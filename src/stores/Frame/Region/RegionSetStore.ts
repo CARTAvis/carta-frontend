@@ -7,7 +7,7 @@ import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {IsAstBadPoint, Scale2D, TransformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
@@ -91,9 +91,8 @@ export class RegionSetStore {
         return RegionStore.AVAILABLE_ANNOTATION_TYPES.has(this.newRegionType);
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
+    @action addPointRegion = (center: Point2D, isCursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, isCursorRegion, isCursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
@@ -115,10 +114,10 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], isTemporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, isTemporary);
     };
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, cursorRegion = false) => {
+
+    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, isCursorRegion = false) => {
         this.pointShapeCache = shape;
-        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, isCursorRegion, this.getTempRegionId());
     };
 
     @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
@@ -157,9 +156,8 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, isTemporary);
     };
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true, annotationStyles?: any) => {
-        const region = this.addRegion(points, rotation, regionType, temporary, regionId, name);
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], isTemporary = true, annotationStyles?: any) => {
+        const region = this.addRegion(points, rotation, regionType, isTemporary, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;
@@ -330,7 +328,7 @@ export class RegionSetStore {
             }
 
             if (region.regionId === CURSOR_REGION_ID) {
-                const centerNewFrame = transformPoint(spatialTransformAST, region.center, isForward);
+                const centerNewFrame = TransformPoint(spatialTransformAST, region.center, isForward);
                 if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
                     this.regions[0].setCenter(centerNewFrame);
                 }
@@ -356,10 +354,10 @@ export class RegionSetStore {
                                 break;
                         }
 
-                        const centerNewFrame = transformPoint(spatialTransformAST, region.center, isForward);
-                        if (!isAstBadPoint(centerNewFrame)) {
+                        const centerNewFrame = TransformPoint(spatialTransformAST, region.center, isForward);
+                        if (!IsAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                            const size = scale2D(region.size, isForward ? transform.scale : 1.0 / transform.scale);
+                            const size = Scale2D(region.size, isForward ? transform.scale : 1.0 / transform.scale);
                             rotation = region.rotation + ((isForward ? 1 : -1) * transform.rotation * 180) / Math.PI;
                             newControlPoints = [centerNewFrame, size];
                         }
@@ -387,8 +385,8 @@ export class RegionSetStore {
                         }
 
                         for (const point of region.controlPoints) {
-                            const pointNewFrame = transformPoint(spatialTransformAST, point, isForward);
-                            if (!isAstBadPoint(pointNewFrame)) {
+                            const pointNewFrame = TransformPoint(spatialTransformAST, point, isForward);
+                            if (!IsAstBadPoint(pointNewFrame)) {
                                 newControlPoints.push(pointNewFrame);
                             }
                         }

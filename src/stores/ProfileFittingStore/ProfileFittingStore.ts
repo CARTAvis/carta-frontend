@@ -5,7 +5,7 @@ import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components
 import {FittingContinuum, FittingFunction} from "enums";
 import {type Point2D} from "models";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
+import {AutoDetecting, Gaussian, GetColorForTheme, Lorentzian, ToFixed} from "utilities";
 
 export class ProfileFittingStore {
     @observable function: FittingFunction = FittingFunction.GAUSSIAN;
@@ -35,12 +35,11 @@ export class ProfileFittingStore {
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action setComponents(length: number, reset?: boolean) {
+    @action setComponents(length: number, isReset?: boolean) {
         this.setSelectedIndex(length - 1);
         const newComponents: ProfileFittingIndividualStore[] = [];
         for (let i = 0; i < length; i++) {
-            if (reset) {
+            if (isReset) {
                 newComponents.push(new ProfileFittingIndividualStore());
             } else {
                 newComponents.push(i < this.components.length ? this.components[i] : new ProfileFittingIndividualStore());
@@ -104,9 +103,9 @@ export class ProfileFittingStore {
                             yMin: 0 + deltaYForContinuum,
                             yMax: component.amp + deltaYForContinuum
                         },
-                        color: getColorForTheme("auto-lime"),
+                        color: GetColorForTheme("auto-lime"),
                         opacity: i === this.selectedIndex ? 0.5 : 0.2,
-                        strokeColor: i === this.selectedIndex ? getColorForTheme("auto-grey") : null,
+                        strokeColor: i === this.selectedIndex ? GetColorForTheme("auto-grey") : null,
                         text: `${i + 1}`
                     };
                     boxes.push(initialBox);
@@ -145,12 +144,12 @@ export class ProfileFittingStore {
         const yUnit = this.widgetStore.yUnit;
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
-                resultString += `Y Intercept = ${toFixed(this.resultYIntercept, 6)} (${yUnit})\n`;
-                resultString += this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs((this.resultYInterceptError * 100) / this.resultYIntercept), 3)}%)\n` : "";
+                resultString += `Y Intercept = ${ToFixed(this.resultYIntercept, 6)} (${yUnit})\n`;
+                resultString += this.resultYInterceptError ? `Y Intercept Error = ${ToFixed(this.resultYInterceptError, 6)} (${ToFixed(Math.abs((this.resultYInterceptError * 100) / this.resultYIntercept), 3)}%)\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
-                resultString += `Slope = ${toFixed(this.resultSlope, 6)} (${yUnit} / ${xUnit})\n`;
-                resultString += this.resultSlopeError ? `Slope Error = ${toFixed(this.resultSlopeError, 6)} (${toFixed(Math.abs((this.resultSlopeError * 100) / this.resultSlope), 3)}%)\n` : "";
+                resultString += `Slope = ${ToFixed(this.resultSlope, 6)} (${yUnit} / ${xUnit})\n`;
+                resultString += this.resultSlopeError ? `Slope Error = ${ToFixed(this.resultSlopeError, 6)} (${ToFixed(Math.abs((this.resultSlopeError * 100) / this.resultSlope), 3)}%)\n` : "";
             }
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += "\n";
@@ -158,14 +157,14 @@ export class ProfileFittingStore {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
                 resultString += `Component #${i + 1}\n`;
-                resultString += `Center = ${toFixed(component.resultCenter, 6)} (${xUnit})\n`;
-                resultString += component.resultCenterError ? `Center Error = ${toFixed(component.resultCenterError, 6)} (${toFixed(Math.abs((component.resultCenterError * 100) / component.resultCenter), 3)}%)\n` : "";
-                resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} (${yUnit})\n`;
-                resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs((component.resultAmpError * 100) / component.resultAmp), 3)}%)\n` : "";
-                resultString += `FWHM = ${toFixed(component.resultFwhm, 6)} (${xUnit})\n`;
-                resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs((component.resultFwhmError * 100) / component.resultFwhm), 3)}%)\n` : "";
-                resultString += `Integral = ${toFixed(component.resultIntegral, 6)} (${yUnit} * ${xUnit})\n`;
-                resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs((component.resultIntegralError * 100) / component.resultIntegral), 3)}%)\n\n` : "";
+                resultString += `Center = ${ToFixed(component.resultCenter, 6)} (${xUnit})\n`;
+                resultString += component.resultCenterError ? `Center Error = ${ToFixed(component.resultCenterError, 6)} (${ToFixed(Math.abs((component.resultCenterError * 100) / component.resultCenter), 3)}%)\n` : "";
+                resultString += `Amplitude = ${ToFixed(component.resultAmp, 6)} (${yUnit})\n`;
+                resultString += component.resultAmpError ? `Amplitude Error = ${ToFixed(component.resultAmpError, 6)} (${ToFixed(Math.abs((component.resultAmpError * 100) / component.resultAmp), 3)}%)\n` : "";
+                resultString += `FWHM = ${ToFixed(component.resultFwhm, 6)} (${xUnit})\n`;
+                resultString += component.resultFwhmError ? `FWHM Error = ${ToFixed(component.resultFwhmError, 6)} (${ToFixed(Math.abs((component.resultFwhmError * 100) / component.resultFwhm), 3)}%)\n` : "";
+                resultString += `Integral = ${ToFixed(component.resultIntegral, 6)} (${yUnit} * ${xUnit})\n`;
+                resultString += component.resultIntegralError ? `Integral Error ~= ${ToFixed(component.resultIntegralError, 6)} (${ToFixed(Math.abs((component.resultIntegralError * 100) / component.resultIntegral), 3)}%)\n\n` : "";
             }
         }
 
@@ -233,9 +232,9 @@ export class ProfileFittingStore {
                 let yi = 0;
                 for (const component of this.components) {
                     if (this.function === FittingFunction.GAUSSIAN) {
-                        yi += gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
+                        yi += Gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     } else if (this.function === FittingFunction.LORENTZIAN) {
-                        yi += lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
+                        yi += Lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     }
                 }
                 modelPoint2DArray[i] = {x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)};
@@ -253,7 +252,7 @@ export class ProfileFittingStore {
                 const individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
                     const yi =
-                        this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
+                        this.function === FittingFunction.GAUSSIAN ? Gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : Lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
                 individualModelPoint2DArrays.push(individualResultPoint2DArray);
@@ -281,7 +280,7 @@ export class ProfileFittingStore {
             return;
         }
         const y = Array.prototype.slice.call(this.fittingData?.y);
-        const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null : {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
+        const result = AutoDetecting(x, y, this.isAutoDetectWithCont ? null : {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
         if (result.components?.length > 0) {
             this.setComponents(result.components.length, true);
             for (let i = 0; i < result.components.length; i++) {
@@ -382,12 +381,12 @@ export class ProfileFittingStore {
         this.slope = val;
     };
 
-    @action setLockedYIntercept = (isVal: boolean) => {
-        this.isLockedYIntercept = isVal;
+    @action setLockedYIntercept = (isBool: boolean) => {
+        this.isLockedYIntercept = isBool;
     };
 
-    @action setLockedSlope = (isVal: boolean) => {
-        this.isLockedSlope = isVal;
+    @action setLockedSlope = (isBool: boolean) => {
+        this.isLockedSlope = isBool;
     };
 
     @action setResultYIntercept = (val: number) => {
@@ -410,8 +409,8 @@ export class ProfileFittingStore {
         this.selectedIndex = val;
     };
 
-    @action setHasResult = (isVal: boolean) => {
-        this.hasResult = isVal;
+    @action setHasResult = (isBool: boolean) => {
+        this.hasResult = isBool;
     };
 
     @action setResultLog = (val: string) => {
@@ -422,36 +421,36 @@ export class ProfileFittingStore {
         this.resultResidual = val;
     };
 
-    @action setIsCursorSelectingYIntercept = (isVal: boolean) => {
-        this.isCursorSelectingYIntercept = isVal;
+    @action setIsCursorSelectingYIntercept = (isBool: boolean) => {
+        this.isCursorSelectingYIntercept = isBool;
     };
 
-    @action setIsCursorSelectingSlope = (isVal: boolean) => {
-        this.isCursorSelectingSlope = isVal;
+    @action setIsCursorSelectingSlope = (isBool: boolean) => {
+        this.isCursorSelectingSlope = isBool;
     };
 
-    @action setIsCursorSelectingComponentOn = (isVal: boolean) => {
-        this.isCursorSelectingComponent = isVal;
+    @action setIsCursorSelectingComponentOn = (isBool: boolean) => {
+        this.isCursorSelectingComponent = isBool;
     };
 
-    @action setIsAutoDetectWithCont = (isVal: boolean) => {
-        this.isAutoDetectWithCont = isVal;
+    @action setIsAutoDetectWithCont = (isBool: boolean) => {
+        this.isAutoDetectWithCont = isBool;
     };
 
-    @action setIsAutoDetectWithFitting = (isVal: boolean) => {
-        this.isAutoDetectWithFitting = isVal;
+    @action setIsAutoDetectWithFitting = (isBool: boolean) => {
+        this.isAutoDetectWithFitting = isBool;
     };
 
-    @action setHasAutoDetectResult = (isVal: boolean) => {
-        this.hasAutoDetectResult = isVal;
+    @action setHasAutoDetectResult = (isBool: boolean) => {
+        this.hasAutoDetectResult = isBool;
     };
 
     @action setDetectedComponentN = (val: number) => {
         this.detectedComponentN = val;
     };
 
-    @action setEnableResidual = (isVal: boolean) => {
-        this.isEnableResidual = isVal;
+    @action setEnableResidual = (isBool: boolean) => {
+        this.isEnableResidual = isBool;
     };
 
     @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
@@ -495,16 +494,16 @@ export class ProfileFittingIndividualStore {
         this.fwhm = val;
     };
 
-    @action setLockedCenter = (isVal: boolean) => {
-        this.isLockedCenter = isVal;
+    @action setLockedCenter = (isBool: boolean) => {
+        this.isLockedCenter = isBool;
     };
 
-    @action setLockedAmp = (isVal: boolean) => {
-        this.isLockedAmp = isVal;
+    @action setLockedAmp = (isBool: boolean) => {
+        this.isLockedAmp = isBool;
     };
 
-    @action setLockedFwhm = (isVal: boolean) => {
-        this.isLockedFwhm = isVal;
+    @action setLockedFwhm = (isBool: boolean) => {
+        this.isLockedFwhm = isBool;
     };
 
     @action setResultCenter = (val: number) => {

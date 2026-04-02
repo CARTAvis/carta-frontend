@@ -1,6 +1,6 @@
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {APP_TOASTER, successToast} from "components/Shared";
+import {AppToaster, SuccessToast} from "components/Shared";
 import {Snippet} from "models";
 import {ApiService} from "services";
 import {AlertStore} from "stores";
@@ -142,9 +142,9 @@ export class SnippetStore {
         try {
             const success = yield ApiService.Instance.setSnippet(name, snippet);
             if (success) {
-                // Silently exit on success if isSilent flag is set
+                // Silently exit on success if silent flag is set
                 if (!isSilent) {
-                    APP_TOASTER.show(successToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -163,9 +163,9 @@ export class SnippetStore {
         try {
             const success = yield ApiService.Instance.clearSnippet(name);
             if (success) {
-                // Silently exit on success if isSilent flag is set
+                // Silently exit on success if silent flag is set
                 if (!isSilent) {
-                    APP_TOASTER.show(successToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {

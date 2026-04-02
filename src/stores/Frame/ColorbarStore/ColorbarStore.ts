@@ -2,7 +2,7 @@ import {computed, makeObservable} from "mobx";
 
 import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp} from "utilities";
+import {Clamp} from "utilities";
 
 const COLORBAR_TICK_NUM_MIN = 3;
 
@@ -64,9 +64,9 @@ export class ColorbarStore {
         const colorbar = this.overlaySettings.colorbar;
         const precision = colorbar.hasNumberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
         if (maxOrder > 5.0 || minOrder < -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.hasNumberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.getPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(Clamp(colorbar.hasNumberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.getPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, ColorbarStore.PRECISION_MAX)));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(Clamp(precision, 0, ColorbarStore.PRECISION_MAX)));
         }
     }
 

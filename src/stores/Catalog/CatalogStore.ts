@@ -6,7 +6,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {type CatalogWidgetStore} from "stores/Widgets";
-import {minMaxArray, setAstSystem} from "utilities";
+import {MinMaxArray, SetAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -312,7 +312,8 @@ export class CatalogStore {
     private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const overlay = AppStore.Instance.overlaySettings;
-            const n = xWcsData.length;
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            const N = xWcsData.length;
 
             const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
             const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
@@ -322,12 +323,12 @@ export class CatalogStore {
                 AST.setI(wcsCopy, "Current", 2);
             }
 
-            setAstSystem(wcsCopy, catalogFrame, overlay.global);
+            SetAstSystem(wcsCopy, catalogFrame, overlay.global);
 
-            const xWCSValues = new Float64Array(n);
-            const yWCSValues = new Float64Array(n);
+            const xWCSValues = new Float64Array(N);
+            const yWCSValues = new Float64Array(N);
 
-            for (let i = 0; i < n; i++) {
+            for (let i = 0; i < N; i++) {
                 xWCSValues[i] = xWcsData[i] * xFraction;
                 yWCSValues[i] = yWcsData[i] * yFraction;
             }
@@ -345,8 +346,8 @@ export class CatalogStore {
             const coords = this.catalogGLData.get(catalogId);
             const count = this.catalogCounts.get(catalogId);
             if (coords?.x && coords?.y) {
-                const minMaxX = minMaxArray(coords.x.slice(0, count));
-                const minMaxY = minMaxArray(coords.y.slice(0, count));
+                const minMaxX = MinMaxArray(coords.x.slice(0, count));
+                const minMaxY = MinMaxArray(coords.y.slice(0, count));
                 if (minMaxX.minVal < minMax.minX) {
                     minMax.minX = minMaxX.minVal;
                 }

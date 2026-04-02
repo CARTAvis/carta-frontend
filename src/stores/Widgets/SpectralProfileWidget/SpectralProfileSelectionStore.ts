@@ -6,7 +6,7 @@ import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
-import {genColorFromIndex, type ProcessedSpectralProfile} from "utilities";
+import {GenColorFromIndex, type ProcessedSpectralProfile} from "utilities";
 
 interface ProfileConfig {
     fileId: number | undefined;
@@ -537,11 +537,11 @@ export class SpectralProfileSelectionStore {
         const profileColor = widgetStore.getProfileColor(selectedId);
 
         if (!profileColor) {
-            let color: string = genColorFromIndex(0);
+            let color: string = GenColorFromIndex(0);
 
             // find color that is not used by other profiles
             for (let i = 0; i < profileColors.length + 1; i++) {
-                color = genColorFromIndex(i);
+                color = GenColorFromIndex(i);
                 if (!profileColors.includes(color)) {
                     break;
                 }

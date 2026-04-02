@@ -5,7 +5,7 @@ import {LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
+import {ASTSettingsString, Clamp, GetColorForTheme, SetAstStringSystem, SetAstSystem, ToFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -50,11 +50,11 @@ export class OverlayGlobalSettings {
         const astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
-        astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
+        astString.add("Tol", ToFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.isValidWcs;
         if (isWcsFrameAndSystem) {
-            setAstStringSystem(astString, this.explicitSystem, this);
+            SetAstStringSystem(astString, this.explicitSystem, this);
         }
 
         const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoOffset ?? frame?.wcsInfo) : frame?.wcsInfo;
@@ -105,7 +105,7 @@ export class OverlayGlobalSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.GLOBAL);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.GLOBAL);
     };
 
     @action setTolerance(tolerance: number) {
@@ -119,9 +119,8 @@ export class OverlayGlobalSettings {
     @action async setSystem(system: SystemType) {
         const frames = AppStore.Instance.frames;
         if ((this.system === SystemType.Image) !== (system === SystemType.Image) && frames.map(f => f.spatialReference !== null).includes(true)) {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            const confirm = await AlertStore.Instance.showInteractiveAlert("Switching system between world and image coordinates will disable spatial matching.");
-            if (confirm) {
+            const isConfirm = await AlertStore.Instance.showInteractiveAlert("Switching system between world and image coordinates will disable spatial matching.");
+            if (isConfirm) {
                 frames.forEach(f => f.clearSpatialReference());
                 this.system = system;
             }
@@ -195,7 +194,7 @@ export class OverlayTitleSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.TITLE);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.TITLE);
     };
 
     @action setCustomText = (isCustomTitle: boolean) => {
@@ -236,7 +235,7 @@ export class OverlayGridSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.GRID);
     };
 
     @action setWidth(width: number) {
@@ -284,7 +283,7 @@ export class OverlayBorderSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.BORDER);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.BORDER);
     };
 
     @action setWidth(width: number) {
@@ -311,8 +310,8 @@ export class OverlayTickSettings {
         astString.add("MinTick(2)", this.densityY, this.hasCustomDensity);
         astString.add("Color(Ticks)", AstColorsIndex.TICK, this.hasCustomColor);
         astString.add("Width(Ticks)", this.width * AppStore.Instance.imageRatio, this.width > 0);
-        astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
-        astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
+        astString.add("MinTickLen", ToFixed(this.length / 100, 2)); // convert to fraction
+        astString.add("MajTickLen", ToFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
     }
 
@@ -346,7 +345,7 @@ export class OverlayTickSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.TICK);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.TICK);
     };
 
     @action setWidth(width: number) {
@@ -392,7 +391,7 @@ export class OverlayAxisSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.AXIS);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.AXIS);
     };
 
     @action setWidth(width: number) {
@@ -511,7 +510,7 @@ export class OverlayNumberSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.NUMBER);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.NUMBER);
     };
 
     @action setCustomFormat(hasCustomFormat: boolean) {
@@ -597,7 +596,7 @@ export class OverlayLabelSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.LABEL);
+        AST.setColor(GetColorForTheme(color), AstColorsIndex.LABEL);
     };
 
     @action setFont = (font: number) => {
@@ -612,8 +611,8 @@ export class OverlayLabelSettings {
         this.isRaDecReference = isRaDecReference;
     }
 
-    @action setCustomText = (isVal: boolean) => {
-        this.hasCustomText = isVal;
+    @action setCustomText = (isBool: boolean) => {
+        this.hasCustomText = isBool;
     };
 
     @action setCustomLabelX = (label: string) => {
@@ -810,7 +809,7 @@ export class OverlayColorbarSettings {
 
         if (!this.numberRotation && this.position === "right") {
             textWidth = 0;
-            const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
+            const textFontIndex = Clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
             for (const frame of AppStore.Instance.imageViewConfigStore.visibleFrames) {
                 const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : (x.match(/[.-]/g)?.length ?? 0) * 0.5))) * this.textRatio[textFontIndex];
                 textWidth = Math.max(textWidth, frameTextWidth);
@@ -900,7 +899,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.isValidWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
+                    SetAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
         });

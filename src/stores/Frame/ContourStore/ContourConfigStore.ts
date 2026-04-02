@@ -36,8 +36,8 @@ export class ContourConfigStore {
         makeObservable(this);
     }
 
-    @action setEnabled(isVal: boolean) {
-        this.isEnabled = isVal;
+    @action setEnabled(isEnabled: boolean) {
+        this.isEnabled = isEnabled;
     }
 
     @action setContourConfiguration = (levels: number[], smoothingMode: CARTA.SmoothingMode, smoothingFactor: number) => {
@@ -66,8 +66,8 @@ export class ContourConfigStore {
         this.colormap = colormap;
     };
 
-    @action setColormapEnabled = (isVal: boolean) => {
-        this.isColormapEnabled = isVal;
+    @action setColormapEnabled = (isEnabled: boolean) => {
+        this.isColormapEnabled = isEnabled;
     };
 
     @action setColormapBias = (val: number) => {
@@ -94,9 +94,9 @@ export class ContourConfigStore {
         this.colormapBias = config.colormapBias;
         this.dashMode = config.dashMode;
         this.thickness = config.thickness;
-        this.isVisible = config.visible;
+        this.isVisible = config.isVisible;
 
-        this.isColormapEnabled = config.colormapEnabled;
+        this.isColormapEnabled = config.isColormapEnabled;
         if (config.color) {
             this.color = config.color;
         }

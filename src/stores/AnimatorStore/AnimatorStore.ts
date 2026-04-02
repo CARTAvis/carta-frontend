@@ -5,7 +5,7 @@ import {AnimationMode, PlayMode} from "enums";
 import {type FrameView, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, getRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
+import {Clamp, GetRequiredTiles, GetTransformedChannelList, MapToObject} from "utilities";
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
@@ -82,7 +82,7 @@ export class AnimatorStore {
             mip: reqView.mip
         };
         const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
-        const tiles = getRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
+        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
         const requiredTiles: CARTA.IAddRequiredTiles = {
             fileId: activeFrame.frameInfo.fileId,
             tiles: tiles,
@@ -95,7 +95,7 @@ export class AnimatorStore {
         for (const sibling of activeFrame.spectralSiblings) {
             const firstChannel = animationFrames.firstFrame.channel ?? 0;
             const lastChannel = animationFrames.lastFrame.channel ?? 0;
-            const frameNumbers = getTransformedChannelList(activeFrame.wcsInfo3D, sibling.wcsInfo3D, appStore.spectralMatchingType, firstChannel, lastChannel);
+            const frameNumbers = GetTransformedChannelList(activeFrame.wcsInfo3D, sibling.wcsInfo3D, appStore.spectralMatchingType, firstChannel, lastChannel);
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
@@ -109,7 +109,7 @@ export class AnimatorStore {
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate,
-            matchedFrames: mapToObject(matchedFrames),
+            matchedFrames: MapToObject(matchedFrames),
             stokesIndices: activeFrame.polarizations.map((polarization, i) => {
                 return i < activeFrame.frameInfo.fileInfoExtended.stokes && i >= 0 ? i : polarization;
             })
@@ -188,7 +188,7 @@ export class AnimatorStore {
     }
 
     @computed get frameInterval() {
-        return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
+        return 1000.0 / Clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 
     @computed get isServerAnimationActive() {

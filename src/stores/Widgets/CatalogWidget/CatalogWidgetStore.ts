@@ -6,7 +6,7 @@ import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape
 import {FACTOR_TO_ARCSEC} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
-import {clamp, minMaxArray} from "utilities";
+import {Clamp, MinMaxArray} from "utilities";
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
@@ -118,7 +118,7 @@ export class CatalogWidgetStore {
         reaction(
             () => this.sizeMapData,
             column => {
-                const result = minMaxArray(column);
+                const result = MinMaxArray(column);
                 this.setSizeColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                 this.setSizeColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
             }
@@ -154,7 +154,7 @@ export class CatalogWidgetStore {
         reaction(
             () => this.sizeMinorMapData,
             column => {
-                const result = minMaxArray(column);
+                const result = MinMaxArray(column);
                 this.setSizeMinorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                 this.setSizeMinorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
             }
@@ -190,7 +190,7 @@ export class CatalogWidgetStore {
         reaction(
             () => this.colorMapData,
             column => {
-                const result = minMaxArray(column);
+                const result = MinMaxArray(column);
                 this.setColorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                 this.setColorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
             }
@@ -208,7 +208,7 @@ export class CatalogWidgetStore {
         reaction(
             () => this.orientationMapData,
             column => {
-                const result = minMaxArray(column);
+                const result = MinMaxArray(column);
                 this.setOrientationMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                 this.setOrientationMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
             }
@@ -270,7 +270,7 @@ export class CatalogWidgetStore {
      * @param max - max degree of orientation
      */
     @action setAngleMax(max: number) {
-        this.angleMax = clamp(max, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
+        this.angleMax = Clamp(max, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
     }
 
     /**
@@ -278,7 +278,7 @@ export class CatalogWidgetStore {
      * @param min - min degree of orientation
      */
     @action setAngleMin(min: number) {
-        this.angleMin = clamp(min, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
+        this.angleMin = Clamp(min, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
     }
 
     /**
@@ -332,7 +332,7 @@ export class CatalogWidgetStore {
             this.orientationMax = {default: undefined, clipd: undefined};
 
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.orientationMapData);
+                const result = MinMaxArray(this.orientationMapData);
                 this.setAngleMax(result.maxVal);
                 this.setAngleMin(result.minVal);
             }
@@ -349,10 +349,10 @@ export class CatalogWidgetStore {
 
     /**
      * Set the colormap direction
-     * @param val - true for isInverted colormap, false for normal colormap
+     * @param isBool - true for isInverted colormap, false for normal colormap
      */
-    @action setColorMapDirection(isVal: boolean) {
-        this.isInvertedColorMap = isVal;
+    @action setColorMapDirection(isBool: boolean) {
+        this.isInvertedColorMap = isBool;
     }
 
     /**
@@ -513,10 +513,10 @@ export class CatalogWidgetStore {
 
     /**
      * Set the size mapping depending on the area or diameter
-     * @param val - true for area, false for diameter
+     * @param isBool - true for area, false for diameter
      */
-    @action setSizeArea(isVal: boolean) {
-        this.isSizeArea = isVal;
+    @action setSizeArea(isBool: boolean) {
+        this.isSizeArea = isBool;
     }
 
     /**
@@ -529,7 +529,7 @@ export class CatalogWidgetStore {
             this.sizeColumnMin = {default: undefined, clipd: undefined};
             this.sizeColumnMax = {default: undefined, clipd: undefined};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMapData);
+                const result = MinMaxArray(this.sizeMapData);
                 this.setSizeMax(result.maxVal);
                 this.setSizeMin(result.minVal);
             }
@@ -652,10 +652,10 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minor axis mapping depending on the area or diameter
-     * @param val - true for area, false for diameter
+     * @param isBool - true for area, false for diameter
      */
-    @action setSizeMinorArea(isVal: boolean) {
-        this.isSizeMinorArea = isVal;
+    @action setSizeMinorArea(isBool: boolean) {
+        this.isSizeMinorArea = isBool;
     }
 
     /**
@@ -668,7 +668,7 @@ export class CatalogWidgetStore {
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMinorMapData);
+                const result = MinMaxArray(this.sizeMinorMapData);
                 this.setMinorSizeMax(result.maxVal);
                 this.setMinorSizeMin(result.minVal);
             }
@@ -691,13 +691,13 @@ export class CatalogWidgetStore {
         if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
             this.isSizeArea = false;
 
-            const result = minMaxArray(this.sizeMapData);
+            const result = MinMaxArray(this.sizeMapData);
             this.setSizeMax(result.maxVal);
             this.setSizeMin(result.minVal);
-            const minorResult = minMaxArray(this.sizeMinorMapData);
+            const minorResult = MinMaxArray(this.sizeMinorMapData);
             this.setMinorSizeMax(minorResult.maxVal);
             this.setMinorSizeMin(minorResult.minVal);
-            const resultOrientation = minMaxArray(this.orientationMapData);
+            const resultOrientation = MinMaxArray(this.orientationMapData);
             this.setAngleMax(resultOrientation.maxVal);
             this.setAngleMin(resultOrientation.minVal);
 
@@ -814,7 +814,7 @@ export class CatalogWidgetStore {
      * @param val - thickness of catalog source
      */
     @action setThickness(val: number) {
-        this.thickness = clamp(val, CatalogWidgetStore.MIN_THICKNESS, CatalogWidgetStore.MAX_THICKNESS);
+        this.thickness = Clamp(val, CatalogWidgetStore.MIN_THICKNESS, CatalogWidgetStore.MAX_THICKNESS);
     }
 
     /**

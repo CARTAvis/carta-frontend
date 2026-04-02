@@ -6,7 +6,7 @@ import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAct
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {length2D} from "utilities";
+import {Length2D} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -121,7 +121,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.shouldKeep);
                 const depth = channelIndexMax - channelIndexMin + 1;
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, length: length2D(this.effectiveRegion.size), depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, length: Length2D(this.effectiveRegion.size), depth});
             }
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);

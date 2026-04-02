@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {VectorOverlayWebGLService} from "services";
 import {type FrameStore} from "stores/Frame";
-import {createTextureFromArray, equalIfBothFinite} from "utilities";
+import {CreateTextureFromArray, EqualIfBothFinite} from "utilities";
 
 export interface VectorOverlayTile {
     texture: WebGLTexture | null;
@@ -72,13 +72,13 @@ export class VectorOverlayStore {
             }
 
             // Skip sets with mismatching dimensions or coordinates
-            if (!equalIfBothFinite(intensityTile?.width ?? undefined, angleTile?.width ?? undefined) || !equalIfBothFinite(intensityTile?.height ?? undefined, angleTile?.height ?? undefined)) {
+            if (!EqualIfBothFinite(intensityTile?.width ?? undefined, angleTile?.width ?? undefined) || !EqualIfBothFinite(intensityTile?.height ?? undefined, angleTile?.height ?? undefined)) {
                 continue;
             }
             if (
-                !equalIfBothFinite(intensityTile?.mip ?? undefined, angleTile?.mip ?? undefined) ||
-                !equalIfBothFinite(intensityTile?.x ?? undefined, angleTile?.x ?? undefined) ||
-                !equalIfBothFinite(intensityTile?.y ?? undefined, angleTile?.y ?? undefined)
+                !EqualIfBothFinite(intensityTile?.mip ?? undefined, angleTile?.mip ?? undefined) ||
+                !EqualIfBothFinite(intensityTile?.x ?? undefined, angleTile?.x ?? undefined) ||
+                !EqualIfBothFinite(intensityTile?.y ?? undefined, angleTile?.y ?? undefined)
             ) {
                 continue;
             }
@@ -124,9 +124,9 @@ export class VectorOverlayStore {
                     }
                 }
             }
-            // Resize vertex data before isCreating a texture
+            // Resize vertex data before creating a texture
             vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 4);
-            const texture = this.gl ? createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4) : null;
+            const texture = this.gl ? CreateTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4) : null;
             if (!this.tiles) {
                 this.tiles = [];
             }

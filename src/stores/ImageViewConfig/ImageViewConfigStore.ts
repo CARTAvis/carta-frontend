@@ -4,7 +4,7 @@ import {action, computed, makeAutoObservable, observable} from "mobx";
 import {ImagePanelMode, ImageType} from "enums";
 import {type ImageViewItem} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
-import {clamp} from "utilities";
+import {Clamp} from "utilities";
 
 /** Configuration of the images in the image view widget. */
 export class ImageViewConfigStore {
@@ -179,7 +179,7 @@ export class ImageViewConfigStore {
             return [];
         }
 
-        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
+        const pageIndex = Clamp(this.currentImagePage, 0, this.numImagePages);
         const firstImageIndex = pageIndex * this.imagesPerPage;
         const indexUpperBound = Math.min(firstImageIndex + this.imagesPerPage, this.imageNum);
         const pageImages: ImageViewItem[] = [];
@@ -189,7 +189,7 @@ export class ImageViewConfigStore {
         return pageImages;
     }
 
-    /** The frames isVisible on the current page, including the loaded images and the layers of the color blended images. */
+    /** The frames visible on the current page, including the loaded images and the layers of the color blended images. */
     @computed get visibleFrames(): FrameStore[] {
         const frames: Set<FrameStore> = new Set();
         this.visibleImages.forEach(imageItem => {
@@ -222,7 +222,7 @@ export class ImageViewConfigStore {
             case ImagePanelMode.Fixed:
                 return Math.max(1, PreferenceStore.Instance.imagePanelColumns);
             default:
-                return clamp(this.imageNum, 1, PreferenceStore.Instance.imagePanelColumns);
+                return Clamp(this.imageNum, 1, PreferenceStore.Instance.imagePanelColumns);
         }
     }
 
@@ -238,7 +238,7 @@ export class ImageViewConfigStore {
             case ImagePanelMode.Fixed:
                 return Math.max(1, PreferenceStore.Instance.imagePanelRows);
             default:
-                return clamp(Math.ceil(this.imageNum / PreferenceStore.Instance.imagePanelColumns), 1, PreferenceStore.Instance.imagePanelRows);
+                return Clamp(Math.ceil(this.imageNum / PreferenceStore.Instance.imagePanelColumns), 1, PreferenceStore.Instance.imagePanelRows);
         }
     }
 

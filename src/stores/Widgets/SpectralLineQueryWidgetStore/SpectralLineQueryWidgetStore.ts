@@ -6,9 +6,10 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {SplatalogueService} from "services";
 import {AppStore, type ControlHeader} from "stores";
-import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {BooleanFiltering, GetHasFilter, GetInitIndexMap, GetSortedIndexMap, NumericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, StringFiltering, WavelengthToFrequency} from "utilities";
 
-const spectralLineDescription = new Map<SpectralLineHeaders, string>([
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineSelection, "Column for line selection"],
     [SpectralLineHeaders.Species, "Descriptive formula of molecular species"],
     [SpectralLineHeaders.ChemicalName, "Common chemical name for species"],
@@ -31,7 +32,8 @@ const spectralLineDescription = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineList, "Originated catalogue"]
 ]);
 
-const spectralLineHeaderWidth = new Map<SpectralLineHeaders, number>([
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const SPECTRAL_LINE_HEADER_WIDTH = new Map<SpectralLineHeaders, number>([
     [SpectralLineHeaders.LineSelection, 50],
     [SpectralLineHeaders.Species, 100],
     [SpectralLineHeaders.ChemicalName, 150],
@@ -118,10 +120,10 @@ export class SpectralLineQueryWidgetStore {
         this.intensityLimitValue = intensityLimitValue;
     };
 
-    @action setHeaderDisplay = (isVal: boolean, columnName: string) => {
+    @action setHeaderDisplay = (isBool: boolean, columnName: string) => {
         const header = this.controlHeader.get(columnName);
         if (header) {
-            header.isDisplay = isVal;
+            header.isDisplay = isBool;
         }
     };
 
@@ -305,11 +307,11 @@ export class SpectralLineQueryWidgetStore {
                         ? column.data
                         : (column.data as (number | undefined)[] | null | undefined)?.map(value => (value !== undefined && isFinite(value) ? value * this.redshiftFactor : undefined));
                 if (dataType === CARTA.ColumnType.Double) {
-                    filteredRowIndexes = numericFiltering(data as Array<number>, filteredRowIndexes, filterString);
+                    filteredRowIndexes = NumericFiltering(data as Array<number>, filteredRowIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.Bool) {
-                    filteredRowIndexes = booleanFiltering(data as Array<boolean>, filteredRowIndexes, filterString);
+                    filteredRowIndexes = BooleanFiltering(data as Array<boolean>, filteredRowIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.String) {
-                    filteredRowIndexes = stringFiltering(data as Array<string>, filteredRowIndexes, filterString);
+                    filteredRowIndexes = StringFiltering(data as Array<string>, filteredRowIndexes, filterString);
                 }
                 filterNum++;
             }
@@ -345,15 +347,15 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @action updateSortedIndexMap() {
-        this.sortedIndexMap = getSortedIndexMap(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
+        this.sortedIndexMap = GetSortedIndexMap(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
+        this.sortedIndexMap = GetInitIndexMap(this.numVisibleRows);
     }
 
     @computed get hasFilter(): boolean {
-        return getHasFilter(this.controlHeader, this.queryResult);
+        return GetHasFilter(this.controlHeader, this.queryResult);
     }
 
     @computed get fullRowIndexes(): Array<number> {
@@ -443,7 +445,7 @@ export class SpectralLineQueryWidgetStore {
                     name: header.name,
                     dataType: header.dataType,
                     columnIndex: (header.columnIndex ?? NaN) + 1, // to save first column for inserting line selection
-                    description: spectralLineDescription.get(header.name as SpectralLineHeaders)
+                    description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
                 })
             );
         });
@@ -456,7 +458,7 @@ export class SpectralLineQueryWidgetStore {
                 name: SpectralLineHeaders.LineSelection,
                 dataType: CARTA.ColumnType.Bool,
                 columnIndex: LINE_SELECTION_COLUMN_INDEX,
-                description: spectralLineDescription.get(SpectralLineHeaders.LineSelection)
+                description: SPECTRAL_LINE_DESCRIPTION.get(SpectralLineHeaders.LineSelection)
             })
         );
 
@@ -523,7 +525,7 @@ export class SpectralLineQueryWidgetStore {
                 dataIndex: index,
                 isDisplay: true,
                 filter: "",
-                columnWidth: spectralLineHeaderWidth.get(header.name) ?? DEFAULT_HEADER_WIDTH
+                columnWidth: SPECTRAL_LINE_HEADER_WIDTH.get(header.name) ?? DEFAULT_HEADER_WIDTH
             };
             controlHeaders.set(header.name, controlHeader);
         });
@@ -535,9 +537,9 @@ export class SpectralLineQueryWidgetStore {
             return undefined;
         }
         if (unit === SpectralLineQueryUnit.CM) {
-            return (wavelengthToFrequency(value / 100) ?? NaN) / 1e6;
+            return (WavelengthToFrequency(value / 100) ?? NaN) / 1e6;
         } else if (unit === SpectralLineQueryUnit.MM) {
-            return (wavelengthToFrequency(value / 1000) ?? NaN) / 1e6;
+            return (WavelengthToFrequency(value / 1000) ?? NaN) / 1e6;
         } else if (unit === SpectralLineQueryUnit.GHz) {
             return value * 1000;
         } else if (unit === SpectralLineQueryUnit.MHz) {

@@ -6,11 +6,12 @@ import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
 import {AppStore, ProfileSmoothingStore} from "stores";
-import {getColorsForValues, isAutoColor} from "utilities";
+import {GetColorsForValues, IsAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-const defaults = {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const DEFAULTS = {
     isFractionalPolVisible: false,
     scatterOutRangePointsZIndex: [],
     primaryLineColor: "auto-blue",
@@ -49,21 +50,21 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoLinePlots: boolean = false;
     @observable scatterChartArea: ChartArea = undefined as any;
     @observable statsType: CARTA.StatsType = CARTA.StatsType.Mean;
-    @observable isFractionalPolVisible: boolean = defaults.isFractionalPolVisible;
+    @observable isFractionalPolVisible: boolean = DEFAULTS.isFractionalPolVisible;
     scatterOutRangePointsZIndex: Array<number>;
 
     // settings
     @observable plotType: PlotType = PlotType.STEPS;
-    @observable primaryLineColor: string = defaults.primaryLineColor;
-    @observable secondaryLineColor: string = defaults.secondaryLineColor;
-    @observable lineWidth: number = defaults.lineWidth;
-    @observable linePlotPointSize: number = defaults.linePlotPointSize;
-    @observable scatterPlotPointSize: number = defaults.scatterPlotPointSize;
-    @observable hasEqualAxes: boolean = defaults.hasEqualAxes;
-    @observable colorMap: string = defaults.colorMap;
-    @observable colorPixel: {color: Uint8ClampedArray; size: number} = getColorsForValues(defaults.colorMap);
-    @observable pointTransparency: number = defaults.pointTransparency;
-    @observable isInvertedColorMap: boolean = defaults.isInvertedColorMap;
+    @observable primaryLineColor: string = DEFAULTS.primaryLineColor;
+    @observable secondaryLineColor: string = DEFAULTS.secondaryLineColor;
+    @observable lineWidth: number = DEFAULTS.lineWidth;
+    @observable linePlotPointSize: number = DEFAULTS.linePlotPointSize;
+    @observable scatterPlotPointSize: number = DEFAULTS.scatterPlotPointSize;
+    @observable hasEqualAxes: boolean = DEFAULTS.hasEqualAxes;
+    @observable colorMap: string = DEFAULTS.colorMap;
+    @observable colorPixel: {color: Uint8ClampedArray; size: number} = GetColorsForValues(DEFAULTS.colorMap);
+    @observable pointTransparency: number = DEFAULTS.pointTransparency;
+    @observable isInvertedColorMap: boolean = DEFAULTS.isInvertedColorMap;
     @observable shouldShowReferenceAxes: boolean = true;
     referenceAxesThickness: number = 2;
     readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
@@ -75,9 +76,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
         const requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
-        const iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
         if (widgetStore.isFractionalPolVisible) {
-            if (iz < 0) {
+            if (Iz < 0) {
                 requiredCoordinate.push(StokesCoordinate.TotalIntensity);
             }
         }
@@ -139,12 +141,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterChartArea = chartArea;
     };
 
-    @action setMouseMoveIntoScatterPlots = (isVal: boolean) => {
-        this.isMouseMoveIntoScatterPlots = isVal;
+    @action setMouseMoveIntoScatterPlots = (isBool: boolean) => {
+        this.isMouseMoveIntoScatterPlots = isBool;
     };
 
-    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
-        this.isMouseMoveIntoLinePlots = isVal;
+    @action setMouseMoveIntoLinePlots = (isBool: boolean) => {
+        this.isMouseMoveIntoLinePlots = isBool;
     };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
@@ -198,8 +200,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotCursorY = cursorVal.y;
     };
 
-    @action setFractionalPolVisible = (isVal: boolean) => {
-        this.isFractionalPolVisible = isVal;
+    @action setFractionalPolVisible = (isBool: boolean) => {
+        this.isFractionalPolVisible = isBool;
         this.clearScatterPlotXYBounds();
     };
 
@@ -212,7 +214,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable(this);
-        this.scatterOutRangePointsZIndex = defaults.scatterOutRangePointsZIndex;
+        this.scatterOutRangePointsZIndex = DEFAULTS.scatterOutRangePointsZIndex;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -333,13 +335,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setEqualAxesValue = (isVal: boolean) => {
-        this.hasEqualAxes = isVal;
+    @action setEqualAxesValue = (isBool: boolean) => {
+        this.hasEqualAxes = isBool;
     };
 
     @action setColormap = (colormap: string) => {
         this.colorMap = colormap;
-        this.colorPixel = getColorsForValues(colormap);
+        this.colorPixel = GetColorsForValues(colormap);
     };
 
     @action setPointTransparency = (val: number) => {
@@ -352,8 +354,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
-    @action setShowReferenceAxes = (isVal: boolean) => {
-        this.shouldShowReferenceAxes = isVal;
+    @action setShowReferenceAxes = (isBool: boolean) => {
+        this.shouldShowReferenceAxes = isBool;
     };
 
     @computed get isLinePlotsAutoScaledX() {
@@ -381,11 +383,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (lineColor.isValid() || IsAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         const secondaryLineColor = tinycolor(widgetSettings.secondaryLineColor);
-        if (secondaryLineColor.isValid() || isAutoColor(widgetSettings.secondaryLineColor)) {
+        if (secondaryLineColor.isValid() || IsAutoColor(widgetSettings.secondaryLineColor)) {
             this.secondaryLineColor = widgetSettings.secondaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {

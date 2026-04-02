@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {APP_TOASTER, successToast} from "components/Shared";
+import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutDialogMode} from "enums";
 import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
@@ -180,7 +180,7 @@ export class LayoutStore {
 
     private handleSaveResult = (isSuccess: boolean) => {
         if (isSuccess) {
-            APP_TOASTER.show(successToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -236,7 +236,7 @@ export class LayoutStore {
 
     private handleRenameResult = (oldName: string, newName: string, isSuccess: boolean) => {
         if (isSuccess) {
-            APP_TOASTER.show(successToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
             }
@@ -272,7 +272,7 @@ export class LayoutStore {
 
     private handleDeleteResult = (layoutName: string, isSuccess: boolean) => {
         if (isSuccess) {
-            APP_TOASTER.show(successToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }

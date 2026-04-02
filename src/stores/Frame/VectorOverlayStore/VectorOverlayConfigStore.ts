@@ -145,15 +145,15 @@ export class VectorOverlayConfigStore {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
         this.pixelAveraging = config.pixelAveraging;
-        this.isFractionalIntensity = config.fractionalIntensity;
-        this.isThresholdEnabled = config.thresholdEnabled;
+        this.isFractionalIntensity = config.isFractionalIntensity;
+        this.isThresholdEnabled = config.isThresholdEnabled;
         this.threshold = config.threshold;
-        this.isDebiasing = config.debiasing;
+        this.isDebiasing = config.isDebiasing;
         this.qError = config.qError;
         this.uError = config.uError;
         this.thresholdOption = config.thresholdOption;
 
-        this.isVisible = config.visible;
+        this.isVisible = config.isVisible;
         this.thickness = config.thickness;
         this.colormapBias = config.colormapBias;
         this.colormapContrast = config.colormapContrast;
@@ -163,7 +163,7 @@ export class VectorOverlayConfigStore {
         this.intensityMax = config.intensityMax;
         this.rotationOffset = config.rotationOffset;
 
-        this.isColormapEnabled = config.colormapEnabled;
+        this.isColormapEnabled = config.isColormapEnabled;
         if (config.color) {
             this.color = config.color;
         }

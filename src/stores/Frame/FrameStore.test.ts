@@ -6,7 +6,7 @@ const stokesCubeframeInfo: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
-    fileInfo: {hduList: ["0"], name: "", size: 17280, type: 3} as any,
+    fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 3} as any,
     fileInfoExtended: {
         dimensions: 4,
         height: 2,

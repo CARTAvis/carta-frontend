@@ -9,7 +9,7 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
+import {Clamp, GenColorFromIndex, GetColorForTheme, IsAutoColor, PixelToFluxDensityUnit} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -51,8 +51,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // style settings
     @observable plotType: PlotType = PlotType.STEPS;
     @observable isMeanRmsVisible: boolean = false;
-    @observable primaryLineColor: string = genColorFromIndex(0); // default auto-blue color in Hex code
-    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, genColorFromIndex(0)]]);
+    @observable primaryLineColor: string = GenColorFromIndex(0); // default auto-blue color in Hex code
+    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, GenColorFromIndex(0)]]);
     @observable lineWidth: number = 1;
     @observable linePlotPointSize: number = 1.5;
     @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
@@ -312,12 +312,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (isVal: boolean) => {
-        this.isMarkerTextVisible = isVal;
+    @action setMarkerTextVisible = (isBool: boolean) => {
+        this.isMarkerTextVisible = isBool;
     };
 
-    @action setMeanRmsVisible = (isVal: boolean) => {
-        this.isMeanRmsVisible = isVal;
+    @action setMeanRmsVisible = (isBool: boolean) => {
+        this.isMeanRmsVisible = isBool;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -332,26 +332,26 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
-        this.isMouseMoveIntoLinePlots = isVal;
+    @action setMouseMoveIntoLinePlots = (isBool: boolean) => {
+        this.isMouseMoveIntoLinePlots = isBool;
     };
 
-    @action updateStreamingDataStatus = (isVal: boolean) => {
-        this.isStreamingData = isVal;
+    @action updateStreamingDataStatus = (isBool: boolean) => {
+        this.isStreamingData = isBool;
     };
 
     @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
         this.settingsTabId = tabId;
     };
 
-    @action setSecondaryAxisCursorInfoVisible = (isVal: boolean) => {
-        this.isSecondaryAxisCursorInfoVisible = isVal;
+    @action setSecondaryAxisCursorInfoVisible = (isBool: boolean) => {
+        this.isSecondaryAxisCursorInfoVisible = isBool;
     };
 
     /**
      * Keep previous moment maps.
      *
-     * @param bool - A boolean. Set true to shouldKeep previous moment maps.
+     * @param isBool - A boolean. Set true to shouldKeep previous moment maps.
      */
     @action setKeep = (isBool: boolean) => {
         this.shouldKeep = isBool;
@@ -484,7 +484,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (profile?.data) {
                 numProfiles++;
                 const profileColor = profileColorMap.get(profile.colorKey ?? "");
-                colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
+                colors.push(profileColor === undefined ? undefined : GetColorForTheme(profileColor));
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
@@ -702,7 +702,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
                 } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && unitString) {
-                    return pixelToFluxDensityUnit(unitString);
+                    return PixelToFluxDensityUnit(unitString);
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${unitString})^2`;
                 } else {
@@ -893,7 +893,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (lineColor.isValid() || IsAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
             this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
         }
@@ -946,8 +946,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
             if (!this.isAutoScaledX) {
-                const localXMin = clamp(this.minX ?? NaN, xMin, xMax);
-                const localXMax = clamp(this.maxX ?? NaN, xMin, xMax);
+                const localXMin = Clamp(this.minX ?? NaN, xMin, xMax);
+                const localXMax = Clamp(this.maxX ?? NaN, xMin, xMax);
                 xMin = localXMin;
                 xMax = localXMax;
             }

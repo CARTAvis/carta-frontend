@@ -2,13 +2,13 @@ import type {OptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
-import {APP_TOASTER, errorToast} from "components/Shared";
+import {AppToaster, ErrorToast} from "components/Shared";
 import {BrowserMode, DialogId, FileFilterMode, FileInfoType, FrequencyUnit, ImageType, PreferenceKeys, RegionId, SelectionMode} from "enums";
-import {fileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, toFileListFilterMode} from "models";
+import {FileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
-import {getDataTypeString, getHeaderNumericValue, type ProcessedColumnData} from "utilities";
+import {GetDataTypeString, GetHeaderNumericValue, type ProcessedColumnData} from "utilities";
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
@@ -46,7 +46,8 @@ export class FileBrowserStore {
     @observable fileList: CARTA.IFileListResponse | null = null;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined = undefined;
     @observable selectedHDU: string | null = null;
-    @observable hduFileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
     @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable isLoadingList: boolean = false;
@@ -115,8 +116,7 @@ export class FileBrowserStore {
         this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
     };
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action showFileBrowser = (mode: BrowserMode, append = false) => {
+    @action showFileBrowser = (mode: BrowserMode, isAppend = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
                 if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
@@ -124,9 +124,9 @@ export class FileBrowserStore {
                 }
                 break;
             case BrowserMode.File:
-                if (!append && AppStore.Instance.isOpenFileDisabled) {
+                if (!isAppend && AppStore.Instance.isOpenFileDisabled) {
                     return;
-                } else if (append && AppStore.Instance.isAppendFileDisabled) {
+                } else if (isAppend && AppStore.Instance.isAppendFileDisabled) {
                     return;
                 }
                 break;
@@ -136,7 +136,7 @@ export class FileBrowserStore {
                     return;
                 }
         }
-        this.isAppendingFrame = append;
+        this.isAppendingFrame = isAppend;
         this.browserMode = mode;
         DialogStore.Instance.showDialog(DialogId.FileBrowser);
         this.fileList = null;
@@ -180,8 +180,8 @@ export class FileBrowserStore {
         }
     }
 
-    @action private setExtendedLoading = (isVal: boolean) => {
-        this.isExtendedLoading = isVal;
+    @action private setExtendedLoading = (isBool: boolean) => {
+        this.isExtendedLoading = isBool;
     };
 
     @flow.bound
@@ -193,10 +193,10 @@ export class FileBrowserStore {
 
         this.selectedFile = null;
         this.selectedHDU = null;
-        this.hduFileInfoExtended = null;
+        this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
-        const filterMode = toFileListFilterMode(appStore.preferenceStore.fileFilterMode);
+        const filterMode = ToFileListFilterMode(appStore.preferenceStore.fileFilterMode);
         AppStore.Instance.restartTaskProgress();
 
         try {
@@ -234,7 +234,7 @@ export class FileBrowserStore {
             }
         } catch (err) {
             console.error(err);
-            APP_TOASTER.show(errorToast(`Error loading file list for directory ${directory}`));
+            AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
         }
         this.isLoadingList = false;
         this.resetLoadingStates();
@@ -270,16 +270,17 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
         this.isLoadingInfo = true;
         this.isFileInfoResp = false;
-        this.hduFileInfoExtended = null;
+        this.HDUfileInfoExtended = null;
         this.responseErrorMessage = "";
 
         try {
             const res = yield backendService.getFileInfo(directory, file, hdu);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.hduFileInfoExtended = res.fileInfoExtended;
-                const hduListLocal = Object.keys(this.hduFileInfoExtended ?? {});
-                if (hduListLocal?.length >= 1) {
-                    this.selectedHDU = hduListLocal[0];
+                this.HDUfileInfoExtended = res.fileInfoExtended;
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                const HDUListLocal = Object.keys(this.HDUfileInfoExtended ?? {});
+                if (HDUListLocal?.length >= 1) {
+                    this.selectedHDU = HDUListLocal[0];
                 }
                 this.updateFileInfoInFileList(res.fileInfo);
                 this.isLoadingInfo = false;
@@ -289,7 +290,7 @@ export class FileBrowserStore {
             console.error(err);
             this.responseErrorMessage = err;
             this.isFileInfoResp = false;
-            this.hduFileInfoExtended = null;
+            this.HDUfileInfoExtended = null;
             this.isLoadingInfo = false;
         }
     }
@@ -433,7 +434,7 @@ export class FileBrowserStore {
             const crpixHeader = headers.find(entry => entry.name?.indexOf(`CRPIX${index}`) !== -1);
             const crvalHeader = headers.find(entry => entry.name?.indexOf(`CRVAL${index}`) !== -1);
             const cdeltHeader = headers.find(entry => entry.name?.indexOf(`CDELT${index}`) !== -1);
-            const polarizationIndex = getHeaderNumericValue(crvalHeader) + (1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+            const polarizationIndex = GetHeaderNumericValue(crvalHeader) + (1 - GetHeaderNumericValue(crpixHeader)) * GetHeaderNumericValue(cdeltHeader);
             if (polarizationIndex) {
                 const polarizationString = STANDARD_POLARIZATIONS.get(polarizationIndex);
                 if (polarizationString) {
@@ -504,7 +505,7 @@ export class FileBrowserStore {
     }
 
     @action selectHDU = (hdu: string) => {
-        if (hdu in (this.hduFileInfoExtended ?? {})) {
+        if (hdu in (this.HDUfileInfoExtended ?? {})) {
             this.selectedHDU = hdu;
         }
     };
@@ -670,7 +671,7 @@ export class FileBrowserStore {
 
             const hduListLocal = Object.keys(res.fileInfoExtended ?? {});
             const fileInfo = hduListLocal?.length >= 1 ? res.fileInfoExtended[hduListLocal[0]] : res.fileInfoExtended;
-            const ctypeInfo = fileCtypeInfo(fileInfo.headerEntries);
+            const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
 
             filesCtype.push(ctypeInfo.ctype);
             filesCtypeRank.push(ctypeInfo.rank);
@@ -748,13 +749,14 @@ export class FileBrowserStore {
         return Freq.ConvertUnitToHz(this.saveRestFreq);
     }
 
-    @computed get hduList(): OptionProps[] | null {
-        return this.hduFileInfoExtended
-            ? Object.keys(this.hduFileInfoExtended)?.map(hdu => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    @computed get HDUList(): OptionProps[] | null {
+        return this.HDUfileInfoExtended
+            ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
                   // hdu extension name is in field 3 of fileInfoExtended computed entries
                   const extName =
-                      (this.hduFileInfoExtended?.[hdu]?.computedEntries?.length ?? NaN) >= 3 && this.hduFileInfoExtended?.[hdu].computedEntries?.[2]?.name === "Extension name"
-                          ? `: ${this.hduFileInfoExtended[hdu].computedEntries?.[2]?.value}`
+                      (this.HDUfileInfoExtended?.[hdu]?.computedEntries?.length ?? NaN) >= 3 && this.HDUfileInfoExtended?.[hdu].computedEntries?.[2]?.name === "Extension name"
+                          ? `: ${this.HDUfileInfoExtended[hdu].computedEntries?.[2]?.value}`
                           : "";
                   return {
                       label: `${hdu}${extName}`,
@@ -765,7 +767,7 @@ export class FileBrowserStore {
     }
 
     @computed get fileInfoExtended(): CARTA.IFileInfoExtended | null {
-        return this.hduFileInfoExtended && this.selectedHDU !== null && this.selectedHDU in this.hduFileInfoExtended ? this.hduFileInfoExtended[this.selectedHDU] : null;
+        return this.HDUfileInfoExtended && this.selectedHDU !== null && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
     }
 
     @computed get isComplexImage() {
@@ -838,7 +840,7 @@ export class FileBrowserStore {
             const catalogHeader = this.catalogHeaders[index];
             nameData.push(catalogHeader.name);
             unitData.push(catalogHeader.units);
-            typeData.push(getDataTypeString(catalogHeader.dataType));
+            typeData.push(GetDataTypeString(catalogHeader.dataType));
             descriptionData.push(catalogHeader.description);
         }
 

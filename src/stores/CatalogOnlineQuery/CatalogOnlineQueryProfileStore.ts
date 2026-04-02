@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogType} from "enums";
 import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
 import {type ControlHeader, PreferenceStore} from "stores";
-import {getInitIndexMap, getSortedIndexMap, type ProcessedColumnData} from "utilities";
+import {GetInitIndexMap, GetSortedIndexMap, type ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -78,15 +78,15 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     @action updateSortedIndexMap() {
-        this.sortedIndexMap = getSortedIndexMap(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
+        this.sortedIndexMap = GetSortedIndexMap(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
+        this.sortedIndexMap = GetInitIndexMap(this.numVisibleRows);
     }
 
     @action initFilterIndexMap() {
-        this.filterIndexMap = getInitIndexMap(this.catalogInfo.dataSize);
+        this.filterIndexMap = GetInitIndexMap(this.catalogInfo.dataSize);
     }
 
     @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {

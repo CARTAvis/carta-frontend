@@ -9,8 +9,8 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, PvGeneratorComponent} from "components";
-import {APP_TOASTER, errorToast, successToast, warningToast} from "components/Shared";
+import {GetImageViewCanvas, PvGeneratorComponent} from "components";
+import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {AnimationMode, BrowserMode, CatalogType, CatalogUpdateMode, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType} from "enums";
 import {
     CARTA_INFO,
@@ -26,7 +26,7 @@ import {
     type RegionId,
     Theme,
     type TileCoordinate,
-    toFileListFilterMode,
+    ToFileListFilterMode,
     type Workspace,
     type WorkspaceFile
 } from "models";
@@ -57,7 +57,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, getRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {Distinct, ExportScreenshot, GetColorForTheme, GetRequiredTiles, GetTimestamp, MapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -510,7 +510,7 @@ export class AppStore {
         return frameMap;
     }
 
-    // Calculates which frames have a vector overlay isVisible as a function of each isVisible frame
+    // Calculates which frames have a vector overlay visible as a function of each visible frame
     @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
         for (const frame of this.imageViewConfigStore.visibleFrames) {
@@ -532,15 +532,14 @@ export class AppStore {
      *
      * @param ack - The ack message received after opening a file.
      * @param directory - The path to the parent directory of the file.
-     * @param lelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
+     * @param isLelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
-     * @param generated - Whether the frame is a generated in-memory image. Used for the telemetry message.
+     * @param isGenerated - Whether the frame is a generated in-memory image. Used for the telemetry message.
      * @param isSetAsActive - Whether the frame should be set as the active frame.
      * @param isUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns Whether the frame was successfully added.
      */
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, isSetAsActive: boolean = true, isUpdateStartingDirectory: boolean = true): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, isLelExpr: boolean, hdu: string, isGenerated: boolean = false, isSetAsActive: boolean = true, isUpdateStartingDirectory: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -556,14 +555,14 @@ export class AppStore {
         const frameInfo: FrameInfo = {
             fileId: ack.fileId ?? -1,
             directory,
-            lelExpr,
+            lelExpr: isLelExpr,
             hdu,
             fileInfo: new CARTA.FileInfo(ack.fileInfo ?? {}),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended ?? {}),
             fileFeatureFlags: ack.fileFeatureFlags ?? 0,
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable ?? [],
-            generated
+            generated: isGenerated
         };
         this.telemetryService.addFileOpenEntry(
             ack.fileId ?? -1,
@@ -572,7 +571,7 @@ export class AppStore {
             ack.fileInfoExtended?.height ?? 0,
             ack.fileInfoExtended?.depth ?? 0,
             ack.fileInfoExtended?.stokes ?? 0,
-            generated
+            isGenerated
         );
 
         const newFrame = new FrameStore(frameInfo);
@@ -705,7 +704,7 @@ export class AppStore {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, isImageArithmetic);
             this.fileCounter++;
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, isSetAsActive, isUpdateStartingDirectory)) {
-                APP_TOASTER.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -734,10 +733,10 @@ export class AppStore {
             this.fileCounter++;
             const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
-                APP_TOASTER.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
-                APP_TOASTER.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -758,7 +757,7 @@ export class AppStore {
             const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, directory, false, hdu)) {
-                APP_TOASTER.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -838,7 +837,7 @@ export class AppStore {
         const fileId = this.activeFrame.frameInfo.fileId;
         try {
             const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq, isOverwrite);
-            APP_TOASTER.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
             this.endFileSaving();
             return ack.fileId;
@@ -1121,11 +1120,11 @@ export class AppStore {
     @flow.bound
     *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
         if (!this.activeFrame) {
-            APP_TOASTER.show(errorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
         if (!(type === CARTA.CatalogFileType.VOTable)) {
-            APP_TOASTER.show(errorToast("Catalog type not supported"));
+            AppToaster.show(ErrorToast("Catalog type not supported"));
             throw new Error("Catalog type not supported");
         }
         this.startFileLoading();
@@ -1244,7 +1243,7 @@ export class AppStore {
     @flow.bound
     *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType, targetFrame?: FrameStore) {
         if (!(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
-            APP_TOASTER.show(errorToast("Region type not supported"));
+            AppToaster.show(ErrorToast("Region type not supported"));
             return;
         }
 
@@ -1256,7 +1255,7 @@ export class AppStore {
         }
 
         if (!frame) {
-            APP_TOASTER.show(errorToast("No image file"));
+            AppToaster.show(ErrorToast("No image file"));
             return;
         }
 
@@ -1280,7 +1279,7 @@ export class AppStore {
             console.error(err);
             this.fileBrowserStore.setImportingRegions(false);
             this.fileBrowserStore.resetLoadingStates();
-            APP_TOASTER.show(errorToast(err));
+            AppToaster.show(ErrorToast(err));
         }
     }
 
@@ -1360,7 +1359,7 @@ export class AppStore {
 
         try {
             yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, isOverwrite);
-            APP_TOASTER.show(successToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
+            AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
             throw err;
@@ -1376,7 +1375,7 @@ export class AppStore {
                 this.deleteRegion(x);
             }
         });
-        APP_TOASTER.show(successToast("console", `Regions deleted successfully.`, 3000));
+        AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
     };
 
     /**
@@ -1450,7 +1449,7 @@ export class AppStore {
                             newMomentImage.setSpatialReference(this.spatialReference);
                         }
                     } else {
-                        APP_TOASTER.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
                 }
             }
@@ -1497,7 +1496,7 @@ export class AppStore {
                         frame.addPvImage(newPVImage);
                     }
                 } else {
-                    APP_TOASTER.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
             }
             frame.resetPvRequestState();
@@ -1508,7 +1507,7 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
-            APP_TOASTER.show(errorToast(err));
+            AppToaster.show(ErrorToast(err));
         }
     }
 
@@ -1532,12 +1531,12 @@ export class AppStore {
                         const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
                         pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
                         pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
-                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WidgetConfig.type);
-                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
+                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
                     }
                 }
             } else {
-                APP_TOASTER.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
             }
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
@@ -1547,7 +1546,7 @@ export class AppStore {
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
-            APP_TOASTER.show(errorToast(err));
+            AppToaster.show(ErrorToast(err));
         }
     }
 
@@ -1606,7 +1605,7 @@ export class AppStore {
                             }
                         }
                     } else {
-                        APP_TOASTER.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
+                        AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
                     }
                 }
                 if (ack.residualImage) {
@@ -1620,18 +1619,18 @@ export class AppStore {
                             }
                         }
                     } else {
-                        APP_TOASTER.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
+                        AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
                     }
                 }
             }
             if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length) {
-                APP_TOASTER.show(warningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
+                AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
             }
             if (ack.message) {
-                APP_TOASTER.show(warningToast(`Image fitting: ${ack.message}.`));
+                AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
         } catch (err) {
-            APP_TOASTER.show(errorToast(`Image fitting failed: ${err}.`));
+            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
         this.setActiveImageByFileId(message.fileId ?? -1);
@@ -1641,8 +1640,8 @@ export class AppStore {
         this.imageFittingStore.resetFittingState();
     }
 
-    @action setAstReady = (isVal: boolean) => {
-        this.isAstReady = isVal;
+    @action setAstReady = (isReady: boolean) => {
+        this.isAstReady = isReady;
     };
 
     @action setDarkTheme = () => {
@@ -1667,14 +1666,14 @@ export class AppStore {
     private updateASTColors() {
         if (this.isAstReady) {
             const astColors = [
-                getColorForTheme(this.overlaySettings.global.color),
-                getColorForTheme(this.overlaySettings.title.color),
-                getColorForTheme(this.overlaySettings.grid.color),
-                getColorForTheme(this.overlaySettings.border.color),
-                getColorForTheme(this.overlaySettings.ticks.color),
-                getColorForTheme(this.overlaySettings.axes.color),
-                getColorForTheme(this.overlaySettings.numbers.color),
-                getColorForTheme(this.overlaySettings.labels.color)
+                GetColorForTheme(this.overlaySettings.global.color),
+                GetColorForTheme(this.overlaySettings.title.color),
+                GetColorForTheme(this.overlaySettings.grid.color),
+                GetColorForTheme(this.overlaySettings.border.color),
+                GetColorForTheme(this.overlaySettings.ticks.color),
+                GetColorForTheme(this.overlaySettings.axes.color),
+                GetColorForTheme(this.overlaySettings.numbers.color),
+                GetColorForTheme(this.overlaySettings.labels.color)
             ];
             AST.setColors(astColors);
         }
@@ -1705,7 +1704,7 @@ export class AppStore {
     };
 
     @action toggleActiveLayer = () => {
-        this.activeLayer = this.activeLayer === ImageViewLayer.regionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.regionCreating;
+        this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
     };
 
     @action setImageRatio = (val: number) => {
@@ -1717,12 +1716,12 @@ export class AppStore {
         this.imageRatio = val;
     };
 
-    @action setIsExportingImage = (isVal: boolean) => {
-        this.isExportingImage = isVal;
+    @action setIsExportingImage = (isBool: boolean) => {
+        this.isExportingImage = isBool;
     };
 
-    @action setIsCanvasUpdated = (isVal: boolean) => {
-        this.isCanvasUpdated = isVal;
+    @action setIsCanvasUpdated = (isBool: boolean) => {
+        this.isCanvasUpdated = isBool;
     };
 
     public static readonly DEFAULT_STATS_TYPES = [
@@ -1959,16 +1958,16 @@ export class AppStore {
             const userString = this.username ? ` as ${this.username}` : "";
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
-                    APP_TOASTER.clear();
+                    AppToaster.clear();
                     if (this.backendService.isConnectionDropped) {
-                        APP_TOASTER.show(warningToast(`Reconnected to server${userString}. Some errors may occur`));
+                        AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
-                        APP_TOASTER.show(successToast("swap-vertical", `Connected to CARTA server${userString}`));
+                        AppToaster.show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
                     }
                     break;
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
-                        APP_TOASTER.show(errorToast("Disconnected from server"));
+                        AppToaster.show(ErrorToast("Disconnected from server"));
                         this.alertStore
                             .showRetryAlert(
                                 "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images, PV images, or fitting model/residual images generated via the GUI will be unloaded.",
@@ -1992,11 +1991,11 @@ export class AppStore {
         // Low-bandwidth mode
         const throttledSetCursorLowBandwidth = _.throttle(this.setCursor, AppStore.CursorThrottleTime * 2);
 
-        // Update frame view for each isVisible frame
+        // Update frame view for each visible frame
         autorun(() => {
-            // Ignore view changes when isZooming if preference not set
+            // Ignore view changes when zooming if preference not set
             if (this.activeFrame && (!this.activeFrame.isZooming || this.preferenceStore.shouldStreamContoursWhileZooming)) {
-                // Group all view updates for isVisible images into one throttled call
+                // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
                     const reqView = frame.requiredFrameView;
@@ -2009,7 +2008,7 @@ export class AppStore {
                     };
 
                     const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                    const tiles = getRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                    const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
                     const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
@@ -2408,7 +2407,7 @@ export class AppStore {
         if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
             return;
         }
-        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WidgetConfig.id + "-" + pvPreviewData.previewId)?.previewFrame;
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
 
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
@@ -2549,7 +2548,7 @@ export class AppStore {
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions: mapToObject(regions),
+                regions: MapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
                 supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport,
@@ -2646,7 +2645,7 @@ export class AppStore {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.isLoadingWorkspace = false;
-                APP_TOASTER.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
 
@@ -2733,7 +2732,7 @@ export class AppStore {
                         frame.zoomLevel = fileInfo.zoomLevel;
                     }
 
-                    // Apply regions if spatial matching isn't isEnabled
+                    // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
                         const preferenceStore = AppStore.Instance.preferenceStore;
                         for (const regionInfo of fileInfo.regionsSet.regions) {
@@ -2750,7 +2749,7 @@ export class AppStore {
                                 regionInfo.annotationStyles
                             );
                             if (region) {
-                                region.setLocked(regionInfo.locked ?? false);
+                                region.setLocked(regionInfo.isLocked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
                                     frame.regionSet.selectRegion(region);
@@ -2797,7 +2796,7 @@ export class AppStore {
             return true;
         } catch (err) {
             console.error(err);
-            APP_TOASTER.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+            AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
             this.isLoadingWorkspace = false;
             return false;
         }
@@ -2815,7 +2814,7 @@ export class AppStore {
         workspace.colorBlendingImages = [];
         workspace.references = {};
 
-        const thumbnail = yield exportScreenshot();
+        const thumbnail = yield ExportScreenshot();
         if (thumbnail) {
             workspace.thumbnail = thumbnail;
         }
@@ -2866,7 +2865,7 @@ export class AppStore {
                         name: region.name,
                         color: region.color,
                         lineWidth: region.lineWidth,
-                        locked: region.isLocked,
+                        isLocked: region.isLocked,
                         dashes: region.dashLength ? [region.dashLength] : [],
                         // Check if styles are available. If so, add them to the region
                         annotationStyles: (region as any).getAnnotationStyles?.()
@@ -2895,19 +2894,19 @@ export class AppStore {
                 contrast,
                 gamma,
                 alpha,
-                inverted: isInverted,
-                useCubeHistogram: shouldUseCubeHistogram,
-                useCubeHistogramContours: shouldUseCubeHistogramContours,
+                isInverted: isInverted,
+                isUseCubeHistogram: shouldUseCubeHistogram,
+                isUseCubeHistogramContours: shouldUseCubeHistogramContours,
                 selectedPercentile,
                 scaleMin,
                 scaleMax,
-                visible: isVisible
+                isVisible: isVisible
             };
 
             // Contours and vector overlays
             const {isEnabled: contoursEnabled, isColormapEnabled: contourColormapEnabled, isVisible: contourVisible, ...contourConfigRest} = frame.contourConfig as any;
             if (contoursEnabled) {
-                workspaceFile.contourConfig = {...contourConfigRest, colormapEnabled: contourColormapEnabled, visible: contourVisible};
+                workspaceFile.contourConfig = {...contourConfigRest, isColormapEnabled: contourColormapEnabled, isVisible: contourVisible};
                 delete (workspaceFile.contourConfig as any)["preferenceStore"];
             }
             const {
@@ -2920,7 +2919,7 @@ export class AppStore {
                 ...vectorOverlayConfigRest
             } = frame.vectorOverlayConfig as any;
             if (vectorOverlayEnabled) {
-                workspaceFile.vectorOverlayConfig = {...vectorOverlayConfigRest, fractionalIntensity: voFractional, thresholdEnabled: voThreshold, debiasing: voDebiasing, visible: voVisible, colormapEnabled: voColormapEnabled};
+                workspaceFile.vectorOverlayConfig = {...vectorOverlayConfigRest, isFractionalIntensity: voFractional, isThresholdEnabled: voThreshold, isDebiasing: voDebiasing, isVisible: voVisible, isColormapEnabled: voColormapEnabled};
                 delete (workspaceFile.vectorOverlayConfig as any)["preferenceStore"];
             }
 
@@ -2933,7 +2932,7 @@ export class AppStore {
         }
 
         if (hasTemporaryFiles) {
-            APP_TOASTER.show(warningToast("The workspace contains generated files. These will not be preserved when reloading."));
+            AppToaster.show(WarningToast("The workspace contains generated files. These will not be preserved when reloading."));
         }
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
@@ -2950,7 +2949,7 @@ export class AppStore {
         try {
             const success = await this.apiService.clearWorkspace(name);
             if (success) {
-                APP_TOASTER.show(successToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
+                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 return;
             }
         } catch (err) {
@@ -3202,14 +3201,14 @@ export class AppStore {
      * @param frame - The frame for which to set spatial matching.
      * @param val - Whether to enable or disable spatial matching.
      */
-    @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, isVal: boolean) {
+    @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, isBool: boolean) {
         if (!frame || frame === this.spatialReference) {
             return;
         }
 
-        if (isVal && this.spatialReference) {
+        if (isBool && this.spatialReference) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                APP_TOASTER.show(warningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
+                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
             const confirmed = yield this.confirmColorBlendingRemoval(frame);
@@ -3279,14 +3278,14 @@ export class AppStore {
         }
     };
 
-    @action setSpectralMatchingEnabled = (frame: FrameStore, isVal: boolean) => {
+    @action setSpectralMatchingEnabled = (frame: FrameStore, isBool: boolean) => {
         if (!frame || frame === this.spectralReference) {
             return;
         }
 
-        if (isVal && this.spectralReference) {
+        if (isBool && this.spectralReference) {
             if (!frame.setSpectralReference(this.spectralReference)) {
-                APP_TOASTER.show(warningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
+                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpectralReference();
@@ -3340,12 +3339,12 @@ export class AppStore {
         }
     };
 
-    @action setRasterScalingMatchingEnabled = (frame: FrameStore, isVal: boolean) => {
+    @action setRasterScalingMatchingEnabled = (frame: FrameStore, isBool: boolean) => {
         if (!frame || frame === this.rasterScalingReference) {
             return;
         }
 
-        if (isVal && this.rasterScalingReference) {
+        if (isBool && this.rasterScalingReference) {
             frame.setRasterScalingReference(this.rasterScalingReference);
         } else {
             frame.clearRasterScalingReference();
@@ -3383,14 +3382,14 @@ export class AppStore {
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.isTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
                 if (this.activeFrame) {
-                    const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+                    const composedCanvas = GetImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                     if (composedCanvas) {
                         composedCanvas.toBlob(blob => {
                             if (blob) {
                                 const link = document.createElement("a") as HTMLAnchorElement;
                                 const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
                                 // Trim filename before timestamp to 200 characters to prevent browser errors
-                                link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
+                                link.download = `${joinedNames}-image`.substring(0, 200) + `-${GetTimestamp()}.png`;
                                 link.href = URL.createObjectURL(blob);
                                 link.dispatchEvent(new MouseEvent("click"));
                             }
@@ -3417,14 +3416,14 @@ export class AppStore {
 
     decreaseImageRatio = () => {
         if (this.imageRatio !== 1 && this.isExportingImage === true) {
-            APP_TOASTER.show(warningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
+            AppToaster.show(WarningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
             this.setImageRatio(this.imageRatio - 1);
         }
     };
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+            const composedCanvas = GetImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }
@@ -3487,7 +3486,7 @@ export class AppStore {
     };
 
     getFileList = async (directory: string) => {
-        return await this.backendService.getFileList(directory, toFileListFilterMode(this.preferenceStore.fileFilterMode));
+        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
     };
 
     // region requirements calculations

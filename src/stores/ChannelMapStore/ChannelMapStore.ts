@@ -71,7 +71,7 @@ export class ChannelMapStore {
     @observable numColumns: number = 2;
     /** The number of rows in the image view. */
     @observable numRows: number = 2;
-    /** Indicates whether the channel map mode is isEnabled. */
+    /** Indicates whether the channel map mode is enabled. */
     @observable isChannelMapEnabled: boolean = false;
     /** Indicates whether to show the channel string. */
     @observable shouldShowChannelString: boolean = false;
@@ -245,7 +245,7 @@ export class ChannelMapStore {
 
     /**
      * Sets whether to use a custom color for rendering the channel map label.
-     * @param hasCustomColor - True to use a custom color, false to use the default color.
+     * @param customColor - True to use a custom color, false to use the default color.
      */
     @action setCustomColor = (hasCustomColor: boolean) => {
         this.hasCustomColor = hasCustomColor;

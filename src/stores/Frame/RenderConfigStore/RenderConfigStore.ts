@@ -5,7 +5,7 @@ import type {WorkspaceRenderConfig} from "models";
 import {FrameScaling} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
+import {Clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, GetColorsForValues, GetColorsFromHex, GetPercentiles, ScaleValueInverse} from "utilities";
 
 export class RenderConfigStore {
     static readonly SCALING_TYPES = new Map<FrameScaling, string>([
@@ -103,7 +103,7 @@ export class RenderConfigStore {
     }
 
     @computed get customColorGradient() {
-        return getColorsFromHex(this.customColormapHexEnd, this.customColormapHexStart);
+        return GetColorsFromHex(this.customColormapHexEnd, this.customColormapHexStart);
     }
 
     @computed get colorscaleArray() {
@@ -113,16 +113,16 @@ export class RenderConfigStore {
         } else if (this.colorMapIndex >= 79 && this.colorMapIndex < COLOR_MAPS_ALL.length) {
             const monoColorHex = this.monoColormapHex;
             if (monoColorHex) {
-                colorsForValues = getColorsFromHex(monoColorHex);
+                colorsForValues = GetColorsFromHex(monoColorHex);
             }
         } else if (this.colorMapIndex >= 0) {
-            colorsForValues = getColorsForValues(this.colorMap);
+            colorsForValues = GetColorsForValues(this.colorMap);
         }
         if (!colorsForValues) {
             return [];
         }
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.isInverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
-        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.shouldUseSmoothedBiasContrast));
+        const scaledArray = indexArray.map(x => 1.0 - ScaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.shouldUseSmoothedBiasContrast));
         const rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
         // Fix: Explicitly type colorscale as (number | string)[]
@@ -211,11 +211,11 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the histogram.
      *
-     * @param val - True for using the cube data.
+     * @param isBool - True for using the cube data.
      */
-    @action setUseCubeHistogram = (isVal: boolean) => {
-        if (isVal !== this.shouldUseCubeHistogram) {
-            this.shouldUseCubeHistogram = isVal;
+    @action setUseCubeHistogram = (isBool: boolean) => {
+        if (isBool !== this.shouldUseCubeHistogram) {
+            this.shouldUseCubeHistogram = isBool;
             if (this.selectedPercentile[this.stokesIndex] > 0) {
                 this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
             }
@@ -225,10 +225,10 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the contour.
      *
-     * @param val - True for using the cube data.
+     * @param isBool - True for using the cube data.
      */
-    @action setUseCubeHistogramContours = (isVal: boolean) => {
-        this.shouldUseCubeHistogramContours = isVal;
+    @action setUseCubeHistogramContours = (isBool: boolean) => {
+        this.shouldUseCubeHistogramContours = isBool;
     };
 
     @computed get histogramMin() {
@@ -270,7 +270,7 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
-        const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
+        const percentiles = GetPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
             this.scaleMin[this.stokesIndex] = percentiles[0];
             this.scaleMax[this.stokesIndex] = percentiles[1];
@@ -316,7 +316,7 @@ export class RenderConfigStore {
      * @param index - The colormap index between -1 and array {@link COLOR_MAPS_ALL} size. The index -1 is the custom color.
      */
     @action setColorMapIndex = (index: number) => {
-        this.colorMapIndex = clamp(index, -1, COLOR_MAPS_ALL.length - 1);
+        this.colorMapIndex = Clamp(index, -1, COLOR_MAPS_ALL.length - 1);
         this.updateSiblings();
     };
 
@@ -498,8 +498,8 @@ export class RenderConfigStore {
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = config.gamma ?? this.gamma;
         this.alpha = config.alpha ?? this.alpha;
-        this.isInverted = config.inverted ?? this.isInverted;
-        this.isVisible = config.visible ?? this.isVisible;
+        this.isInverted = config.isInverted ?? this.isInverted;
+        this.isVisible = config.isVisible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;

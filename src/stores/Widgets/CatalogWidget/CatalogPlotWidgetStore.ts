@@ -2,7 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
 import {CatalogOverlay, type CatalogPlotType} from "enums";
-import {toExponential} from "utilities";
+import {ToExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
     xColumnName: string;
@@ -20,8 +20,8 @@ type Statistic = {mean: number; count: number; validCount: number; std: number; 
 export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D | undefined = undefined;
-    @observable scatterborder: Border | undefined = undefined;
-    @observable dragmode: DragMode = "select";
+    @observable scatterBorder: Border | undefined = undefined;
+    @observable dragMode: DragMode = "select";
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
@@ -61,7 +61,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @action setScatterborder(border: Border) {
-        this.scatterborder = border;
+        this.scatterBorder = border;
     }
 
     @action setHistogramXBorder(xborder: XBorder) {
@@ -69,7 +69,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @action setDragmode(mode: DragMode) {
-        this.dragmode = mode;
+        this.dragMode = mode;
     }
 
     @action setLogScaleY(isVal: boolean) {
@@ -98,7 +98,7 @@ export class CatalogPlotWidgetStore {
     };
 
     @computed get isScatterAutoScaled() {
-        return this.scatterborder === undefined;
+        return this.scatterBorder === undefined;
     }
 
     @computed get isHistogramAutoScaledX() {
@@ -107,15 +107,15 @@ export class CatalogPlotWidgetStore {
 
     @computed get fittingResultString(): string {
         if (this.shouldShowFittingResult && this.fitting) {
-            const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
-            const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
-            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
+            const sqrtCov00 = ToExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
+            const sqrtCov11 = ToExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
+            return `${this.yColumnName} = ${ToExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${ToExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${ToExponential(
                 this.fitting.cov00,
                 CatalogPlotWidgetStore.Decimals
-            )}, cov01 = ${toExponential(this.fitting.cov01, CatalogPlotWidgetStore.Decimals)}, cov11 = ${toExponential(
+            )}, cov01 = ${ToExponential(this.fitting.cov01, CatalogPlotWidgetStore.Decimals)}, cov11 = ${ToExponential(
                 this.fitting.cov11,
                 CatalogPlotWidgetStore.Decimals
-            )} <br>sqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11} <br>rss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
+            )} <br>sqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11} <br>rss = ${ToExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
         }
         return "";
     }
@@ -140,10 +140,10 @@ export class CatalogPlotWidgetStore {
 
     @computed get statisticString(): string {
         if (this.shouldEnableStatistic && this.shouldShowStatisticResult && this.statistic) {
-            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, CatalogPlotWidgetStore.Decimals)}, rms: ${toExponential(
+            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${ToExponential(this.statistic.mean, CatalogPlotWidgetStore.Decimals)}, rms: ${ToExponential(
                 this.statistic.rms,
                 CatalogPlotWidgetStore.Decimals
-            )}, stddev: ${toExponential(this.statistic.std, CatalogPlotWidgetStore.Decimals)}, min: ${toExponential(this.statistic.min, CatalogPlotWidgetStore.Decimals)}, max: ${toExponential(
+            )}, stddev: ${ToExponential(this.statistic.std, CatalogPlotWidgetStore.Decimals)}, min: ${ToExponential(this.statistic.min, CatalogPlotWidgetStore.Decimals)}, max: ${ToExponential(
                 this.statistic.max,
                 CatalogPlotWidgetStore.Decimals
             )}`;

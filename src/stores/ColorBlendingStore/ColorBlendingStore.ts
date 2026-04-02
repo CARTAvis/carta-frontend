@@ -2,7 +2,7 @@ import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {AppStore, type FrameStore, RenderConfigStore} from "stores";
-import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
+import {COLOR_MAPS_MONO, GetColorsForValues} from "utilities";
 
 /** The configuration of a colormap set. Can either be a single gradient colormap or a collection of multiple colormaps. */
 type ColormapSetConfig =
@@ -178,7 +178,7 @@ export class ColorBlendingStore {
         const frameNum = rasterUnmatchedFrames.length;
 
         if (colormapSetConfig.type === "gradient") {
-            const gradient = getColorsForValues(colormapSetConfig.colormap);
+            const gradient = GetColorsForValues(colormapSetConfig.colormap);
             const getHex = (index: number): string => "#" + tinycolor({r: gradient.color[index * 4], g: gradient.color[index * 4 + 1], b: gradient.color[index * 4 + 2], a: gradient.color[index * 4 + 3]}).toHex();
 
             for (let i = 0; i < frameNum; i++) {

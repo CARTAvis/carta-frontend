@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 
 jest.mock("components/Shared", () => ({
-    APP_TOASTER: {show: jest.fn()}
+    AppToaster: {show: jest.fn()}
 }));
 
 import * as colorUtils from "../../utilities/color/color";
@@ -11,7 +11,7 @@ import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
 import {ColorBlendingStore} from "./ColorBlendingStore";
 
 const mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-const getColorsForValues = jest.spyOn(colorUtils, "getColorsForValues");
+const getColorsForValues = jest.spyOn(colorUtils, "GetColorsForValues");
 
 describe("ColorBlendingStore", () => {
     let colorBlendingStore: ColorBlendingStore;

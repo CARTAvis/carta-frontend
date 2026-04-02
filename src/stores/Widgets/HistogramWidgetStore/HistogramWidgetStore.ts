@@ -4,7 +4,7 @@ import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
-import {closeTo, isAutoColor} from "utilities";
+import {CloseTo, IsAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -105,8 +105,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
-        this.isMouseMoveIntoLinePlots = isVal;
+    @action setMouseMoveIntoLinePlots = (isBool: boolean) => {
+        this.isMouseMoveIntoLinePlots = isBool;
     };
 
     @action setSettingsTabId = (tabId: HistogramSettingsTabs) => {
@@ -233,8 +233,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                         config.fixedNumBins === isFixedNumBins &&
                         config.numBins === numBins &&
                         config.fixedBounds === isFixedBounds &&
-                        closeTo(config.bounds?.min ?? NaN, minPix ?? NaN) &&
-                        closeTo(config.bounds?.max ?? NaN, maxPix ?? NaN)
+                        CloseTo(config.bounds?.min ?? NaN, minPix ?? NaN) &&
+                        CloseTo(config.bounds?.max ?? NaN, maxPix ?? NaN)
                 );
 
                 if (!histogramConfig) {
@@ -314,8 +314,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                                 updatedConfig.fixedNumBins !== config.fixedNumBins ||
                                 updatedConfig.numBins !== config.numBins ||
                                 updatedConfig.fixedBounds !== config.fixedBounds ||
-                                !closeTo(updatedConfig.bounds?.min ?? NaN, config.bounds?.min ?? NaN) ||
-                                !closeTo(updatedConfig.bounds?.max ?? NaN, config.bounds?.max ?? NaN)
+                                !CloseTo(updatedConfig.bounds?.min ?? NaN, config.bounds?.min ?? NaN) ||
+                                !CloseTo(updatedConfig.bounds?.max ?? NaN, config.bounds?.max ?? NaN)
                             ) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
@@ -384,8 +384,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setMeanRmsVisible = (isVal: boolean) => {
-        this.isMeanRmsVisible = isVal;
+    @action setMeanRmsVisible = (isBool: boolean) => {
+        this.isMeanRmsVisible = isBool;
     };
 
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
@@ -406,7 +406,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (lineColor.isValid() || IsAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {

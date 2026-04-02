@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
+import {ASTSettingsString, Clamp, GetPixelValueFromWCS, SetAstSystem, TransformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
 
@@ -246,7 +246,7 @@ export class CatalogOnlineQueryConfigStore {
             if (isNaN(isDiagonal)) {
                 return 90;
             }
-            return clamp(isDiagonal / 2, 0, 90);
+            return Clamp(isDiagonal / 2, 0, 90);
         }
         return 90;
     }
@@ -309,11 +309,11 @@ export class CatalogOnlineQueryConfigStore {
             const astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
-                setAstSystem(wcsCopy, sys, overlay.global);
+                SetAstSystem(wcsCopy, sys, overlay.global);
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
             }
-            const pointWCS = transformPoint(wcsCopy, pixelCoords);
+            const pointWCS = TransformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
             p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
             AST.deleteObject(wcsCopy);
@@ -334,7 +334,7 @@ export class CatalogOnlineQueryConfigStore {
                 AST.set(wcsCopy, `Format(${frame.dirX})=${format}`);
                 AST.set(wcsCopy, `Format(${frame.dirY})=${format}`);
             }
-            p = getPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
+            p = GetPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
             AST.deleteObject(wcsCopy);
         }
         return p;

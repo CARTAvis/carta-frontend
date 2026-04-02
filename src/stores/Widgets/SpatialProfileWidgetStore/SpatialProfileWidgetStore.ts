@@ -7,7 +7,7 @@ import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialPro
 import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {clamp, isAutoColor} from "utilities";
+import {Clamp, IsAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -82,16 +82,16 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (isVal: boolean) => {
-        this.isMarkerTextVisible = isVal;
+    @action setMarkerTextVisible = (isBool: boolean) => {
+        this.isMarkerTextVisible = isBool;
     };
 
-    @action setMeanRmsVisible = (isVal: boolean) => {
-        this.isMeanRmsVisible = isVal;
+    @action setMeanRmsVisible = (isBool: boolean) => {
+        this.isMeanRmsVisible = isBool;
     };
 
-    @action setWcsAxisVisible = (isVal: boolean) => {
-        this.isWcsAxisVisible = isVal;
+    @action setWcsAxisVisible = (isBool: boolean) => {
+        this.isWcsAxisVisible = isBool;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -102,8 +102,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
-        this.isMouseMoveIntoLinePlots = isVal;
+    @action setMouseMoveIntoLinePlots = (isBool: boolean) => {
+        this.isMouseMoveIntoLinePlots = isBool;
     };
 
     @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
@@ -178,16 +178,16 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
-                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
-                    start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
+                    mip: Clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
+                    start: Math.floor(Clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
+                    end: Math.ceil(Clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
                 };
             } else {
                 return {
                     coordinate,
-                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
-                    start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
+                    mip: Clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
+                    start: Math.floor(Clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
+                    end: Math.ceil(Clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
                 };
             }
         } else {
@@ -341,7 +341,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             this.coordinate = widgetSettings.coordinate;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (lineColor.isValid() || IsAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {

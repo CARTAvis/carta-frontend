@@ -2,7 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {isAutoColor} from "utilities";
+import {IsAutoColor} from "utilities";
 
 export class RenderConfigWidgetStore {
     @observable minX: number | undefined = undefined;
@@ -55,12 +55,12 @@ export class RenderConfigWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (isVal: boolean) => {
-        this.isMarkerTextVisible = isVal;
+    @action setMarkerTextVisible = (isBool: boolean) => {
+        this.isMarkerTextVisible = isBool;
     };
 
-    @action setMeanRmsVisible = (isVal: boolean) => {
-        this.isMeanRmsVisible = isVal;
+    @action setMeanRmsVisible = (isBool: boolean) => {
+        this.isMeanRmsVisible = isBool;
     };
 
     @action setLogScale = (isLogScale: boolean) => {
@@ -113,7 +113,7 @@ export class RenderConfigWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (lineColor.isValid() || IsAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {

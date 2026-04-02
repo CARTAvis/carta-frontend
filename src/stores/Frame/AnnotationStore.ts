@@ -7,7 +7,7 @@ import {Font, FontStyle} from "enums";
 import {type Point2D} from "models";
 import {type BackendService} from "services";
 import {type FrameStore} from "stores/Frame";
-import {getPixelSizes, transformPoint} from "utilities";
+import {GetPixelSizes, TransformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
 
@@ -319,7 +319,7 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public getCompassApproximation(wcsInfo: AST.FrameSet, isSpatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
-        const originPoint = isSpatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const originPoint = isSpatiallyMatched && spatialTransform ? TransformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
         // Early return for invalid WCS - rendering component handles this case separately
         if (!wcsInfo || !this.activeFrame.isValidWcs) {
@@ -334,7 +334,7 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
         const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
-        const pixelSizeArcsec = getPixelSizes(this.activeFrame);
+        const pixelSizeArcsec = GetPixelSizes(this.activeFrame);
         const xPixelSizeRad = ((pixelSizeArcsec.x / 3600) * Math.PI) / 180;
         const yPixelSizeRad = ((pixelSizeArcsec.y / 3600) * Math.PI) / 180;
         const angularWidth = Math.abs(xPixelSizeRad * width);
@@ -518,8 +518,8 @@ export class RulerAnnotationStore extends RegionStore {
         const yIn = new Float64Array(2);
 
         // If matched, transform image coordinate of reference image to matched image using Mapping
-        const imagePointStart = mapping ? transformPoint(mapping, this.controlPoints[0], false) : this.controlPoints[0];
-        const imagePointFinish = mapping ? transformPoint(mapping, this.controlPoints[1], false) : this.controlPoints[1];
+        const imagePointStart = mapping ? TransformPoint(mapping, this.controlPoints[0], false) : this.controlPoints[0];
+        const imagePointFinish = mapping ? TransformPoint(mapping, this.controlPoints[1], false) : this.controlPoints[1];
         xIn[0] = imagePointStart.x;
         xIn[1] = imagePointFinish.x;
         yIn[0] = imagePointStart.y;
@@ -542,7 +542,7 @@ export class RulerAnnotationStore extends RegionStore {
         const yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
         const hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
-        return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints, corner: transformPoint(wcsInfo, corner, false)};
+        return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints, corner: TransformPoint(wcsInfo, corner, false)};
     }
 
     public getAnnotationStyles = () => {
