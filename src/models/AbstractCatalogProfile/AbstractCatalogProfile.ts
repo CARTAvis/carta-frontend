@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
+import {FilterProcessedColumnData, GetComparisonOperatorAndValue, GetHasFilter, MinMaxArray, type ProcessedColumnData, TransformPoint, type TypedArray} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -84,7 +84,7 @@ export abstract class AbstractCatalogProfileStore {
         if (!this.isFileBasedCatalog && this.filterIndexMap.length !== this.catalogInfo.dataSize) {
             const filteredData = new Map<number, ProcessedColumnData>();
             this._catalogData.forEach((columnData, i) => {
-                filteredData.set(i, filterProcessedColumnData(columnData, this.filterIndexMap));
+                filteredData.set(i, FilterProcessedColumnData(columnData, this.filterIndexMap));
             });
             return filteredData;
         }
@@ -170,7 +170,7 @@ export abstract class AbstractCatalogProfileStore {
                         }
                     }
                 } else {
-                    const result = getComparisonOperatorAndValue(value.filter);
+                    const result = GetComparisonOperatorAndValue(value.filter);
                     if (result.operator !== undefined && result.values.length > 0) {
                         filter.comparisonOperator = result.operator;
                         if (result.values.length > 1) {
@@ -220,7 +220,7 @@ export abstract class AbstractCatalogProfileStore {
             const selectedData = new Map<number, ProcessedColumnData>();
             this.catalogData.forEach((data, i) => {
                 if (displayed.includes(i)) {
-                    selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));
+                    selectedData.set(i, FilterProcessedColumnData(data, selectedPointIndices));
                 }
             });
 
@@ -232,7 +232,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get autoScrollRowNumber(): Region {
         let singleRowRegion: Region = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
-            singleRowRegion = Regions.row(minMaxArray(this.selectedPointIndices).minVal);
+            singleRowRegion = Regions.row(MinMaxArray(this.selectedPointIndices).minVal);
         }
         return singleRowRegion;
     }
@@ -252,7 +252,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get hasFilter(): boolean {
-        return getHasFilter(this.catalogControlHeader, this.catalogData);
+        return GetHasFilter(this.catalogControlHeader, this.catalogData);
     }
 
     @action updateTableStatus(isVal: boolean) {
@@ -374,8 +374,8 @@ export abstract class AbstractCatalogProfileStore {
                 let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
                 if (activeFrame) {
                     if (selectedDataLength > 1) {
-                        const minMaxX = minMaxArray(selectedX);
-                        const minMaxY = minMaxArray(selectedY);
+                        const minMaxX = MinMaxArray(selectedX);
+                        const minMaxY = MinMaxArray(selectedY);
                         const width = minMaxX.maxVal - minMaxX.minVal;
                         const height = minMaxY.maxVal - minMaxY.minVal;
                         positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
@@ -384,7 +384,7 @@ export abstract class AbstractCatalogProfileStore {
                     }
 
                     if (frame?.spatialReference && frame !== activeFrame && frame.spatialTransformAST) {
-                        positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                        positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
                     }
 
                     if (activeFrame.spatialReference && frame && !frame.spatialReference) {

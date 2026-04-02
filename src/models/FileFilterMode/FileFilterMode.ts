@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {FileFilterMode} from "enums";
 
-export function toFileListFilterMode(mode: FileFilterMode): CARTA.FileListFilterMode {
+export function ToFileListFilterMode(mode: FileFilterMode): CARTA.FileListFilterMode {
     switch (mode) {
         case FileFilterMode.Content:
             return CARTA.FileListFilterMode.Content;

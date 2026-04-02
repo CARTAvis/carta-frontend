@@ -42,7 +42,7 @@ export const CTYPE_NAME = new Map<string, string>([
     ["RM", "Rotation Measure"]
 ]);
 
-export function ctypeAbbrToName(ctypes: string): string {
+export function CtypeAbbrToName(ctypes: string): string {
     const ctypeName: string[] = [];
 
     ctypes.split(",").forEach(ctype => {
@@ -52,7 +52,7 @@ export function ctypeAbbrToName(ctypes: string): string {
     return ctypeName.join(", ");
 }
 
-export function fileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} {
+export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} {
     if (headerEntries === null) {
         console.debug("no header");
         return {ctype: "", rank: 0};
@@ -117,7 +117,7 @@ export function fileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     return {ctype: ctypeString, rank: ctypeRank};
 }
 
-export function hyperCubeCtypeTransform(ctypes: {ctype: string[]; rank: number[]}): {ctype: string[]; rank: number[]} {
+export function HyperCubeCtypeTransform(ctypes: {ctype: string[]; rank: number[]}): {ctype: string[]; rank: number[]} {
     const ctypeString = ctypes.ctype.map(ctype => {
         return ctype + ",P";
     });

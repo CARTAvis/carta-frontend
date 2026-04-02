@@ -1,15 +1,15 @@
-import {getEventList} from "./Event";
+import {GetEventList} from "./Event";
 
-describe("getEventList", () => {
+describe("GetEventList", () => {
     test("properly adds/removes elements", () => {
         let eventList = [1, 2, 3];
-        eventList = getEventList(eventList, 4);
+        eventList = GetEventList(eventList, 4);
         expect(eventList).toStrictEqual([1, 2, 3, 4]);
 
-        eventList = getEventList(eventList, 2);
+        eventList = GetEventList(eventList, 2);
         expect(eventList).toStrictEqual([1, 3, 4]);
 
-        eventList = getEventList(eventList, [3, 5]);
+        eventList = GetEventList(eventList, [3, 5]);
         expect(eventList).toStrictEqual([1, 4, 5]);
     });
 });

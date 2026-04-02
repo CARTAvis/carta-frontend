@@ -3,8 +3,8 @@ import Ajv from "ajv";
 import {CatalogOverlayComponent} from "components";
 import {PresetLayout} from "models";
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
-import {findDeep} from "utilities";
-import {smoothStepOffset} from "utilities/math/math";
+import {FindDeep} from "utilities";
+import {SmoothStepOffset} from "utilities/math/math";
 
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
@@ -15,7 +15,7 @@ const componentConfig = new Map<string, any>([
             type: "react-component",
             component: "image-view",
             title: "No image loaded",
-            height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
+            height: SmoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
             id: "image-view",
             isClosable: false
         }
@@ -184,7 +184,7 @@ export class LayoutConfig {
     public static UpgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
         // Upgrade to V2 if required
         if (layout.layoutVersion === 1) {
-            const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
+            const spatialProfileWidgets = FindDeep(layout, item => item.id === "spatial-profiler");
             for (const widget of spatialProfileWidgets) {
                 if (widget.coord) {
                     if (!widget.widgetSettings) {
@@ -263,7 +263,7 @@ export class LayoutConfig {
             };
             // add widget settings
             let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-            if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
+            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
                 const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
@@ -324,7 +324,7 @@ export class LayoutConfig {
                     }
                     // add widget settings
                     let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-                    if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
+                    if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                         const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
                         const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                         widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);

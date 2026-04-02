@@ -14,13 +14,13 @@ export interface WorkspaceRenderConfig {
     contrast?: number;
     gamma?: number;
     alpha?: number;
-    inverted?: boolean;
-    useCubeHistogram?: boolean;
-    useCubeHistogramContours?: boolean;
+    isInverted?: boolean;
+    isUseCubeHistogram?: boolean;
+    isUseCubeHistogramContours?: boolean;
     selectedPercentile?: number[];
     scaleMin?: number[];
     scaleMax?: number[];
-    visible?: boolean;
+    isVisible?: boolean;
 }
 
 export interface WorkspaceContourConfig {
@@ -28,30 +28,30 @@ export interface WorkspaceContourConfig {
     smoothingMode: CARTA.SmoothingMode;
     smoothingFactor: number;
     color?: RGBColor;
-    colormapEnabled: boolean;
+    isColormapEnabled: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
     dashMode: ContourDashMode;
     thickness: number;
-    visible: boolean;
+    isVisible: boolean;
 }
 
 export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
-    fractionalIntensity: boolean;
+    isFractionalIntensity: boolean;
     pixelAveraging: number;
-    thresholdEnabled: boolean;
+    isThresholdEnabled: boolean;
     threshold: number;
-    debiasing: boolean;
+    isDebiasing: boolean;
     qError: number;
     uError: number;
     thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
-    visible: boolean;
+    isVisible: boolean;
     thickness: number;
-    colormapEnabled: boolean;
+    isColormapEnabled: boolean;
     color?: RGBColor;
     colormap?: string;
     colormapContrast: number;
@@ -72,7 +72,7 @@ export interface WorkspaceRegion {
     color?: string;
     lineWidth?: number;
     dashes?: number[];
-    locked?: boolean;
+    isLocked?: boolean;
     annotationStyles?: any;
 }
 
@@ -109,7 +109,7 @@ export interface WorkspaceFile {
 export interface Workspace {
     id?: string;
     name?: string;
-    editable?: boolean;
+    isEditable?: boolean;
     workspaceVersion: number;
     frontendVersion: number;
     description?: string;

@@ -1,5 +1,5 @@
 export enum ImageViewLayer {
-    regionCreating = "regionCreating",
+    RegionCreating = "regionCreating",
     Catalog = "catalog",
     RegionMoving = "regionMoving"
 }

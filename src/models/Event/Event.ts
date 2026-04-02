@@ -14,7 +14,7 @@ export class Event {
     };
 }
 
-export function getEventList(list: number[], value: number[] | number): number[] {
+export function GetEventList(list: number[], value: number[] | number): number[] {
     if (!list || !Array.isArray(list)) {
         list = [];
     }

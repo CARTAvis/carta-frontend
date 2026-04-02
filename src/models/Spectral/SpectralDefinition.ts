@@ -27,7 +27,7 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
-export function isSpectralMatchingTypeValid(type: SpectralType) {
+export function IsSpectralMatchingTypeValid(type: SpectralType) {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
 }
 
@@ -121,13 +121,14 @@ enum Kelvin {
     mK = "mK"
 }
 
-const JYS = Object.values(Jansky);
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const Jys = Object.values(Jansky);
 const intensityOptionsMap = new Map<IntensityUnitType, string[]>([
     [IntensityUnitType.Kelvin, Object.values(Kelvin)],
-    [IntensityUnitType.JyBeam, JYS.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
-    [IntensityUnitType.JySr, JYS.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
-    [IntensityUnitType.JyArcsec2, JYS.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/arcsec^2`)],
-    [IntensityUnitType.JyPixel, JYS.map(jy => `${jy}/pixel`)]
+    [IntensityUnitType.JyBeam, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
+    [IntensityUnitType.JySr, Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
+    [IntensityUnitType.JyArcsec2, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/arcsec^2`)],
+    [IntensityUnitType.JyPixel, Jys.map(jy => `${jy}/pixel`)]
 ]);
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
