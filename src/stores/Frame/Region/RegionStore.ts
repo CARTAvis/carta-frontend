@@ -6,7 +6,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CoordinateMode} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
-import {isValidWcsPoint, type Point2D} from "models";
+import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -30,9 +30,9 @@ export class RegionStore {
     // Shallow observable, since control point updates are atomic
     @observable.shallow controlPoints: Point2D[] = [];
     @observable rotation: number = 0;
-    @observable editing: boolean = false;
-    @observable creating: boolean = false;
-    @observable locked: boolean = false;
+    @observable isEditing: boolean = false;
+    @observable isCreating: boolean = false;
+    @observable isLocked: boolean = false;
     @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
@@ -232,11 +232,11 @@ export class RegionStore {
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
-        if (!this.size || !frame?.validWcs) {
+        if (!this.size || !frame?.isValidWcs) {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
-        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
+        return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {
@@ -403,7 +403,7 @@ export class RegionStore {
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === CARTA.RegionType.POLYGON) {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.isCreating);
             } else {
                 approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, false);
             }
@@ -446,7 +446,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
-        if (activeFrame.validWcs) {
+        if (activeFrame.isValidWcs) {
             this.coordinate = CoordinateMode.World;
         } else {
             this.coordinate = CoordinateMode.Image;
@@ -472,6 +472,7 @@ export class RegionStore {
         this.regionId = id;
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     @action setCenter = (p: Point2D, skipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             const rotation = (this.rotation * Math.PI) / 180.0;
@@ -495,6 +496,7 @@ export class RegionStore {
      *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
      * @param skipUpdate - Whether to update the changes with the backend.
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     @action setSize = (p: Point2D, skipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             const rotation = (this.rotation * Math.PI) / 180.0;
@@ -510,16 +512,17 @@ export class RegionStore {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
         // Check for control point NaN values
         if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
             this.modifiedTimestamp = performance.now();
             this.controlPoints[index] = p;
-            if (!this.editing && !skipUpdate) {
+            if (!this.isEditing && !skipUpdate) {
                 this.updateRegion();
-            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                if (PreferenceStore.Instance.lowBandwidthMode) {
+            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.isCreating && this.isPreviewCut) {
+                if (PreferenceStore.Instance.isLowBandwidthMode) {
                     this.lowBandWidthThrottledUpdateRegion(true);
                 } else {
                     this.throttledUpdateRegion(true);
@@ -535,6 +538,7 @@ export class RegionStore {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
         // Check for control point NaN values
         if (!points.length) {
@@ -558,10 +562,10 @@ export class RegionStore {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
-        if (!this.editing && !skipUpdate) {
+        if (!this.isEditing && !skipUpdate) {
             this.updateRegion();
-        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            if (PreferenceStore.Instance.lowBandwidthMode) {
+        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.isCreating && this.isPreviewCut) {
+            if (PreferenceStore.Instance.isLowBandwidthMode) {
                 this.lowBandWidthThrottledUpdateRegion(true);
             } else {
                 this.throttledUpdateRegion(true);
@@ -579,6 +583,7 @@ export class RegionStore {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     @action setRotation = (angle: number, skipUpdate = false) => {
         // Images with non-square pixels do not support rotations
         if (!this.activeFrame?.hasSquarePixels) {
@@ -598,7 +603,7 @@ export class RegionStore {
             this.rotation = (angle + 360) % 360;
             this.regionApproximationMap.clear();
             this.modifiedTimestamp = performance.now();
-            if (!this.editing && !skipUpdate) {
+            if (!this.isEditing && !skipUpdate) {
                 this.updateRegion();
             }
         }
@@ -634,13 +639,13 @@ export class RegionStore {
     };
 
     @action beginCreating = () => {
-        this.creating = true;
-        this.editing = true;
+        this.isCreating = true;
+        this.isEditing = true;
     };
 
     @flow.bound *endCreating() {
-        this.creating = false;
-        this.editing = false;
+        this.isCreating = false;
+        this.isEditing = false;
 
         // re-calculate projected points when the status changes from unclosed to closed
         if (this.regionType === CARTA.RegionType.POLYGON) {
@@ -659,23 +664,23 @@ export class RegionStore {
     }
 
     @action beginEditing = () => {
-        this.editing = true;
+        this.isEditing = true;
     };
 
     @action endEditing = () => {
-        this.editing = false;
+        this.isEditing = false;
         this.updateRegion();
     };
 
     @action toggleLock = () => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.locked = !this.locked;
+            this.isLocked = !this.isLocked;
         }
     };
 
-    @action setLocked = (locked: boolean) => {
+    @action setLocked = (isLocked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.locked = locked;
+            this.isLocked = isLocked;
         }
     };
 

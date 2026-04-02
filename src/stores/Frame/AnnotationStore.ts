@@ -212,8 +212,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable pointerLength: number = 10;
     @observable northTextOffset: Point2D = {x: 0, y: 0};
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
-    @observable northArrowhead: boolean = true;
-    @observable eastArrowhead: boolean = true;
+    @observable hasNorthArrowhead: boolean = true;
+    @observable hasEastArrowhead: boolean = true;
 
     constructor(
         backendService: BackendService,
@@ -280,49 +280,49 @@ export class CompassAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setLength = (length: number, skipUpdate: boolean = false) => {
+    @action setLength = (length: number, isSkipUpdate: boolean = false) => {
         this.length = Math.abs(length);
-        this.setControlPoint(1, {x: length, y: length}, skipUpdate);
+        this.setControlPoint(1, {x: length, y: length}, isSkipUpdate);
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setNorthTextOffset = (offset: number, isX: boolean, skipTimeStampUpdate: boolean = false) => {
+    @action setNorthTextOffset = (offset: number, isX: boolean, isSkipTimeStampUpdate: boolean = false) => {
         if (isX) {
             this.northTextOffset = {...this.northTextOffset, x: offset};
         } else {
             this.northTextOffset = {...this.northTextOffset, y: offset};
         }
-        if (!skipTimeStampUpdate) {
+        if (!isSkipTimeStampUpdate) {
             this.modifiedTimestamp = performance.now();
         }
     };
 
-    @action setEastTextOffset = (offset: number, isX: boolean, skipTimeStampUpdate: boolean = false) => {
+    @action setEastTextOffset = (offset: number, isX: boolean, isSkipTimeStampUpdate: boolean = false) => {
         if (isX) {
             this.eastTextOffset = {...this.eastTextOffset, x: offset};
         } else {
             this.eastTextOffset = {...this.eastTextOffset, y: offset};
         }
-        if (!skipTimeStampUpdate) {
+        if (!isSkipTimeStampUpdate) {
             this.modifiedTimestamp = performance.now();
         }
     };
 
-    @action setNorthArrowhead = (northArrowhead: boolean) => {
-        this.northArrowhead = northArrowhead;
+    @action setNorthArrowhead = (hasNorthArrowhead: boolean) => {
+        this.hasNorthArrowhead = hasNorthArrowhead;
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setEastArrowhead = (eastArrowhead: boolean) => {
-        this.eastArrowhead = eastArrowhead;
+    @action setEastArrowhead = (hasEastArrowhead: boolean) => {
+        this.hasEastArrowhead = hasEastArrowhead;
         this.modifiedTimestamp = performance.now();
     };
 
-    public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
-        const originPoint = spatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
+    public getCompassApproximation(wcsInfo: AST.FrameSet, isSpatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
+        const originPoint = isSpatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
         // Early return for invalid WCS - rendering component handles this case separately
-        if (!wcsInfo || !this.activeFrame.validWcs) {
+        if (!wcsInfo || !this.activeFrame.isValidWcs) {
             return {northApproximatePoints: [], eastApproximatePoints: []};
         }
 
@@ -349,8 +349,8 @@ export class CompassAnnotationStore extends RegionStore {
         return {
             textLabel0: this.northLabel,
             textLabel1: this.eastLabel,
-            isNorthArrow: this.northArrowhead,
-            isEastArrow: this.eastArrowhead,
+            isNorthArrow: this.hasNorthArrowhead,
+            isEastArrow: this.hasEastArrowhead,
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
@@ -366,8 +366,8 @@ export class CompassAnnotationStore extends RegionStore {
         return {
             textLabel0: this.northLabel,
             textLabel1: this.eastLabel,
-            isNorthArrow: this.northArrowhead,
-            isEastArrow: this.eastArrowhead,
+            isNorthArrow: this.hasNorthArrowhead,
+            isEastArrow: this.hasEastArrowhead,
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
@@ -401,8 +401,8 @@ export class CompassAnnotationStore extends RegionStore {
         this.setNorthTextOffset(annotationStyles.northTextOffset?.y ?? this.northTextOffset.y, false);
         this.setEastTextOffset(annotationStyles.eastTextOffset?.x ?? this.eastTextOffset.x, true);
         this.setEastTextOffset(annotationStyles.eastTextOffset?.y ?? this.eastTextOffset.y, false);
-        this.setNorthArrowhead(annotationStyles.isNorthArrow ?? this.northArrowhead);
-        this.setEastArrowhead(annotationStyles.isEastArrow ?? this.eastArrowhead);
+        this.setNorthArrowhead(annotationStyles.isNorthArrow ?? this.hasNorthArrowhead);
+        this.setEastArrowhead(annotationStyles.isEastArrow ?? this.hasEastArrowhead);
     };
 }
 
@@ -411,9 +411,9 @@ export class RulerAnnotationStore extends RegionStore {
     @observable fontStyle: FontStyle = FontStyle.NORMAL;
     @observable font: Font = Font.HELVETICA;
     @observable decimals: number = 6;
-    @observable auxiliaryLineVisible: boolean = true;
+    @observable isAuxiliaryLineVisible: boolean = true;
     @observable auxiliaryLineDashLength: number = 0;
-    @observable auxiliaryTextVisible: boolean = true;
+    @observable isAuxiliaryTextVisible: boolean = true;
     @observable textOffset: Point2D = {x: 0, y: 0};
     @observable xTextOffset: Point2D = {x: 0, y: 0};
     @observable yTextOffset: Point2D = {x: 0, y: 0};
@@ -469,7 +469,7 @@ export class RulerAnnotationStore extends RegionStore {
     };
 
     @action setAuxiliaryLineVisible = (isVisible: boolean) => {
-        this.auxiliaryLineVisible = isVisible;
+        this.isAuxiliaryLineVisible = isVisible;
         if (!isVisible) {
             this.setAuxiliaryTextVisible(false);
         }
@@ -482,7 +482,7 @@ export class RulerAnnotationStore extends RegionStore {
     };
 
     @action setAuxiliaryTextVisible = (isVisible: boolean) => {
-        this.auxiliaryTextVisible = isVisible;
+        this.isAuxiliaryTextVisible = isVisible;
         this.modifiedTimestamp = performance.now();
     };
 
@@ -550,9 +550,9 @@ export class RulerAnnotationStore extends RegionStore {
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
-            auxiliaryLineVisible: this.auxiliaryLineVisible,
+            isAuxiliaryLineVisible: this.isAuxiliaryLineVisible,
             auxiliaryLineDashLength: this.auxiliaryLineDashLength,
-            auxiliaryTextVisible: this.auxiliaryTextVisible,
+            isAuxiliaryTextVisible: this.isAuxiliaryTextVisible,
             textOffset: this.textOffset,
             xTextOffset: this.xTextOffset,
             yTextOffset: this.yTextOffset
@@ -572,9 +572,9 @@ export class RulerAnnotationStore extends RegionStore {
         fontSize: number;
         fontStyle: FontStyle;
         font: Font;
-        auxiliaryLineVisible: boolean;
+        isAuxiliaryLineVisible: boolean;
         auxiliaryLineDashLength: number;
-        auxiliaryTextVisible: boolean;
+        isAuxiliaryTextVisible: boolean;
         textOffset: Point2D;
         xTextOffset: Point2D;
         yTextOffset: Point2D;
@@ -582,9 +582,9 @@ export class RulerAnnotationStore extends RegionStore {
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
         this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
         this.setFont(annotationStyles.font ?? this.font);
-        this.setAuxiliaryLineVisible(annotationStyles.auxiliaryLineVisible ?? this.auxiliaryLineVisible);
+        this.setAuxiliaryLineVisible(annotationStyles.isAuxiliaryLineVisible ?? this.isAuxiliaryLineVisible);
         this.setAuxiliaryLineDashLength(annotationStyles.auxiliaryLineDashLength ?? this.auxiliaryLineDashLength);
-        this.setAuxiliaryTextVisible(annotationStyles.auxiliaryTextVisible ?? this.auxiliaryTextVisible);
+        this.setAuxiliaryTextVisible(annotationStyles.isAuxiliaryTextVisible ?? this.isAuxiliaryTextVisible);
         this.setTextOffset(annotationStyles.textOffset?.x ?? this.textOffset.x, true);
         this.setTextOffset(annotationStyles.textOffset?.y ?? this.textOffset.y, false);
         this.setXTextOffset(annotationStyles.xTextOffset?.x ?? this.xTextOffset.x, true);
