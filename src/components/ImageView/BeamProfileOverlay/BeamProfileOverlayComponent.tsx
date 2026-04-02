@@ -8,7 +8,7 @@ import {BeamType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {getColorForTheme} from "utilities";
+import {GetColorForTheme} from "utilities";
 
 import "./BeamProfileOverlayComponent.scss";
 
@@ -48,7 +48,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const id = frame.frameInfo.fileId;
         const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / AppStore.Instance.imageRatio;
         const beamSettings = frame.overlayBeamSettings;
-        const color = getColorForTheme(beamSettings.color);
+        const color = GetColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;

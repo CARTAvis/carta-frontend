@@ -9,7 +9,7 @@ import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
-import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {CloseTo, GetFormattedWCSPoint, GetPixelValueFromWCS, IsWCSStringFormatValid} from "utilities";
 
 @observer
 export class PolygonRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
@@ -23,7 +23,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         return (value: number): boolean => {
             const region = this.props.region;
             const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
-            if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
+            if (isFinite(value) && !CloseTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
                 if (isXCoordinate) {
                     this.props.region.setControlPoint(index, {x: value, y: this.props.region.controlPoints[index].y});
                 } else {
@@ -38,16 +38,16 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
     private handleWCSPointChange = (index: number, isXCoordinate: boolean) => {
         return (wcsString: string): boolean => {
             const region = this.props.region;
-            const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
-            if (pointWCS && isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlaySettings.numbers.formatTypeX : AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
+            const pointWCS = GetFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
+            if (pointWCS && IsWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlaySettings.numbers.formatTypeX : AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
+                const newPoint = GetPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
                 if (!newPoint) {
                     return false;
                 }
                 const value = isXCoordinate ? newPoint.x : newPoint.y;
                 const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
 
-                if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
+                if (isFinite(value) && !CloseTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
                     this.props.region.setControlPoint(index, newPoint);
                     return true;
                 }
@@ -78,7 +78,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
 
         const pointRows = region.controlPoints.map((point, index) => {
-            const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
+            const pointWCS = GetFormattedWCSPoint(this.props.wcsInfo, point);
             const xInput = (
                 <CoordNumericInput
                     coord={region.coordinate}

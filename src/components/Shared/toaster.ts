@@ -1,7 +1,7 @@
 import {createRoot} from "react-dom/client";
 import {type IconName, OverlayToaster, Position, type ToastProps} from "@blueprintjs/core";
 
-import {copyToClipboard} from "utilities";
+import {CopyToClipboard} from "utilities";
 
 const toaster = OverlayToaster.create(
     {
@@ -13,7 +13,8 @@ const toaster = OverlayToaster.create(
     }
 );
 
-export const APP_TOASTER = {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const AppToaster = {
     show: async (toast: ToastProps) => {
         (await toaster).show(toast);
     },
@@ -22,7 +23,7 @@ export const APP_TOASTER = {
     }
 };
 
-export function successToast(icon: IconName, message: string, timeout?: number): ToastProps {
+export function SuccessToast(icon: IconName, message: string, timeout?: number): ToastProps {
     return {
         icon: icon,
         intent: "success",
@@ -31,27 +32,27 @@ export function successToast(icon: IconName, message: string, timeout?: number):
     };
 }
 
-export function errorToast(message: string): ToastProps {
+export function ErrorToast(message: string): ToastProps {
     return {
         icon: "error",
         intent: "danger",
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => copyToClipboard(message),
+            onClick: () => CopyToClipboard(message),
             icon: "clipboard"
         }
     };
 }
 
-export function warningToast(message: string): ToastProps {
+export function WarningToast(message: string): ToastProps {
     return {
         icon: "warning-sign",
         intent: "warning",
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => copyToClipboard(message),
+            onClick: () => CopyToClipboard(message),
             icon: "clipboard"
         }
     };

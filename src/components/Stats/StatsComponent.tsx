@@ -11,7 +11,7 @@ import {HelpType, POLARIZATIONS} from "enums";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
-import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
+import {ExportTsvFile, PixelToFluxDensityUnit, ToExponential} from "utilities";
 
 import "./StatsComponent.scss";
 
@@ -19,7 +19,7 @@ import "./StatsComponent.scss";
 export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
@@ -108,7 +108,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === StatsComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === StatsComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addStatsWidget();
             if (id) {
@@ -185,7 +185,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 } else if (type === CARTA.StatsType.SumSq) {
                     unitString = `(${unit})^2`;
                 } else if (type === CARTA.StatsType.FluxDensity) {
-                    unitString = pixelToFluxDensityUnit(unit);
+                    unitString = PixelToFluxDensityUnit(unit);
                 } else {
                     unitString = unit;
                 }
@@ -193,7 +193,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             const value = this.statsData.statistics[index].value;
             if (value != null) {
-                numString = toExponential(value, 12);
+                numString = ToExponential(value, 12);
                 unitString = isFinite(value) ? unitString : "";
             }
         }
@@ -234,7 +234,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 }
             });
 
-            exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
+            ExportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
         }
     };
 

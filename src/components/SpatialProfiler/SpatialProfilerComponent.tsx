@@ -13,7 +13,7 @@ import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {SpatialProfileWidgetStore} from "stores/Widgets";
-import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
+import {ASTSettingsString, BinarySearchByX, Clamp, FormattedExponential, GetColorForTheme, SetAstStringSystem, ToFixed, TransformPoint} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -24,7 +24,7 @@ const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler",
             type: "spatial-profiler",
@@ -109,16 +109,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     xMin = this.autoScaleHorizontalMin;
                     xMax = this.autoScaleHorizontalMax;
                 } else {
-                    xMin = clamp(this.widgetStore.minX ?? this.lineAxis.min, this.lineAxis.min, this.lineAxis.max);
-                    xMax = clamp(this.widgetStore.maxX ?? this.lineAxis.max, this.lineAxis.min, this.lineAxis.max);
+                    xMin = Clamp(this.widgetStore.minX ?? this.lineAxis.min, this.lineAxis.min, this.lineAxis.max);
+                    xMax = Clamp(this.widgetStore.maxX ?? this.lineAxis.max, this.lineAxis.min, this.lineAxis.max);
                 }
             } else {
                 if (this.widgetStore.isAutoScaledX) {
                     xMin = this.autoScaleHorizontalMin;
                     xMax = this.autoScaleHorizontalMax;
                 } else {
-                    xMin = clamp(this.widgetStore.minX ?? 0, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    xMax = clamp(
+                    xMin = Clamp(this.widgetStore.minX ?? 0, 0, this.frame.frameInfo.fileInfoExtended.width);
+                    xMax = Clamp(
                         this.widgetStore.maxX ?? (this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height),
                         0,
                         this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height
@@ -143,18 +143,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let values: Array<Point2D> = [];
             let fullResolutionValues: Array<Point2D> = [];
             let smoothingValues: Array<{x: number; y: number}> = [];
-            let n: number;
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            let N: number;
 
             if (this.lineAxis) {
-                n = coordinateData.values.length;
-                values = new Array(n);
-                fullResolutionValues = new Array(n);
-                const xArray: number[] = new Array(n);
+                N = coordinateData.values.length;
+                values = new Array(N);
+                fullResolutionValues = new Array(N);
+                const xArray: number[] = new Array(N);
                 const numPixels = this.width;
-                const decimationFactor = Math.round(n / numPixels);
+                const decimationFactor = Math.round(N / numPixels);
                 let startIndex: number | undefined;
                 let endIndex: number | undefined;
-                for (let i = 0; i < n; i++) {
+                for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i];
                     const x =
                         this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE && coordinateData.lineAxis
@@ -183,9 +184,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
                 smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
             } else if ((coordinateData.mip ?? 0) > 1 || (coordinateData.start ?? 0) > 0 || (coordinateData.end ?? xMax) < xMax) {
-                n = coordinateData.values.length;
-                values = new Array(n);
-                for (let i = 0; i < n; i++) {
+                N = coordinateData.values.length;
+                values = new Array(N);
+                for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i];
                     const x = (coordinateData.start ?? 0) + i * (coordinateData.mip ?? 1);
                     if (x >= xMin && x <= xMax && isFinite(y)) {
@@ -198,19 +199,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     values[i] = {x, y};
                 }
             } else {
-                n = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
-                if (n > 0) {
+                N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
+                if (N > 0) {
                     const xArray: number[] = new Array(coordinateData.values.length);
                     for (let i = 0; i < coordinateData.values.length; i++) {
                         xArray[i] = i;
                     }
                     const numPixels = this.width;
-                    const decimationFactor = Math.round(n / numPixels);
+                    const decimationFactor = Math.round(N / numPixels);
 
                     if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                         // full resolution data
-                        values = new Array(n);
-                        for (let i = 0; i < n; i++) {
+                        values = new Array(N);
+                        for (let i = 0; i < N; i++) {
                             const y = coordinateData.values[i + xMin];
                             const x = (coordinateData.start ?? 0) + i + xMin;
                             if (x >= xMin && x <= xMax && isFinite(y)) {
@@ -224,8 +225,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         }
                     } else {
                         // Decimated data
-                        fullResolutionValues = new Array(n);
-                        for (let i = 0; i < n; i++) {
+                        fullResolutionValues = new Array(N);
+                        for (let i = 0; i < N; i++) {
                             const val = coordinateData.values[i + xMin];
                             const x = (coordinateData.start ?? 0) + i + xMin;
                             if (isFinite(val)) {
@@ -304,7 +305,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get nearestCursorPoint(): Point2D | null {
         if (this.widgetStore.isMouseMoveIntoLinePlots && this.plotData) {
-            return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
+            return BinarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
         }
         return null;
     }
@@ -337,7 +338,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === SpatialProfilerComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {
@@ -376,9 +377,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (this.lineAxis) {
                     this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
                 } else if (this.widgetStore.isXProfile) {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+                    this.setAutoScaleBounds(Clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), Clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    this.setAutoScaleBounds(Clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), Clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
                 }
             },
             {delay: AUTOSCALE_THROTTLE_TIME}
@@ -405,17 +406,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         const astString = new ASTSettingsString();
         const global = AppStore.Instance.overlaySettings.global;
-        setAstStringSystem(astString, global.explicitSystem, global);
+        SetAstStringSystem(astString, global.explicitSystem, global);
 
         if (this.widgetStore.isXProfile && this.profileStore?.y != null) {
             for (let i = 0; i < ticks.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: ticks[i].value, y: this.profileStore.y});
+                const pointWCS = TransformPoint(this.frame.wcsInfo, {x: ticks[i].value, y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, 0, astString.toString(), true).x;
             }
         } else if (this.profileStore?.x != null) {
             for (let i = 0; i < ticks.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: ticks[i].value});
+                const pointWCS = TransformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: ticks[i].value});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, 0, normVals.y, astString.toString(), true).y;
             }
@@ -490,8 +491,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 // handle the value when cursor is in profiler
                 if (this.pointInfo && this.nearestCursorPoint) {
                     const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
-                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
-                    const valueLabel = `${this.nearestCursorPoint.y !== undefined ? formattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
+                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${FormattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
+                    const valueLabel = `${this.nearestCursorPoint.y !== undefined ? FormattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
 
@@ -507,8 +508,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 // get value directly from point region
                 if (this.pointInfo?.posImageSpace) {
                     const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
-                    const valueLabel = `${this.profileStore?.value != null ? formattedExponential(this.profileStore.value, 5) : ""}`;
+                    const imageLabel = `Image: ${ToFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
+                    const valueLabel = `${this.profileStore?.value != null ? FormattedExponential(this.profileStore.value, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.profileStore && this.plotData?.smoothingValues ? this.genSmoothedProfilerInfo(this.plotData.smoothingValues, this.profileStore.x ?? undefined) : null;
 
@@ -523,9 +524,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
             if (this.widgetStore.isMeanRmsVisible) {
                 if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
-                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                    profilerInfo.push(` Mean/RMS: ${FormattedExponential(this.plotData.yMean, 2) + " / " + FormattedExponential(this.plotData.yRms, 2)}`);
                 } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
-                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.ySmoothedMean, 2) + " / " + formattedExponential(this.plotData.ySmoothedRms, 2)}`);
+                    profilerInfo.push(` Mean/RMS: ${FormattedExponential(this.plotData.ySmoothedMean, 2) + " / " + FormattedExponential(this.plotData.ySmoothedRms, 2)}`);
                 }
             }
         }
@@ -534,16 +535,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string | null => {
         let profilerInfo = "";
-        const nearest = binarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
+        const nearest = BinarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
         const smoothedXLabel =
-            this.lineAxis && nearest?.point?.x != null ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : nearest?.point?.x != null ? `Image: ${nearest.point.x} px, ` : "";
+            this.lineAxis && nearest?.point?.x != null ? `${this.lineAxis.label}: ${FormattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : nearest?.point?.x != null ? `Image: ${nearest.point.x} px, ` : "";
 
         if (pointXValue && nearest?.point?.y != null) {
-            profilerInfo += formattedExponential(nearest.point.y, 5);
+            profilerInfo += FormattedExponential(nearest.point.y, 5);
         } else {
             // handle the value when cursor is in profiler
             if (nearest?.point?.y != null) {
-                const valueLabel = formattedExponential(nearest.point.y, 5);
+                const valueLabel = FormattedExponential(nearest.point.y, 5);
                 profilerInfo += valueLabel;
             }
         }
@@ -615,7 +616,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.fullResolutionData = currentPlotData.fullResolutionValues;
 
                     // set line color
-                    const primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
+                    const primaryLineColor = GetColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
@@ -628,7 +629,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothingValues,
                             type: smoothingStore.lineType,
-                            borderColor: getColorForTheme(smoothingStore.lineColor),
+                            borderColor: GetColorForTheme(smoothingStore.lineColor),
                             borderWidth: smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,

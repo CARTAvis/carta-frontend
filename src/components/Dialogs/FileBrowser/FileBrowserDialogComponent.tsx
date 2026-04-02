@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
-import {APP_TOASTER, errorToast, type SimpleTableComponentProps} from "components/Shared";
+import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
 import {BrowserMode, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -252,7 +252,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 this.isOverwriteExistingFileAlertVisible = true;
             } else {
                 console.error(err.message);
-                APP_TOASTER.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };
@@ -280,7 +280,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 this.isOverwriteExistingFileAlertVisible = true;
             } else {
                 console.error(err.message);
-                APP_TOASTER.show(errorToast(err.message));
+                AppToaster.show(ErrorToast(err.message));
             }
         }
     };
@@ -314,14 +314,14 @@ export class FileBrowserDialogComponent extends React.Component {
                 await this.exportRegion(directory, filename, true);
             } catch (err) {
                 console.error(err.message);
-                APP_TOASTER.show(errorToast(err.message));
+                AppToaster.show(ErrorToast(err.message));
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             try {
                 await this.handleSaveFile(true);
             } catch (err) {
                 console.error(err.message);
-                APP_TOASTER.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };
@@ -793,9 +793,9 @@ export class FileBrowserDialogComponent extends React.Component {
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_FILTERING_TYPE, type);
     };
 
-    @action setEnableImageArithmetic = (isVal: boolean) => {
-        this.isEnableImageArithmetic = isVal;
-        if (isVal) {
+    @action setEnableImageArithmetic = (isEnable: boolean) => {
+        this.isEnableImageArithmetic = isEnable;
+        if (isEnable) {
             this.clearFilterString();
         }
     };
@@ -946,7 +946,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <div className="file-info-pane">
                             <FileInfoComponent
                                 infoTypes={FileBrowserDialogComponent.getFileInfoTypes(fileBrowserStore.browserMode)}
-                                HDUOptions={{hduList: fileBrowserStore.hduList || [], handleSelectedHDUChange: fileBrowserStore.selectHDU}}
+                                HDUOptions={{HDUList: fileBrowserStore.HDUList || [], handleSelectedHDUChange: fileBrowserStore.selectHDU}}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
@@ -974,7 +974,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     onCancel={this.handleOverwriteAlertDismissed}
                     canEscapeKeyCancel={true}
                 >
-                    This file exists. Are you sure to isOverwrite it?
+                    This file exists. Are you sure to overwrite it?
                 </Alert>
                 <TaskProgressDialogComponent
                     isOpen={fileBrowserStore.isImportingRegions && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}

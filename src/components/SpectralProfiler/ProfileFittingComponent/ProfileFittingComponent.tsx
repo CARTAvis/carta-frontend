@@ -7,7 +7,7 @@ import {SafeNumericInput} from "components/Shared";
 import {FittingContinuum, FittingFunction} from "enums";
 import {AppStore, type ProfileFittingStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {ExportTxtFile, GetTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
 
@@ -144,8 +144,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         }
 
         const content = `${headerString}\n${this.fittingStore.resultLog}`;
-        const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
-        exportTxtFile(fileName, content);
+        const fileName = `Profile_Fitting_Result_Log-${GetTimestamp()}`;
+        ExportTxtFile(fileName, content);
     };
 
     @action private reset = () => {
@@ -182,12 +182,12 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         );
     };
 
-    @action setIsShowingLog(isVal: boolean) {
-        this.isShowingLog = isVal;
+    @action setIsShowingLog(isBool: boolean) {
+        this.isShowingLog = isBool;
     }
 
-    @action setIsShowingResultButton(isVal: boolean) {
-        this.isShowingResultButton = isVal;
+    @action setIsShowingResultButton(isBool: boolean) {
+        this.isShowingResultButton = isBool;
     }
 
     constructor(props: ProfileFittingComponentProps) {

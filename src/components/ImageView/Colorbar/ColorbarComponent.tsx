@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {Font, ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, getColorForTheme} from "utilities";
+import {Clamp, GetColorForTheme} from "utilities";
 
 import "./ColorbarComponent.scss";
 
@@ -37,8 +37,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.hoverInfoText = text;
     };
 
-    @action setMouseHovering = (isVal: boolean) => {
-        this.isHovering = isVal;
+    @action setMouseHovering = (isHovering: boolean) => {
+        this.isHovering = isHovering;
     };
 
     @action onMouseEnter = () => {
@@ -84,9 +84,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             scaledPos = height - scaledPos;
         }
         scaledPos /= height;
-        scaledPos = clamp(scaledPos, 0.0, 1.0);
+        scaledPos = Clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, yOffset, yOffset + height);
+        point = Clamp(point, yOffset, yOffset + height);
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -113,7 +113,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         appStore.updateLayerPixelRatio(this.layerRef);
 
         const getColor = (hasCustomColor: boolean, color: string): string => {
-            return hasCustomColor ? getColorForTheme(color) : colorbarSettings.hasCustomColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
+            return hasCustomColor ? GetColorForTheme(color) : colorbarSettings.hasCustomColor ? GetColorForTheme(colorbarSettings.color) : GetColorForTheme(appStore.overlaySettings.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
@@ -276,7 +276,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const hoverBar =
             colorbarSettings.isInteractive && this.isHovering ? (
-                <Line points={hoverBarPosition} stroke={colorbarSettings.hasCustomColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color)} strokeWidth={1 / devicePixelRatio} />
+                <Line points={hoverBarPosition} stroke={colorbarSettings.hasCustomColor ? GetColorForTheme(colorbarSettings.color) : GetColorForTheme(appStore.overlaySettings.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =

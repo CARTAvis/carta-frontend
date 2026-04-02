@@ -11,7 +11,7 @@ import {CoordinateMode, DialogId, HelpType, InputType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {ExportTxtFile, GetTimestamp} from "utilities";
 
 import "./FittingDialogComponent.scss";
 
@@ -89,16 +89,16 @@ export class FittingDialogComponent extends React.Component {
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
         if (content) {
-            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
-            exportTxtFile(fileName, content);
+            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${GetTimestamp()}-2D_Fitting_Result`;
+            ExportTxtFile(fileName, content);
         }
     };
 
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
         if (content) {
-            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
-            exportTxtFile(fileName, content);
+            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${GetTimestamp()}-2D_Fitting_Full_Log`;
+            ExportTxtFile(fileName, content);
         }
     };
 

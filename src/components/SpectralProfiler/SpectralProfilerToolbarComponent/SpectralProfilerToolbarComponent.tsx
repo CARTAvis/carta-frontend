@@ -275,17 +275,17 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     public render() {

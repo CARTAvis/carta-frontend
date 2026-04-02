@@ -11,7 +11,7 @@ import {ImageViewLayer, RegionMode, SystemType} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {type FrameStore, RegionStore} from "stores/Frame";
-import {toFixed} from "utilities";
+import {ToFixed} from "utilities";
 
 import "./ToolbarComponent.scss";
 
@@ -78,7 +78,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
         this.props.onActiveLayerChange(layer);
-        if (layer === ImageViewLayer.regionCreating) {
+        if (layer === ImageViewLayer.RegionCreating) {
             this.props.frame.regionSet.setMode(RegionMode.CREATING);
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
@@ -87,7 +87,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handlePanZoomShortCutClicked = () => {
         const widgetsStore = AppStore.Instance.widgetsStore;
-        const parentType = ImageViewComponent.WidgetConfig.type;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
         const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
         if (settingsWidget) {
             widgetsStore.removeFloatingWidget(settingsWidget.id);
@@ -134,7 +134,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             <span>
                 <br />
                 <i>
-                    <small>Current: {toFixed(zoomLevel, 2)}x</small>
+                    <small>Current: {ToFixed(zoomLevel, 2)}x</small>
                 </i>
             </span>
         );
@@ -237,7 +237,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const isCatalogSelectionDisabled = appStore.catalogNum === 0 || isNumSourcesZero === true;
 
         const handleDistanceMeasuringClicked = () => {
-            this.handleActiveLayerClicked(ImageViewLayer.regionCreating);
+            this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
             const activeFrame = appStore.activeFrame;
             activeFrame?.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
             activeFrame?.regionSet.setMode(RegionMode.CREATING);
@@ -261,7 +261,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.regionCreating} onClick={handleDistanceMeasuringClicked} />
+                                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={handleDistanceMeasuringClicked} />
                                 </Tooltip>
                                 <Tooltip
                                     position={tooltipPosition}
@@ -296,8 +296,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         >
                                             <AnchorButton
                                                 icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon}
-                                                active={appStore.activeLayer === ImageViewLayer.regionCreating || appStore.activeFrame?.regionSet.mode === RegionMode.CREATING}
-                                                onClick={() => this.handleActiveLayerClicked(ImageViewLayer.regionCreating)}
+                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame?.regionSet.mode === RegionMode.CREATING}
+                                                onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
                                             />
                                         </Tooltip>
                                     </Popover>
@@ -322,7 +322,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.regionCreating)} />
+                                        <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                                     </Tooltip>
                                 )}
                                 <Tooltip

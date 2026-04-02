@@ -27,7 +27,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-line-query",
             type: "spectral-line-query",
@@ -63,7 +63,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.width = width;
         this.height = height;
 
-        // fixed bug from blueprintjs, only isDisplay 4 rows.
+        // fixed bug from blueprintjs, only display 4 rows.
         if (this.headerTableRef) {
             this.updateTableSize(this.headerTableRef, this.props.isDocked);
         }

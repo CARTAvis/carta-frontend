@@ -65,7 +65,8 @@ const PV_GENERATOR_HELP_CONTENT_URL = `${URL_PREFIX}/pv_generator.html`;
 const CURSOR_INFO_HELP_CONTENT_URL = `${URL_PREFIX}/cursor_info.html`;
 const CHANNEL_MAP_CONTROL_HELP_CONTENT_URL = `${URL_PREFIX}/channel_map_control.html`;
 
-const helpContentMap = new Map<HelpType, string | undefined>([
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const HELP_CONTENT_MAP = new Map<HelpType, string | undefined>([
     // Dialog
     [HelpType.CONTOUR, CONTOUR_HELP_CONTENT_URL],
     [HelpType.FILE_BROWSER, FILE_BROWSER_HELP_CONTENT_URL],
@@ -143,7 +144,7 @@ export class HelpDrawerComponent extends React.Component {
         return (
             <Drawer {...drawerProps}>
                 <div className={Classes.DRAWER_BODY}>
-                    <iframe src={helpContentMap.get(helpStore.type) ?? ""} loading="eager" allow="camera 'none'; microphone 'none'; geolocation 'none'" title={helpStore.type ?? ""}></iframe>
+                    <iframe src={HELP_CONTENT_MAP.get(helpStore.type) ?? ""} loading="eager" allow="camera 'none'; microphone 'none'; geolocation 'none'" title={helpStore.type ?? ""}></iframe>
                 </div>
             </Drawer>
         );

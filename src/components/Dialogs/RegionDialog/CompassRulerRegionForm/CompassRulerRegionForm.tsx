@@ -9,7 +9,7 @@ import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type RegionStore} from "stores/Frame";
-import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {GetFormattedWCSPoint, GetPixelValueFromWCS, IsWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
@@ -53,27 +53,27 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (!wcsInfo) {
                     return false;
                 }
-                if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
+                if (isX && IsWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
                     if (finish) {
-                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...wcsFinish, x: value});
+                        const finishPixelFromWCS = GetPixelValueFromWCS(wcsInfo, {...wcsFinish, x: value});
                         if (finishPixelFromWCS) {
                             region?.setControlPoint(1, finishPixelFromWCS);
                         }
                     } else {
-                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...wcsStart, x: value});
+                        const startPixelFromWCS = GetPixelValueFromWCS(wcsInfo, {...wcsStart, x: value});
                         if (startPixelFromWCS) {
                             region?.setControlPoint(0, startPixelFromWCS);
                         }
                     }
                     return true;
-                } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
+                } else if (!isX && IsWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
                     if (finish) {
-                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...wcsFinish, y: value});
+                        const finishPixelFromWCS = GetPixelValueFromWCS(wcsInfo, {...wcsFinish, y: value});
                         if (finishPixelFromWCS) {
                             region?.setControlPoint(1, finishPixelFromWCS);
                         }
                     } else {
-                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...wcsStart, y: value});
+                        const startPixelFromWCS = GetPixelValueFromWCS(wcsInfo, {...wcsStart, y: value});
                         if (startPixelFromWCS) {
                             region?.setControlPoint(0, startPixelFromWCS);
                         }
@@ -124,8 +124,8 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
         const isWCS = region.coordinate === CoordinateMode.World;
-        const wcsStart = getFormattedWCSPoint(wcsInfo, region?.controlPoints[0]);
-        const wcsFinish = getFormattedWCSPoint(wcsInfo, region?.controlPoints[1]);
+        const wcsStart = GetFormattedWCSPoint(wcsInfo, region?.controlPoints[0]);
+        const wcsFinish = GetFormattedWCSPoint(wcsInfo, region?.controlPoints[1]);
         const compassLength = (region as CompassAnnotationStore).length;
 
         return (

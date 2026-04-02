@@ -10,10 +10,9 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     const appStore = AppStore.Instance;
     const preference = appStore.preferenceStore;
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const iconWrapper = (path: React.ReactNode, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+    const iconWrapper = (path: React.ReactNode, color: string, isFilled: boolean, strokeWidth = 2, viewboxDefault = 16) => {
         let fillColor = color;
-        if (!fill) {
+        if (!isFilled) {
             fillColor = "none";
         }
         return (

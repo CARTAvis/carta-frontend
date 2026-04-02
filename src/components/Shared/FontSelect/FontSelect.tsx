@@ -42,7 +42,7 @@ const RenderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) =
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
 };
 
-export function fontSelect(isVisible: boolean, currentFontId: number, fontSetter: Function) {
+export function FontSelect(isVisible: boolean, currentFontId: number, fontSetter: Function) {
     let currentFont: Font = AST_FONTS[currentFontId];
     if (typeof currentFont === "undefined") {
         currentFont = AST_FONTS[0];

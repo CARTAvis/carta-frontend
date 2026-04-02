@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {type FrameStore, PreferenceStore} from "stores";
-import {getPercentiles, scaleValue} from "utilities";
+import {GetPercentiles, ScaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
@@ -31,7 +31,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get minValue(): number {
         if (this.enteredMinValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
-            return getPercentiles(this.props.frame.renderConfig.contourHistogram, [0.1])[0];
+            return GetPercentiles(this.props.frame.renderConfig.contourHistogram, [0.1])[0];
         } else {
             return this.enteredMinValue ?? 0;
         }
@@ -39,7 +39,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get maxValue(): number {
         if (this.enteredMaxValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
-            return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
+            return GetPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
             return this.enteredMaxValue ?? 1;
         }
@@ -96,7 +96,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             const numIntervals = this.numLevels - 1;
             const levels: number[] = [];
             for (let i = 0; i < this.numLevels; i++) {
-                const fraction = scaleValue(i / numIntervals, this.scalingType);
+                const fraction = ScaleValue(i / numIntervals, this.scalingType);
                 levels.push(this.minValue + range * fraction);
             }
             return levels;
@@ -191,7 +191,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get refValue(): number {
         if (this.enteredRefValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
-            return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
+            return GetPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
             return this.enteredRefValue ?? 1;
         }

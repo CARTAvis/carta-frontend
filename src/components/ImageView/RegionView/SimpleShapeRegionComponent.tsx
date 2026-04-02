@@ -8,10 +8,10 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type TextAnnotationStore} from "stores/Frame";
-import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {Add2D, Angle2D, Rotate2D, Scale2D, Subtract2D, TransformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {AdjustPosToUnityStage, CanvasToTransformedImagePos, TransformedImageToCanvasPos} from "./shared";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -71,9 +71,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         // Find center's canvas space position
         let centerImagePos = region.center;
         if (frame.spatialReference && frame.spatialTransformAST) {
-            centerImagePos = transformPoint(frame.spatialTransformAST, centerImagePos, false);
+            centerImagePos = TransformPoint(frame.spatialTransformAST, centerImagePos, false);
         }
-        const centerCanvasPos = transformedImageToCanvasPos(centerImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+        const centerCanvasPos = TransformedImageToCanvasPos(centerImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
         this.centerCanvasPos = centerCanvasPos;
 
         let w: number, h: number;
@@ -104,18 +104,18 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
-        const relativeOppositeAnchorPoint = rotate2D(
-            scale2D(relativeOppositeAnchorPointUnrotated, this.props.region.regionType === CARTA.RegionType.ANNTEXT ? AppStore.Instance.imageRatio / zoomLevel : 1),
+        const relativeOppositeAnchorPoint = Rotate2D(
+            Scale2D(relativeOppositeAnchorPointUnrotated, this.props.region.regionType === CARTA.RegionType.ANNTEXT ? AppStore.Instance.imageRatio / zoomLevel : 1),
             (this.props.region.rotation * Math.PI) / 180.0
         );
-        this.editOppositeAnchorPoint = add2D(this.editStartCenterPoint, relativeOppositeAnchorPoint);
+        this.editOppositeAnchorPoint = Add2D(this.editStartCenterPoint, relativeOppositeAnchorPoint);
 
         // Find opposite anchor's canvas space position for corner mode
         let editOppositeAnchorImagePos = this.editOppositeAnchorPoint;
         if (frame.spatialReference && frame.spatialTransformAST) {
-            editOppositeAnchorImagePos = transformPoint(frame.spatialTransformAST, editOppositeAnchorImagePos, false);
+            editOppositeAnchorImagePos = TransformPoint(frame.spatialTransformAST, editOppositeAnchorImagePos, false);
         }
-        const editOppositeAnchorCanvasPos = transformedImageToCanvasPos(editOppositeAnchorImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+        const editOppositeAnchorCanvasPos = TransformedImageToCanvasPos(editOppositeAnchorImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
         this.editOppositeAnchorCanvasPos = editOppositeAnchorCanvasPos;
 
         this.props.region.beginEditing();
@@ -124,10 +124,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+        let newAnchorPoint = CanvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         if (frame.spatialReference && frame.spatialTransformAST) {
-            newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+            newAnchorPoint = TransformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
         let w: number, h: number;
@@ -142,9 +142,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             h = region.size.x;
         }
 
-        let deltaAnchors = subtract2D(newAnchorPoint, this.editOppositeAnchorPoint);
+        let deltaAnchors = Subtract2D(newAnchorPoint, this.editOppositeAnchorPoint);
         // Apply inverse rotation to get difference between anchors without rotation
-        const deltaAnchorsUnrotated = rotate2D(deltaAnchors, (-region.rotation * Math.PI) / 180.0);
+        const deltaAnchorsUnrotated = Rotate2D(deltaAnchors, (-region.rotation * Math.PI) / 180.0);
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
@@ -160,8 +160,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
 
         // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
-        deltaAnchors = rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
-        const newCenter = add2D(this.editOppositeAnchorPoint, scale2D(deltaAnchors, 0.5));
+        deltaAnchors = Rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
+        const newCenter = Add2D(this.editOppositeAnchorPoint, Scale2D(deltaAnchors, 0.5));
         const newSize =
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}
@@ -177,10 +177,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, isKeepAspect: boolean) => {
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+        let newAnchorPoint = CanvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         if (frame.spatialReference && frame.spatialTransformAST) {
-            newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+            newAnchorPoint = TransformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
         let w: number, h: number;
@@ -195,9 +195,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             h = region.size.x;
         }
 
-        const deltaAnchorPoint = subtract2D(newAnchorPoint, region.center);
+        const deltaAnchorPoint = Subtract2D(newAnchorPoint, region.center);
         // Apply inverse rotation to get difference between anchor and center without rotation
-        const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-region.rotation * Math.PI) / 180.0);
+        const deltaAnchorPointUnrotated = Rotate2D(deltaAnchorPoint, (-region.rotation * Math.PI) / 180.0);
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
@@ -236,10 +236,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
-            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = AdjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
+            let positionImageSpace = CanvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
-                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
             this.props.region.setCenter(positionImageSpace);
         }
@@ -340,14 +340,14 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else {
                 delta = {x: 0, y: size.y};
             }
-            const offset = rotate2D(
-                scale2D(
+            const offset = Rotate2D(
+                Scale2D(
                     delta,
                     region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? 0.5 : region.regionType === CARTA.RegionType.ANNTEXT ? (0.5 * AppStore.Instance.imageRatio) / zoomLevel : 1
                 ),
                 (-region.rotation * Math.PI) / 180.0
             );
-            return isCornerMode ? add2D(this.editOppositeAnchorCanvasPos, scale2D(offset, 2)) : add2D(this.centerCanvasPos, offset);
+            return isCornerMode ? Add2D(this.editOppositeAnchorCanvasPos, Scale2D(offset, 2)) : Add2D(this.centerCanvasPos, offset);
         }
         return undefined;
     };
@@ -358,21 +358,21 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
-            const offset = rotate2D(
-                scale2D(
+            const offset = Rotate2D(
+                Scale2D(
                     size,
                     region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? 0.5 : region.regionType === CARTA.RegionType.ANNTEXT ? (0.5 * AppStore.Instance.imageRatio) / zoomLevel : 1
                 ),
                 (region.rotation * Math.PI) / 180.0
             );
             if (anchorName === "top-left") {
-                return add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: -offset.y});
+                return Add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: -offset.y});
             } else if (anchorName === "bottom-left") {
-                return add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: offset.y});
+                return Add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: offset.y});
             } else if (anchorName === "top-right") {
-                return add2D(this.centerCanvasPos, {x: offset.x * frame.aspectRatio, y: -offset.y});
+                return Add2D(this.centerCanvasPos, {x: offset.x * frame.aspectRatio, y: -offset.y});
             } else {
-                return add2D(this.centerCanvasPos, {x: offset.x * frame.aspectRatio, y: offset.y});
+                return Add2D(this.centerCanvasPos, {x: offset.x * frame.aspectRatio, y: offset.y});
             }
         }
         return undefined;
@@ -386,16 +386,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const anchor = konvaEvent.target;
             const anchorName = anchor.id();
             const anchorPos = anchor.position();
-            const offsetPoint = adjustPosToUnityStage(anchorPos, this.props.stageRef.current);
+            const offsetPoint = AdjustPosToUnityStage(anchorPos, this.props.stageRef.current);
             if (anchorName.includes("rotator")) {
                 // Calculate rotation from anchor position
-                let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
+                let newAnchorPoint = CanvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference && frame.spatialTransformAST) {
-                    newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+                    newAnchorPoint = TransformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
-                const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
-                const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
+                const delta = Subtract2D(newAnchorPoint, region.center);
+                const topAnchorPosition = Rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
+                const angle = (180.0 / Math.PI) * Angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else {
                 const isKeepAspectMode = evt.shiftKey;
@@ -453,14 +453,14 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         return anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
-            const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
-            let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
+            const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT && frame.spatialTransformAST ? TransformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
+            let posImage = Add2D(transformedCenter, Rotate2D(config.offset, (region.rotation * Math.PI) / 180));
 
             if (frame.spatialReference && region.regionType !== CARTA.RegionType.ANNTEXT && frame.spatialTransformAST) {
-                posImage = transformPoint(frame.spatialTransformAST, posImage, false);
+                posImage = TransformPoint(frame.spatialTransformAST, posImage, false);
             }
 
-            const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const posCanvas = TransformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             return (
                 <Anchor
                     key={config.anchor}
@@ -575,13 +575,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference && frame.spatialTransformAST) {
-            const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const centerSecondaryImage = TransformPoint(frame.spatialTransformAST, centerReferenceImage, false);
+            const centerPixelSpace = TransformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const n = (pointsSecondaryImage as Point2D[]).length;
             const pointArray = new Array<number>(n * 2);
             for (let i = 0; i < n; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const approxPointPixelSpace = TransformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
@@ -617,7 +617,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const height = region.size.y / devicePixelRatio;
             const rotation = region.rotation;
 
-            const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const centerPixelSpace = TransformedImageToCanvasPos(centerReferenceImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?

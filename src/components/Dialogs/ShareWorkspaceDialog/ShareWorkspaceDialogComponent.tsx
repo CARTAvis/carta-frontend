@@ -5,9 +5,9 @@ import {observer} from "mobx-react";
 
 import {DialogId} from "enums";
 import {AppStore} from "stores";
-import {copyToClipboard} from "utilities";
+import {CopyToClipboard} from "utilities";
 
-import {APP_TOASTER, warningToast} from "../../Shared";
+import {AppToaster, WarningToast} from "../../Shared";
 
 import "./ShareWorkspaceDialogComponent.scss";
 
@@ -54,7 +54,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
             setShareKey(shareKey ?? "");
         } catch (err) {
             console.error(err);
-            APP_TOASTER.show(warningToast("Could not generate a sharing link."));
+            AppToaster.show(WarningToast("Could not generate a sharing link."));
         }
     };
 
@@ -63,10 +63,10 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     if (shareKey) {
         const baseUrl = window.location.href.split("?")[0];
         const link = `${baseUrl}?key=${shareKey}`;
-        const copyButton = <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => copyToClipboard(link)} />;
+        const copyButton = <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => CopyToClipboard(link)} />;
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
-        const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
+        const isReadOnly = !activeWorkspace?.isEditable || !activeWorkspace.name;
         const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={isSaveBeforeShare} onChange={() => setSaveBeforeShare(!isSaveBeforeShare)} />;
         const readOnlyTooltip = (
             <span>

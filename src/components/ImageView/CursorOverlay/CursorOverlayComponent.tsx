@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {CursorInfo, SpectralInfo} from "models";
 
-import {formattedExponential, toFixed} from "utilities";
+import {FormattedExponential, ToFixed} from "utilities";
 
 import "./CursorOverlayComponent.scss";
 
@@ -36,10 +36,10 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
         }
         if (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE) {
-            infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
+            infoStrings.push(`Image: (${ToFixed(cursorInfo.posImageSpace.x)}, ${ToFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.cursorValue !== undefined) {
-            let valueString = `Value: ${this.props.isCursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            let valueString = `Value: ${this.props.isCursorValueToPercentage ? ToFixed(this.props.cursorValue, 1) + " %" : FormattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }

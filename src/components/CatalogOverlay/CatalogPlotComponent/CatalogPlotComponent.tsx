@@ -14,7 +14,7 @@ import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} f
 import {CatalogPlotType, CatalogUpdateMode} from "enums";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
-import {minMaxArray, toFixed, type TypedArray} from "utilities";
+import {MinMaxArray, ToFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
 
@@ -35,7 +35,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-plot",
             type: "catalog-plot",
@@ -81,7 +81,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 const frame = appStore.activeFrame;
                 const progress = profileStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
-                    progressString = `[${toFixed(progress * 100)}% complete]`;
+                    progressString = `[${ToFixed(progress * 100)}% complete]`;
                 }
                 if (frame && catalogFileIds?.length) {
                     WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType} : ${fileName} ${progressString}`);
@@ -154,7 +154,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const isYColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore?.plotType) {
                 case CatalogPlotType.D2Scatter:
-                    if (!isXColumn && !isYColumn && plotWidgetStore.scatterborder === undefined) {
+                    if (!isXColumn && !isYColumn && plotWidgetStore.scatterBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
@@ -219,8 +219,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private getScatterBorder(xArray: number[], yArray: number[]): Border {
-        const xBounds = minMaxArray(xArray);
-        const yBounds = minMaxArray(yArray);
+        const xBounds = MinMaxArray(xArray);
+        const yBounds = MinMaxArray(yArray);
         return {
             xMin: xBounds.minVal,
             xMax: xBounds.maxVal,
@@ -230,7 +230,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
-        const xBounds = minMaxArray(xArray);
+        const xBounds = MinMaxArray(xArray);
         return {
             xMin: xBounds.minVal,
             xMax: xBounds.maxVal
@@ -406,7 +406,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const mean = _.mean(data);
         const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / count);
         const rms = Math.sqrt(_.sum(_.map(data, i => Math.pow(i, 2))) / count);
-        const minMax = minMaxArray(data);
+        const minMax = MinMaxArray(data);
         widgetStore.setStatistic({mean: mean, count: size, validCount: count, std: std, min: minMax.minVal, max: minMax.maxVal, rms: rms});
     };
 
@@ -503,7 +503,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const yMin = event["yaxis.range[0]"];
             const yMax = event["yaxis.range[1]"];
             if (isFinite(xMin) || isFinite(yMin)) {
-                const currentBorder = widgetStore.scatterborder;
+                const currentBorder = widgetStore.scatterBorder;
                 if (currentBorder) {
                     const scatterBorder: Border = {
                         xMin: isFinite(xMin) ? xMin : currentBorder.xMin,
@@ -620,10 +620,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        const isInDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
+        const isInDragMode = widgetStore && selectionMode.includes(widgetStore.dragMode);
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        if (event?.points?.length > 0 && isInDragmode && profileStore && catalogWidgetStore) {
+        if (event?.points?.length > 0 && isInDragMode && profileStore && catalogWidgetStore) {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
             catalogStore.updateCatalogProfiles(catalogFileId);
@@ -697,7 +697,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
         const result = GSL.getFittingParameters(new Float64Array(x), new Float64Array(y));
-        const minMaxX = minMaxArray(x);
+        const minMaxX = MinMaxArray(x);
         widgetStore.setMinMaxX(minMaxX);
         widgetStore.setFitting(result);
     };
@@ -930,7 +930,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 pad: 0
             },
             showlegend: false,
-            dragmode: widgetStore.dragmode
+            dragMode: widgetStore.dragMode
         };
 
         if (widgetStore.shouldShowFittingResult) {
@@ -983,7 +983,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (widgetStore.isScatterAutoScaled) {
                 border = scatter.border;
             } else {
-                border = widgetStore.scatterborder;
+                border = widgetStore.scatterBorder;
             }
             if (border && layout.xaxis && layout.yaxis) {
                 layout.xaxis.range = [border.xMin, border.xMax];

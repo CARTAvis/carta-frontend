@@ -6,7 +6,7 @@ import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType, TickType} from "enums";
-import {clamp, toExponential, toFixed} from "utilities";
+import {Clamp, ToExponential, ToFixed} from "utilities";
 
 Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
 
@@ -222,11 +222,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     };
 
     private static formatTicksScientific = (value: number, index: number, ticks: Tick[]) => {
-        return toExponential(value, 2);
+        return ToExponential(value, 2);
     };
 
     private static formatTicksInteger = (value: number, index: number, ticks: Tick[]) => {
-        return toFixed(value);
+        return ToFixed(value);
     };
 
     private static formatTicksAutomatic = (value: number, index: number, ticks: Tick[]) => {
@@ -355,7 +355,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         const labelColor = this.props.isDarkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.isDarkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
         let lineColor = this.props.lineColor || (this.props.isDarkMode ? Colors.BLUE4 : Colors.BLUE2);
-        const opacity = clamp(this.props.opacity || 1.0, 0, 1);
+        const opacity = Clamp(this.props.opacity || 1.0, 0, 1);
         if (opacity < 1.0) {
             lineColor = tinycolor(lineColor).setAlpha(opacity).toRgbString();
         }
@@ -502,7 +502,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }
 
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
-                const currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
+                const currentOpacity = Clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
                 if (currentOpacity < 1.0) {
                     currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }

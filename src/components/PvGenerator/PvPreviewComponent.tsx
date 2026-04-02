@@ -16,7 +16,7 @@ interface PVPreviewDialogProps {
 
 @observer
 export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "pv-preview",
             type: "pv-preview",

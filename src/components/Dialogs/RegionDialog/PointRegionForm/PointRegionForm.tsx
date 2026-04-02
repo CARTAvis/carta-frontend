@@ -9,7 +9,7 @@ import {CoordinateMode, InputType} from "enums";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {type PointAnnotationStore, type RegionStore} from "stores/Frame";
-import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {CloseTo, GetFormattedWCSPoint, GetPixelValueFromWCS, IsWCSStringFormatValid} from "utilities";
 
 import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
@@ -22,7 +22,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         if (!region || !this.props.wcsInfo) {
             return null;
         }
-        return getFormattedWCSPoint(this.props.wcsInfo, region.center);
+        return GetFormattedWCSPoint(this.props.wcsInfo, region.center);
     }
 
     private handleNameChange = ev => {
@@ -31,7 +31,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
 
     private handleCenterXChange = (value: number): boolean => {
         const existingValue = this.props.region.center.x;
-        if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.RegionPixelEps)) {
+        if (isFinite(value) && !CloseTo(value, existingValue, PointRegionForm.RegionPixelEps)) {
             this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return true;
         }
@@ -40,7 +40,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
 
     private handleCenterYChange = (value: number): boolean => {
         const existingValue = this.props.region.center.y;
-        if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.RegionPixelEps)) {
+        if (isFinite(value) && !CloseTo(value, existingValue, PointRegionForm.RegionPixelEps)) {
             this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return true;
         }
@@ -48,10 +48,10 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
+        if (IsWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
+            const newPoint = GetPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
             const existingValue = this.props.region.center.x;
-            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.RegionPixelEps)) {
+            if (newPoint && isFinite(newPoint.x) && !CloseTo(newPoint.x, existingValue, PointRegionForm.RegionPixelEps)) {
                 this.props.region.setCenter(newPoint);
                 return true;
             }
@@ -60,10 +60,10 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
+        if (IsWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
+            const newPoint = GetPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
             const existingValue = this.props.region.center.y;
-            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.RegionPixelEps)) {
+            if (newPoint && isFinite(newPoint.y) && !CloseTo(newPoint.y, existingValue, PointRegionForm.RegionPixelEps)) {
                 this.props.region.setCenter(newPoint);
                 return true;
             }

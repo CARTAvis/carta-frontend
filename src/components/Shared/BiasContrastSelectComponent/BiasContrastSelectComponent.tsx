@@ -5,7 +5,7 @@ import type Konva from "konva";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {clamp} from "utilities";
+import {Clamp} from "utilities";
 
 const DRAG_MOVE_INTERVAL = 10;
 const DOUBLE_CLICK_THRESHOLD = 300;
@@ -32,8 +32,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     private updateValues = (x: number, y: number, interval: number) => {
         clearTimeout(this.updateValuesTimer);
         this.updateValuesTimer = setTimeout(() => {
-            const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-            const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
+            const bias = (Clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+            const contrast = this.props.contrastMax - (Clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
             this.props.setBias(bias);
             this.props.setContrast(contrast);
         }, interval);
@@ -72,7 +72,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     radius={5}
                     fill={Colors.GRAY3}
                     draggable={true}
-                    dragBoundFunc={pos => ({x: clamp(pos.x, 0, this.props.boardWidth), y: clamp(pos.y, 0, this.props.boardHeight)})}
+                    dragBoundFunc={pos => ({x: Clamp(pos.x, 0, this.props.boardWidth), y: Clamp(pos.y, 0, this.props.boardHeight)})}
                     onDragMove={this.handleDragMove}
                     onDblClick={this.handleDoubleClick}
                 />

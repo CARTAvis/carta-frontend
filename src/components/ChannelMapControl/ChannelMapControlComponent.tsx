@@ -4,16 +4,16 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AutoColorPickerComponent, FontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {clamp, SWATCH_COLORS} from "utilities";
+import {Clamp, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
 
 @observer
 export class ChannelMapControlComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "channel-map-control",
             type: "channel-map-control",
@@ -44,7 +44,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.displayedFrame;
         if (frame) {
-            channelMapStore.setStartChannel(clamp(val, 0, channelMapStore.totalChannelNum - 1));
+            channelMapStore.setStartChannel(Clamp(val, 0, channelMapStore.totalChannelNum - 1));
         }
     };
 
@@ -177,7 +177,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <Collapse isOpen={isChannelMapLabelVisible}>
                     <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font" disabled={!channelMapSettings.isChannelMapEnabled}>
-                        {fontSelect(channelMapSettings.isChannelMapEnabled, channelMapSettings.font, channelMapSettings.setFont)}
+                        {FontSelect(channelMapSettings.isChannelMapEnabled, channelMapSettings.font, channelMapSettings.setFont)}
                         <SafeNumericInput
                             min={7}
                             max={96}

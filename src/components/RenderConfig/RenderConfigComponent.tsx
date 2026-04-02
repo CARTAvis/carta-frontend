@@ -12,7 +12,7 @@ import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
+import {Clamp, GetColorForTheme, ScaleValue, ToExponential, ToFixed} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -27,7 +27,7 @@ const COLORSCALE_LENGTH = 2048;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",
@@ -81,9 +81,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
             if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
                 minIndex = Math.floor((this.widgetStore.minX - firstBinCenter) / binWidth);
-                minIndex = clamp(minIndex, 0, bins.length - 1);
+                minIndex = Clamp(minIndex, 0, bins.length - 1);
                 maxIndex = Math.ceil((this.widgetStore.maxX - firstBinCenter) / binWidth);
-                maxIndex = clamp(maxIndex, 0, bins.length - 1);
+                maxIndex = Clamp(maxIndex, 0, bins.length - 1);
             }
 
             const xMin = firstBinCenter + binWidth * minIndex;
@@ -92,8 +92,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let yMax = yMin;
 
             let values: Array<{x: number; y: number}> = [];
-            const n = maxIndex - minIndex;
-            if (n > 0 && !isNaN(n)) {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            const N = maxIndex - minIndex;
+            if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
@@ -114,7 +115,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === RenderConfigComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addRenderConfigWidget();
             if (id) {
@@ -246,9 +247,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let numberString;
             // Switch between standard and scientific notation
             if (this.widgetStore.cursorX < 1e-2) {
-                numberString = toExponential(this.widgetStore.cursorX, 2);
+                numberString = ToExponential(this.widgetStore.cursorX, 2);
             } else {
-                numberString = toFixed(this.widgetStore.cursorX, 2);
+                numberString = ToFixed(this.widgetStore.cursorX, 2);
             }
 
             const frame = AppStore.Instance.activeFrame;
@@ -315,7 +316,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const scaleMinVal = frame.renderConfig.scaleMinVal;
         const scaleMaxVal = frame.renderConfig.scaleMaxVal;
-        const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+        const primaryLineColor = GetColorForTheme(this.widgetStore.primaryLineColor);
         const histogram = frame.renderConfig.histogram;
 
         if (histogram && histogram.bins && histogram.bins.length) {
@@ -400,7 +401,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal));
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colormapScalingY = colormapScalingY.map(x =>
-                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.shouldUseSmoothedBiasContrast)
+                    ScaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.shouldUseSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
                 if (linePlotProps.isLogY) {

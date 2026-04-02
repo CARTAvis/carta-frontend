@@ -11,7 +11,7 @@ import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
+import {BinarySearchByX, Clamp, CloseTo, GetColorForTheme, ToExponential, ToFixed} from "utilities";
 
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
@@ -21,7 +21,7 @@ import "./HistogramComponent.scss";
 export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -65,7 +65,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
         return (
             !(regionHistogramData.config.fixedBounds ?? false) ||
-            (regionHistogramData.config.bounds ? closeTo(regionHistogramData.config.bounds.min ?? 0, this.widgetStore.minPix ?? 0) && closeTo(regionHistogramData.config.bounds.max ?? 0, this.widgetStore.maxPix ?? 0) : false)
+            (regionHistogramData.config.bounds ? CloseTo(regionHistogramData.config.bounds.min ?? 0, this.widgetStore.minPix ?? 0) && CloseTo(regionHistogramData.config.bounds.max ?? 0, this.widgetStore.maxPix ?? 0) : false)
         );
     }
 
@@ -83,9 +83,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
             if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
                 minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+                minIndex = Clamp(minIndex, 0, histogram.bins.length - 1);
                 maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+                maxIndex = Clamp(maxIndex, 0, histogram.bins.length - 1);
             }
 
             const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
@@ -144,7 +144,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === HistogramComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {
@@ -207,9 +207,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
-                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
+                const nearest = BinarySearchByX(this.plotData.values, this.widgetStore.cursorX);
                 if (nearest?.point) {
-                    let xValueLabel = Math.abs(nearest.point.x) < 1e-5 ? toExponential(nearest.point.x, 5) : toFixed(nearest.point.x, 5);
+                    let xValueLabel = Math.abs(nearest.point.x) < 1e-5 ? ToExponential(nearest.point.x, 5) : ToFixed(nearest.point.x, 5);
                     let yValueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
                     if (unit) {
                         xValueLabel += ` ${unit}`;
@@ -315,7 +315,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     linePlotProps.data = currentPlotData.values;
 
                     // set line color
-                    linePlotProps.lineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                    linePlotProps.lineColor = GetColorForTheme(this.widgetStore.primaryLineColor);
 
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                     if (this.widgetStore.isAutoScaledX) {

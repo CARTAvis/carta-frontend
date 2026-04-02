@@ -18,7 +18,7 @@ import "./ToolbarMenuComponent.scss";
 export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
-        appStore.updateActiveLayer(ImageViewLayer.regionCreating);
+        appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
         appStore.activeFrame?.regionSet.setNewRegionType(type);
         appStore.activeFrame?.regionSet.setMode(RegionMode.CREATING);
     };
@@ -139,8 +139,8 @@ export class ToolbarMenuComponent extends React.Component {
                     </Popover>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
-                    {Array.from(WidgetsStore.Instance.cartaWidgets.keys()).map(widgetType => {
-                        const widgetConfig = WidgetsStore.Instance.cartaWidgets.get(widgetType);
+                    {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
+                        const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
                         if (!widgetConfig) {
                             return null;
                         }

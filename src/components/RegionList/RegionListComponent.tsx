@@ -12,7 +12,7 @@ import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
 import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
+import {Clamp, FormattedArcsec, GetFormattedWCSPoint, Length2D, ToFixed} from "utilities";
 
 import "./RegionListComponent.scss";
 
@@ -30,7 +30,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly HeaderRowHeight = 25;
     private listRef = React.createRef<any>();
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",
@@ -231,9 +231,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
         }
 
-        // Dummy values to trigger re-rendering of isVisible rows when region properties change from an external source
-        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, frame.regionSet.regions.length - 1);
-        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, frame.regionSet.regions.length - 1);
+        // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
+        const firstVisibleRegion = Clamp(this.firstVisibleRow, 0, frame.regionSet.regions.length - 1);
+        const lastVisibleRegion = Clamp(this.lastVisibleRow, firstVisibleRegion, frame.regionSet.regions.length - 1);
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = frame.regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -327,7 +327,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         centerContent = <RegionWcsCenter region={region} frame={frame} />;
                     }
                 } else {
-                    centerContent = `(${toFixed(region.center.x, 1)}, ${toFixed(region.center.y, 1)})`;
+                    centerContent = `(${ToFixed(region.center.x, 1)}, ${ToFixed(region.center.y, 1)})`;
                 }
             } else {
                 centerContent = "Invalid";
@@ -345,16 +345,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                                formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
+                                FormattedArcsec(region.wcsSize && Length2D(region.wcsSize), WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
-                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
+                                    {FormattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
                                     <br />
-                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
+                                    {FormattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size && length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? ToFixed(region.size && Length2D(region.size), 1) : `(${ToFixed(region.size.x, 1)}, ${ToFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
@@ -449,7 +449,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     {isShowSizeColumn && sizeEntry}
                     {isShowRotationColumn && (
                         <div className="cell" style={{width: RegionListComponent.RotationColumnDefaultWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
-                            {toFixed(region.rotation, 1)}
+                            {ToFixed(region.rotation, 1)}
                         </div>
                     )}
                 </div>
@@ -513,7 +513,7 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
             );
         }
 
-        const centerWCSPoint = getFormattedWCSPoint(this.props.frame.wcsInfoForTransformation, region.center);
+        const centerWCSPoint = GetFormattedWCSPoint(this.props.frame.wcsInfoForTransformation, region.center);
         if (centerWCSPoint) {
             return (
                 <React.Fragment>

@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, LayoutDialogMode, PreferenceKeys} from "enums";
-import {ctypeAbbrToName, PresetLayout} from "models";
+import {CtypeAbbrToName, PresetLayout} from "models";
 import {AppStore, type FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
@@ -294,7 +294,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
 
     const [selectedLayout, setSelectedLayout] = React.useState(layoutName);
 
-    const ctypeName = ctypeAbbrToName(ctypes);
+    const ctypeName = CtypeAbbrToName(ctypes);
     const normCtype = ctypes
         .split(",")
         .map(ctype => {

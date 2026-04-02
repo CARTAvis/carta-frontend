@@ -8,14 +8,14 @@ import {ResizeDetector} from "components/Shared";
 import {HelpType, ImageType} from "enums";
 import {type Point2D, Zoom} from "models";
 import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
-import {toFixed} from "utilities";
+import {ToFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
 
-export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function GetImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
 
@@ -37,7 +37,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
+        const panelCanvas = GetPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
@@ -46,7 +46,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     return imageViewCanvas;
 }
 
-export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function GetPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const panelElement = $(`#image-panel-${column}-${row}`)?.first();
     if (!panelElement?.length) {
         return null;
@@ -166,7 +166,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view",
             type: "image-view",
@@ -286,7 +286,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     {this.panels}
                     <div style={{opacity: this.isShowRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
                         <p>
-                            {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
+                            {effectiveImageSize.x} &times; {effectiveImageSize.y} ({ToFixed(ratio, 2)})
                         </p>
                         {gridSizeNode}
                     </div>

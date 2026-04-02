@@ -15,7 +15,7 @@ import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {Clamp, GetColorForTheme, ToExponential, ToFixed} from "utilities";
 
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
@@ -162,9 +162,9 @@ export class ContourDialogComponent extends React.Component {
         // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
         if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
             minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-            minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+            minIndex = Clamp(minIndex, 0, histogram.bins.length - 1);
             maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-            maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+            maxIndex = Clamp(maxIndex, 0, histogram.bins.length - 1);
         }
 
         const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
@@ -370,7 +370,7 @@ export class ContourDialogComponent extends React.Component {
         const currentPlotData = this.plotData;
         if (currentPlotData) {
             // set line color
-            const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+            const primaryLineColor = GetColorForTheme(this.widgetStore.primaryLineColor);
             linePlotProps.lineColor = primaryLineColor;
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -441,7 +441,7 @@ export class ContourDialogComponent extends React.Component {
         const sortedLevels = this.levels
             .slice()
             .sort((a, b) => a - b)
-            .map(level => (Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2)));
+            .map(level => (Math.abs(level) < 0.1 ? ToExponential(level, 2) : ToFixed(level, 2)));
 
         const levelPanel = (
             <div className="contour-level-panel">

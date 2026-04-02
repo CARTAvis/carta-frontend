@@ -11,7 +11,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
 import {AlertStore, AppStore} from "stores";
 
-import {APP_TOASTER, errorToast, successToast} from "../../Shared";
+import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
 import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
 
@@ -72,14 +72,14 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.saveWorkspace(name);
                 if (res) {
-                    APP_TOASTER.show(successToast("floppy-disk", "Workspace saved"));
+                    AppToaster.show(SuccessToast("floppy-disk", "Workspace saved"));
                     handleCloseClicked();
                     return;
                 }
             } catch (err) {
                 console.error(err);
             }
-            APP_TOASTER.show(errorToast("Error saving workspace"));
+            AppToaster.show(ErrorToast("Error saving workspace"));
             setIsFetching(false);
         },
         [appStore, handleCloseClicked]
@@ -95,7 +95,7 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.loadWorkspace(name);
                 if (res) {
-                    APP_TOASTER.show(successToast("floppy-disk", "Workspace loaded"));
+                    AppToaster.show(SuccessToast("floppy-disk", "Workspace loaded"));
                     handleCloseClicked();
                     return;
                 }

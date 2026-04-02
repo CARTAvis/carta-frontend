@@ -10,7 +10,7 @@ import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
-import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {Clamp, GetFormattedWCSPoint, GetPixelValueFromWCS, IsWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
 
@@ -81,7 +81,7 @@ export class CatalogQueryComponent extends React.Component {
         const formatX = appStore.overlaySettings.numbers.formatTypeX;
         const formatY = appStore.overlaySettings.numbers.formatTypeY;
         const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = GetFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
@@ -374,7 +374,7 @@ export class CatalogQueryComponent extends React.Component {
         if (isFinite(val) && val <= configStore.maxRadius && val >= 0) {
             configStore.setSearchRadius(val);
         } else {
-            ev.currentTarget.value = clamp(val, 0, configStore.maxRadius).toString();
+            ev.currentTarget.value = Clamp(val, 0, configStore.maxRadius).toString();
         }
     };
 
@@ -390,7 +390,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = GetFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
         }
@@ -398,8 +398,8 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.x) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
+        if (IsWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
+            const newPoint = GetPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
@@ -420,7 +420,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = GetFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
         }
@@ -428,8 +428,8 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.y) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
+        if (IsWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
+            const newPoint = GetPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;

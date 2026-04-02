@@ -6,7 +6,7 @@ import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {CeilToPower, COLOR_MAPS_ALL, GL2, Rotate2D, Scale2D, Subtract2D} from "utilities";
 
 import "./ContourViewComponent.scss";
 
@@ -78,7 +78,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
         // Otherwise just clear it
         const xOffset = this.props.column * frame.renderWidth * appStore.pixelRatio;
-        // y-axis is isInverted
+        // y-axis is inverted
         const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * appStore.pixelRatio;
         this.gl.viewport(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
@@ -133,7 +133,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
-            const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
+            const originAdjustedOffset = Subtract2D(baseFrame.spatialTransform.origin, Scale2D(Rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
 
             const rangeOffset = {
                 x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
@@ -146,7 +146,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
 
             lineThickness = (AppStore.Instance.pixelRatio * frame.contourConfig.thickness) / (baseFrame.spatialReference.zoomLevel * baseFrame.spatialTransform.scale);
-            dashFactor = ceilToPower(1.0 / baseFrame.spatialReference.zoomLevel, 3.0);
+            dashFactor = CeilToPower(1.0 / baseFrame.spatialReference.zoomLevel, 3.0);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
             const rangeScale = {
@@ -165,7 +165,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, 1.0);
 
             lineThickness = (AppStore.Instance.pixelRatio * frame.contourConfig.thickness) / baseFrame.zoomLevel;
-            dashFactor = ceilToPower(1.0 / baseFrame.zoomLevel, 3.0);
+            dashFactor = CeilToPower(1.0 / baseFrame.zoomLevel, 3.0);
         }
 
         if (isActive) {

@@ -6,7 +6,7 @@ import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps
 import {HelpType} from "enums";
 import {type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {parseNumber} from "utilities";
+import {ParseNumber} from "utilities";
 
 import "./RenderConfigSettingsPanelComponent.scss";
 
@@ -14,7 +14,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",
@@ -61,8 +61,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = ParseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = ParseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (minX === undefined || maxX === undefined) {
             return;
         }
@@ -80,8 +80,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = ParseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = ParseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (minX === undefined || maxX === undefined) {
             return;
         }
@@ -99,8 +99,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = ParseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = ParseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (minY === undefined || maxY === undefined) {
             return;
         }
@@ -118,8 +118,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = ParseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = ParseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (minY === undefined || maxY === undefined) {
             return;
         }
@@ -151,13 +151,13 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             handleMarkerTextChanged: this.handleMarkerTextChanged,
             isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
-            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            xMinVal: ParseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            xMaxVal: ParseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            yMinVal: ParseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            yMaxVal: ParseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
 

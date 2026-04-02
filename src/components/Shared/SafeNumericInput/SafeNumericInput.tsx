@@ -48,8 +48,8 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
         }
     }
 
-    @action setFocused(isValue: boolean) {
-        this.isFocused = isValue;
+    @action setFocused(isBool: boolean) {
+        this.isFocused = isBool;
     }
 
     handleOnFocus = () => {

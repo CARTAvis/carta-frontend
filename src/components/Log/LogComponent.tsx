@@ -11,7 +11,7 @@ import "./LogComponent.scss";
 
 @observer
 export class LogComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "log",
             type: "log",

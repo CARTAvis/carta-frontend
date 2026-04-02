@@ -10,7 +10,7 @@ import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "mode
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, getRequiredTiles, GL2, layerToMip, scale2D, smoothStep} from "utilities";
+import {Add2D, CopyToFP32Texture, CreateFP32Texture, GetColorForTheme, GetRequiredTiles, GL2, LayerToMip, Scale2D, SmoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -256,7 +256,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
 
-            const pixelGridColor = tinycolor(getColorForTheme(appStore.preferenceStore.pixelGridColor));
+            const pixelGridColor = tinycolor(GetColorForTheme(appStore.preferenceStore.pixelGridColor));
             if (pixelGridColor.isValid()) {
                 const rgba = pixelGridColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.PixelGridColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
@@ -286,7 +286,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
             this.gl.disable(GL2.SCISSOR_TEST);
 
-            // Skip rendering if frame is isHidden
+            // Skip rendering if frame is hidden
             if (frame.renderConfig.isVisible) {
                 if (this.props.image?.type === ImageType.PV_PREVIEW) {
                     this.renderSingleTileCanvas(frame);
@@ -318,10 +318,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         this.gl.activeTexture(GL2.TEXTURE0);
 
-        const requiredTiles = getRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
-            const mip = layerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+            const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
             this.renderTiles(frame, requiredTiles, channel, mip, false, 3, true);
         } else {
             this.renderTiles(frame, requiredTiles, channel, boundedView.mip, false, 3, true);
@@ -410,9 +410,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         if (!isTileBasedRender && rasterTile.width != null && rasterTile.height != null && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
-            const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
+            const texture = CreateFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             if (texture && rasterTile.data) {
-                copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
+                CopyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
                 this.gl.bindTexture(GL2.TEXTURE_2D, texture);
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
@@ -444,12 +444,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
         let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
-        const tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
+        const tileScaling = Scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {
-            bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
+            bottomLeft = Add2D(bottomLeft, frame.spatialTransform.translation);
             // set origin of rotation to image center
-            const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
+            const rotationOriginImageSpace: Point2D = Add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
             const rotationOriginCanvasSpace: Point2D = {
                 x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
                 y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin)
@@ -479,7 +479,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.isPixelGridVisible) {
             const cutoff = 0.5 / zoom;
-            const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
+            const opacity = 0.25 * SmoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
             this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
             this.gl.uniform1f(shaderUniforms.PixelGridOpacity, opacity);
         } else {
@@ -487,7 +487,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         this.gl.uniform1f(shaderUniforms.PixelAspectRatio, aspectRatio);
         // take zoom level into account to convert from image space to canvas space
-        bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
+        bottomLeft = Scale2D(bottomLeft, spatialRef.zoomLevel);
         this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width ?? 0, rasterTile.height ?? 0);
         this.gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         this.gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
@@ -527,7 +527,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     nanAlpha: appStore.preferenceStore.nanAlpha,
                     isPixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
-                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                    pixelGridColor: GetColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };
                 const ratio = appStore.imageRatio;
             }

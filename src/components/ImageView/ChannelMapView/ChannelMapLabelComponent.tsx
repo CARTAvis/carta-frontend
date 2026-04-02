@@ -6,7 +6,7 @@ import type {ImageItem} from "models";
 
 import {Font} from "components/Shared";
 import {AppStore, ChannelMapStore, type OverlaySettings} from "stores";
-import {getColorForTheme} from "utilities";
+import {GetColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {
     overlaySettings: OverlaySettings;
@@ -62,7 +62,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: channelMapStore.hasCustomColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
+                    color: channelMapStore.hasCustomColor ? GetColorForTheme(channelMapStore.color) : GetColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
                     position: "absolute",
                     top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
                     left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,

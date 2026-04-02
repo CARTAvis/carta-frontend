@@ -9,10 +9,10 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "stores/Frame";
-import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
+import {Add2D, Angle2D, Average2D, ClosestPointOnLine, Rotate2D, Subtract2D, TransformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {AdjustPosToUnityStage, CanvasToTransformedImagePos, TransformedImageToCanvasPos} from "./shared";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -102,21 +102,21 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const index = node.index;
             const anchor = node.id();
             const evt = konvaEvent.evt;
-            const offsetPoint = adjustPosToUnityStage(node.position(), this.props.stageRef.current);
+            const offsetPoint = AdjustPosToUnityStage(node.position(), this.props.stageRef.current);
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
-                let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
+                let newAnchorPoint = CanvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference && frame.spatialTransformAST) {
-                    newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+                    newAnchorPoint = TransformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
-                const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 1, y: 0}, (region.rotation * Math.PI) / 180.0);
-                const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
+                const delta = Subtract2D(newAnchorPoint, region.center);
+                const topAnchorPosition = Rotate2D({x: 1, y: 0}, (region.rotation * Math.PI) / 180.0);
+                const angle = (180.0 / Math.PI) * Angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else if (index >= 0 && index < region.controlPoints.length) {
-                let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
+                let positionImageSpace = CanvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference && frame.spatialTransformAST) {
-                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                    positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if (
@@ -177,16 +177,16 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const frame = this.props.frame;
 
         if (this.props.selected && region.controlPoints.length >= 2) {
-            let positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
+            let positionImageSpace = CanvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
-                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
             let minDistance = Number.MAX_VALUE;
             let closestIndex = -1;
             let closestPoint: Point2D | null = null;
             // Find closest point on each line segment, select the closest overall that actually lies on the line segment
             for (let i = 0; i < (region.regionType === CARTA.RegionType.POLYLINE ? region.controlPoints.length - 1 : region.controlPoints.length); i++) {
-                const pointCheck = closestPointOnLine(positionImageSpace, region.controlPoints[i], region.controlPoints[(i + 1) % region.controlPoints.length]);
+                const pointCheck = ClosestPointOnLine(positionImageSpace, region.controlPoints[i], region.controlPoints[(i + 1) % region.controlPoints.length]);
                 if (pointCheck.bounded && pointCheck.distance < minDistance) {
                     minDistance = pointCheck.distance;
                     closestPoint = pointCheck.point;
@@ -244,14 +244,14 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         if (konvaEvent.target) {
             const region = this.props.region;
             const frame = this.props.frame;
-            const centerImageSpace = average2D(region.controlPoints);
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
-            let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const centerImageSpace = Average2D(region.controlPoints);
+            const position = AdjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
+            let newPosition = CanvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
-                newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
+                newPosition = TransformPoint(frame.spatialTransformAST, newPosition, true);
             }
-            const deltaPosition = subtract2D(newPosition, centerImageSpace);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
+            const deltaPosition = Subtract2D(newPosition, centerImageSpace);
+            const newPoints = region.controlPoints.map(p => Add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
         }
     };
@@ -297,14 +297,14 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const pixelRatio = AppStore.Instance.pixelRatio;
 
         if (frame.spatialReference && frame.spatialTransformAST) {
-            const centerReferenceImage = average2D(controlPoints);
-            const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const centerReferenceImage = Average2D(controlPoints);
+            const centerSecondaryImage = TransformPoint(frame.spatialTransformAST, centerReferenceImage, false);
+            centerPointCanvasSpace = TransformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const n = (pointsSecondaryImage as Point2D[]).length;
             pointArray = new Array<number>(n * 2);
             for (let i = 0; i < n; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const approxPointPixelSpace = TransformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -312,13 +312,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             // Construct anchors if region is selected
             if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 anchors = controlPoints.map((p, i) => {
-                    const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
-                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                    const pSecondaryImage = TransformPoint(frame.spatialTransformAST!, p, false);
+                    const pCanvasPos = TransformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
-                    // trigger rotation anchor re-render when isZooming
+                    // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.spatialReference?.zoomLevel;
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
@@ -329,15 +329,15 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             if (this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
-                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const pSecondaryImage = TransformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
+                const pCanvasPos = TransformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
         } else {
             controlPoints = controlPoints.map(p => {
-                return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                return TransformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             });
-            centerPointCanvasSpace = average2D(controlPoints);
+            centerPointCanvasSpace = Average2D(controlPoints);
             // Construct anchors if region is selected
             if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
@@ -346,7 +346,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
-                    // trigger rotation anchor re-render when isZooming
+                    // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.zoomLevel;
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
@@ -357,7 +357,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             if (this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const anchorPositionPixelSpace = TransformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
 

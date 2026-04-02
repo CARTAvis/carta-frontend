@@ -15,7 +15,7 @@ class PlaceholderComponentProps {
 
 @observer
 export class PlaceholderComponent extends React.Component<PlaceholderComponentProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "placeholder",
             type: "placeholder",

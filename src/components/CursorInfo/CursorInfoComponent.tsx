@@ -8,13 +8,13 @@ import {ResizeDetector, SimpleTableComponent} from "components/Shared";
 import {HelpType, ImageType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {formattedExponential, toFixed} from "utilities";
+import {FormattedExponential, ToFixed} from "utilities";
 
 import "./CursorInfoComponent.scss";
 
 @observer
 export class CursorInfoComponent extends React.Component<WidgetProps> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "cursor-info",
             type: "cursor-info",
@@ -55,7 +55,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             return "-";
         }
 
-        let valueString = frame.requiredUnit === "%" ? toFixed(frame.cursorValue.value, 1) : formattedExponential(frame.cursorValue.value, 5, "", true, true);
+        let valueString = frame.requiredUnit === "%" ? ToFixed(frame.cursorValue.value, 1) : FormattedExponential(frame.cursorValue.value, 5, "", true, true);
         if (isNaN(frame.cursorValue.value)) {
             valueString = "NaN";
         }
@@ -97,9 +97,9 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
         return (
             <React.Fragment>
-                {toFixed(x, 3)}
+                {ToFixed(x, 3)}
                 <br />
-                {toFixed(y, 3)}
+                {ToFixed(y, 3)}
             </React.Fragment>
         );
     };

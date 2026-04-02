@@ -7,10 +7,10 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
+import {Add2D, PointDistance, Subtract2D, TransformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {AdjustPosToUnityStage, CanvasToTransformedImagePos, TransformedImageToCanvasPos} from "./shared";
 
 interface CompassRulerAnnotationProps {
     key: number;
@@ -56,12 +56,12 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);
-            const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-            const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-            const deltaPosition = subtract2D(imagePosition, oldImagePosition);
-            const newPoints = region.controlPoints.map((p, i) => (i === 0 ? add2D(p, deltaPosition) : p));
+            const oldPosition = AdjustPosToUnityStage(mousePoint.current, props.stageRef.current);
+            const oldImagePosition = CanvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
+            const position = AdjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            const imagePosition = CanvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            const deltaPosition = Subtract2D(imagePosition, oldImagePosition);
+            const newPoints = region.controlPoints.map((p, i) => (i === 0 ? Add2D(p, deltaPosition) : p));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
         }
@@ -100,14 +100,14 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         if (konvaEvent.target) {
             const anchor = konvaEvent.target;
             const anchorPos = anchor.position();
-            const offsetPoint = adjustPosToUnityStage(anchorPos, props.stageRef.current);
-            let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
-            const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
-            const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            const distance = pointDistance(anchorPos, originPoints);
+            const offsetPoint = AdjustPosToUnityStage(anchorPos, props.stageRef.current);
+            let positionImageSpace = CanvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
+            const controlPoint = frame.spatialReference && frame.spatialTransformAST ? TransformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
+            const originPoints = TransformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+            const distance = PointDistance(anchorPos, originPoints);
 
             if (frame.spatialReference && frame.spatialTransformAST) {
-                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
 
             if (anchor.id() === "origin") {
@@ -134,8 +134,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const eastApproxPoints = approxPoints.eastApproximatePoints;
     const northPointArray: number[] = [];
     const eastPointArray: number[] = [];
-    const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
-    const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const controlPoint = frame.spatialReference && frame.spatialTransformAST ? TransformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
+    const originPoints = TransformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     if (!frame.isValidWcs) {
         const originX = originPoints.x - mousePoint.current.x;
@@ -146,8 +146,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         eastPointArray.push(originX, originY, originX - compassStageLength, originY);
     } else {
         for (let i = 0; i < northApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+            const point = TransformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+            if (PointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
                 break;
             }
             northPointArray[i] = point.x - mousePoint.current.x;
@@ -155,8 +155,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         }
 
         for (let i = 0; i < eastApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+            const point = TransformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+            if (PointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
                 break;
             }
             eastPointArray[i] = point.x - mousePoint.current.x;
@@ -315,14 +315,14 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);
-            const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
+            const oldPosition = AdjustPosToUnityStage(mousePoint.current, props.stageRef.current);
+            const oldImagePosition = CanvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
             const transformedOldImagePosition = frame.spatialReference && frame.spatialTransform ? frame.spatialTransform.transformCoordinate(oldImagePosition) : oldImagePosition;
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-            const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            const position = AdjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            const imagePosition = CanvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const transformedImagePosition = frame.spatialReference && frame.spatialTransform ? frame.spatialTransform.transformCoordinate(imagePosition) : imagePosition;
-            const deltaPosition = subtract2D(transformedImagePosition, transformedOldImagePosition);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
+            const deltaPosition = Subtract2D(transformedImagePosition, transformedOldImagePosition);
+            const newPoints = region.controlPoints.map(p => Add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
         }
@@ -355,10 +355,10 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
             const anchor = konvaEvent.target;
             const anchorPos = anchor.position();
             const anchorName = anchor.id();
-            const offsetPoint = adjustPosToUnityStage(anchorPos, props.stageRef.current);
-            let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
+            const offsetPoint = AdjustPosToUnityStage(anchorPos, props.stageRef.current);
+            let positionImageSpace = CanvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
-                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
 
             if (anchorName === "start") {
@@ -399,10 +399,10 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     const imageRatio = AppStore.Instance.imageRatio;
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const secondaryImagePointStart = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
-    const secondaryImagePointFinish = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[1], false) : region.controlPoints[1];
-    const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const secondaryImagePointStart = frame.spatialReference && frame.spatialTransformAST ? TransformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
+    const secondaryImagePointFinish = frame.spatialReference && frame.spatialTransformAST ? TransformPoint(frame.spatialTransformAST, region.controlPoints[1], false) : region.controlPoints[1];
+    const canvasPosStart = TransformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const canvasPosFinish = TransformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
     const wcsInfo = frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
@@ -417,19 +417,19 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const hypotenusePointArray = Array<number>(hypotenuseApproxPoints.length);
 
     for (let i = 0; i < xPointArray.length; i += 2) {
-        const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        const point = TransformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         xPointArray[i] = point.x - mousePoint.current.x;
         xPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < yPointArray.length; i += 2) {
-        const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        const point = TransformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         yPointArray[i] = point.x - mousePoint.current.x;
         yPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < hypotenusePointArray.length; i += 2) {
-        const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        const point = TransformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         hypotenusePointArray[i] = point.x - mousePoint.current.x;
         hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }

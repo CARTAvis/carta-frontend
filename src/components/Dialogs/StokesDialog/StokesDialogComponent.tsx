@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {BrowserMode, DialogId, HelpType} from "enums";
-import {hyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
+import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
 import {AppStore, PreferenceStore} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -218,7 +218,7 @@ export class StokesDialogComponent extends React.Component {
         });
 
         if (PreferenceStore.Instance.isDynamicLayoutEnabled) {
-            const hyperCubeCtype = hyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
+            const hyperCubeCtype = HyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
             dynamicLayoutStore.matchLayoutMapping(hyperCubeCtype);
             if (dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
                 layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);

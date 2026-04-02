@@ -10,14 +10,14 @@ import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
 import {SimpleTableComponent, type SimpleTableComponentProps} from "components/Shared";
 import {FileInfoType} from "enums";
 import {AppStore} from "stores";
-import {exportTxtFile} from "utilities";
+import {ExportTxtFile} from "utilities";
 
 import "./FileInfoComponent.scss";
 
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
-    HDUOptions?: {hduList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
+    HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.IFileInfoExtended | null;
     regionFileInfo: string;
     catalogFileInfo: CARTA.ICatalogFileInfo | null;
@@ -210,11 +210,11 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHDUList = () => {
-        return this.props.HDUOptions && this.props.HDUOptions.hduList?.length > 1 ? (
+        return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
             <ControlGroup vertical={false}>
                 <Divider />
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect options={this.props.HDUOptions.hduList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
@@ -447,7 +447,7 @@ export class FileInfoComponent extends React.Component<{
                 content += `${row.name} = ${row.value}\n`;
             }
         });
-        exportTxtFile(imageName, content);
+        ExportTxtFile(imageName, content);
     };
 
     render() {

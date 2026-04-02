@@ -11,7 +11,7 @@ import moment from "moment";
 
 import {BrowserMode, FileFilteringType, FileFilterMode} from "enums";
 import {AppStore, type BrowserFileList, FileBrowserStore, type ISelectedFile} from "stores";
-import {toFixed} from "utilities";
+import {ToFixed} from "utilities";
 
 import "./FileListTableComponent.scss";
 
@@ -83,13 +83,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private static getFileSizeDisplay(sizeInBytes: number): string {
         if (sizeInBytes >= 1e12) {
-            return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
+            return `${ToFixed(sizeInBytes / 1e12, 2)} TB`;
         } else if (sizeInBytes >= 1e9) {
-            return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
+            return `${ToFixed(sizeInBytes / 1e9, 1)} GB`;
         } else if (sizeInBytes >= 1e6) {
-            return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
+            return `${ToFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
+            return `${ToFixed(sizeInBytes / 1e3, 1)} kB`;
         } else {
             return `${sizeInBytes} B`;
         }

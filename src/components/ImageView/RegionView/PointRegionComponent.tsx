@@ -5,10 +5,10 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
-import {transformPoint} from "utilities";
+import {TransformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {AdjustPosToUnityStage, CanvasToTransformedImagePos, TransformedImageToCanvasPos} from "./shared";
 
 interface PointRegionComponentProps {
     region: RegionStore;
@@ -50,10 +50,10 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
-            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = AdjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
+            let positionImageSpace = CanvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
-                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                positionImageSpace = TransformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
             this.props.region.setCenter(positionImageSpace);
         }
@@ -73,11 +73,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         if (frame.spatialReference && frame.spatialTransformAST && frame.spatialTransform) {
             const pointReferenceImage = region.center;
-            const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
-            centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const pointSecondaryImage = TransformPoint(frame.spatialTransformAST, pointReferenceImage, false);
+            centerPixelSpace = TransformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
-            centerPixelSpace = transformedImageToCanvasPos(region.center, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            centerPixelSpace = TransformedImageToCanvasPos(region.center, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             rotation = 0;
         }
 

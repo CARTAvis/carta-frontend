@@ -4,11 +4,11 @@ import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, FontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {BeamType, CoordinateMode, HelpType, ImagePanelMode, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
 import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, type WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
-import {SWATCH_COLORS, toFixed} from "utilities";
+import {SWATCH_COLORS, ToFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -51,7 +51,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         });
     }
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view-floating-settings",
             type: "floating-settings",
@@ -93,7 +93,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const isPVImage = frame?.isPVImage;
 
         const getInfoString = (value: number, valueWcs: string | undefined) => {
-            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${global.system !== SystemType.Image ? valueWcs : "-"}` : `Image: ${toFixed(value, 3)} px`;
+            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${global.system !== SystemType.Image ? valueWcs : "-"}` : `Image: ${ToFixed(value, 3)} px`;
         };
         const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
         const panAndZoomPanel = (
@@ -251,7 +251,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={title.isVisible} onChange={ev => title.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!title.isVisible}>
-                    {fontSelect(title.isVisible, title.font, title.setFont)}
+                    {FontSelect(title.isVisible, title.font, title.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={title.fontSize} disabled={!title.isVisible} onValueChange={(value: number) => title.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!title.isVisible}>
@@ -408,7 +408,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={numbers.isVisible} onChange={ev => numbers.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.isVisible}>
-                    {fontSelect(numbers.isVisible, numbers.font, numbers.setFont)}
+                    {FontSelect(numbers.isVisible, numbers.font, numbers.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={numbers.fontSize} disabled={!numbers.isVisible} onValueChange={(value: number) => numbers.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!numbers.isVisible}>
@@ -463,7 +463,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={labels.isVisible} onChange={ev => labels.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.isVisible}>
-                    {fontSelect(labels.isVisible, labels.font, labels.setFont)}
+                    {FontSelect(labels.isVisible, labels.font, labels.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={labels.fontSize} disabled={!labels.isVisible} onValueChange={(value: number) => labels.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Show RA/Dec reference" disabled={!labels.isVisible}>
@@ -575,7 +575,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Label font" disabled={!colorbar.isVisible || !colorbar.isLabelVisible}>
-                    {fontSelect(colorbar.isVisible && colorbar.isLabelVisible, colorbar.labelFont, colorbar.setLabelFont)}
+                    {FontSelect(colorbar.isVisible && colorbar.isLabelVisible, colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput min={7} max={96} value={colorbar.labelFontSize} disabled={!colorbar.isVisible || !colorbar.isLabelVisible} onValueChange={(value: number) => colorbar.setLabelFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Label custom text" disabled={!colorbar.isVisible || !colorbar.isLabelVisible}>
@@ -611,7 +611,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Numbers font" disabled={!colorbar.isVisible || !colorbar.isNumberVisible}>
-                    {fontSelect(colorbar.isVisible && colorbar.isNumberVisible, colorbar.numberFont, colorbar.setNumberFont)}
+                    {FontSelect(colorbar.isVisible && colorbar.isNumberVisible, colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput min={7} max={96} value={colorbar.numberFontSize} disabled={!colorbar.isVisible || !colorbar.isNumberVisible} onValueChange={(value: number) => colorbar.setNumberFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Numbers custom precision" disabled={!colorbar.isVisible || !colorbar.isNumberVisible}>

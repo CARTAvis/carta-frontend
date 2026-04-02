@@ -10,7 +10,7 @@ import {HelpType, RegionId, type SpectralSystem} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
-import {toFixed} from "utilities";
+import {ToFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
@@ -25,7 +25,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable isValidSpectralRange: boolean = true;
     private widgetId: string;
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "pv-generator",
             type: "pv-generator",
@@ -137,7 +137,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         // Return estimated size in GB to be consistent with PreferenceStore.Instance.pvPreviewCubeSizeLimit
-        return parseFloat(toFixed(estimatedSize / 1e9, 2));
+        return parseFloat(ToFixed(estimatedSize / 1e9, 2));
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
@@ -151,7 +151,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === PvGeneratorComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addPvGeneratorWidget();
             if (id) {

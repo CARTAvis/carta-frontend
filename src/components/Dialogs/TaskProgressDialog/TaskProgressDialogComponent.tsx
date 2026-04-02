@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
-import {toFixed} from "utilities";
+import {ToFixed} from "utilities";
 
 import "./TaskProgressDialogComponent.scss";
 
@@ -35,11 +35,11 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             if (numSeconds > 60) {
                 const numMinutes = Math.floor(numSeconds / 60);
                 const remainingSeconds = Math.floor(numSeconds - numMinutes * 60);
-                const secondsText = remainingSeconds >= 10 ? toFixed(remainingSeconds) : `0${toFixed(remainingSeconds)}`;
+                const secondsText = remainingSeconds >= 10 ? ToFixed(remainingSeconds) : `0${ToFixed(remainingSeconds)}`;
                 timeRemainingText = `${numMinutes}m${secondsText}s`;
             } else {
                 const remainingSeconds = Math.floor(numSeconds);
-                const secondsText = remainingSeconds >= 10 ? toFixed(remainingSeconds) : `0${toFixed(remainingSeconds)}`;
+                const secondsText = remainingSeconds >= 10 ? ToFixed(remainingSeconds) : `0${ToFixed(remainingSeconds)}`;
                 timeRemainingText = `${secondsText}s`;
             }
             titleText = `${this.props.text} (${timeRemainingText} left)`;

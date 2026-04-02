@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {APP_TOASTER, warningToast} from "components/Shared";
+import {AppToaster, WarningToast} from "components/Shared";
 import {DialogId} from "enums";
 import {Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
@@ -79,7 +79,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         if (snippetStore.isValidInput && !snippetStore.isExecuting) {
             const success = await snippetStore.executeCurrentSnippet();
             if (!success) {
-                APP_TOASTER.show(warningToast("Error encountered while executing snippet. See JavaScript console for details."));
+                AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
             }
         }
         this.tryRefocusEditor();

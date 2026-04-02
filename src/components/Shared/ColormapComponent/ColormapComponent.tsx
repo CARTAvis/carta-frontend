@@ -26,7 +26,8 @@ interface ColormapComponentProps {
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const ColorMapSelect = Select<string>;
-const colormapPopoverProps: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
@@ -63,7 +64,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} isInverted={props.isInverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
-        <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={colormapPopoverProps} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
+        <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
             <Button disabled={props.disabled} text={colormapBlock} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );

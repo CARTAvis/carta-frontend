@@ -3,7 +3,7 @@ import {AnchorButton, FormGroup, NumericInput, type NumericInputProps, type Plac
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {toExponential} from "utilities";
+import {ToExponential} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
@@ -54,8 +54,8 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         makeObservable(this);
     }
 
-    @action setFocused(isValue: boolean) {
-        this.isFocused = isValue;
+    @action setFocused(isBool: boolean) {
+        this.isFocused = isBool;
     }
 
     handleChange = ev => {
@@ -102,7 +102,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     render() {
         let value: number | string = this.props.value;
         if (value !== undefined) {
-            value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
+            value = this.props.displayExponential && !this.isFocused ? ToExponential(Number(this.props.value), 3) : this.props.value;
         }
         return (
             <FormGroup className={this.props.className} label={this.props.label} labelInfo={this.props.labelInfo} inline={this.props.inline === undefined || this.props.inline} disabled={this.props.disabled}>

@@ -11,7 +11,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {Clamp, ExportTsvFile, GetTimestamp, ToExponential} from "utilities";
 
 import "./ScatterPlotComponent.scss";
 
@@ -344,7 +344,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (blob) {
                     const link = document.createElement("a") as HTMLAnchorElement;
                     // Trim filename before timestamp to 200 characters to prevent browser errors
-                    link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                    link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${GetTimestamp()}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }
@@ -372,26 +372,26 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         let rows: string[] = [];
         if (plotName === "histogram" && this.props.data) {
-            rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
+            rows = this.props.data.map(o => `${ToExponential(o.x, 10)}\t${ToExponential(o.y, 10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
                 if (this.props.tickTypeX === TickType.Scientific) {
-                    rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
+                    rows = this.props.data.map(o => `${ToExponential(o.x, 10)}\t${ToExponential(o.y, 10)}`);
                 } else {
-                    rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
+                    rows = this.props.data.map(o => `${o.x}\t${ToExponential(o.y, 10)}`);
                 }
             }
         }
 
-        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
+        ExportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     onStageMouseMove = ev => {
         if (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
-            const mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
-            const mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
+            const mousePosX = Clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
+            const mousePosY = Clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
             // Cursor move updates
             if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
@@ -514,7 +514,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
                     minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                    // Canvas space y-axis is isInverted, so min/max are switched when transforming to graph space
+                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
                     const minY = this.getValueForPixelY(maxCanvasSpace);
                     const maxY = this.getValueForPixelY(minCanvasSpace);
 
@@ -588,8 +588,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const h = chartArea.bottom - chartArea.top;
             if (this.zoomMode === ZoomMode.X) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
-                const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
-                const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
+                const heightAbove = Clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
+                const heightBelow = Clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
                 // Selection rectangle consists of a filled rectangle with vertical drag handles on either side
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={chartArea.top} width={delta.x} height={h} />,
@@ -598,8 +598,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 ];
             } else if (this.zoomMode === ZoomMode.Y) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
-                const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
-                const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
+                const widthLeft = Clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
+                const widthRight = Clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
                 // Selection rectangle consists of a filled rectangle with horizontal drag handles on either side
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={chartArea.left} y={start.y} width={w} height={delta.y} />,

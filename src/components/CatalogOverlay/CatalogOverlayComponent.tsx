@@ -14,7 +14,7 @@ import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType,
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, type ProcessedColumnData, toFixed} from "utilities";
+import {Clamp, type ProcessedColumnData, ToFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -44,7 +44,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Uint64
     ];
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
@@ -162,7 +162,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 const fileName = profileStore.catalogInfo.fileInfo.name;
                 const progress = profileStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
-                    progressString = `[${toFixed(progress * 100)}% complete]`;
+                    progressString = `[${ToFixed(progress * 100)}% complete]`;
                 }
 
                 if (frame && catalogFileIds?.length) {
@@ -659,7 +659,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action private handleSplitChange = (newSize: number) => {
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION, CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION);
+        const position = Clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION, CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
@@ -709,7 +709,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     private onCompleteRender = () => {

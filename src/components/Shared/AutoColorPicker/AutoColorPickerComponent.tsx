@@ -8,7 +8,7 @@ import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
-import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
+import {AUTO_COLOR_OPTIONS, GetColorForTheme} from "utilities";
 
 import "./AutoColorPickerComponent.scss";
 
@@ -30,7 +30,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     @observable isDisplayColorPicker: boolean = false;
 
     get autoColor(): string {
-        return getColorForTheme(this.props.color);
+        return GetColorForTheme(this.props.color);
     }
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
@@ -64,7 +64,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 </div>
             );
         } else {
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(getColorForTheme(colorItem))} />;
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(GetColorForTheme(colorItem))} />;
         }
     };
 

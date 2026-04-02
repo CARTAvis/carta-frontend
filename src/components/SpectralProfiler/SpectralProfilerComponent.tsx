@@ -11,7 +11,7 @@ import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingTy
 import {type Point2D} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
+import {BinarySearchByX, Clamp, FormattedExponential, GetColorForTheme, ToExponential, ToFixed, ToFormattedNotationByDiff} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -26,7 +26,7 @@ const INFO_HEIGHT_MAX = 100;
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
@@ -68,7 +68,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.isDocked && props.id === SpectralProfilerComponent.WidgetConfig.type) {
+        if (!props.isDocked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpectralProfileWidget();
             if (id) {
@@ -89,7 +89,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (this.widgetStore && currentData && isFinite(currentData.progress)) {
                 if (currentData.progress < 1.0) {
                     const totalProgress = currentData.numProfiles * 100;
-                    title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
+                    title += `: [${ToFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
                     this.widgetStore.updateStreamingDataStatus(true);
                 } else {
                     this.widgetStore.updateStreamingDataStatus(false);
@@ -158,7 +158,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }, 33);
 
     private precisionFormatting = (data: number, diff: number, spectralType: SpectralType): string => {
-        return spectralType === SpectralType.CHANNEL ? toFixed(data) : (toFormattedNotationByDiff(data, diff) ?? data.toString());
+        return spectralType === SpectralType.CHANNEL ? ToFixed(data) : (ToFormattedNotationByDiff(data, diff) ?? data.toString());
     };
 
     private genCursorInfoString = (data: Point2D[], smoothedData: Point2D[], secondaryXData: number[], cursorXValue: number, cursorXUnit: string, label: string): string => {
@@ -172,8 +172,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let secondaryChannelString = "";
         let cursorInfoString: string = "";
 
-        const nearest = binarySearchByX(data, cursorXValue);
-        const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
+        const nearest = BinarySearchByX(data, cursorXValue);
+        const nearestSmooth = smoothedData.length ? BinarySearchByX(smoothedData, cursorXValue) : null;
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let primaryXStr: string = "";
             const currentIndex = nearest.index;
@@ -198,13 +198,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 xLabel += secondaryChannelString === "Channel" ? `, Channel ${secondaryXStr}` : `, ${secondaryXStr}${secondaryXUnit ? ` ${secondaryXUnit}` : ""}`;
             }
-            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${nearestSmooth?.point.x !== undefined ? toFixed(nearestSmooth.point.x, 0) : ""}` : `${smoothedFloatXStr} ${cursorXUnit}`;
+            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${nearestSmooth?.point.x !== undefined ? ToFixed(nearestSmooth.point.x, 0) : ""}` : `${smoothedFloatXStr} ${cursorXUnit}`;
             if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+                cursorInfoString = `(${xLabel}, ${ToExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${ToExponential(nearestSmooth.point.y, 2)})`;
             } else if (nearestSmooth) {
-                cursorInfoString = `(${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+                cursorInfoString = `(${smoothedXLabel}, ${ToExponential(nearestSmooth.point.y, 2)})`;
             } else {
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+                cursorInfoString = `(${xLabel}, ${ToExponential(nearest.point.y, 2)})`;
             }
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
@@ -233,7 +233,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 profilerInfo.push({
                     infoString:
                         this.isMeanRmsVisible && this.plotData.yMean !== undefined && this.plotData.yRms !== undefined
-                            ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}`
+                            ? `${cursorInfoString}, Mean/RMS: ${FormattedExponential(this.plotData.yMean, 2)}/${FormattedExponential(this.plotData.yRms, 2)}`
                             : cursorInfoString
                 });
             } else {
@@ -292,7 +292,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 xMin = this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX;
                 xMax = this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX;
             }
-            // only keep isVisible lines within x range
+            // only keep visible lines within x range
             for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
                 const line = spectralLines[lineIndex];
                 if (isFinite(xMin) && isFinite(xMax) && line && isFinite(line.value) && line.value >= xMin && line.value <= xMax) {
@@ -385,7 +385,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,
-                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors?.[i] : getColorForTheme(smoothingStore.lineColor),
+                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors?.[i] : GetColorForTheme(smoothingStore.lineColor),
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
@@ -399,7 +399,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
 
                 // set line color
-                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const primaryLineColor = GetColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 if (this.widgetStore.profileNum === 1) {
@@ -409,7 +409,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             plotName: currentPlotData.plotName.plot,
                             data: fittingStore.baseLinePoint2DArray,
                             type: PlotType.LINES,
-                            borderColor: getColorForTheme("auto-lime"),
+                            borderColor: GetColorForTheme("auto-lime"),
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
@@ -424,7 +424,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             plotName: currentPlotData.plotName?.plot ?? "",
                             data: fittingStore.modelPoint2DArray,
                             type: PlotType.LINES,
-                            borderColor: getColorForTheme("auto-orange"),
+                            borderColor: GetColorForTheme("auto-orange"),
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
@@ -439,7 +439,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.individualModelPoint2DArrays[i],
                                 type: PlotType.LINES,
-                                borderColor: getColorForTheme("auto-orange"),
+                                borderColor: GetColorForTheme("auto-orange"),
                                 borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
@@ -456,7 +456,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.residualPoint2DArray,
                                 type: PlotType.POINTS,
-                                borderColor: getColorForTheme("auto-orange"),
+                                borderColor: GetColorForTheme("auto-orange"),
                                 borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
@@ -565,7 +565,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         className="body-split-pane"
                         split="horizontal"
                         primary={"second"}
-                        defaultSize={clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                        defaultSize={Clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
                         minSize={INFO_HEIGHT_MIN}
                     >
                         <Pane className={"line-plot-container"}>

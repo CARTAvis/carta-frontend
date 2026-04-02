@@ -3,12 +3,12 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
+import {CanvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogOverlayShape, CatalogTextureType, ImageViewLayer} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {closestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {ClosestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, Rotate2D, Scale2D, Subtract2D} from "utilities";
 
 import "./CatalogViewGLComponent.scss";
 
@@ -212,7 +212,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     if (!sourceFrame.spatialTransform) {
                         return;
                     }
-                    const originAdjustedOffset = subtract2D(sourceFrame.spatialTransform.origin, scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
+                    const originAdjustedOffset = Subtract2D(sourceFrame.spatialTransform.origin, Scale2D(Rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
 
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
@@ -354,8 +354,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (!frame) {
                 return;
             }
-            const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
-            const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, catalog.x, catalog.y);
+            const cursorPosImageSpace = CanvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
+            const closestPoint = ClosestCatalogIndexToCursor(cursorPosImageSpace, catalog.x, catalog.y);
             if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
                 selectedPoint.minIndex = closestPoint.minIndex;
                 selectedPoint.minDistanceSquared = closestPoint.minDistanceSquared;

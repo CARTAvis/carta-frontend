@@ -10,7 +10,7 @@ import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapCompon
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, HelpType} from "enums";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
-import {getColorForTheme, SWATCH_COLORS} from "utilities";
+import {GetColorForTheme, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -57,7 +57,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogOverlayShape.LineSegment_FILLED
     ];
 
-    public static get WidgetConfig(): DefaultWidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
@@ -562,7 +562,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : GetColorForTheme(color));
                         }}
                         disableAlpha={true}
                         disabled={isDisabledOverlayPanel || !widgetStore.shouldDisableColorMap}
@@ -573,7 +573,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         color={widgetStore.highlightColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : GetColorForTheme(color));
                         }}
                         disableAlpha={true}
                         disabled={isDisabledOverlayPanel}

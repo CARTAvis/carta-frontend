@@ -6,13 +6,13 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {APP_TOASTER, ExportImageMenuComponent, successToast} from "components/Shared";
+import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
 import {ApiService} from "services";
 import {AppStore, SnippetStore, WidgetsStore} from "stores";
-import {copyToClipboard, toFixed} from "utilities";
+import {CopyToClipboard, ToFixed} from "utilities";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
@@ -48,7 +48,7 @@ export class RootMenuComponent extends React.Component {
     };
 
     private genWidgetsMenu = () => {
-        const cartaWidgets = WidgetsStore.Instance.cartaWidgets;
+        const cartaWidgets = WidgetsStore.Instance.CARTAWidgets;
         const regionListConfig = cartaWidgets.get(WidgetType.Region);
         const imageListConfig = cartaWidgets.get(WidgetType.ImageList);
         const cursorInfoConfig = cartaWidgets.get(WidgetType.CursorInfo);
@@ -130,7 +130,7 @@ export class RootMenuComponent extends React.Component {
         const snippetObj = new Map<string, any>();
 
         for (const [name, snippet] of appStore.snippetStore.snippets) {
-            // Skip isHidden snippets
+            // Skip hidden snippets
             if (snippet?.categories?.includes("hidden")) {
                 continue;
             }
@@ -192,8 +192,8 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await copyToClipboard(appStore.backendService.sessionId.toString());
-                        APP_TOASTER.show(successToast("clipboard", "Session ID copied!"));
+                        await CopyToClipboard(appStore.backendService.sessionId.toString());
+                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.error(err);
                     }
@@ -212,11 +212,11 @@ export class RootMenuComponent extends React.Component {
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl?.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            await copyToClipboard(finalUrl);
+                            await CopyToClipboard(finalUrl);
                         } else {
-                            await copyToClipboard(document.URL);
+                            await CopyToClipboard(document.URL);
                         }
-                        APP_TOASTER.show(successToast("clipboard", "Session URL copied!"));
+                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.error(err);
                     }
@@ -328,7 +328,7 @@ export class RootMenuComponent extends React.Component {
 
         let connectivityClass = "connectivity-icon";
         let connectivityTooltip;
-        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${toFixed(appStore.backendService.endToEndPing, 1)} ms` : "Unknown";
+        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${ToFixed(appStore.backendService.endToEndPing, 1)} ms` : "Unknown";
         const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
@@ -385,12 +385,12 @@ export class RootMenuComponent extends React.Component {
             }
             let contourTooltipContent;
             if (isContoursLoading && appStore.activeFrame) {
-                contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
+                contourTooltipContent = <span>Streaming contours. {ToFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
             if (isVectorOverlayLoading && appStore.activeFrame) {
-                vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
+                vectorOverlayTooltipContent = <span>Streaming vector overlay. {ToFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
             loadingTooltipFragment = (

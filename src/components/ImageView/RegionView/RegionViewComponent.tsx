@@ -11,13 +11,13 @@ import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {Add2D, Average2D, Length2D, PointDistanceSquared, Scale2D, Subtract2D, TransformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
-import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {AdjustPosToMutatedStage, CanvasToImagePos, CanvasToTransformedImagePos, ImageToCanvasPos, TransformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
 import "./RegionViewComponent.scss";
@@ -123,8 +123,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (stage) {
                 const offset = {x: ((this.props.width - prevProps.width) / 2) * this.frame.aspectRatio, y: (this.props.height - prevProps.height) / 2};
                 const zoom = stage.scaleX();
-                const mutatedOffset = scale2D(offset, (1 - zoom) / zoom);
-                this.stageResizeOffset = add2D(this.stageResizeOffset, mutatedOffset);
+                const mutatedOffset = Scale2D(offset, (1 - zoom) / zoom);
+                this.stageResizeOffset = Add2D(this.stageResizeOffset, mutatedOffset);
 
                 const frame = this.frame?.spatialReference ?? this.frame;
                 if (frame) {
@@ -141,16 +141,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.frame;
         if (frame.wcsInfo) {
-            const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
+            const imagePos = CanvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
             this.frame.setCursorPosition(imagePos);
         }
     }, 100);
 
     private getCursorPosImageSpace = (offsetX: number, offsetY: number): Point2D => {
         const frame = this.frame;
-        let cursorPosImageSpace = canvasToTransformedImagePos(offsetX, offsetY, frame, this.props.width, this.props.height);
+        let cursorPosImageSpace = CanvasToTransformedImagePos(offsetX, offsetY, frame, this.props.width, this.props.height);
         if (frame.spatialReference && frame.spatialTransformAST) {
-            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
+            cursorPosImageSpace = TransformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
         return cursorPosImageSpace;
     };
@@ -249,10 +249,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNTEXT:
                 frame = this.frame.spatialReference || this.frame;
-                if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
+                if (this.creatingRegion.controlPoints.length > 1 && Length2D(this.creatingRegion.size) === 0) {
                     const scaleFactor =
                         (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
-                    this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
+                    this.creatingRegion.setSize(Scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
                 }
                 break;
             case CARTA.RegionType.ANNCOMPASS:
@@ -290,7 +290,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             this.creatingRegion = null;
         }
 
-        // Switch to isMoving mode after region creation. Use a timeout to allow the handleClick function to execute first
+        // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
         setTimeout(() => {
             this.frame.regionSet.setMode(RegionMode.MOVING);
             AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
@@ -457,9 +457,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        const deltaTouch = subtract2D(touch1, touch0);
-        const distance = length2D(deltaTouch);
-        const centerCanvasSpace = average2D([touch0, touch1]);
+        const deltaTouch = Subtract2D(touch1, touch0);
+        const distance = Length2D(deltaTouch);
+        const centerCanvasSpace = Average2D([touch0, touch1]);
         // ignore invalid
         if (!isFinite(distance) || distance <= 0) {
             return;
@@ -467,7 +467,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         if (this.initialPinchDistance > 0) {
             const zoomFactor = distance / this.initialPinchDistance;
-            const centerImageSpace = canvasToImagePos(centerCanvasSpace.x, centerCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const centerImageSpace = CanvasToImagePos(centerCanvasSpace.x, centerCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
             frame.zoomToPoint(centerImageSpace.x, centerImageSpace.y, this.initialPinchZoom * zoomFactor);
         } else {
             this.initialPinchDistance = distance;
@@ -482,10 +482,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
         if (this.frame) {
             const frame = this.frame.spatialReference || this.frame;
-            const dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
-            const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
-            const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, dragOffset);
-            const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const dragOffset = Subtract2D(currentStagePosition, this.initialStagePosition);
+            const initialCenterCanvasSpace = ImageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const newCenterCanvasSpace = Subtract2D(initialCenterCanvasSpace, dragOffset);
+            const newCenterImageSpace = CanvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
             frame.setCenter(newCenterImageSpace.x, newCenterImageSpace.y);
         }
     };
@@ -497,7 +497,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
         // Record click position and distance
-        this.mouseClickDistance = pointDistanceSquared(mouseEvent, this.mousePreviousClick);
+        this.mouseClickDistance = PointDistanceSquared(mouseEvent, this.mousePreviousClick);
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
         // Ignore clicks that aren't on the stage, unless it's a secondary click
@@ -516,7 +516,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && this.props.onClickToCenter && (!this.props.dragPanningEnabled || isSecondaryClick)) {
-            const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            const cursorPosImageSpace = CanvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClickToCenter(frame.getCursorInfo(cursorPosImageSpace));
         }
     };
@@ -527,9 +527,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
             const origin = {x: (this.props.width * (1 - refFrameZoom * this.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom)) / 2};
             const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom * this.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom / devicePixelRatio)};
-            const newOrigin = add2D(origin, centerMovementCanvas);
+            const newOrigin = Add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
-            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
+            const correctedOrigin = Subtract2D(newOrigin, Scale2D(this.stageResizeOffset, refFrameZoom));
             stage.position(correctedOrigin);
         }
     };
@@ -556,7 +556,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt;
         const frame = this.frame;
         if (frame) {
-            const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            const cursorPosImageSpace = CanvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
@@ -707,12 +707,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
             if (frame.spatialReference && frame.spatialTransformAST) {
-                firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
-                lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
+                firstControlPoint = TransformPoint(frame.spatialTransformAST, firstControlPoint, false);
+                lastControlPoint = TransformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
-            const lineStart = transformedImageToCanvasPos(firstControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
-            const lineEnd = transformedImageToCanvasPos(lastControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
-            const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
+            const lineStart = TransformedImageToCanvasPos(firstControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
+            const lineEnd = TransformedImageToCanvasPos(lastControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
+            const cusorCanvasPos = AdjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE && this.creatingRegion?.regionType !== CARTA.RegionType.ANNPOLYLINE) {
                 points = [lineStart.x ?? 0, lineStart.y ?? 0, cusorCanvasPos.x ?? 0, cusorCanvasPos.y ?? 0, lineEnd.x ?? 0, lineEnd.y ?? 0];
