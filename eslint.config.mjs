@@ -48,7 +48,7 @@ export default [
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["static"],
-                    format: ["PascalCase"],
+                    format: ["UPPER_CASE", "PascalCase"],
                 },
                 {
                     selector: ["property"],
@@ -101,6 +101,11 @@ export default [
                     selector: ["variable"],
                     modifiers: ["global"],
                     types: ["function"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: ["function"],
+                    modifiers: ["global", "exported"],
                     format: ["PascalCase"]
                 }
             ],
