@@ -5,7 +5,7 @@ import {AnimationMode, PlayMode} from "enums";
 import {type FrameView, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
+import {clamp, getRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
@@ -24,12 +24,12 @@ export class AnimatorStore {
     @observable maxStep: number = 50;
     @observable minStep: number = 1;
     @observable animationMode: AnimationMode = AnimationMode.CHANNEL;
-    @observable animationActive: boolean = false;
+    @observable isAnimationActive: boolean = false;
     @observable playMode: PlayMode = PlayMode.FORWARD;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
-        if (this.animationActive) {
+        if (this.isAnimationActive) {
             return;
         }
         this.animationMode = val;
@@ -44,7 +44,7 @@ export class AnimatorStore {
     };
 
     @flow.bound *startAnimation() {
-        if (this.startAnimationDisabled) {
+        if (this.isStartAnimationDisabled) {
             return;
         }
 
@@ -56,7 +56,7 @@ export class AnimatorStore {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
             }
-            this.animationActive = true;
+            this.isAnimationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -82,7 +82,7 @@ export class AnimatorStore {
             mip: reqView.mip
         };
         const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
-        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
+        const tiles = getRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
         const requiredTiles: CARTA.IAddRequiredTiles = {
             fileId: activeFrame.frameInfo.fileId,
             tiles: tiles,
@@ -115,7 +115,7 @@ export class AnimatorStore {
             })
         };
 
-        this.animationActive = true;
+        this.isAnimationActive = true;
 
         try {
             yield appStore.backendService.startAnimation(animationMessage);
@@ -133,7 +133,7 @@ export class AnimatorStore {
 
     @action stopAnimation = () => {
         // Ignore stop when not playing
-        if (!this.animationActive) {
+        if (!this.isAnimationActive) {
             return;
         }
 
@@ -143,7 +143,7 @@ export class AnimatorStore {
             return;
         }
 
-        this.animationActive = false;
+        this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
@@ -173,7 +173,7 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
+        if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
             AppStore.Instance.nextImage();
         }
     };
@@ -191,12 +191,12 @@ export class AnimatorStore {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 
-    @computed get serverAnimationActive() {
-        return this.animationActive && this.animationMode !== AnimationMode.FRAME;
+    @computed get isServerAnimationActive() {
+        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
-    @computed get startAnimationDisabled() {
+    @computed get isStartAnimationDisabled() {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return true;

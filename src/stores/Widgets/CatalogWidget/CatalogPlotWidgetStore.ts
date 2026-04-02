@@ -24,7 +24,7 @@ export class CatalogPlotWidgetStore {
     @observable dragmode: DragMode = "select";
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
-    @observable logScaleY: boolean = true;
+    @observable isLogScaleY: boolean = true;
     @observable nBinx: number | undefined = undefined;
     @observable xColumnName: string;
     @observable yColumnName: string | undefined;
@@ -72,8 +72,8 @@ export class CatalogPlotWidgetStore {
         this.dragmode = mode;
     }
 
-    @action setLogScaleY(val: boolean) {
-        this.logScaleY = val;
+    @action setLogScaleY(isVal: boolean) {
+        this.isLogScaleY = isVal;
     }
 
     @action setNumBinsX(val: number) {
@@ -106,7 +106,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get fittingResultString(): string {
-        if (this.showFittingResult && this.fitting) {
+        if (this.shouldShowFittingResult && this.fitting) {
             const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
             const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
             return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
@@ -120,18 +120,18 @@ export class CatalogPlotWidgetStore {
         return "";
     }
 
-    @computed get showFittingResult(): boolean {
+    @computed get shouldShowFittingResult(): boolean {
         if (!this.fitting || !this.minMaxX) {
             return false;
         }
         return !isNaN(this.fitting.intercept) && !isNaN(this.fitting.slope) && !isNaN(this.minMaxX.minVal) && !isNaN(this.minMaxX.maxVal);
     }
 
-    @computed get enableStatistic(): boolean {
+    @computed get shouldEnableStatistic(): boolean {
         return this.statisticColumnName !== CatalogOverlay.NONE;
     }
 
-    @computed get showStatisticResult(): boolean {
+    @computed get shouldShowStatisticResult(): boolean {
         if (!this.statistic) {
             return false;
         }
@@ -139,7 +139,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get statisticString(): string {
-        if (this.enableStatistic && this.showStatisticResult && this.statistic) {
+        if (this.shouldEnableStatistic && this.shouldShowStatisticResult && this.statistic) {
             return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, CatalogPlotWidgetStore.Decimals)}, rms: ${toExponential(
                 this.statistic.rms,
                 CatalogPlotWidgetStore.Decimals

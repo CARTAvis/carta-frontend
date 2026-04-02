@@ -79,7 +79,7 @@ export class CatalogStore {
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalog.x[startIndex + i] = pixelData.xImageCoords[i];
                         catalog.y[startIndex + i] = pixelData.yImageCoords[i];
@@ -298,7 +298,7 @@ export class CatalogStore {
         }
     }
 
-    private static GetFractionFromUnit(unit: string): number {
+    private static getFractionFromUnit(unit: string): number {
         if (CatalogStore.ArcminUnits.includes(unit)) {
             return Math.PI / 10800.0;
         } else if (CatalogStore.ArcsecUnits.includes(unit)) {
@@ -309,13 +309,13 @@ export class CatalogStore {
         }
     }
 
-    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
+    private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const overlay = AppStore.Instance.overlaySettings;
-            const N = xWcsData.length;
+            const n = xWcsData.length;
 
-            const xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
-            const yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
+            const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
 
             const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && overlay.isImgCoordinates) {
@@ -324,10 +324,10 @@ export class CatalogStore {
 
             setAstSystem(wcsCopy, catalogFrame, overlay.global);
 
-            const xWCSValues = new Float64Array(N);
-            const yWCSValues = new Float64Array(N);
+            const xWCSValues = new Float64Array(n);
+            const yWCSValues = new Float64Array(n);
 
-            for (let i = 0; i < N; i++) {
+            for (let i = 0; i < n; i++) {
                 xWCSValues[i] = xWcsData[i] * xFraction;
                 yWCSValues[i] = yWcsData[i] * yFraction;
             }

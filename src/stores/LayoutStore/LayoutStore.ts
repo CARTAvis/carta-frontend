@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {AppToaster, SuccessToast} from "components/Shared";
+import {APP_TOASTER, successToast} from "components/Shared";
 import {LayoutDialogMode} from "enums";
 import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
@@ -19,14 +19,14 @@ export class LayoutStore {
         return LayoutStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
-    @observable supportsServer: boolean = false;
+    @observable isSupportsServer: boolean = false;
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     private constructor() {
@@ -70,7 +70,7 @@ export class LayoutStore {
     }
 
     @computed get userLayoutNames(): string[] {
-        return this.layouts ? Object.keys(this.layouts).filter(layoutName => !PresetLayout.isPreset(layoutName)) : [];
+        return this.layouts ? Object.keys(this.layouts).filter(layoutName => !PresetLayout.IsPreset(layoutName)) : [];
     }
 
     @computed get orderedLayoutNames(): string[] {
@@ -141,7 +141,7 @@ export class LayoutStore {
             return;
         }
 
-        if (PresetLayout.isPreset(this.layoutNameToBeSaved)) {
+        if (PresetLayout.IsPreset(this.layoutNameToBeSaved)) {
             appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
@@ -165,7 +165,7 @@ export class LayoutStore {
 
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = configToSave;
-        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
+        if (!PresetLayout.IsPreset(this.layoutNameToBeSaved)) {
             try {
                 const success = yield appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave);
                 if (success) {
@@ -178,9 +178,9 @@ export class LayoutStore {
         }
     }
 
-    private handleSaveResult = (success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
+    private handleSaveResult = (isSuccess: boolean) => {
+        if (isSuccess) {
+            APP_TOASTER.show(successToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -197,7 +197,7 @@ export class LayoutStore {
             return;
         }
 
-        if (PresetLayout.isPreset(newName)) {
+        if (PresetLayout.IsPreset(newName)) {
             appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
@@ -215,7 +215,7 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         const configToSave = this.layouts[oldName];
         this.layouts[newName] = configToSave;
-        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
+        if (!PresetLayout.IsPreset(this.layoutNameToBeSaved)) {
             try {
                 const success = yield appStore.apiService.setLayout(newName, configToSave);
 
@@ -234,9 +234,9 @@ export class LayoutStore {
         }
     }
 
-    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
+    private handleRenameResult = (oldName: string, newName: string, isSuccess: boolean) => {
+        if (isSuccess) {
+            APP_TOASTER.show(successToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
             }
@@ -270,9 +270,9 @@ export class LayoutStore {
         }
     }
 
-    private handleDeleteResult = (layoutName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
+    private handleDeleteResult = (layoutName: string, isSuccess: boolean) => {
+        if (isSuccess) {
+            APP_TOASTER.show(successToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }

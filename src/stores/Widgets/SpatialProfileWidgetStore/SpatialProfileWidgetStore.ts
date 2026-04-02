@@ -21,13 +21,13 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable minY: number | undefined = undefined;
     @observable maxY: number | undefined = undefined;
     @observable cursorX: number = 0;
-    @observable markerTextVisible: boolean = false;
+    @observable isMarkerTextVisible: boolean = false;
     @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable wcsAxisVisible: boolean = true;
+    @observable isWcsAxisVisible: boolean = true;
     @observable plotType: PlotType = PlotType.STEPS;
-    @observable meanRmsVisible: boolean = false;
+    @observable isMeanRmsVisible: boolean = false;
     @observable primaryLineColor: string = "auto-blue";
     @observable lineWidth: number = 1;
     @observable linePlotPointSize: number = 1.5;
@@ -82,16 +82,16 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (val: boolean) => {
-        this.markerTextVisible = val;
+    @action setMarkerTextVisible = (isVal: boolean) => {
+        this.isMarkerTextVisible = isVal;
     };
 
-    @action setMeanRmsVisible = (val: boolean) => {
-        this.meanRmsVisible = val;
+    @action setMeanRmsVisible = (isVal: boolean) => {
+        this.isMeanRmsVisible = isVal;
     };
 
-    @action setWcsAxisVisible = (val: boolean) => {
-        this.wcsAxisVisible = val;
+    @action setWcsAxisVisible = (isVal: boolean) => {
+        this.isWcsAxisVisible = isVal;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -102,8 +102,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (val: boolean) => {
-        this.isMouseMoveIntoLinePlots = val;
+    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
+        this.isMouseMoveIntoLinePlots = isVal;
     };
 
     @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
@@ -173,8 +173,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         }
     }
 
-    private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && region?.regionId === RegionId.CURSOR) {
+    private static getSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
+        if (frame.isCursorMoving && !AppStore.Instance.isCursorFrozen && region?.regionId === RegionId.CURSOR) {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
@@ -232,7 +232,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, region, region.lineRegionSampleWidth));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.getSpatialConfig(frame, widgetStore.fullCoordinate, region, region.lineRegionSampleWidth));
                 }
             }
         });
@@ -350,11 +350,11 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.wcsAxisVisible === "boolean") {
-            this.wcsAxisVisible = widgetSettings.wcsAxisVisible;
+        if (typeof widgetSettings.isWcsAxisVisible === "boolean") {
+            this.isWcsAxisVisible = widgetSettings.isWcsAxisVisible;
         }
-        if (typeof widgetSettings.meanRmsVisible === "boolean") {
-            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        if (typeof widgetSettings.isMeanRmsVisible === "boolean") {
+            this.isMeanRmsVisible = widgetSettings.isMeanRmsVisible;
         }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
@@ -379,8 +379,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            wcsAxisVisible: this.wcsAxisVisible,
-            meanRmsVisible: this.meanRmsVisible,
+            isWcsAxisVisible: this.isWcsAxisVisible,
+            isMeanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,

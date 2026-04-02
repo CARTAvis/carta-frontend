@@ -1,11 +1,11 @@
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {AppToaster, SuccessToast} from "components/Shared";
+import {APP_TOASTER, successToast} from "components/Shared";
 import {Snippet} from "models";
 import {ApiService} from "services";
 import {AlertStore} from "stores";
 
-import {exampleSnippets} from "./ExampleSnippets";
+import {EXAMPLE_SNIPPETS} from "./ExampleSnippets";
 
 export class SnippetStore {
     private static staticInstance: SnippetStore;
@@ -17,7 +17,7 @@ export class SnippetStore {
         return SnippetStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
     @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
     @observable activeSnippet: Snippet = {
@@ -44,7 +44,7 @@ export class SnippetStore {
             this.snippets = new Map<string, Snippet>();
         }
         this.snippets.clear();
-        for (const example of exampleSnippets) {
+        for (const example of EXAMPLE_SNIPPETS) {
             let category = "Examples";
             if (example.section) {
                 category += `/${example.section}`;
@@ -54,8 +54,8 @@ export class SnippetStore {
                 tags: ["example"],
                 categories: [category],
                 code: example.code,
-                frontendVersion: Snippet.FrontendVersion,
-                snippetVersion: Snippet.SnippetVersion
+                frontendVersion: Snippet.FRONTEND_VERSION,
+                snippetVersion: Snippet.SNIPPET_VERSION
             };
 
             this.snippets.set(example.name, snippet);
@@ -84,17 +84,17 @@ export class SnippetStore {
         return this.snippets.size;
     }
 
-    @computed get validInput() {
+    @computed get isValidInput() {
         return this.functionToExecute !== undefined;
     }
 
     @computed
     private get functionToExecute() {
-        const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-        if (this.activeSnippet && AsyncFunction) {
+        const asyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+        if (this.activeSnippet && asyncFunction) {
             let f;
             try {
-                f = new AsyncFunction(this.activeSnippet.code);
+                f = new asyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
                 console.error(e);
@@ -122,8 +122,8 @@ export class SnippetStore {
     @action clearActiveSnippet = () => {
         this.activeSnippet = {
             code: "",
-            frontendVersion: Snippet.FrontendVersion,
-            snippetVersion: Snippet.FrontendVersion,
+            frontendVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.FRONTEND_VERSION,
             categories: []
         };
         this.activeSnippetName = "";
@@ -136,15 +136,15 @@ export class SnippetStore {
         this.activeSnippet.code = val;
     };
 
-    @flow.bound *saveSnippet(name: string, snippet: Snippet, silent: boolean = false) {
+    @flow.bound *saveSnippet(name: string, snippet: Snippet, isSilent: boolean = false) {
         this.snippets.set(name, snippet);
 
         try {
             const success = yield ApiService.Instance.setSnippet(name, snippet);
             if (success) {
-                // Silently exit on success if silent flag is set
-                if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                // Silently exit on success if isSilent flag is set
+                if (!isSilent) {
+                    APP_TOASTER.show(successToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -158,14 +158,14 @@ export class SnippetStore {
         }
     }
 
-    @flow.bound *deleteSnippet(name: string, silent: boolean = false) {
+    @flow.bound *deleteSnippet(name: string, isSilent: boolean = false) {
         this.snippets.delete(name);
         try {
             const success = yield ApiService.Instance.clearSnippet(name);
             if (success) {
-                // Silently exit on success if silent flag is set
-                if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                // Silently exit on success if isSilent flag is set
+                if (!isSilent) {
+                    APP_TOASTER.show(successToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -179,8 +179,8 @@ export class SnippetStore {
         }
     }
 
-    @action private setSnippetExecuting = (val: boolean) => {
-        this.isExecuting = val;
+    @action private setSnippetExecuting = (isVal: boolean) => {
+        this.isExecuting = isVal;
     };
 
     @flow.bound *executeCurrentSnippet() {

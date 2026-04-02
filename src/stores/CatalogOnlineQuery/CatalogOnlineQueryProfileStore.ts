@@ -23,7 +23,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.numVisibleRows = catalogInfo.dataSize;
 
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
-        const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem?.system);
+        const system = AbstractCatalogProfileStore.GetCatalogSystem(coordinateSystem?.system);
         this.catalogCoordinateSystem = {
             system: system,
             equinox: null,
@@ -44,8 +44,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return false;
     }
 
-    get loadOntoImage() {
-        return this.loadingData;
+    get shouldLoadOntoImage() {
+        return this.isLoadingData;
     }
 
     get maxRows() {
@@ -59,13 +59,13 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let isDisplay = false;
                 if (this.catalogType === CatalogType.SIMBAD && CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
-                    display = true;
+                    isDisplay = true;
                 } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizierInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
-                    display = true;
+                    isDisplay = true;
                 }
-                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, isDisplay: isDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -94,7 +94,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         filterConfigs?.forEach(filterConfig => {
             const header = this.catalogControlHeader.get(filterConfig.columnName);
             const dataIndex = header?.dataIndex;
-            if (dataIndex !== undefined && dataIndex > -1 && header?.display) {
+            if (dataIndex !== undefined && dataIndex > -1 && header?.isDisplay) {
                 const catalogColumn = this.catalogOriginalData.get(dataIndex);
                 switch (catalogColumn?.dataType) {
                     case CARTA.ColumnType.String:

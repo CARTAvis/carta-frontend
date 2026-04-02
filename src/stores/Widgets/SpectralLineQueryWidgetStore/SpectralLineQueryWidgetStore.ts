@@ -8,7 +8,7 @@ import {SplatalogueService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
-const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
+const spectralLineDescription = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineSelection, "Column for line selection"],
     [SpectralLineHeaders.Species, "Descriptive formula of molecular species"],
     [SpectralLineHeaders.ChemicalName, "Common chemical name for species"],
@@ -31,7 +31,7 @@ const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineList, "Originated catalogue"]
 ]);
 
-const SPECTRAL_LINE_HEADER_WIDTH = new Map<SpectralLineHeaders, number>([
+const spectralLineHeaderWidth = new Map<SpectralLineHeaders, number>([
     [SpectralLineHeaders.LineSelection, 50],
     [SpectralLineHeaders.Species, 100],
     [SpectralLineHeaders.ChemicalName, 150],
@@ -73,7 +73,7 @@ export class SpectralLineQueryWidgetStore {
     @observable queryRange: NumberRange = [0, 0];
     @observable queryRangeByCenter: NumberRange = [0, 0];
     @observable queryUnit: SpectralLineQueryUnit = SpectralLineQueryUnit.MHz;
-    @observable intensityLimitEnabled: boolean = true;
+    @observable isIntensityLimitEnabled: boolean = true;
     @observable intensityLimitValue: number = -5;
     @observable isQuerying: boolean = false;
     @observable columnHeaders: Array<CARTA.ICatalogHeader> = [];
@@ -111,17 +111,17 @@ export class SpectralLineQueryWidgetStore {
     };
 
     @action toggleIntensityLimit = () => {
-        this.intensityLimitEnabled = !this.intensityLimitEnabled;
+        this.isIntensityLimitEnabled = !this.isIntensityLimitEnabled;
     };
 
     @action setIntensityLimitValue = (intensityLimitValue: number) => {
         this.intensityLimitValue = intensityLimitValue;
     };
 
-    @action setHeaderDisplay = (val: boolean, columnName: string) => {
+    @action setHeaderDisplay = (isVal: boolean, columnName: string) => {
         const header = this.controlHeader.get(columnName);
         if (header) {
-            header.display = val;
+            header.isDisplay = isVal;
         }
     };
 
@@ -253,7 +253,7 @@ export class SpectralLineQueryWidgetStore {
 
         this.isQuerying = true;
         try {
-            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.isIntensityLimitEnabled ? this.intensityLimitValue : NaN);
             if (ack?.dataSize >= 0) {
                 this.numDataRows = ack.dataSize;
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
@@ -280,7 +280,7 @@ export class SpectralLineQueryWidgetStore {
         const newHeader: ControlHeader = {
             columnIndex: current?.columnIndex,
             dataIndex: current?.dataIndex,
-            display: current?.display,
+            isDisplay: current?.isDisplay,
             filter: filterInput,
             columnWidth: current?.columnWidth
         };
@@ -371,7 +371,7 @@ export class SpectralLineQueryWidgetStore {
     @computed get displayedColumnHeaders(): Array<CARTA.ICatalogHeader> {
         const displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
         this.controlHeader?.forEach(controlHeader => {
-            if (controlHeader.display && controlHeader.dataIndex !== undefined && controlHeader.dataIndex < this.columnHeaders?.length) {
+            if (controlHeader.isDisplay && controlHeader.dataIndex !== undefined && controlHeader.dataIndex < this.columnHeaders?.length) {
                 displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
             }
         });
@@ -408,7 +408,7 @@ export class SpectralLineQueryWidgetStore {
     @computed get resultTableColumnWidths(): (number | null | undefined)[] {
         const columnWidths: (number | null | undefined)[] = [];
         this.controlHeader.forEach(value => {
-            if (value.display) {
+            if (value.isDisplay) {
                 columnWidths.push(value.columnWidth);
             }
         });
@@ -419,14 +419,14 @@ export class SpectralLineQueryWidgetStore {
         const selectedLines: SpectralLine[] = [];
         const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
         const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
+        const qnColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
         const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
         lineSelectionData?.forEach((isSelected, index) => {
             if (isSelected) {
                 selectedLines.push({
                     species: speciesColumn?.data?.[index] as string,
                     value: (frequencyColumn?.data?.[index] as number) * this.redshiftFactor, // update shifted value
-                    qn: QNColumn?.data?.[index] as string
+                    qn: qnColumn?.data?.[index] as string
                 });
             }
         });
@@ -443,7 +443,7 @@ export class SpectralLineQueryWidgetStore {
                     name: header.name,
                     dataType: header.dataType,
                     columnIndex: (header.columnIndex ?? NaN) + 1, // to save first column for inserting line selection
-                    description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
+                    description: spectralLineDescription.get(header.name as SpectralLineHeaders)
                 })
             );
         });
@@ -456,7 +456,7 @@ export class SpectralLineQueryWidgetStore {
                 name: SpectralLineHeaders.LineSelection,
                 dataType: CARTA.ColumnType.Bool,
                 columnIndex: LINE_SELECTION_COLUMN_INDEX,
-                description: SPECTRAL_LINE_DESCRIPTION.get(SpectralLineHeaders.LineSelection)
+                description: spectralLineDescription.get(SpectralLineHeaders.LineSelection)
             })
         );
 
@@ -521,9 +521,9 @@ export class SpectralLineQueryWidgetStore {
             const controlHeader: ControlHeader = {
                 columnIndex: header.columnIndex,
                 dataIndex: index,
-                display: true,
+                isDisplay: true,
                 filter: "",
-                columnWidth: SPECTRAL_LINE_HEADER_WIDTH.get(header.name) ?? DEFAULT_HEADER_WIDTH
+                columnWidth: spectralLineHeaderWidth.get(header.name) ?? DEFAULT_HEADER_WIDTH
             };
             controlHeaders.set(header.name, controlHeader);
         });

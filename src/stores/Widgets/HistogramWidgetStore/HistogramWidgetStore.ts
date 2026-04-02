@@ -20,28 +20,28 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable logScaleY: boolean = true;
+    @observable isLogScaleY: boolean = true;
     @observable plotType: PlotType = PlotType.STEPS;
     @observable primaryLineColor: string = "auto-blue";
     @observable lineWidth: number = 1;
     @observable linePlotPointSize: number = 1.5;
-    @observable meanRmsVisible: boolean = false;
+    @observable isMeanRmsVisible: boolean = false;
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     // Current config settings
-    @observable currentAutoBounds: boolean = true;
+    @observable isCurrentAutoBounds: boolean = true;
     @observable currentMinPix: number | undefined = undefined;
     @observable currentMaxPix: number | undefined = undefined;
-    @observable currentAutoBins: boolean = true;
+    @observable isCurrentAutoBins: boolean = true;
     @observable currentNumBins: number | null | undefined = null;
 
     // Maximum number of histogram bins on the slider
     @observable maxNumBins: number;
 
     // Config settings in the protobuf message
-    public fixedNumBins: boolean;
+    public isFixedNumBins: boolean;
     public numBins: number | null | undefined;
-    public fixedBounds: boolean;
+    public isFixedBounds: boolean;
     public minPix: number | undefined;
     public maxPix: number | undefined;
 
@@ -93,8 +93,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setLogScale = (logScale: boolean) => {
-        this.logScaleY = logScale;
+    @action setLogScale = (isLogScale: boolean) => {
+        this.isLogScaleY = isLogScale;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -105,16 +105,16 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (val: boolean) => {
-        this.isMouseMoveIntoLinePlots = val;
+    @action setMouseMoveIntoLinePlots = (isVal: boolean) => {
+        this.isMouseMoveIntoLinePlots = isVal;
     };
 
     @action setSettingsTabId = (tabId: HistogramSettingsTabs) => {
         this.settingsTabId = tabId;
     };
 
-    @action setAutoBounds = (autoBounds: boolean) => {
-        this.currentAutoBounds = autoBounds;
+    @action setAutoBounds = (isAutoBounds: boolean) => {
+        this.isCurrentAutoBounds = isAutoBounds;
     };
 
     @action setMinPix = (minPix: number) => {
@@ -125,8 +125,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.currentMaxPix = maxPix;
     };
 
-    @action setAutoBins = (autoBins: boolean) => {
-        this.currentAutoBins = autoBins;
+    @action setAutoBins = (isAutoBins: boolean) => {
+        this.isCurrentAutoBins = isAutoBins;
         this.resetNumBins();
     };
 
@@ -155,9 +155,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     }
 
     @action onResetConfig = () => {
-        this.currentAutoBounds = true;
+        this.isCurrentAutoBounds = true;
         this.resetBounds();
-        this.currentAutoBins = true;
+        this.isCurrentAutoBins = true;
         this.resetNumBins();
     };
 
@@ -184,10 +184,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     };
 
     @computed get isAbleToGenerate(): boolean {
-        if (!this.currentAutoBounds && this.currentMinPix !== undefined && this.currentMaxPix !== undefined && this.currentMinPix >= this.currentMaxPix) {
+        if (!this.isCurrentAutoBounds && this.currentMinPix !== undefined && this.currentMaxPix !== undefined && this.currentMinPix >= this.currentMaxPix) {
             return false;
         }
-        return !(!this.currentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
+        return !(!this.isCurrentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
@@ -221,18 +221,18 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     regionRequirements.histograms = [];
                 }
 
-                const fixedNumBins = widgetStore.fixedNumBins;
+                const isFixedNumBins = widgetStore.isFixedNumBins;
                 const numBins = widgetStore.numBins;
-                const fixedBounds = widgetStore.fixedBounds;
+                const isFixedBounds = widgetStore.isFixedBounds;
                 const minPix = widgetStore.minPix;
                 const maxPix = widgetStore.maxPix;
 
                 const histogramConfig = regionRequirements.histograms.find(
                     config =>
                         config.coordinate === coordinate &&
-                        config.fixedNumBins === fixedNumBins &&
+                        config.fixedNumBins === isFixedNumBins &&
                         config.numBins === numBins &&
-                        config.fixedBounds === fixedBounds &&
+                        config.fixedBounds === isFixedBounds &&
                         closeTo(config.bounds?.min ?? NaN, minPix ?? NaN) &&
                         closeTo(config.bounds?.max ?? NaN, maxPix ?? NaN)
                 );
@@ -241,9 +241,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     regionRequirements.histograms.push({
                         coordinate: coordinate,
                         channel: -1,
-                        fixedNumBins: fixedNumBins,
+                        fixedNumBins: isFixedNumBins,
                         numBins: numBins,
-                        fixedBounds: fixedBounds,
+                        fixedBounds: isFixedBounds,
                         bounds: {min: minPix, max: maxPix}
                     });
                 }
@@ -334,9 +334,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.resetBounds();
         this.resetNumBins();
 
-        this.fixedNumBins = false;
+        this.isFixedNumBins = false;
         this.numBins = -1;
-        this.fixedBounds = false;
+        this.isFixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
         this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram?.numBins ?? NaN) * 2;
@@ -346,21 +346,21 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         autorun(() => {
             // Update the config parameters
             if (this.isAbleToGenerate) {
-                if (this.currentAutoBounds) {
-                    this.fixedBounds = false;
+                if (this.isCurrentAutoBounds) {
+                    this.isFixedBounds = false;
                     this.minPix = 0;
                     this.maxPix = 0;
                 } else {
-                    this.fixedBounds = true;
+                    this.isFixedBounds = true;
                     this.minPix = this.currentMinPix;
                     this.maxPix = this.currentMaxPix;
                 }
 
-                if (this.currentAutoBins) {
-                    this.fixedNumBins = false;
+                if (this.isCurrentAutoBins) {
+                    this.isFixedNumBins = false;
                     this.numBins = -1;
                 } else {
-                    this.fixedNumBins = true;
+                    this.isFixedNumBins = true;
                     this.numBins = this.currentNumBins;
                 }
             }
@@ -384,8 +384,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setMeanRmsVisible = (val: boolean) => {
-        this.meanRmsVisible = val;
+    @action setMeanRmsVisible = (isVal: boolean) => {
+        this.isMeanRmsVisible = isVal;
     };
 
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
@@ -415,8 +415,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.logScaleY === "boolean") {
-            this.logScaleY = widgetSettings.logScaleY;
+        if (typeof widgetSettings.isLogScaleY === "boolean") {
+            this.isLogScaleY = widgetSettings.isLogScaleY;
         }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
@@ -440,7 +440,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            logScaleY: this.logScaleY,
+            isLogScaleY: this.isLogScaleY,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,

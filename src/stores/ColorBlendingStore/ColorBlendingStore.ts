@@ -9,7 +9,7 @@ type ColormapSetConfig =
     | {
           type: "gradient";
           colormap: string;
-          inverted: boolean;
+          isInverted: boolean;
       }
     | {
           type: "collection";
@@ -23,13 +23,13 @@ export class ColorBlendingStore {
     /** The filename of the color blended image. */
     readonly filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
-    static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
+    static readonly COLORMAP_SETS: ReadonlyMap<string, ColormapSetConfig> = new Map([
         ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
         ["CMY", {type: "collection", colormaps: ["Magenta", "Yellow", "Cyan"]}],
-        ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
+        ["Rainbow", {type: "gradient", colormap: "rainbow", isInverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
-    static readonly DefaultLayerLimit = 10;
+    static readonly DEFAULT_LAYER_LIMIT = 10;
 
     /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string = "";
@@ -38,11 +38,11 @@ export class ColorBlendingStore {
     /** The alpha values of all the layers */
     @observable alpha: number[];
     /** The visibility of the blended raster image. */
-    @observable rasterVisible: boolean = true;
+    @observable isRasterVisible: boolean = true;
     /** The visibility of all the contours. */
-    @observable contourVisible: boolean = true;
+    @observable isContourVisible: boolean = true;
     /** The visibility of all the vector overlays. */
-    @observable vectorOverlayVisible: boolean = true;
+    @observable isVectorOverlayVisible: boolean = true;
 
     /**
      * Sets the custom title shown in the image view overlay.
@@ -114,17 +114,17 @@ export class ColorBlendingStore {
 
     /** Hides or shows the blended raster image. */
     @action toggleRasterVisible = () => {
-        this.rasterVisible = !this.rasterVisible;
+        this.isRasterVisible = !this.isRasterVisible;
     };
 
     /** Hides or shows all the contours. */
     @action toggleContourVisible = () => {
-        this.contourVisible = !this.contourVisible;
+        this.isContourVisible = !this.isContourVisible;
     };
 
     /** Hides or shows all the vector overlays. */
     @action toggleVectorOverlayVisible = () => {
-        this.vectorOverlayVisible = !this.vectorOverlayVisible;
+        this.isVectorOverlayVisible = !this.isVectorOverlayVisible;
     };
 
     /** The frame from the base layer. */
@@ -141,7 +141,7 @@ export class ColorBlendingStore {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
         this.titleCustomText = this.filename;
-        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DefaultLayerLimit - 1) ?? [];
+        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DEFAULT_LAYER_LIMIT - 1) ?? [];
         this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
 
@@ -168,7 +168,7 @@ export class ColorBlendingStore {
      * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
     applyColormapSet = (set: string) => {
-        const colormapSetConfig = ColorBlendingStore.ColormapSets.get(set);
+        const colormapSetConfig = ColorBlendingStore.COLORMAP_SETS.get(set);
         if (!colormapSetConfig) {
             console.error("Invalid colormap set name.");
             return;
@@ -184,9 +184,9 @@ export class ColorBlendingStore {
             for (let i = 0; i < frameNum; i++) {
                 let index;
                 if (frameNum === 1) {
-                    index = colormapSetConfig.inverted ? gradient.size - 1 : 0;
+                    index = colormapSetConfig.isInverted ? gradient.size - 1 : 0;
                 } else {
-                    index = Math.round(((colormapSetConfig.inverted ? frameNum - 1 - i : i) * (gradient.size - 1)) / (frameNum - 1));
+                    index = Math.round(((colormapSetConfig.isInverted ? frameNum - 1 - i : i) * (gradient.size - 1)) / (frameNum - 1));
                 }
                 const hex = getHex(index);
 

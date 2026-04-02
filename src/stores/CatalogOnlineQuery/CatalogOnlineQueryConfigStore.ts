@@ -22,7 +22,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable coordsFormat: NumberFormatType = NumberFormatType.Degrees;
     @observable centerPixelCoord: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
     @observable maxObject: number = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
-    @observable enablePointSelection: boolean = false;
+    @observable isEnablePointSelection: boolean = false;
     @observable radiusUnits: RadiusUnits = RadiusUnits.DEGREES;
     @observable objectName: string = "";
     @observable isObjectQuerying: boolean = false;
@@ -41,10 +41,10 @@ export class CatalogOnlineQueryConfigStore {
             }
         );
         reaction(
-            () => AppStore.Instance.cursorFrozen,
-            cursorFrozen => {
+            () => AppStore.Instance.isCursorFrozen,
+            isCursorFrozen => {
                 const frame = this.activeFrame;
-                if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
+                if (isCursorFrozen && frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterPixelCoord(frame.cursorInfo.posImageSpace);
                     this.resetObjectName();
                 }
@@ -124,7 +124,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action setPointSelection() {
-        this.enablePointSelection = !this.enablePointSelection;
+        this.isEnablePointSelection = !this.isEnablePointSelection;
     }
 
     @action setRadiusUnits(units: RadiusUnits) {
@@ -231,22 +231,22 @@ export class CatalogOnlineQueryConfigStore {
         }
     }
 
-    @computed get disableObjectSearch(): boolean {
+    @computed get shouldDisableObjectSearch(): boolean {
         return this.objectName === "";
     }
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
+        if (activeFrame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
             const diagonal3 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, false);
-            const diagonal = Math.max(diagonal1, diagonal2, diagonal3);
-            if (isNaN(diagonal)) {
+            const isDiagonal = Math.max(diagonal1, diagonal2, diagonal3);
+            if (isNaN(isDiagonal)) {
                 return 90;
             }
-            return clamp(diagonal / 2, 0, 90);
+            return clamp(isDiagonal / 2, 0, 90);
         }
         return 90;
     }
@@ -262,7 +262,7 @@ export class CatalogOnlineQueryConfigStore {
         return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
     }
 
-    @computed get showVizierResult(): boolean {
+    @computed get shouldShowVizierResult(): boolean {
         return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
@@ -272,8 +272,8 @@ export class CatalogOnlineQueryConfigStore {
         return resources;
     }
 
-    @computed get enableLoadVizier(): boolean {
-        return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
+    @computed get shouldEnableLoadVizier(): boolean {
+        return this.vizierSelectedTableName.length > 0 && this.shouldShowVizierResult;
     }
 
     @computed get vizierTable(): VizierItem[] {
@@ -296,7 +296,7 @@ export class CatalogOnlineQueryConfigStore {
             console.warn(`Invalid precision string: ${precision}. Expected '*' or a non-negative integer. Using default precision *.`);
         }
         const overlay = AppStore.Instance.overlaySettings;
-        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+        return precision ?? (overlay.numbers.hasCustomPrecision ? overlay.numbers.precision.toString() : "*");
     }
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
@@ -340,12 +340,12 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
+    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, isDiagonal: boolean): number {
         const max = this.convertToDeg(x);
         const min = this.convertToDeg(y);
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
-        if (diagonal) {
+        if (isDiagonal) {
             return Math.sqrt(xd * xd + yd * yd);
         } else {
             return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) : Math.abs(yd);
