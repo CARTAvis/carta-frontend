@@ -34,8 +34,8 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefine
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, forward: boolean = true) {
-    return AST.transformPoint(astTransform, point.x, point.y, forward);
+export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
+    return AST.transformPoint(astTransform, point.x, point.y, isForward);
 }
 
 export function getReferencePixel(frame: FrameStore): Point2D {
@@ -176,9 +176,9 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
     const dummySpectralValue = AST.transform3DPoint(copyDest, 1, 1, 1, true);
 
-    const N = lastChannel - firstChannel + 1;
-    const destChannels = new Array<number>(N);
-    for (let i = 0; i < N; i++) {
+    const n = lastChannel - firstChannel + 1;
+    const destChannels = new Array<number>(n);
+    for (let i = 0; i < n; i++) {
         // Get spectral value from forward transform
         const sourceSpectralValue = AST.transform3DPoint(copySrc, 1, 1, firstChannel + i, true);
         if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
@@ -229,13 +229,13 @@ export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerRe
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
-    const totalLength = polygonPerimeter(controlPoints, closed);
+export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, isClosed: boolean = true): Point2D[] {
+    const totalLength = polygonPerimeter(controlPoints, isClosed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 
-    const M = controlPoints.length + (closed ? 1 : 0);
+    const m = controlPoints.length + (isClosed ? 1 : 0);
     const approxPointsOriginalSpace = new Array<Point2D>();
-    for (let i = 1; i < M; i++) {
+    for (let i = 1; i < m; i++) {
         const p1 = controlPoints[i % controlPoints.length];
         const p0 = controlPoints[i - 1];
         const {mag, dir} = magDir2D(subtract2D(p1, p0));
@@ -246,24 +246,24 @@ export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlP
             const p = add2D(p0, scale2D(dir, j * segmentSubdivisionLength));
             approxPointsOriginalSpace.push(p);
         }
-        if (i === M - 1 && !closed) {
+        if (i === m - 1 && !isClosed) {
             approxPointsOriginalSpace.push(p1);
         }
     }
 
-    const N = approxPointsOriginalSpace.length;
+    const n = approxPointsOriginalSpace.length;
 
-    if (N) {
-        const xCoords = new Float64Array(N);
-        const yCoords = new Float64Array(N);
-        for (let i = 0; i < N; i++) {
+    if (n) {
+        const xCoords = new Float64Array(n);
+        const yCoords = new Float64Array(n);
+        for (let i = 0; i < n; i++) {
             xCoords[i] = approxPointsOriginalSpace[i].x;
             yCoords[i] = approxPointsOriginalSpace[i].y;
         }
 
         const results = AST.transformPointArrays(astTransform, xCoords, yCoords, false);
-        const approximatePoints = new Array<Point2D>(N);
-        for (let i = 0; i < N; i++) {
+        const approximatePoints = new Array<Point2D>(n);
+        for (let i = 0; i < n; i++) {
             approximatePoints[i] = {x: results.x[i], y: results.y[i]};
         }
         return approximatePoints;

@@ -9,11 +9,11 @@ export class CompressionQuality {
     public static readonly ANIMATION_STEP = 1;
     public static readonly ANIMATION_DEFAULT = 9;
 
-    public static isImageCompressionQualityValid = (value: number): boolean => {
+    public static IsImageCompressionQualityValid = (value: number): boolean => {
         return isFinite(value) && value >= CompressionQuality.IMAGE_MIN && value <= CompressionQuality.IMAGE_MAX;
     };
 
-    public static isAnimationCompressionQualityValid = (value: number): boolean => {
+    public static IsAnimationCompressionQualityValid = (value: number): boolean => {
         return isFinite(value) && value >= CompressionQuality.ANIMATION_MIN && value <= CompressionQuality.ANIMATION_MAX;
     };
 }

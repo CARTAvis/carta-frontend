@@ -8,7 +8,7 @@ import {smoothStepOffset} from "utilities/math/math";
 
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
-const COMPONENT_CONFIG = new Map<string, any>([
+const componentConfig = new Map<string, any>([
     [
         "image-view",
         {
@@ -217,12 +217,12 @@ export class LayoutConfig {
             return false;
         }
         // exclude conflict with presets
-        if (PresetLayout.isPreset(layoutName)) {
+        if (PresetLayout.IsPreset(layoutName)) {
             return false;
         }
 
-        const validLayout = LayoutConfig.LayoutValidator(layoutConfig);
-        if (validLayout) {
+        const isValidLayout = LayoutConfig.LayoutValidator(layoutConfig);
+        if (isValidLayout) {
             return true;
         } else {
             console.log(LayoutConfig.LayoutValidator.errors);
@@ -245,7 +245,7 @@ export class LayoutConfig {
         };
 
         // 1. generate config from current docked widgets
-        LayoutConfig.GenSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
+        LayoutConfig.genSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
@@ -263,7 +263,7 @@ export class LayoutConfig {
             };
             // add widget settings
             let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
                 const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
                 const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
@@ -284,7 +284,7 @@ export class LayoutConfig {
         return configToSave;
     };
 
-    private static GenSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
+    private static genSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -308,7 +308,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
+                        LayoutConfig.genSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/(-component)?-\d+$/, "");
@@ -324,7 +324,7 @@ export class LayoutConfig {
                     }
                     // add widget settings
                     let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-                    if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                    if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
                         const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
                         const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                         widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
@@ -373,23 +373,23 @@ export class LayoutConfig {
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(widgetType)) {
-                        const componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
+                    if (componentConfig.has(widgetType)) {
+                        const widgetConfig = Object.assign({}, componentConfig.get(widgetType));
                         if (child.width) {
-                            componentConfig["width"] = child.width;
+                            widgetConfig["width"] = child.width;
                         }
                         if (child.height) {
-                            componentConfig["height"] = child.height;
+                            widgetConfig["height"] = child.height;
                         }
                         if ("widgetSettings" in child) {
-                            componentConfig["widgetSettings"] = child.widgetSettings;
+                            widgetConfig["widgetSettings"] = child.widgetSettings;
                         }
                         if ("plotType" in child) {
-                            componentConfig["plotType"] = child.plotType;
+                            widgetConfig["plotType"] = child.plotType;
                         }
-                        componentConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
-                        componentConfigs.push(componentConfig);
-                        newParentContent.push(componentConfig);
+                        widgetConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
+                        componentConfigs.push(widgetConfig);
+                        newParentContent.push(widgetConfig);
                     }
                 }
             }

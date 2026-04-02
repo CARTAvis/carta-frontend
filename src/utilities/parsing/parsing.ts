@@ -12,13 +12,13 @@ enum ComparisonOperator {
     RangeOpen = ".."
 }
 
-export function parseBoolean(value: string, defaultValue: boolean): boolean {
+export function parseBoolean(value: string, isDefaultValue: boolean): boolean {
     if (value === "true") {
         return true;
     } else if (value === "false") {
         return false;
     } else {
-        return defaultValue;
+        return isDefaultValue;
     }
 }
 
@@ -75,8 +75,8 @@ export function getComparisonOperatorAndValue(filterString: string): {operator: 
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)
     for (const key of Object.keys(ComparisonOperator)) {
         const operator = ComparisonOperator[key];
-        const found = filter.includes(operator);
-        if (found) {
+        const isFound = filter.includes(operator);
+        if (isFound) {
             if (operator === ComparisonOperator.Equal) {
                 const equalTo = getNumberFromFilterString(filter);
                 if (equalTo !== undefined) {

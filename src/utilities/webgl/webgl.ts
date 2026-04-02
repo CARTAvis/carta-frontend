@@ -1,5 +1,5 @@
 import {AlertStore} from "stores";
-import {TemplateNodes} from "utilities";
+import {TEMPLATE_NODES} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
 
@@ -99,7 +99,7 @@ export function initWebGL() {
     const gl = document.createElement("canvas").getContext("webgl");
     const floatExtension = gl?.getExtension("OES_texture_float");
     if (!gl || !floatExtension) {
-        AlertStore.Instance.showAlert(TemplateNodes.WebGLErrorMessage, "issue");
+        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGLErrorMessage, "issue");
         return null;
     }
     return gl;
@@ -108,7 +108,7 @@ export function initWebGL() {
 export function initWebGL2() {
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
-        AlertStore.Instance.showAlert(TemplateNodes.WebGL2ErrorMessage, "issue");
+        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGL2ErrorMessage, "issue");
         return null;
     }
     return gl;
@@ -126,12 +126,12 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     const height = Math.ceil(numPoints / width);
 
     let paddedData;
-    const UIn8 = getBufferElementType(data) === "UIn8";
+    const isUIn8 = getBufferElementType(data) === "UIn8";
     if (width * height === numPoints) {
         paddedData = data;
     } else {
         const size = width * height * components;
-        paddedData = UIn8 ? new Uint8Array(size) : new Float32Array(size);
+        paddedData = isUIn8 ? new Uint8Array(size) : new Float32Array(size);
         paddedData.set(data, 0);
     }
 
@@ -140,7 +140,7 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     gl.bindTexture(GL2.TEXTURE_2D, texture);
     switch (components) {
         case 1:
-            if (UIn8) {
+            if (isUIn8) {
                 gl.pixelStorei(GL2.UNPACK_ALIGNMENT, 1);
                 gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R8UI, width, height, 0, GL2.RED_INTEGER, GL2.UNSIGNED_BYTE, paddedData);
             } else {

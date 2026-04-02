@@ -5,11 +5,11 @@ export class Event {
     public static readonly EVENT_TYPES = Object.values(CARTA.EventType) as CARTA.EventType[];
     public static readonly EVENT_NUMBER = Event.EVENT_TYPES.length;
 
-    public static isTypeValid = (eventType: CARTA.EventType): boolean => {
+    public static IsTypeValid = (eventType: CARTA.EventType): boolean => {
         return Event.EVENT_TYPES.includes(eventType);
     };
 
-    public static getNameFromType = (eventType: CARTA.EventType): string => {
+    public static GetNameFromType = (eventType: CARTA.EventType): string => {
         return CARTA.EventType[eventType];
     };
 }

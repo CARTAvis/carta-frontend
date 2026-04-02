@@ -56,8 +56,8 @@ export class BackendService {
     private static readonly ConnectionAttemptDelay = 1000;
 
     @observable connectionStatus: ConnectionStatus = ConnectionStatus.CLOSED;
-    readonly loggingEnabled: boolean;
-    @observable connectionDropped: boolean = false;
+    readonly isLoggingEnabled: boolean;
+    @observable isConnectionDropped: boolean = false;
     @observable endToEndPing: number = NaN;
 
     public animationId: number;
@@ -92,7 +92,7 @@ export class BackendService {
     private constructor() {
         makeObservable(this);
 
-        this.loggingEnabled = true;
+        this.isLoggingEnabled = true;
         this.deferredMap = new Map<number, Deferred<IBackendResponse>>();
 
         this.eventCounter = 1;
@@ -169,7 +169,7 @@ export class BackendService {
         const isReconnection: boolean = url === this.serverUrl;
         let connectionAttempts = 0;
         const apiService = ApiService.Instance;
-        this.connectionDropped = false;
+        this.isConnectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
         this.serverUrl = url;
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
@@ -203,7 +203,7 @@ export class BackendService {
 
         this.connection.onopen = action(() => {
             if (this.connectionStatus === ConnectionStatus.CLOSED) {
-                this.connectionDropped = true;
+                this.isConnectionDropped = true;
             }
             this.connectionStatus = ConnectionStatus.ACTIVE;
             const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
@@ -292,8 +292,8 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const supportAipsBeam = AppStore.Instance.preferenceStore.aipsBeamSupport;
-            const message = CARTA.FileInfoRequest.create({directory, file, hdu, supportAipsBeam});
+            const hasSupportAipsBeam = AppStore.Instance.preferenceStore.hasAipsBeamSupport;
+            const message = CARTA.FileInfoRequest.create({directory, file, hdu, supportAipsBeam: hasSupportAipsBeam});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
@@ -357,6 +357,7 @@ export class BackendService {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>, overwrite: boolean = false): Promise<CARTA.IExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -374,7 +375,7 @@ export class BackendService {
         }
     }
 
-    async loadFile(directory: string, file: string, hdu: string, fileId: number, imageArithmetic: boolean): Promise<CARTA.IOpenFileAck> {
+    async loadFile(directory: string, file: string, hdu: string, fileId: number, isImageArithmetic: boolean): Promise<CARTA.IOpenFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -383,9 +384,9 @@ export class BackendService {
                 file,
                 hdu,
                 fileId,
-                lelExpr: imageArithmetic,
+                lelExpr: isImageArithmetic,
                 renderMode: CARTA.RenderMode.RASTER,
-                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
+                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
@@ -458,8 +459,10 @@ export class BackendService {
         regionId?: number,
         channels?: number[],
         stokes?: number[],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         keepDegenerate?: boolean,
         restFreq?: number,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         overwrite: boolean = false
     ): Promise<CARTA.ISaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -490,10 +493,10 @@ export class BackendService {
     }
 
     @action("set channels")
-    setChannels(fileId: number, channel: number | undefined, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, channelMapEnabled?: boolean, _channelRange?: CARTA.IIntBounds | undefined, currentRange?: CARTA.IIntBounds): boolean {
+    setChannels(fileId: number, channel: number | undefined, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, isChannelMapEnabled?: boolean, _channelRange?: CARTA.IIntBounds | undefined, currentRange?: CARTA.IIntBounds): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const channelRange: CARTA.IIntBounds | null = _channelRange || null;
-            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelMapEnabled, channelRange, currentRange});
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelMapEnabled: isChannelMapEnabled, channelRange, currentRange});
             this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
@@ -1045,10 +1048,10 @@ export class BackendService {
         }
     }
 
-    private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
+    private logEvent(eventType: CARTA.EventType, eventId: number, message: any, isIncoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
-            if (incoming) {
+        if (this.isLoggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
+            if (isIncoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);
                 } else {

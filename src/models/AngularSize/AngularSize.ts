@@ -11,7 +11,7 @@ export class AngularSize {
     value: number;
     unit: AngularSizeUnit;
 
-    public static convertValueFromArcsec = (arcsec: number, dstUnit: AngularSizeUnit): number => {
+    public static ConvertValueFromArcsec = (arcsec: number, dstUnit: AngularSizeUnit): number => {
         if (!isFinite(arcsec)) {
             return NaN;
         }
@@ -29,13 +29,13 @@ export class AngularSize {
         }
     };
 
-    public static convertFromArcsec = (arcsec: number, supportMilliarcsec: boolean = false): AngularSize => {
+    public static ConvertFromArcsec = (arcsec: number, isSupportMilliarcsec: boolean = false): AngularSize => {
         if (!isFinite(arcsec)) {
             return {value: NaN, unit: AngularSizeUnit.ARCSEC};
         }
 
         let unit;
-        if (supportMilliarcsec && arcsec < 0.002) {
+        if (isSupportMilliarcsec && arcsec < 0.002) {
             unit = AngularSizeUnit.MILLIARCSEC;
         } else if (arcsec < 120) {
             unit = AngularSizeUnit.ARCSEC;
@@ -44,6 +44,6 @@ export class AngularSize {
         } else {
             unit = AngularSizeUnit.DEG;
         }
-        return {value: AngularSize.convertValueFromArcsec(arcsec, unit), unit: unit};
+        return {value: AngularSize.ConvertValueFromArcsec(arcsec, unit), unit: unit};
     };
 }

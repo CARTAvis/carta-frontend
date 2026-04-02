@@ -37,7 +37,7 @@ const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
 
 // Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
 // Validate with regex ^auto-(blue|orange|green...)$
-const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
+const supportedAutoColorsRegex = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
 
 /**
  * All provided colormaps.
@@ -209,12 +209,12 @@ export function getColorsFromHex(colorHex: string, startColorHex: string = "#000
 }
 
 export function isAutoColor(color: string): boolean {
-    return SUPPORTED_AUTO_COLORS_REGEX.test(color);
+    return supportedAutoColorsRegex.test(color);
 }
 
 export function genColorFromIndex(index: number) {
     const selectedColor = Number.isInteger(index) && index >= 0 ? SELECTABLE_COLORS[index % SELECTABLE_COLORS.length] : SELECTABLE_COLORS[0];
-    return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+    return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 
 export function getColorForTheme(color: string): string {
@@ -229,7 +229,7 @@ export function getColorForTheme(color: string): string {
     }
 
     const requiredColor = color.substr(5).toUpperCase();
-    return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+    return Colors[`${requiredColor}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 
 function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {

@@ -83,16 +83,16 @@ export function formattedNotation(value: number): string | null {
     return value < 1e-2 ? toExponential(value, 2) : toFixed(value, 2);
 }
 
-export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
+export function formattedExponential(val: number, digits: number, unit: string = "", shouldTrim: boolean = true, shouldPad: boolean = false) {
     let valString = toExponential(val, digits);
-    if (trim) {
+    if (shouldTrim) {
         // remove unnecessary trailing decimals
         valString = valString.replace(/0+e/, "e");
         valString = valString.replace(".e", ".0e");
         // strip unnecessary exponential notation
         valString = valString.replace("e+0", "");
     }
-    if (pad && val >= 0) {
+    if (shouldPad && val >= 0) {
         valString = " " + valString;
     }
     // append unit
@@ -128,7 +128,7 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string |
         return null;
     }
 
-    const angularSize = AngularSize.convertFromArcsec(arcsec);
+    const angularSize = AngularSize.ConvertFromArcsec(arcsec);
     let arcString = decimals < 0 ? toFixed(angularSize.value, 6) : toFixed(angularSize.value, decimals);
     switch (angularSize.unit) {
         case AngularSizeUnit.ARCSEC:

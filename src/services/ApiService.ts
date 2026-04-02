@@ -2,7 +2,7 @@ import Ajv from "ajv";
 import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {AppToaster} from "components/Shared";
+import {APP_TOASTER} from "components/Shared";
 import {ConvertToGB, PreferenceKeys} from "enums";
 import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
@@ -46,8 +46,8 @@ export class ApiService {
         }
     }
 
-    private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
-    private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
+    private static preferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
+    private static snippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
     @observable private _accessToken: string | undefined;
     private _tokenLifetime: number;
@@ -102,8 +102,8 @@ export class ApiService {
 
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
-        const tokenRefreshed = await this.refreshAccessToken();
-        if (tokenRefreshed) {
+        const isTokenRefreshed = await this.refreshAccessToken();
+        if (isTokenRefreshed) {
             console.debug("Authenticated");
             const dt = this.tokenLifetime;
             // Queue up an access token refresh 10 seconds before the current one expires
@@ -120,7 +120,7 @@ export class ApiService {
             window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
-            AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
+            APP_TOASTER.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
         }
     };
 
@@ -158,7 +158,7 @@ export class ApiService {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
-                AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
+                APP_TOASTER.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
                 console.error(err);
             }
         }
@@ -187,10 +187,11 @@ export class ApiService {
         if (preferences) {
             this.upgradePreferences(preferences);
             console.log(preferences);
-            const valid = ApiService.PreferenceValidator(preferences);
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            const valid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
             if (!valid) {
-                for (const error of ApiService.PreferenceValidator.errors ?? []) {
+                for (const error of ApiService.preferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
@@ -285,9 +286,10 @@ export class ApiService {
                     obj[key] = preferences[key];
                 }
 
-                const valid = ApiService.PreferenceValidator(obj);
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                const valid = ApiService.preferenceValidator(obj);
                 if (!valid) {
-                    console.log(ApiService.PreferenceValidator.errors);
+                    console.log(ApiService.preferenceValidator.errors);
                 }
 
                 localStorage.setItem("preferences", JSON.stringify(obj));
@@ -354,6 +356,7 @@ export class ApiService {
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
                 LayoutConfig.UpgradeLayout(layout);
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 const valid = LayoutConfig.LayoutValidator(layout);
                 if (!valid) {
                     console.log(LayoutConfig.LayoutValidator.errors);
@@ -440,9 +443,10 @@ export class ApiService {
             const validSnippets = new Map<string, Snippet>();
             for (const snippetName of Object.keys(savedSnippets)) {
                 const snippet = savedSnippets[snippetName];
-                const valid = ApiService.SnippetValidator(snippet);
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                const valid = ApiService.snippetValidator(snippet);
                 if (!valid) {
-                    console.log(ApiService.SnippetValidator.errors);
+                    console.log(ApiService.snippetValidator.errors);
                 } else {
                     validSnippets.set(snippetName, snippet);
                 }
@@ -553,6 +557,7 @@ export class ApiService {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
                     if (valid) {
                         return workspace;

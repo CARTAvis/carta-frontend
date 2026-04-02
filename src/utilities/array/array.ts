@@ -7,8 +7,8 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     }
 
     const length = sortedArray.length;
-    const incremental = sortedArray[0].x <= sortedArray[length - 1].x;
-    if (incremental) {
+    const isIncremental = sortedArray[0].x <= sortedArray[length - 1].x;
+    if (isIncremental) {
         if (x <= sortedArray[0].x) {
             return {point: sortedArray[0], index: 0};
         } else if (x >= sortedArray[length - 1].x) {
@@ -30,7 +30,7 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
         if (x === sortedArray[middle].x) {
             return {point: sortedArray[middle], index: middle};
         }
-        if (incremental) {
+        if (isIncremental) {
             if (x < sortedArray[middle].x) {
                 end = middle - 1;
             } else {
@@ -51,6 +51,6 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     return {point: sortedArray[closer], index: closer};
 }
 
-export const distinct = (value: any, index: number, self: Array<any>) => {
+export const Distinct = (value: any, index: number, self: Array<any>) => {
     return self.indexOf(value) === index;
 };

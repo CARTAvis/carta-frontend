@@ -30,7 +30,7 @@ interface TelemetryDb extends DBSchema {
 export class TelemetryService {
     private static staticInstance: TelemetryService;
 
-    public static readonly ServerUrl = "https://telemetry.cartavis.org";
+    public static readonly SERVER_URL = "https://telemetry.cartavis.org";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
@@ -45,15 +45,15 @@ export class TelemetryService {
 
     @computed get effectiveTelemetryMode() {
         const preferences = PreferenceStore.Instance;
-        if (!this.skipTelemetry && preferences.telemetryConsentShown && preferences.telemetryUuid) {
+        if (!this.isSkipTelemetry && preferences.isTelemetryConsentShown && preferences.telemetryUuid) {
             return preferences.telemetryMode;
         }
         return TelemetryMode.None;
     }
 
-    @computed get consentRequired() {
+    @computed get isConsentRequired() {
         const preferences = PreferenceStore.Instance;
-        return !this.skipTelemetry && !preferences.telemetryConsentShown;
+        return !this.isSkipTelemetry && !preferences.isTelemetryConsentShown;
     }
 
     @computed get decodedUserId() {
@@ -64,11 +64,11 @@ export class TelemetryService {
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
     @observable private uuid: string = "";
-    @observable private skipTelemetry: boolean = false;
+    @observable private isSkipTelemetry: boolean = false;
 
     private constructor() {
         this.axiosInstance = axios.create({
-            baseURL: TelemetryService.ServerUrl
+            baseURL: TelemetryService.SERVER_URL
         });
         this.sessionId = uuidv1();
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
@@ -82,20 +82,20 @@ export class TelemetryService {
         makeObservable(this);
     }
 
-    @flow.bound *checkAndGenerateId(flush: boolean = false, forceNewId: boolean = false) {
+    @flow.bound *checkAndGenerateId(isFlush: boolean = false, isForceNewId: boolean = false) {
         const url = new URL(window.location.href);
-        const skipTelemetry = url.searchParams.get("skipTelemetry");
+        const isSkipTelemetry = url.searchParams.get("skipTelemetry");
         // Check for URL query parameter or build-time flag for skipping telemetry
-        if (skipTelemetry || process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY === "true") {
-            console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
-            this.skipTelemetry = true;
+        if (isSkipTelemetry || process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY === "true") {
+            console.log(`Skipping telemetry due to ${isSkipTelemetry ? "URL override" : "build-time override"}`);
+            this.isSkipTelemetry = true;
             return false;
         }
 
         const preferences = PreferenceStore.Instance;
         let token = preferences.telemetryUuid;
 
-        if (!token || forceNewId) {
+        if (!token || isForceNewId) {
             try {
                 const res = yield this.axiosInstance.get("/api/token");
                 token = res.data?.token;
@@ -103,7 +103,7 @@ export class TelemetryService {
                 if (decodedObject?.uuid) {
                     yield preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, token);
                     console.log(`Generated new telemetry ID ${decodedObject.uuid}. This will only be used if telemetry consent is given.`);
-                    if (forceNewId) {
+                    if (isForceNewId) {
                         yield this.clearTelemetry();
                     }
                 }
@@ -132,7 +132,7 @@ export class TelemetryService {
 
         this.axiosInstance.defaults.headers.common = {Authorization: `Bearer ${token}`};
 
-        if (flush) {
+        if (isFlush) {
             this.flushTelemetry();
         }
 
@@ -181,7 +181,7 @@ export class TelemetryService {
         }
     }
 
-    flushTelemetry = async (includeEndSession: boolean = false) => {
+    flushTelemetry = async (isIncludeEndSession: boolean = false) => {
         if (this.effectiveTelemetryMode !== TelemetryMode.None) {
             if (this.effectiveTelemetryMode === TelemetryMode.Minimal) {
                 // TODO: Filter DB entries to remove usage stats if any exist in current DB
@@ -194,7 +194,7 @@ export class TelemetryService {
             const db = await this.getDb();
             const entries = (await db.getAll(TelemetryService.StoreName)) ?? [];
 
-            if (includeEndSession) {
+            if (isIncludeEndSession) {
                 const endSessionEntry: TelemetryMessage = {
                     id: uuidv1(),
                     timestamp: getUnixTimestamp(),
@@ -244,9 +244,9 @@ export class TelemetryService {
         return this.db;
     }
 
-    addFileOpenEntry(id: number, type: CARTA.FileType, width: number, height: number, depth: number, stokes: number, generated: boolean) {
+    addFileOpenEntry(id: number, type: CARTA.FileType, width: number, height: number, depth: number, stokes: number, isGenerated: boolean) {
         const fileType = Object.keys(CARTA.FileType).find(key => CARTA.FileType[key] === type);
-        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, fileType, width, height, depth, stokes, generated});
+        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, fileType, width, height, depth, stokes, isGenerated});
     }
 
     addFileCloseEntry(id: number) {
@@ -274,12 +274,12 @@ export class TelemetryService {
         // All other actions are considered usage stats
         const isUsageEntry = !(action === TelemetryAction.Connection || action === TelemetryAction.EndSession);
         const preferences = PreferenceStore.Instance;
-        const loggingEnabled = preferences.telemetryLogging;
+        const isLoggingEnabled = preferences.isTelemetryLogging;
         const loggingPrefix = `[Telemetry] [uuid=${this.uuid}, sessionId=${this.sessionId}]`;
         const timestamp = getUnixTimestamp();
 
-        const entryAllowed = this.effectiveTelemetryMode === TelemetryMode.Usage || (!isUsageEntry && this.effectiveTelemetryMode === TelemetryMode.Minimal);
-        if (entryAllowed) {
+        const isEntryAllowed = this.effectiveTelemetryMode === TelemetryMode.Usage || (!isUsageEntry && this.effectiveTelemetryMode === TelemetryMode.Minimal);
+        if (isEntryAllowed) {
             const telemetryMessage: TelemetryMessage = {
                 id: id || uuidv1(),
                 timestamp,
@@ -290,7 +290,7 @@ export class TelemetryService {
                 usageEntry: isUsageEntry
             };
 
-            if (loggingEnabled) {
+            if (isLoggingEnabled) {
                 console.debug(`${loggingPrefix} ${telemetryMessage.action} ${details ? JSON.stringify(details) : ""}`);
             }
 
@@ -317,8 +317,8 @@ export class TelemetryService {
             } catch (err) {
                 console.warn(err);
             }
-        } else if (loggingEnabled) {
-            console.debug(`${loggingPrefix} NO-OP (disabled due to ${preferences.telemetryConsentShown ? "user preference" : "lack of explicit consent"})`);
+        } else if (isLoggingEnabled) {
+            console.debug(`${loggingPrefix} NO-OP (disabled due to ${preferences.isTelemetryConsentShown ? "user preference" : "lack of explicit consent"})`);
         }
     }
 }

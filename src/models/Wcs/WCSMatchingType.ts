@@ -4,11 +4,11 @@ export class WCSMatching {
     public static readonly MATCHING_TYPES = Object.values(WCSMatchingType).filter(v => !isNaN(Number(v)) && Number(v) !== WCSMatchingType.NONE) as WCSMatchingType[];
     public static readonly MATCHING_NUMBER = WCSMatching.MATCHING_TYPES.length;
 
-    public static isTypeValid = (value: number): boolean => {
+    public static IsTypeValid = (value: number): boolean => {
         return value >= 0 && value <= WCSMatching.MATCHING_TYPES.reduce((a: number, b: number) => a | b, 0);
     };
 
-    public static getNameFromType = (matchingType: WCSMatchingType): string => {
+    public static GetNameFromType = (matchingType: WCSMatchingType): string => {
         const string = WCSMatchingType[matchingType];
         return this.capitalizeFirstLetter(string);
     };

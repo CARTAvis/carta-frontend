@@ -3,7 +3,7 @@ export class WCSType {
     public static readonly DEGREES = "degrees";
     public static readonly SEXAGESIMAL = "sexagesimal";
 
-    public static isValid = (wcsType: string): boolean => {
+    public static IsValid = (wcsType: string): boolean => {
         return wcsType === WCSType.AUTOMATIC || wcsType === WCSType.DEGREES || wcsType === WCSType.SEXAGESIMAL;
     };
 }

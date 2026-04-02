@@ -2,7 +2,7 @@ import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} f
 import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
-import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
+import {APP_TOASTER, errorToast, warningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore} from "stores";
@@ -11,7 +11,7 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
-    public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+    public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
     private static staticInstance: CatalogApiService;
     private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
@@ -75,11 +75,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    AppToaster.show(WarningToast(error?.message));
+                    APP_TOASTER.show(warningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
+                APP_TOASTER.show(errorToast(error.message));
             } else {
                 console.log("Vizier Resource Error: " + error);
             }
@@ -106,11 +106,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    AppToaster.show(WarningToast(error?.message));
+                    APP_TOASTER.show(warningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
+                APP_TOASTER.show(errorToast(error.message));
             } else {
                 console.log("VizieR Table Error: " + error);
             }
@@ -145,7 +145,7 @@ export class CatalogApiService {
     @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
         if (!appStore.activeFrame) {
-            AppToaster.show(ErrorToast("Please load an image file"));
+            APP_TOASTER.show(errorToast("Please load an image file"));
             return;
         }
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
@@ -174,7 +174,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            AppToaster.show(ErrorToast("Please load an image file"));
+            APP_TOASTER.show(errorToast("Please load an image file"));
             throw new Error("No image file");
         }
 
@@ -207,11 +207,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    AppToaster.show(WarningToast(error?.message));
+                    APP_TOASTER.show(warningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
             } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
+                APP_TOASTER.show(errorToast(error.message));
             } else {
                 console.log("Append Simbad Error: " + error);
             }

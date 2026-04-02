@@ -15,12 +15,12 @@ export class ControlMap {
     gl: WebGL2RenderingContext;
     private grid: Float32Array;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.Mapping, width: number, height: number, updateBoudary: boolean = true) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.Mapping, width: number, height: number, isUpdateBoudary: boolean = true) {
         this.source = src;
         this.destination = dst;
         this.width = width;
         this.height = height;
-        if (updateBoudary) {
+        if (isUpdateBoudary) {
             this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width - 1, this.source.frameInfo.fileInfoExtended.height - 1);
             this.setGrid(astTransform);
         }
@@ -34,16 +34,16 @@ export class ControlMap {
     };
 
     setGrid = (astTransform?: AST.Mapping) => {
-        let cleanUpTransform: boolean = false;
+        let isCleanUpTransform: boolean = false;
 
         if (!astTransform || (astTransform as number) < 0) {
             astTransform = AST.getSpatialMapping(this.source.wcsInfo, this.destination.wcsInfo);
-            cleanUpTransform = true;
+            isCleanUpTransform = true;
         }
 
         this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, this.width, this.minPoint.y, this.maxPoint.y, this.height, true);
 
-        if (cleanUpTransform) {
+        if (isCleanUpTransform) {
             AST.deleteObject(astTransform);
         }
     };

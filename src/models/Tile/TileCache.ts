@@ -9,11 +9,11 @@ export class TileCache {
     public static readonly SYSTEM_STEP = 256;
     public static readonly SYSTEM_DEFAULT = 4096;
 
-    public static isGPUTileCacheValid = (value: number): boolean => {
+    public static IsGPUTileCacheValid = (value: number): boolean => {
         return isFinite(value) && value >= TileCache.GPU_MIN && value <= TileCache.GPU_MAX;
     };
 
-    public static isSystemTileCacheValid = (value: number): boolean => {
+    public static IsSystemTileCacheValid = (value: number): boolean => {
         return isFinite(value) && value >= TileCache.SYSTEM_MIN && value <= TileCache.SYSTEM_MAX;
     };
 }

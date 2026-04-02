@@ -15,10 +15,10 @@ export interface CatalogInfo {
 }
 
 export abstract class AbstractCatalogProfileStore {
-    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
-    private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
-    private static readonly TRUE_REGEX = /^[tTyY].*$/;
-    private static readonly FALSE_REGEX = /^[fFnN].*$/;
+    private static readonly NegativeInfinity = -1.7976931348623157e308;
+    private static readonly PositiveInfinity = 1.7976931348623157e308;
+    private static readonly TrueRegex = /^[tTyY].*$/;
+    private static readonly FalseRegex = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.CatalogHeader>;
@@ -30,11 +30,11 @@ export abstract class AbstractCatalogProfileStore {
     abstract get updateRequestDataSize(): any;
     abstract get shouldUpdateData(): boolean;
     abstract resetCatalogFilterRequest(): void;
-    abstract get loadOntoImage(): boolean;
+    abstract get shouldLoadOntoImage(): boolean;
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
-    @observable loadingData: boolean = false;
+    @observable isLoadingData: boolean = false;
     @observable catalogType: CatalogType = CatalogType.SIMBAD;
     @observable catalogFilterRequest: CARTA.ICatalogFilterRequest = {};
     @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined} = {
@@ -45,8 +45,8 @@ export abstract class AbstractCatalogProfileStore {
     };
     @observable filterDataSize: number | undefined = undefined;
     @observable progress: number;
-    @observable updatingDataStream: boolean = false;
-    @observable updateTableView: boolean = false;
+    @observable isUpdatingDataStream: boolean = false;
+    @observable shouldUpdateTableView: boolean = false;
     @observable updateMode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
     @observable selectedPointIndices: number[] = [];
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
@@ -55,7 +55,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
-    public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+    public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
         [CatalogSystemType.Galactic, "GALACTIC"],
@@ -103,9 +103,9 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogData.clear();
     }
 
-    public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
+    public static GetCatalogSystem(system: string | null | undefined): CatalogSystemType {
         let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
+        const systemMap = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME;
         systemMap.forEach((value, key) => {
             if (system?.toUpperCase().includes(value.toUpperCase())) {
                 catalogSystem = key;
@@ -149,7 +149,7 @@ export abstract class AbstractCatalogProfileStore {
     public getUserFilters(): CARTA.FilterConfig[] {
         const userFilters: CARTA.FilterConfig[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter !== undefined && value.display && value.dataIndex !== undefined) {
+            if (value.filter !== undefined && value.isDisplay && value.dataIndex !== undefined) {
                 const filter = new CARTA.FilterConfig();
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
@@ -161,10 +161,10 @@ export abstract class AbstractCatalogProfileStore {
                 } else if (dataType === CARTA.ColumnType.Bool) {
                     if (value.filter) {
                         filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
-                        if (value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)) {
+                        if (value.filter.match(AbstractCatalogProfileStore.TrueRegex)) {
                             filter.value = 1;
                             userFilters.push(filter);
-                        } else if (value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)) {
+                        } else if (value.filter.match(AbstractCatalogProfileStore.FalseRegex)) {
                             filter.value = 0;
                             userFilters.push(filter);
                         }
@@ -202,7 +202,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         const displayedColumnHeaders: CARTA.CatalogHeader[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.display && this.catalogHeader && value.dataIndex !== undefined) {
+            if (value.isDisplay && this.catalogHeader && value.dataIndex !== undefined) {
                 displayedColumnHeaders.push(this.catalogHeader[value.dataIndex]);
             }
         });
@@ -244,7 +244,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get tableColumnWidths(): Array<number | null | undefined> {
         const columnWidths: (number | null | undefined)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.display) {
+            if (value.isDisplay) {
                 columnWidths.push(value.columnWidth);
             }
         });
@@ -255,8 +255,8 @@ export abstract class AbstractCatalogProfileStore {
         return getHasFilter(this.catalogControlHeader, this.catalogData);
     }
 
-    @action updateTableStatus(val: boolean) {
-        this.updateTableView = val;
+    @action updateTableStatus(isVal: boolean) {
+        this.shouldUpdateTableView = isVal;
     }
 
     @action setColumnFilter = (filter: string, columnName: string) => {
@@ -264,7 +264,7 @@ export abstract class AbstractCatalogProfileStore {
         const newHeader: ControlHeader = {
             columnIndex: current?.columnIndex ?? NaN,
             dataIndex: current?.dataIndex ?? NaN,
-            display: current?.display ?? false,
+            isDisplay: current?.isDisplay ?? false,
             filter: filter,
             columnWidth: current?.columnWidth ?? null
         };
@@ -279,10 +279,10 @@ export abstract class AbstractCatalogProfileStore {
         }
     }
 
-    @action setHeaderDisplay(val: boolean, columnName: string) {
+    @action setHeaderDisplay(isVal: boolean, columnName: string) {
         const header = this.catalogControlHeader.get(columnName);
         if (header) {
-            header.display = val;
+            header.isDisplay = isVal;
         }
     }
 
@@ -290,12 +290,12 @@ export abstract class AbstractCatalogProfileStore {
         this.updateMode = mode;
     }
 
-    @action setLoadingDataStatus(val: boolean) {
-        this.loadingData = val;
+    @action setLoadingDataStatus(isVal: boolean) {
+        this.isLoadingData = isVal;
     }
 
-    @action setUpdatingDataStream(val: boolean) {
-        this.updatingDataStream = val;
+    @action setUpdatingDataStream(isVal: boolean) {
+        this.isUpdatingDataStream = isVal;
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
@@ -312,8 +312,8 @@ export abstract class AbstractCatalogProfileStore {
         this.progress = val;
     }
 
-    @action setIsUpdateColumn(val: boolean) {
-        this.isUpdateColumnMode = val;
+    @action setIsUpdateColumn(isVal: boolean) {
+        this.isUpdateColumnMode = isVal;
     }
 
     getSortedIndices(selectedPointIndices: number[]): number[] {
@@ -345,7 +345,7 @@ export abstract class AbstractCatalogProfileStore {
         return indices;
     }
 
-    @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
+    @action setSelectedPointIndices = (pointIndices: Array<number>, isAutoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
         const catalogStore = CatalogStore.Instance;
         const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
@@ -366,7 +366,7 @@ export abstract class AbstractCatalogProfileStore {
                 selectedData[i] = 1.0;
             }
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
-            if (autoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
+            if (isAutoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const activeFrame = appStore.activeFrame;
@@ -406,6 +406,6 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     private isInfinite(value: number) {
-        return !isFinite(value) || value === AbstractCatalogProfileStore.NEGATIVE_INFINITY || value === AbstractCatalogProfileStore.POSITIVE_INFINITY;
+        return !isFinite(value) || value === AbstractCatalogProfileStore.NegativeInfinity || value === AbstractCatalogProfileStore.PositiveInfinity;
     }
 }

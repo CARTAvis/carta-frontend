@@ -4,7 +4,7 @@ export class Freq {
     value: number;
     unit: FrequencyUnit;
 
-    public static convertUnitFromHz = (freq: number): Freq => {
+    public static ConvertUnitFromHz = (freq: number): Freq => {
         if (!isFinite(freq)) {
             return {value: NaN, unit: FrequencyUnit.MHZ};
         }
@@ -20,7 +20,7 @@ export class Freq {
         }
     };
 
-    public static convertUnitToHz = (freq: Freq): number => {
+    public static ConvertUnitToHz = (freq: Freq): number => {
         switch (freq.unit) {
             case FrequencyUnit.GHZ:
                 return freq.value * 1e9;

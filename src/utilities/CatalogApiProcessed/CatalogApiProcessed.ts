@@ -42,7 +42,7 @@ export class CatalogApiProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: header["name"],
                 description: header["description"],
-                dataType: CatalogApiProcessing.matchDataType(header["datatype"]),
+                dataType: CatalogApiProcessing.MatchDataType(header["datatype"]),
                 columnIndex: index,
                 units: header["unit"]
             });
@@ -117,7 +117,7 @@ export class CatalogApiProcessing {
         return dataMap;
     }
 
-    static matchDataType(dataType: string | null): CARTA.ColumnType {
+    static MatchDataType(dataType: string | null): CARTA.ColumnType {
         const dataTypeUpperCase = dataType?.toUpperCase();
         switch (dataTypeUpperCase) {
             case DataType.CHAR:
@@ -181,7 +181,7 @@ export class CatalogApiProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: field.getAttribute("name"),
                 description: field.getElementsByTagName("DESCRIPTION")[0]?.textContent,
-                dataType: CatalogApiProcessing.matchDataType(field.getAttribute("datatype")),
+                dataType: CatalogApiProcessing.MatchDataType(field.getAttribute("datatype")),
                 columnIndex: index,
                 units: field.getAttribute("unit")
             });

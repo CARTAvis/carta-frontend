@@ -35,20 +35,20 @@ export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined)
 }
 
 export function filterProcessedColumnData(columnData: ProcessedColumnData, selectedIndices: Array<number>): ProcessedColumnData {
-    const N = selectedIndices.length;
+    const n = selectedIndices.length;
     let data: ColumnArray;
 
     // Special cases for bool and string arrays
     if (columnData.dataType === CARTA.ColumnType.String) {
         const srcData = columnData.data as Array<string>;
-        data = new Array<string>(N);
-        for (let i = 0; i < N; i++) {
+        data = new Array<string>(n);
+        for (let i = 0; i < n; i++) {
             data[i] = srcData[selectedIndices[i]];
         }
     } else if (columnData.dataType === CARTA.ColumnType.Bool) {
         const srcData = columnData.data as Array<boolean>;
-        data = new Array<boolean>(N);
-        for (let i = 0; i < N; i++) {
+        data = new Array<boolean>(n);
+        for (let i = 0; i < n; i++) {
             data[i] = srcData[selectedIndices[i]];
         }
     } else if (columnData.dataType === CARTA.ColumnType.UnsupportedType) {
@@ -56,8 +56,8 @@ export function filterProcessedColumnData(columnData: ProcessedColumnData, selec
     } else {
         // All other arrays are simply typed arrays
         const srcData = columnData.data as Array<number>;
-        data = new Array<number>(N);
-        for (let i = 0; i < N; i++) {
+        data = new Array<number>(n);
+        for (let i = 0; i < n; i++) {
             data[i] = srcData[selectedIndices[i]];
         }
     }
@@ -167,7 +167,7 @@ export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryRes
 
     let hasFilter = false;
     controlHeader.forEach((value, key) => {
-        if (value.filter && value.display) {
+        if (value.filter && value.isDisplay) {
             const column = queryResult.get(value.dataIndex ?? NaN);
             if (column?.dataType === CARTA.ColumnType.String) {
                 hasFilter = true;
