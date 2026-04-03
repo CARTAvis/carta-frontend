@@ -4,7 +4,8 @@ cd "${0%/*}"
 cd gsl_wrapper
 mkdir -p build
 printf "Building GSL wrapper..."
-npx tsc --project tsconfig.json
+npx tsc pre.ts --outFile build/pre.js
+npx tsc post.ts --outFile build/post.js
 emcc -o build/gsl_wrapper.js gsl_wrapper.cc --pre-js build/pre.js --post-js build/post.js -I ../../wasm_libs/built/include \
     -L../../wasm_libs/built/lib -lm -lgsl -lm -lgslcblas -g0 -O2 -msimd128 -std=c++11 \
     -s ALLOW_MEMORY_GROWTH=1 \

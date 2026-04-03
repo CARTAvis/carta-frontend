@@ -4,7 +4,8 @@ cd "${0%/*}"
 cd ast_wrapper
 mkdir -p build
 printf "Building AST wrapper..."
-npx tsc --project tsconfig.json
+npx tsc pre.ts --outFile build/pre.js
+npx tsc post.ts --outFile build/post.js
 emcc -std=c++11 -o build/ast_wrapper.js ast_wrapper.cc grf_debug.cc --pre-js build/pre.js --post-js build/post.js \
     -I../../wasm_libs/built/include -L../../wasm_libs/built/lib -last -last_pal -lm -g0 -O2 -msimd128 \
     -s ALLOW_MEMORY_GROWTH=1 -s NO_EXIT_RUNTIME=1 -s EXPORTED_RUNTIME_METHODS='["cwrap", "UTF8ToString", "HEAPF32", "HEAPF64"]' \
