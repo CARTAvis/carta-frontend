@@ -7,8 +7,7 @@ cd "${0%/*}"
 cd carta_computation
 mkdir -p build
 printf "Building carta computation code..."
-npx tsc post.ts --outFile build/post.js
-npx tsc pre.ts --outFile build/pre.js
+npx tsc --project tsconfig.json
 cp typings.d.ts build/index.d.ts
 
 emcc -o build/carta_computation.js carta_computation.cc Point2D.cc ../../wasm_libs/zstd/build/standalone_zstd.a \

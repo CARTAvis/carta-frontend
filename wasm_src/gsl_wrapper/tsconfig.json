@@ -1,14 +1,17 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es5",
         "sourceMap": true,
         "lib": [
-            "es5",
+            "es6",
             "webworker"
-        ]
+        ],
+        "types": ["node"],
+        "skipLibCheck": true,
+        "outDir": "build"
     },
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "build"
     ]
 }

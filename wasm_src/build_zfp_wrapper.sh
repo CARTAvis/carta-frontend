@@ -4,8 +4,7 @@ cd "${0%/*}"
 cd zfp_wrapper
 mkdir -p build
 printf "Building ZFP wrapper..."
-npx tsc pre.ts --outFile build/pre.js
-npx tsc post.ts --outFile build/post.js
+npx tsc --project tsconfig.json
 emcc -o build/zfp_wrapper.js zfp_wrapper.c --pre-js build/pre.js --post-js build/post.js -I ../../wasm_libs/built/include \
     -L../../wasm_libs/built/lib -lm -lzfp -g0 -O2 -msimd128 \
     -s ALLOW_MEMORY_GROWTH=1 \
