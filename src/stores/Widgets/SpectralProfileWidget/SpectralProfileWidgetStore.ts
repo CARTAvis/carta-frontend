@@ -1,6 +1,6 @@
 import type {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -14,7 +14,6 @@ import {Clamp, GenColorFromIndex, GetColorForTheme, IsAutoColor, PixelToFluxDens
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
-type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
@@ -23,7 +22,6 @@ export type MultiPlotData = {
     fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
     colors: (string | undefined)[];
     labels: {image: string | undefined; plot: string}[];
-    comments: Comments[];
     plotName: {image: string; plot: string};
     xMin: number | undefined;
     xMax: number | undefined;
@@ -76,6 +74,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
     readonly fittingStore: ProfileFittingStore;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     /**
      * Set region for the spectral profiler.
@@ -366,58 +366,76 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
-        reaction(
-            () => this.effectiveFrame,
-            frame => {
-                if (frame) {
-                    const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-                    if (isMultiProfileActive) {
-                        this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame,
+                frame => {
+                    if (frame) {
+                        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+                        if (isMultiProfileActive) {
+                            this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                        }
                     }
                 }
-            }
+            )
         );
 
-        reaction(
-            () => this.profileSelectionStore.activeProfileCategory,
-            () => {
-                this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
-            }
-        );
-
-        reaction(
-            () => this.effectiveFrame?.requiredPolarization,
-            polarization => {
-                if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
+        this.disposers.push(
+            reaction(
+                () => this.profileSelectionStore.activeProfileCategory,
+                () => {
+                    this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
                 }
-            }
+            )
         );
 
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.requiredPolarization,
+                polarization => {
+                    if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
+                        this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.channelValueBounds,
+                channelValueBounds => {
+                    if (channelValueBounds) {
+                        this.updateRanges();
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                if (this.effectiveFrame) {
                     this.updateRanges();
+                    this.selectMomentRegion(RegionId.IMAGE);
                 }
-            }
+            })
         );
-
-        autorun(() => {
-            if (this.effectiveFrame) {
-                this.updateRanges();
-                this.selectMomentRegion(RegionId.IMAGE);
-            }
-        });
 
         // Update boundaries
-        autorun(() => {
-            const currentData = this.plotData;
-            if (currentData) {
-                this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                const currentData = this.plotData;
+                if (currentData) {
+                    this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            })
+        );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        this.profileSelectionStore.dispose();
+    };
 
     @computed private get intensityConfig(): IntensityConfig | undefined {
         const frame = this.effectiveFrame;
@@ -469,7 +487,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const smoothedData: Point2D[][] = [];
         const colors: (string | undefined)[] = [];
         const labels: {image: string | undefined; plot: string}[] = [];
-        const comments: string[][] = [];
         const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
@@ -486,7 +503,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const profileColor = profileColorMap.get(profile.colorKey ?? "");
                 colors.push(profileColor === undefined ? undefined : GetColorForTheme(profileColor));
                 labels.push(profile.label);
-                comments.push(profile.comments);
 
                 const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
@@ -565,7 +581,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             fittingData,
             colors,
             labels,
-            comments,
             plotName: this.profileSelectionStore.profilesPlotName,
             xMin,
             xMax,

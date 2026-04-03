@@ -55,6 +55,7 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
+                this.animateHandle = undefined;
             }
             this.isAnimationActive = true;
             this.animate();
@@ -125,13 +126,15 @@ export class AnimatorStore {
             console.error(err);
             appStore.tileService.setAnimationEnabled(false);
         }
-        if (this.stopHandle !== undefined) {
-            clearTimeout(this.stopHandle);
-        }
+        clearTimeout(this.stopHandle);
+        this.stopHandle = undefined;
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     }
 
     @action stopAnimation = () => {
+        clearTimeout(this.stopHandle);
+        this.stopHandle = undefined;
+
         // Ignore stop when not playing
         if (!this.isAnimationActive) {
             return;
@@ -148,6 +151,7 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
+                this.animateHandle = undefined;
             }
         } else {
             const endFrame: CARTA.IAnimationFrame = {

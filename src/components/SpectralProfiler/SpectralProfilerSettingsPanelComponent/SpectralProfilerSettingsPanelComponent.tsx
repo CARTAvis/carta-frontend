@@ -1,6 +1,6 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
@@ -20,6 +20,7 @@ const KEYCODE_ENTER = 13;
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -61,20 +62,27 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.floatingSettingsId = props.floatingSettingsId;
 
         const appStore = AppStore.Instance;
-        autorun(() => {
-            if (this.widgetStore) {
-                const frame = this.widgetStore.effectiveFrame;
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                    const id = this.floatingSettingsId;
-                    if (id) {
-                        appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const frame = this.widgetStore.effectiveFrame;
+                    if (frame) {
+                        const regionId = this.widgetStore.effectiveRegionId;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                        const id = this.floatingSettingsId;
+                        if (id) {
+                            appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
+                        }
                     }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {

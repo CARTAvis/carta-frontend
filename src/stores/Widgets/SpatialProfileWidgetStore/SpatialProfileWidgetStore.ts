@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, override} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
@@ -34,6 +34,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
     readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
     @observable settingsTabId: SpatialProfilerSettingsTabs = SpatialProfilerSettingsTabs.STYLING;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -121,15 +123,22 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (coordinate !== undefined) {
             this.coordinate = coordinate;
         }
-        autorun(() => {
-            if (this.effectiveFrame) {
-                action(() => {
-                    this.selectedStokes = DEFAULT_STOKES;
-                })();
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (this.effectiveFrame) {
+                    action(() => {
+                        this.selectedStokes = DEFAULT_STOKES;
+                    })();
+                }
+            })
+        );
         makeObservable(this);
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 
     @computed get isXProfile(): boolean {
         return this.coordinate?.includes("x");

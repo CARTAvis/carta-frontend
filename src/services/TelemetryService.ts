@@ -65,6 +65,7 @@ export class TelemetryService {
     private db: IDBPDatabase<TelemetryDb>;
     @observable private uuid: string = "";
     @observable private isSkipTelemetry: boolean = false;
+    private telemetrySubmissionHandle: ReturnType<typeof setInterval> | undefined;
 
     private constructor() {
         this.axiosInstance = axios.create({
@@ -78,9 +79,16 @@ export class TelemetryService {
             ev.preventDefault();
         };
 
-        setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        this.telemetrySubmissionHandle = setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        window.addEventListener("unload", this.dispose);
         makeObservable(this);
     }
+
+    public dispose = () => {
+        clearInterval(this.telemetrySubmissionHandle);
+        this.telemetrySubmissionHandle = undefined;
+        window.removeEventListener("unload", this.dispose);
+    };
 
     @flow.bound *checkAndGenerateId(isFlush: boolean = false, isForceNewId: boolean = false) {
         const url = new URL(window.location.href);

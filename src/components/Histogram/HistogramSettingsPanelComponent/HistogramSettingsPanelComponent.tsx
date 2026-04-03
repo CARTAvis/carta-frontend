@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun, computed, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 import type {LineKey} from "models";
 
@@ -20,6 +20,7 @@ const KEYCODE_ENTER = 13;
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -55,30 +56,37 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         this.floatingSettingsId = props.floatingSettingsId;
 
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                let regionString = "Unknown";
-                const regionId = this.widgetStore.effectiveRegionId;
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                if (this.widgetStore && this.widgetStore.effectiveFrame) {
+                    let regionString = "Unknown";
+                    const regionId = this.widgetStore.effectiveRegionId;
 
-                if (regionId === -1) {
-                    regionString = "Image";
-                } else if (this.widgetStore.effectiveFrame.regionSet) {
-                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                    if (region) {
-                        regionString = region.nameString;
+                    if (regionId === -1) {
+                        regionString = "Image";
+                    } else if (this.widgetStore.effectiveFrame.regionSet) {
+                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                        if (region) {
+                            regionString = region.nameString;
+                        }
+                    }
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
+                    }
+                } else {
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings`);
                     }
                 }
-                const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                if (this.floatingSettingsId) {
-                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
-                }
-            } else {
-                if (this.floatingSettingsId) {
-                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings`);
-                }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {

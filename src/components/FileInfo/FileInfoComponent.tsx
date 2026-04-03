@@ -39,8 +39,8 @@ export class FileInfoComponent extends React.Component<{
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{line: number; num: number}> = [];
     private listRef = React.createRef<any>();
-    private clickMatchedTimer;
-    private clickMatchedTimerStart;
+    private clickMatchedTimer: ReturnType<typeof setInterval> | undefined;
+    private clickMatchedTimerStart: ReturnType<typeof setTimeout> | undefined;
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -150,7 +150,9 @@ export class FileInfoComponent extends React.Component<{
         }
         if (mode === 0) {
             clearTimeout(this.clickMatchedTimerStart);
+            this.clickMatchedTimerStart = undefined;
             clearInterval(this.clickMatchedTimer);
+            this.clickMatchedTimer = undefined;
         } else {
             const clickMatched = () => {
                 if (mode === -1 || mode === -99) {
@@ -178,6 +180,13 @@ export class FileInfoComponent extends React.Component<{
     constructor(props) {
         super(props);
         makeObservable(this);
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.clickMatchedTimerStart);
+        this.clickMatchedTimerStart = undefined;
+        clearInterval(this.clickMatchedTimer);
+        this.clickMatchedTimer = undefined;
     }
 
     private renderInfoTabs = () => {

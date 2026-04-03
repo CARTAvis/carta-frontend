@@ -4,7 +4,7 @@ import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -23,6 +23,7 @@ export class StokesDialogComponent extends React.Component {
 
     @observable stokes: Map<string, CARTA.IStokesFile> = new Map();
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
+    private readonly disposers: IReactionDisposer[] = [];
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
         const currentStoke = this.stokes.get(fileName);
@@ -79,23 +80,30 @@ export class StokesDialogComponent extends React.Component {
         super(props);
         makeObservable(this);
 
-        reaction(
-            () => this.isStokesDialogVisible,
-            isStokesDialogVisible => {
-                if (isStokesDialogVisible) {
-                    const fileBrowserStore = AppStore.Instance.fileBrowserStore;
-                    this.stokes = new Map();
-                    fileBrowserStore.selectedFiles.forEach(async file => {
-                        if (fileBrowserStore.fileList?.directory && file.fileInfo?.name && file.hdu !== undefined) {
-                            const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
-                            if (stokes) {
-                                this.setStokes(file.fileInfo.name, stokes);
+        this.disposers.push(
+            reaction(
+                () => this.isStokesDialogVisible,
+                isStokesDialogVisible => {
+                    if (isStokesDialogVisible) {
+                        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+                        this.stokes = new Map();
+                        fileBrowserStore.selectedFiles.forEach(async file => {
+                            if (fileBrowserStore.fileList?.directory && file.fileInfo?.name && file.hdu !== undefined) {
+                                const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                                if (stokes) {
+                                    this.setStokes(file.fileInfo.name, stokes);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
-            }
+            )
         );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     render() {

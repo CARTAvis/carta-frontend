@@ -70,6 +70,7 @@ export class BackendService {
     private lastPongTime: number;
     private deferredMap: Map<number, Deferred<IBackendResponse>>;
     private eventCounter: number;
+    private pingIntervalHandle: ReturnType<typeof setInterval> | undefined;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
@@ -156,8 +157,15 @@ export class BackendService {
         ]);
 
         // check ping every 5 seconds
-        setInterval(this.sendPing, 5000);
+        this.pingIntervalHandle = setInterval(this.sendPing, 5000);
+        window.addEventListener("unload", this.dispose);
     }
+
+    public dispose = () => {
+        clearInterval(this.pingIntervalHandle);
+        this.pingIntervalHandle = undefined;
+        window.removeEventListener("unload", this.dispose);
+    };
 
     @action("connect")
     async connect(url: string): Promise<CARTA.IRegisterViewerAck> {

@@ -21,7 +21,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     @observable hoverInfoText: string = "";
     @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
-    private mouseEnterHandle;
+    private mouseEnterHandle: ReturnType<typeof setTimeout> | undefined;
     private layerRef = React.createRef<any>();
 
     private static readonly HoverDelay = 500;
@@ -42,9 +42,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     };
 
     @action onMouseEnter = () => {
-        if (this.mouseEnterHandle) {
-            clearTimeout(this.mouseEnterHandle);
-        }
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
         this.mouseEnterHandle = setTimeout(() => {
             this.setMouseHovering(true);
         }, ColorbarComponent.HoverDelay);
@@ -52,9 +51,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     @action onMouseLeave = () => {
         this.setMouseHovering(false);
-        if (this.mouseEnterHandle) {
-            clearTimeout(this.mouseEnterHandle);
-        }
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
         this.props.onCursorHoverValueChanged(NaN);
     };
 
@@ -64,6 +62,11 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
     }
 
     private handleMouseMove = event => {

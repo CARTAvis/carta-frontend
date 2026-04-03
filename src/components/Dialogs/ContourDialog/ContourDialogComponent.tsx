@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -49,6 +49,7 @@ export class ContourDialogComponent extends React.Component {
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore | null;
     private cachedHistogram: CARTA.IHistogram;
+    private readonly disposers: IReactionDisposer[] = [];
 
     constructor(props: {appStore: AppStore}) {
         super(props);
@@ -58,23 +59,30 @@ export class ContourDialogComponent extends React.Component {
 
         makeObservable(this);
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            if (appStore.contourDataSource) {
-                const newHist = appStore.contourDataSource.renderConfig.contourHistogram;
-                if (newHist !== this.cachedHistogram) {
-                    this.cachedHistogram = newHist;
-                    this.widgetStore.clearXYBounds();
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                if (appStore.contourDataSource) {
+                    const newHist = appStore.contourDataSource.renderConfig.contourHistogram;
+                    if (newHist !== this.cachedHistogram) {
+                        this.cachedHistogram = newHist;
+                        this.widgetStore.clearXYBounds();
+                    }
                 }
-            }
-            const widgetStore = this.widgetStore;
-            if (widgetStore) {
-                const currentData = this.plotData;
-                if (currentData) {
-                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                const widgetStore = this.widgetStore;
+                if (widgetStore) {
+                    const currentData = this.plotData;
+                    if (currentData) {
+                        widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action setDefaultContourParameters() {
