@@ -942,7 +942,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 pad: 0
             },
             showlegend: false,
-            dragMode: widgetStore.dragMode
+            dragmode: widgetStore.dragMode
         };
 
         if (widgetStore.shouldShowFittingResult) {
