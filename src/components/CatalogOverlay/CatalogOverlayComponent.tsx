@@ -199,6 +199,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 // Helper: first displayed numeric column matching regex
+                const isExcludedCoordinateName = (name: string): boolean => {
+                    const normalized = name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+                    return normalized.startsWith("e_") || normalized.startsWith("pm") || normalized.includes("_pm") || normalized.includes("propermotion") || /(err|error|sigma|sig|unc|uncertainty|offset|resid|residual)/.test(normalized);
+                };
+
                 const findColumnBy = (regex: RegExp): string | undefined => {
                     for (const [name, header] of profileStore.catalogControlHeader) {
                         const dataIndex = header.dataIndex;
@@ -207,7 +212,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         }
                         const dataType = profileStore.catalogHeader[dataIndex]?.dataType;
                         const isNumeric = CatalogOverlayComponent.axisDataType.includes(dataType);
-                        if (header.display && isNumeric && regex.test(name)) {
+                        if (header.display && isNumeric && !isExcludedCoordinateName(name) && regex.test(name)) {
                             return name;
                         }
                     }
@@ -229,8 +234,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
                 // RA aliases: ra, ra_deg, ra_*, r.a., right ascension, alpha, raj...
                 // DEC aliases: dec, dec_deg, dec_*, decl, declination, delta, dej...
-                trySetAxis(xLabel, CatalogOverlay.RA, catalogWidgetStore.xAxis, [/^ra_?deg/i, /^ra_/i, /^ra\b/i, /^r\.?a\.?/i, /^right[ _-]?asc/i, /^alpha/i, /^raj/i], name => catalogWidgetStore.setxAxis(name));
-                trySetAxis(yLabel, CatalogOverlay.DEC, catalogWidgetStore.yAxis, [/^dec_?deg/i, /^dec_/i, /^dec\b/i, /^decl/i, /^declin/i, /^delta/i, /^dej/i], name => catalogWidgetStore.setyAxis(name));
+                trySetAxis(
+                    xLabel,
+                    CatalogOverlay.RA,
+                    catalogWidgetStore.xAxis,
+                    [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i],
+                    name => catalogWidgetStore.setxAxis(name)
+                );
+                trySetAxis(
+                    yLabel,
+                    CatalogOverlay.DEC,
+                    catalogWidgetStore.yAxis,
+                    [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i],
+                    name => catalogWidgetStore.setyAxis(name)
+                );
 
                 // Mark as attempted regardless of success to avoid future auto-selection for this catalog
                 this.autoSelectAttemptedCatalogIds.add(currentId);
