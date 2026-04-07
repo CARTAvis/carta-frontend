@@ -2,7 +2,7 @@ import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {AppStore, type FrameStore, RenderConfigStore} from "stores";
-import {getColorsForValues} from "utilities";
+import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 
 /** The configuration of a colormap set. Can either be a single gradient colormap or a collection of multiple colormaps. */
 type ColormapSetConfig =
@@ -32,17 +32,17 @@ export class ColorBlendingStore {
     static readonly DefaultLayerLimit = 10;
 
     /** The custom title shown in the image view overlay. */
-    @observable titleCustomText: string;
+    @observable titleCustomText: string = "";
     /** The frames from the layers excluding the base layer. */
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
     /** The visibility of the blended raster image. */
-    @observable rasterVisible = true;
+    @observable rasterVisible: boolean = true;
     /** The visibility of all the contours. */
-    @observable contourVisible = true;
+    @observable contourVisible: boolean = true;
     /** The visibility of all the vector overlays. */
-    @observable vectorOverlayVisible = true;
+    @observable vectorOverlayVisible: boolean = true;
 
     /**
      * Sets the custom title shown in the image view overlay.
@@ -128,13 +128,13 @@ export class ColorBlendingStore {
     };
 
     /** The frame from the base layer. */
-    @computed get baseFrame(): FrameStore {
+    @computed get baseFrame(): FrameStore | null {
         return AppStore.Instance.spatialReference;
     }
 
     /** The frames from all the layers. */
     @computed get frames(): FrameStore[] {
-        return [this.baseFrame, ...this.selectedFrames];
+        return this.baseFrame ? [this.baseFrame, ...this.selectedFrames] : [...this.selectedFrames];
     }
 
     constructor(id: number) {
@@ -191,7 +191,7 @@ export class ColorBlendingStore {
                 const hex = getHex(index);
 
                 let isExistingSingleColor = false;
-                for (const [key, val] of RenderConfigStore.COLOR_MAPS_MONO) {
+                for (const [key, val] of COLOR_MAPS_MONO) {
                     if (val === hex) {
                         rasterUnmatchedFrames[i].renderConfig.setColorMap(key);
                         isExistingSingleColor = true;

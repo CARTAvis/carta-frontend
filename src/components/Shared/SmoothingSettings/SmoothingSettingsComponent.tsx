@@ -1,22 +1,13 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps, Switch} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, LineSettings, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
-import {ProfileSmoothingStore} from "stores";
+import {AutoColorPickerComponent, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {LineSettings, PlotType, SmoothingType} from "enums";
+import {type ProfileSmoothingStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 
 import "./SmoothingSettingsComponent.scss";
-
-export enum SmoothingType {
-    NONE = "None",
-    HANNING = "Hanning",
-    BOXCAR = "Boxcar",
-    GAUSSIAN = "Gaussian",
-    DECIMATION = "Decimation",
-    BINNING = "Binning",
-    SAVITZKY_GOLAY = "Savitzky-Golay"
-}
 
 @observer
 export class SmoothingSettingsComponent extends React.Component<{
@@ -67,7 +58,11 @@ export class SmoothingSettingsComponent extends React.Component<{
                             <FormGroup inline={true} label="Color">
                                 {smoothingStore.colorMap.size > 0 && <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged} />}
                                 <AutoColorPickerComponent
-                                    color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
+                                    color={
+                                        smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)
+                                            ? (smoothingStore.colorMap.get(smoothingStore.selectedLine) ?? smoothingStore.lineColor)
+                                            : smoothingStore.lineColor
+                                    }
                                     presetColors={SWATCH_COLORS}
                                     setColor={(color: string) => {
                                         if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {

@@ -1,18 +1,14 @@
-import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
+import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, RadiusUnits, SystemType} from "stores";
-import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
+import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
+import {type CatalogInfo, type WCSPoint2D} from "models";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore} from "stores";
+import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
-import {TelemetryAction, TelemetryService} from "./TelemetryService";
-
-export enum CatalogDatabase {
-    SIMBAD = "SIMBAD",
-    VIZIER = "VizieR"
-}
+import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
     public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
@@ -20,7 +16,7 @@ export class CatalogApiService {
     private static staticInstance: CatalogApiService;
     private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
         [CatalogDatabase.SIMBAD, {baseURL: "https://simbad.u-strasbg.fr/simbad/sim-tap/"}],
-        [CatalogDatabase.VIZIER, {baseURL: "https://vizier.u-strasbg.fr/viz-bin/"}]
+        [CatalogDatabase.VIZIER, {baseURL: "https://vizier.cds.unistra.fr/viz-bin/"}]
     ]);
     private axiosInstanceSimbad: AxiosInstance;
     private axiosInstanceVizier: AxiosInstance;
@@ -61,7 +57,7 @@ export class CatalogApiService {
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         // http://cdsarc.u-strasbg.fr/doc/asu-summary.htx
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
         // -meta.max = 100000, use a large number to get all tables(same number as vizier use for their websit). default is 500.
@@ -93,14 +89,14 @@ export class CatalogApiService {
 
     public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizierResource[]): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
         sources.forEach(element => {
             sourceString += `${element.table.name},`;
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        const query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
             const response = await this.axiosInstanceVizier.get(query);
@@ -136,7 +132,7 @@ export class CatalogApiService {
                 description: "Online VizieR Catalog",
                 coosys: [coosy]
             };
-            let catalogInfo: CatalogInfo = {
+            const catalogInfo: CatalogInfo = {
                 fileId,
                 fileInfo: catalogFileInfo,
                 dataSize: size,
@@ -148,6 +144,10 @@ export class CatalogApiService {
 
     @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
+        if (!appStore.activeFrame) {
+            AppToaster.show(ErrorToast("Please load an image file"));
+            return;
+        }
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
         if (catalogWidgetId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
@@ -174,7 +174,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
         }
 
@@ -187,7 +187,7 @@ export class CatalogApiService {
                 const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
                 const coosys: CARTA.ICoosys = {system: configStore.coordsType};
-                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                 const catalogFileInfo: CARTA.ICatalogFileInfo = {
                     name: fileName,
@@ -195,7 +195,7 @@ export class CatalogApiService {
                     description: "Online Simbad Catalog",
                     coosys: [coosys]
                 };
-                let catalogInfo: CatalogInfo = {
+                const catalogInfo: CatalogInfo = {
                     fileId,
                     fileInfo: catalogFileInfo,
                     dataSize: response.data?.data?.length ?? 0,

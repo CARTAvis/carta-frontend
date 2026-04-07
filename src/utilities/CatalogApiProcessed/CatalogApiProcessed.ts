@@ -1,9 +1,9 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import type {ProcessedColumnData} from "utilities";
 
-import {CatalogSystemType} from "models";
-import {AppStore, NumberFormatType, SystemType} from "stores";
-import {ProcessedColumnData} from "utilities";
+import {CatalogSystemType, NumberFormatType, SystemType} from "enums";
+import {AppStore} from "stores";
 
 enum DataType {
     CHAR = "CHAR",
@@ -36,7 +36,7 @@ type VizierTable = {
 
 export class CatalogApiProcessing {
     static ProcessSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
-        let headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
+        const headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
             const header = metaData[index];
             headers[index] = new CARTA.CatalogHeader({
@@ -75,20 +75,25 @@ export class CatalogApiProcessing {
         const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
 
-        const frame = AppStore.Instance.activeFrame;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame) {
+            console.warn("No active frame to process Simbad data.");
+            return dataMap;
+        }
+
         const raformat = `${NumberFormatType.HMS}.${6}`;
         const deformat = `${NumberFormatType.DMS}.${6}`;
-        const wcsCopy = AST.copy(frame.wcsInfo);
-        if (frame.isXY || frame.isYX) {
+        const wcsCopy = AST.copy(activeFrame.wcsInfo);
+        if (activeFrame.isXY || activeFrame.isYX) {
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            AST.set(wcsCopy, `Format(${frame.dirX})=${frame.isXY ? `${raformat}` : `${deformat}`}`);
-            AST.set(wcsCopy, `Format(${frame.dirY})=${frame.isXY ? `${deformat}` : `${raformat}`}`);
+            AST.set(wcsCopy, `Format(${activeFrame.dirX})=${activeFrame.isXY ? `${raformat}` : `${deformat}`}`);
+            AST.set(wcsCopy, `Format(${activeFrame.dirY})=${activeFrame.isXY ? `${deformat}` : `${raformat}`}`);
         }
         const fraction = Math.PI / 180.0;
 
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
-            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
+            const column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
             if (column.data) {
                 for (let j = 0; j < data.length; j++) {
                     if (header["name"] === "dist") {
@@ -135,9 +140,8 @@ export class CatalogApiProcessing {
 
     static ProcessVizierData(data: string): Map<string, VizierResource> {
         const resources: Map<string, VizierResource> = new Map();
-        let dom: Document;
         const parser = new DOMParser();
-        dom = parser.parseFromString(data, "application/xml");
+        const dom = parser.parseFromString(data, "application/xml");
         const resourceElements = dom.documentElement.getElementsByTagName("RESOURCE");
         for (let index = 0; index < resourceElements.length; index++) {
             const resourceElement = resourceElements[index];
@@ -171,7 +175,7 @@ export class CatalogApiProcessing {
 
     static ProcessVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
-        let headers: CARTA.CatalogHeader[] = new Array(fields.length);
+        const headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
             const field = fields[index];
             headers[index] = new CARTA.CatalogHeader({
@@ -188,7 +192,7 @@ export class CatalogApiProcessing {
         const dataMap = new Map<number, ProcessedColumnData>();
         for (let index = 0; index < headers.length; index++) {
             const header = headers[index];
-            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
+            const column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
             dataMap.set(index, column);
         }
 

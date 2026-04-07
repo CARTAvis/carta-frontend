@@ -3,31 +3,19 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 
-import {Point2D} from "models";
-import {BackendService} from "services";
-import {FrameStore} from "stores/Frame";
-import {transformPoint} from "utilities";
+import {Font, FontStyle} from "enums";
+import {type Point2D} from "models";
+import {type BackendService} from "services";
+import {type FrameStore} from "stores/Frame";
+import {getPixelSizes, transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
-
-export enum FontStyle {
-    NORMAL = "Normal",
-    BOLD = "Bold",
-    ITALIC = "Italic",
-    BOLD_ITALIC = "Italic Bold"
-}
-
-export enum Font {
-    HELVETICA = "Helvetica",
-    TIMES = "Times",
-    COURIER = "Courier"
-}
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
 
 export class PointAnnotationStore extends RegionStore {
-    @observable pointShape: CARTA.PointAnnotationShape;
-    @observable pointWidth: number;
+    @observable pointShape: CARTA.PointAnnotationShape = CARTA.PointAnnotationShape.SQUARE;
+    @observable pointWidth: number = 6;
 
     constructor(
         backendService: BackendService,
@@ -40,15 +28,11 @@ export class PointAnnotationStore extends RegionStore {
         name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        pointShape: CARTA.PointAnnotationShape = CARTA.PointAnnotationShape.SQUARE,
-        pointWidth: number = 6
+        dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
-        this.pointShape = pointShape || CARTA.PointAnnotationShape.SQUARE;
-        this.pointWidth = pointWidth || 6;
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setPointShape = (pointShape: CARTA.PointAnnotationShape) => {
@@ -102,8 +86,8 @@ export class TextAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setText = (text: string) => {
@@ -245,9 +229,9 @@ export class CompassAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
         this.setLength(controlPoints[1].x, true);
+        makeObservable(this);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -335,11 +319,13 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
-        const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
+        const originPoint = spatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
-        const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT1"));
-        const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT2"));
+        // Early return for invalid WCS - rendering component handles this case separately
+        if (!wcsInfo || !this.activeFrame.validWcs) {
+            return {northApproximatePoints: [], eastApproximatePoints: []};
+        }
+
         const frameView = this.activeFrame.requiredFrameViewForRegionRender;
         const top = frameView.yMax;
         const bottom = frameView.yMin;
@@ -347,12 +333,15 @@ export class CompassAnnotationStore extends RegionStore {
         const right = frameView.xMax;
         const width = right - left;
         const height = top - bottom;
-        const angularWidth = delta1 ? Math.abs((delta1?.numericValue * Math.PI * width) / 180) : 6.18;
-        const angularHeight = delta2 ? Math.abs((delta2?.numericValue * Math.PI * height) / 180) : 6.18;
+        const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
+        const pixelSizeArcsec = getPixelSizes(this.activeFrame);
+        const xPixelSizeRad = ((pixelSizeArcsec.x / 3600) * Math.PI) / 180;
+        const yPixelSizeRad = ((pixelSizeArcsec.y / 3600) * Math.PI) / 180;
+        const angularWidth = Math.abs(xPixelSizeRad * width);
+        const angularHeight = Math.abs(yPixelSizeRad * height);
 
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
-
+        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirX, transformed.x, transformed.y, angularWidth);
+        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirY, transformed.x, transformed.y, angularHeight);
         return {northApproximatePoints, eastApproximatePoints};
     }
 
@@ -443,8 +432,8 @@ export class RulerAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setFontSize = (fontSize: number) => {
@@ -525,10 +514,6 @@ export class RulerAnnotationStore extends RegionStore {
     };
 
     public getCurveApproximation(wcsInfo: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]; corner: Point2D} {
-        let xApproximatePoints;
-        let yApproximatePoints;
-        let hypotenuseApproximatePoints;
-
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
 
@@ -553,9 +538,9 @@ export class RulerAnnotationStore extends RegionStore {
         const start = {x: startX, y: startY};
         const finish = {x: finishX, y: finishY};
 
-        xApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, corner, start);
-        yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
-        hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
+        const xApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, corner, start);
+        const yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
+        const hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints, corner: transformPoint(wcsInfo, corner, false)};
     }

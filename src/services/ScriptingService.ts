@@ -1,4 +1,4 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {toJS} from "mobx";
 

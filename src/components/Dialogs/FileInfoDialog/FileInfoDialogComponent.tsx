@@ -1,11 +1,12 @@
 import * as React from "react";
-import {Classes, DialogProps} from "@blueprintjs/core";
+import {Classes, type DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, DialogId, HelpType} from "stores";
+import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
+import {DialogId, FileInfoType, HelpType} from "enums";
+import {AppStore} from "stores";
 
 import "./FileInfoDialogComponent.scss";
 
@@ -26,7 +27,7 @@ export class FileInfoDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo) || false,
             title: "File Header"
         };
 

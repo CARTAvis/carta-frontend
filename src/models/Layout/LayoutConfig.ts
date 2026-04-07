@@ -2,7 +2,7 @@ import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
 import {PresetLayout} from "models";
-import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
 import {findDeep} from "utilities";
 import {smoothStepOffset} from "utilities/math/math";
 
@@ -235,7 +235,7 @@ export class LayoutConfig {
             return null;
         }
 
-        let configToSave = {
+        const configToSave = {
             layoutVersion: LayoutConfig.CurrentSchemaVersion,
             docked: {
                 type: rootConfig.type,
@@ -253,7 +253,7 @@ export class LayoutConfig {
             if (config?.type === "floating-settings") {
                 return;
             }
-            let floatingConfig = {
+            const floatingConfig = {
                 type: "component",
                 id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
@@ -292,7 +292,7 @@ export class LayoutConfig {
         parentContent.forEach(child => {
             if (child.type) {
                 if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    let simpleChild = {
+                    const simpleChild = {
                         type: child.type,
                         content: []
                     };
@@ -312,7 +312,7 @@ export class LayoutConfig {
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                    let simpleChild = {
+                    const simpleChild = {
                         type: child.type,
                         id: widgetType
                     };
@@ -353,7 +353,7 @@ export class LayoutConfig {
         parentContent.forEach(child => {
             if (child.type) {
                 if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    let simpleChild = {
+                    const simpleChild = {
                         type: child.type,
                         content: []
                     };
@@ -374,7 +374,7 @@ export class LayoutConfig {
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");
                     if (COMPONENT_CONFIG.has(widgetType)) {
-                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
+                        const componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
                         if (child.width) {
                             componentConfig["width"] = child.width;
                         }

@@ -1,7 +1,7 @@
 import {computed, makeObservable} from "mobx";
 
 import {OverlaySettings} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
 const COLORBAR_TICK_NUM_MIN = 3;
@@ -30,10 +30,10 @@ export class ColorbarStore {
         return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
     }
 
-    @computed get roundedNumbers(): {numbers: number[]; precision: number} {
+    @computed get roundedNumbers(): {numbers: number[]; precision: number} | null {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !this.tickNum) {
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal === undefined || scaleMaxVal === undefined || scaleMinVal >= scaleMaxVal || !this.tickNum) {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / this.tickNum; // estimate the step
@@ -44,7 +44,7 @@ export class ColorbarStore {
             roundBase = Math.pow(10, precision);
             const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
-            let numbers = [];
+            const numbers: number[] = [];
             let val = min > scaleMinVal ? min : Math.round((min + dy) * roundBase) / roundBase;
             while (val < scaleMaxVal) {
                 numbers.push(val);
@@ -77,6 +77,9 @@ export class ColorbarStore {
         }
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
+        if (scaleMinVal === undefined || scaleMaxVal === undefined) {
+            return [];
+        }
         if (colorbar.position === "right") {
             return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {

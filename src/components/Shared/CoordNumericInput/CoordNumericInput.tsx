@@ -1,21 +1,15 @@
 import {Position, Tooltip} from "@blueprintjs/core";
 
+import {CoordinateMode, InputType} from "enums";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {CoordinateMode} from "stores/Frame";
 
 import {SafeNumericInput} from "..";
 
 const KEYCODE_ENTER = 13;
 
-export enum InputType {
-    XCoord = "XCoord",
-    YCoord = "YCoord",
-    Size = "Size"
-}
-
 type WcsCoordNumericInputProps = {
     inputType: InputType;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
@@ -38,14 +32,16 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     };
 
     let tooltipContent = "";
-    switch (inputType) {
+    switch (valueWcs && inputType) {
         case InputType.XCoord:
             const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
-            tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`;
+            const formatXLabel = formatX ? NUMBER_FORMAT_LABEL.get(formatX) : undefined;
+            tooltipContent = `Format: ${formatXLabel ?? "Unknown"}`;
             break;
         case InputType.YCoord:
             const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
-            tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`;
+            const formatYLabel = formatY ? NUMBER_FORMAT_LABEL.get(formatY) : undefined;
+            tooltipContent = `Format: ${formatYLabel ?? "Unknown"}`;
             break;
         case InputType.Size:
             tooltipContent = "Format: arcsec(\"), arcmin('), or degrees(deg)";
@@ -120,7 +116,7 @@ interface CoordNumericInputProps {
     inputType: InputType;
     value: number;
     onChange: (val: number) => boolean;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean;
     disabled?: boolean;
     wcsDisabled?: boolean;
@@ -128,9 +124,10 @@ interface CoordNumericInputProps {
 }
 
 export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled = false, wcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
+    const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
     if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || AppStore.Instance.overlaySettings.isImgCoordinates} customPlaceholder={customPlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={isImgCoordinates ? "" : valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || isImgCoordinates} customPlaceholder={customPlaceholder} />;
     }
 };

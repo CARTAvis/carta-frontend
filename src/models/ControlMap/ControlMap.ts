@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 
-import {Point2D} from "models";
-import {FrameStore} from "stores/Frame";
+import {type Point2D} from "models";
+import {type FrameStore} from "stores/Frame";
 import {GL2} from "utilities";
 
 export class ControlMap {

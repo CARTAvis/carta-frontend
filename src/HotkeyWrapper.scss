@@ -1,0 +1,45 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+/* SCSS sizing variables */
+$col-w: 380px; /* column width */
+$gap: 20px; /* column gap */
+$pad: 20px; /* Blueprint dialog body horizontal padding per side */
+$breakpoint-buffer: 100px; /* additional buffer for responsive breakpoint calculations */
+
+// Calculate breakpoint values
+$breakpoint-2col: $col-w * 2 + $gap + $pad * 2 + $breakpoint-buffer;
+$breakpoint-3col: $col-w * 3 + $gap * 2 + $pad * 2 + $breakpoint-buffer;
+
+.#{$ns}-dialog.hotkeys-dialog {
+    /* 1 col = 1×col-w + 0×gap + 2×pad */
+    width: $col-w + $pad * 2;
+    max-width: 95vw;
+}
+
+@media (min-width: $breakpoint-2col) {
+    .#{$ns}-dialog.hotkeys-dialog {
+        /* 2 cols = 2×col-w + 1×gap + 2×pad */
+        width: $col-w * 2 + $gap + $pad * 2;
+    }
+}
+
+@media (min-width: $breakpoint-3col) {
+    .#{$ns}-dialog.hotkeys-dialog {
+        /* 3 cols = 3×col-w + 2×gap + 2×pad */
+        width: $col-w * 3 + $gap * 2 + $pad * 2;
+    }
+}
+
+.hotkeys-grid {
+    /* Multi-row layout: left-to-right, then next row */
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap;
+    width: 100%;
+}
+
+.hotkeys-item {
+    /* Keep group intact within a row */
+    flex: 0 0 $col-w;
+    box-sizing: border-box;
+}

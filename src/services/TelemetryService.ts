@@ -1,33 +1,14 @@
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
-import {DBSchema, IDBPDatabase, openDB} from "idb";
+import {type DBSchema, type IDBPDatabase, openDB} from "idb";
 import {jwtDecode} from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 
+import {PreferenceKeys, TelemetryAction, TelemetryMode} from "enums";
 import {CARTA_INFO} from "models";
-import {PreferenceKeys, PreferenceStore} from "stores";
+import {PreferenceStore} from "stores";
 import {getUnixTimestamp} from "utilities";
-
-export enum TelemetryMode {
-    None = "none",
-    Minimal = "minimal",
-    Usage = "usage"
-}
-
-export enum TelemetryAction {
-    Connection = "connection",
-    EndSession = "endSession",
-    RetryConnection = "retryConnection",
-    OptIn = "optIn",
-    OptOut = "optOut",
-    FileOpen = "fileOpen",
-    FileClose = "fileClose",
-    SpectralProfileGeneration = "spectralProfileGeneration",
-    PvGeneration = "pvGeneration",
-    MomentGeneration = "momentGeneration",
-    CatalogLoading = "catalogLoading"
-}
 
 export interface TelemetryMessage {
     timestamp: number;
@@ -82,11 +63,11 @@ export class TelemetryService {
     private readonly sessionId: string;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
-    @observable private uuid: string;
-    @observable private skipTelemetry: boolean;
+    @observable private uuid: string = "";
+    @observable private skipTelemetry: boolean = false;
+    private telemetrySubmissionHandle: ReturnType<typeof setInterval> | undefined;
 
     private constructor() {
-        makeObservable(this);
         this.axiosInstance = axios.create({
             baseURL: TelemetryService.ServerUrl
         });
@@ -98,14 +79,22 @@ export class TelemetryService {
             ev.preventDefault();
         };
 
-        setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        this.telemetrySubmissionHandle = setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        window.addEventListener("unload", this.dispose);
+        makeObservable(this);
     }
+
+    public dispose = () => {
+        clearInterval(this.telemetrySubmissionHandle);
+        this.telemetrySubmissionHandle = undefined;
+        window.removeEventListener("unload", this.dispose);
+    };
 
     @flow.bound *checkAndGenerateId(flush: boolean = false, forceNewId: boolean = false) {
         const url = new URL(window.location.href);
         const skipTelemetry = url.searchParams.get("skipTelemetry");
         // Check for URL query parameter or build-time flag for skipping telemetry
-        if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY === "true") {
+        if (skipTelemetry || process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY === "true") {
             console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
             this.skipTelemetry = true;
             return false;
@@ -128,6 +117,7 @@ export class TelemetryService {
                 }
             } catch (err) {
                 console.warn("Could not generate telemetry UUID");
+                console.error(err);
                 return false;
             }
         }
@@ -144,6 +134,7 @@ export class TelemetryService {
             }
         } catch (err) {
             console.warn("Malformed telemetry token");
+            console.error(err);
             return false;
         }
 
@@ -173,6 +164,7 @@ export class TelemetryService {
             await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
+            console.error(err);
         }
     }
 
@@ -193,6 +185,7 @@ export class TelemetryService {
             await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
+            console.error(err);
         }
     }
 
@@ -236,6 +229,7 @@ export class TelemetryService {
                 }
             } catch (err) {
                 console.debug("Telemetry server not available");
+                console.error(err);
             }
         }
     };

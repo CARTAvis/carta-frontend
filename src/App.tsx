@@ -6,10 +6,11 @@ import {observer} from "mobx-react";
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ResizeDetector} from "components/Shared";
+import {AlertType} from "enums";
 import {ApiService} from "services";
-import {AlertStore, AlertType, AppStore} from "stores";
+import {type AlertStore, AppStore} from "stores";
 
-import {HotkeyTargetContainer} from "./HotkeyWrapper";
+import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 
 import "./App.scss";
 import "./layout-base.scss";
@@ -94,7 +95,7 @@ export class App extends React.Component {
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent
-                    progress={undefined}
+                    progress={0}
                     timeRemaining={0}
                     isOpen={appStore.resumingSession || appStore.loadingWorkspace}
                     cancellable={false}
@@ -103,7 +104,8 @@ export class App extends React.Component {
                 <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
                     <div className={glClassName} ref={this.setAppContainerRef} />
                 </ResizeDetector>
-                <HotkeyTargetContainer />
+                <HotkeysRegistrar />
+                <HotkeyService />
                 <FloatingWidgetManagerComponent />
             </div>
         );

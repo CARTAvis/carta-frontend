@@ -1,12 +1,12 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, ObservableMap} from "mobx";
 
-import {CatalogSystemType} from "models";
+import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {CatalogWidgetStore} from "stores/Widgets";
-import {minMaxArray} from "utilities";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {type CatalogWidgetStore} from "stores/Widgets";
+import {minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -27,28 +27,21 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable private _catalogGLData: Map<number, CatalogOverlayCoords>;
-    @observable catalogCounts: Map<number, number>;
+    @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
+    @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
-    @observable imageAssociatedCatalogId: Map<number, Array<number>>;
+    @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
     // catalog component Id : catalog file Id
-    @observable catalogProfiles: Map<string, number>;
+    @observable catalogProfiles: Map<string, number> = new Map();
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
-    @observable catalogPlots: Map<string, ObservableMap<number, string>>;
+    @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
     // catalog file Id : catalog Profile store
-    @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>;
+    @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // catalog file Id : catalog widget storeId
-    @observable catalogWidgets: Map<number, string>;
+    @observable catalogWidgets: Map<number, string> = new Map();
 
     private constructor() {
         makeObservable(this);
-        this._catalogGLData = new Map<number, CatalogOverlayCoords>();
-        this.imageAssociatedCatalogId = new Map<number, Array<number>>();
-        this.catalogProfiles = new Map<string, number>();
-        this.catalogPlots = new Map<string, ObservableMap<number, string>>();
-        this.catalogProfileStores = new Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>();
-        this.catalogWidgets = new Map<number, string>();
-        this.catalogCounts = new Map<number, number>();
     }
 
     @computed get catalogGLData() {
@@ -280,7 +273,7 @@ export class CatalogStore {
     }
 
     getCatalogFileNames(fileIds: Array<number>) {
-        let fileList = new Map<number, string>();
+        const fileList = new Map<number, string>();
         fileIds.forEach(catalogFileId => {
             const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
             if (catalogProfileStore) {
@@ -318,26 +311,18 @@ export class CatalogStore {
 
     private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
+            const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
-            let xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
-            let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
+            const yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
-            let wcsCopy = AST.copy(wcsInfo);
-            if (wcsCopy !== 0 && AppStore.Instance.overlaySettings.isImgCoordinates) {
+            const wcsCopy = AST.copy(wcsInfo);
+            if (wcsCopy !== 0 && overlay.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
-            let system = "System=" + catalogFrame;
-            AST.set(wcsCopy, system);
-            if (catalogFrame === CatalogSystemType.FK4) {
-                AST.set(wcsCopy, "Epoch=B1950");
-                AST.set(wcsCopy, "Equinox=1950");
-            }
 
-            if (catalogFrame === CatalogSystemType.FK5) {
-                AST.set(wcsCopy, "Epoch=J2000");
-                AST.set(wcsCopy, "Equinox=2000");
-            }
+            setAstSystem(wcsCopy, catalogFrame, overlay.global);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);
@@ -355,7 +340,7 @@ export class CatalogStore {
     }
 
     getFrameMinMaxPoints(frameId: number): {minX: number; maxX: number; minY: number; maxY: number} {
-        let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
+        const minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
         this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
             const count = this.catalogCounts.get(catalogId);

@@ -1,11 +1,4 @@
-import {Point2D} from "models";
-
-export enum CursorInfoVisibility {
-    Always = "always",
-    Never = "never",
-    ActiveImage = "activeImage",
-    HideTiled = "hideTiled"
-}
+import {type Point2D} from "models";
 
 export interface CursorInfo {
     posImageSpace: Point2D;

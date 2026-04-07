@@ -4,9 +4,10 @@ import {Colors} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
-import {AppStore, BeamType} from "stores";
-import {FrameStore} from "stores/Frame";
+import {BeamType} from "enums";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {getColorForTheme} from "utilities";
 
 import "./BeamProfileOverlayComponent.scss";
@@ -39,13 +40,13 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         AppStore.Instance.resetImageRatio();
     }
 
-    private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
+    private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null => {
         if (!frame.hasVisibleBeam) {
             return null;
         }
 
         const id = frame.frameInfo.fileId;
-        const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel) / AppStore.Instance.imageRatio;
+        const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / AppStore.Instance.imageRatio;
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
@@ -54,6 +55,11 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
+
+        if (!frame.beamProperties) {
+            return null;
+        }
+
         const a = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
         const b = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
         let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
@@ -84,7 +90,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
     };
 
-    private plotBeam(plotProps: BeamPlotProps) {
+    private plotBeam(plotProps: BeamPlotProps | null): JSX.Element | null {
         if (!plotProps) {
             return null;
         }
@@ -119,15 +125,20 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
-        let baseBeamPlotProps: BeamPlotProps;
+        let baseBeamPlotProps: BeamPlotProps | null = null;
         if (baseFrame.hasVisibleBeam) {
             baseBeamPlotProps = this.getPlotProps(baseFrame);
         }
 
-        const contourBeams = [];
+        const contourBeams: JSX.Element[] = [];
         contourFrames?.forEach(contourFrame => {
-            const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);
-            contourBeams.push(this.plotBeam(plotProps));
+            const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps?.position);
+            if (plotProps) {
+                const beamElement = this.plotBeam(plotProps);
+                if (beamElement) {
+                    contourBeams.push(beamElement);
+                }
+            }
         });
 
         const className = classNames("beam-profile-stage", {docked: this.props.docked});
@@ -135,7 +146,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         return (
             <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
                 <Layer listening={false} ref={this.layerRef}>
-                    {this.plotBeam(baseBeamPlotProps)}
+                    {baseBeamPlotProps && this.plotBeam(baseBeamPlotProps)}
                     {contourBeams}
                 </Layer>
             </Stage>

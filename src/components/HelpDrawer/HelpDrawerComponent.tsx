@@ -1,17 +1,16 @@
 import * as React from "react";
-import {Classes, Drawer, DrawerProps} from "@blueprintjs/core";
+import {Classes, Drawer, type DrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {HelpType} from "enums";
+import {CARTA_INFO} from "models";
 import {AppStore, HelpStore} from "stores";
-import {HelpType} from "stores/HelpStore/HelpStore";
 
 import "./HelpDrawerComponent.scss";
 
-const url_version = "5.0";
-const url_prefix = `https://carta.readthedocs.io/en/${url_version}`;
+const url_prefix = `https://carta.readthedocs.io/en/${CARTA_INFO.docsVersion}`;
 
-// note for v5-beta release: URLs are not final. The readthedocs user manual needs a major reorganization of topics to support online in-app help
 // dialog URLs
 const CONTOUR_HELP_CONTENT_URL = `${url_prefix}/contour_rendering.html`;
 const FILE_BROWSER_HELP_CONTENT_URL = `${url_prefix}/file_browser.html`;
@@ -66,7 +65,7 @@ const PV_GENERATOR_HELP_CONTENT_URL = `${url_prefix}/pv_generator.html`;
 const CURSOR_INFO_HELP_CONTENT_URL = `${url_prefix}/cursor_info.html`;
 const CHANNEL_MAP_CONTROL_HELP_CONTENT_URL = `${url_prefix}/channel_map_control.html`;
 
-const HELP_CONTENT_MAP = new Map<HelpType, string>([
+const HELP_CONTENT_MAP = new Map<HelpType, string | undefined>([
     // Dialog
     [HelpType.CONTOUR, CONTOUR_HELP_CONTENT_URL],
     [HelpType.FILE_BROWSER, FILE_BROWSER_HELP_CONTENT_URL],

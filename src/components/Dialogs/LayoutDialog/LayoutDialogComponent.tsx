@@ -1,14 +1,15 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
+import {DialogId, HelpType, LayoutDialogMode, PreferenceKeys} from "enums";
 import {CtypeAbbrToName, PresetLayout} from "models";
-import {AppStore, DialogId, FrameStore, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, type FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
 
@@ -35,11 +36,11 @@ export class LayoutDialogComponent extends React.Component {
     }
 
     @computed get validName(): boolean {
-        return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @computed get validRename(): boolean {
-        return this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @action onMouseEnter = (layoutName: string) => {
@@ -190,7 +191,7 @@ export class LayoutDialogComponent extends React.Component {
                             </AnchorButton>
                             <AnchorButton
                                 icon="edit"
-                                onClick={() => (this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName)}
+                                onClick={() => runInAction(() => (this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName))}
                                 disabled={PresetLayout.PRESETS.includes(layoutName)}
                                 active={this.editingLayoutName === layoutName}
                             />
@@ -245,14 +246,15 @@ export class LayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
+        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "page-layout",
             backdropClassName: "minimal-dialog-backdrop",
-            className: "layout-dialog",
+            className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout) || false,
             title: "Layout"
         };
 
@@ -334,7 +336,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
 interface LayoutMappingComponentProps {
     orderedLayoutNames: string[];
     existLayoutMapping: {[key: string]: string};
-    activeFrame: FrameStore;
+    activeFrame: FrameStore | null;
 }
 
 export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentProps) => {

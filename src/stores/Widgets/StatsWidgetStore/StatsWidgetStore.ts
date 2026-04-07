@@ -1,12 +1,13 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {POLARIZATIONS, RegionsType} from "enums";
+import {VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
-import {RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {RegionWidgetStore} from "stores/Widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
+    @observable coordinate: string = "z";
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -26,7 +27,6 @@ export class StatsWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        this.coordinate = "z";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
@@ -58,7 +58,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
+                const histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!histogramConfig) {
                     regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
@@ -94,13 +94,13 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

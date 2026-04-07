@@ -1,10 +1,10 @@
 import * as React from "react";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -30,7 +30,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
     }
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
+    get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.renderConfigWidgets) {
             const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
@@ -39,7 +39,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             }
         }
         console.log("can't find store for widget");
-        return null;
+        return new RenderConfigWidgetStore();
     }
 
     handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +63,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -79,6 +82,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
@@ -95,6 +101,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
@@ -111,6 +120,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {

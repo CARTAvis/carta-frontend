@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition, PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, Popover, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -9,6 +9,7 @@ import allMaps from "static/allmaps.png";
 
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
+import {COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED} from "utilities";
 
 import "./ColormapComponent.scss";
 
@@ -25,10 +26,10 @@ interface ColormapComponentProps {
 
 const ColorMapSelect = Select<string>;
 const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
-const CUSTOM_COLOR_MAP_OPTIONS = [...RenderConfigStore.COLOR_MAPS_SELECTED, ...RenderConfigStore.COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
+const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
-    const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : RenderConfigStore.COLOR_MAPS_SELECTED;
+    const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : COLOR_MAPS_SELECTED;
 
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
         const disableAlpha = true;
@@ -42,7 +43,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
             const handleColorChange = _.throttle((color: any) => {
-                props.onCustomColorSelect(color.hex);
+                props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
 
@@ -84,7 +85,7 @@ export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColo
                 }}
             />
         );
-    } else if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
+    } else if (COLOR_MAPS_MONO.get(colormap)) {
         return (
             <div
                 className={className}
@@ -93,15 +94,15 @@ export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColo
                     height: `${blockHeight}px`,
                     width: roundIcon ? `${blockHeight}px` : undefined,
                     borderRadius: roundIcon ? `100%` : undefined,
-                    backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
+                    backgroundImage: `linear-gradient(to right, black, ${COLOR_MAPS_MONO.get(colormap)})`,
                     backgroundSize: `100% 300%`,
                     backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
                 }}
             />
         );
     } else {
-        const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
-        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        const N = COLOR_MAPS_ALL.length - COLOR_MAPS_MONO.size;
+        const i = COLOR_MAPS_ALL.indexOf(colormap);
         return (
             <div
                 className={className}

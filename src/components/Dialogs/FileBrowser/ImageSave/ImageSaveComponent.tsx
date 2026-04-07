@@ -1,39 +1,51 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, OptionProps, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit, ImageType, SpectralSystem} from "models";
+import {FrequencyUnit, ImageType, type SpectralSystem} from "enums";
 import {AppStore, FileBrowserStore} from "stores";
 
 import "./ImageSaveComponent.scss";
 
 @observer
 export class ImageSaveComponent extends React.Component {
+    private readonly disposers: IReactionDisposer[] = [];
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            if (appStore.activeFrame?.numChannels <= 1 || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
-                appStore.endFileSaving();
-            } else {
-                appStore.startFileSaving();
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                const numChannels = appStore.activeFrame?.numChannels;
+                if ((numChannels !== undefined && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
+                    appStore.endFileSaving();
+                } else {
+                    appStore.startFileSaving();
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @computed get validSaveSpectralRangeStart() {
         const fileBrowser = FileBrowserStore.Instance;
-        return AppStore.Instance.activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
+        const min = AppStore.Instance.activeFrame?.channelValueBounds?.min;
+        return min !== undefined && min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
     }
 
     @computed get validSaveSpectralRangeEnd() {
         const fileBrowser = FileBrowserStore.Instance;
-        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= AppStore.Instance.activeFrame?.channelValueBounds?.max;
+        const max = AppStore.Instance.activeFrame?.channelValueBounds?.max;
+        return max !== undefined && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -72,11 +84,11 @@ export class ImageSaveComponent extends React.Component {
     }
 
     /// Generate options for stokes via string
-    @computed get stokesOptions() {
+    get stokesOptions(): OptionProps[] {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {
-            let options = [];
+            const options: OptionProps[] = [];
             const addOption = (value: number, stokesInfoList: string[]) => {
                 options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
             };
@@ -118,7 +130,7 @@ export class ImageSaveComponent extends React.Component {
                     break;
             }
 
-            return options.sort((a, b) => a.value - b.value);
+            return options.sort((a, b) => (a.value as number) - (b.value as number));
         }
         return [];
     }
@@ -146,13 +158,13 @@ export class ImageSaveComponent extends React.Component {
             closedRegions?.map(region => ({
                 value: region.regionId,
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
-            }))
+            })) || []
         );
 
         const numChannels = activeFrame?.numChannels;
         const min = activeFrame?.channelValueBounds?.min ?? 0;
         const max = activeFrame?.channelValueBounds?.max ?? 1;
-        const delta = numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
+        const delta = numChannels !== undefined && numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
@@ -167,7 +179,7 @@ export class ImageSaveComponent extends React.Component {
                             <FormGroup className="region-select" label={"Region"} inline={true}>
                                 <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
                             </FormGroup>
-                            {numChannels > 1 && (
+                            {numChannels !== undefined && numChannels > 1 && (
                                 <React.Fragment>
                                     <div className="coordinate-select">
                                         <SpectralSettingsComponent

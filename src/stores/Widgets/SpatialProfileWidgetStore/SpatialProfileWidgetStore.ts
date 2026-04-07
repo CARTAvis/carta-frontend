@@ -1,40 +1,41 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, override} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {SpatialProfilerSettingsTabs} from "components";
-import {LineSettings, PlotType} from "components/Shared";
-import {LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
+import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
+import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
-import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 const DEFAULT_STOKES = "current";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
-    @observable selectedStokes: string;
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable markerTextVisible: boolean;
-    @observable isMouseMoveIntoLinePlots: boolean;
+    @observable coordinate: string = "x";
+    @observable selectedStokes: string = DEFAULT_STOKES;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable markerTextVisible: boolean = false;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable wcsAxisVisible: boolean;
-    @observable plotType: PlotType;
-    @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
-    readonly smoothingStore: ProfileSmoothingStore;
-    @observable settingsTabId: SpatialProfilerSettingsTabs;
+    @observable wcsAxisVisible: boolean = true;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable meanRmsVisible: boolean = false;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+    readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
+    @observable settingsTabId: SpatialProfilerSettingsTabs = SpatialProfilerSettingsTabs.STYLING;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -119,29 +120,25 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     constructor(coordinate: string = "x") {
         super(RegionsType.POINT_AND_LINES);
+        if (coordinate !== undefined) {
+            this.coordinate = coordinate;
+        }
+        this.disposers.push(
+            autorun(() => {
+                if (this.effectiveFrame) {
+                    action(() => {
+                        this.selectedStokes = DEFAULT_STOKES;
+                    })();
+                }
+            })
+        );
         makeObservable(this);
-        // Describes which data is being visualised
-        this.coordinate = coordinate;
-        this.selectedStokes = DEFAULT_STOKES;
-
-        // Describes how the data is visualised
-        this.plotType = PlotType.STEPS;
-        this.meanRmsVisible = false;
-        this.markerTextVisible = false;
-        this.wcsAxisVisible = true;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
-        this.smoothingStore = new ProfileSmoothingStore();
-        this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
-
-        autorun(() => {
-            if (this.effectiveFrame) {
-                this.selectedStokes = DEFAULT_STOKES;
-            }
-        });
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 
     @computed get isXProfile(): boolean {
         return this.coordinate?.includes("x");
@@ -156,7 +153,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get stokesOptions(): LineOption[] {
-        let options = [{value: DEFAULT_STOKES, label: "Current"}];
+        const options = [{value: DEFAULT_STOKES, label: "Current"}];
         if (this.effectiveFrame?.hasStokes) {
             options.push(...this.effectiveFrame.coordinateOptions);
         }
@@ -278,13 +275,13 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
