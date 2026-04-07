@@ -216,8 +216,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 const axisOptions = this.getAutoSelectableAxisOptions();
-                this.tryAutoSelectAxis(this.xAxisLable, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-                this.tryAutoSelectAxis(this.yAxisLable, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+                this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+                this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
 
                 this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             })
@@ -289,8 +289,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // Directly auto-select axes that are currently NONE.
         if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay) {
             const axisOptions = this.getAutoSelectableAxisOptions();
-            this.tryAutoSelectAxis(this.xAxisLable, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-            this.tryAutoSelectAxis(this.yAxisLable, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+            this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+            this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
         }
     }
 
@@ -393,7 +393,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable(): CatalogOverlay {
+    @computed get xAxisLabel(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -405,7 +405,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get yAxisLable(): CatalogOverlay {
+    @computed get yAxisLabel(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -1012,7 +1012,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={disable}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
@@ -1030,7 +1030,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     </Select>
                                 </FormGroup>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || disable}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
