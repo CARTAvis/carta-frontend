@@ -289,8 +289,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // Directly auto-select axes that are currently NONE.
         if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay) {
             const axisOptions = this.getAutoSelectableAxisOptions();
-            this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-            this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+            this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, colName => catalogWidgetStore.setxAxis(colName));
+            this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, colName => catalogWidgetStore.setyAxis(colName));
         }
     }
 
