@@ -29,7 +29,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
-    // Track catalogs for which axes auto-selection has been attempted (per catalog)
     private autoSelectAttemptedCatalogIds: Set<number> = new Set();
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
@@ -197,7 +196,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
 
         this.disposers.push(
-            // Auto-select RA/DEC columns by prefix when axes are None (attempt at most once per catalog)
+            // Auto-select coordinate columns by common prefixes when axes are None (attempt at most once per catalog)
             autorun(() => {
                 const profileStore = this.profileStore;
                 const catalogWidgetStore = this.widgetStore;
@@ -215,7 +214,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     return;
                 }
 
-                this.autoSelectAxes();
+                this.autoSelectAxes({allowHiddenFallback: true});
 
                 this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             })
@@ -277,15 +276,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             this.handleFilterRequest();
         }
 
-        if (catalogWidgetStore?.xAxis === columnName) {
+        const removedXAxis = catalogWidgetStore?.xAxis === columnName;
+        const removedYAxis = catalogWidgetStore?.yAxis === columnName;
+
+        if (removedXAxis) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
         }
-        if (catalogWidgetStore?.yAxis === columnName) {
+        if (removedYAxis) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
 
-        // Directly auto-select axes that are currently NONE.
-        this.autoSelectAxes();
+        // Only re-select axes when the active axis column itself has just been hidden.
+        this.autoSelectAxes({reselectXAxis: removedXAxis, reselectYAxis: removedYAxis});
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -326,6 +328,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get axisOption(): string[] {
+        return this.getAxisOptions();
+    }
+
+    private getAxisOptions(includeHidden = false): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [CatalogOverlay.NONE];
@@ -335,7 +341,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && (includeHidden || header.display)) {
                     axisOptions.push(columnName);
                 }
             }
@@ -343,8 +349,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return axisOptions;
     }
 
-    private getAutoSelectableAxisOptions(): string[] {
-        return this.axisOption.filter(columnName => columnName !== CatalogOverlay.NONE && !this.isExcludedCoordinateName(columnName));
+    private getAutoSelectableAxisOptions(includeHidden = false): string[] {
+        return this.getAxisOptions(includeHidden).filter(columnName => columnName !== CatalogOverlay.NONE && !this.isExcludedCoordinateName(columnName));
     }
 
     private isExcludedCoordinateName(name: string): boolean {
@@ -362,36 +368,87 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
-    private tryAutoSelectAxis(axisLabel: CatalogOverlay, currentAxis: string, axisOptions: string[], setAxis: (columnName: string) => void) {
+    private getAutoSelectedAxisColumn(axisLabel: CatalogOverlay, currentAxis: string, axisOptions: string[]): string | undefined {
         if (currentAxis !== CatalogOverlay.NONE) {
-            return;
+            return undefined;
         }
 
         const patterns = CatalogOverlayComponent.AxisAutoSelectPatterns.get(axisLabel);
         if (!patterns) {
-            return;
+            return undefined;
         }
 
-        const columnName = this.findPreferredAxisColumn(axisOptions, patterns);
-        if (columnName) {
-            setAxis(columnName);
-        }
+        return this.findPreferredAxisColumn(axisOptions, patterns);
     }
 
-    private autoSelectAxes(forceReset: boolean = false) {
+    private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return false;
+        }
+
+        const visibleColumns = new Set(columnNames.filter((columnName): columnName is string => Boolean(columnName)));
+        let didEnableColumns = false;
+        visibleColumns.forEach(columnName => {
+            const header = profileStore.catalogControlHeader.get(columnName);
+            if (header && !header.display) {
+                profileStore.setHeaderDisplay(true, columnName);
+                didEnableColumns = true;
+            }
+        });
+        return didEnableColumns;
+    }
+
+    private autoSelectAxes({
+        forceReset = false,
+        allowHiddenFallback = false,
+        reselectXAxis = true,
+        reselectYAxis = true
+    }: {
+        forceReset?: boolean;
+        allowHiddenFallback?: boolean;
+        reselectXAxis?: boolean;
+        reselectYAxis?: boolean;
+    } = {}) {
         const catalogWidgetStore = this.widgetStore;
         if (catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
             return;
         }
 
-        const axisOptions = this.getAutoSelectableAxisOptions();
         if (forceReset) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
 
-        this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-        this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+        const axisOptions = this.getAutoSelectableAxisOptions();
+        let xColumnName = reselectXAxis ? this.getAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions) : undefined;
+        let yColumnName = reselectYAxis ? this.getAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions) : undefined;
+        let enabledHiddenColumns = false;
+
+        if (allowHiddenFallback) {
+            const shouldSearchHiddenColumns = (reselectXAxis && !xColumnName && catalogWidgetStore.xAxis === CatalogOverlay.NONE) || (reselectYAxis && !yColumnName && catalogWidgetStore.yAxis === CatalogOverlay.NONE);
+            if (shouldSearchHiddenColumns) {
+                const allAxisOptions = this.getAutoSelectableAxisOptions(true);
+                const fallbackXColumn = reselectXAxis && !xColumnName ? this.getAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, allAxisOptions) : undefined;
+                const fallbackYColumn = reselectYAxis && !yColumnName ? this.getAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, allAxisOptions) : undefined;
+
+                enabledHiddenColumns = this.enableAxisColumns([fallbackXColumn, fallbackYColumn]);
+                xColumnName ??= fallbackXColumn;
+                yColumnName ??= fallbackYColumn;
+            }
+        }
+
+        if (xColumnName) {
+            catalogWidgetStore.setxAxis(xColumnName);
+        }
+        if (yColumnName) {
+            catalogWidgetStore.setyAxis(yColumnName);
+        }
+
+        if (enabledHiddenColumns && this.profileStore?.isFileBasedCatalog) {
+            this.profileStore.setIsUpdateColumn(true);
+            this.handleFilterRequest();
+        }
     }
 
     @action private handleCatalogSystemChange = (system: CatalogSystemType) => {
@@ -401,7 +458,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         profileStore.setCatalogCoordinateSystem(system);
-        this.autoSelectAxes(true);
+        this.autoSelectAxes({forceReset: true, allowHiddenFallback: true});
     };
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
