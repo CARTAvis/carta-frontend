@@ -285,6 +285,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (catalogWidgetStore?.yAxis === columnName) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
+
+        // Directly auto-select axes that are currently NONE.
+        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay) {
+            const axisOptions = this.getAutoSelectableAxisOptions();
+            this.tryAutoSelectAxis(this.xAxisLable, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+            this.tryAutoSelectAxis(this.yAxisLable, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+        }
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
