@@ -645,7 +645,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "channel-map-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-channel-map",
+                        className: "flexlayout__tab_toolbar_button",
                         title: "enable/disable channel map",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -658,7 +658,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "prev-page-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-image-panel-previous",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page",
                         disabled: !hasPrevious,
                         onClick: (e: React.MouseEvent) => {
@@ -672,7 +672,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "image-panel-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-image-panel",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: this.getImagePanelButtonTooltip(imagePanelMode),
                         "data-testid": nodeId + "-multipanel-view-switch",
                         onClick: (e: React.MouseEvent) => {
@@ -686,7 +686,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "next-page-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-image-panel-next",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page",
                         disabled: !hasNext,
                         onClick: (e: React.MouseEvent) => {
@@ -705,7 +705,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "cog-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-settings",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "settings",
                         "data-testid": nodeId + "-header-settings-button",
                         onClick: (e: React.MouseEvent) => {
@@ -724,7 +724,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "help-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-help",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "help",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -742,7 +742,7 @@ export class WidgetsStore {
                     "button",
                     {
                         key: "unpin-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-unpin",
+                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "detach",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();

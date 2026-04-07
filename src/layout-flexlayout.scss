@@ -17,6 +17,8 @@ $pt-dark-app-background-color: #252a31;
         left: 0;
         right: 0;
         bottom: 0;
+
+        --color-icon: #{$gray1};
     }
 }
 
@@ -31,7 +33,7 @@ $pt-dark-app-background-color: #252a31;
     font-size: 14px;
     color: $dark-gray5;
     border: none;
-    // background: transparent;
+    background-color: $light-gray5;
     cursor: pointer;
 
     &--selected {
@@ -57,6 +59,11 @@ $pt-dark-app-background-color: #252a31;
     height: 100%;
 }
 
+// --- Tab toolbar buttons ---
+.flexlayout__tab_toolbar {
+    gap: 0px;
+}
+
 // --- Splitter bars ---
 .flexlayout__splitter {
     background-color: white;
@@ -76,36 +83,6 @@ $pt-dark-app-background-color: #252a31;
     }
 }
 
-// --- Custom tab header buttons ---
-.flexlayout-tab-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    margin: 0 1px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: $gray1;
-    opacity: 0.7;
-
-    &:hover {
-        opacity: 1;
-        color: $dark-gray1;
-    }
-
-    &:disabled {
-        opacity: 0.3;
-        cursor: default;
-    }
-
-    span {
-        font-size: 16px;
-    }
-}
-
 // --- Drag proxy ---
 .flexlayout__drag_rect {
     background-color: rgba($blue3, 0.3);
@@ -117,23 +94,40 @@ $pt-dark-app-background-color: #252a31;
     border: 2px dashed $blue3;
 }
 
-// --- Maximize button ---
-.flexlayout__tab_toolbar_button-max {
-    &::before {
-        content: "";
-    }
-}
-
 // --- Built-in toolbar buttons (popout, maximize) ---
-// Match the hover style of custom widget buttons (.flexlayout-tab-button)
 .flexlayout__tab_toolbar_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0 1px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
     color: $gray1;
-    opacity: 0.7;
 
     &:hover {
-        opacity: 1;
         color: $dark-gray1;
         background-color: transparent;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    span {
+        font-size: 16px;
+    }
+
+    svg {
+        width: 20px !important;
+        height: 20px !important;
+        &:hover {
+            fill: $dark-gray1;
+        }
     }
 }
 
@@ -180,7 +174,7 @@ $pt-dark-app-background-color: #252a31;
         --color-tab-unselected: #{$light-gray4};
         --color-tab-unselected-background: transparent;
         --color-overflow: #{$light-gray3};
-        --color-icon: #{$light-gray3};
+        --color-icon: #{$gray4};
         --color-drag1: #{$blue4};
         --color-drag1-background: rgba(#{$blue4}, 0.1);
     }
@@ -192,6 +186,7 @@ $pt-dark-app-background-color: #252a31;
 
     .flexlayout__tab_button {
         color: $light-gray4;
+        background-color: $dark-gray3;
 
         &--selected {
             background-color: $dark-gray3;
@@ -200,7 +195,7 @@ $pt-dark-app-background-color: #252a31;
         }
 
         &:hover {
-            background-color: $dark-gray2;
+            background-color: $dark-gray5;
         }
 
         &_content {
@@ -229,20 +224,19 @@ $pt-dark-app-background-color: #252a31;
         }
     }
 
-    .flexlayout-tab-button {
-        color: $light-gray3;
-
-        &:hover {
-            color: white;
-        }
-    }
-
     .flexlayout__tab_toolbar_button {
-        color: $light-gray3;
+        color: $gray4;
+        background: transparent;
 
         &:hover {
-            color: white;
+            color: $light-gray5;
             background-color: transparent;
+        }
+
+        svg {
+            &:hover {
+                fill: $light-gray5;
+            }
         }
     }
 
