@@ -49,6 +49,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly CoordinateColumnExclusionPattern = /^(?:e_|pm)|_pm|propermotion|err|error|sigma|sig|unc|uncertainty|offset|resid|residual/;
     private static readonly RightAscensionPatterns = [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i];
     private static readonly DeclinationPatterns = [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i];
+    private static readonly GalacticLongitudePatterns = [/^glon$/i, /^glon_?deg$/i, /^gal(?:actic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?gal(?:actic)?$/i, /^gal_?l$/i, /^l$/i];
+    private static readonly GalacticLatitudePatterns = [/^glat$/i, /^glat_?deg$/i, /^gal(?:actic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?gal(?:actic)?$/i, /^gal_?b$/i, /^b$/i];
+    private static readonly EclipticLongitudePatterns = [/^elon$/i, /^elon_?deg$/i, /^ecl(?:iptic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?ecl(?:iptic)?$/i, /^lambda(?:_?(?:deg|j2000))?$/i];
+    private static readonly EclipticLatitudePatterns = [/^elat$/i, /^elat_?deg$/i, /^ecl(?:iptic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?ecl(?:iptic)?$/i, /^beta(?:_?(?:deg|j2000))?$/i];
+    private static readonly AxisAutoSelectPatterns = new Map<CatalogOverlay, RegExp[]>([
+        [CatalogOverlay.RA, CatalogOverlayComponent.RightAscensionPatterns],
+        [CatalogOverlay.DEC, CatalogOverlayComponent.DeclinationPatterns],
+        [CatalogOverlay.GLON, CatalogOverlayComponent.GalacticLongitudePatterns],
+        [CatalogOverlay.GLAT, CatalogOverlayComponent.GalacticLatitudePatterns],
+        [CatalogOverlay.ELON, CatalogOverlayComponent.EclipticLongitudePatterns],
+        [CatalogOverlay.ELAT, CatalogOverlayComponent.EclipticLatitudePatterns]
+    ]);
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -204,8 +216,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 const axisOptions = this.getAutoSelectableAxisOptions();
-                this.tryAutoSelectAxis(this.xAxisLable, CatalogOverlay.RA, catalogWidgetStore.xAxis, CatalogOverlayComponent.RightAscensionPatterns, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-                this.tryAutoSelectAxis(this.yAxisLable, CatalogOverlay.DEC, catalogWidgetStore.yAxis, CatalogOverlayComponent.DeclinationPatterns, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+                this.tryAutoSelectAxis(this.xAxisLable, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+                this.tryAutoSelectAxis(this.yAxisLable, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
 
                 this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             })
@@ -349,8 +361,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
-    private tryAutoSelectAxis(axisLabel: string, expectedLabel: string, currentAxis: string, patterns: RegExp[], axisOptions: string[], setAxis: (columnName: string) => void) {
-        if (axisLabel !== expectedLabel || currentAxis !== CatalogOverlay.NONE) {
+    private tryAutoSelectAxis(axisLabel: CatalogOverlay, currentAxis: string, axisOptions: string[], setAxis: (columnName: string) => void) {
+        if (currentAxis !== CatalogOverlay.NONE) {
+            return;
+        }
+
+        const patterns = CatalogOverlayComponent.AxisAutoSelectPatterns.get(axisLabel);
+        if (!patterns) {
             return;
         }
 
@@ -369,7 +386,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable(): string {
+    @computed get xAxisLable(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -381,7 +398,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get yAxisLable(): string {
+    @computed get yAxisLable(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
