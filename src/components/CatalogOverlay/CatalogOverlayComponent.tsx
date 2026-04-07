@@ -215,9 +215,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     return;
                 }
 
-                const axisOptions = this.getAutoSelectableAxisOptions();
-                this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
-                this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+                this.autoSelectAxes();
 
                 this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             })
@@ -287,11 +285,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         // Directly auto-select axes that are currently NONE.
-        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay) {
-            const axisOptions = this.getAutoSelectableAxisOptions();
-            this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, colName => catalogWidgetStore.setxAxis(colName));
-            this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, colName => catalogWidgetStore.setyAxis(colName));
-        }
+        this.autoSelectAxes();
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -383,6 +377,32 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             setAxis(columnName);
         }
     }
+
+    private autoSelectAxes(forceReset: boolean = false) {
+        const catalogWidgetStore = this.widgetStore;
+        if (catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return;
+        }
+
+        const axisOptions = this.getAutoSelectableAxisOptions();
+        if (forceReset) {
+            catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
+            catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
+        }
+
+        this.tryAutoSelectAxis(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+        this.tryAutoSelectAxis(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
+    }
+
+    @action private handleCatalogSystemChange = (system: CatalogSystemType) => {
+        const profileStore = this.profileStore;
+        if (!profileStore || profileStore.catalogCoordinateSystem.system === system) {
+            return;
+        }
+
+        profileStore.setCatalogCoordinateSystem(system);
+        this.autoSelectAxes(true);
+    };
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
@@ -959,7 +979,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 filterable={false}
                                 items={systemOptions}
                                 activeItem={profileStore.catalogCoordinateSystem.system}
-                                onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
+                                onItemSelect={this.handleCatalogSystemChange}
                                 itemRenderer={this.renderSystemPopOver}
                                 disabled={!isImageOverlay}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
