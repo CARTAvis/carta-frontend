@@ -201,7 +201,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 // Helper: first displayed numeric column matching regex
                 const findColumnBy = (regex: RegExp): string | undefined => {
                     for (const [name, header] of profileStore.catalogControlHeader) {
-                        const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
+                        const dataIndex = header.dataIndex;
+                        if (dataIndex === undefined) {
+                            continue;
+                        }
+                        const dataType = profileStore.catalogHeader[dataIndex]?.dataType;
                         const isNumeric = CatalogOverlayComponent.axisDataType.includes(dataType);
                         if (header.display && isNumeric && regex.test(name)) {
                             return name;
