@@ -5,8 +5,6 @@ import axios from "axios";
 
 import {ApiService} from "services";
 
-import "./setupGoldenLayout";
-
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
 import gammaPng from "./static/equations/gamma.png";
