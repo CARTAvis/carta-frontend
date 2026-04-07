@@ -46,6 +46,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Int64,
         CARTA.ColumnType.Uint64
     ];
+    private static readonly CoordinateColumnExclusionPattern = /^(?:e_|pm)|_pm|propermotion|err|error|sigma|sig|unc|uncertainty|offset|resid|residual/;
+    private static readonly RightAscensionPatterns = [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i];
+    private static readonly DeclinationPatterns = [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -186,71 +189,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             autorun(() => {
                 const profileStore = this.profileStore;
                 const catalogWidgetStore = this.widgetStore;
-                const currentId = this.catalogFileId;
-                if (!profileStore || !catalogWidgetStore || currentId === undefined) return;
-
-                // If already attempted for this catalog, do nothing
-                if (this.autoSelectAttemptedCatalogIds.has(currentId)) return;
-
-                // Only auto-select for ImageOverlay; otherwise mark as attempted and exit
-                if (catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-                    this.autoSelectAttemptedCatalogIds.add(currentId);
+                const catalogFileId = this.catalogFileId;
+                if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
                     return;
                 }
 
-                // Helper: first displayed numeric column matching regex
-                const isExcludedCoordinateName = (name: string): boolean => {
-                    const normalized = name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-                    return normalized.startsWith("e_") || normalized.startsWith("pm") || normalized.includes("_pm") || normalized.includes("propermotion") || /(err|error|sigma|sig|unc|uncertainty|offset|resid|residual)/.test(normalized);
-                };
+                if (this.autoSelectAttemptedCatalogIds.has(catalogFileId)) {
+                    return;
+                }
 
-                const findColumnBy = (regex: RegExp): string | undefined => {
-                    for (const [name, header] of profileStore.catalogControlHeader) {
-                        const dataIndex = header.dataIndex;
-                        if (dataIndex === undefined) {
-                            continue;
-                        }
-                        const dataType = profileStore.catalogHeader[dataIndex]?.dataType;
-                        const isNumeric = CatalogOverlayComponent.axisDataType.includes(dataType);
-                        if (header.display && isNumeric && !isExcludedCoordinateName(name) && regex.test(name)) {
-                            return name;
-                        }
-                    }
-                    return undefined;
-                };
+                if (catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+                    this.autoSelectAttemptedCatalogIds.add(catalogFileId);
+                    return;
+                }
 
-                const xLabel = this.xAxisLable;
-                const yLabel = this.yAxisLable;
-                const trySetAxis = (axisLabel: string, expectedLabel: string, currentAxis: string, patterns: RegExp[], setter: (name: string) => void) => {
-                    if (axisLabel !== expectedLabel || currentAxis !== CatalogOverlay.NONE) return;
-                    for (const pattern of patterns) {
-                        const col = findColumnBy(pattern);
-                        if (col) {
-                            setter(col);
-                            break;
-                        }
-                    }
-                };
+                const axisOptions = this.getAutoSelectableAxisOptions();
+                this.tryAutoSelectAxis(this.xAxisLable, CatalogOverlay.RA, catalogWidgetStore.xAxis, CatalogOverlayComponent.RightAscensionPatterns, axisOptions, columnName => catalogWidgetStore.setxAxis(columnName));
+                this.tryAutoSelectAxis(this.yAxisLable, CatalogOverlay.DEC, catalogWidgetStore.yAxis, CatalogOverlayComponent.DeclinationPatterns, axisOptions, columnName => catalogWidgetStore.setyAxis(columnName));
 
-                // RA aliases: ra, ra_deg, ra_*, r.a., right ascension, alpha, raj...
-                // DEC aliases: dec, dec_deg, dec_*, decl, declination, delta, dej...
-                trySetAxis(
-                    xLabel,
-                    CatalogOverlay.RA,
-                    catalogWidgetStore.xAxis,
-                    [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i],
-                    name => catalogWidgetStore.setxAxis(name)
-                );
-                trySetAxis(
-                    yLabel,
-                    CatalogOverlay.DEC,
-                    catalogWidgetStore.yAxis,
-                    [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i],
-                    name => catalogWidgetStore.setyAxis(name)
-                );
-
-                // Mark as attempted regardless of success to avoid future auto-selection for this catalog
-                this.autoSelectAttemptedCatalogIds.add(currentId);
+                this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             })
         );
     }
@@ -371,6 +328,36 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             }
         });
         return axisOptions;
+    }
+
+    private getAutoSelectableAxisOptions(): string[] {
+        return this.axisOption.filter(columnName => columnName !== CatalogOverlay.NONE && !this.isExcludedCoordinateName(columnName));
+    }
+
+    private isExcludedCoordinateName(name: string): boolean {
+        const normalizedName = name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+        return CatalogOverlayComponent.CoordinateColumnExclusionPattern.test(normalizedName);
+    }
+
+    private findPreferredAxisColumn(axisOptions: string[], patterns: RegExp[]): string | undefined {
+        for (const pattern of patterns) {
+            const columnName = axisOptions.find(option => pattern.test(option));
+            if (columnName) {
+                return columnName;
+            }
+        }
+        return undefined;
+    }
+
+    private tryAutoSelectAxis(axisLabel: string, expectedLabel: string, currentAxis: string, patterns: RegExp[], axisOptions: string[], setAxis: (columnName: string) => void) {
+        if (axisLabel !== expectedLabel || currentAxis !== CatalogOverlay.NONE) {
+            return;
+        }
+
+        const columnName = this.findPreferredAxisColumn(axisOptions, patterns);
+        if (columnName) {
+            setAxis(columnName);
+        }
     }
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
