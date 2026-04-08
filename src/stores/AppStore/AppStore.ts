@@ -11,7 +11,23 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {AnimationMode, BrowserMode, CatalogType, CatalogUpdateMode, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType} from "enums";
+import {
+    AnimationMode,
+    BrowserMode,
+    CatalogOverlay,
+    CatalogType,
+    CatalogUpdateMode,
+    ConnectionStatus,
+    DialogId,
+    ImageType,
+    ImageViewLayer,
+    PreferenceKeys,
+    RegionId as RegionIdType,
+    SpectralType,
+    SystemType,
+    TelemetryAction,
+    WCSMatchingType
+} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -2367,7 +2383,7 @@ export class AppStore {
                 const xColumn = catalogWidgetStore?.xAxis;
                 const yColumn = catalogWidgetStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (xColumn && yColumn && frame) {
+                if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     if (coords.wcsX && coords.wcsY && coords.xHeaderInfo.units && coords.yHeaderInfo.units) {
