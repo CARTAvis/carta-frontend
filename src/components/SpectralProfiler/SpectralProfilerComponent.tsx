@@ -1,5 +1,5 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -589,17 +589,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                     </div>
-                    <SplitPane
-                        className="body-split-pane"
-                        split="horizontal"
-                        primary={"second"}
-                        defaultSize={Clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
-                        minSize={INFO_HEIGHT_MIN}
-                    >
+                    <SplitPane className="body-split-pane" direction="vertical">
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
-                        <Pane className={"info-container"}>
+                        <Pane
+                            className={"info-container"}
+                            defaultSize={Clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                            minSize={INFO_HEIGHT_MIN}
+                        >
                             <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
                         </Pane>
                     </SplitPane>

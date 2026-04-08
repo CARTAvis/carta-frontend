@@ -240,34 +240,34 @@ export class ApiService {
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
 
+            // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
+            const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+            if (/[A-Z]/.test(preferences[key])) {
+                preferences[key] = preferences[key].toLowerCase();
+                this.setPreference(key, preferences[key]);
+            }
+
+            // This is to ensure consistency in the unit used for the preview cube size limit
+            const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+            const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
+
+            const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+            if (typeof conversionFactor === "number") {
+                const gbSize = preferences[cubeSizeKey] * conversionFactor;
+                if (gbSize !== preferences[cubeSizeKey]) {
+                    preferences[cubeSizeKey] = gbSize;
+                    this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+                }
+            } else if (cubeSizeUnitKey in preferences) {
+                // set an invalid value to cubeSizeKey to be removed by the validator
+                preferences[cubeSizeKey] = -1;
+            }
+            delete preferences[cubeSizeUnitKey];
+            this.clearPreferences([cubeSizeUnitKey]);
+
             preferences["version"] = 2;
             this.setPreference("version", 2);
         }
-
-        // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
-        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-        if (/[A-Z]/.test(preferences[key])) {
-            preferences[key] = preferences[key].toLowerCase();
-            this.setPreference(key, preferences[key]);
-        }
-
-        // This is to ensure consistency in the unit used for the preview cube size limit
-        const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
-        const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
-
-        const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
-        if (typeof conversionFactor === "number") {
-            const gbSize = preferences[cubeSizeKey] * conversionFactor;
-            if (gbSize !== preferences[cubeSizeKey]) {
-                preferences[cubeSizeKey] = gbSize;
-                this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
-            }
-        } else if (cubeSizeUnitKey in preferences) {
-            // set an invalid value to cubeSizeKey to be removed by the validator
-            preferences[cubeSizeKey] = -1;
-        }
-        delete preferences[cubeSizeUnitKey];
-        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {
