@@ -29,6 +29,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
+    // Intentionally non-observable: this one-shot guard should not retrigger the reaction.
     private autoSelectAttemptedCatalogIds: Set<number> = new Set();
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
