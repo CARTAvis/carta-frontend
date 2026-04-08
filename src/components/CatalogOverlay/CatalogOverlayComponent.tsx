@@ -52,13 +52,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly GalacticLatitudePatterns = [/^glat$/i, /^glat_?deg$/i, /^gal(?:actic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?gal(?:actic)?$/i, /^gal_?b$/i, /^b$/i];
     private static readonly EclipticLongitudePatterns = [/^elon$/i, /^elon_?deg$/i, /^ecl(?:iptic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?ecl(?:iptic)?$/i, /^lambda(?:_?(?:deg|j2000))?$/i];
     private static readonly EclipticLatitudePatterns = [/^elat$/i, /^elat_?deg$/i, /^ecl(?:iptic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?ecl(?:iptic)?$/i, /^beta(?:_?(?:deg|j2000))?$/i];
+    private static readonly Pixel0XPatterns = [/^x$/i, /^xcentroid$/i, /^xcentroid_win$/i, /^xcpeak$/i, /^xpeak$/i];
+    private static readonly Pixel0YPatterns = [/^y$/i, /^ycentroid$/i, /^ycentroid_win$/i, /^ycpeak$/i, /^ypeak$/i];
+    private static readonly Pixel1XPatterns = [/^x_?image$/i, /^xwin_?image$/i];
+    private static readonly Pixel1YPatterns = [/^y_?image$/i, /^ywin_?image$/i];
     private static readonly AxisAutoSelectPatterns = new Map<CatalogOverlay, RegExp[]>([
         [CatalogOverlay.RA, CatalogOverlayComponent.RightAscensionPatterns],
         [CatalogOverlay.DEC, CatalogOverlayComponent.DeclinationPatterns],
         [CatalogOverlay.GLON, CatalogOverlayComponent.GalacticLongitudePatterns],
         [CatalogOverlay.GLAT, CatalogOverlayComponent.GalacticLatitudePatterns],
         [CatalogOverlay.ELON, CatalogOverlayComponent.EclipticLongitudePatterns],
-        [CatalogOverlay.ELAT, CatalogOverlayComponent.EclipticLatitudePatterns]
+        [CatalogOverlay.ELAT, CatalogOverlayComponent.EclipticLatitudePatterns],
+        [CatalogOverlay.X0, CatalogOverlayComponent.Pixel0XPatterns],
+        [CatalogOverlay.Y0, CatalogOverlayComponent.Pixel0YPatterns],
+        [CatalogOverlay.X1, CatalogOverlayComponent.Pixel1XPatterns],
+        [CatalogOverlay.Y1, CatalogOverlayComponent.Pixel1YPatterns]
     ]);
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
