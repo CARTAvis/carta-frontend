@@ -199,8 +199,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action setRatioIndicatorVisible = (isVal: boolean) => {
-        this.isShowRatioIndicator = isVal;
+    @action setRatioIndicatorVisible = (isBool: boolean) => {
+        this.isShowRatioIndicator = isBool;
     };
 
     constructor(props: WidgetProps) {

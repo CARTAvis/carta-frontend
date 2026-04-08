@@ -255,8 +255,8 @@ export abstract class AbstractCatalogProfileStore {
         return GetHasFilter(this.catalogControlHeader, this.catalogData);
     }
 
-    @action updateTableStatus(isVal: boolean) {
-        this.shouldUpdateTableView = isVal;
+    @action updateTableStatus(isBool: boolean) {
+        this.shouldUpdateTableView = isBool;
     }
 
     @action setColumnFilter = (filter: string, columnName: string) => {
@@ -279,10 +279,10 @@ export abstract class AbstractCatalogProfileStore {
         }
     }
 
-    @action setHeaderDisplay(isVal: boolean, columnName: string) {
+    @action setHeaderDisplay(isBool: boolean, columnName: string) {
         const header = this.catalogControlHeader.get(columnName);
         if (header) {
-            header.isDisplay = isVal;
+            header.isDisplay = isBool;
         }
     }
 
@@ -290,12 +290,12 @@ export abstract class AbstractCatalogProfileStore {
         this.updateMode = mode;
     }
 
-    @action setLoadingDataStatus(isVal: boolean) {
-        this.isLoadingData = isVal;
+    @action setLoadingDataStatus(isBool: boolean) {
+        this.isLoadingData = isBool;
     }
 
-    @action setUpdatingDataStream(isVal: boolean) {
-        this.isUpdatingDataStream = isVal;
+    @action setUpdatingDataStream(isBool: boolean) {
+        this.isUpdatingDataStream = isBool;
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
@@ -312,8 +312,8 @@ export abstract class AbstractCatalogProfileStore {
         this.progress = val;
     }
 
-    @action setIsUpdateColumn(isVal: boolean) {
-        this.isUpdateColumnMode = isVal;
+    @action setIsUpdateColumn(isBool: boolean) {
+        this.isUpdateColumnMode = isBool;
     }
 
     getSortedIndices(selectedPointIndices: number[]): number[] {

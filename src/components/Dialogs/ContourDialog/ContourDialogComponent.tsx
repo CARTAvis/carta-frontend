@@ -205,12 +205,12 @@ export class ContourDialogComponent extends React.Component {
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    private handleHistogramChange = (isValue: boolean) => {
+    private handleHistogramChange = (isBool: boolean) => {
         const appStore = AppStore.Instance;
         if (!appStore || !appStore.contourDataSource) {
             return;
         }
-        if (isValue && !appStore.contourDataSource.renderConfig.cubeHistogram) {
+        if (isBool && !appStore.contourDataSource.renderConfig.cubeHistogram) {
             // skip alert and warning for HDF5 files
             if (appStore.contourDataSource.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
                 this.handleAlertConfirm();
@@ -218,7 +218,7 @@ export class ContourDialogComponent extends React.Component {
                 this.shouldShowCubeHistogramAlert = true;
             }
         } else {
-            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(isValue);
+            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(isBool);
         }
     };
 

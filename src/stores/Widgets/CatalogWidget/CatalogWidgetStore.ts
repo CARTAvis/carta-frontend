@@ -765,12 +765,12 @@ export class CatalogWidgetStore {
         this.dataTableColumnWidths = vals;
     }
 
-    @action setShowSelectedData(isVal: boolean) {
-        this.isShowSelectedData = isVal;
+    @action setShowSelectedData(isBool: boolean) {
+        this.isShowSelectedData = isBool;
     }
 
-    @action setCatalogTableAutoScroll(isVal: boolean) {
-        this.isCatalogTableAutoScroll = isVal;
+    @action setCatalogTableAutoScroll(isBool: boolean) {
+        this.isCatalogTableAutoScroll = isBool;
     }
 
     @action setCatalogPlotType(type: CatalogPlotType) {

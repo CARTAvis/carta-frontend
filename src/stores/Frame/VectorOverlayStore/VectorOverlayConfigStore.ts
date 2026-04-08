@@ -55,12 +55,12 @@ export class VectorOverlayConfigStore {
         makeObservable(this);
     }
 
-    @action setEnabled(isVal: boolean) {
-        this.isEnabled = isVal;
+    @action setEnabled(isBool: boolean) {
+        this.isEnabled = isBool;
     }
 
-    @action setThresholdEnabled(isVal: boolean) {
-        this.isThresholdEnabled = isVal;
+    @action setThresholdEnabled(isBool: boolean) {
+        this.isThresholdEnabled = isBool;
     }
 
     @action setThresholdOption(val: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear) {
@@ -107,8 +107,8 @@ export class VectorOverlayConfigStore {
         this.colormap = colormap;
     };
 
-    @action setColormapEnabled = (isVal: boolean) => {
-        this.isColormapEnabled = isVal;
+    @action setColormapEnabled = (isBool: boolean) => {
+        this.isColormapEnabled = isBool;
     };
 
     @action setColormapBias = (val: number) => {

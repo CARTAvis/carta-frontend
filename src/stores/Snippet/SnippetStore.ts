@@ -179,8 +179,8 @@ export class SnippetStore {
         }
     }
 
-    @action private setSnippetExecuting = (isVal: boolean) => {
-        this.isExecuting = isVal;
+    @action private setSnippetExecuting = (isBool: boolean) => {
+        this.isExecuting = isBool;
     };
 
     @flow.bound *executeCurrentSnippet() {

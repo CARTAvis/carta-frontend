@@ -35,15 +35,15 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    handleHistogramChange = (isValue: boolean) => {
-        if (isValue && !this.props.renderConfig.cubeHistogram) {
+    handleHistogramChange = (isBool: boolean) => {
+        if (isBool && !this.props.renderConfig.cubeHistogram) {
             if (this.props.warnOnCubeHistogram) {
                 this.shouldShowCubeHistogramAlert = true;
             } else {
                 this.handleAlertConfirm();
             }
         } else {
-            this.props.renderConfig.setUseCubeHistogram(isValue);
+            this.props.renderConfig.setUseCubeHistogram(isBool);
         }
     };
 

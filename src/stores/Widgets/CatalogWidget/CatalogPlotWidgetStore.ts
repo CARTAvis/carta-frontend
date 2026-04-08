@@ -72,8 +72,8 @@ export class CatalogPlotWidgetStore {
         this.dragMode = mode;
     }
 
-    @action setLogScaleY(isVal: boolean) {
-        this.isLogScaleY = isVal;
+    @action setLogScaleY(isBool: boolean) {
+        this.isLogScaleY = isBool;
     }
 
     @action setNumBinsX(val: number) {

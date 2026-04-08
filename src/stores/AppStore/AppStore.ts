@@ -202,8 +202,8 @@ export class AppStore {
     // New release notification
     @observable shouldShowNewRelease: boolean = false;
     @observable newRelease: string = "";
-    @action setShowNewRelease = (isVal: boolean) => {
-        this.shouldShowNewRelease = isVal;
+    @action setShowNewRelease = (isBool: boolean) => {
+        this.shouldShowNewRelease = isBool;
     };
     @action private updateNewRelease = (release: string) => {
         this.newRelease = release;
@@ -1688,8 +1688,8 @@ export class AppStore {
         this.isCursorFrozen = !this.isCursorFrozen;
     };
 
-    @action setCursorFrozen = (isVal: boolean) => {
-        this.isCursorFrozen = isVal;
+    @action setCursorFrozen = (isBool: boolean) => {
+        this.isCursorFrozen = isBool;
     };
 
     @action toggleCursorMirror = () => {
@@ -1700,8 +1700,8 @@ export class AppStore {
         this.isToolbarExpanded = !this.isToolbarExpanded;
     };
 
-    @action setToolbarExpanded = (isVal: boolean) => {
-        this.isToolbarExpanded = isVal;
+    @action setToolbarExpanded = (isBool: boolean) => {
+        this.isToolbarExpanded = isBool;
     };
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
