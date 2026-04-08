@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
 * Changed offset coordinate system to use spherical geometry instead of linear geometry ([#2663](https://github.com/CARTAvis/carta-frontend/issues/2663)).
 ### Added
-* Added support for auto-selecting RA/DEC columns by common prefixes when loading a catalog overlay. ([#2578](https://github.com/CARTAvis/carta-frontend/issues/2578))
+* Added automatic coordinate-column selection for catalog overlays using common equatorial, galactic, ecliptic, and pixel/image column aliases ([#2407](https://github.com/CARTAvis/carta-frontend/issues/2407)).
 
 ## [5.1.0]
 
