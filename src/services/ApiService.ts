@@ -581,7 +581,7 @@ export class ApiService {
                 if (res.data?.workspace?.id) {
                     workspace.id = res.data?.workspace?.id;
                 }
-                return {...workspace, isEditable: res.data?.workspace?.editable, name: workspaceName};
+                return {...workspace, editable: res.data?.workspace?.editable, name: workspaceName};
             } catch (err) {
                 console.error(err);
                 return undefined;

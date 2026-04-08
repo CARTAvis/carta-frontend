@@ -2754,7 +2754,7 @@ export class AppStore {
                                 regionInfo.annotationStyles
                             );
                             if (region) {
-                                region.setLocked(regionInfo.isLocked ?? false);
+                                region.setLocked(regionInfo.locked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
                                     frame.regionSet.selectRegion(region);
@@ -2870,7 +2870,7 @@ export class AppStore {
                         name: region.name,
                         color: region.color,
                         lineWidth: region.lineWidth,
-                        isLocked: region.isLocked,
+                        locked: region.isLocked,
                         dashes: region.dashLength ? [region.dashLength] : [],
                         // Check if styles are available. If so, add them to the region
                         annotationStyles: (region as any).getAnnotationStyles?.()
@@ -2899,13 +2899,13 @@ export class AppStore {
                 contrast,
                 gamma,
                 alpha,
-                isInverted: isInverted,
-                isUseCubeHistogram: shouldUseCubeHistogram,
-                isUseCubeHistogramContours: shouldUseCubeHistogramContours,
+                inverted: isInverted,
+                useCubeHistogram: shouldUseCubeHistogram,
+                useCubeHistogramContours: shouldUseCubeHistogramContours,
                 selectedPercentile,
                 scaleMin,
                 scaleMax,
-                isVisible: isVisible
+                visible: isVisible
             };
 
             // Contours and vector overlays

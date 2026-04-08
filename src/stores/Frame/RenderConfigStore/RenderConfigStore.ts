@@ -498,8 +498,8 @@ export class RenderConfigStore {
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = config.gamma ?? this.gamma;
         this.alpha = config.alpha ?? this.alpha;
-        this.isInverted = config.isInverted ?? this.isInverted;
-        this.isVisible = config.isVisible ?? this.isVisible;
+        this.isInverted = config.inverted ?? this.isInverted;
+        this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;

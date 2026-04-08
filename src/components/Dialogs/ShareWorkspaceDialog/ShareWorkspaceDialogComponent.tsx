@@ -66,7 +66,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         const copyButton = <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => CopyToClipboard(link)} />;
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
-        const isReadOnly = !activeWorkspace?.isEditable || !activeWorkspace.name;
+        const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
         const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={isSaveBeforeShare} onChange={() => setSaveBeforeShare(!isSaveBeforeShare)} />;
         const readOnlyTooltip = (
             <span>

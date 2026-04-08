@@ -5,6 +5,7 @@ import {type ContourDashMode, type FrameScaling, type VectorOverlaySource} from 
 
 import {type Point2D} from "./Point2D/Point2D";
 
+// To support old workspaces, properties in the interfaces here don't follow the naming convention and keep the original names as they are. When creating new properties, please follow the naming convention and add the new properties to the end of the interface to avoid confusion.
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
@@ -14,13 +15,14 @@ export interface WorkspaceRenderConfig {
     contrast?: number;
     gamma?: number;
     alpha?: number;
-    isInverted?: boolean;
-    isUseCubeHistogram?: boolean;
-    isUseCubeHistogramContours?: boolean;
+    inverted?: boolean;
+    useCubeHistogram?: boolean;
+    useCubeHistogramContours?: boolean;
     selectedPercentile?: number[];
     scaleMin?: number[];
     scaleMax?: number[];
-    isVisible?: boolean;
+    visible?: boolean;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceContourConfig {
@@ -28,30 +30,31 @@ export interface WorkspaceContourConfig {
     smoothingMode: CARTA.SmoothingMode;
     smoothingFactor: number;
     color?: RGBColor;
-    isColormapEnabled: boolean;
+    colormapEnabled: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
     dashMode: ContourDashMode;
     thickness: number;
-    isVisible: boolean;
+    visible: boolean;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
-    isFractionalIntensity: boolean;
+    fractionalIntensity: boolean;
     pixelAveraging: number;
-    isThresholdEnabled: boolean;
+    thresholdEnabled: boolean;
     threshold: number;
-    isDebiasing: boolean;
+    debiasing: boolean;
     qError: number;
     uError: number;
     thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
-    isVisible: boolean;
+    visible: boolean;
     thickness: number;
-    isColormapEnabled: boolean;
+    colormapEnabled: boolean;
     color?: RGBColor;
     colormap?: string;
     colormapContrast: number;
@@ -61,6 +64,7 @@ export interface WorkspaceVectorOverlayConfig {
     intensityMin: number | undefined;
     intensityMax: number | undefined;
     rotationOffset: number;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceRegion {
@@ -72,14 +76,16 @@ export interface WorkspaceRegion {
     color?: string;
     lineWidth?: number;
     dashes?: number[];
-    isLocked?: boolean;
+    locked?: boolean;
     annotationStyles?: any;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceColorBlending {
     imageListIndex: number;
     selectedFrameId: number[];
     alpha: number[];
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceFile {
@@ -104,12 +110,13 @@ export interface WorkspaceFile {
         selectedRegion?: number;
         regions?: WorkspaceRegion[];
     };
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface Workspace {
     id?: string;
     name?: string;
-    isEditable?: boolean;
+    editable?: boolean;
     workspaceVersion: number;
     frontendVersion: number;
     description?: string;
@@ -123,10 +130,12 @@ export interface Workspace {
     selectedFile?: number;
     thumbnail?: string;
     date?: number;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
 
 export interface WorkspaceListItem {
     name: string;
     id?: string;
     date: number;
+    // don't change names above this line, add new properties below this line following the naming convention
 }
