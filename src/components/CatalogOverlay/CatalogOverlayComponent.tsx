@@ -466,12 +466,66 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private hasActiveImageOverlayState(): boolean {
+        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return false;
+        }
+
+        const hasRenderedOverlay = (CatalogStore.Instance.catalogCounts.get(catalogFileId) ?? 0) > 0;
+        const isOverlayMidUpdate = profileStore.updatingDataStream;
+        const isOverlayModeActive = profileStore.updateMode === CatalogUpdateMode.ViewUpdate;
+
+        return hasRenderedOverlay || isOverlayMidUpdate || isOverlayModeActive;
+    }
+
+    private refreshImageOverlayCoordinates() {
+        const profileStore = this.profileStore;
+        const appStore = AppStore.Instance;
+        const catalogStore = CatalogStore.Instance;
+        const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+
+        if (
+            !profileStore ||
+            !catalogWidgetStore ||
+            catalogFileId === undefined ||
+            catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay ||
+            catalogWidgetStore.xAxis === CatalogOverlay.NONE ||
+            catalogWidgetStore.yAxis === CatalogOverlay.NONE
+        ) {
+            return;
+        }
+
+        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
+        if (frame) {
+            const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
+            const wcs = frame.validWcs ? frame.wcsInfo : 0;
+            catalogStore.clearImageCoordsData(catalogFileId);
+            if (imageCoords.wcsX && imageCoords.wcsY) {
+                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem.system, 0, 0);
+            }
+            profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
+        }
+        if (profileStore.shouldUpdateData) {
+            profileStore.setUpdatingDataStream(true);
+            const catalogFilter = profileStore.updateRequestDataSize;
+            appStore.sendCatalogFilter(catalogFilter);
+        }
+    }
+
     private reselectRemovedAxes(reselectXAxis: boolean, reselectYAxis: boolean) {
         if (!reselectXAxis && !reselectYAxis) {
             return;
         }
 
-        this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), reselectXAxis, reselectYAxis);
+        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), reselectXAxis, reselectYAxis);
+        if ((selected.didSelectX || selected.didSelectY) && this.hasActiveImageOverlayState()) {
+            this.refreshImageOverlayCoordinates();
+        }
     }
 
     @action private handleCatalogSystemChange = (system: CatalogSystemType) => {
@@ -763,32 +817,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // init plot data
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
-                profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (frame) {
-                    const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
-                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    catalogStore.clearImageCoordsData(catalogFileId);
-                    if (imageCoords.wcsX && imageCoords.wcsY) {
-                        catalogStore.convertToImageCoordinate(
-                            catalogFileId,
-                            imageCoords.wcsX,
-                            imageCoords.wcsY,
-                            wcs,
-                            imageCoords.xHeaderInfo?.units ?? "",
-                            imageCoords.yHeaderInfo?.units ?? "",
-                            profileStore.catalogCoordinateSystem.system,
-                            0,
-                            0
-                        );
-                    }
-                    profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
-                }
-                if (profileStore.shouldUpdateData) {
-                    profileStore.setUpdatingDataStream(true);
-                    const catalogFilter = profileStore.updateRequestDataSize;
-                    appStore.sendCatalogFilter(catalogFilter);
-                }
+                this.refreshImageOverlayCoordinates();
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
