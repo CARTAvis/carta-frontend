@@ -7,7 +7,7 @@ docs_changed=0
 docs_prettier="docs_website/node_modules/.bin/prettier"
 
 echo "[pre-push] Running root checks..."
-# npm run check-eslint
+npm run check-eslint
 npm run checkformat
 
 while read -r local_ref local_sha remote_ref remote_sha; do
