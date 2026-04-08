@@ -471,6 +471,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         if (enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
+            profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }

@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -29,6 +29,7 @@ type MockProfileStore = {
     isFileBasedCatalog: boolean;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
+    setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
 };
 
 const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
@@ -84,7 +85,8 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         catalogHeader,
         isFileBasedCatalog: false,
         setIsUpdateColumn: jest.fn(),
-        setHeaderDisplay: jest.fn()
+        setHeaderDisplay: jest.fn(),
+        setUpdateMode: jest.fn()
     };
 };
 
@@ -148,6 +150,7 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(widgetStore.yAxis).toBe("ycentroid");
         expect(profileStore.setHeaderDisplay).toHaveBeenCalledWith(true, "xcentroid");
         expect(profileStore.setHeaderDisplay).toHaveBeenCalledWith(true, "ycentroid");
+        expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
         expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
         expect(component["handleFilterRequest"]).toHaveBeenCalled();
     });
