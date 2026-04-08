@@ -74,6 +74,7 @@ import {
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -1893,6 +1894,7 @@ export class AppStore {
         AppStore.staticInstance = this;
         window["app"] = this;
         window["carta"] = this;
+        window["utils"] = Utils;
 
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -1944,6 +1946,7 @@ export class AppStore {
 
         // Log the frontend git commit hash
         this.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+
         this.previousConnectionStatus = ConnectionStatus.CLOSED;
 
         // Adjust document background when theme changes

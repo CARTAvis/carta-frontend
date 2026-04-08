@@ -3,6 +3,7 @@ import {pluginEslint} from "@rsbuild/plugin-eslint";
 import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
+import {pluginTypeCheck} from '@rsbuild/plugin-type-check';
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
 export default defineConfig({
@@ -17,7 +18,8 @@ export default defineConfig({
         pluginReact(),
         pluginSass(),
         pluginNodePolyfill(),
-        pluginGlsl()
+        pluginGlsl(),
+        pluginTypeCheck()
     ],
     source: {
         decorators: {

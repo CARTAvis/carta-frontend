@@ -1,5 +1,5 @@
 import * as React from "react";
-import SplitPane from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
@@ -188,149 +188,153 @@ export class FittingDialogComponent extends React.Component {
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                 </div>
-                <SplitPane split="horizontal" defaultSize="45%">
-                    <div className="upper-pane">
-                        <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
-                            <ScrollShadow>
-                                <FormGroup label="Region" inline={true}>
-                                    <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
-                                </FormGroup>
-                                <FormGroup label="Components" inline={true}>
-                                    <SafeNumericInput
-                                        className="components-input"
-                                        selectAllOnFocus={true}
-                                        value={fittingStore.components.length}
-                                        min={1}
-                                        max={20}
-                                        stepSize={1}
-                                        // wait for onBlur events of the inputs
-                                        // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
-                                        onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
-                                        data-testid="image-fitting-component-input"
-                                    />
-                                    <Tooltip content={`${fittingStore.isAutoInitVal ? "Disable" : "Enable"} initial value auto generation`} position={Position.RIGHT}>
-                                        <Switch
-                                            className="auto-switch"
-                                            checked={fittingStore.isAutoInitVal}
-                                            onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)}
-                                            innerLabel="Auto"
-                                            data-testid="image-fitting-auto-initial-value-toggle"
+                <SplitPane direction="vertical">
+                    <Pane defaultSize="45%">
+                        <div className="upper-pane">
+                            <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
+                                <ScrollShadow>
+                                    <FormGroup label="Region" inline={true}>
+                                        <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
+                                    </FormGroup>
+                                    <FormGroup label="Components" inline={true}>
+                                        <SafeNumericInput
+                                            className="components-input"
+                                            selectAllOnFocus={true}
+                                            value={fittingStore.components.length}
+                                            min={1}
+                                            max={20}
+                                            stepSize={1}
+                                            // wait for onBlur events of the inputs
+                                            // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
+                                            onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
+                                            data-testid="image-fitting-component-input"
                                         />
-                                    </Tooltip>
-                                    {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
-                                        <div className="components-slider">
-                                            <Slider
-                                                value={fittingStore.selectedComponentIndex + 1}
-                                                min={1}
-                                                stepSize={1}
-                                                max={fittingStore.components.length}
-                                                showTrackFill={false}
-                                                // wait for onBlur events of the inputs
-                                                // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
-                                                onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)}
-                                                disabled={fittingStore.components.length <= 1}
+                                        <Tooltip content={`${fittingStore.isAutoInitVal ? "Disable" : "Enable"} initial value auto generation`} position={Position.RIGHT}>
+                                            <Switch
+                                                className="auto-switch"
+                                                checked={fittingStore.isAutoInitVal}
+                                                onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)}
+                                                innerLabel="Auto"
+                                                data-testid="image-fitting-auto-initial-value-toggle"
                                             />
-                                            <Tooltip content="Delete current component">
-                                                <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
-                                            </Tooltip>
-                                        </div>
-                                    )}
-                                </FormGroup>
-                                <Collapse isOpen={!fittingStore.isAutoInitVal}>
-                                    <FormGroup label="Coordinate" inline={true}>
-                                        <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                                        </Tooltip>
+                                        {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
+                                            <div className="components-slider">
+                                                <Slider
+                                                    value={fittingStore.selectedComponentIndex + 1}
+                                                    min={1}
+                                                    stepSize={1}
+                                                    max={fittingStore.components.length}
+                                                    showTrackFill={false}
+                                                    // wait for onBlur events of the inputs
+                                                    // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
+                                                    onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)}
+                                                    disabled={fittingStore.components.length <= 1}
+                                                />
+                                                <Tooltip content="Delete current component">
+                                                    <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
+                                                </Tooltip>
+                                            </div>
+                                        )}
                                     </FormGroup>
-                                    <Divider />
-                                    <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
-                                        {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x || "", component?.setCenterXWcs)}
-                                        {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
-                                        {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y || "", component?.setCenterYWcs)}
-                                        {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
-                                        {this.renderInfoString(component?.center, component?.centerWcs)}
+                                    <Collapse isOpen={!fittingStore.isAutoInitVal}>
+                                        <FormGroup label="Coordinate" inline={true}>
+                                            <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                                        </FormGroup>
+                                        <Divider />
+                                        <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
+                                            {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x || "", component?.setCenterXWcs)}
+                                            {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
+                                            {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y || "", component?.setCenterYWcs)}
+                                            {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
+                                            {this.renderInfoString(component?.center, component?.centerWcs)}
+                                        </FormGroup>
+                                        <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
+                                            {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                                            {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
+                                        </FormGroup>
+                                        <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
+                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x || "", component?.setFwhmXWcs)}
+                                            {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
+                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y || "", component?.setFwhmYWcs)}
+                                            {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
+                                            {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
+                                        </FormGroup>
+                                        <FormGroup label="P.A." inline={true} labelInfo="(deg)">
+                                            {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
+                                            {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
+                                        </FormGroup>
+                                        <Divider />
+                                    </Collapse>
+                                    <ClearableNumericInputComponent
+                                        label="Background"
+                                        inline={true}
+                                        labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}
+                                        value={fittingStore.backgroundOffset}
+                                        placeholder="Offset"
+                                        onValueChanged={fittingStore.setBackgroundOffset}
+                                        onValueCleared={fittingStore.resetBackgroundOffset}
+                                        showTooltip={false}
+                                        additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
+                                    />
+                                    <FormGroup label="Solver" inline={true}>
+                                        <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
                                     </FormGroup>
-                                    <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
-                                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
-                                        {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
-                                    </FormGroup>
-                                    <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x || "", component?.setFwhmXWcs)}
-                                        {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
-                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y || "", component?.setFwhmYWcs)}
-                                        {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
-                                        {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
-                                    </FormGroup>
-                                    <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                                        {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
-                                        {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
-                                    </FormGroup>
-                                    <Divider />
-                                </Collapse>
-                                <ClearableNumericInputComponent
-                                    label="Background"
-                                    inline={true}
-                                    labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}
-                                    value={fittingStore.backgroundOffset}
-                                    placeholder="Offset"
-                                    onValueChanged={fittingStore.setBackgroundOffset}
-                                    onValueCleared={fittingStore.resetBackgroundOffset}
-                                    showTooltip={false}
-                                    additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
-                                />
-                                <FormGroup label="Solver" inline={true}>
-                                    <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
-                                </FormGroup>
-                            </ScrollShadow>
-                        </div>
-                        <div className={Classes.DIALOG_FOOTER}>
-                            <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                                <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
-                                <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
-                                <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
-                                    <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
-                                </Tooltip>
-                                <Tooltip
-                                    content={
-                                        <span>
-                                            Fit the current channel of the image
-                                            {fittingStore.isAutoInitVal && (
-                                                <span>
-                                                    <br />
-                                                    <i>
-                                                        <small>Initial values will be auto generated.</small>
-                                                    </i>
-                                                </span>
-                                            )}
-                                            {fittingStore.fixedParamsNum > 0 && (
-                                                <span>
-                                                    <br />
-                                                    <i>
-                                                        <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are fixed.</small>
-                                                    </i>
-                                                </span>
-                                            )}
-                                            {fittingStore.effectiveFrame?.fittingResult !== "" && (
-                                                <span>
-                                                    <br />
-                                                    <i>
-                                                        <small>Existing fitting results will be replaced.</small>
-                                                    </i>
-                                                </span>
-                                            )}
-                                        </span>
-                                    }
-                                    position={Position.BOTTOM}
-                                >
-                                    <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
-                                </Tooltip>
+                                </ScrollShadow>
+                            </div>
+                            <div className={Classes.DIALOG_FOOTER}>
+                                <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                                    <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                                    <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
+                                    <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
+                                        <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
+                                    </Tooltip>
+                                    <Tooltip
+                                        content={
+                                            <span>
+                                                Fit the current channel of the image
+                                                {fittingStore.isAutoInitVal && (
+                                                    <span>
+                                                        <br />
+                                                        <i>
+                                                            <small>Initial values will be auto generated.</small>
+                                                        </i>
+                                                    </span>
+                                                )}
+                                                {fittingStore.fixedParamsNum > 0 && (
+                                                    <span>
+                                                        <br />
+                                                        <i>
+                                                            <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are fixed.</small>
+                                                        </i>
+                                                    </span>
+                                                )}
+                                                {fittingStore.effectiveFrame?.fittingResult !== "" && (
+                                                    <span>
+                                                        <br />
+                                                        <i>
+                                                            <small>Existing fitting results will be replaced.</small>
+                                                        </i>
+                                                    </span>
+                                                )}
+                                            </span>
+                                        }
+                                        position={Position.BOTTOM}
+                                    >
+                                        <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
+                                    </Tooltip>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className={classNames(Classes.DIALOG_BODY, "lower-pane", "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                        <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
-                            <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
-                            <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} data-testid="image-fitting-full-log-tab-title" />
-                        </Tabs>
-                    </div>
+                    </Pane>
+                    <Pane>
+                        <div className={classNames(Classes.DIALOG_BODY, "lower-pane", "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                            <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
+                                <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
+                                <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} data-testid="image-fitting-full-log-tab-title" />
+                            </Tabs>
+                        </div>
+                    </Pane>
                 </SplitPane>
                 <TaskProgressDialogComponent
                     isOpen={fittingStore.isFitting}
