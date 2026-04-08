@@ -75,7 +75,7 @@ export class SnippetStore {
                 this.setActiveSnippet(previousSnippet, "");
             }
         } catch (err) {
-            AlertStore.Instance.showAlert("Loading user-defined snippets failed!");
+            AlertStore.Instance.shouldShowDashboard("Loading user-defined snippets failed!");
             console.error(err);
         }
     }
@@ -148,11 +148,11 @@ export class SnippetStore {
                 }
                 return true;
             } else {
-                AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+                AlertStore.Instance.shouldShowDashboard(`Saving snippet ${name} failed!`);
                 return false;
             }
         } catch (err) {
-            AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+            AlertStore.Instance.shouldShowDashboard(`Saving snippet ${name} failed!`);
             console.error(err);
             return false;
         }
@@ -169,11 +169,11 @@ export class SnippetStore {
                 }
                 return true;
             } else {
-                AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
+                AlertStore.Instance.shouldShowDashboard(`Deleting snippet ${name} failed!`);
                 return false;
             }
         } catch (err) {
-            AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
+            AlertStore.Instance.shouldShowDashboard(`Deleting snippet ${name} failed!`);
             console.error(err);
             return false;
         }

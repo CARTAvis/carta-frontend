@@ -99,7 +99,7 @@ export function InitWebGL() {
     const gl = document.createElement("canvas").getContext("webgl");
     const floatExtension = gl?.getExtension("OES_texture_float");
     if (!gl || !floatExtension) {
-        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGLErrorMessage, "issue");
+        AlertStore.Instance.shouldShowDashboard(TEMPLATE_NODES.WebGLErrorMessage, "issue");
         return null;
     }
     return gl;
@@ -108,7 +108,7 @@ export function InitWebGL() {
 export function InitWebGL2() {
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
-        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGL2ErrorMessage, "issue");
+        AlertStore.Instance.shouldShowDashboard(TEMPLATE_NODES.WebGL2ErrorMessage, "issue");
         return null;
     }
     return gl;

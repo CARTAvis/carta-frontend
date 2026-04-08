@@ -173,7 +173,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
                             if (scatterCoords?.wcsX && scatterCoords?.wcsY) {
                                 const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
-                                plotWidgetStore.setScatterborder(scatterBorder);
+                                plotWidgetStore.setScatterBorder(scatterBorder);
                             }
                         }
                     }
@@ -215,11 +215,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
                 return undefined;
             case CatalogPlotType.Histogram:
-                const historgramProps: CatalogPlotWidgetStoreProps = {
+                const histogramProps: CatalogPlotWidgetStoreProps = {
                     xColumnName: CatalogPlotComponent.emptyColumn,
                     plotType: this.plotType
                 };
-                const histogramPlotId = appStore.widgetsStore.addCatalogPlotWidget(historgramProps);
+                const histogramPlotId = appStore.widgetsStore.addCatalogPlotWidget(histogramProps);
                 if (histogramPlotId !== null) {
                     catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, histogramPlotId);
                     return histogramPlotId;
@@ -339,7 +339,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return {data: histogramDatasets, border: xRange};
     }
 
-    @computed get isEnablePlotButton(): boolean {
+    @computed get isPlotButtonEnabled(): boolean {
         const emptyColumn = CatalogPlotComponent.emptyColumn;
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
@@ -441,7 +441,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
             const initBorder = this.initScatterBorder;
             if (initBorder) {
-                widgetStore.setScatterborder(initBorder);
+                widgetStore.setScatterBorder(initBorder);
             }
             widgetStore.initLinearFitting();
         } else if (widgetStore.plotType === CatalogPlotType.Histogram) {
@@ -490,7 +490,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetsStore.plotType === CatalogPlotType.D2Scatter) {
             const initBorder = this.initScatterBorder;
             if (initBorder) {
-                widgetsStore.setScatterborder(initBorder);
+                widgetsStore.setScatterBorder(initBorder);
             }
         } else {
             const initBorder = this.initHistogramXBorder;
@@ -507,7 +507,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         if (event.dragmode) {
-            widgetStore.setDragmode(event.dragmode);
+            widgetStore.setDragMode(event.dragmode);
         }
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             const xMin = event["xaxis.range[0]"];
@@ -523,14 +523,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         yMin: isFinite(yMin) ? yMin : currentBorder.yMin,
                         yMax: isFinite(yMax) ? yMax : currentBorder.yMax
                     };
-                    widgetStore.setScatterborder(scatterBorder);
+                    widgetStore.setScatterBorder(scatterBorder);
                 }
             }
 
             if (event["xaxis.autorange"] && event["yaxis.autorange"]) {
                 const initBorder = this.initScatterBorder;
                 if (initBorder) {
-                    widgetStore.setScatterborder(initBorder);
+                    widgetStore.setScatterBorder(initBorder);
                 }
             }
         }
@@ -746,7 +746,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const columnsName = profileStore.displayedColumnHeaders;
         const xyOptions = [CatalogPlotComponent.emptyColumn];
-        const isDisabled = !this.isEnablePlotButton;
+        const isDisabled = !this.isPlotButtonEnabled;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
         const ratio = isScatterPlot ? devicePixelRatio : 1;

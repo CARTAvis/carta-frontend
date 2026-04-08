@@ -110,7 +110,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
             <div className={"draggable-dialog"} ref={this.dd}>
                 {this.props.dialogProps.isOpen && (
                     <Rnd
-                        isEnableResizing={resizeSettings}
+                        enableResizing={resizeSettings}
                         bounds={".gl-container-app"}
                         dragGrid={[1, 1]}
                         resizeGrid={[25, 25]}

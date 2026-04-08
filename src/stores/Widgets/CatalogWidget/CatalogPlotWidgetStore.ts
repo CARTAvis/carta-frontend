@@ -60,15 +60,15 @@ export class CatalogPlotWidgetStore {
         this.indicatorInfo = val;
     }
 
-    @action setScatterborder(border: Border) {
+    @action setScatterBorder(border: Border) {
         this.scatterBorder = border;
     }
 
-    @action setHistogramXBorder(xborder: XBorder) {
-        this.histogramBorder = xborder;
+    @action setHistogramXBorder(xBorder: XBorder) {
+        this.histogramBorder = xBorder;
     }
 
-    @action setDragmode(mode: DragMode) {
+    @action setDragMode(mode: DragMode) {
         this.dragMode = mode;
     }
 

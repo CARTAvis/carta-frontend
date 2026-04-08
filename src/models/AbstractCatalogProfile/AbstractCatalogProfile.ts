@@ -191,7 +191,7 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogInfo.fileId;
     }
 
-    @computed get activedSystem(): {x: CatalogOverlay; y: CatalogOverlay} | undefined {
+    @computed get activeSystem(): {x: CatalogOverlay; y: CatalogOverlay} | undefined {
         return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
     }
 

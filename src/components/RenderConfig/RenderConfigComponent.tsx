@@ -197,7 +197,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     handlePercentileRankClick = (value: number) => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && !appStore.activeFrame.renderConfig.setPercentileRank(value)) {
-            appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
+            appStore.alertStore.shouldShowDashboard(`Couldn't set percentile of rank ${value}%`);
             appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };

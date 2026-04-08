@@ -241,13 +241,13 @@ export class SpectralLineQueryWidgetStore {
         const alertStore = AppStore.Instance.alertStore;
 
         if (freqMHzFrom === undefined || freqMHzTo === undefined || !isFinite(freqMHzFrom) || !isFinite(freqMHzTo) || freqMHzFrom < 0 || freqMHzTo < 0) {
-            alertStore.showAlert("Invalid frequency range.");
+            alertStore.shouldShowDashboard("Invalid frequency range.");
             return;
         } else if (freqMHzFrom === freqMHzTo) {
-            alertStore.showAlert("Please specify a frequency range.");
+            alertStore.shouldShowDashboard("Please specify a frequency range.");
             return;
         } else if (Math.abs(freqMHzTo - freqMHzFrom) > FREQUENCY_RANGE_LIMIT) {
-            alertStore.showAlert(
+            alertStore.shouldShowDashboard(
                 `Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide.` +
                     `Please specify a frequency range within ${FREQUENCY_RANGE_LIMIT / 1e3} GHz.`
             );
@@ -270,7 +270,7 @@ export class SpectralLineQueryWidgetStore {
             }
         } catch (err) {
             this.resetQueryContents();
-            alertStore.showAlert(err?.toString() ?? "Spectral line query failed.");
+            alertStore.shouldShowDashboard(err?.toString() ?? "Spectral line query failed.");
         }
         this.isQuerying = false;
     }).bind(this);

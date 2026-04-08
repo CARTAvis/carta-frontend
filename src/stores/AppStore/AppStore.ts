@@ -124,7 +124,7 @@ export class AppStore {
     @observable isCartaComputeReady: boolean = false;
     // Frames
     @observable previewFrames: ObservableMap<number, FrameStore> = new ObservableMap<number, FrameStore>();
-    /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
+    /** The active image, which can be a loaded image, a color blended image, or a PV preview. */
     @observable activeImage: ImageItem | null = null;
     @observable hoveredFrame: FrameStore | null = null;
     @observable contourDataSource: FrameStore | null = null;
@@ -473,7 +473,7 @@ export class AppStore {
         return baseGroupFrames;
     }
 
-    @computed get spatialAndSpectalMatchedFileIds(): number[] {
+    @computed get spatialAndSpectralMatchedFileIds(): number[] {
         const matchedIds: number[] = [];
         const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
         const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
@@ -500,7 +500,7 @@ export class AppStore {
         return [...new Set(matchedIds)]; //Remove duplicate
     }
 
-    // Calculates which frames have a contour isVisible as a function of each isVisible frame
+    // Calculates which frames have a contour visible as a function of each isVisible frame
     @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
         for (const frame of this.imageViewConfigStore.visibleFrames) {
@@ -715,7 +715,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.alertStore.shouldShowDashboard(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -746,7 +746,7 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
+            this.alertStore.shouldShowDashboard(`HiPS data query failed: ${err}`);
             throw err;
         }
     }
@@ -768,7 +768,7 @@ export class AppStore {
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading files: ${err}`);
+            this.alertStore.shouldShowDashboard(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -1160,7 +1160,7 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading catalogs: ${err}`);
+            this.alertStore.shouldShowDashboard(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -1841,7 +1841,7 @@ export class AppStore {
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    AlertStore.Instance.shouldShowDashboard(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
@@ -2584,7 +2584,7 @@ export class AppStore {
             this.onSessionResumed();
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert("Error resuming session");
+            this.alertStore.shouldShowDashboard("Error resuming session");
         }
     }
 
@@ -2960,7 +2960,7 @@ export class AppStore {
         } catch (err) {
             console.error(err);
         }
-        AlertStore.Instance.showAlert(`Deleting workspace ${name} failed!`);
+        AlertStore.Instance.shouldShowDashboard(`Deleting workspace ${name} failed!`);
     }
 
     @action closeWorkspace = () => {

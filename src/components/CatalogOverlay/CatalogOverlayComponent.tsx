@@ -131,7 +131,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {dataset, numVisibleRows};
     }
 
-    @computed get isEnablePlotButton(): boolean {
+    @computed get isPlotButtonEnabled(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const isEnable = !profileStore?.isLoadingData && !profileStore?.isUpdatingDataStream && catalogWidgetStore?.xAxis !== CatalogOverlay.NONE;
@@ -306,25 +306,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable(): string {
+    @computed get xAxisLabel(): string {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
             case CatalogPlotType.ImageOverlay:
                 const profileStore = this.profileStore;
-                return profileStore?.activedSystem?.x ?? CatalogOverlay.X;
+                return profileStore?.activeSystem?.x ?? CatalogOverlay.X;
             default:
                 return CatalogOverlay.X;
         }
     }
 
-    @computed get yAxisLable(): string {
+    @computed get yAxisLabel(): string {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
             case CatalogPlotType.ImageOverlay:
                 const profileStore = this.profileStore;
-                return profileStore?.activedSystem?.y ?? CatalogOverlay.Y;
+                return profileStore?.activeSystem?.y ?? CatalogOverlay.Y;
             default:
                 return CatalogOverlay.Y;
         }
@@ -615,11 +615,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
                 break;
             case CatalogPlotType.Histogram:
-                const historgramProps: CatalogPlotWidgetStoreProps = {
+                const histogramProps: CatalogPlotWidgetStoreProps = {
                     xColumnName: catalogWidgetStore.xAxis,
                     plotType: catalogWidgetStore.catalogPlotType
                 };
-                const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(historgramProps);
+                const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(histogramProps);
                 if (histogramPlot.widgetComponentId) {
                     catalogStore.setCatalogPlots(histogramPlot.widgetComponentId, catalogFileId, histogramPlot.widgetStoreId ?? "");
                 }
@@ -715,7 +715,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private shortcutoOnClick = (type: CatalogSettingsTabs) => {
+    private shortcutOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
@@ -885,9 +885,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                            <AnchorButton onClick={() => this.shortcutOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
+                            <AnchorButton onClick={() => this.shortcutOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
+                            <AnchorButton onClick={() => this.shortcutOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
                         </ButtonGroup>
                     </div>
                     <SplitPane
@@ -925,7 +925,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={isDisable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isDisable}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
@@ -943,7 +943,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     </Select>
                                 </FormGroup>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || isDisable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isDisable}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
@@ -983,7 +983,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 />
                                 <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={isDisable} data-testid="catalog-reset-button" />
                                 <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={isDisable} data-testid="catalog-close-button" />
-                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.isEnablePlotButton} data-testid="catalog-plot-button" />
+                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.isPlotButtonEnabled} data-testid="catalog-plot-button" />
                             </div>
                         </div>
                     </div>

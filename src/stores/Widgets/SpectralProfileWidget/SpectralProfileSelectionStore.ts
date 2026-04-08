@@ -272,7 +272,7 @@ export class SpectralProfileSelectionStore {
         const appStore = AppStore.Instance;
         const frameOptions = appStore.frameOptions;
         if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
-            const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
+            const matchedFrameIds = appStore.spatialAndSpectralMatchedFileIds;
 
             // Highlight matched active option
             if (matchedFrameIds?.length > 1 && appStore.activeFrameFileId && matchedFrameIds?.includes(appStore.activeFrameFileId)) {
@@ -576,7 +576,7 @@ export class SpectralProfileSelectionStore {
 
     @action selectFrameMultiMode = (fileId: number) => {
         const widgetStore = this.widgetStore;
-        const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+        const matchedFileIds = AppStore.Instance.spatialAndSpectralMatchedFileIds;
 
         if (this.selectedFrameFileId !== undefined && (!matchedFileIds?.includes(fileId) || !matchedFileIds?.includes(this.selectedFrameFileId))) {
             this.selectedFileIds = [fileId];
@@ -753,7 +753,7 @@ export class SpectralProfileSelectionStore {
         this.disposers.push(
             reaction(
                 () => {
-                    const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+                    const matchedFileIds = AppStore.Instance.spatialAndSpectralMatchedFileIds;
                     return matchedFileIds;
                 },
                 matchedFileIds => {
