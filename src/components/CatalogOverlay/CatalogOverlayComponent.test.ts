@@ -94,6 +94,7 @@ const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
     const profileStore = createProfileStore(system, columns);
     const widgetStore = createWidgetStore(xAxis, yAxis);
+    component["autoSelectAttemptedCatalogIds"] = new Set<number>();
 
     Object.defineProperty(component, "profileStore", {
         configurable: true,
@@ -153,6 +154,17 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
         expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
         expect(component["handleFilterRequest"]).toHaveBeenCalled();
+    });
+
+    test("tryAutoSelectAxes only attempts auto-selection once per catalog", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay);
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay);
+
+        expect(autoSelectSpy).toHaveBeenCalledTimes(1);
+        expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(true);
     });
 });
 

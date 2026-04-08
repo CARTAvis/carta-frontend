@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@bluepr
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
@@ -205,27 +205,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         this.disposers.push(
             // Auto-select coordinate columns by common prefixes when axes are None (attempt at most once per catalog)
-            autorun(() => {
-                const profileStore = this.profileStore;
-                const catalogWidgetStore = this.widgetStore;
-                const catalogFileId = this.catalogFileId;
-                if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
-                    return;
-                }
-
-                if (this.autoSelectAttemptedCatalogIds.has(catalogFileId)) {
-                    return;
-                }
-
-                if (catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-                    this.autoSelectAttemptedCatalogIds.add(catalogFileId);
-                    return;
-                }
-
-                this.autoSelectAxes();
-
-                this.autoSelectAttemptedCatalogIds.add(catalogFileId);
-            })
+            reaction(
+                () => [this.catalogFileId, this.profileStore, this.widgetStore, this.widgetStore?.catalogPlotType] as const,
+                ([catalogFileId, profileStore, catalogWidgetStore, catalogPlotType]) => {
+                    this.tryAutoSelectAxes(profileStore, catalogWidgetStore, catalogFileId, catalogPlotType);
+                },
+                {fireImmediately: true}
+            )
         );
     }
 
@@ -439,6 +425,29 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName)};
+    }
+
+    private tryAutoSelectAxes(
+        profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined,
+        catalogWidgetStore: CatalogWidgetStore | undefined,
+        catalogFileId: number | undefined,
+        catalogPlotType: CatalogPlotType | undefined
+    ) {
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
+            return;
+        }
+
+        if (this.autoSelectAttemptedCatalogIds.has(catalogFileId)) {
+            return;
+        }
+
+        if (catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            this.autoSelectAttemptedCatalogIds.add(catalogFileId);
+            return;
+        }
+
+        this.autoSelectAxes();
+        this.autoSelectAttemptedCatalogIds.add(catalogFileId);
     }
 
     private autoSelectAxes(forceReset = false) {
