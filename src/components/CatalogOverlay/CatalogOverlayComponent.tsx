@@ -706,6 +706,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         catalogWidgetStore?.setShowSelectedData(false);
     };
 
+    private shouldPreserveImageOverlayDuringColumnUpdate(): boolean {
+        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
+        if (!profileStore?.isUpdateColumnMode || catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay || catalogWidgetStore.xAxis === CatalogOverlay.NONE || catalogWidgetStore.yAxis === CatalogOverlay.NONE) {
+            return false;
+        }
+
+        const coords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
+        return Boolean(coords.wcsX && coords.wcsY);
+    }
+
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
@@ -725,7 +736,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(catalogFileId);
+            if (!this.shouldPreserveImageOverlayDuringColumnUpdate()) {
+                appStore.catalogStore.clearImageCoordsData(catalogFileId);
+            }
             if (profileStore.isFileBasedCatalog) {
                 profileStore.updateTableStatus(false);
                 profileStore.resetFilterRequest();
