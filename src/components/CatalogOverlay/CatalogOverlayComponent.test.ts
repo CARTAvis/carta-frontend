@@ -134,10 +134,13 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         ["FK5", CatalogSystemType.FK5, [{name: "flux"}, {name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000"],
         ["FK4", CatalogSystemType.FK4, [{name: "flux"}, {name: "ra"}, {name: "dec"}], "ra", "dec"],
         ["ICRS", CatalogSystemType.ICRS, [{name: "flux"}, {name: "RAJ2000"}, {name: "DEJ2000"}], "RAJ2000", "DEJ2000"],
+        ["ICRS explicit", CatalogSystemType.ICRS, [{name: "flux"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}], "RA_ICRS", "DE_ICRS"],
         ["Galactic", CatalogSystemType.Galactic, [{name: "flux"}, {name: "GLON"}, {name: "GLAT"}], "GLON", "GLAT"],
         ["Ecliptic", CatalogSystemType.Ecliptic, [{name: "flux"}, {name: "ecl_lon"}, {name: "ecl_lat"}], "ecl_lon", "ecl_lat"],
-        ["Pixel0", CatalogSystemType.Pixel0, [{name: "id"}, {name: "xcentroid"}, {name: "ycentroid"}], "xcentroid", "ycentroid"],
-        ["Pixel1", CatalogSystemType.Pixel1, [{name: "id"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "X_IMAGE", "Y_IMAGE"]
+        ["Pixel0 centroid", CatalogSystemType.Pixel0, [{name: "id"}, {name: "xcentroid"}, {name: "ycentroid"}], "xcentroid", "ycentroid"],
+        ["Pixel0 peak", CatalogSystemType.Pixel0, [{name: "id"}, {name: "xpeak"}, {name: "ypeak"}], "xpeak", "ypeak"],
+        ["Pixel1 image", CatalogSystemType.Pixel1, [{name: "id"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "X_IMAGE", "Y_IMAGE"],
+        ["Pixel1 windowed image", CatalogSystemType.Pixel1, [{name: "id"}, {name: "XWIN_IMAGE"}, {name: "YWIN_IMAGE"}], "XWIN_IMAGE", "YWIN_IMAGE"]
     ])("autoSelectAxes picks %s aliases from catalog columns", (_label, system, columns, expectedX, expectedY) => {
         const {component, widgetStore} = createComponentHarness(system, columns);
 
