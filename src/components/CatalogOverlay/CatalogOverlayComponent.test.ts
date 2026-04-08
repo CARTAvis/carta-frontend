@@ -22,11 +22,12 @@ type MockWidgetStore = {
 };
 
 type MockProfileStore = {
-    activedSystem: {x: CatalogOverlay; y: CatalogOverlay};
+    activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
     isFileBasedCatalog: boolean;
+    setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
     setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
@@ -78,16 +79,24 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         };
     });
 
-    return {
+    const profileStore = {
         activedSystem: systemOverlayMap.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
         catalogHeader,
         isFileBasedCatalog: false,
+        setCatalogCoordinateSystem: jest.fn(),
         setIsUpdateColumn: jest.fn(),
         setHeaderDisplay: jest.fn(),
         setUpdateMode: jest.fn()
-    };
+    } as MockProfileStore;
+
+    profileStore.setCatalogCoordinateSystem.mockImplementation((nextSystem: CatalogSystemType) => {
+        profileStore.catalogCoordinateSystem.system = nextSystem;
+        profileStore.activedSystem = systemOverlayMap.get(nextSystem);
+    });
+
+    return profileStore;
 };
 
 const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
@@ -188,6 +197,19 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
 });
 
 describe("CatalogOverlayComponent image overlay state", () => {
+    test("autoSelectAxes force-reset path reselects columns for the new system", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec");
+
+        profileStore.setCatalogCoordinateSystem(CatalogSystemType.Pixel1);
+        component["autoSelectAxes"](true);
+
+        expect(profileStore.setCatalogCoordinateSystem).toHaveBeenCalledWith(CatalogSystemType.Pixel1);
+        expect(widgetStore.setxAxis).toHaveBeenNthCalledWith(1, CatalogOverlay.NONE);
+        expect(widgetStore.setyAxis).toHaveBeenNthCalledWith(1, CatalogOverlay.NONE);
+        expect(widgetStore.xAxis).toBe("X_IMAGE");
+        expect(widgetStore.yAxis).toBe("Y_IMAGE");
+    });
+
     test("reselectRemovedAxes updates axes without auto-applying the image overlay", () => {
         const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}]);
 
