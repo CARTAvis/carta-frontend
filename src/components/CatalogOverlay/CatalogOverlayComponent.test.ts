@@ -139,6 +139,17 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(widgetStore.yAxis).toBe("dec");
     });
 
+    test("isExcludedCoordinateName only excludes coordinate-error tokens", () => {
+        const {component} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+
+        expect(component["isExcludedCoordinateName"]("deterrence")).toBe(false);
+        expect(component["isExcludedCoordinateName"]("design")).toBe(false);
+        expect(component["isExcludedCoordinateName"]("ra_error")).toBe(true);
+        expect(component["isExcludedCoordinateName"]("sigma_ra")).toBe(true);
+        expect(component["isExcludedCoordinateName"]("pmdec")).toBe(true);
+        expect(component["isExcludedCoordinateName"]("raOffset")).toBe(true);
+    });
+
     test("autoSelectAxes enables hidden matching columns when no visible coordinate columns are available", () => {
         const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}]);
 

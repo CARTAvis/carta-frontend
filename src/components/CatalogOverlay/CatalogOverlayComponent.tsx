@@ -46,7 +46,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Int64,
         CARTA.ColumnType.Uint64
     ];
-    private static readonly CoordinateColumnExclusionPattern = /^(?:e_|pm)|_pm|propermotion|err|error|sigma|sig|unc|uncertainty|offset|resid|residual/;
+    private static readonly CoordinateColumnExclusionPatterns = [/^e_/i, /(?:^|_)pm(?=$|_|[a-z])/i, /(?:^|_)(?:propermotion|err(?:or)?|sigma|sig|unc(?:ertainty)?|offset|resid(?:ual)?)(?:_|$)/i];
     private static readonly RightAscensionPatterns = [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i];
     private static readonly DeclinationPatterns = [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i];
     private static readonly GalacticLongitudePatterns = [/^glon$/i, /^glon_?deg$/i, /^gal(?:actic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?gal(?:actic)?$/i, /^gal_?l$/i, /^l$/i];
@@ -362,8 +362,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private isExcludedCoordinateName(name: string): boolean {
-        const normalizedName = name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-        return CatalogOverlayComponent.CoordinateColumnExclusionPattern.test(normalizedName);
+        const normalizedName = name
+            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+            .replace(/[^a-zA-Z0-9]+/g, "_")
+            .toLowerCase();
+        return CatalogOverlayComponent.CoordinateColumnExclusionPatterns.some(pattern => pattern.test(normalizedName));
     }
 
     private findPreferredAxisColumn(axisOptions: string[], patterns: RegExp[]): string | undefined {
