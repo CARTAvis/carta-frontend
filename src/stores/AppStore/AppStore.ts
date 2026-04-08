@@ -2398,6 +2398,7 @@ export class AppStore {
                             catalogFilter.subsetEndIndex,
                             catalogFilter.subsetDataSize
                         );
+                        catalogWidgetStore?.setAppliedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
                     }
                 }
             }

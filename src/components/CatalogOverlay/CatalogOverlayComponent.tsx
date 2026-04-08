@@ -502,6 +502,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
+            catalogWidgetStore.setAppliedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system);
             const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
             const wcs = frame.validWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
@@ -809,6 +810,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(catalogFileId);
+            catalogWidgetStore.clearAppliedImageOverlayState();
             if (profileStore.isFileBasedCatalog) {
                 appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
             }
@@ -893,6 +895,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: ItemRendererProps) => {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
+
+    @computed get isImageOverlaySelectionDirty(): boolean {
+        const catalogWidgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        if (!catalogWidgetStore || !profileStore || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay || !catalogWidgetStore.hasAppliedImageOverlay) {
+            return false;
+        }
+
+        return (
+            catalogWidgetStore.appliedImageOverlayXAxis !== catalogWidgetStore.xAxis ||
+            catalogWidgetStore.appliedImageOverlayYAxis !== catalogWidgetStore.yAxis ||
+            catalogWidgetStore.appliedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system
+        );
+    }
 
     @action private handleSplitChange = (newSize: number) => {
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
@@ -1070,6 +1086,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const activeSystem = AbstractCatalogProfileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
+        const hasAppliedImageOverlay = isImageOverlay && catalogWidgetStore.hasAppliedImageOverlay;
+        const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
+        const plotButtonText = isImageOverlay && hasAppliedImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
+        const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
         const disable = profileStore.loadOntoImage;
 
         let footerDropdownClass = "footer-action-large";
@@ -1212,7 +1232,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 />
                                 <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
                                 <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
-                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
+                                <AnchorButton intent={plotButtonIntent} text={plotButtonText} onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
                             </div>
                         </div>
                     </div>
