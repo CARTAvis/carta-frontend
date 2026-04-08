@@ -91,10 +91,18 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 };
 
 const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
+    // These unit tests exercise isolated instance methods, so we bypass the real constructor
+    // and manually seed any constructor-initialized fields that the methods may touch.
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
     const profileStore = createProfileStore(system, columns);
     const widgetStore = createWidgetStore(xAxis, yAxis);
     component["autoSelectAttemptedCatalogIds"] = new Set<number>();
+    component["catalogFileNames"] = new Map<number, string>();
+    component["widgetId"] = "catalog-overlay-test";
+    Object.defineProperty(component, "disposers", {
+        configurable: true,
+        value: []
+    });
 
     Object.defineProperty(component, "profileStore", {
         configurable: true,
