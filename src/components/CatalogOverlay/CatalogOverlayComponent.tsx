@@ -408,15 +408,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        const visibleColumns = new Set(columnNames.filter((columnName): columnName is string => Boolean(columnName)));
         let didEnableColumns = false;
-        visibleColumns.forEach(columnName => {
+        for (const columnName of columnNames) {
+            if (!columnName) {
+                continue;
+            }
             const header = profileStore.catalogControlHeader.get(columnName);
             if (header && !header.display) {
                 profileStore.setHeaderDisplay(true, columnName);
                 didEnableColumns = true;
             }
-        });
+        }
         return didEnableColumns;
     }
 
@@ -457,8 +459,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const hiddenAxisOptions = this.getAutoSelectableAxisOptions(true);
-        const fallbackXColumn = selected.didSelectX ? undefined : this.findAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, hiddenAxisOptions);
-        const fallbackYColumn = selected.didSelectY ? undefined : this.findAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, hiddenAxisOptions);
+        const fallbackXColumn = this.findAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, hiddenAxisOptions);
+        const fallbackYColumn = this.findAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, hiddenAxisOptions);
         const enabledHiddenColumns = this.enableAxisColumns([fallbackXColumn, fallbackYColumn]);
 
         if (fallbackXColumn) {
@@ -800,7 +802,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(catalogFileId);
-            catalogWidgetStore.clearAppliedImageOverlayState();
             if (profileStore.isFileBasedCatalog) {
                 appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
             }
@@ -1077,9 +1078,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const activeSystem = AbstractCatalogProfileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
-        const hasAppliedImageOverlay = isImageOverlay && catalogWidgetStore.hasAppliedImageOverlay;
         const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
-        const plotButtonText = isImageOverlay && hasAppliedImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
+        const plotButtonText = isImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
         const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
         const disable = profileStore.loadOntoImage;
 
