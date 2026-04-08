@@ -466,22 +466,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private hasActiveImageOverlayState(): boolean {
-        const profileStore = this.profileStore;
-        const catalogWidgetStore = this.widgetStore;
-        const catalogFileId = this.catalogFileId;
-        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return false;
-        }
-
-        const hasRenderedOverlay = (CatalogStore.Instance.catalogCounts.get(catalogFileId) ?? 0) > 0;
-        const isOverlayMidUpdate = profileStore.updatingDataStream;
-        const isOverlayModeActive = profileStore.updateMode === CatalogUpdateMode.ViewUpdate;
-
-        return hasRenderedOverlay || isOverlayMidUpdate || isOverlayModeActive;
-    }
-
-    private refreshImageOverlayCoordinates() {
+    private applyImageOverlayPlot() {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
@@ -523,10 +508,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), reselectXAxis, reselectYAxis);
-        if ((selected.didSelectX || selected.didSelectY) && this.hasActiveImageOverlayState()) {
-            this.refreshImageOverlayCoordinates();
-        }
+        this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), reselectXAxis, reselectYAxis);
     }
 
     @action private handleCatalogSystemChange = (system: CatalogSystemType) => {
@@ -832,7 +814,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // init plot data
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
-                this.refreshImageOverlayCoordinates();
+                this.applyImageOverlayPlot();
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
