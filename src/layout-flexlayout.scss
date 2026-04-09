@@ -31,15 +31,18 @@ $pt-dark-app-background-color: #252a31;
 .flexlayout__tab_button {
     padding: 3px 8px;
     font-size: 14px;
-    color: $dark-gray5;
+    color: $gray1;
     border: none;
-    background-color: $light-gray5;
+    background-color: $light-gray4;
+    border-radius: 4px 4px 0 0;
     cursor: pointer;
 
     &--selected {
         background-color: $light-gray5;
         color: $dark-gray1;
-        border-bottom: 2px solid $blue3;
+        .flexlayout__tab_button_content {
+            color: $blue2;
+        }
     }
 
     &:hover {
@@ -47,7 +50,7 @@ $pt-dark-app-background-color: #252a31;
     }
 
     &_content {
-        color: $blue2;
+        color: $gray2;
     }
 }
 
@@ -76,6 +79,7 @@ $pt-dark-app-background-color: #252a31;
 // --- Tabset (stack) borders ---
 .flexlayout__tabset {
     border: 1px solid $light-gray1;
+    border-radius: 4px;
     overflow: hidden;
 
     &-selected {
@@ -106,15 +110,15 @@ $pt-dark-app-background-color: #252a31;
     border: none;
     background: transparent;
     cursor: pointer;
-    color: $gray1;
+    color: $gray3;
 
     &:hover {
-        color: $dark-gray1;
+        color: $dark-gray3;
         background-color: transparent;
     }
 
     &:disabled {
-        opacity: 0.3;
+        color: $gray5;
         cursor: default;
     }
 
@@ -123,6 +127,8 @@ $pt-dark-app-background-color: #252a31;
     }
 
     svg {
+        fill: $gray3;
+        stroke-width: 0;
         width: 20px !important;
         height: 20px !important;
         &:hover {
@@ -136,6 +142,7 @@ $pt-dark-app-background-color: #252a31;
     margin-left: 4px;
     opacity: 0.5;
     cursor: pointer;
+    visibility: visible;
 
     &:hover {
         opacity: 1;
@@ -185,13 +192,15 @@ $pt-dark-app-background-color: #252a31;
     }
 
     .flexlayout__tab_button {
-        color: $light-gray4;
+        color: $gray3;
         background-color: $dark-gray3;
 
         &--selected {
-            background-color: $dark-gray3;
+            background-color: $dark-gray2;
             color: white;
-            border-bottom-color: $blue4;
+            .flexlayout__tab_button_content {
+                color: $blue5;
+            }
         }
 
         &:hover {
@@ -199,7 +208,7 @@ $pt-dark-app-background-color: #252a31;
         }
 
         &_content {
-            color: $blue5;
+            color: $gray4;
         }
     }
 
@@ -225,7 +234,7 @@ $pt-dark-app-background-color: #252a31;
     }
 
     .flexlayout__tab_toolbar_button {
-        color: $gray4;
+        color: $gray3;
         background: transparent;
 
         &:hover {
@@ -234,6 +243,8 @@ $pt-dark-app-background-color: #252a31;
         }
 
         svg {
+            fill: $gray3;
+            stroke-width: 0;
             &:hover {
                 fill: $light-gray5;
             }
@@ -251,6 +262,7 @@ $pt-dark-app-background-color: #252a31;
 
     .flexlayout__tab_button_trailing {
         color: $light-gray3;
+        visibility: visible;
     }
 
     .flexlayout__tab_button_overflow {
