@@ -18,14 +18,9 @@ $pt-dark-app-background-color: #252a31;
         right: 0;
         bottom: 0;
 
+        --color-tabset-divider-line: white;
         --color-icon: #{$gray1};
     }
-}
-
-// --- Tab strip (header bar of each tabset) ---
-.flexlayout__tabset_header {
-    background-color: $light-gray4;
-    border-bottom: 1px solid $gray4;
 }
 
 .flexlayout__tab_button {
@@ -39,6 +34,7 @@ $pt-dark-app-background-color: #252a31;
 
     &--selected {
         background-color: $light-gray5;
+        border-bottom: 1px solid $blue2;
         color: $dark-gray1;
         .flexlayout__tab_button_content {
             color: $blue2;
@@ -60,6 +56,7 @@ $pt-dark-app-background-color: #252a31;
     overflow: auto;
     position: relative;
     height: 100%;
+    border-radius: 4px;
 }
 
 // --- Tab toolbar buttons ---
@@ -78,8 +75,6 @@ $pt-dark-app-background-color: #252a31;
 
 // --- Tabset (stack) borders ---
 .flexlayout__tabset {
-    border: 1px solid $light-gray1;
-    border-radius: 4px;
     overflow: hidden;
 
     &-selected {
@@ -161,34 +156,9 @@ $pt-dark-app-background-color: #252a31;
 .layout-container.dark-theme {
     // Override FlexLayout CSS custom properties for dark mode
     .flexlayout__layout {
-        --color-text: #{$light-gray5};
-        --color-background: #{$pt-dark-app-background-color};
-        --color-1: #{$dark-gray3};
-        --color-2: #{$dark-gray2};
-        --color-3: #{$dark-gray3};
-        --color-4: #{$dark-gray2};
-        --color-5: #{$dark-gray1};
-        --color-6: #{$dark-gray1};
-        --color-tabset-background: #{$dark-gray4};
-        --color-tabset-background-selected: #{$dark-gray3};
-        --color-tabset-background-maximized: #{$dark-gray2};
-        --color-tabset-divider-line: #{$dark-gray2};
-        --color-tabset-header-background: #{$dark-gray4};
-        --color-tabset-header: #{$light-gray5};
+        --color-background: #{$dark-gray4};
+        --color-tabset-divider-line: #{$dark-gray4};
         --color-tab-content: #{$pt-dark-app-background-color};
-        --color-tab-selected: white;
-        --color-tab-selected-background: #{$dark-gray2};
-        --color-tab-unselected: #{$light-gray4};
-        --color-tab-unselected-background: transparent;
-        --color-overflow: #{$light-gray3};
-        --color-icon: #{$gray4};
-        --color-drag1: #{$blue4};
-        --color-drag1-background: rgba(#{$blue4}, 0.1);
-    }
-
-    .flexlayout__tabset_header {
-        background-color: $dark-gray4;
-        border-bottom: 1px solid $dark-gray2;
     }
 
     .flexlayout__tab_button {
@@ -197,6 +167,7 @@ $pt-dark-app-background-color: #252a31;
 
         &--selected {
             background-color: $dark-gray2;
+            border-bottom: 1px solid $blue5;
             color: white;
             .flexlayout__tab_button_content {
                 color: $blue5;
@@ -215,6 +186,7 @@ $pt-dark-app-background-color: #252a31;
     .flexlayout__tab {
         background-color: $pt-dark-app-background-color;
         color: $light-gray5;
+        border-radius: 4px;
     }
 
     .flexlayout__splitter {
@@ -226,8 +198,6 @@ $pt-dark-app-background-color: #252a31;
     }
 
     .flexlayout__tabset {
-        border-color: $dark-gray2;
-
         &-selected {
             background-color: $dark-gray4;
         }
@@ -289,11 +259,4 @@ body.layout-container {
 // Hide the built-in popout button in popout windows (tab is already popped out)
 .flexlayout__floating_window_content .flexlayout__tab_toolbar_button-float {
     display: none;
-}
-
-// =====================================================
-// PV Generator overflow fix (was .lm_content:has(.pv-generator-widget))
-// =====================================================
-.flexlayout__tab:has(.pv-generator-widget) {
-    overflow: auto;
 }
