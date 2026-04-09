@@ -1,0 +1,37 @@
+diff --git a/node_modules/react-plotly.js/factory.js b/node_modules/react-plotly.js/factory.js
+index 40f3edc..1fe071d 100644
+--- a/node_modules/react-plotly.js/factory.js
++++ b/node_modules/react-plotly.js/factory.js
+@@ -142,7 +142,8 @@ function plotComponentFactory(Plotly) {
+         this.figureCallback(this.props.onPurge);
+ 
+         if (this.resizeHandler && isBrowser) {
+-          window.removeEventListener('resize', this.resizeHandler);
++          var win = (this.el && this.el.ownerDocument && this.el.ownerDocument.defaultView) || window;
++          win.removeEventListener('resize', this.resizeHandler);
+           this.resizeHandler = null;
+         }
+ 
+@@ -205,18 +206,20 @@ function plotComponentFactory(Plotly) {
+           return;
+         }
+ 
++        var win = (this.el && this.el.ownerDocument && this.el.ownerDocument.defaultView) || window;
++
+         if (this.props.useResizeHandler && !this.resizeHandler) {
+           this.resizeHandler = function () {
+             return Plotly.Plots.resize(_this5.el);
+           };
+ 
+-          window.addEventListener('resize', this.resizeHandler);
++          win.addEventListener('resize', this.resizeHandler);
+ 
+           if (invoke) {
+             this.resizeHandler();
+           }
+         } else if (!this.props.useResizeHandler && this.resizeHandler) {
+-          window.removeEventListener('resize', this.resizeHandler);
++          win.removeEventListener('resize', this.resizeHandler);
+           this.resizeHandler = null;
+         }
+       }

@@ -1,0 +1,185 @@
+diff --git a/node_modules/plotly.js/src/components/dragelement/index.js b/node_modules/plotly.js/src/components/dragelement/index.js
+index 16a7598..4398abd 100644
+--- a/node_modules/plotly.js/src/components/dragelement/index.js
++++ b/node_modules/plotly.js/src/components/dragelement/index.js
+@@ -76,6 +76,10 @@ dragElement.init = function init(options) {
+     var doubleClickDelay = gd._context.doubleClickDelay;
+     var element = options.element;
+ 
++    // Use element's ownerDocument to support popout windows
++    var doc = element.ownerDocument || document;
++    var win = doc.defaultView || window;
++
+     var startX,
+         startY,
+         newMouseDownTime,
+@@ -114,7 +118,7 @@ dragElement.init = function init(options) {
+         // so that others can look at and modify them
+         gd._dragged = false;
+         gd._dragging = true;
+-        var offset = pointerOffset(e);
++        var offset = pointerOffset(e, doc.body);
+         startX = offset[0];
+         startY = offset[1];
+         initialTarget = e.target;
+@@ -140,22 +144,22 @@ dragElement.init = function init(options) {
+         if(options.prepFn) options.prepFn(e, startX, startY);
+ 
+         if(hasHover && !rightClick) {
+-            dragCover = coverSlip();
+-            dragCover.style.cursor = window.getComputedStyle(element).cursor;
++            dragCover = coverSlip(doc);
++            dragCover.style.cursor = win.getComputedStyle(element).cursor;
+         } else if(!hasHover) {
+             // document acts as a dragcover for mobile, bc we can't create dragcover dynamically
+-            dragCover = document;
+-            cursor = window.getComputedStyle(document.documentElement).cursor;
+-            document.documentElement.style.cursor = window.getComputedStyle(element).cursor;
++            dragCover = doc;
++            cursor = win.getComputedStyle(doc.documentElement).cursor;
++            doc.documentElement.style.cursor = win.getComputedStyle(element).cursor;
+         }
+ 
+-        document.addEventListener('mouseup', onDone);
+-        document.addEventListener('touchend', onDone);
++        doc.addEventListener('mouseup', onDone);
++        doc.addEventListener('touchend', onDone);
+ 
+         if(options.dragmode !== false) {
+             e.preventDefault();
+-            document.addEventListener('mousemove', onMove);
+-            document.addEventListener('touchmove', onMove, {passive: false});
++            doc.addEventListener('mousemove', onMove);
++            doc.addEventListener('touchmove', onMove, {passive: false});
+         }
+ 
+         return;
+@@ -164,7 +168,7 @@ dragElement.init = function init(options) {
+     function onMove(e) {
+         e.preventDefault();
+ 
+-        var offset = pointerOffset(e);
++        var offset = pointerOffset(e, doc.body);
+         var minDrag = options.minDrag || constants.MINDRAG;
+         var dxdy = clampFn(offset[0] - startX, offset[1] - startY, minDrag);
+         var dx = dxdy[0];
+@@ -192,12 +196,12 @@ dragElement.init = function init(options) {
+ 
+         if(options.dragmode !== false) {
+             e.preventDefault();
+-            document.removeEventListener('mousemove', onMove);
+-            document.removeEventListener('touchmove', onMove);
++            doc.removeEventListener('mousemove', onMove);
++            doc.removeEventListener('touchmove', onMove);
+         }
+ 
+-        document.removeEventListener('mouseup', onDone);
+-        document.removeEventListener('touchend', onDone);
++        doc.removeEventListener('mouseup', onDone);
++        doc.removeEventListener('touchend', onDone);
+ 
+         if(hasHover) {
+             removeElement(dragCover);
+@@ -262,8 +266,9 @@ dragElement.init = function init(options) {
+     }
+ };
+ 
+-function coverSlip() {
+-    var cover = document.createElement('div');
++function coverSlip(doc) {
++    doc = doc || document;
++    var cover = doc.createElement('div');
+ 
+     cover.className = 'dragcover';
+     var cStyle = cover.style;
+@@ -275,16 +280,16 @@ function coverSlip() {
+     cStyle.zIndex = 999999999;
+     cStyle.background = 'none';
+ 
+-    document.body.appendChild(cover);
++    doc.body.appendChild(cover);
+ 
+     return cover;
+ }
+ 
+ dragElement.coverSlip = coverSlip;
+ 
+-function pointerOffset(e) {
++function pointerOffset(e, body) {
+     return mouseOffset(
+         e.changedTouches ? e.changedTouches[0] : e,
+-        document.body
++        body || document.body
+     );
+ }
+diff --git a/node_modules/plotly.js/src/components/modebar/modebar.js b/node_modules/plotly.js/src/components/modebar/modebar.js
+index 4a2ce19..1fae668 100644
+--- a/node_modules/plotly.js/src/components/modebar/modebar.js
++++ b/node_modules/plotly.js/src/components/modebar/modebar.js
+@@ -19,7 +19,7 @@ var Parser = new DOMParser();
+  */
+ function ModeBar(opts) {
+     this.container = opts.container;
+-    this.element = document.createElement('div');
++    this.element = (this.container.ownerDocument || document).createElement('div');
+ 
+     this.update(opts.graphInfo, opts.buttons);
+ 
+@@ -57,8 +57,7 @@ proto.update = function(graphInfo, buttons) {
+     var style = fullLayout.modebar;
+ 
+     // set style for modebar-group directly instead of inline CSS that's not allowed by strict CSP's
+-    var groupSelector = '#' + modeBarId + ' .modebar-group';
+-    document.querySelectorAll(groupSelector).forEach(function(group) {
++    this.element.querySelectorAll('.modebar-group').forEach(function(group) {
+         group.style.backgroundColor = style.bgcolor;
+     });
+     // if buttons or logo have changed, redraw modebar interior
+@@ -130,7 +129,8 @@ proto.updateButtons = function(buttons) {
+  * @Return {HTMLelement}
+  */
+ proto.createGroup = function() {
+-    var group = document.createElement('div');
++    var doc = this.element.ownerDocument || document;
++    var group = doc.createElement('div');
+     group.className = 'modebar-group';
+ 
+     var style = this.graphInfo._fullLayout.modebar;
+@@ -146,7 +146,8 @@ proto.createGroup = function() {
+  */
+ proto.createButton = function(config) {
+     var _this = this;
+-    var button = document.createElement('button');
++    var doc = this.element.ownerDocument || document;
++    var button = doc.createElement('button');
+ 
+     button.setAttribute('type', 'button');
+     button.setAttribute('rel', 'tooltip');
+@@ -209,14 +210,15 @@ proto.createIcon = function(thisIcon) {
+         Number(thisIcon.height) :
+         thisIcon.ascent - thisIcon.descent;
+     var svgNS = 'http://www.w3.org/2000/svg';
++    var doc = this.element.ownerDocument || document;
+     var icon;
+ 
+     if(thisIcon.path) {
+-        icon = document.createElementNS(svgNS, 'svg');
++        icon = doc.createElementNS(svgNS, 'svg');
+         icon.setAttribute('viewBox', [0, 0, thisIcon.width, iconHeight].join(' '));
+         icon.setAttribute('class', 'icon');
+ 
+-        var path = document.createElementNS(svgNS, 'path');
++        var path = doc.createElementNS(svgNS, 'path');
+         path.setAttribute('d', thisIcon.path);
+ 
+         if(thisIcon.transform) {
+@@ -322,7 +324,8 @@ function jsVersion(str) {
+  */
+ proto.getLogo = function() {
+     var group = this.createGroup();
+-    var a = document.createElement('a');
++    var doc = this.element.ownerDocument || document;
++    var a = doc.createElement('a');
+ 
+     a.href = 'https://plotly.com/';
+     a.target = '_blank';
