@@ -716,7 +716,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
-            this.alertStore.shouldShowDashboard(`Error loading file: ${err}`);
+            this.alertStore.showDashboard(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -747,7 +747,7 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.shouldShowDashboard(`HiPS data query failed: ${err}`);
+            this.alertStore.showDashboard(`HiPS data query failed: ${err}`);
             throw err;
         }
     }
@@ -769,7 +769,7 @@ export class AppStore {
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.shouldShowDashboard(`Error loading files: ${err}`);
+            this.alertStore.showDashboard(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -1161,7 +1161,7 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
-            this.alertStore.shouldShowDashboard(`Error loading catalogs: ${err}`);
+            this.alertStore.showDashboard(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
         }
@@ -1842,7 +1842,7 @@ export class AppStore {
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                    AlertStore.Instance.shouldShowDashboard(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    AlertStore.Instance.showDashboard(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
@@ -2587,7 +2587,7 @@ export class AppStore {
             this.onSessionResumed();
         } catch (err) {
             console.error(err);
-            this.alertStore.shouldShowDashboard("Error resuming session");
+            this.alertStore.showDashboard("Error resuming session");
         }
     }
 
@@ -2963,7 +2963,7 @@ export class AppStore {
         } catch (err) {
             console.error(err);
         }
-        AlertStore.Instance.shouldShowDashboard(`Deleting workspace ${name} failed!`);
+        AlertStore.Instance.showDashboard(`Deleting workspace ${name} failed!`);
     }
 
     @action closeWorkspace = () => {

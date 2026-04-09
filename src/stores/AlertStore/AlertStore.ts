@@ -24,11 +24,11 @@ export class AlertStore {
     @observable shouldShowDashboardLink: boolean = false;
     private interactionPromise: Deferred<boolean> | null;
 
-    @action shouldShowDashboard = (text: string | React.ReactNode, icon?: IconName | MaybeElement, isShowDashboard = false) => {
+    @action showDashboard = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
         this.alertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Info;
-        this.shouldShowDashboardLink = isShowDashboard;
+        this.shouldShowDashboardLink = shouldShowDashboard;
         this.isAlertVisible = true;
     };
 
