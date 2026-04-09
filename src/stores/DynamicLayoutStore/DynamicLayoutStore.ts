@@ -82,7 +82,7 @@ export class DynamicLayoutStore {
 
         // show alert if no other alert is shown
         if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.isAlertVisible === false) {
-            appStore.alertStore.showDashboard(`Fail to save (${layoutMappingCtype}): ${layoutName}! No ${layoutName} layout existed.`);
+            appStore.alertStore.showAlert(`Fail to save (${layoutMappingCtype}): ${layoutName}! No ${layoutName} layout existed.`);
             return;
         }
 

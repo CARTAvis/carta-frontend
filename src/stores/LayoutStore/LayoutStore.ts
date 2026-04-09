@@ -51,7 +51,7 @@ export class LayoutStore {
                 }
             }
         } catch (err) {
-            AlertStore.Instance.showDashboard("Loading user-defined layout failed!");
+            AlertStore.Instance.showAlert("Loading user-defined layout failed!");
             console.error(err);
         }
     }
@@ -84,7 +84,7 @@ export class LayoutStore {
 
     @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExists(layoutName)) {
-            AlertStore.Instance.showDashboard(`Applying layout failed! Layout ${layoutName} not found.`);
+            AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return false;
         }
 
@@ -137,29 +137,29 @@ export class LayoutStore {
     @flow.bound *saveLayout() {
         const appStore = AppStore.Instance;
         if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
-            appStore.alertStore.showDashboard("Save layout failed! Empty layouts or name.");
+            appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
 
         if (PresetLayout.IsPreset(this.layoutNameToBeSaved)) {
-            appStore.alertStore.showDashboard("Layout name cannot be the same as system presets.");
+            appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
 
         if (!this.layoutExists(this.layoutNameToBeSaved) && this.numSavedLayouts >= MAX_LAYOUT) {
-            appStore.alertStore.showDashboard(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
+            appStore.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
             return;
         }
 
         const currentConfig = this.dockedLayout.toConfig();
         if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
-            appStore.alertStore.showDashboard("Saving layout failed! Something is wrong with current layout.");
+            appStore.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
         const configToSave = LayoutConfig.CreateConfigToSave(appStore, currentConfig.content[0]);
         if (!configToSave) {
-            appStore.alertStore.showDashboard("Saving layout failed! Creat layout configuration for saving failed.");
+            appStore.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
             return;
         }
 
@@ -184,7 +184,7 @@ export class LayoutStore {
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
-            AlertStore.Instance.showDashboard("Saving user-defined layout failed! ");
+            AlertStore.Instance.showAlert("Saving user-defined layout failed! ");
         }
     };
 
@@ -193,22 +193,22 @@ export class LayoutStore {
         const dynamicLayout = appStore.dynamicLayoutStore;
 
         if (!this.layouts || !newName || !this.dockedLayout) {
-            appStore.alertStore.showDashboard("Save layout failed! Empty layouts or name.");
+            appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
 
         if (PresetLayout.IsPreset(newName)) {
-            appStore.alertStore.showDashboard("Layout name cannot be the same as system presets.");
+            appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
 
         if (this.layoutExists(newName)) {
-            appStore.alertStore.showDashboard("Layout name already exists.");
+            appStore.alertStore.showAlert("Layout name already exists.");
             return;
         }
 
         if (!oldName || !this.layoutExists(oldName)) {
-            appStore.alertStore.showDashboard(`Cannot rename layout ${oldName}! It does not exist.`);
+            appStore.alertStore.showAlert(`Cannot rename layout ${oldName}! It does not exist.`);
             return;
         }
 
@@ -241,7 +241,7 @@ export class LayoutStore {
                 this.currentLayoutName = newName;
             }
         } else {
-            AlertStore.Instance.showDashboard("Renaming user-defined layout failed!");
+            AlertStore.Instance.showAlert("Renaming user-defined layout failed!");
         }
     };
 
@@ -250,7 +250,7 @@ export class LayoutStore {
         const dynamicLayout = appStore.dynamicLayoutStore;
 
         if (!layoutName || !this.layoutExists(layoutName)) {
-            appStore.alertStore.showDashboard(`Cannot delete layout ${layoutName}! It does not exist.`);
+            appStore.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
             return;
         }
 
@@ -277,7 +277,7 @@ export class LayoutStore {
                 this.currentLayoutName = "";
             }
         } else {
-            AlertStore.Instance.showDashboard("Deleting user-defined layout failed!");
+            AlertStore.Instance.showAlert("Deleting user-defined layout failed!");
         }
     };
 }

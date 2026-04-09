@@ -64,7 +64,7 @@ export const WorkspaceDialogComponent = observer(() => {
 
             // TODO: to be removed after storing SystemType in workspace
             if (appStore.overlaySettings.isImgCoordinates && appStore.frames.map(frame => frame.spatialReference !== null).includes(true)) {
-                AlertStore.Instance.showDashboard("Saving workspace failed: not supporting spatial matching in image cooordinates.");
+                AlertStore.Instance.showAlert("Saving workspace failed: not supporting spatial matching in image cooordinates.");
                 return;
             }
 

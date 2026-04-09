@@ -185,7 +185,7 @@ export class ApiService {
                 }
             } catch (err) {
                 console.error(err);
-                AppStore.Instance.alertStore.showDashboard(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
+                AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
                 return undefined;
             }
         } else {
@@ -212,7 +212,7 @@ export class ApiService {
 
                 if (deletedKeys.length > 0) {
                     // Show an alert to the user about the deleted preferences
-                    AppStore.Instance.alertStore.showDashboard(`Invalid preferences reset to defaults: ${deletedKeys.join(", ")}`);
+                    AppStore.Instance.alertStore.showAlert(`Invalid preferences reset to defaults: ${deletedKeys.join(", ")}`);
                 }
             }
         }
