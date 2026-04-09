@@ -53,9 +53,6 @@ $pt-dark-app-background-color: #252a31;
 // --- Tab content area ---
 .flexlayout__tab {
     background-color: $light_gray5;
-    overflow: auto;
-    position: relative;
-    height: 100%;
     border-radius: 4px;
 }
 
@@ -76,6 +73,8 @@ $pt-dark-app-background-color: #252a31;
 // --- Tabset (stack) borders ---
 .flexlayout__tabset {
     overflow: hidden;
+    border: 1px solid $light_gray1;
+    border-radius: 4px;
 
     &-selected {
         background-color: $white;
@@ -198,6 +197,7 @@ $pt-dark-app-background-color: #252a31;
     }
 
     .flexlayout__tabset {
+        border: 1px solid $dark-gray2;
         &-selected {
             background-color: $dark-gray4;
         }
