@@ -1,4 +1,4 @@
-import {Model} from "flexlayout-react";
+import {DockLocation, type DropInfo, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -115,6 +115,9 @@ export class LayoutStore {
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
 
         this.layoutModel = Model.fromJson(modelJson);
+        this.layoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
+        });
 
         appStore.widgetsStore.updateImageWidgetTitle();
         this.currentLayoutName = layoutName;
