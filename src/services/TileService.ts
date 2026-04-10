@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import LRUCache from "mnemonist/lru-cache";
+import {LRUCache} from "mnemonist";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
