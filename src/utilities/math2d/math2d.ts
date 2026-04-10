@@ -258,6 +258,22 @@ export function angle2D(a: Point2D, b: Point2D) {
     return Math.asin(cross2D(a, b));
 }
 
+// Ray-casting algorithm for point-in-polygon test
+export function pointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
+    let inside = false;
+    const n = polygon.length;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+        const xi = polygon[i].x;
+        const yi = polygon[i].y;
+        const xj = polygon[j].x;
+        const yj = polygon[j].y;
+        if (yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
 export function round2D(a: Point2D) {
     return {x: Math.round(a.x), y: Math.round(a.y)};
 }
