@@ -12,7 +12,7 @@ export interface CatalogPlotWidgetStoreProps {
 
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
-export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
+export type DragMode = "zoom" | "pan" | "select" | "lasso" | false;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
