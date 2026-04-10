@@ -264,6 +264,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const header = profileStore?.catalogControlHeader.get(columnName);
         profileStore?.setHeaderDisplay(val, columnName);
 
+        if (val === true && (catalogWidgetStore?.xAxis === CatalogOverlay.NONE || catalogWidgetStore?.yAxis === CatalogOverlay.NONE)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        }
+
         const shouldUpdateFilter = (val === true || (header?.filter !== "" && val === false)) && profileStore?.isFileBasedCatalog;
 
         if (shouldUpdateFilter) {

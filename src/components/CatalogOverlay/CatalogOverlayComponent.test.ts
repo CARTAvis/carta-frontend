@@ -95,6 +95,12 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         profileStore.catalogCoordinateSystem.system = nextSystem;
         profileStore.activedSystem = systemOverlayMap.get(nextSystem);
     });
+    profileStore.setHeaderDisplay.mockImplementation((display: boolean, columnName: string) => {
+        const header = profileStore.catalogControlHeader.get(columnName);
+        if (header) {
+            header.display = display;
+        }
+    });
 
     return profileStore;
 };
@@ -185,6 +191,26 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
         expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
         expect(component["handleFilterRequest"]).toHaveBeenCalled();
+    });
+
+    test("handleHeaderDisplayChange reselects visible coordinate axes when columns are toggled back on from None", () => {
+        const {component, widgetStore} = createComponentHarness(
+            CatalogSystemType.ICRS,
+            [
+                {name: "ra", display: false},
+                {name: "dec", display: false}
+            ],
+            CatalogOverlay.NONE,
+            CatalogOverlay.NONE
+        );
+
+        component["handleHeaderDisplayChange"]({target: {checked: true}}, "ra");
+        expect(widgetStore.xAxis).toBe("ra");
+        expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+
+        component["handleHeaderDisplayChange"]({target: {checked: true}}, "dec");
+        expect(widgetStore.xAxis).toBe("ra");
+        expect(widgetStore.yAxis).toBe("dec");
     });
 
     test("tryAutoSelectAxes only attempts auto-selection once per catalog", () => {
