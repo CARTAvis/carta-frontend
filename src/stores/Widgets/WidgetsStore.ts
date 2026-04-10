@@ -1569,7 +1569,9 @@ export class WidgetsStore {
             component: widgetConfig.type,
             name: widgetConfig.title || widgetConfig.type,
             id,
-            config: {id}
+            config: {id},
+            // remove the below line if we migrate plotly.js to chart.js
+            ...(widgetConfig.type === CatalogPlotComponent.WIDGET_CONFIG.type && {enablePopout: false})
         };
 
         let dropped = false;

@@ -57,7 +57,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 type: "tab",
                 component: widgetConfig.type,
                 name: widgetConfig.title || widgetConfig.type,
-                id: widgetConfig.id
+                id: widgetConfig.id,
+                // remove the below line if we migrate plotly.js to chart.js
+                ...(widgetConfig.type === "catalog-plot" && {enablePopout: false})
             };
 
             if (widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
