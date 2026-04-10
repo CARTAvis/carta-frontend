@@ -30,38 +30,11 @@
         height: calc(100% - 40px);
     }
 
-    .catalog-plotly {
+    .catalog-chart-container {
         width: 100%;
         height: calc(100% - 105px);
         position: relative;
-
-        .js-plotly-plot .plotly .hoverlayer .spikeline {
-            stroke: $gray2 !important;
-            stroke-width: 1px;
-        }
-    }
-
-    .catalog-plotly-dark {
-        width: calc(100% - 10px);
-        height: calc(100% - 105px);
-        position: relative;
-
-        .js-plotly-plot .plotly .hoverlayer .spikeline {
-            stroke: $gray4 !important;
-            stroke-width: 1px;
-        }
-    }
-
-    .catalog-scatter {
-        .js-plotly-plot .plotly {
-            .modebar-container {
-                right: 80px !important;
-            }
-
-            .modebar {
-                transform: scale(2);
-            }
-        }
+        padding-right: 10px;
     }
 
     .#{$ns}-dialog-footer {
