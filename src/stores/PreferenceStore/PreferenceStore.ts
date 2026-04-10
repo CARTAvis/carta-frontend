@@ -125,7 +125,8 @@ const DEFAULTS = {
     },
     CATALOG: {
         catalogDisplayedColumnSize: 10,
-        catalogTableSeparatorPosition: "60%"
+        catalogTableSeparatorPosition: "60%",
+        catalogAutoSelectImageOverlayColumns: true
     },
     STATS_PANEL: {
         statsPanelEnabled: false,
@@ -535,6 +536,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
+    @computed get autoSelectImageOverlayCoordinateColumns(): boolean {
+        return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
+    }
+
     @computed get pixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
@@ -856,7 +861,7 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS]);
     };
 
     /**

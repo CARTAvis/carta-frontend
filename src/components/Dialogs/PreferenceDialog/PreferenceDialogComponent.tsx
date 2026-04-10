@@ -870,6 +870,9 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Auto-select image overlay columns">
+                    <Switch checked={preference.autoSelectImageOverlayCoordinateColumns} onChange={ev => preference.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, ev.currentTarget.checked)} />
+                </FormGroup>
             </div>
         );
 

@@ -105,19 +105,19 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
     return profileStore;
 };
 
-const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
+let harnessId = 0;
+
+const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
     // and manually seed any constructor-initialized fields that the methods may touch.
+    harnessId += 1;
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
     const profileStore = createProfileStore(system, columns);
     const widgetStore = createWidgetStore(xAxis, yAxis);
+    const autoSelectEnabled = options.autoSelectEnabled ?? true;
     component["autoSelectAttemptedCatalogIds"] = new Set<number>();
     component["catalogFileNames"] = new Map<number, string>();
-    component["widgetId"] = "catalog-overlay-test";
-    Object.defineProperty(component, "disposers", {
-        configurable: true,
-        value: []
-    });
+    component["widgetId"] = `catalog-overlay-test-${harnessId}`;
 
     Object.defineProperty(component, "profileStore", {
         configurable: true,
@@ -131,9 +131,17 @@ const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
         configurable: true,
         get: () => 1
     });
+    Object.defineProperty(component, "shouldAutoSelectImageOverlayColumns", {
+        configurable: true,
+        get: () => autoSelectEnabled
+    });
 
     return {component, profileStore, widgetStore};
 };
+
+afterEach(() => {
+    jest.restoreAllMocks();
+});
 
 describe("CatalogOverlayComponent auto-select coordinates", () => {
     test.each([
@@ -193,6 +201,24 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(component["handleFilterRequest"]).toHaveBeenCalled();
     });
 
+    test("autoSelectAxes does nothing when preference is disabled", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}], CatalogOverlay.NONE, CatalogOverlay.NONE, {
+            autoSelectEnabled: false
+        });
+
+        profileStore.isFileBasedCatalog = true;
+        component["handleFilterRequest"] = jest.fn();
+
+        component["autoSelectAxes"]();
+
+        expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+        expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        expect(profileStore.setHeaderDisplay).not.toHaveBeenCalled();
+        expect(profileStore.setUpdateMode).not.toHaveBeenCalled();
+        expect(profileStore.setIsUpdateColumn).not.toHaveBeenCalled();
+        expect(component["handleFilterRequest"]).not.toHaveBeenCalled();
+    });
+
     test("handleHeaderDisplayChange reselects visible coordinate axes when columns are toggled back on from None", () => {
         const {component, widgetStore} = createComponentHarness(
             CatalogSystemType.ICRS,
@@ -213,15 +239,44 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(widgetStore.yAxis).toBe("dec");
     });
 
+    test("handleHeaderDisplayChange does not auto-reselect visible coordinate axes when preference is disabled", () => {
+        const {component, widgetStore} = createComponentHarness(
+            CatalogSystemType.ICRS,
+            [
+                {name: "ra", display: false},
+                {name: "dec", display: false}
+            ],
+            CatalogOverlay.NONE,
+            CatalogOverlay.NONE,
+            {autoSelectEnabled: false}
+        );
+
+        component["handleHeaderDisplayChange"]({target: {checked: true}}, "ra");
+        component["handleHeaderDisplayChange"]({target: {checked: true}}, "dec");
+
+        expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+        expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+    });
+
     test("tryAutoSelectAxes only attempts auto-selection once per catalog", () => {
         const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
         const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
 
-        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay);
-        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay);
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
 
         expect(autoSelectSpy).toHaveBeenCalledTimes(1);
         expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(true);
+    });
+
+    test("tryAutoSelectAxes skips selection and does not mark the catalog when preference is disabled", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, false);
+
+        expect(autoSelectSpy).not.toHaveBeenCalled();
+        expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(false);
     });
 });
 
@@ -269,6 +324,37 @@ describe("CatalogOverlayComponent image overlay state", () => {
         expect(widgetStore.xAxis).toBe("x");
         expect(widgetStore.yAxis).toBe("y");
         expect(widgetStore.setxAxis).not.toHaveBeenCalled();
+    });
+
+    test("reselectRemovedAxes does not auto-select replacement axes when preference is disabled", () => {
+        const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}], CatalogOverlay.NONE, CatalogOverlay.NONE, {
+            autoSelectEnabled: false
+        });
+
+        component["reselectRemovedAxes"](true, true);
+
+        expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+        expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+    });
+
+    test("handleCatalogSystemChange clears image overlay axes when preference is disabled and the axis labels change", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec", {autoSelectEnabled: false});
+
+        component["handleCatalogSystemChange"](CatalogSystemType.Pixel1);
+
+        expect(profileStore.setCatalogCoordinateSystem).toHaveBeenCalledWith(CatalogSystemType.Pixel1);
+        expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+        expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+    });
+
+    test("handleCatalogSystemChange preserves image overlay axes when preference is disabled and the axis labels stay compatible", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000", {autoSelectEnabled: false});
+
+        component["handleCatalogSystemChange"](CatalogSystemType.ICRS);
+
+        expect(profileStore.setCatalogCoordinateSystem).toHaveBeenCalledWith(CatalogSystemType.ICRS);
+        expect(widgetStore.xAxis).toBe("_RAJ2000");
+        expect(widgetStore.yAxis).toBe("_DEJ2000");
     });
 
     test("isImageOverlaySelectionDirty reports pending plot changes when current axes differ from the applied overlay", () => {
