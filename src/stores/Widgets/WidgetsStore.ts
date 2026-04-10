@@ -173,7 +173,7 @@ export class WidgetsStore {
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
 
     private static readonly showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
-    private static readonly imageViewerRestoredHeightPercent = 60;
+    private static readonly imageViewerRestoredHeightPercent = 68;
     private static readonly hideHelpButtonWidgets = ["pv-preview"];
 
     public readonly CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean; icon: string; onClick: () => void; widgetConfig: DefaultWidgetConfig}>([
@@ -886,27 +886,24 @@ export class WidgetsStore {
                         this.popoutPositions.delete(tabId);
                     }
 
-                    // Ensure image-view tabset occupies 60% of its parent row
-                    for (const tabNode of tabNodes) {
-                        if (tabNode.getComponent() === ImageViewComponent.WIDGET_CONFIG.type) {
-                            const restoredTab = layoutModel.getNodeById(tabNode.getId());
-                            if (restoredTab) {
-                                const parentTabset = restoredTab.getParent();
-                                if (parentTabset && parentTabset.getType() === "tabset") {
-                                    const row = parentTabset.getParent();
-                                    if (row && row.getType() === "row") {
-                                        let otherWeightSum = 0;
-                                        for (const child of row.getChildren()) {
-                                            if (child.getId() !== parentTabset.getId()) {
-                                                otherWeightSum += (child as TabSetNode).getWeight();
-                                            }
-                                        }
-                                        if (otherWeightSum > 0) {
-                                            const pct = WidgetsStore.imageViewerRestoredHeightPercent;
-                                            const imageWeight = (pct / (100 - pct)) * otherWeightSum;
-                                            layoutModel.doAction(Actions.updateNodeAttributes(parentTabset.getId(), {weight: imageWeight}));
-                                        }
+                    // Ensure image-view tabset occupies 68% of its parent row
+                    // when any popped-out tab returns to the same row
+                    const imageViewNode = layoutModel.getNodeById("image-view");
+                    if (imageViewNode) {
+                        const imageTabset = imageViewNode.getParent();
+                        if (imageTabset && imageTabset.getType() === "tabset") {
+                            const row = imageTabset.getParent();
+                            if (row && row.getType() === "row" && row.getChildren().length > 1) {
+                                let otherWeightSum = 0;
+                                for (const child of row.getChildren()) {
+                                    if (child.getId() !== imageTabset.getId()) {
+                                        otherWeightSum += (child as TabSetNode).getWeight();
                                     }
+                                }
+                                if (otherWeightSum > 0) {
+                                    const pct = WidgetsStore.imageViewerRestoredHeightPercent;
+                                    const imageWeight = (pct / (100 - pct)) * otherWeightSum;
+                                    layoutModel.doAction(Actions.updateNodeAttributes(imageTabset.getId(), {weight: imageWeight}));
                                 }
                             }
                         }

@@ -32,8 +32,8 @@ export class LayoutConfig {
                         type: "column",
                         width: 60,
                         content: [
-                            {type: "component", id: "image-view", height: 67},
-                            {...config.leftBottomContent, height: 33}
+                            {type: "component", id: "image-view", height: 68},
+                            {...config.leftBottomContent, height: 32}
                         ]
                     },
                     {
