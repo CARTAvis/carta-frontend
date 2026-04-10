@@ -8,7 +8,8 @@ export enum ZoomMode {
 export enum InteractionMode {
     NONE,
     SELECTING,
-    PANNING
+    PANNING,
+    LASSO_SELECTING
 }
 
 export enum LinePlotSelectingMode {
