@@ -4,11 +4,13 @@ import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonI
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {BarController, BarElement, Chart, type ChartArea, type ChartOptions, Legend, LinearScale, LogarithmicScale, type Plugin, PointElement} from "chart.js";
+import {type AnnotationOptions} from "chartjs-plugin-annotation";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
+import tinycolor from "tinycolor2";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
@@ -473,15 +475,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onScatterCursorMoved = (x: number, y: number) => {
-        const widgetStore = this.widgetStore;
-        if (widgetStore) {
-            widgetStore.setIndicator({x, y});
-        }
         const scatter = this.scatterData;
         if (scatter.xData.length > 0) {
             const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
             const idx = closestPointIndexToCursor({x, y}, points);
             this.cursorNearestScatterPoint = points[idx];
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                widgetStore.setIndicator({x: this.cursorNearestScatterPoint.x, y: this.cursorNearestScatterPoint.y});
+            }
         } else {
             this.cursorNearestScatterPoint = undefined;
         }
@@ -734,13 +736,19 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getScatterDragAction = (): "boxSelect" | "lassoSelect" | "zoom" => {
+    private getScatterDragAction = (): "boxSelect" | "lassoSelect" | "zoom" | "pan" => {
         const dragmode = this.widgetStore?.dragMode;
         if (dragmode === "lasso") {
             return "lassoSelect";
         }
         if (dragmode === "select") {
             return "boxSelect";
+        }
+        if (dragmode === "zoom") {
+            return "zoom";
+        }
+        if (dragmode === "pan") {
+            return "pan";
         }
         return "boxSelect";
     };
@@ -791,21 +799,46 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private histogramDragStartX: number | undefined;
     private histogramDragCurrentX: number | undefined;
+    private histogramPanPrevX: number | undefined;
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
-            this.histogramDragStartX = event.nativeEvent.offsetX;
-            this.histogramDragCurrentX = undefined;
+            const widgetStore = this.widgetStore;
+            if (widgetStore?.histogramDragMode === "pan") {
+                this.histogramPanPrevX = event.nativeEvent.offsetX;
+            } else {
+                this.histogramDragStartX = event.nativeEvent.offsetX;
+                this.histogramDragCurrentX = undefined;
+            }
         }
     };
 
     private onHistogramMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-        if (this.histogramDragStartX !== undefined) {
+        const chart = this.histogramPlotRef;
+        const widgetStore = this.widgetStore;
+        if (this.histogramPanPrevX !== undefined && chart && widgetStore) {
+            const xScale = chart.scales["x"];
+            if (xScale) {
+                const prevVal = xScale.getValueForPixel(this.histogramPanPrevX);
+                const currentVal = xScale.getValueForPixel(event.nativeEvent.offsetX);
+                if (prevVal !== undefined && currentVal !== undefined) {
+                    const delta = prevVal - currentVal;
+                    const currentMin = xScale.min;
+                    const currentMax = xScale.max;
+                    widgetStore.setHistogramXBorder({xMin: currentMin + delta, xMax: currentMax + delta});
+                }
+                this.histogramPanPrevX = event.nativeEvent.offsetX;
+            }
+        } else if (this.histogramDragStartX !== undefined) {
             this.histogramDragCurrentX = event.nativeEvent.offsetX;
         }
     };
 
     private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
+        if (this.histogramPanPrevX !== undefined) {
+            this.histogramPanPrevX = undefined;
+            return;
+        }
         const chart = this.histogramPlotRef;
         const widgetStore = this.widgetStore;
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
@@ -874,7 +907,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
         } else {
-            border = widgetStore.scatterborder;
+            border = widgetStore.scatterBorder;
         }
         if (!border) {
             return null;
@@ -895,6 +928,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 yMin={border.yMin}
                 yMax={border.yMax}
                 selectedIndices={selectedSet}
+                hasSelection={selectedSet.size > 0}
                 pointSize={5}
                 darkMode={AppStore.Instance.darkTheme}
             />
@@ -1078,12 +1112,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            const hasSelection = selectedSet.size > 0;
+            const alphaValue = hasSelection ? 0.5 : 1.0;
+            const unselectedColor = tinycolor(Colors.BLUE2).setAlpha(alphaValue).toRgbString();
             const barColors = histData.bins.map((_, i) => {
-                if (selectedSet.size > 0 && histData.binIndices[i]) {
-                    const hasSelected = histData.binIndices[i].some(idx => selectedSet.has(idx));
-                    return hasSelected ? Colors.RED2 : Colors.BLUE2;
+                if (hasSelection && histData.binIndices[i]) {
+                    const hasBinSelected = histData.binIndices[i].some(idx => selectedSet.has(idx));
+                    return hasBinSelected ? Colors.RED2 : unselectedColor;
                 }
-                return Colors.BLUE2;
+                return unselectedColor;
             });
 
             const chartAreaPlugin: Plugin<"bar"> = {
@@ -1230,7 +1267,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             onDoubleClick={this.onDoubleClick}
                         >
                             <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin]} />
-                            <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData} />
+                            <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
+                                <Tooltip content="Zoom">
+                                    <AnchorButton icon="zoom-in" active={widgetStore.histogramDragMode === "zoom"} onClick={() => widgetStore.setHistogramDragMode("zoom")} />
+                                </Tooltip>
+                                <Tooltip content="Pan">
+                                    <AnchorButton icon="move" active={widgetStore.histogramDragMode === "pan"} onClick={() => widgetStore.setHistogramDragMode("pan")} />
+                                </Tooltip>
+                            </ToolbarComponent>
                         </div>
                         <div className={Classes.DIALOG_FOOTER}>
                             <div className="scatter-info" data-testid="catalog-plot-info">
@@ -1256,7 +1300,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
         } else {
-            border = widgetStore.scatterborder;
+            border = widgetStore.scatterBorder;
         }
 
         const scatterMultiPlotMap = new Map<string, MultiPlotProps>();
@@ -1278,6 +1322,27 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     borderWidth: 2.5
                 });
             }
+        }
+
+        let scatterExtraPluginOptions: ChartOptions<"scatter">["plugins"] | undefined;
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
+            const fittingAnnotation: AnnotationOptions = {
+                type: "label",
+                xValue: border?.xMin,
+                yValue: border?.yMax,
+                position: {x: "start", y: "start"},
+                content: widgetStore.fittingResultString.split("\n"),
+                textAlign: "start",
+                color: Colors.WHITE,
+                font: {family: "monospace", size: 9},
+                padding: {top: 0, right: 0, bottom: 0, left: 0},
+                adjustScaleRange: false
+            };
+            scatterExtraPluginOptions = {
+                annotation: {
+                    annotations: {fittingLabel: fittingAnnotation}
+                }
+            };
         }
 
         return (
@@ -1315,6 +1380,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             onLassoSelected={this.onLassoSelected}
                             renderOverlay={this.renderWebGLOverlay}
                             cursorNearestPoint={this.cursorNearestScatterPoint}
+                            extraPluginOptions={scatterExtraPluginOptions}
+                            toolbarChildren={
+                                <React.Fragment>
+                                    <Tooltip content="Box select">
+                                        <AnchorButton icon="widget" active={widgetStore.dragMode === "select"} onClick={() => widgetStore.setDragMode("select")} />
+                                    </Tooltip>
+                                    <Tooltip content="Lasso select">
+                                        <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === "lasso"} onClick={() => widgetStore.setDragMode("lasso")} />
+                                    </Tooltip>
+                                    <Tooltip content="Zoom">
+                                        <AnchorButton icon="zoom-in" active={widgetStore.dragMode === "zoom"} onClick={() => widgetStore.setDragMode("zoom")} />
+                                    </Tooltip>
+                                    <Tooltip content="Pan">
+                                        <AnchorButton icon="move" active={widgetStore.dragMode === "pan"} onClick={() => widgetStore.setDragMode("pan")} />
+                                    </Tooltip>
+                                </React.Fragment>
+                            }
                         />
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
