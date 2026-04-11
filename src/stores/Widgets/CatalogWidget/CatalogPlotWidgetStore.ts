@@ -13,6 +13,7 @@ export interface CatalogPlotWidgetStoreProps {
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | false;
+export type HistogramDragMode = "zoom" | "pan" | "select";
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
@@ -22,6 +23,7 @@ export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterborder: Border | undefined = undefined;
     @observable dragmode: DragMode = "select";
+    @observable histogramDragMode: HistogramDragMode = "zoom";
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable logScaleY: boolean = true;
@@ -72,6 +74,10 @@ export class CatalogPlotWidgetStore {
         this.dragmode = mode;
     }
 
+    @action setHistogramDragMode(mode: HistogramDragMode) {
+        this.histogramDragMode = mode;
+    }
+
     @action setLogScaleY(val: boolean) {
         this.logScaleY = val;
     }
@@ -109,13 +115,13 @@ export class CatalogPlotWidgetStore {
         if (this.showFittingResult && this.fitting) {
             const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
             const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
-            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
+            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName}\ncov00 = ${toExponential(
                 this.fitting.cov00,
                 CatalogPlotWidgetStore.Decimals
             )}, cov01 = ${toExponential(this.fitting.cov01, CatalogPlotWidgetStore.Decimals)}, cov11 = ${toExponential(
                 this.fitting.cov11,
                 CatalogPlotWidgetStore.Decimals
-            )} <br>sqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11} <br>rss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
+            )}\nsqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11}\nrss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
         }
         return "";
     }
