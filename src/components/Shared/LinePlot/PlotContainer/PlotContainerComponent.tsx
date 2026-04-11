@@ -2,13 +2,14 @@ import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
+import Annotation from "chartjs-plugin-annotation";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
-Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
+Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement, Annotation);
 
 export class PlotContainerProps {
     width?: number;
@@ -49,6 +50,7 @@ export class PlotContainerProps {
     borderWidth?: number;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    extraPluginOptions?: ChartOptions<"scatter">["plugins"];
 }
 
 export class MultiPlotProps {
@@ -347,6 +349,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
 
+        if (!_.isEqual(props.extraPluginOptions, nextProps.extraPluginOptions)) {
+            return true;
+        }
+
         // Skip any other changes
         return false;
     }
@@ -366,7 +372,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plugins: {
                 legend: {
                     display: this.props.showLegend === undefined ? false : this.props.showLegend
-                }
+                },
+                ...this.props.extraPluginOptions
             },
             scales: {
                 x: {

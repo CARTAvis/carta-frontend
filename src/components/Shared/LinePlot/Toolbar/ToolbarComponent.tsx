@@ -13,6 +13,7 @@ export class ToolbarComponentProps {
     visible: boolean;
     exportImage?: () => void;
     exportData: () => void;
+    children?: React.ReactNode;
 }
 
 @observer
@@ -40,6 +41,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
+                {this.props.children}
                 {this.props.exportImage ? (
                     <Tooltip content={<span>Export image {this.exportImageTooltip()}</span>}>
                         <AnchorButton icon="floppy-disk" onClick={this.props.exportImage} />

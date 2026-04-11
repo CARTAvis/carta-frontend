@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Group, Layer, Line, Rect, Ring, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {type Chart, type ChartArea, type Tick} from "chart.js";
+import {type Chart, type ChartArea, type ChartOptions, type Tick} from "chart.js";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -67,10 +67,12 @@ export class ScatterPlotComponentProps {
     cursorNearestPoint?: {x: number; y: number};
     updateChartArea?: (chartArea: ChartArea) => void;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
-    dragAction?: "zoom" | "boxSelect" | "lassoSelect";
+    dragAction?: "zoom" | "boxSelect" | "lassoSelect" | "pan";
     onBoxSelected?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     onLassoSelected?: (polygonGraphCoords: Point2D[]) => void;
     renderOverlay?: (width: number, height: number, chartArea: ChartArea | undefined) => React.ReactNode;
+    toolbarChildren?: React.ReactNode;
+    extraPluginOptions?: ChartOptions<"scatter">["plugins"];
 }
 
 // Maximum time between double clicks
@@ -486,7 +488,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
         const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (modifierPressed) {
+        if (modifierPressed || this.props.dragAction === "pan") {
             this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
         } else if (this.props.dragAction === "lassoSelect") {
             this.startLassoSelection(mouseEvent.offsetX, mouseEvent.offsetY);
@@ -709,7 +711,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                         </Stage>
                     )}
                     {(this.props.data !== undefined || (this.props.multiPlotPropsMap?.size ?? 0) > 0) && (
-                        <ToolbarComponent darkMode={this.props.darkMode ?? false} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />
+                        <ToolbarComponent darkMode={this.props.darkMode ?? false} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData}>
+                            {this.props.toolbarChildren}
+                        </ToolbarComponent>
                     )}
                 </div>
             </ResizeDetector>
