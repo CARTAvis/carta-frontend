@@ -56,6 +56,7 @@ interface CatalogScatterWebGLProps {
     yMin: number;
     yMax: number;
     selectedIndices: Set<number>;
+    hasSelection: boolean;
     pointSize?: number;
     darkMode?: boolean;
 }
@@ -197,6 +198,9 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
         const blueColor = parseColor(Colors.BLUE2);
         const redColor = parseColor(Colors.RED2);
+        if (this.props.hasSelection) {
+            blueColor[3] = 0.9;
+        }
         gl.uniform4fv(this.uniforms.uColor, blueColor);
         gl.uniform4fv(this.uniforms.uSelectedColor, redColor);
 
