@@ -352,7 +352,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
 
-        this.reselectRemovedAxes(removedXAxis, removedYAxis);
+        if (this.shouldAutoSelectImageOverlayColumns && (removedXAxis || removedYAxis)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), removedXAxis, removedYAxis);
+        }
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -644,18 +646,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private reselectRemovedAxes(reselectXAxis: boolean, reselectYAxis: boolean) {
-        if (!this.shouldAutoSelectImageOverlayColumns || (!reselectXAxis && !reselectYAxis)) {
-            return;
-        }
-
-        this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), reselectXAxis, reselectYAxis);
-    }
-
-    private shouldClearAxesForSystemChange(previousSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined, nextSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined): boolean {
-        return previousSystem?.x !== nextSystem?.x || previousSystem?.y !== nextSystem?.y;
-    }
-
     @action private handleCatalogSystemChange(system: CatalogSystemType) {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
@@ -670,7 +660,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldClearAxesForSystemChange(previousSystem, profileStore.activedSystem)) {
+        const shouldClearAxes = previousSystem?.x !== profileStore.activedSystem?.x || previousSystem?.y !== profileStore.activedSystem?.y;
+        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay && shouldClearAxes) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }

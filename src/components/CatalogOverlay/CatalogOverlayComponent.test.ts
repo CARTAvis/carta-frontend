@@ -382,48 +382,48 @@ describe("CatalogOverlayComponent", () => {
         });
     });
 
-    describe("reselectRemovedAxes", () => {
-        test("updates axes without auto-applying the image overlay", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}]);
+    describe("handleHeaderDisplayChange reselects removed axes", () => {
+        test("reselects xAxis without auto-applying the image overlay", () => {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}, {name: "ycentroid"}], "x", "y");
 
             component["applyImageOverlayPlot"] = jest.fn();
 
-            component["reselectRemovedAxes"](true, true);
+            component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
-            expect(widgetStore.xAxis).toBe("x");
+            expect(widgetStore.xAxis).toBe("xcentroid");
             expect(widgetStore.yAxis).toBe("y");
             expect(component["applyImageOverlayPlot"]).not.toHaveBeenCalled();
         });
 
-        test("only updates the requested x axis", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}], CatalogOverlay.NONE, "y");
+        test("only reselects the removed xAxis", () => {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y");
 
-            component["reselectRemovedAxes"](true, false);
+            component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
-            expect(widgetStore.xAxis).toBe("x");
+            expect(widgetStore.xAxis).toBe("xcentroid");
             expect(widgetStore.yAxis).toBe("y");
             expect(widgetStore.setyAxis).not.toHaveBeenCalled();
         });
 
-        test("only updates the requested y axis", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}], "x", CatalogOverlay.NONE);
+        test("only reselects the removed yAxis", () => {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "ycentroid"}], "x", "y");
 
-            component["reselectRemovedAxes"](false, true);
+            component["handleHeaderDisplayChange"]({target: {checked: false}}, "y");
 
             expect(widgetStore.xAxis).toBe("x");
-            expect(widgetStore.yAxis).toBe("y");
+            expect(widgetStore.yAxis).toBe("ycentroid");
             expect(widgetStore.setxAxis).not.toHaveBeenCalled();
         });
 
         test("does not auto-select replacement axes when preference is disabled", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}], CatalogOverlay.NONE, CatalogOverlay.NONE, {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y", {
                 autoSelectEnabled: false
             });
 
-            component["reselectRemovedAxes"](true, true);
+            component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
             expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
-            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe("y");
         });
     });
 
