@@ -28,7 +28,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setAppliedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: jest.fn(),
             xAxis: CatalogOverlay.NONE,
             yAxis: "dec"
         };
@@ -53,10 +53,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
         expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
-        expect(widgetStore.setAppliedImageOverlayState).not.toHaveBeenCalled();
+        expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });
 
-    test("updates the applied overlay state after converting view-update coordinates", () => {
+    test("updates the plotted overlay state after converting view-update coordinates", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
@@ -73,7 +73,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setAppliedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: jest.fn(),
             xAxis: "_RAJ2000",
             yAxis: "_DEJ2000"
         };
@@ -98,7 +98,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         expect(profileStore.get2DPlotData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", CatalogSystemType.FK5, 1, 1);
-        expect(widgetStore.setAppliedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
         expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
     });

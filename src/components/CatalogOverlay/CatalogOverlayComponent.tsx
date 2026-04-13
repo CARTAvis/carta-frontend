@@ -638,7 +638,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
-            catalogWidgetStore.setAppliedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system);
+            catalogWidgetStore.setPlottedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system);
             const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
             const wcs = frame.validWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
@@ -1045,14 +1045,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get isImageOverlaySelectionDirty(): boolean {
         const catalogWidgetStore = this.widgetStore;
         const profileStore = this.profileStore;
-        if (!catalogWidgetStore || !profileStore || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay || !catalogWidgetStore.hasAppliedImageOverlay) {
+        if (!catalogWidgetStore || !profileStore || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay || !catalogWidgetStore.hasPlottedImageOverlay) {
             return false;
         }
 
         return (
-            catalogWidgetStore.appliedImageOverlayXAxis !== catalogWidgetStore.xAxis ||
-            catalogWidgetStore.appliedImageOverlayYAxis !== catalogWidgetStore.yAxis ||
-            catalogWidgetStore.appliedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system
+            catalogWidgetStore.plottedImageOverlayXAxis !== catalogWidgetStore.xAxis ||
+            catalogWidgetStore.plottedImageOverlayYAxis !== catalogWidgetStore.yAxis ||
+            catalogWidgetStore.plottedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system
         );
     }
 

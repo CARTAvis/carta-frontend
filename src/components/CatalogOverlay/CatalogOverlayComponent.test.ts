@@ -10,11 +10,11 @@ type MockColumn = {
 };
 
 type MockWidgetStore = {
-    appliedImageOverlaySystem?: CatalogSystemType;
-    appliedImageOverlayXAxis: string;
-    appliedImageOverlayYAxis: string;
+    plottedImageOverlaySystem?: CatalogSystemType;
+    plottedImageOverlayXAxis: string;
+    plottedImageOverlayYAxis: string;
     catalogPlotType: CatalogPlotType;
-    hasAppliedImageOverlay: boolean;
+    hasPlottedImageOverlay: boolean;
     setxAxis: jest.Mock<void, [string]>;
     setyAxis: jest.Mock<void, [string]>;
     xAxis: string;
@@ -45,10 +45,10 @@ const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: Catal
 
 const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
     const widgetStore = {
-        appliedImageOverlayXAxis: CatalogOverlay.NONE,
-        appliedImageOverlayYAxis: CatalogOverlay.NONE,
+        plottedImageOverlayXAxis: CatalogOverlay.NONE,
+        plottedImageOverlayYAxis: CatalogOverlay.NONE,
         catalogPlotType: CatalogPlotType.ImageOverlay,
-        hasAppliedImageOverlay: false,
+        hasPlottedImageOverlay: false,
         xAxis,
         yAxis
     } as MockWidgetStore;
@@ -432,10 +432,10 @@ describe("CatalogOverlayComponent", () => {
         test("reports pending plot changes when current axes differ from the applied overlay", () => {
             const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
 
-            widgetStore.hasAppliedImageOverlay = true;
-            widgetStore.appliedImageOverlayXAxis = "ra";
-            widgetStore.appliedImageOverlayYAxis = "dec";
-            widgetStore.appliedImageOverlaySystem = CatalogSystemType.ICRS;
+            widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayXAxis = "ra";
+            widgetStore.plottedImageOverlayYAxis = "dec";
+            widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
 
             expect(component.isImageOverlaySelectionDirty).toBe(true);
 
@@ -446,10 +446,10 @@ describe("CatalogOverlayComponent", () => {
         test("reports pending plot changes when only the coordinate system differs", () => {
             const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000");
 
-            widgetStore.hasAppliedImageOverlay = true;
-            widgetStore.appliedImageOverlayXAxis = "_RAJ2000";
-            widgetStore.appliedImageOverlayYAxis = "_DEJ2000";
-            widgetStore.appliedImageOverlaySystem = CatalogSystemType.ICRS;
+            widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayXAxis = "_RAJ2000";
+            widgetStore.plottedImageOverlayYAxis = "_DEJ2000";
+            widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
 
             expect(component.isImageOverlaySelectionDirty).toBe(true);
 

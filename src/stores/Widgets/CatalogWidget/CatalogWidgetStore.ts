@@ -68,10 +68,10 @@ export class CatalogWidgetStore {
     @observable catalogShape: CatalogOverlayShape = CatalogOverlayShape.CIRCLE_LINED;
     @observable xAxis: string = CatalogOverlay.NONE;
     @observable yAxis: string = CatalogOverlay.NONE;
-    @observable hasAppliedImageOverlay: boolean = false;
-    @observable appliedImageOverlayXAxis: string = CatalogOverlay.NONE;
-    @observable appliedImageOverlayYAxis: string = CatalogOverlay.NONE;
-    @observable appliedImageOverlaySystem: CatalogSystemType | undefined = undefined;
+    @observable hasPlottedImageOverlay: boolean = false;
+    @observable plottedImageOverlayXAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlayYAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlaySystem: CatalogSystemType | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     @observable highlightColor: string = Colors.RED2;
     @observable settingsTabId: CatalogSettingsTabs = CatalogSettingsTabs.SIZE;
@@ -263,7 +263,7 @@ export class CatalogWidgetStore {
      * Reset all settings of catalog source plot to default
      */
     @action resetMaps() {
-        this.clearAppliedImageOverlayState();
+        this.clearPlottedImageOverlayState();
         // size
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
@@ -828,18 +828,18 @@ export class CatalogWidgetStore {
         this.yAxis = yColumnName;
     }
 
-    @action setAppliedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType) {
-        this.hasAppliedImageOverlay = true;
-        this.appliedImageOverlayXAxis = xColumnName;
-        this.appliedImageOverlayYAxis = yColumnName;
-        this.appliedImageOverlaySystem = system;
+    @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType) {
+        this.hasPlottedImageOverlay = true;
+        this.plottedImageOverlayXAxis = xColumnName;
+        this.plottedImageOverlayYAxis = yColumnName;
+        this.plottedImageOverlaySystem = system;
     }
 
-    @action clearAppliedImageOverlayState() {
-        this.hasAppliedImageOverlay = false;
-        this.appliedImageOverlayXAxis = CatalogOverlay.NONE;
-        this.appliedImageOverlayYAxis = CatalogOverlay.NONE;
-        this.appliedImageOverlaySystem = undefined;
+    @action clearPlottedImageOverlayState() {
+        this.hasPlottedImageOverlay = false;
+        this.plottedImageOverlayXAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlayYAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlaySystem = undefined;
     }
 
     @action setTableSeparatorPosition(position: string) {
