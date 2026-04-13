@@ -18,6 +18,13 @@ import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
+type AxisMatchCandidate = {
+    columnName: string;
+    matchPriority: number;
+    optionIndex: number;
+    patternIndex: number;
+};
+
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private catalogTableRef: Table2 | undefined = undefined;
@@ -34,6 +41,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
+    private static readonly IncompatibleAxisPriority = Number.MAX_SAFE_INTEGER;
     static readonly axisDataType = [
         CARTA.ColumnType.Double,
         CARTA.ColumnType.Float,
@@ -47,8 +55,41 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Uint64
     ];
     private static readonly CoordinateColumnExclusionPatterns = [/^e_/i, /(?:^|_)pm(?=$|_|[a-z])/i, /(?:^|_)(?:propermotion|err(?:or)?|sigma|sig|unc(?:ertainty)?|offset|resid(?:ual)?)(?:_|$)/i];
-    private static readonly RightAscensionPatterns = [/^ra\b/i, /^_?raj2000\b/i, /^ra_?icrs\b/i, /^ra(?:mean|stack)\b/i, /^ra_?deg\b/i, /^ra_/i, /^r\.?a\.?(?:$|[_\s-])/i, /^right[ _-]?asc(?:ension)?\b/i, /^alpha\b/i, /^_?raj(?:\b|[0-9])/i];
-    private static readonly DeclinationPatterns = [/^dec\b/i, /^_?dej2000\b/i, /^(?:de|dec)_?icrs\b/i, /^dec(?:mean|stack)\b/i, /^(?:de|dec)_?deg\b/i, /^dec_/i, /^decl(?:ination)?\b/i, /^delta\b/i, /^_?dej(?:\b|[0-9])/i];
+    private static readonly RightAscensionPatterns = [
+        /^_?ra[._]?icrs\b/i,
+        /^_?raj20\d{2}\b/i,
+        /^_?rab19\d{2}\b/i,
+        /^coord_ra\b/i,
+        /^target_ra\b/i,
+        /^alpha_?j20\d{2}\b/i,
+        /^alpha_?b19\d{2}\b/i,
+        /^alpha_?sky\b/i,
+        /^ra\b/i,
+        /^ra(?:mean|stack)\b/i,
+        /^ra_?deg\b/i,
+        /^ra_/i,
+        /^r\.?a\.?(?:$|[_\s-])/i,
+        /^right[ _-]?asc(?:ension)?\b/i,
+        /^alpha\b/i,
+        /^_?raj(?:\b|[0-9])/i
+    ];
+    private static readonly DeclinationPatterns = [
+        /^_?(?:de|dec)[._]?icrs\b/i,
+        /^_?dej20\d{2}\b/i,
+        /^_?deb19\d{2}\b/i,
+        /^coord_dec\b/i,
+        /^target_dec\b/i,
+        /^delta_?j20\d{2}\b/i,
+        /^delta_?b19\d{2}\b/i,
+        /^delta_?sky\b/i,
+        /^dec\b/i,
+        /^dec(?:mean|stack)\b/i,
+        /^(?:de|dec)_?deg\b/i,
+        /^dec_/i,
+        /^decl(?:ination)?\b/i,
+        /^delta\b/i,
+        /^_?dej(?:\b|[0-9])/i
+    ];
     private static readonly GalacticLongitudePatterns = [/^glon$/i, /^glon_?deg$/i, /^gal(?:actic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?gal(?:actic)?$/i, /^gal_?l$/i, /^l$/i];
     private static readonly GalacticLatitudePatterns = [/^glat$/i, /^glat_?deg$/i, /^gal(?:actic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?gal(?:actic)?$/i, /^gal_?b$/i, /^b$/i];
     private static readonly EclipticLongitudePatterns = [/^elon$/i, /^elon_?deg$/i, /^ecl(?:iptic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?ecl(?:iptic)?$/i, /^lambda(?:_?(?:deg|j2000))?$/i];
@@ -69,6 +110,32 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [CatalogOverlay.X1, CatalogOverlayComponent.Pixel1XPatterns],
         [CatalogOverlay.Y1, CatalogOverlayComponent.Pixel1YPatterns]
     ]);
+    private static readonly ExplicitICRSPattern = /(?:^|[_.])icrs(?:$|[_.])|icrs$/i;
+    private static readonly ExplicitFK5Pattern = /(?:j20\d{2}|20\d{2}|raj2000|dej2000|alpha_?j2000|delta_?j2000)/i;
+    private static readonly ExplicitFK4Pattern = /(?:b19\d{2}|19\d{2}|rab1950|deb1950|alpha_?b1950|delta_?b1950)/i;
+
+    private static getExplicitEquatorialSystem(columnName: string): CatalogSystemType | undefined {
+        if (CatalogOverlayComponent.ExplicitICRSPattern.test(columnName)) {
+            return CatalogSystemType.ICRS;
+        }
+        if (CatalogOverlayComponent.ExplicitFK4Pattern.test(columnName)) {
+            return CatalogSystemType.FK4;
+        }
+        if (CatalogOverlayComponent.ExplicitFK5Pattern.test(columnName)) {
+            return CatalogSystemType.FK5;
+        }
+        return undefined;
+    }
+
+    private static getExactEquatorialSystemPriority(explicitSystem: CatalogSystemType | undefined, expectedSystem: CatalogSystemType): number {
+        if (explicitSystem === expectedSystem) {
+            return 0;
+        }
+        if (explicitSystem === undefined) {
+            return 1;
+        }
+        return CatalogOverlayComponent.IncompatibleAxisPriority;
+    }
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -377,14 +444,66 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return CatalogOverlayComponent.CoordinateColumnExclusionPatterns.some(pattern => pattern.test(normalizedName));
     }
 
-    private findPreferredAxisColumn(axisOptions: string[], patterns: RegExp[]): string | undefined {
-        for (const pattern of patterns) {
-            const columnName = axisOptions.find(option => pattern.test(option));
-            if (columnName) {
-                return columnName;
-            }
+    private getEquatorialColumnPriority(columnName: string): number {
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        const explicitSystem = CatalogOverlayComponent.getExplicitEquatorialSystem(columnName.toLowerCase());
+
+        switch (system) {
+            case CatalogSystemType.FK4:
+                return CatalogOverlayComponent.getExactEquatorialSystemPriority(explicitSystem, CatalogSystemType.FK4);
+            case CatalogSystemType.FK5:
+                return CatalogOverlayComponent.getExactEquatorialSystemPriority(explicitSystem, CatalogSystemType.FK5);
+            case CatalogSystemType.ICRS:
+                if (explicitSystem === CatalogSystemType.FK4) {
+                    return CatalogOverlayComponent.IncompatibleAxisPriority;
+                }
+                if (explicitSystem === CatalogSystemType.ICRS) {
+                    return 0;
+                }
+                return explicitSystem === CatalogSystemType.FK5 ? 1 : 2;
+            default:
+                return 0;
         }
-        return undefined;
+    }
+
+    private getAxisMatchPriority(axisLabel: CatalogOverlay, columnName: string): number {
+        if (axisLabel !== CatalogOverlay.RA && axisLabel !== CatalogOverlay.DEC) {
+            return 0;
+        }
+
+        return this.getEquatorialColumnPriority(columnName);
+    }
+
+    private isBetterAxisMatch(candidate: AxisMatchCandidate, bestMatch: AxisMatchCandidate | undefined): boolean {
+        return (
+            !bestMatch ||
+            candidate.matchPriority < bestMatch.matchPriority ||
+            (candidate.matchPriority === bestMatch.matchPriority && candidate.patternIndex < bestMatch.patternIndex) ||
+            (candidate.matchPriority === bestMatch.matchPriority && candidate.patternIndex === bestMatch.patternIndex && candidate.optionIndex < bestMatch.optionIndex)
+        );
+    }
+
+    private findPreferredAxisColumn(axisLabel: CatalogOverlay, axisOptions: string[], patterns: RegExp[]): string | undefined {
+        let bestMatch: AxisMatchCandidate | undefined;
+
+        axisOptions.forEach((option, optionIndex) => {
+            const patternIndex = patterns.findIndex(pattern => pattern.test(option));
+            if (patternIndex === -1) {
+                return;
+            }
+
+            const matchPriority = this.getAxisMatchPriority(axisLabel, option);
+            if (matchPriority >= CatalogOverlayComponent.IncompatibleAxisPriority) {
+                return;
+            }
+
+            const candidate = {columnName: option, matchPriority, optionIndex, patternIndex};
+            if (this.isBetterAxisMatch(candidate, bestMatch)) {
+                bestMatch = candidate;
+            }
+        });
+
+        return bestMatch?.columnName;
     }
 
     private findAutoSelectedAxisColumn(axisLabel: CatalogOverlay, currentAxis: string, axisOptions: string[]): string | undefined {
@@ -397,7 +516,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return undefined;
         }
 
-        return this.findPreferredAxisColumn(axisOptions, patterns);
+        return this.findPreferredAxisColumn(axisLabel, axisOptions, patterns);
     }
 
     private enableAxisColumns(columnNames: Array<string | undefined>): boolean {

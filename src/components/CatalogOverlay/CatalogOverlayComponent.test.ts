@@ -173,6 +173,46 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(widgetStore.yAxis).toBe("dec");
     });
 
+    test("autoSelectAxes prefers FK4 columns over explicit J2000 or ICRS columns", () => {
+        const {component, widgetStore} = createComponentHarness(CatalogSystemType.FK4, [{name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAB1950"}, {name: "DEB1950"}]);
+
+        component["autoSelectAxes"]();
+
+        expect(widgetStore.xAxis).toBe("RAB1950");
+        expect(widgetStore.yAxis).toBe("DEB1950");
+    });
+
+    test("autoSelectAxes prefers FK5 columns over explicit B1950 or ICRS columns", () => {
+        const {component, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
+
+        component["autoSelectAxes"]();
+
+        expect(widgetStore.xAxis).toBe("RAJ2000");
+        expect(widgetStore.yAxis).toBe("DEJ2000");
+    });
+
+    test("autoSelectAxes prefers ICRS columns and excludes explicit B1950 columns", () => {
+        const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}]);
+
+        component["autoSelectAxes"]();
+
+        expect(widgetStore.xAxis).toBe("RA_ICRS");
+        expect(widgetStore.yAxis).toBe("DE_ICRS");
+    });
+
+    test.each([
+        ["FK4", CatalogSystemType.FK4, "RAJ2015", "DEJ2015", "RAB1975", "DEB1975", "RAB1975", "DEB1975"],
+        ["FK5", CatalogSystemType.FK5, "RAB1975", "DEB1975", "RAJ2015", "DEJ2015", "RAJ2015", "DEJ2015"],
+        ["ICRS", CatalogSystemType.ICRS, "RAB1975", "DEB1975", "RA_ICRS", "DE_ICRS", "RA_ICRS", "DE_ICRS"]
+    ])("autoSelectAxes filters generic epoch-specific equatorial columns for %s", (_label, system, incompatibleX, incompatibleY, compatibleX, compatibleY, expectedX, expectedY) => {
+        const {component, widgetStore} = createComponentHarness(system, [{name: incompatibleX}, {name: incompatibleY}, {name: compatibleX}, {name: compatibleY}]);
+
+        component["autoSelectAxes"]();
+
+        expect(widgetStore.xAxis).toBe(expectedX);
+        expect(widgetStore.yAxis).toBe(expectedY);
+    });
+
     test("isExcludedCoordinateName only excludes coordinate-error tokens", () => {
         const {component} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 
