@@ -285,7 +285,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (image.type === ImageType.COLOR_BLENDING) {
             return (
                 <ResizeDetector onResize={this.onResize} throttleTime={1000}>
-                    <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    <div className="render-config-container">
+                        <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    </div>
                 </ResizeDetector>
             );
         }
