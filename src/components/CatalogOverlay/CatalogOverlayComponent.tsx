@@ -36,9 +36,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
-    // Intentionally non-observable: this one-shot guard should not retrigger the reaction.
-    private autoSelectAttemptedCatalogIds: Set<number> = new Set();
-
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
     private static readonly IncompatibleAxisPriority = Number.MAX_SAFE_INTEGER;
@@ -186,7 +183,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             }
             appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
             catalogWidgetStore?.resetMaps();
-            this.autoSelectAttemptedCatalogIds.delete(catalogFileId);
         }
     };
 
@@ -569,7 +565,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        if (this.autoSelectAttemptedCatalogIds.has(catalogFileId)) {
+        if (catalogWidgetStore.autoSelectImageOverlayAxesAttempted) {
             return;
         }
 
@@ -578,7 +574,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         this.autoSelectAxes();
-        this.autoSelectAttemptedCatalogIds.add(catalogFileId);
+        catalogWidgetStore.setAutoSelectImageOverlayAxesAttempted(true);
     }
 
     private autoSelectAxes(forceReset = false) {

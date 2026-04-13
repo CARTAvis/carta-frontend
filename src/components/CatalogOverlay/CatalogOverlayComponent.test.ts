@@ -13,8 +13,10 @@ type MockWidgetStore = {
     plottedImageOverlaySystem?: CatalogSystemType;
     plottedImageOverlayXAxis: string;
     plottedImageOverlayYAxis: string;
+    autoSelectImageOverlayAxesAttempted: boolean;
     catalogPlotType: CatalogPlotType;
     hasPlottedImageOverlay: boolean;
+    setAutoSelectImageOverlayAxesAttempted: jest.Mock<void, [boolean]>;
     setxAxis: jest.Mock<void, [string]>;
     setyAxis: jest.Mock<void, [string]>;
     xAxis: string;
@@ -45,6 +47,7 @@ const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: Catal
 
 const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
     const widgetStore = {
+        autoSelectImageOverlayAxesAttempted: false,
         plottedImageOverlayXAxis: CatalogOverlay.NONE,
         plottedImageOverlayYAxis: CatalogOverlay.NONE,
         catalogPlotType: CatalogPlotType.ImageOverlay,
@@ -58,6 +61,9 @@ const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
     });
     widgetStore.setyAxis = jest.fn((nextYAxis: string) => {
         widgetStore.yAxis = nextYAxis;
+    });
+    widgetStore.setAutoSelectImageOverlayAxesAttempted = jest.fn((attempted: boolean) => {
+        widgetStore.autoSelectImageOverlayAxesAttempted = attempted;
     });
 
     return widgetStore;
@@ -107,15 +113,14 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 
 let harnessId = 0;
 
-const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean} = {}) => {
+const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
     // and manually seed any constructor-initialized fields that the methods may touch.
     harnessId += 1;
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
     const profileStore = createProfileStore(system, columns);
-    const widgetStore = createWidgetStore(xAxis, yAxis);
+    const widgetStore = options.widgetStore ?? createWidgetStore(xAxis, yAxis);
     const autoSelectEnabled = options.autoSelectEnabled ?? true;
-    component["autoSelectAttemptedCatalogIds"] = new Set<number>();
     component["catalogFileNames"] = new Map<number, string>();
     component["widgetId"] = `catalog-overlay-test-${harnessId}`;
 
@@ -291,7 +296,7 @@ describe("CatalogOverlayComponent", () => {
             component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
 
             expect(autoSelectSpy).toHaveBeenCalledTimes(1);
-            expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(true);
+            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
         });
 
         test("skips selection and does not mark the catalog when preference is disabled", () => {
@@ -301,7 +306,7 @@ describe("CatalogOverlayComponent", () => {
             component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, false);
 
             expect(autoSelectSpy).not.toHaveBeenCalled();
-            expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(false);
+            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(false);
         });
 
         test("defers attempt tracking until ImageOverlay mode is active", () => {
@@ -311,12 +316,28 @@ describe("CatalogOverlayComponent", () => {
             component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.Histogram, true);
 
             expect(autoSelectSpy).not.toHaveBeenCalled();
-            expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(false);
+            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(false);
 
             component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
 
             expect(autoSelectSpy).toHaveBeenCalledTimes(1);
-            expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(true);
+            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
+        });
+
+        test("does not retry auto-selection when another component uses the same widget store", () => {
+            const firstHarness = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+            const secondHarness = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], CatalogOverlay.NONE, CatalogOverlay.NONE, {
+                widgetStore: firstHarness.widgetStore
+            });
+            const firstAutoSelectSpy = jest.spyOn(firstHarness.component as any, "autoSelectAxes");
+            const secondAutoSelectSpy = jest.spyOn(secondHarness.component as any, "autoSelectAxes");
+
+            firstHarness.component["tryAutoSelectAxes"](firstHarness.profileStore as any, firstHarness.widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
+            secondHarness.component["tryAutoSelectAxes"](secondHarness.profileStore as any, secondHarness.widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
+
+            expect(firstAutoSelectSpy).toHaveBeenCalledTimes(1);
+            expect(secondAutoSelectSpy).not.toHaveBeenCalled();
+            expect(firstHarness.widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
         });
     });
 

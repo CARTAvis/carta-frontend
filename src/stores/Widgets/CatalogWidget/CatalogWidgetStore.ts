@@ -62,6 +62,7 @@ export class CatalogWidgetStore {
     @observable showSelectedData: boolean = false;
     @observable catalogTableAutoScroll: boolean = false;
     @observable catalogPlotType: CatalogPlotType = CatalogPlotType.ImageOverlay;
+    @observable autoSelectImageOverlayAxesAttempted: boolean = false;
     @observable catalogSize: number = 10.0; // in pixel
     @observable showedCatalogSize: number = 10.0;
     @observable catalogColor: string = Colors.TURQUOISE3;
@@ -826,6 +827,10 @@ export class CatalogWidgetStore {
 
     @action setyAxis(yColumnName: string) {
         this.yAxis = yColumnName;
+    }
+
+    @action setAutoSelectImageOverlayAxesAttempted(attempted: boolean) {
+        this.autoSelectImageOverlayAxesAttempted = attempted;
     }
 
     @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType) {
