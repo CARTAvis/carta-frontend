@@ -92,9 +92,17 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             return;
         }
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
+        const helpStore = HelpStore.Instance;
+        const toggleOrShow = (helpType: HelpType) => {
+            if (helpStore.helpVisible && helpStore.type === helpType) {
+                helpStore.hideHelpDrawer();
+            } else {
+                helpStore.showHelpDrawer(helpType, centerX);
+            }
+        };
 
         if (this.props.widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-            HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+            toggleOrShow(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG);
             return;
         }
 
@@ -134,10 +142,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
 
             if (settingsTab !== undefined && this.props.widgetConfig.helpType[settingsTab]) {
-                HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
+                toggleOrShow(this.props.widgetConfig.helpType[settingsTab]);
             }
         } else if (this.props.widgetConfig.helpType) {
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+            toggleOrShow(this.props.widgetConfig.helpType);
         }
     };
 

@@ -34,6 +34,7 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
+import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
@@ -611,7 +612,11 @@ export class WidgetsStore {
                 return React.createElement(
                     PortalProvider,
                     {portalContainer: popoutBody},
-                    React.createElement(OverlaysProvider, null, React.createElement(HotkeysProvider, null, React.createElement(PopoutKeyboardForwarder, {popoutWindow: popoutWindow}), element))
+                    React.createElement(
+                        OverlaysProvider,
+                        null,
+                        React.createElement(HotkeysProvider, null, React.createElement(PopoutKeyboardForwarder, {popoutWindow: popoutWindow}), React.createElement(PopoutEventForwarder, {popoutWindow: popoutWindow}), element)
+                    )
                 );
             }
         }
@@ -1059,17 +1064,26 @@ export class WidgetsStore {
         if (rect && rect.width) {
             centerX = ev.currentTarget.getBoundingClientRect().right + 36 - rect.width * 0.5;
         }
+        const containerWidth = (ev.currentTarget as Element).ownerDocument.body.clientWidth;
+        const helpStore = HelpStore.Instance;
+        const toggleOrShow = (helpType: HelpType) => {
+            if (helpStore.helpVisible && helpStore.type === helpType) {
+                helpStore.hideHelpDrawer();
+            } else {
+                helpStore.showHelpDrawer(helpType, centerX, containerWidth);
+            }
+        };
         if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
-            HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
+            toggleOrShow(widgetConfig.helpType);
         } else {
             const id = node.getId();
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
             if (catalogPlotWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
+                toggleOrShow(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT);
             }
             const renderConfigWidgetStore = this.renderConfigWidgets.get(id);
             if (renderConfigWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+                toggleOrShow(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG);
             }
         }
     };
