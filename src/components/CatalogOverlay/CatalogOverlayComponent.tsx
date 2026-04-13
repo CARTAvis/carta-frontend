@@ -535,14 +535,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return didEnableColumns;
     }
 
-    private setAutoSelectedAxes(axisOptions: string[], selectXAxis = true, selectYAxis = true): {didSelectX: boolean; didSelectY: boolean} {
+    private setAutoSelectedAxes(axisOptions: string[], selectXAxis = true, selectYAxis = true, enableHiddenColumns = false): {didSelectX: boolean; didSelectY: boolean; enabledHiddenColumns: boolean} {
         const catalogWidgetStore = this.widgetStore;
         if (catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return {didSelectX: false, didSelectY: false};
+            return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
         }
 
         const xColumnName = selectXAxis ? this.findAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions) : undefined;
         const yColumnName = selectYAxis ? this.findAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions) : undefined;
+
+        let enabledHiddenColumnsResult = false;
+        if (enableHiddenColumns) {
+            enabledHiddenColumnsResult = this.enableAxisColumns([xColumnName, yColumnName]);
+        }
 
         if (xColumnName) {
             catalogWidgetStore.setxAxis(xColumnName);
@@ -551,7 +556,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogWidgetStore.setyAxis(yColumnName);
         }
 
-        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName)};
+        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: enabledHiddenColumnsResult};
     }
 
     private tryAutoSelectAxes(
@@ -594,19 +599,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const hiddenAxisOptions = this.getAutoSelectableAxisOptions(true);
-        const fallbackXColumn = this.findAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, hiddenAxisOptions);
-        const fallbackYColumn = this.findAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, hiddenAxisOptions);
-        const enabledHiddenColumns = this.enableAxisColumns([fallbackXColumn, fallbackYColumn]);
-
-        if (fallbackXColumn) {
-            catalogWidgetStore.setxAxis(fallbackXColumn);
-        }
-        if (fallbackYColumn) {
-            catalogWidgetStore.setyAxis(fallbackYColumn);
-        }
-
-        if (enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
+        const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
+        if (fallback.enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
