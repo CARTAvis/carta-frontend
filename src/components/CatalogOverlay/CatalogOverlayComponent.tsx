@@ -110,9 +110,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [CatalogOverlay.X1, CatalogOverlayComponent.Pixel1XPatterns],
         [CatalogOverlay.Y1, CatalogOverlayComponent.Pixel1YPatterns]
     ]);
-    private static readonly ExplicitICRSPattern = /(?:^|[_.])icrs(?:$|[_.])|icrs$/i;
-    private static readonly ExplicitFK5Pattern = /(?:j20\d{2}|20\d{2}|raj2000|dej2000|alpha_?j2000|delta_?j2000)/i;
-    private static readonly ExplicitFK4Pattern = /(?:b19\d{2}|19\d{2}|rab1950|deb1950|alpha_?b1950|delta_?b1950)/i;
+    private static readonly ExplicitICRSPattern = /(?:^|[_.])icrs(?:$|[_.])/i;
+    private static readonly ExplicitFK5Pattern = /20\d{2}/;
+    private static readonly ExplicitFK4Pattern = /19\d{2}/;
 
     private static getExplicitEquatorialSystem(columnName: string): CatalogSystemType | undefined {
         if (CatalogOverlayComponent.ExplicitICRSPattern.test(columnName)) {
