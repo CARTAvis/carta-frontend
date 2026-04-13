@@ -53,6 +53,7 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
+import {smoothStepOffset} from "utilities";
 
 export interface DefaultWidgetConfig {
     id: string;
@@ -173,7 +174,7 @@ export class WidgetsStore {
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
 
     private static readonly showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
-    private static readonly imageViewerRestoredHeightPercent = 68;
+    private static readonly imageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
     private static readonly hideHelpButtonWidgets = ["pv-preview"];
 
     public readonly CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean; icon: string; onClick: () => void; widgetConfig: DefaultWidgetConfig}>([
