@@ -574,7 +574,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         if (catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            this.autoSelectAttemptedCatalogIds.add(catalogFileId);
             return;
         }
 

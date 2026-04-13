@@ -318,6 +318,21 @@ describe("CatalogOverlayComponent auto-select coordinates", () => {
         expect(autoSelectSpy).not.toHaveBeenCalled();
         expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(false);
     });
+
+    test("tryAutoSelectAxes defers attempt tracking until ImageOverlay mode is active", () => {
+        const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.Histogram, true);
+
+        expect(autoSelectSpy).not.toHaveBeenCalled();
+        expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(false);
+
+        component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
+
+        expect(autoSelectSpy).toHaveBeenCalledTimes(1);
+        expect(component["autoSelectAttemptedCatalogIds"].has(1)).toBe(true);
+    });
 });
 
 describe("CatalogOverlayComponent image overlay state", () => {
