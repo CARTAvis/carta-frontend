@@ -73,7 +73,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
-                                    shouldDismissPopover={false}
+                                    shouldDismissPopover={true}
                                     data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + (item.label || "").split(" ").join("-").toLowerCase()}
                                 />
                             ))}
