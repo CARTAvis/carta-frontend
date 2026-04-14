@@ -473,14 +473,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private getAxisMatchPriority(axisLabel: CatalogOverlay, columnName: string): number {
-        if (axisLabel !== CatalogOverlay.RA && axisLabel !== CatalogOverlay.DEC) {
-            return 0;
-        }
-
-        return this.getEquatorialColumnPriority(columnName);
-    }
-
     private isBetterAxisMatch(candidate: AxisMatchCandidate, bestMatch: AxisMatchCandidate | undefined): boolean {
         return (
             !bestMatch ||
@@ -492,6 +484,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private findPreferredAxisColumn(axisLabel: CatalogOverlay, axisOptions: string[], patterns: RegExp[]): string | undefined {
         let bestMatch: AxisMatchCandidate | undefined;
+        const usesEquatorialPriority = axisLabel === CatalogOverlay.RA || axisLabel === CatalogOverlay.DEC;
 
         axisOptions.forEach((option, optionIndex) => {
             const patternIndex = patterns.findIndex(pattern => pattern.test(option));
@@ -499,7 +492,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 return;
             }
 
-            const matchPriority = this.getAxisMatchPriority(axisLabel, option);
+            const matchPriority = usesEquatorialPriority ? this.getEquatorialColumnPriority(option) : 0;
             if (matchPriority >= CatalogOverlayComponent.IncompatibleAxisPriority) {
                 return;
             }
