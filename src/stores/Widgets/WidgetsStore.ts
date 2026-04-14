@@ -173,6 +173,7 @@ export class WidgetsStore {
     private defaultFloatingWidgetOffset: number;
     private beingUnpinned: Set<string> = new Set();
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
+    private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
 
     private static readonly showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
     private static readonly imageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
@@ -742,7 +743,7 @@ export class WidgetsStore {
             );
         }
 
-        if (component !== "image-view") {
+        if (component !== "image-view" && !selectedNode.isPoppedOut()) {
             buttons.push(
                 React.createElement(
                     "button",
@@ -843,9 +844,29 @@ export class WidgetsStore {
                     }
                 });
 
-                const allHavePositions = tabNodes.length > 0 && tabNodes.every(t => this.popoutPositions.has(t.getId()));
+                // Restore tabs that originated from floating widgets back to floating state
+                const floatingTabs = tabNodes.filter(t => this.floatingOriginPopouts.has(t.getId()));
+                if (floatingTabs.length > 0) {
+                    for (const tabNode of floatingTabs) {
+                        const tabId = tabNode.getId();
+                        const savedConfig = this.floatingOriginPopouts.get(tabId)!;
+                        this.beingUnpinned.add(tabId);
+                        layoutModel.doAction(Actions.deleteTab(tabId));
+                        this.beingUnpinned.delete(tabId);
+                        this.addFloatingWidget(savedConfig);
+                        this.floatingOriginPopouts.delete(tabId);
+                        this.popoutPositions.delete(tabId);
+                    }
+                    // If all tabs were floating-origin, skip the normal restore logic
+                    if (floatingTabs.length === tabNodes.length) {
+                        return undefined;
+                    }
+                }
+
+                const remainingTabs = tabNodes.filter(t => !floatingTabs.includes(t));
+                const allHavePositions = remainingTabs.length > 0 && remainingTabs.every(t => this.popoutPositions.has(t.getId()));
                 if (allHavePositions) {
-                    for (const tabNode of tabNodes) {
+                    for (const tabNode of remainingTabs) {
                         const tabId = tabNode.getId();
                         const savedPos = this.popoutPositions.get(tabId)!;
 
@@ -1053,6 +1074,39 @@ export class WidgetsStore {
         if (layoutModel) {
             layoutModel.doAction(Actions.deleteTab(id));
         }
+        this.beingUnpinned.delete(id);
+    };
+
+    @action popoutFloatingWidget = (widgetConfig: WidgetConfig) => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return;
+        }
+
+        const id = widgetConfig.id;
+        const tabJson: any = {
+            type: "tab",
+            component: widgetConfig.type,
+            name: widgetConfig.title || widgetConfig.type,
+            id,
+            // remove the below line if we migrate plotly.js to chart.js
+            ...(widgetConfig.type === CatalogPlotComponent.WIDGET_CONFIG.type && {enablePopout: false})
+        };
+
+        if (widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
+            tabJson.config = {id, label: widgetConfig.title};
+        } else if (widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type) {
+            tabJson.config = {id: widgetConfig.parentId};
+        } else {
+            tabJson.config = {id};
+        }
+
+        const firstTabSet = layoutModel.getFirstTabSet();
+        this.floatingOriginPopouts.set(id, widgetConfig);
+        this.beingUnpinned.add(id);
+        layoutModel.doAction(Actions.addNode(tabJson, firstTabSet.getId(), DockLocation.CENTER, -1, false));
+        layoutModel.doAction(Actions.popoutTab(id));
+        this.removeFloatingWidget(id, true);
         this.beingUnpinned.delete(id);
     };
 

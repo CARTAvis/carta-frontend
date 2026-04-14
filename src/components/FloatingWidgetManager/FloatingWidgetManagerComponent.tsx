@@ -193,6 +193,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     }
 
                     const showPinButton = this.showPin(w);
+                    const canPopout = w.type !== CatalogPlotComponent.WIDGET_CONFIG.type;
                     const id = w.componentId ? w.componentId : w.id;
 
                     const zIndex = zIndexManager.findIndex(id);
@@ -209,6 +210,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 showFloatingSettingsButton={showSettingsButton}
+                                canPopout={canPopout}
                                 floatingWidgets={widgetConfigs.length}
                             >
                                 {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
