@@ -274,9 +274,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.disposers.push(
             // Auto-select coordinate columns by common prefixes when axes are None (attempt at most once per catalog)
             reaction(
-                () => [this.catalogFileId, this.profileStore, this.widgetStore, this.widgetStore?.catalogPlotType, this.shouldAutoSelectImageOverlayColumns] as const,
-                ([catalogFileId, profileStore, catalogWidgetStore, catalogPlotType, autoSelectEnabled]) => {
-                    this.tryAutoSelectAxes(profileStore, catalogWidgetStore, catalogFileId, catalogPlotType, autoSelectEnabled);
+                () => {
+                    const catalogWidgetStore = this.widgetStore;
+                    const canAutoSelectAxes = this.catalogFileId !== undefined && this.profileStore !== undefined && catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
+                    return [catalogWidgetStore, canAutoSelectAxes] as const;
+                },
+                ([catalogWidgetStore, canAutoSelectAxes]) => {
+                    if (!catalogWidgetStore || !canAutoSelectAxes || catalogWidgetStore.autoSelectImageOverlayAxesAttempted) {
+                        return;
+                    }
+
+                    this.autoSelectAxes();
+                    catalogWidgetStore.setAutoSelectImageOverlayAxesAttempted(true);
                 },
                 {fireImmediately: true}
             )
@@ -559,29 +568,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: enabledHiddenColumnsResult};
-    }
-
-    private tryAutoSelectAxes(
-        profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined,
-        catalogWidgetStore: CatalogWidgetStore | undefined,
-        catalogFileId: number | undefined,
-        catalogPlotType: CatalogPlotType | undefined,
-        autoSelectEnabled: boolean
-    ) {
-        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined || !autoSelectEnabled) {
-            return;
-        }
-
-        if (catalogWidgetStore.autoSelectImageOverlayAxesAttempted) {
-            return;
-        }
-
-        if (catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return;
-        }
-
-        this.autoSelectAxes();
-        catalogWidgetStore.setAutoSelectImageOverlayAxesAttempted(true);
     }
 
     private autoSelectAxes(forceReset = false) {

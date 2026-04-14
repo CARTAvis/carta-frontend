@@ -1,6 +1,9 @@
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
+import {CatalogStore, WidgetsStore} from "stores";
+import {CatalogWidgetStore} from "stores/Widgets";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -25,10 +28,12 @@ type MockWidgetStore = {
 
 type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
+    catalogInfo: {fileInfo: {name: string}};
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
     isFileBasedCatalog: boolean;
+    progress?: number;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
@@ -87,6 +92,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 
     const profileStore = {
         activedSystem: systemOverlayMap.get(system),
+        catalogInfo: {fileInfo: {name: "test-catalog"}},
         catalogControlHeader,
         catalogCoordinateSystem: {system},
         catalogHeader,
@@ -112,6 +118,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 };
 
 let harnessId = 0;
+const constructedComponents: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogWidgetStore}> = [];
 
 const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
@@ -144,7 +151,47 @@ const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     return {component, profileStore, widgetStore};
 };
 
+const createConstructedComponentHarness = (
+    system: CatalogSystemType,
+    columns: MockColumn[],
+    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: MockProfileStore; widgetStore?: CatalogWidgetStore} = {}
+) => {
+    harnessId += 1;
+    const catalogFileId = options.catalogFileId ?? 10_000 + harnessId;
+    const componentId = options.componentId ?? `catalog-overlay-reaction-test-${harnessId}`;
+    const catalogWidgetId = options.catalogWidgetId ?? `catalog-widget-reaction-test-${harnessId}`;
+    const profileStore = options.profileStore ?? createProfileStore(system, columns);
+    const widgetStore = options.widgetStore ?? new CatalogWidgetStore(catalogFileId);
+
+    if (options.catalogPlotType !== undefined) {
+        widgetStore.setCatalogPlotType(options.catalogPlotType);
+    }
+
+    runInAction(() => {
+        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore as any);
+        CatalogStore.Instance.catalogWidgets.set(catalogFileId, catalogWidgetId);
+        WidgetsStore.Instance.catalogWidgets.set(catalogWidgetId, widgetStore);
+    });
+
+    const component = new CatalogOverlayComponent({id: componentId, docked: false});
+    constructedComponents.push({catalogFileId, catalogWidgetId, component, componentId, widgetStore});
+
+    return {catalogFileId, catalogWidgetId, component, componentId, profileStore, widgetStore};
+};
+
 afterEach(() => {
+    constructedComponents.forEach(({catalogFileId, catalogWidgetId, component, componentId, widgetStore}) => {
+        component.componentWillUnmount();
+        widgetStore.dispose();
+        runInAction(() => {
+            CatalogStore.Instance.catalogProfiles.delete(componentId);
+            CatalogStore.Instance.catalogProfileStores.delete(catalogFileId);
+            CatalogStore.Instance.catalogWidgets.delete(catalogFileId);
+            WidgetsStore.Instance.catalogWidgets.delete(catalogWidgetId);
+        });
+    });
+    constructedComponents.length = 0;
     jest.restoreAllMocks();
 });
 
@@ -287,56 +334,55 @@ describe("CatalogOverlayComponent", () => {
         });
     });
 
-    describe("tryAutoSelectAxes", () => {
+    describe("auto-select axes reaction", () => {
         test("only attempts auto-selection once per catalog", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-            const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+            const {widgetStore} = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 
-            component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
-            component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
-
-            expect(autoSelectSpy).toHaveBeenCalledTimes(1);
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
             expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
-        });
 
-        test("skips selection and does not mark the catalog when preference is disabled", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-            const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+            widgetStore.setxAxis(CatalogOverlay.NONE);
+            widgetStore.setyAxis(CatalogOverlay.NONE);
+            widgetStore.setCatalogPlotType(CatalogPlotType.Histogram);
+            widgetStore.setCatalogPlotType(CatalogPlotType.ImageOverlay);
 
-            component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, false);
-
-            expect(autoSelectSpy).not.toHaveBeenCalled();
-            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(false);
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
         });
 
         test("defers attempt tracking until ImageOverlay mode is active", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-            const autoSelectSpy = jest.spyOn(component as any, "autoSelectAxes");
+            const {widgetStore} = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {catalogPlotType: CatalogPlotType.Histogram});
 
-            component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.Histogram, true);
-
-            expect(autoSelectSpy).not.toHaveBeenCalled();
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
             expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(false);
 
-            component["tryAutoSelectAxes"](profileStore as any, widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
+            widgetStore.setCatalogPlotType(CatalogPlotType.ImageOverlay);
 
-            expect(autoSelectSpy).toHaveBeenCalledTimes(1);
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
             expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
         });
 
         test("does not retry auto-selection when another component uses the same widget store", () => {
-            const firstHarness = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-            const secondHarness = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], CatalogOverlay.NONE, CatalogOverlay.NONE, {
+            const firstHarness = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+
+            expect(firstHarness.widgetStore.xAxis).toBe("ra");
+            expect(firstHarness.widgetStore.yAxis).toBe("dec");
+
+            firstHarness.widgetStore.setxAxis(CatalogOverlay.NONE);
+            firstHarness.widgetStore.setyAxis(CatalogOverlay.NONE);
+
+            createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {
+                catalogFileId: firstHarness.catalogFileId,
+                catalogWidgetId: firstHarness.catalogWidgetId,
+                profileStore: firstHarness.profileStore,
                 widgetStore: firstHarness.widgetStore
             });
-            const firstAutoSelectSpy = jest.spyOn(firstHarness.component as any, "autoSelectAxes");
-            const secondAutoSelectSpy = jest.spyOn(secondHarness.component as any, "autoSelectAxes");
 
-            firstHarness.component["tryAutoSelectAxes"](firstHarness.profileStore as any, firstHarness.widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
-            secondHarness.component["tryAutoSelectAxes"](secondHarness.profileStore as any, secondHarness.widgetStore as any, 1, CatalogPlotType.ImageOverlay, true);
-
-            expect(firstAutoSelectSpy).toHaveBeenCalledTimes(1);
-            expect(secondAutoSelectSpy).not.toHaveBeenCalled();
+            expect(firstHarness.widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(firstHarness.widgetStore.yAxis).toBe(CatalogOverlay.NONE);
             expect(firstHarness.widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
         });
     });
