@@ -13,6 +13,7 @@ type MockColumn = {
 };
 
 type MockWidgetStore = {
+    plottedImageOverlayMaxRows?: number;
     plottedImageOverlaySystem?: CatalogSystemType;
     plottedImageOverlayXAxis: string;
     plottedImageOverlayYAxis: string;
@@ -32,6 +33,7 @@ type MockProfileStore = {
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
     isFileBasedCatalog: boolean;
+    maxRows: number;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
@@ -51,6 +53,7 @@ const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: Catal
 const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
     const widgetStore = {
         autoSelectImageOverlayAxesAttempted: false,
+        plottedImageOverlayMaxRows: undefined,
         plottedImageOverlayXAxis: CatalogOverlay.NONE,
         plottedImageOverlayYAxis: CatalogOverlay.NONE,
         catalogPlotType: CatalogPlotType.ImageOverlay,
@@ -94,6 +97,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         catalogCoordinateSystem: {system},
         catalogHeader,
         isFileBasedCatalog: false,
+        maxRows: 100,
         setCatalogCoordinateSystem: jest.fn(),
         setIsUpdateColumn: jest.fn(),
         setHeaderDisplay: jest.fn(),
@@ -581,9 +585,10 @@ describe("CatalogOverlayComponent", () => {
 
     describe("isImageOverlaySelectionDirty", () => {
         test("reports pending plot changes when current axes differ from the applied overlay", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
+            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
 
             widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayMaxRows = profileStore.maxRows;
             widgetStore.plottedImageOverlayXAxis = "ra";
             widgetStore.plottedImageOverlayYAxis = "dec";
             widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
@@ -598,6 +603,7 @@ describe("CatalogOverlayComponent", () => {
             const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000");
 
             widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayMaxRows = profileStore.maxRows;
             widgetStore.plottedImageOverlayXAxis = "_RAJ2000";
             widgetStore.plottedImageOverlayYAxis = "_DEJ2000";
             widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
@@ -605,6 +611,35 @@ describe("CatalogOverlayComponent", () => {
             expect(component.isImageOverlaySelectionDirty).toBe(true);
 
             profileStore.catalogCoordinateSystem.system = CatalogSystemType.ICRS;
+            expect(component.isImageOverlaySelectionDirty).toBe(false);
+        });
+
+        test("reports pending plot changes when max rows increases past plotted rows", () => {
+            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
+
+            widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayMaxRows = 100;
+            widgetStore.plottedImageOverlayXAxis = "ra";
+            widgetStore.plottedImageOverlayYAxis = "dec";
+            widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
+            profileStore.maxRows = 200;
+
+            expect(component.isImageOverlaySelectionDirty).toBe(true);
+
+            profileStore.maxRows = 100;
+            expect(component.isImageOverlaySelectionDirty).toBe(false);
+        });
+
+        test("does not report pending plot changes when max rows is reduced below plotted rows", () => {
+            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
+
+            widgetStore.hasPlottedImageOverlay = true;
+            widgetStore.plottedImageOverlayMaxRows = 1500;
+            widgetStore.plottedImageOverlayXAxis = "ra";
+            widgetStore.plottedImageOverlayYAxis = "dec";
+            widgetStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
+            profileStore.maxRows = 200;
+
             expect(component.isImageOverlaySelectionDirty).toBe(false);
         });
     });

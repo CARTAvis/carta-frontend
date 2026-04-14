@@ -609,7 +609,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
-            catalogWidgetStore.setPlottedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system);
+            catalogWidgetStore.setPlottedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
             const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
             const wcs = frame.validWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
@@ -1009,10 +1009,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return false;
         }
 
+        const shouldPlotMoreRows = catalogWidgetStore.plottedImageOverlayMaxRows !== undefined && profileStore.maxRows > catalogWidgetStore.plottedImageOverlayMaxRows;
         return (
             catalogWidgetStore.plottedImageOverlayXAxis !== catalogWidgetStore.xAxis ||
             catalogWidgetStore.plottedImageOverlayYAxis !== catalogWidgetStore.yAxis ||
-            catalogWidgetStore.plottedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system
+            catalogWidgetStore.plottedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system ||
+            shouldPlotMoreRows
         );
     }
 

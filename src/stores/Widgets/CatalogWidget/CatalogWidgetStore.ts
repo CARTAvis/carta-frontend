@@ -73,6 +73,7 @@ export class CatalogWidgetStore {
     @observable plottedImageOverlayXAxis: string = CatalogOverlay.NONE;
     @observable plottedImageOverlayYAxis: string = CatalogOverlay.NONE;
     @observable plottedImageOverlaySystem: CatalogSystemType | undefined = undefined;
+    @observable plottedImageOverlayMaxRows: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     @observable highlightColor: string = Colors.RED2;
     @observable settingsTabId: CatalogSettingsTabs = CatalogSettingsTabs.SIZE;
@@ -833,11 +834,14 @@ export class CatalogWidgetStore {
         this.autoSelectImageOverlayAxesAttempted = attempted;
     }
 
-    @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType) {
+    @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
         this.hasPlottedImageOverlay = true;
         this.plottedImageOverlayXAxis = xColumnName;
         this.plottedImageOverlayYAxis = yColumnName;
         this.plottedImageOverlaySystem = system;
+        if (maxRows !== undefined) {
+            this.plottedImageOverlayMaxRows = maxRows;
+        }
     }
 
     @action clearPlottedImageOverlayState() {
@@ -845,6 +849,7 @@ export class CatalogWidgetStore {
         this.plottedImageOverlayXAxis = CatalogOverlay.NONE;
         this.plottedImageOverlayYAxis = CatalogOverlay.NONE;
         this.plottedImageOverlaySystem = undefined;
+        this.plottedImageOverlayMaxRows = undefined;
     }
 
     @action setTableSeparatorPosition(position: string) {
