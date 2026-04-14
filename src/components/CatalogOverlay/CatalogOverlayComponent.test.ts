@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
-import {CatalogStore, WidgetsStore} from "stores";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
+import {CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogWidgetStore} from "stores/Widgets";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
@@ -28,12 +28,10 @@ type MockWidgetStore = {
 
 type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
-    catalogInfo: {fileInfo: {name: string}};
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
     isFileBasedCatalog: boolean;
-    progress?: number;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
@@ -92,7 +90,6 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 
     const profileStore = {
         activedSystem: systemOverlayMap.get(system),
-        catalogInfo: {fileInfo: {name: "test-catalog"}},
         catalogControlHeader,
         catalogCoordinateSystem: {system},
         catalogHeader,
@@ -111,6 +108,30 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         const header = profileStore.catalogControlHeader.get(columnName);
         if (header) {
             header.display = display;
+        }
+    });
+
+    return profileStore;
+};
+
+const createCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
+    const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name: column.name}));
+    const profileStore = new CatalogProfileStore(
+        {
+            dataSize: 0,
+            directory: "",
+            fileId: catalogFileId,
+            fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})
+        },
+        catalogHeader,
+        new Map(),
+        CatalogType.FILE
+    );
+
+    profileStore.setCatalogCoordinateSystem(system);
+    columns.forEach(column => {
+        if (column.display !== undefined) {
+            profileStore.setHeaderDisplay(column.display, column.name);
         }
     });
 
@@ -151,16 +172,43 @@ const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     return {component, profileStore, widgetStore};
 };
 
+const createComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
+    harnessId += 1;
+    const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
+    const widgetStore = createWidgetStore(xAxis, yAxis);
+    component["catalogFileNames"] = new Map<number, string>();
+    component["widgetId"] = `catalog-overlay-test-${harnessId}`;
+
+    Object.defineProperty(component, "profileStore", {
+        configurable: true,
+        get: () => undefined
+    });
+    Object.defineProperty(component, "widgetStore", {
+        configurable: true,
+        get: () => widgetStore
+    });
+    Object.defineProperty(component, "catalogFileId", {
+        configurable: true,
+        get: () => 1
+    });
+    Object.defineProperty(component, "shouldAutoSelectImageOverlayColumns", {
+        configurable: true,
+        get: () => true
+    });
+
+    return {component, widgetStore};
+};
+
 const createConstructedComponentHarness = (
     system: CatalogSystemType,
     columns: MockColumn[],
-    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: MockProfileStore; widgetStore?: CatalogWidgetStore} = {}
+    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogWidgetStore} = {}
 ) => {
     harnessId += 1;
     const catalogFileId = options.catalogFileId ?? 10_000 + harnessId;
     const componentId = options.componentId ?? `catalog-overlay-reaction-test-${harnessId}`;
     const catalogWidgetId = options.catalogWidgetId ?? `catalog-widget-reaction-test-${harnessId}`;
-    const profileStore = options.profileStore ?? createProfileStore(system, columns);
+    const profileStore = options.profileStore ?? createCatalogProfileStore(catalogFileId, system, columns);
     const widgetStore = options.widgetStore ?? new CatalogWidgetStore(catalogFileId);
 
     if (options.catalogPlotType !== undefined) {
@@ -169,7 +217,7 @@ const createConstructedComponentHarness = (
 
     runInAction(() => {
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
-        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore as any);
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore);
         CatalogStore.Instance.catalogWidgets.set(catalogFileId, catalogWidgetId);
         WidgetsStore.Instance.catalogWidgets.set(catalogWidgetId, widgetStore);
     });
@@ -230,6 +278,18 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe(expectedY);
         });
 
+        test.each([
+            ["X-axis", [{name: "ra"}], "ra", CatalogOverlay.NONE],
+            ["Y-axis", [{name: "dec"}], CatalogOverlay.NONE, "dec"]
+        ])("selects only the available %s candidate", (_label, columns, expectedX, expectedY) => {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, columns);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe(expectedX);
+            expect(widgetStore.yAxis).toBe(expectedY);
+        });
+
         test("skips excluded coordinate-like error columns", () => {
             const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "e_ra"}, {name: "pmdec"}, {name: "ra"}, {name: "dec"}]);
 
@@ -237,6 +297,30 @@ describe("CatalogOverlayComponent", () => {
 
             expect(widgetStore.xAxis).toBe("ra");
             expect(widgetStore.yAxis).toBe("dec");
+        });
+
+        test("skips columns when data type metadata is missing", () => {
+            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+            profileStore.catalogHeader = [];
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.setxAxis).not.toHaveBeenCalled();
+            expect(widgetStore.setyAxis).not.toHaveBeenCalled();
+        });
+
+        test("uses safe defaults when profile store is unavailable", () => {
+            const {component, widgetStore} = createComponentWithoutProfileStore("ra", "dec");
+
+            expect(component.axisOption).toEqual([CatalogOverlay.NONE]);
+            expect(component["getAutoSelectableAxisOptions"]()).toEqual([]);
+            expect(() => component["autoSelectAxes"]()).not.toThrow();
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+            expect(widgetStore.setxAxis).not.toHaveBeenCalled();
+            expect(widgetStore.setyAxis).not.toHaveBeenCalled();
         });
 
         test("prefers FK4 columns over explicit J2000 or ICRS columns", () => {
