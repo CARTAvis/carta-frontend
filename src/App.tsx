@@ -85,6 +85,11 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const apiService = ApiService.Instance;
+        if (!apiService.authChecked) {
+            return <div className="loading-screen">Authenticating...</div>;
+        }
+
         const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
         const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
 

@@ -15,6 +15,8 @@ export interface RuntimeConfig {
     apiAddress?: string;
     tokenRefreshAddress?: string;
     logoutAddress?: string;
+    loginAddress?: string;
+    serviceRestartable?: boolean;
 }
 
 export class ApiService {
@@ -51,6 +53,7 @@ export class ApiService {
 
     @observable private _accessToken: string | undefined = "";
     @observable private _tokenLifetime: number = 0;
+    @observable authChecked = false;
     private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
@@ -97,6 +100,7 @@ export class ApiService {
         } else {
             this._accessToken = "no_auth_configured";
             this._tokenLifetime = Number.MAX_VALUE;
+            this.authChecked = true;
         }
     }
 
@@ -112,6 +116,7 @@ export class ApiService {
         } else {
             this.handleAuthLost();
         }
+        this.authChecked = true;
     };
 
     public dispose = () => {
@@ -121,12 +126,13 @@ export class ApiService {
 
     private handleAuthLost = () => {
         this.dispose();
-        if (ApiService.RuntimeConfig.dashboardAddress) {
-            this.clearToken();
+        this.clearToken();
+        // Try loginAddress first (Go controller), fall back to dashboardAddress (TypeScript controller) for backwards compatibility
+        const redirectTarget = ApiService.RuntimeConfig.loginAddress || ApiService.RuntimeConfig.dashboardAddress;
+        if (redirectTarget) {
             const redirectParams = btoa(window.location.search);
-            window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
+            window.open(`${redirectTarget}?redirectParams=${redirectParams}`, "_self");
         } else {
-            this.clearToken();
             AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
         }
     };
@@ -145,7 +151,9 @@ export class ApiService {
                 }
             } catch (err) {
                 this.clearToken();
-                console.error(err);
+                if (!axios.isAxiosError(err) || err.response?.status !== 401) {
+                    console.error(err);
+                }
                 return false;
             }
         } else {

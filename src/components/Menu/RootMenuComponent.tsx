@@ -182,7 +182,9 @@ export class RootMenuComponent extends React.Component {
         const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
+        // Show restart button if serviceRestartable is true, or if authenticated with dashboard (TypeScript controller backwards compatibility)
+        const canRestartService = ApiService.RuntimeConfig.serviceRestartable || (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress);
+        if (canRestartService) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
         if (ApiService.RuntimeConfig.logoutAddress) {
