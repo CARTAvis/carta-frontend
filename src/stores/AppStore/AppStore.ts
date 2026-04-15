@@ -2914,7 +2914,7 @@ export class AppStore {
             // Contours and vector overlays
             const {isEnabled: contoursEnabled, isColormapEnabled: contourColormapEnabled, isVisible: contourVisible, ...contourConfigRest} = frame.contourConfig as any;
             if (contoursEnabled) {
-                workspaceFile.contourConfig = {...contourConfigRest, isColormapEnabled: contourColormapEnabled, isVisible: contourVisible};
+                workspaceFile.contourConfig = {...contourConfigRest, colormapEnabled: contourColormapEnabled, visible: contourVisible};
                 delete (workspaceFile.contourConfig as any)["preferenceStore"];
             }
             const {
@@ -2927,7 +2927,7 @@ export class AppStore {
                 ...vectorOverlayConfigRest
             } = frame.vectorOverlayConfig as any;
             if (vectorOverlayEnabled) {
-                workspaceFile.vectorOverlayConfig = {...vectorOverlayConfigRest, isFractionalIntensity: voFractional, isThresholdEnabled: voThreshold, isDebiasing: voDebiasing, isVisible: voVisible, isColormapEnabled: voColormapEnabled};
+                workspaceFile.vectorOverlayConfig = {...vectorOverlayConfigRest, fractionalIntensity: voFractional, thresholdEnabled: voThreshold, debiasing: voDebiasing, visible: voVisible, colormapEnabled: voColormapEnabled};
                 delete (workspaceFile.vectorOverlayConfig as any)["preferenceStore"];
             }
 
