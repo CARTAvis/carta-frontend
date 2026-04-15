@@ -202,14 +202,18 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                             data-testid={this.props.widgetConfig?.id + "-header-settings-button"}
                         >
                             <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"cog"} />
+                                <span>
+                                    <Icon icon={"cog"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}
                     {widgetConfig.helpType && (
                         <div className={buttonClass} onClick={this.onClickHelpButton}>
                             <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"help"} />
+                                <span>
+                                    <Icon icon={"help"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}
@@ -226,7 +230,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     {this.props.showPinButton && (
                         <div className={buttonClass} draggable onDragStart={this.handlePinDragStart} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"pin"} />
+                                <span>
+                                    <Icon icon={"pin"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}
