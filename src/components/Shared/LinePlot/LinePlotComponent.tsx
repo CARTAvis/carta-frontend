@@ -128,6 +128,7 @@ export const VERTICAL_RANGE_PADDING = 0.05;
 export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private plotRef: Chart;
     private stageRef;
+    private containerRef = React.createRef<HTMLDivElement>();
     private stageClickStartX?: number;
     private stageClickStartY?: number;
     private panPrevious: number;
@@ -155,6 +156,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     componentDidUpdate() {
+        this.setupPopoutDragListeners();
+    }
+
+    componentDidMount() {
         this.setupPopoutDragListeners();
     }
 
@@ -1192,8 +1197,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         return (
-            <ResizeDetector onResize={this.resize} throttleTime={33}>
+            <ResizeDetector onResize={this.resize} throttleTime={33} targetRef={this.containerRef}>
                 <div
+                    ref={this.containerRef}
                     className={"line-plot-component"}
                     style={{cursor: this.cursorShape}}
                     onKeyDown={this.onKeyDown}

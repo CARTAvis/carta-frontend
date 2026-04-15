@@ -5,10 +5,11 @@ interface ResizeDetectorProps {
     onResize: (width: number, height: number) => void;
     throttleTime?: number; // optional throttle time in milliseconds
     targetRef?: React.RefObject<HTMLElement>; // if there is ref attached to children, the same ref must be set here
+    forceResizeRef?: React.MutableRefObject<(() => void) | null>; // assign a ref to imperatively trigger a resize measurement
     children: React.ReactElement;
 }
 
-export const ResizeDetector = ({onResize, throttleTime, targetRef, children}: ResizeDetectorProps) => {
+export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRef, children}: ResizeDetectorProps) => {
     const internalRef = React.useRef<HTMLElement>(null);
     const activeRef = targetRef ?? internalRef;
 
@@ -35,7 +36,39 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, children}: Re
         const win = element.ownerDocument?.defaultView ?? window;
         const observer = new (win as Window & typeof globalThis).ResizeObserver(handleResize);
         observer.observe(element);
-        return () => observer.disconnect();
+
+        // IntersectionObserver catches visibility transitions (e.g. tab shown after a
+        // sibling was popped out) where ResizeObserver won't fire because the element
+        // size hasn't actually changed between hide and show.
+        const intersectionObserver = new win.IntersectionObserver(entries => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) {
+                    const el = activeRef.current;
+                    if (el) {
+                        const {width, height} = el.getBoundingClientRect();
+                        onResize(width, height);
+                    }
+                }
+            }
+        });
+        intersectionObserver.observe(element);
+
+        if (forceResizeRef) {
+            forceResizeRef.current = () => {
+                const el = activeRef.current;
+                if (el) {
+                    const {width, height} = el.getBoundingClientRect();
+                    onResize(width, height);
+                }
+            };
+        }
+        return () => {
+            observer.disconnect();
+            intersectionObserver.disconnect();
+            if (forceResizeRef) {
+                forceResizeRef.current = null;
+            }
+        };
     }, [activeRef, handleResize]);
 
     if (targetRef) {
