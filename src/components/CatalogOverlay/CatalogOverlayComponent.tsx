@@ -4,7 +4,7 @@ import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {CARTA} from "carta-protobuf";
+import type {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -14,16 +14,9 @@ import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType,
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, type ProcessedColumnData, toFixed} from "utilities";
+import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
-
-type AxisMatchCandidate = {
-    columnName: string;
-    matchPriority: number;
-    optionIndex: number;
-    patternIndex: number;
-};
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
@@ -38,101 +31,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    private static readonly IncompatibleAxisPriority = Number.MAX_SAFE_INTEGER;
-    static readonly axisDataType = [
-        CARTA.ColumnType.Double,
-        CARTA.ColumnType.Float,
-        CARTA.ColumnType.Int8,
-        CARTA.ColumnType.Uint8,
-        CARTA.ColumnType.Int16,
-        CARTA.ColumnType.Uint16,
-        CARTA.ColumnType.Int32,
-        CARTA.ColumnType.Uint32,
-        CARTA.ColumnType.Int64,
-        CARTA.ColumnType.Uint64
-    ];
-    private static readonly CoordinateColumnExclusionPatterns = [/^e_/i, /(?:^|_)pm(?=$|_|[a-z])/i, /(?:^|_)(?:propermotion|err(?:or)?|sigma|sig|unc(?:ertainty)?|offset|resid(?:ual)?)(?:_|$)/i];
-    private static readonly RightAscensionPatterns = [
-        /^_?ra[._]?icrs\b/i,
-        /^_?raj20\d{2}\b/i,
-        /^_?rab19\d{2}\b/i,
-        /^coord_ra\b/i,
-        /^target_ra\b/i,
-        /^alpha_?j20\d{2}\b/i,
-        /^alpha_?b19\d{2}\b/i,
-        /^alpha_?sky\b/i,
-        /^ra\b/i,
-        /^ra(?:mean|stack)\b/i,
-        /^ra_?deg\b/i,
-        /^ra_/i,
-        /^r\.?a\.?(?:$|[_\s-])/i,
-        /^right[ _-]?asc(?:ension)?\b/i,
-        /^alpha\b/i,
-        /^_?raj(?:\b|[0-9])/i
-    ];
-    private static readonly DeclinationPatterns = [
-        /^_?(?:de|dec)[._]?icrs\b/i,
-        /^_?dej20\d{2}\b/i,
-        /^_?deb19\d{2}\b/i,
-        /^coord_dec\b/i,
-        /^target_dec\b/i,
-        /^delta_?j20\d{2}\b/i,
-        /^delta_?b19\d{2}\b/i,
-        /^delta_?sky\b/i,
-        /^dec\b/i,
-        /^dec(?:mean|stack)\b/i,
-        /^(?:de|dec)_?deg\b/i,
-        /^dec_/i,
-        /^decl(?:ination)?\b/i,
-        /^delta\b/i,
-        /^_?dej(?:\b|[0-9])/i
-    ];
-    private static readonly GalacticLongitudePatterns = [/^glon$/i, /^glon_?deg$/i, /^gal(?:actic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?gal(?:actic)?$/i, /^gal_?l$/i, /^l$/i];
-    private static readonly GalacticLatitudePatterns = [/^glat$/i, /^glat_?deg$/i, /^gal(?:actic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?gal(?:actic)?$/i, /^gal_?b$/i, /^b$/i];
-    private static readonly EclipticLongitudePatterns = [/^elon$/i, /^elon_?deg$/i, /^ecl(?:iptic)?_?lon(?:gitude)?(?:_?deg)?$/i, /^lon_?ecl(?:iptic)?$/i, /^lambda(?:_?(?:deg|j2000))?$/i];
-    private static readonly EclipticLatitudePatterns = [/^elat$/i, /^elat_?deg$/i, /^ecl(?:iptic)?_?lat(?:itude)?(?:_?deg)?$/i, /^lat_?ecl(?:iptic)?$/i, /^beta(?:_?(?:deg|j2000))?$/i];
-    private static readonly Pixel0XPatterns = [/^x$/i, /^xcentroid$/i, /^xcentroid_win$/i, /^xcpeak$/i, /^xpeak$/i];
-    private static readonly Pixel0YPatterns = [/^y$/i, /^ycentroid$/i, /^ycentroid_win$/i, /^ycpeak$/i, /^ypeak$/i];
-    private static readonly Pixel1XPatterns = [/^x_?image$/i, /^xwin_?image$/i];
-    private static readonly Pixel1YPatterns = [/^y_?image$/i, /^ywin_?image$/i];
-    private static readonly AxisAutoSelectPatterns = new Map<CatalogOverlay, RegExp[]>([
-        [CatalogOverlay.RA, CatalogOverlayComponent.RightAscensionPatterns],
-        [CatalogOverlay.DEC, CatalogOverlayComponent.DeclinationPatterns],
-        [CatalogOverlay.GLON, CatalogOverlayComponent.GalacticLongitudePatterns],
-        [CatalogOverlay.GLAT, CatalogOverlayComponent.GalacticLatitudePatterns],
-        [CatalogOverlay.ELON, CatalogOverlayComponent.EclipticLongitudePatterns],
-        [CatalogOverlay.ELAT, CatalogOverlayComponent.EclipticLatitudePatterns],
-        [CatalogOverlay.X0, CatalogOverlayComponent.Pixel0XPatterns],
-        [CatalogOverlay.Y0, CatalogOverlayComponent.Pixel0YPatterns],
-        [CatalogOverlay.X1, CatalogOverlayComponent.Pixel1XPatterns],
-        [CatalogOverlay.Y1, CatalogOverlayComponent.Pixel1YPatterns]
-    ]);
-    private static readonly ExplicitICRSPattern = /(?:^|[_.])icrs(?:$|[_.])/i;
-    private static readonly ExplicitFK5Pattern = /20\d{2}/;
-    private static readonly ExplicitFK4Pattern = /19\d{2}/;
-
-    private static getExplicitEquatorialSystem(columnName: string): CatalogSystemType | undefined {
-        if (CatalogOverlayComponent.ExplicitICRSPattern.test(columnName)) {
-            return CatalogSystemType.ICRS;
-        }
-        if (CatalogOverlayComponent.ExplicitFK4Pattern.test(columnName)) {
-            return CatalogSystemType.FK4;
-        }
-        if (CatalogOverlayComponent.ExplicitFK5Pattern.test(columnName)) {
-            return CatalogSystemType.FK5;
-        }
-        return undefined;
-    }
-
-    private static getExactEquatorialSystemPriority(explicitSystem: CatalogSystemType | undefined, expectedSystem: CatalogSystemType): number {
-        if (explicitSystem === expectedSystem) {
-            return 0;
-        }
-        if (explicitSystem === undefined) {
-            return 1;
-        }
-        return CatalogOverlayComponent.IncompatibleAxisPriority;
-    }
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -413,7 +311,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (isCatalogAxisDataType(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }
@@ -434,89 +332,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             }
 
             const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-            if (!dataType || !CatalogOverlayComponent.axisDataType.includes(dataType) || (!includeHidden && !header.display) || this.isExcludedCoordinateName(columnName)) {
+            if (!isCatalogAxisDataType(dataType) || (!includeHidden && !header.display) || isExcludedCoordinateName(columnName)) {
                 return;
             }
 
             axisOptions.push(columnName);
         });
         return axisOptions;
-    }
-
-    private isExcludedCoordinateName(name: string): boolean {
-        const normalizedName = name
-            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-            .replace(/[^a-zA-Z0-9]+/g, "_")
-            .toLowerCase();
-        return CatalogOverlayComponent.CoordinateColumnExclusionPatterns.some(pattern => pattern.test(normalizedName));
-    }
-
-    private getEquatorialColumnPriority(columnName: string): number {
-        const system = this.profileStore?.catalogCoordinateSystem.system;
-        const explicitSystem = CatalogOverlayComponent.getExplicitEquatorialSystem(columnName.toLowerCase());
-
-        switch (system) {
-            case CatalogSystemType.FK4:
-                return CatalogOverlayComponent.getExactEquatorialSystemPriority(explicitSystem, CatalogSystemType.FK4);
-            case CatalogSystemType.FK5:
-                return CatalogOverlayComponent.getExactEquatorialSystemPriority(explicitSystem, CatalogSystemType.FK5);
-            case CatalogSystemType.ICRS:
-                if (explicitSystem === CatalogSystemType.FK4) {
-                    return CatalogOverlayComponent.IncompatibleAxisPriority;
-                }
-                if (explicitSystem === CatalogSystemType.ICRS) {
-                    return 0;
-                }
-                return explicitSystem === CatalogSystemType.FK5 ? 1 : 2;
-            default:
-                return 0;
-        }
-    }
-
-    private isBetterAxisMatch(candidate: AxisMatchCandidate, bestMatch: AxisMatchCandidate | undefined): boolean {
-        return (
-            !bestMatch ||
-            candidate.matchPriority < bestMatch.matchPriority ||
-            (candidate.matchPriority === bestMatch.matchPriority && candidate.patternIndex < bestMatch.patternIndex) ||
-            (candidate.matchPriority === bestMatch.matchPriority && candidate.patternIndex === bestMatch.patternIndex && candidate.optionIndex < bestMatch.optionIndex)
-        );
-    }
-
-    private findPreferredAxisColumn(axisLabel: CatalogOverlay, axisOptions: string[], patterns: RegExp[]): string | undefined {
-        let bestMatch: AxisMatchCandidate | undefined;
-        const usesEquatorialPriority = axisLabel === CatalogOverlay.RA || axisLabel === CatalogOverlay.DEC;
-
-        axisOptions.forEach((option, optionIndex) => {
-            const patternIndex = patterns.findIndex(pattern => pattern.test(option));
-            if (patternIndex === -1) {
-                return;
-            }
-
-            const matchPriority = usesEquatorialPriority ? this.getEquatorialColumnPriority(option) : 0;
-            if (matchPriority >= CatalogOverlayComponent.IncompatibleAxisPriority) {
-                return;
-            }
-
-            const candidate = {columnName: option, matchPriority, optionIndex, patternIndex};
-            if (this.isBetterAxisMatch(candidate, bestMatch)) {
-                bestMatch = candidate;
-            }
-        });
-
-        return bestMatch?.columnName;
-    }
-
-    private findAutoSelectedAxisColumn(axisLabel: CatalogOverlay, currentAxis: string, axisOptions: string[]): string | undefined {
-        if (currentAxis !== CatalogOverlay.NONE) {
-            return undefined;
-        }
-
-        const patterns = CatalogOverlayComponent.AxisAutoSelectPatterns.get(axisLabel);
-        if (!patterns) {
-            return undefined;
-        }
-
-        return this.findPreferredAxisColumn(axisLabel, axisOptions, patterns);
     }
 
     private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
@@ -545,8 +367,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
         }
 
-        const xColumnName = selectXAxis ? this.findAutoSelectedAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions) : undefined;
-        const yColumnName = selectYAxis ? this.findAutoSelectedAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions) : undefined;
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        const xColumnName = selectXAxis ? findAutoSelectedCatalogAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, system) : undefined;
+        const yColumnName = selectYAxis ? findAutoSelectedCatalogAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, system) : undefined;
 
         let enabledHiddenColumnsResult = false;
         if (enableHiddenColumns) {
@@ -688,37 +511,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private static GetDataType(type: CARTA.ColumnType) {
-        switch (type) {
-            case CARTA.ColumnType.Bool:
-                return "bool";
-            case CARTA.ColumnType.Int8:
-                return "byte";
-            case CARTA.ColumnType.Int16:
-                return "short";
-            case CARTA.ColumnType.Int32:
-                return "int";
-            case CARTA.ColumnType.Int64:
-                return "long";
-            case CARTA.ColumnType.Uint8:
-                return "unsigned byte";
-            case CARTA.ColumnType.Uint16:
-                return "unsigned short";
-            case CARTA.ColumnType.Uint32:
-                return "unsigned int";
-            case CARTA.ColumnType.Uint64:
-                return "unsigned long";
-            case CARTA.ColumnType.Double:
-                return "double";
-            case CARTA.ColumnType.Float:
-                return "float";
-            case CARTA.ColumnType.String:
-                return "string";
-            default:
-                return "unsupported";
-        }
-    }
-
     private createHeaderTable() {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
@@ -738,7 +530,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             headerNames.push(header.name);
             headerDescriptions.push(header.description);
             units.push(header.units);
-            types.push(CatalogOverlayComponent.GetDataType(header.dataType));
+            types.push(getCatalogDataTypeDisplayName(header.dataType));
         }
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);

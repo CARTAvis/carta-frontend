@@ -248,19 +248,6 @@ afterEach(() => {
 });
 
 describe("CatalogOverlayComponent", () => {
-    describe("isExcludedCoordinateName", () => {
-        test("excludes coordinate-error tokens but not similar words", () => {
-            const {component} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-
-            expect(component["isExcludedCoordinateName"]("deterrence")).toBe(false);
-            expect(component["isExcludedCoordinateName"]("design")).toBe(false);
-            expect(component["isExcludedCoordinateName"]("ra_error")).toBe(true);
-            expect(component["isExcludedCoordinateName"]("sigma_ra")).toBe(true);
-            expect(component["isExcludedCoordinateName"]("pmdec")).toBe(true);
-            expect(component["isExcludedCoordinateName"]("raOffset")).toBe(true);
-        });
-    });
-
     describe("autoSelectAxes", () => {
         test.each([
             ["FK5", CatalogSystemType.FK5, [{name: "flux"}, {name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000"],
