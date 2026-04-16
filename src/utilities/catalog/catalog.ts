@@ -9,6 +9,12 @@ type AxisMatchCandidate = {
     patternIndex: number;
 };
 
+enum AxisMatchPriority {
+    Exact = 0,
+    Compatible = 1,
+    Generic = 2
+}
+
 const INCOMPATIBLE_AXIS_PRIORITY = Number.MAX_SAFE_INTEGER;
 const CATALOG_AXIS_DATA_TYPES: CARTA.ColumnType[] = [
     CARTA.ColumnType.Double,
@@ -153,10 +159,10 @@ function getExplicitEquatorialSystem(columnName: string): CatalogSystemType | un
 
 function getExactEquatorialSystemPriority(explicitSystem: CatalogSystemType | undefined, expectedSystem: CatalogSystemType): number {
     if (explicitSystem === expectedSystem) {
-        return 0;
+        return AxisMatchPriority.Exact;
     }
     if (explicitSystem === undefined) {
-        return 1;
+        return AxisMatchPriority.Compatible;
     }
     return INCOMPATIBLE_AXIS_PRIORITY;
 }
@@ -174,11 +180,11 @@ function getEquatorialColumnPriority(columnName: string, system: CatalogSystemTy
                 return INCOMPATIBLE_AXIS_PRIORITY;
             }
             if (explicitSystem === CatalogSystemType.ICRS) {
-                return 0;
+                return AxisMatchPriority.Exact;
             }
-            return explicitSystem === CatalogSystemType.FK5 ? 1 : 2;
+            return explicitSystem === CatalogSystemType.FK5 ? AxisMatchPriority.Compatible : AxisMatchPriority.Generic;
         default:
-            return 0;
+            return AxisMatchPriority.Exact;
     }
 }
 
