@@ -59,6 +59,7 @@ interface CatalogScatterWebGLProps {
     hasSelection: boolean;
     pointSize?: number;
     darkMode?: boolean;
+    onRef?: (ref: CatalogScatterWebGL | null) => void;
 }
 
 function parseColor(hex: string): [number, number, number, number] {
@@ -69,8 +70,8 @@ function parseColor(hex: string): [number, number, number, number] {
 }
 
 export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProps> {
-    private canvasRef = React.createRef<HTMLCanvasElement>();
-    private gl: WebGL2RenderingContext | null = null;
+    public canvasRef = React.createRef<HTMLCanvasElement>();
+    public gl: WebGL2RenderingContext | null = null;
     private shaderProgram: WebGLProgram | null = null;
     private positionBuffer: WebGLBuffer | null = null;
     private selectedBuffer: WebGLBuffer | null = null;
@@ -79,6 +80,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     componentDidMount() {
         this.initGL();
         this.draw();
+        this.props.onRef?.(this);
     }
 
     componentDidUpdate() {
@@ -86,6 +88,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     }
 
     componentWillUnmount() {
+        this.props.onRef?.(null);
         const gl = this.gl;
         if (gl) {
             if (this.positionBuffer) {
@@ -106,7 +109,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             return;
         }
 
-        const gl = canvas.getContext("webgl2", {alpha: true, premultipliedAlpha: false});
+        const gl = canvas.getContext("webgl2", {alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true});
         if (!gl) {
             console.error("WebGL2 not available for catalog scatter");
             return;
@@ -134,7 +137,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.selectedBuffer = gl.createBuffer();
     }
 
-    private draw() {
+    public draw() {
         const {gl, shaderProgram} = this;
         const {width, height, chartArea, xData, yData, xMin, xMax, yMin, yMax, selectedIndices, pointSize} = this.props;
 
@@ -212,6 +215,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
         gl.disable(GL2.SCISSOR_TEST);
         gl.disable(GL2.BLEND);
+        gl.finish();
     }
 
     render() {
@@ -219,6 +223,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         return (
             <canvas
                 ref={this.canvasRef}
+                data-overlay="true"
                 width={width * (window.devicePixelRatio || 1)}
                 height={height * (window.devicePixelRatio || 1)}
                 style={{
