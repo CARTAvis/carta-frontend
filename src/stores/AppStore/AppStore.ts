@@ -2812,12 +2812,6 @@ export class AppStore {
 
     @flow.bound
     public *saveWorkspace(name: string) {
-        const layoutModel = this.layoutStore.layoutModel;
-        if (layoutModel && layoutModel.getwindowsMap().size > 1) {
-            this.alertStore.showAlert("Cannot save workspace while popout windows are open. Please close all popout windows first.");
-            return false;
-        }
-
         const workspace: Workspace = {
             workspaceVersion: 0,
             frontendVersion: CARTA_INFO.version,
