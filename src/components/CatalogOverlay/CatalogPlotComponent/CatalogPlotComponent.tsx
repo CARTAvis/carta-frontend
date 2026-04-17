@@ -908,8 +908,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        // Find the Chart.js canvas via the DOM
-        const scatterContainer = document.querySelector<HTMLElement>('[data-testid="catalog-scatter-plot"] .scatter-plot-component');
+        // Find the Chart.js canvas scoped to the same widget instance by navigating
+        // from the WebGL overlay canvas up to its scatter-plot-component container.
+        const scatterContainer = webglCanvas.closest<HTMLElement>(".scatter-plot-component");
         const chartCanvas = scatterContainer?.querySelector<HTMLCanvasElement>("canvas:not([data-overlay])");
         if (!chartCanvas) {
             return;

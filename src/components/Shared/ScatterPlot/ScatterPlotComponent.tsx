@@ -178,7 +178,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onKeyDown = (ev: React.KeyboardEvent) => {
-        if (this.isSelecting && ev.key === "Escape") {
+        if ((this.isSelecting || this.isLassoSelecting) && ev.key === "Escape") {
             this.endInteractions();
         }
     };
