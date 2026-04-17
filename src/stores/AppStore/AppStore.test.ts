@@ -102,4 +102,52 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
         expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
     });
+
+    test("does not replot for column-update responses", () => {
+        const processedData = new Map<number, unknown>();
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.FK5},
+            get2DPlotData: jest.fn(() => ({
+                wcsX: [1.1],
+                wcsY: [2.2],
+                xHeaderInfo: {units: "deg"},
+                yHeaderInfo: {units: "deg"}
+            })),
+            isUpdateColumnMode: true,
+            setLoadingDataStatus: jest.fn(),
+            setProgress: jest.fn(),
+            setUpdatingDataStream: jest.fn(),
+            updateCatalogData: jest.fn(() => {
+                profileStore.isUpdateColumnMode = false;
+            }),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        const widgetStore = {
+            setPlottedImageOverlayState: jest.fn(),
+            xAxis: "RAJ2000",
+            yAxis: "_DEJ2000"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogWidgets.set(1, "widget-1");
+        widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
+
+        jest.spyOn(ProtobufProcessing, "ProcessCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({validWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            fileId: 1,
+            progress: 1,
+            subsetDataSize: 1,
+            subsetEndIndex: 1
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
+        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(convertSpy).not.toHaveBeenCalled();
+        expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
+    });
 });

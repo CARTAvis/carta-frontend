@@ -245,6 +245,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const shouldUpdateFilter = (val === true || (header?.filter !== "" && val === false)) && profileStore?.isFileBasedCatalog;
 
         if (shouldUpdateFilter) {
+            profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore?.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }

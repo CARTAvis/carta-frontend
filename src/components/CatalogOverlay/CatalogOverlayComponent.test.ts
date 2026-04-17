@@ -463,6 +463,18 @@ describe("CatalogOverlayComponent", () => {
     });
 
     describe("handleHeaderDisplayChange", () => {
+        test("uses table update mode for file-based column display updates", () => {
+            const {component, profileStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], "RAJ2000", "_DEJ2000");
+            profileStore.isFileBasedCatalog = true;
+            component["handleFilterRequest"] = jest.fn();
+
+            component["handleHeaderDisplayChange"]({target: {checked: true}}, "_RAJ2000");
+
+            expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
+            expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
+            expect(component["handleFilterRequest"]).toHaveBeenCalled();
+        });
+
         test("reselects visible coordinate axes when columns are toggled back on from None", () => {
             const {component, widgetStore} = createComponentHarness(
                 CatalogSystemType.ICRS,
