@@ -457,17 +457,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onScatterCursorMoved = (x: number, y: number) => {
         const scatter = this.scatterData;
-        if (scatter.xData.length > 0) {
-            const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
-            const idx = closestPointIndexToCursor({x, y}, points);
-            this.cursorNearestScatterPoint = points[idx];
-            const widgetStore = this.widgetStore;
-            if (widgetStore) {
-                widgetStore.setIndicator({x: this.cursorNearestScatterPoint.x, y: this.cursorNearestScatterPoint.y});
-            }
-        } else {
+        if (scatter.xData.length === 0) {
             this.cursorNearestScatterPoint = undefined;
+            return;
         }
+        const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
+        const nearest = points[closestPointIndexToCursor({x, y}, points)];
+        this.cursorNearestScatterPoint = nearest;
+        this.widgetStore?.setIndicator(nearest);
     };
 
     private onDoubleClick = () => {
@@ -481,15 +478,25 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (initBorder) {
                 widgetsStore.setScatterborder(initBorder);
             }
-            // Also deselect on double-click
             this.onDeselect();
         } else {
             const initBorder = this.initHistogramXBorder;
             if (initBorder) {
-                widgetsStore?.setHistogramXBorder(initBorder);
+                widgetsStore.setHistogramXBorder(initBorder);
             }
         }
     };
+
+    private selectCatalogPoints(rawIndices: number[]) {
+        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.catalogWidgetStore;
+        if (!rawIndices.length || !profileStore || !catalogWidgetStore) {
+            return;
+        }
+        CatalogStore.Instance.updateCatalogProfiles(profileStore.catalogInfo.fileId);
+        profileStore.setSelectedPointIndices(profileStore.getOriginIndices(rawIndices), true);
+        catalogWidgetStore.setCatalogTableAutoScroll(true);
+    }
 
     private onScatterZoomedXY = (xMin: number, xMax: number, yMin: number, yMax: number) => {
         const widgetStore = this.widgetStore;
@@ -497,101 +504,47 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             widgetStore.setScatterborder({xMin, xMax, yMin, yMax});
         }
     };
-    // Box selection handler for scatter plots
+
     private onBoxSelected = (xMin: number, xMax: number, yMin: number, yMax: number) => {
-        const profileStore = this.profileStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
-        const widgetStore = this.widgetStore;
-        if (!profileStore || !catalogWidgetStore || !widgetStore) {
-            return;
-        }
-
-        const catalogStore = CatalogStore.Instance;
-        const catalogFileId = profileStore.catalogInfo.fileId;
-        catalogStore.updateCatalogProfiles(catalogFileId);
-
         const scatter = this.scatterData;
-        const selectedPointIndices: number[] = [];
         const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        const selected: number[] = [];
         for (let i = 0; i < numPoints; i++) {
-            const x = scatter.xData[i];
-            const y = scatter.yData[i];
-            if (x >= xMin && x <= xMax && y >= yMin && y <= yMax) {
-                selectedPointIndices.push(i);
+            if (scatter.xData[i] >= xMin && scatter.xData[i] <= xMax && scatter.yData[i] >= yMin && scatter.yData[i] <= yMax) {
+                selected.push(i);
             }
         }
-
-        if (selectedPointIndices.length) {
-            const matched = profileStore.getOriginIndices(selectedPointIndices);
-            profileStore.setSelectedPointIndices(matched, true);
-            catalogWidgetStore.setCatalogTableAutoScroll(true);
-        }
+        this.selectCatalogPoints(selected);
     };
 
-    // Lasso selection handler for scatter plots
     private onLassoSelected = (polygon: Point2D[]) => {
-        const profileStore = this.profileStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
-        const widgetStore = this.widgetStore;
-        if (!profileStore || !catalogWidgetStore || !widgetStore || polygon.length < 3) {
+        if (polygon.length < 3) {
             return;
         }
-
-        const catalogStore = CatalogStore.Instance;
-        const catalogFileId = profileStore.catalogInfo.fileId;
-        catalogStore.updateCatalogProfiles(catalogFileId);
-
         const scatter = this.scatterData;
-        const selectedPointIndices: number[] = [];
         const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        const selected: number[] = [];
         for (let i = 0; i < numPoints; i++) {
             if (pointInPolygon({x: scatter.xData[i], y: scatter.yData[i]}, polygon)) {
-                selectedPointIndices.push(i);
+                selected.push(i);
             }
         }
-
-        if (selectedPointIndices.length) {
-            const matched = profileStore.getOriginIndices(selectedPointIndices);
-            profileStore.setSelectedPointIndices(matched, true);
-            catalogWidgetStore.setCatalogTableAutoScroll(true);
-        }
+        this.selectCatalogPoints(selected);
     };
 
-    // Single-click handler for scatter plots
     private onGraphClicked = (x: number, y: number, _data: {x: number; y: number; z?: number}[]) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        const isInDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
-        const profileStore = this.profileStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
-        if (!isInDragmode || !profileStore || !catalogWidgetStore) {
+        if (!widgetStore || !selectionMode.includes(widgetStore.dragmode)) {
             return;
         }
-
-        const catalogStore = CatalogStore.Instance;
-        const catalogFileId = profileStore.catalogInfo.fileId;
-        catalogStore.updateCatalogProfiles(catalogFileId);
-
-        // Find nearest point to click
         const scatter = this.scatterData;
-        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
-        let minDist = Infinity;
-        let nearestIndex = -1;
-        for (let i = 0; i < numPoints; i++) {
-            const dx = scatter.xData[i] - x;
-            const dy = scatter.yData[i] - y;
-            const dist = dx * dx + dy * dy;
-            if (dist < minDist) {
-                minDist = dist;
-                nearestIndex = i;
-            }
+        if (!scatter.xData.length) {
+            return;
         }
-
-        if (nearestIndex >= 0) {
-            const matched = profileStore.getOriginIndices([nearestIndex]);
-            profileStore.setSelectedPointIndices(matched, true);
-            catalogWidgetStore.setCatalogTableAutoScroll(true);
-        }
+        const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
+        const nearestIndex = closestPointIndexToCursor({x, y}, points);
+        this.selectCatalogPoints([nearestIndex]);
     };
 
     private handlePlotClick = () => {
@@ -602,36 +555,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             profileStore.setUpdatingDataStream(true);
             const catalogFilter = profileStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
-        }
-    };
-
-    // region selection - histogram box selection
-    private onHistogramBoxSelected = (xMin: number, xMax: number) => {
-        const profileStore = this.profileStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
-        if (!profileStore || !catalogWidgetStore) {
-            return;
-        }
-
-        const catalogStore = CatalogStore.Instance;
-        const catalogFileId = profileStore.catalogInfo.fileId;
-        catalogStore.updateCatalogProfiles(catalogFileId);
-
-        const histogram = this.histogramData;
-        const selectedPointIndices: number[] = [];
-        for (let i = 0; i < histogram.bins.length; i++) {
-            const binLeft = histogram.start + i * histogram.binSize;
-            const binRight = binLeft + histogram.binSize;
-            // Check if bin overlaps with selection range
-            if (binRight >= xMin && binLeft <= xMax) {
-                selectedPointIndices.push(...histogram.binIndices[i]);
-            }
-        }
-
-        if (selectedPointIndices.length) {
-            const matched = profileStore.getOriginIndices(selectedPointIndices);
-            profileStore.setSelectedPointIndices(matched, true);
-            catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
 
@@ -779,22 +702,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private selectHistogramBinsInRange(xMin: number, xMax: number) {
-        const profileStore = this.profileStore;
-        if (!profileStore) {
-            return;
-        }
         const {bins, binSize, binIndices} = this.histogramData;
-        const indicesInRange: number[] = [];
+        const selected: number[] = [];
         for (let i = 0; i < bins.length; i++) {
             const halfBin = binSize / 2;
             if (bins[i].x + halfBin >= xMin && bins[i].x - halfBin <= xMax) {
-                indicesInRange.push(...binIndices[i]);
+                selected.push(...binIndices[i]);
             }
         }
-        if (indicesInRange.length) {
-            profileStore.setSelectedPointIndices(profileStore.getOriginIndices(indicesInRange), true);
-            this.catalogWidgetStore?.setCatalogTableAutoScroll(true);
-        }
+        this.selectCatalogPoints(selected);
     }
 
     private histogramDragStartX: number | undefined;
@@ -815,23 +731,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onHistogramMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+        const offsetX = event.nativeEvent.offsetX;
         const chart = this.histogramPlotRef;
         const widgetStore = this.widgetStore;
         if (this.histogramPanPrevX !== undefined && chart && widgetStore) {
             const xScale = chart.scales["x"];
             if (xScale) {
                 const prevVal = xScale.getValueForPixel(this.histogramPanPrevX);
-                const currentVal = xScale.getValueForPixel(event.nativeEvent.offsetX);
+                const currentVal = xScale.getValueForPixel(offsetX);
                 if (prevVal !== undefined && currentVal !== undefined) {
                     const delta = prevVal - currentVal;
                     const currentMin = xScale.min;
                     const currentMax = xScale.max;
                     widgetStore.setHistogramXBorder({xMin: currentMin + delta, xMax: currentMax + delta});
                 }
-                this.histogramPanPrevX = event.nativeEvent.offsetX;
+                this.histogramPanPrevX = offsetX;
             }
         } else if (this.histogramDragStartX !== undefined) {
-            this.histogramDragCurrentX = event.nativeEvent.offsetX;
+            this.histogramDragCurrentX = offsetX;
             this.histogramPlotRef?.draw();
         }
     };
@@ -876,9 +793,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!ctx) {
             return;
         }
-        const isDarkTheme = AppStore.Instance.darkTheme;
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
-        ctx.fillRect(0, 0, composed.width, composed.height);
+        this.fillPlotBackground(ctx, composed.width, composed.height);
         ctx.drawImage(chart.canvas, 0, 0);
         const columnName = this.widgetStore?.xColumnName ?? "histogram";
         this.downloadCanvasAsPng(composed, `catalog-histogram-${columnName}`);
@@ -892,6 +807,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const content = comment + "\n" + rows.join("\n");
         exportTsvFile("catalog", `histogram-${columnName}`, content);
     };
+
+    private fillPlotBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
+        const isDarkTheme = AppStore.Instance.darkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, width, height);
+    }
 
     private readWebGLPixelsFlipped(gl: WebGL2RenderingContext, canvas: HTMLCanvasElement): ImageData {
         const {width, height} = canvas;
@@ -912,9 +833,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         composed.height = chartCanvas.height;
         const ctx = composed.getContext("2d")!;
 
-        const isDarkTheme = AppStore.Instance.darkTheme;
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
-        ctx.fillRect(0, 0, composed.width, composed.height);
+        this.fillPlotBackground(ctx, composed.width, composed.height);
         ctx.drawImage(chartCanvas, 0, 0);
 
         const webglImageData = this.readWebGLPixelsFlipped(gl, webglCanvas);

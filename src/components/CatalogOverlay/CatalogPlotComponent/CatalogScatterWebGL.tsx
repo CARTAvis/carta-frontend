@@ -76,7 +76,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private positionBuffer: WebGLBuffer | null = null;
     private selectedBuffer: WebGLBuffer | null = null;
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
-    // Cached typed arrays to avoid per-frame GC churn on large datasets
     private positionData: Float32Array = new Float32Array(0);
     private selectedData: Float32Array = new Float32Array(0);
 
@@ -188,7 +187,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enable(GL2.BLEND);
         gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
 
-        // Upload position data (interleaved x, y) — re-use cached arrays, only reallocate on length change
         const numPoints = Math.min(xData.length, yData.length);
         if (this.positionData.length !== numPoints * 2) {
             this.positionData = new Float32Array(numPoints * 2);
@@ -202,25 +200,21 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             this.selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
         }
 
-        // Position attribute
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.positionBuffer);
         gl.bufferData(GL2.ARRAY_BUFFER, this.positionData, GL2.DYNAMIC_DRAW);
         const posLoc = gl.getAttribLocation(shaderProgram, "aPosition");
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
-        // Selected attribute
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.selectedBuffer);
         gl.bufferData(GL2.ARRAY_BUFFER, this.selectedData, GL2.DYNAMIC_DRAW);
         const selLoc = gl.getAttribLocation(shaderProgram, "aSelected");
         gl.enableVertexAttribArray(selLoc);
         gl.vertexAttribPointer(selLoc, 1, GL2.FLOAT, false, 0, 0);
 
-        // Uniforms
         gl.uniform2f(this.uniforms.uRangeMin, xMin, yMin);
         gl.uniform2f(this.uniforms.uRangeMax, xMax, yMax);
 
-        // Viewport in CSS-pixel coordinates, scaled by DPR
         const viewLeft = chartArea.left * dpr;
         const viewTop = chartArea.top * dpr;
         const viewWidth = (chartArea.right - chartArea.left) * dpr;
@@ -237,7 +231,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.uniform4fv(this.uniforms.uColor, blueColor);
         gl.uniform4fv(this.uniforms.uSelectedColor, redColor);
 
-        // Enable scissor test to clip to chart area
         gl.enable(GL2.SCISSOR_TEST);
         gl.scissor(Math.floor(viewLeft), Math.floor(canvas.height - viewTop - viewHeight), Math.ceil(viewWidth), Math.ceil(viewHeight));
 
