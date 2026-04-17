@@ -31,7 +31,13 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
     const binSize = (end - start) / numBins;
 
     if (binSize <= 0) {
-        return {bins: [{x: minVal, y: data.length}], binSize: 0, start: minVal, binIndices: [Array.from({length: data.length}, (_, i) => i)]};
+        const validIndices: number[] = [];
+        for (let i = 0; i < data.length; i++) {
+            if (!isNaN(data[i])) {
+                validIndices.push(i);
+            }
+        }
+        return {bins: [{x: minVal, y: validIndices.length}], binSize: 0, start: minVal, binIndices: [validIndices]};
     }
 
     const counts = new Array<number>(numBins).fill(0);
