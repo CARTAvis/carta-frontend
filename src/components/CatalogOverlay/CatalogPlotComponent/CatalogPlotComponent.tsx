@@ -498,13 +498,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (initBorder) {
                 widgetsStore.setScatterborder(initBorder);
             }
-            this.onDeselect();
         } else {
             const initBorder = this.initHistogramXBorder;
             if (initBorder) {
                 widgetsStore.setHistogramXBorder(initBorder);
             }
         }
+
+        this.onDeselect();
     };
 
     private selectCatalogPoints(rawIndices: number[]) {
