@@ -781,6 +781,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramDragStartX: number | undefined;
     private histogramDragCurrentX: number | undefined;
     private histogramPanPrevX: number | undefined;
+    private histogramDragHandled = false;
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
@@ -812,6 +813,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         } else if (this.histogramDragStartX !== undefined) {
             this.histogramDragCurrentX = event.nativeEvent.offsetX;
+            this.histogramPlotRef?.draw();
         }
     };
 
@@ -822,15 +824,34 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
         const chart = this.histogramPlotRef;
         const widgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
             const xScale = chart.scales["x"];
-            if (xScale) {
+            if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
+                this.histogramDragHandled = true;
                 const x1 = xScale.getValueForPixel(this.histogramDragStartX);
                 const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
-                if (x1 !== undefined && x2 !== undefined && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
+                if (x1 !== undefined && x2 !== undefined) {
                     const newMin = Math.min(x1, x2);
                     const newMax = Math.max(x1, x2);
-                    widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
+                    if (widgetStore.histogramDragMode === "select" && profileStore) {
+                        const histData = this.histogramData;
+                        const selectedPointIndices: number[] = [];
+                        for (let i = 0; i < histData.bins.length; i++) {
+                            const binCenter = histData.bins[i].x;
+                            const halfBin = histData.binSize / 2;
+                            if (binCenter + halfBin >= newMin && binCenter - halfBin <= newMax) {
+                                selectedPointIndices.push(...histData.binIndices[i]);
+                            }
+                        }
+                        if (selectedPointIndices.length) {
+                            const matched = profileStore.getOriginIndices(selectedPointIndices);
+                            profileStore.setSelectedPointIndices(matched, true);
+                            this.catalogWidgetStore?.setCatalogTableAutoScroll(true);
+                        }
+                    } else {
+                        widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
+                    }
                 }
             }
         }
@@ -1245,7 +1266,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     }
                 },
                 onClick: (_event, elements) => {
-                    if (elements.length > 0) {
+                    // Skip if a drag action (zoom/select) was just handled
+                    if (this.histogramDragHandled) {
+                        this.histogramDragHandled = false;
+                        return;
+                    }
+                    if (widgetStore.histogramDragMode === "select" && elements.length > 0) {
                         const binIndex = elements[0].index;
                         if (histData.binIndices[binIndex]?.length) {
                             const matched = profileStore.getOriginIndices(histData.binIndices[binIndex]);
@@ -1309,6 +1335,38 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             };
 
+            const dragBoxPlugin: Plugin<"bar"> = {
+                id: "dragBoxPlugin",
+                afterDraw: (chart: Chart) => {
+                    if (this.histogramDragStartX === undefined || this.histogramDragCurrentX === undefined) {
+                        return;
+                    }
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) {
+                        return;
+                    }
+                    const startX = Math.max(this.histogramDragStartX, chartArea.left);
+                    const endX = Math.min(this.histogramDragCurrentX, chartArea.right);
+                    const boxWidth = endX - startX;
+                    ctx.save();
+                    ctx.fillStyle = Colors.GRAY3;
+                    ctx.globalAlpha = 0.2;
+                    ctx.fillRect(startX, chartArea.top, boxWidth, chartArea.bottom - chartArea.top);
+                    ctx.globalAlpha = 1.0;
+                    ctx.strokeStyle = Colors.GRAY3;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, chartArea.top);
+                    ctx.lineTo(startX, chartArea.bottom);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(endX, chartArea.top);
+                    ctx.lineTo(endX, chartArea.bottom);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            };
+
             const histogramChartData = {
                 datasets: [
                     {
@@ -1343,8 +1401,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             onMouseUp={this.onHistogramMouseUp}
                             onDoubleClick={this.onDoubleClick}
                         >
-                            <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin]} />
+                            <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
                             <ToolbarComponent darkMode={isDarkTheme} visible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
+                                <Tooltip content="Box select">
+                                    <AnchorButton icon="widget" active={widgetStore.histogramDragMode === "select"} onClick={() => widgetStore.setHistogramDragMode("select")} />
+                                </Tooltip>
                                 <Tooltip content="Zoom">
                                     <AnchorButton icon="zoom-in" active={widgetStore.histogramDragMode === "zoom"} onClick={() => widgetStore.setHistogramDragMode("zoom")} />
                                 </Tooltip>
