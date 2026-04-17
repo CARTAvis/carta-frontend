@@ -506,13 +506,13 @@ export class WidgetsStore {
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
-                itemId = this.addCatalogPlotWidget(scatterProps);
+                itemId = this.addCatalogPlotWidget(scatterProps, preAssignedId);
                 const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
                 break;
             case CatalogPlotType.Histogram:
                 const histogramProps: CatalogPlotWidgetStoreProps = {xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram};
-                itemId = this.addCatalogPlotWidget(histogramProps);
+                itemId = this.addCatalogPlotWidget(histogramProps, preAssignedId);
                 const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
                 break;
@@ -814,11 +814,12 @@ export class WidgetsStore {
                     if (grandparent) {
                         const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
                         const nearestSibling = tabsetIndex > 0 ? grandparent.getChildren()[tabsetIndex - 1] : grandparent.getChildren()[tabsetIndex + 1];
+                        const isAlone = tabsetNode.getChildren().length === 1;
                         for (const child of tabsetNode.getChildren()) {
                             this.popoutPositions.set(child.getId(), {
                                 parentTabsetId: tabsetNode.getId(),
                                 tabIndex: tabsetNode.getChildren().indexOf(child),
-                                wasAlone: true,
+                                wasAlone: isAlone,
                                 grandparentId: grandparent.getId(),
                                 tabsetIndexInParent: tabsetIndex,
                                 tabsetWeight: tabsetNode.getWeight(),
@@ -866,11 +867,34 @@ export class WidgetsStore {
                 const remainingTabs = tabNodes.filter(t => !floatingTabs.includes(t));
                 const allHavePositions = remainingTabs.length > 0 && remainingTabs.every(t => this.popoutPositions.has(t.getId()));
                 if (allHavePositions) {
+                    // Sort tabs by tabIndex so multi-tab tabsets restore in original order
+                    remainingTabs.sort((a, b) => {
+                        const posA = this.popoutPositions.get(a.getId())!;
+                        const posB = this.popoutPositions.get(b.getId())!;
+                        return posA.tabIndex - posB.tabIndex;
+                    });
+
+                    // Track newly-created tabsets for popped-out multi-tab tabsets
+                    // Maps original parentTabsetId → new tabset ID after first tab is restored
+                    const recreatedTabsets = new Map<string, string>();
+
                     for (const tabNode of remainingTabs) {
                         const tabId = tabNode.getId();
                         const savedPos = this.popoutPositions.get(tabId)!;
 
                         if (!savedPos.wasAlone) {
+                            // Check if another tab from the same tabset already recreated it
+                            const newTabsetId = recreatedTabsets.get(savedPos.parentTabsetId);
+                            if (newTabsetId) {
+                                const newTabset = layoutModel.getNodeById(newTabsetId);
+                                if (newTabset) {
+                                    const clampedIndex = Math.min(savedPos.tabIndex, newTabset.getChildren().length);
+                                    layoutModel.doAction(Actions.moveNode(tabId, newTabsetId, DockLocation.CENTER, clampedIndex));
+                                    this.popoutPositions.delete(tabId);
+                                    continue;
+                                }
+                            }
+
                             const originalTabset = layoutModel.getNodeById(savedPos.parentTabsetId);
                             if (originalTabset) {
                                 const clampedIndex = Math.min(savedPos.tabIndex, originalTabset.getChildren().length);
@@ -884,6 +908,14 @@ export class WidgetsStore {
                         if (grandparentRow) {
                             const clampedIndex = Math.min(savedPos.tabsetIndexInParent, grandparentRow.getChildren().length);
                             layoutModel.doAction(Actions.moveNode(tabId, savedPos.grandparentId, DockLocation.CENTER, clampedIndex));
+                            // Track the new tabset so sibling tabs from the same popped-out tabset rejoin it
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
                             this.popoutPositions.delete(tabId);
                             continue;
                         }
@@ -900,6 +932,14 @@ export class WidgetsStore {
                                     location = savedPos.wasBeforeSibling ? DockLocation.LEFT : DockLocation.RIGHT;
                                 }
                                 layoutModel.doAction(Actions.moveNode(tabId, savedPos.siblingTabsetId, location, -1));
+                                // Track new tabset for sibling tabs
+                                if (!savedPos.wasAlone) {
+                                    const restoredTab = layoutModel.getNodeById(tabId);
+                                    const parentId = restoredTab?.getParent()?.getId();
+                                    if (parentId) {
+                                        recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                    }
+                                }
                                 this.popoutPositions.delete(tabId);
                                 continue;
                             }
@@ -909,6 +949,13 @@ export class WidgetsStore {
                         const root = layoutModel.getRoot();
                         if (root) {
                             layoutModel.doAction(Actions.moveNode(tabId, root.getId(), DockLocation.CENTER, -1));
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
                         }
                         this.popoutPositions.delete(tabId);
                     }

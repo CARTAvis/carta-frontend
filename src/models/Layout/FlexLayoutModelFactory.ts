@@ -351,6 +351,11 @@ function extractTabNode(node: any): any {
         id: widgetType
     };
 
+    // Preserve original instance ID so EnrichSaveConfig can look up per-instance widget stores
+    if (id !== widgetType) {
+        result._instanceId = id;
+    }
+
     // Extract widget settings from config
     if (node.config?.widgetSettings) {
         result.widgetSettings = node.config.widgetSettings;

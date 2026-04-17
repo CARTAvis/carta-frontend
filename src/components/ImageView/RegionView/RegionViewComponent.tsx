@@ -115,6 +115,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.cleanupPopoutDragListeners();
     }
 
     @action componentDidUpdate(prevProps) {

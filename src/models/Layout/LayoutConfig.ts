@@ -220,22 +220,27 @@ export class LayoutConfig {
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
                 LayoutConfig.EnrichSaveConfig(appStore, child);
             } else if (child.type === "component" && child.id) {
+                // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
+                // since child.id is the collapsed base type (e.g. "catalog-plot")
+                const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
                 let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
                 if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                    const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
+                    const catalogFileId = CatalogStore.Instance.catalogProfiles.get(instanceId) ?? NaN;
                     const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                     widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
                 } else {
-                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 }
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
                 }
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(child.id);
+                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
                 if (plotWidget) {
                     child.plotType = plotWidget.plotType;
                 }
+                // Clean up internal field so it doesn't persist in saved layouts
+                delete child._instanceId;
             }
         }
     };
