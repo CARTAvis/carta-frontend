@@ -47,6 +47,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramPlotRef: Chart<"bar"> | null = null;
     private cursorNearestScatterPoint: {x: number; y: number} | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
+    private webglOverlayRef: CatalogScatterWebGL | null = null;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -873,6 +874,101 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         exportTsvFile("catalog", `histogram-${columnName}`, content);
     };
 
+    private exportScatterImage = () => {
+        const webgl = this.webglOverlayRef;
+        if (!webgl) {
+            return;
+        }
+        // Force a fresh draw to ensure the WebGL buffer has current content
+        webgl.draw();
+        const gl = webgl.gl;
+        const webglCanvas = webgl.canvasRef.current;
+        if (!gl || !webglCanvas || webglCanvas.width === 0 || webglCanvas.height === 0) {
+            return;
+        }
+
+        // Find the Chart.js canvas via the DOM
+        const scatterContainer = document.querySelector<HTMLElement>('[data-testid="catalog-scatter-plot"] .scatter-plot-component');
+        const chartCanvas = scatterContainer?.querySelector<HTMLCanvasElement>("canvas:not([data-overlay])");
+        if (!chartCanvas) {
+            return;
+        }
+
+        const composedCanvas = document.createElement("canvas");
+        composedCanvas.width = chartCanvas.width;
+        composedCanvas.height = chartCanvas.height;
+        const ctx = composedCanvas.getContext("2d");
+        if (!ctx) {
+            return;
+        }
+
+        const isDarkTheme = AppStore.Instance.darkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+        ctx.drawImage(chartCanvas, 0, 0);
+
+        // Read WebGL pixels directly via gl.readPixels for maximum reliability
+        const w = webglCanvas.width;
+        const h = webglCanvas.height;
+        const pixels = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+        // Flip vertically (WebGL y=0 is bottom, canvas y=0 is top)
+        const flipped = new Uint8ClampedArray(w * h * 4);
+        const rowSize = w * 4;
+        for (let row = 0; row < h; row++) {
+            const srcOffset = row * rowSize;
+            const dstOffset = (h - 1 - row) * rowSize;
+            flipped.set(pixels.subarray(srcOffset, srcOffset + rowSize), dstOffset);
+        }
+
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = w;
+        tempCanvas.height = h;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+            tempCtx.putImageData(new ImageData(flipped, w, h), 0, 0);
+            ctx.drawImage(tempCanvas, 0, 0, composedCanvas.width, composedCanvas.height);
+        }
+
+        const widgetStore = this.widgetStore;
+        const plotName = `scatter-${widgetStore?.xColumnName ?? "x"}-${widgetStore?.yColumnName ?? "y"}`;
+        composedCanvas.toBlob(blob => {
+            if (blob) {
+                const link = document.createElement("a");
+                link.download = `catalog-${plotName}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.dispatchEvent(new MouseEvent("click"));
+            }
+        }, "image/png");
+    };
+
+    private exportScatterData = () => {
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+        const scatter = this.scatterData;
+        const xColumnName = widgetStore.xColumnName ?? "x";
+        const yColumnName = widgetStore.yColumnName ?? "y";
+        let comment = `# Catalog Scatter: ${xColumnName} vs ${yColumnName}`;
+        comment += `\n# xLabel: ${xColumnName}`;
+        comment += `\n# yLabel: ${yColumnName}`;
+
+        if (widgetStore.showFittingResult && widgetStore.fittingResultString) {
+            comment += "\n# " + widgetStore.fittingResultString.split("\n").join("\n# ");
+        }
+
+        const header = `# ${xColumnName}\t${yColumnName}`;
+        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        const rows: string[] = [];
+        for (let i = 0; i < numPoints; i++) {
+            rows.push(`${toExponential(scatter.xData[i], 10)}\t${toExponential(scatter.yData[i], 10)}`);
+        }
+
+        exportTsvFile("catalog", `scatter-${xColumnName}-${yColumnName}`, `${comment}\n${header}\n${rows.join("\n")}\n`);
+    };
+
     private renderWebGLOverlay = (width: number, height: number, chartArea: ChartArea | undefined) => {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -911,6 +1007,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 hasSelection={selectedSet.size > 0}
                 pointSize={5}
                 darkMode={AppStore.Instance.darkTheme}
+                onRef={ref => (this.webglOverlayRef = ref)}
             />
         );
     };
@@ -1361,6 +1458,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             renderOverlay={this.renderWebGLOverlay}
                             cursorNearestPoint={this.cursorNearestScatterPoint}
                             extraPluginOptions={scatterExtraPluginOptions}
+                            customExportData={this.exportScatterData}
+                            customExportImage={this.exportScatterImage}
                             toolbarChildren={
                                 <React.Fragment>
                                     <Tooltip content="Box select">

@@ -73,6 +73,8 @@ export class ScatterPlotComponentProps {
     renderOverlay?: (width: number, height: number, chartArea: ChartArea | undefined) => React.ReactNode;
     toolbarChildren?: React.ReactNode;
     extraPluginOptions?: ChartOptions<"scatter">["plugins"];
+    customExportImage?: () => void;
+    customExportData?: () => void;
 }
 
 // Maximum time between double clicks
@@ -89,6 +91,7 @@ const OUTERRADIUS = 3;
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
     private markerOpacity = 0.8;
     private plotRef: Chart;
+    private containerRef = React.createRef<HTMLDivElement>();
     private previousClickTime: number;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
@@ -343,6 +346,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     exportImage = () => {
+        if (this.props.customExportImage) {
+            this.props.customExportImage();
+            return;
+        }
         const scatter = this.plotRef;
         const canvas = scatter.canvas;
         const plotName = this.props.plotName || "unknown";
@@ -358,6 +365,16 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
             ctx.drawImage(canvas, 0, 0);
 
+            // Composite overlay canvases (e.g. WebGL scatter) marked with data-overlay attribute.
+            if (this.containerRef.current) {
+                const overlayCanvases = this.containerRef.current.querySelectorAll<HTMLCanvasElement>("canvas[data-overlay]");
+                overlayCanvases.forEach(c => {
+                    if (c.width > 0 && c.height > 0) {
+                        ctx.drawImage(c, 0, 0, composedCanvas.width, composedCanvas.height);
+                    }
+                });
+            }
+
             composedCanvas.toBlob(blob => {
                 if (blob) {
                     const link = document.createElement("a") as HTMLAnchorElement;
@@ -371,6 +388,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     exportData = () => {
+        if (this.props.customExportData) {
+            this.props.customExportData();
+            return;
+        }
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
@@ -691,6 +712,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return (
             <ResizeDetector onResize={this.resize} throttleTime={33}>
                 <div
+                    ref={this.containerRef}
                     className={"scatter-plot-component"}
                     style={{cursor: this.isPanning ? "move" : "crosshair"}}
                     onKeyDown={this.onKeyDown}
