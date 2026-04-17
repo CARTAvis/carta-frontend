@@ -778,6 +778,25 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private selectHistogramBinsInRange(xMin: number, xMax: number) {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return;
+        }
+        const {bins, binSize, binIndices} = this.histogramData;
+        const indicesInRange: number[] = [];
+        for (let i = 0; i < bins.length; i++) {
+            const halfBin = binSize / 2;
+            if (bins[i].x + halfBin >= xMin && bins[i].x - halfBin <= xMax) {
+                indicesInRange.push(...binIndices[i]);
+            }
+        }
+        if (indicesInRange.length) {
+            profileStore.setSelectedPointIndices(profileStore.getOriginIndices(indicesInRange), true);
+            this.catalogWidgetStore?.setCatalogTableAutoScroll(true);
+        }
+    }
+
     private histogramDragStartX: number | undefined;
     private histogramDragCurrentX: number | undefined;
     private histogramPanPrevX: number | undefined;
@@ -824,7 +843,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
         const chart = this.histogramPlotRef;
         const widgetStore = this.widgetStore;
-        const profileStore = this.profileStore;
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
             const xScale = chart.scales["x"];
             if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
@@ -834,21 +852,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 if (x1 !== undefined && x2 !== undefined) {
                     const newMin = Math.min(x1, x2);
                     const newMax = Math.max(x1, x2);
-                    if (widgetStore.histogramDragMode === "select" && profileStore) {
-                        const histData = this.histogramData;
-                        const selectedPointIndices: number[] = [];
-                        for (let i = 0; i < histData.bins.length; i++) {
-                            const binCenter = histData.bins[i].x;
-                            const halfBin = histData.binSize / 2;
-                            if (binCenter + halfBin >= newMin && binCenter - halfBin <= newMax) {
-                                selectedPointIndices.push(...histData.binIndices[i]);
-                            }
-                        }
-                        if (selectedPointIndices.length) {
-                            const matched = profileStore.getOriginIndices(selectedPointIndices);
-                            profileStore.setSelectedPointIndices(matched, true);
-                            this.catalogWidgetStore?.setCatalogTableAutoScroll(true);
-                        }
+                    if (widgetStore.histogramDragMode === "select") {
+                        this.selectHistogramBinsInRange(newMin, newMax);
                     } else {
                         widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
                     }
@@ -864,26 +869,19 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!chart) {
             return;
         }
-        const canvas = chart.canvas;
-        const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-        composedCanvas.width = canvas.width;
-        composedCanvas.height = canvas.height;
-        const ctx = composedCanvas.getContext("2d");
-        if (ctx) {
-            const isDarkMode = AppStore.Instance.darkTheme;
-            ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkMode ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
-            ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-            ctx.drawImage(canvas, 0, 0);
-            composedCanvas.toBlob(blob => {
-                if (blob) {
-                    const link = document.createElement("a") as HTMLAnchorElement;
-                    const columnName = this.widgetStore?.xColumnName ?? "histogram";
-                    link.download = `catalog-histogram-${columnName}`.substring(0, 200) + `-${getTimestamp()}.png`;
-                    link.href = URL.createObjectURL(blob);
-                    link.dispatchEvent(new MouseEvent("click"));
-                }
-            }, "image/png");
+        const composed = document.createElement("canvas") as HTMLCanvasElement;
+        composed.width = chart.canvas.width;
+        composed.height = chart.canvas.height;
+        const ctx = composed.getContext("2d");
+        if (!ctx) {
+            return;
         }
+        const isDarkTheme = AppStore.Instance.darkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, composed.width, composed.height);
+        ctx.drawImage(chart.canvas, 0, 0);
+        const columnName = this.widgetStore?.xColumnName ?? "histogram";
+        this.downloadCanvasAsPng(composed, `catalog-histogram-${columnName}`);
     };
 
     private exportHistogramData = () => {
@@ -895,74 +893,72 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         exportTsvFile("catalog", `histogram-${columnName}`, content);
     };
 
+    private readWebGLPixelsFlipped(gl: WebGL2RenderingContext, canvas: HTMLCanvasElement): ImageData {
+        const {width, height} = canvas;
+        const pixels = new Uint8Array(width * height * 4);
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+        const flipped = new Uint8ClampedArray(width * height * 4);
+        const rowSize = width * 4;
+        for (let row = 0; row < height; row++) {
+            flipped.set(pixels.subarray(row * rowSize, (row + 1) * rowSize), (height - 1 - row) * rowSize);
+        }
+        return new ImageData(flipped, width, height);
+    }
+
+    private compositeScatterCanvases(chartCanvas: HTMLCanvasElement, webglCanvas: HTMLCanvasElement, gl: WebGL2RenderingContext): HTMLCanvasElement {
+        const composed = document.createElement("canvas");
+        composed.width = chartCanvas.width;
+        composed.height = chartCanvas.height;
+        const ctx = composed.getContext("2d")!;
+
+        const isDarkTheme = AppStore.Instance.darkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, composed.width, composed.height);
+        ctx.drawImage(chartCanvas, 0, 0);
+
+        const webglImageData = this.readWebGLPixelsFlipped(gl, webglCanvas);
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = webglCanvas.width;
+        tempCanvas.height = webglCanvas.height;
+        tempCanvas.getContext("2d")!.putImageData(webglImageData, 0, 0);
+        ctx.drawImage(tempCanvas, 0, 0, composed.width, composed.height);
+
+        return composed;
+    }
+
+    private downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string) {
+        canvas.toBlob(blob => {
+            if (blob) {
+                const link = document.createElement("a");
+                link.download = filename.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.dispatchEvent(new MouseEvent("click"));
+            }
+        }, "image/png");
+    }
+
     private exportScatterImage = () => {
         const webgl = this.webglOverlayRef;
         if (!webgl) {
             return;
         }
-        // Force a fresh draw to ensure the WebGL buffer has current content
         webgl.draw();
-        const gl = webgl.gl;
+        const {gl} = webgl;
         const webglCanvas = webgl.canvasRef.current;
         if (!gl || !webglCanvas || webglCanvas.width === 0 || webglCanvas.height === 0) {
             return;
         }
 
-        // Find the Chart.js canvas scoped to the same widget instance by navigating
-        // from the WebGL overlay canvas up to its scatter-plot-component container.
-        const scatterContainer = webglCanvas.closest<HTMLElement>(".scatter-plot-component");
-        const chartCanvas = scatterContainer?.querySelector<HTMLCanvasElement>("canvas:not([data-overlay])");
+        const chartCanvas = webglCanvas.closest<HTMLElement>(".scatter-plot-component")?.querySelector<HTMLCanvasElement>("canvas:not([data-overlay])");
         if (!chartCanvas) {
             return;
         }
 
-        const composedCanvas = document.createElement("canvas");
-        composedCanvas.width = chartCanvas.width;
-        composedCanvas.height = chartCanvas.height;
-        const ctx = composedCanvas.getContext("2d");
-        if (!ctx) {
-            return;
-        }
-
-        const isDarkTheme = AppStore.Instance.darkTheme;
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
-        ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-        ctx.drawImage(chartCanvas, 0, 0);
-
-        // Read WebGL pixels directly via gl.readPixels for maximum reliability
-        const w = webglCanvas.width;
-        const h = webglCanvas.height;
-        const pixels = new Uint8Array(w * h * 4);
-        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-        // Flip vertically (WebGL y=0 is bottom, canvas y=0 is top)
-        const flipped = new Uint8ClampedArray(w * h * 4);
-        const rowSize = w * 4;
-        for (let row = 0; row < h; row++) {
-            const srcOffset = row * rowSize;
-            const dstOffset = (h - 1 - row) * rowSize;
-            flipped.set(pixels.subarray(srcOffset, srcOffset + rowSize), dstOffset);
-        }
-
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = w;
-        tempCanvas.height = h;
-        const tempCtx = tempCanvas.getContext("2d");
-        if (tempCtx) {
-            tempCtx.putImageData(new ImageData(flipped, w, h), 0, 0);
-            ctx.drawImage(tempCanvas, 0, 0, composedCanvas.width, composedCanvas.height);
-        }
-
-        const widgetStore = this.widgetStore;
-        const plotName = `scatter-${widgetStore?.xColumnName ?? "x"}-${widgetStore?.yColumnName ?? "y"}`;
-        composedCanvas.toBlob(blob => {
-            if (blob) {
-                const link = document.createElement("a");
-                link.download = `catalog-${plotName}`.substring(0, 200) + `-${getTimestamp()}.png`;
-                link.href = URL.createObjectURL(blob);
-                link.dispatchEvent(new MouseEvent("click"));
-            }
-        }, "image/png");
+        const xColumn = this.widgetStore?.xColumnName ?? "x";
+        const yColumn = this.widgetStore?.yColumnName ?? "y";
+        const composed = this.compositeScatterCanvases(chartCanvas, webglCanvas, gl);
+        this.downloadCanvasAsPng(composed, `catalog-scatter-${xColumn}-${yColumn}`);
     };
 
     private exportScatterData = () => {
