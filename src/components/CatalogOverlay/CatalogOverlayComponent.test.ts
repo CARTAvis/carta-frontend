@@ -341,6 +341,15 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe("DE_ICRS");
         });
 
+        test("only treats J2000 FK5 columns as ICRS-compatible", () => {
+            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "RAJ2021"}, {name: "DEJ2021"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RAJ2000");
+            expect(widgetStore.yAxis).toBe("DEJ2000");
+        });
+
         test.each([
             ["FK4", CatalogSystemType.FK4, "RAJ2015", "DEJ2015", "RAB1975", "DEB1975", "RAB1975", "DEB1975"],
             ["FK5", CatalogSystemType.FK5, "RAB1975", "DEB1975", "RAJ2015", "DEJ2015", "RAJ2015", "DEJ2015"],

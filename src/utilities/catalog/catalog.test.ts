@@ -36,6 +36,11 @@ describe("catalog utilities", () => {
             expect(findAutoSelectedCatalogAxisColumn(CatalogOverlay.RA, CatalogOverlay.NONE, axisOptions, CatalogSystemType.ICRS)).toBe("RA_ICRS");
         });
 
+        test("limits ICRS compatibility with FK5 epoch columns to J2000", () => {
+            expect(findAutoSelectedCatalogAxisColumn(CatalogOverlay.RA, CatalogOverlay.NONE, ["RAJ2021", "ra", "RAJ2000"], CatalogSystemType.ICRS)).toBe("RAJ2000");
+            expect(findAutoSelectedCatalogAxisColumn(CatalogOverlay.RA, CatalogOverlay.NONE, ["RAJ2021"], CatalogSystemType.ICRS)).toBeUndefined();
+        });
+
         test("does not replace an existing axis selection", () => {
             expect(findAutoSelectedCatalogAxisColumn(CatalogOverlay.RA, "ra", ["RAJ2000"], CatalogSystemType.FK5)).toBeUndefined();
         });

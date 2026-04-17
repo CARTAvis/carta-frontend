@@ -86,6 +86,7 @@ const AXIS_AUTO_SELECT_PATTERNS = new Map<CatalogOverlay, RegExp[]>([
 ]);
 const EXPLICIT_ICRS_PATTERN = /(?:^|[_.])icrs(?:$|[_.])/i;
 const EXPLICIT_FK5_PATTERN = /20\d{2}/;
+const EXPLICIT_FK5_J2000_PATTERN = /(?:^|\D)2000(?!\d)/;
 const EXPLICIT_FK4_PATTERN = /19\d{2}/;
 
 export function isCatalogAxisDataType(dataType: CARTA.ColumnType | null | undefined): boolean {
@@ -182,7 +183,10 @@ function getEquatorialColumnPriority(columnName: string, system: CatalogSystemTy
             if (explicitSystem === CatalogSystemType.ICRS) {
                 return AxisMatchPriority.Exact;
             }
-            return explicitSystem === CatalogSystemType.FK5 ? AxisMatchPriority.Compatible : AxisMatchPriority.Generic;
+            if (explicitSystem === CatalogSystemType.FK5) {
+                return EXPLICIT_FK5_J2000_PATTERN.test(columnName) ? AxisMatchPriority.Compatible : INCOMPATIBLE_AXIS_PRIORITY;
+            }
+            return AxisMatchPriority.Generic;
         default:
             return AxisMatchPriority.Exact;
     }
