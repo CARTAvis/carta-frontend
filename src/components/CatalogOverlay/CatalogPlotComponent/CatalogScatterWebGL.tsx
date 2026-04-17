@@ -76,8 +76,16 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private positionBuffer: WebGLBuffer | null = null;
     private selectedBuffer: WebGLBuffer | null = null;
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
+    // Cached typed arrays to avoid per-frame GC churn on large datasets
+    private positionData: Float32Array = new Float32Array(0);
+    private selectedData: Float32Array = new Float32Array(0);
 
     componentDidMount() {
+        const canvas = this.canvasRef.current;
+        if (canvas) {
+            canvas.addEventListener("webglcontextlost", this.onContextLost);
+            canvas.addEventListener("webglcontextrestored", this.onContextRestored);
+        }
         this.initGL();
         this.draw();
         this.props.onRef?.(this);
@@ -89,6 +97,11 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
     componentWillUnmount() {
         this.props.onRef?.(null);
+        const canvas = this.canvasRef.current;
+        if (canvas) {
+            canvas.removeEventListener("webglcontextlost", this.onContextLost);
+            canvas.removeEventListener("webglcontextrestored", this.onContextRestored);
+        }
         const gl = this.gl;
         if (gl) {
             if (this.positionBuffer) {
@@ -102,6 +115,19 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             }
         }
     }
+
+    private onContextLost = (event: Event) => {
+        event.preventDefault();
+        this.gl = null;
+        this.shaderProgram = null;
+        this.positionBuffer = null;
+        this.selectedBuffer = null;
+    };
+
+    private onContextRestored = () => {
+        this.initGL();
+        this.draw();
+    };
 
     private initGL() {
         const canvas = this.canvasRef.current;
@@ -162,26 +188,30 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enable(GL2.BLEND);
         gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
 
-        // Upload position data (interleaved x, y)
+        // Upload position data (interleaved x, y) — re-use cached arrays, only reallocate on length change
         const numPoints = Math.min(xData.length, yData.length);
-        const positionData = new Float32Array(numPoints * 2);
-        const selectedData = new Float32Array(numPoints);
+        if (this.positionData.length !== numPoints * 2) {
+            this.positionData = new Float32Array(numPoints * 2);
+        }
+        if (this.selectedData.length !== numPoints) {
+            this.selectedData = new Float32Array(numPoints);
+        }
         for (let i = 0; i < numPoints; i++) {
-            positionData[i * 2] = xData[i];
-            positionData[i * 2 + 1] = yData[i];
-            selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
+            this.positionData[i * 2] = xData[i];
+            this.positionData[i * 2 + 1] = yData[i];
+            this.selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
         }
 
         // Position attribute
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(GL2.ARRAY_BUFFER, positionData, GL2.DYNAMIC_DRAW);
+        gl.bufferData(GL2.ARRAY_BUFFER, this.positionData, GL2.DYNAMIC_DRAW);
         const posLoc = gl.getAttribLocation(shaderProgram, "aPosition");
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
         // Selected attribute
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.selectedBuffer);
-        gl.bufferData(GL2.ARRAY_BUFFER, selectedData, GL2.DYNAMIC_DRAW);
+        gl.bufferData(GL2.ARRAY_BUFFER, this.selectedData, GL2.DYNAMIC_DRAW);
         const selLoc = gl.getAttribLocation(shaderProgram, "aSelected");
         gl.enableVertexAttribArray(selLoc);
         gl.vertexAttribPointer(selLoc, 1, GL2.FLOAT, false, 0, 0);
