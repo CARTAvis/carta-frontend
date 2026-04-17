@@ -1410,7 +1410,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 position: {x: "start", y: "start"},
                 content: widgetStore.fittingResultString.split("\n"),
                 textAlign: "start",
-                color: Colors.WHITE,
+                color: isDarkTheme ? Colors.LIGHT_GRAY4 : Colors.DARK_GRAY1,
                 font: {family: "monospace", size: 9},
                 padding: {top: 0, right: 0, bottom: 0, left: 0},
                 adjustScaleRange: false
