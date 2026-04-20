@@ -3003,18 +3003,47 @@ export class AppStore {
     };
 
     /**
-     * Sets the active image with a loaded image.
-     * @param fileId - The file id of the loaded image.
+     * Sets the active image by its type and stable store id.
+     *
+     * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).
+     * For `ImageType.COLOR_BLENDING`, `id` is `ColorBlendingStore.id`.
+     *
+     * `ImageType.PV_PREVIEW` is intentionally unsupported by this action:
+     * `getImageListIndex` also restricts itself to `FRAME | COLOR_BLENDING`.
+     *
+     * Preferred over `setActiveImageByIndex` for programmatic activation,
+     * because `imageList` indices are volatile (images can be added,
+     * removed, or reordered), whereas `(type, id)` is stable.
+     *
+     * @param type - The image-view item type.
+     * @param id - The stable store id for that type.
      */
-    @action setActiveImageByFileId = (fileId: number) => {
-        const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, fileId);
+    @action setActiveImageById = (type: ImageType, id: number) => {
+        if (type !== ImageType.FRAME && type !== ImageType.COLOR_BLENDING) {
+            console.error(`setActiveImageById: unsupported image type ${type}`);
+            return;
+        }
+        const index = this.imageViewConfigStore.getImageListIndex(type, id);
         const image = this.imageViewConfigStore.getImage(index);
 
         if (image) {
             this.setActiveImage(image);
         } else {
-            console.log(`Can't find required frame ${fileId}`);
+            console.error(`Can't find image of type ${type} with id ${id}`);
         }
+    };
+
+    /**
+     * Sets the active image with a loaded image.
+     *
+     * Thin wrapper around {@link setActiveImageById} kept for backward
+     * compatibility with existing frontend call sites (e.g.
+     * `onFrameViewUpdated`, `ProfileFittingComponent`).
+     *
+     * @param fileId - The file id of the loaded image.
+     */
+    @action setActiveImageByFileId = (fileId: number) => {
+        this.setActiveImageById(ImageType.FRAME, fileId);
     };
 
     /**
@@ -3028,7 +3057,7 @@ export class AppStore {
                 this.setActiveImage(image);
             }
         } else {
-            console.log(`Invalid image index ${index}`);
+            console.error(`Invalid image index ${index}`);
         }
     };
 
