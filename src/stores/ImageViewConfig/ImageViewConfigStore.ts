@@ -99,9 +99,21 @@ export class ImageViewConfigStore {
 
         const appStore = AppStore.Instance;
         const baseFrame = frames[0];
+        const currentRef = appStore.spatialReference;
+        const hasExistingBlendings = this.colorBlendingImages.length > 0;
 
-        appStore.setSpatialReference(baseFrame, false);
+        if (hasExistingBlendings && currentRef !== baseFrame) {
+            console.error("createColorBlendingFromFrames: refusing to change the global spatial reference while color blending images already exist.");
+            return null;
+        }
+
+        if (currentRef !== baseFrame) {
+            appStore.setSpatialReference(baseFrame, false);
+        }
         for (let i = 1; i < frames.length; i++) {
+            if (frames[i].spatialReference === baseFrame) {
+                continue;
+            }
             if (!frames[i].setSpatialReference(baseFrame)) {
                 console.error(`createColorBlendingFromFrames: failed to spatially match frames[${i}] to the base frame.`);
                 return null;
