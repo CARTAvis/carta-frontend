@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "src",
+        "declarations.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "build",
+        "wasm_src",
+        "wasm_libs",
+        "protobuf",
+        "scripts",
+        "acceptance-tests",
+        "webpack",
+        "jest",
+        "emscripten.simg"
+    ]
+}
