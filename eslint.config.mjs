@@ -46,11 +46,6 @@ export default [
                     format: null
                 },
                 {
-                    selector: ["classicAccessor"],
-                    modifiers: ["static"],
-                    format: ["UPPER_CASE", "PascalCase"],
-                },
-                {
                     selector: ["property"],
                     modifiers: ["public", "static", "readonly"],
                     format: ["UPPER_CASE"],
@@ -58,11 +53,6 @@ export default [
                 {
                     selector: ["property"],
                     modifiers: ["private", "static", "readonly"],
-                    format: ["PascalCase"],
-                },
-                {
-                    selector: ["property"],
-                    modifiers: ["public", "static"],
                     format: ["PascalCase"],
                 },
                 {
@@ -81,32 +71,15 @@ export default [
                     leadingUnderscore: "allow"
                 },
                 {
-                    selector: ["classMethod"],
-                    modifiers: ["public", "static"],
-                    types: ["function"],
-                    format: ["PascalCase"]
-                },
-                {
                     selector: ["variable"],
                     modifiers: ["global"],
-                    types: ["number", "string", "boolean", "array"],
-                    format: ["UPPER_CASE"]
-                },
-                {
-                    selector: ["variable"],
-                    modifiers: ["global", "exported"],
                     format: ["UPPER_CASE"]
                 },
                 {
                     selector: ["variable"],
                     modifiers: ["global"],
                     types: ["function"],
-                    format: ["PascalCase"]
-                },
-                {
-                    selector: ["function"],
-                    modifiers: ["global", "exported"],
-                    format: ["PascalCase"]
+                    format: ["camelCase"]
                 }
             ],
             "@typescript-eslint/no-unused-expressions": "error",
