@@ -28,7 +28,7 @@ export default [
         },
         rules: {
             "@typescript-eslint/naming-convention": [
-                "off",
+                "warn",
                 {
                     selector: "default",
                     format: ["camelCase", "PascalCase", "UPPER_CASE"],
@@ -46,41 +46,40 @@ export default [
                     format: null
                 },
                 {
-                    selector: ["property"],
+                    selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: "classProperty",
                     modifiers: ["public", "static", "readonly"],
                     format: ["UPPER_CASE"],
                 },
                 {
-                    selector: ["property"],
+                    selector: "classProperty",
                     modifiers: ["private", "static", "readonly"],
                     format: ["PascalCase"],
                 },
                 {
-                    selector: ["variable", "parameter", "property", "accessor"],
+                    selector: "classProperty",
+                    modifiers: ["protected", "static", "readonly"],
+                    format: ["camelCase"],
+                },
+                {
+                    selector: "variable",
+                    modifiers: ["const", "global"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
                     prefix: ["is", "should", "has", "can", "did", "will"]
                 },
-                {
-                    selector: ["typeLike", "enum", "interface", "class", "typeAlias"],
-                    format: ["PascalCase"]
-                },
-                {
-                    selector: ["variable", "function", "parameter", "property", "accessor", "method", "classMethod"],
-                    format: ["camelCase"],
-                    leadingUnderscore: "allow"
-                },
-                {
-                    selector: ["variable"],
-                    modifiers: ["global"],
-                    format: ["UPPER_CASE"]
-                },
-                {
-                    selector: ["variable"],
-                    modifiers: ["global"],
-                    types: ["function"],
-                    format: ["camelCase"]
-                }
             ],
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
