@@ -60,11 +60,6 @@ export default [
                     format: ["PascalCase"],
                 },
                 {
-                    selector: "classProperty",
-                    modifiers: ["protected", "static", "readonly"],
-                    format: ["camelCase"],
-                },
-                {
                     selector: "variable",
                     modifiers: ["const", "global"],
                     format: ["UPPER_CASE"],
