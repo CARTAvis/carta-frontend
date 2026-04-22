@@ -324,6 +324,7 @@ export class AppStore {
         return estimatedFinishTime - dt;
     }
 
+    // (carta-python)
     @computed get frontendVersion(): string {
         return CARTA_INFO.version;
     }
@@ -3007,6 +3008,7 @@ export class AppStore {
     };
 
     /**
+     * (carta-python)
      * Sets the active image by its type and stable store id.
      *
      * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).

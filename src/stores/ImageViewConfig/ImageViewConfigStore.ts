@@ -125,7 +125,7 @@ export class ImageViewConfigStore {
         return this.imageList.map(image => image.store.filename);
     }
 
-    /** Serializable snapshot of the image list (type and id per entry). */
+    /** (carta-python) Serializable snapshot of the image list (type and id per entry). */
     @computed get imageListSummary(): {type: ImageType; id: number}[] {
         return this.imageList.map(item => ({
             type: item.type,
