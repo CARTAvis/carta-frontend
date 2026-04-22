@@ -38,9 +38,9 @@ const file2 = await app.appendFile("testfile2.fits");
 const file3 = await app.appendFile("testfile3.fits");
 
 // The active image can be changed with "setActiveFrame", as well as the wrapper
-// functions "setActiveFrameByFileId" and "setActiveFrameByIndex".
+// functions "setActiveImageByFileId" and "setActiveFrameByIndex".
 app.setActiveFrameByIndex(0);
-app.setActiveFrameByFileId(file2.frameInfo.fileId);
+app.setActiveImageByFileId(file2.frameInfo.fileId);
 app.setActiveFrame(file3);
 
 // # Closing images
