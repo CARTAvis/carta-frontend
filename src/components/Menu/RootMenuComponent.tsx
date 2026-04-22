@@ -193,6 +193,9 @@ export class RootMenuComponent extends React.Component {
         if (ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
+        if (ApiService.RuntimeConfig.apiKeySupport) {
+            serverMenu.push(<MenuItem key="api-keys" text="API Key Management" disabled={!appStore.apiService.authenticated} onClick={() => appStore.dialogStore.showDialog(DialogId.ApiKey)} />);
+        }
         serverMenu.push(
             <MenuItem
                 key="copy-id"

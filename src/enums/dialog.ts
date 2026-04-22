@@ -1,5 +1,6 @@
 export enum DialogId {
     About = "about-dialog",
+    ApiKey = "api-key-dialog",
     OnlineDataQuery = "online-data-query-dialog",
     Snippet = "snippet-dialog",
     Contour = "contour-dialog",

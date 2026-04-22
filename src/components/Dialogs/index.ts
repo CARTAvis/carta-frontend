@@ -1,4 +1,5 @@
 export * from "./AboutDialog/AboutDialogComponent";
+export * from "./ApiKeyDialog/ApiKeyDialogComponent";
 export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
 export * from "./DraggableDialog/DraggableDialogComponent";

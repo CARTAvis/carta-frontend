@@ -1,0 +1,62 @@
+.api-key-dialog {
+    .api-key-dialog-description {
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+
+    .api-key-list-section,
+    .api-key-create-section {
+        margin-bottom: 16px;
+    }
+
+    .api-key-loading {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .api-key-list {
+        width: 100%;
+
+        th,
+        td {
+            vertical-align: middle;
+        }
+    }
+
+    .api-key-list-disabled {
+        opacity: 0.65;
+    }
+
+    .api-key-created-table {
+        width: 100%;
+
+        th,
+        td {
+            vertical-align: middle;
+        }
+    }
+
+    .api-key-secret-value {
+        word-break: break-all;
+        font-family: monospace;
+    }
+
+    input.bp6-input[type="date"] {
+        width: 100%;
+        max-width: 260px;
+    }
+
+    input.bp6-input[type="number"] {
+        width: 100%;
+        max-width: 260px;
+    }
+}
+
+.api-key-credentials-dialog {
+    width: min(720px, calc(100vw - 32px));
+
+    .bp6-callout {
+        margin-bottom: 12px;
+    }
+}

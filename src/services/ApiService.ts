@@ -17,6 +17,18 @@ export interface RuntimeConfig {
     logoutAddress?: string;
     loginAddress?: string;
     serviceRestartable?: boolean;
+    apiKeySupport?: boolean;
+}
+
+export interface ApiKeyEntry {
+    key_id: string;
+    expiry: string;
+}
+
+export interface ApiKeyCreateResponse {
+    key_id: string;
+    access_key: string;
+    expiry: string;
 }
 
 export class ApiService {
@@ -177,6 +189,75 @@ export class ApiService {
                 AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
                 console.error(err);
             }
+        }
+    };
+
+    public getApiKeys = async (): Promise<ApiKeyEntry[] | undefined> => {
+        if (!ApiService.RuntimeConfig.apiAddress) {
+            return [];
+        }
+
+        try {
+            const url = `${ApiService.RuntimeConfig.apiAddress}/auth/apikey_manage`;
+            const response = await this.axiosInstance.get(url);
+            const keys = response?.data?.keys;
+            if (!Array.isArray(keys)) {
+                return [];
+            }
+
+            return keys
+                .map((entry: any) => {
+                    const keyId = typeof entry?.key_id === "string" ? entry.key_id : "";
+                    const expiry = typeof entry?.expiry === "string" ? entry.expiry : "";
+                    if (!keyId) {
+                        return undefined;
+                    }
+                    return {key_id: keyId, expiry};
+                })
+                .filter((entry: ApiKeyEntry | undefined): entry is ApiKeyEntry => !!entry);
+        } catch (err) {
+            console.error(err);
+            return undefined;
+        }
+    };
+
+    public createApiKey = async (tokenExpirySeconds?: number): Promise<ApiKeyCreateResponse | undefined> => {
+        if (!ApiService.RuntimeConfig.apiAddress) {
+            return undefined;
+        }
+
+        try {
+            const url = `${ApiService.RuntimeConfig.apiAddress}/auth/apikey_manage`;
+            const payload: {token_expiry_seconds?: number} = {};
+            if (typeof tokenExpirySeconds === "number") {
+                payload.token_expiry_seconds = tokenExpirySeconds;
+            }
+            const response = await this.axiosInstance.post(url, payload);
+            const keyId = response?.data?.key_id;
+            const accessKey = response?.data?.access_key;
+            const responseExpiry = response?.data?.expiry;
+            if (typeof keyId !== "string" || typeof accessKey !== "string" || typeof responseExpiry !== "string") {
+                return undefined;
+            }
+            return {key_id: keyId, access_key: accessKey, expiry: responseExpiry};
+        } catch (err) {
+            console.error(err);
+            return undefined;
+        }
+    };
+
+    public deleteApiKey = async (keyId: string): Promise<boolean> => {
+        if (!ApiService.RuntimeConfig.apiAddress) {
+            return false;
+        }
+
+        try {
+            const url = `${ApiService.RuntimeConfig.apiAddress}/auth/apikey_manage`;
+            const response = await this.axiosInstance.delete(url, {params: {key_id: keyId}});
+            return response?.data?.success === true && response?.data?.key_id === keyId;
+        } catch (err) {
+            console.error(err);
+            return false;
         }
     };
 
