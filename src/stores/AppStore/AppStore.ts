@@ -324,6 +324,10 @@ export class AppStore {
         return estimatedFinishTime - dt;
     }
 
+    @computed get frontendVersion(): string {
+        return CARTA_INFO.version;
+    }
+
     @action startFileLoading = () => {
         this.fileLoading = true;
     };
