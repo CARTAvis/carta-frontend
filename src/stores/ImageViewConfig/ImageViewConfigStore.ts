@@ -18,6 +18,7 @@ export class ImageViewConfigStore {
     }
 
     @observable private imageList: ImageViewItem[] = [];
+    private nextColorBlendingId = 0;
 
     /**
      * Adds a loaded image to the image list.
@@ -56,7 +57,9 @@ export class ImageViewConfigStore {
      */
     @action createColorBlending = (): ColorBlendingStore | null => {
         if (this.frames.length > 0) {
-            const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
+            // Keep ids monotonic within a frontend session.
+            const id = this.nextColorBlendingId;
+            this.nextColorBlendingId += 1;
             const newImage = new ColorBlendingStore(id);
 
             const imageItem: ImageViewItem = {type: ImageType.COLOR_BLENDING, store: newImage};
