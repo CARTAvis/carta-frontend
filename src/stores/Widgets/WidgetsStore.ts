@@ -536,6 +536,46 @@ export class WidgetsStore {
         this.popoutPositions.clear();
     };
 
+    private getNearestSibling = (tabsetNode: TabSetNode) => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const siblingIndex = tabsetIndex > 0 ? tabsetIndex - 1 : tabsetIndex + 1;
+        return grandparent.getChildren()[siblingIndex] ?? null;
+    };
+
+    private getPopoutPositionInfo = (tabNode: TabNode, tabsetNode: TabSetNode): PopoutPositionInfo | null => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const nearestSibling = this.getNearestSibling(tabsetNode);
+
+        return {
+            parentTabsetId: tabsetNode.getId(),
+            tabIndex: tabsetNode.getChildren().indexOf(tabNode),
+            wasAlone: tabsetNode.getChildren().length === 1,
+            grandparentId: grandparent.getId(),
+            tabsetIndexInParent: tabsetIndex,
+            tabsetWeight: tabsetNode.getWeight(),
+            siblingTabsetId: nearestSibling?.getId(),
+            wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
+            grandparentOrientation: grandparent.getOrientation().getName()
+        };
+    };
+
+    private savePopoutPosition = (tabNode: TabNode, tabsetNode: TabSetNode) => {
+        const popoutPositionInfo = this.getPopoutPositionInfo(tabNode, tabsetNode);
+        if (popoutPositionInfo) {
+            this.popoutPositions.set(tabNode.getId(), popoutPositionInfo);
+        }
+    };
+
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
             let savedConfigId = savedConfig.id;
@@ -782,23 +822,7 @@ export class WidgetsStore {
                     const tabNode = node as TabNode;
                     const parent = tabNode.getParent();
                     if (parent && parent.getType() === "tabset") {
-                        const tabsetNode = parent as TabSetNode;
-                        const grandparent = tabsetNode.getParent();
-                        if (grandparent) {
-                            const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
-                            const nearestSibling = tabsetIndex > 0 ? grandparent.getChildren()[tabsetIndex - 1] : grandparent.getChildren()[tabsetIndex + 1];
-                            this.popoutPositions.set(tabNode.getId(), {
-                                parentTabsetId: tabsetNode.getId(),
-                                tabIndex: tabsetNode.getChildren().indexOf(tabNode),
-                                wasAlone: tabsetNode.getChildren().length === 1,
-                                grandparentId: grandparent.getId(),
-                                tabsetIndexInParent: tabsetIndex,
-                                tabsetWeight: tabsetNode.getWeight(),
-                                siblingTabsetId: nearestSibling?.getId(),
-                                wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
-                                grandparentOrientation: grandparent.getOrientation().getName()
-                            });
-                        }
+                        this.savePopoutPosition(tabNode, parent as TabSetNode);
                     }
                 }
             }
@@ -810,24 +834,8 @@ export class WidgetsStore {
                 const node = layoutModel.getNodeById(nodeId);
                 if (node && node.getType() === "tabset") {
                     const tabsetNode = node as TabSetNode;
-                    const grandparent = tabsetNode.getParent();
-                    if (grandparent) {
-                        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
-                        const nearestSibling = tabsetIndex > 0 ? grandparent.getChildren()[tabsetIndex - 1] : grandparent.getChildren()[tabsetIndex + 1];
-                        const isAlone = tabsetNode.getChildren().length === 1;
-                        for (const child of tabsetNode.getChildren()) {
-                            this.popoutPositions.set(child.getId(), {
-                                parentTabsetId: tabsetNode.getId(),
-                                tabIndex: tabsetNode.getChildren().indexOf(child),
-                                wasAlone: isAlone,
-                                grandparentId: grandparent.getId(),
-                                tabsetIndexInParent: tabsetIndex,
-                                tabsetWeight: tabsetNode.getWeight(),
-                                siblingTabsetId: nearestSibling?.getId(),
-                                wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
-                                grandparentOrientation: grandparent.getOrientation().getName()
-                            });
-                        }
+                    for (const child of tabsetNode.getChildren()) {
+                        this.savePopoutPosition(child as TabNode, tabsetNode);
                     }
                 }
             }

@@ -92,12 +92,68 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         this.rnd.updatePosition({x: widgetConfig.defaultX ?? 0, y: widgetConfig.defaultY ?? 0});
     };
 
+    private getCatalogOverlaySettingsTab = (parentId: string): number | undefined => {
+        const catalogStore = CatalogStore.Instance;
+        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
+        if (!catalogFileId) {
+            return undefined;
+        }
+
+        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+        if (!catalogWidgetStoreId) {
+            return undefined;
+        }
+
+        return AppStore.Instance.widgetsStore.catalogWidgets.get(catalogWidgetStoreId)?.settingsTabId;
+    };
+
+    private getSettingsTab = (parentId: string, parentType?: string): number | undefined => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+
+        switch (parentType) {
+            case "spatial-profiler":
+                return widgetsStore.spatialProfileWidgets.get(parentId)?.settingsTabId;
+            case "spectral-profiler":
+                return widgetsStore.spectralProfileWidgets.get(parentId)?.settingsTabId;
+            case "catalog-overlay":
+                return this.getCatalogOverlaySettingsTab(parentId);
+            case "stokes":
+            default:
+                return widgetsStore.stokesAnalysisWidgets.get(parentId)?.settingsTabId;
+        }
+    };
+
+    private getHelpType = (): HelpType | undefined => {
+        const {widgetConfig} = this.props;
+
+        if (widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+            return AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG;
+        }
+
+        if (!Array.isArray(widgetConfig.helpType)) {
+            return widgetConfig.helpType;
+        }
+
+        const parentId = AppStore.Instance.widgetsStore.floatingSettingsWidgets.get(widgetConfig.id);
+        if (parentId === undefined) {
+            return undefined;
+        }
+
+        const settingsTab = this.getSettingsTab(parentId, widgetConfig.parentType);
+        return settingsTab === undefined ? undefined : widgetConfig.helpType[settingsTab];
+    };
+
     private onClickHelpButton = () => {
         if (!this.rnd) {
             return;
         }
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
         const helpStore = HelpStore.Instance;
+        const helpType = this.getHelpType();
+        if (!helpType) {
+            return;
+        }
+
         const toggleOrShow = (helpType: HelpType) => {
             if (helpStore.helpVisible && helpStore.type === helpType) {
                 helpStore.hideHelpDrawer();
@@ -106,52 +162,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
         };
 
-        if (this.props.widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-            toggleOrShow(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG);
-            return;
-        }
-
-        if (Array.isArray(this.props.widgetConfig.helpType)) {
-            const widgetsStore = AppStore.Instance.widgetsStore;
-            const widgetParentType = this.props.widgetConfig.parentType;
-            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
-            let settingsTab: number | undefined;
-
-            if (parentId !== undefined) {
-                switch (widgetParentType) {
-                    case "spatial-profiler":
-                        const spatialWidget = widgetsStore.spatialProfileWidgets.get(parentId);
-                        settingsTab = spatialWidget?.settingsTabId;
-                        break;
-                    case "spectral-profiler":
-                        const spectralWidget = widgetsStore.spectralProfileWidgets.get(parentId);
-                        settingsTab = spectralWidget?.settingsTabId;
-                        break;
-                    case "catalog-overlay":
-                        const catalogStore = CatalogStore.Instance;
-                        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
-                        if (catalogFileId) {
-                            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-                            if (catalogWidgetStoreId) {
-                                const catalogWidget = widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                                settingsTab = catalogWidget?.settingsTabId;
-                            }
-                        }
-                        break;
-                    case "stokes":
-                    default:
-                        const stokesWidget = widgetsStore.stokesAnalysisWidgets.get(parentId);
-                        settingsTab = stokesWidget?.settingsTabId;
-                        break;
-                }
-            }
-
-            if (settingsTab !== undefined && this.props.widgetConfig.helpType[settingsTab]) {
-                toggleOrShow(this.props.widgetConfig.helpType[settingsTab]);
-            }
-        } else if (this.props.widgetConfig.helpType) {
-            toggleOrShow(this.props.widgetConfig.helpType);
-        }
+        toggleOrShow(helpType);
     };
 
     public render() {

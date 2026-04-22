@@ -25,24 +25,22 @@ export class App extends React.Component {
     }
 
     private renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
+        const baseAlertProps = {
+            icon: alertStore.alertIcon,
+            className: classNames({[Classes.DARK]: darkTheme}),
+            isOpen: alertStore.alertVisible
+        };
+
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert {...baseAlertProps} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
             case AlertType.Interactive:
                 return (
-                    <Alert
-                        icon={alertStore.alertIcon}
-                        className={classNames({[Classes.DARK]: darkTheme})}
-                        isOpen={alertStore.alertVisible}
-                        confirmButtonText="OK"
-                        cancelButtonText="Cancel"
-                        intent={Intent.DANGER}
-                        onClose={alertStore.handleInteractiveAlertClosed}
-                    >
+                    <Alert {...baseAlertProps} confirmButtonText="OK" cancelButtonText="Cancel" intent={Intent.DANGER} onClose={alertStore.handleInteractiveAlertClosed}>
                         <p>{alertStore.interactiveAlertText}</p>
                     </Alert>
                 );
@@ -56,16 +54,7 @@ export class App extends React.Component {
                         : {};
 
                 return (
-                    <Alert
-                        icon={alertStore.alertIcon}
-                        className={classNames({[Classes.DARK]: darkTheme})}
-                        isOpen={alertStore.alertVisible}
-                        confirmButtonText="Retry"
-                        {...cancelProps}
-                        intent={Intent.DANGER}
-                        onClose={alertStore.handleInteractiveAlertClosed}
-                        canEscapeKeyCancel={false}
-                    >
+                    <Alert {...baseAlertProps} confirmButtonText="Retry" {...cancelProps} intent={Intent.DANGER} onClose={alertStore.handleInteractiveAlertClosed} canEscapeKeyCancel={false}>
                         <p>{alertStore.interactiveAlertText}</p>
                     </Alert>
                 );

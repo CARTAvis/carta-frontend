@@ -1,5 +1,25 @@
 import * as React from "react";
 
+const getBasePointingEventInit = (event: MouseEvent | PointerEvent): MouseEventInit => {
+    return {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        detail: event.detail,
+        screenX: event.screenX,
+        screenY: event.screenY,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        metaKey: event.metaKey,
+        button: event.button,
+        buttons: event.buttons,
+        relatedTarget: null
+    };
+};
+
 /**
  * Forwards mouse, pointer, and touch tracking events from a popout window's document
  * to the main window's document. This allows third-party libraries (Blueprint.js Slider,
@@ -17,45 +37,13 @@ export function PopoutEventForwarder({popoutWindow}: {popoutWindow: Window}) {
         const popoutDoc = popoutWindow.document;
 
         const forwardMouseEvent = (event: MouseEvent) => {
-            document.dispatchEvent(
-                new MouseEvent(event.type, {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    detail: event.detail,
-                    screenX: event.screenX,
-                    screenY: event.screenY,
-                    clientX: event.clientX,
-                    clientY: event.clientY,
-                    ctrlKey: event.ctrlKey,
-                    altKey: event.altKey,
-                    shiftKey: event.shiftKey,
-                    metaKey: event.metaKey,
-                    button: event.button,
-                    buttons: event.buttons,
-                    relatedTarget: null
-                })
-            );
+            document.dispatchEvent(new MouseEvent(event.type, getBasePointingEventInit(event)));
         };
 
         const forwardPointerEvent = (event: PointerEvent) => {
             document.dispatchEvent(
                 new PointerEvent(event.type, {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    detail: event.detail,
-                    screenX: event.screenX,
-                    screenY: event.screenY,
-                    clientX: event.clientX,
-                    clientY: event.clientY,
-                    ctrlKey: event.ctrlKey,
-                    altKey: event.altKey,
-                    shiftKey: event.shiftKey,
-                    metaKey: event.metaKey,
-                    button: event.button,
-                    buttons: event.buttons,
-                    relatedTarget: null,
+                    ...getBasePointingEventInit(event),
                     pointerId: event.pointerId,
                     width: event.width,
                     height: event.height,
@@ -91,24 +79,18 @@ export function PopoutEventForwarder({popoutWindow}: {popoutWindow: Window}) {
             }
         };
 
-        popoutDoc.addEventListener("mousemove", forwardMouseEvent);
-        popoutDoc.addEventListener("mouseup", forwardMouseEvent);
-        popoutDoc.addEventListener("pointermove", forwardPointerEvent);
-        popoutDoc.addEventListener("pointerup", forwardPointerEvent);
-        popoutDoc.addEventListener("pointercancel", forwardPointerEvent);
-        popoutDoc.addEventListener("touchmove", forwardTouchEvent);
-        popoutDoc.addEventListener("touchend", forwardTouchEvent);
-        popoutDoc.addEventListener("touchcancel", forwardTouchEvent);
+        const mouseEventTypes = ["mousemove", "mouseup"] as const;
+        const pointerEventTypes = ["pointermove", "pointerup", "pointercancel"] as const;
+        const touchEventTypes = ["touchmove", "touchend", "touchcancel"] as const;
+
+        mouseEventTypes.forEach(eventType => popoutDoc.addEventListener(eventType, forwardMouseEvent));
+        pointerEventTypes.forEach(eventType => popoutDoc.addEventListener(eventType, forwardPointerEvent));
+        touchEventTypes.forEach(eventType => popoutDoc.addEventListener(eventType, forwardTouchEvent));
 
         return () => {
-            popoutDoc.removeEventListener("mousemove", forwardMouseEvent);
-            popoutDoc.removeEventListener("mouseup", forwardMouseEvent);
-            popoutDoc.removeEventListener("pointermove", forwardPointerEvent);
-            popoutDoc.removeEventListener("pointerup", forwardPointerEvent);
-            popoutDoc.removeEventListener("pointercancel", forwardPointerEvent);
-            popoutDoc.removeEventListener("touchmove", forwardTouchEvent);
-            popoutDoc.removeEventListener("touchend", forwardTouchEvent);
-            popoutDoc.removeEventListener("touchcancel", forwardTouchEvent);
+            mouseEventTypes.forEach(eventType => popoutDoc.removeEventListener(eventType, forwardMouseEvent));
+            pointerEventTypes.forEach(eventType => popoutDoc.removeEventListener(eventType, forwardPointerEvent));
+            touchEventTypes.forEach(eventType => popoutDoc.removeEventListener(eventType, forwardTouchEvent));
         };
     }, [popoutWindow]);
 

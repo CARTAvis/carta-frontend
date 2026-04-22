@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
+import {Classes, Dialog, Hotkey, type HotkeyConfig, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -15,6 +15,10 @@ enum HotkeyGroup {
     FileControls = "File controls",
     Other = "Other"
 }
+
+const WithHotkeyDefaults = (defaults: Partial<HotkeyConfig>, hotkeys: HotkeyConfig[]): HotkeyConfig[] => {
+    return hotkeys.map(hotkey => ({...defaults, ...hotkey}));
+};
 
 @observer
 export class HotkeyService extends React.Component<{}> {
@@ -38,32 +42,25 @@ export class HotkeyService extends React.Component<{}> {
         );
     }
 
-    static NextChannel = () => {
+    private static incrementActiveFrame = (channelIncrement: number, stokesIncrement: number) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.incrementChannels(1, 0);
-        }
+        appStore.activeFrame?.incrementChannels(channelIncrement, stokesIncrement);
+    };
+
+    static NextChannel = () => {
+        HotkeyService.incrementActiveFrame(1, 0);
     };
 
     static PrevChannel = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.incrementChannels(-1, 0);
-        }
+        HotkeyService.incrementActiveFrame(-1, 0);
     };
 
     static NextStokes = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.incrementChannels(0, 1);
-        }
+        HotkeyService.incrementActiveFrame(0, 1);
     };
 
     static PrevStokes = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.incrementChannels(0, -1);
-        }
+        HotkeyService.incrementActiveFrame(0, -1);
     };
 
     static ToggleDarkTheme = () => {
@@ -126,7 +123,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "mod + click", label: "Pan image (inside region)"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     // For display in custom hotkeys dialog
@@ -138,7 +135,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift", label: "Symmetric region creation"},
             {combo: "double-click", label: "Region properties"}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     static RegionHotkeys() {
@@ -153,7 +150,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     static FrameControlHotkeys() {
@@ -169,7 +166,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}shift + up`, label: "Next Stokes cube", onKeyDown: HotkeyService.NextStokes},
             {combo: `${modString}shift + down`, label: "Previous Stokes cube", onKeyDown: HotkeyService.PrevStokes}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     // Hidden hotkeys for input method compatibility
@@ -182,7 +179,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}“`, label: "Previous image", onKeyDown: appStore.prevImage}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     static FileControlHotkeys() {
@@ -198,7 +195,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}G`, label: "Import catalog", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)},
             {combo: `${modString}E`, label: "Export image", onKeyDown: () => appStore.exportImage(1)}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     static OtherHotkeys() {
@@ -210,7 +207,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "f", label: "Freeze/unfreeze cursor position", onKeyDown: appStore.toggleCursorFrozen},
             {combo: "g", label: "Mirror cursor on multipanel view", onKeyDown: appStore.toggleCursorMirror}
         ];
-        return items.map(item => ({...base, ...item}));
+        return WithHotkeyDefaults(base, items);
     }
 
     // For display in custom hotkeys dialog

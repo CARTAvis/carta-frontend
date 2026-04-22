@@ -3,7 +3,6 @@ import {Layer, Line, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
-import {DD} from "konva/lib/DragAndDrop";
 import * as _ from "lodash";
 import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -13,6 +12,7 @@ import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
@@ -153,36 +153,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private setupPopoutDragListeners() {
         this.cleanupPopoutDragListeners();
-
-        const stage = this.stageRef.current;
-        if (!stage) {
-            return;
-        }
-
-        const container = stage.container();
-        const popoutWindow = container?.ownerDocument?.defaultView;
-
-        // Only mirror if we're in a different window (popout)
-        if (!popoutWindow || popoutWindow === window) {
-            return;
-        }
-
-        // Mirror the same listeners Konva registers on the main window
-        popoutWindow.addEventListener("mouseup", DD._endDragBefore, true);
-        popoutWindow.addEventListener("touchend", DD._endDragBefore, true);
-        popoutWindow.addEventListener("mousemove", DD._drag);
-        popoutWindow.addEventListener("touchmove", DD._drag);
-        popoutWindow.addEventListener("mouseup", DD._endDragAfter, false);
-        popoutWindow.addEventListener("touchend", DD._endDragAfter, false);
-
-        this.popoutDragCleanup = () => {
-            popoutWindow.removeEventListener("mouseup", DD._endDragBefore, true);
-            popoutWindow.removeEventListener("touchend", DD._endDragBefore, true);
-            popoutWindow.removeEventListener("mousemove", DD._drag);
-            popoutWindow.removeEventListener("touchmove", DD._drag);
-            popoutWindow.removeEventListener("mouseup", DD._endDragAfter, false);
-            popoutWindow.removeEventListener("touchend", DD._endDragAfter, false);
-        };
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef.current);
     }
 
     private cleanupPopoutDragListeners() {

@@ -23,6 +23,16 @@ export class ResizableDialogComponentProps {
     children?: React.ReactNode;
 }
 
+function getViewportDimensions() {
+    const documentElement = document.documentElement;
+    const body = document.getElementsByTagName("body")[0];
+
+    return {
+        width: window.innerWidth || documentElement.clientWidth || body.clientWidth,
+        height: window.innerHeight || documentElement.clientHeight || body.clientHeight
+    };
+}
+
 @observer
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd = React.createRef<HTMLDivElement>();
@@ -84,12 +94,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     render() {
-        const w = window,
-            d = document,
-            e = d.documentElement,
-            g = d.getElementsByTagName("body")[0],
-            windowWidth = w.innerWidth || e.clientWidth || g.clientWidth,
-            windowHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+        const {width: windowWidth, height: windowHeight} = getViewportDimensions();
 
         const resizeEnabled = this.props.enableResizing;
         const resizeSettings: ResizeEnable = {

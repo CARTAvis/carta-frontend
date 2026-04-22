@@ -212,34 +212,14 @@ export class ImageViewConfigStore {
 
     /** The number of columns in the image view widget. */
     @computed get numImageColumns() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            return 1;
-        }
-
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, PreferenceStore.Instance.imagePanelColumns);
-            default:
-                return clamp(this.imageNum, 1, PreferenceStore.Instance.imagePanelColumns);
-        }
+        return this.getImagePanelDimension(PreferenceStore.Instance.imagePanelColumns, this.imageNum);
     }
 
     /** The number of rows in the image view widget. */
     @computed get numImageRows() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            return 1;
-        }
-
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, PreferenceStore.Instance.imagePanelRows);
-            default:
-                return clamp(Math.ceil(this.imageNum / PreferenceStore.Instance.imagePanelColumns), 1, PreferenceStore.Instance.imagePanelRows);
-        }
+        const preferenceStore = PreferenceStore.Instance;
+        const dynamicRowCount = Math.ceil(this.imageNum / preferenceStore.imagePanelColumns);
+        return this.getImagePanelDimension(preferenceStore.imagePanelRows, dynamicRowCount);
     }
 
     /** The number of image panels on a page. */
@@ -252,6 +232,21 @@ export class ImageViewConfigStore {
         const preferenceStore = PreferenceStore.Instance;
         return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
+
+    private getImagePanelDimension = (fixedPanelCount: number, dynamicPanelCount: number) => {
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            return 1;
+        }
+
+        switch (this.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, fixedPanelCount);
+            default:
+                return clamp(dynamicPanelCount, 1, fixedPanelCount);
+        }
+    };
 
     private constructor() {
         makeAutoObservable(this);
