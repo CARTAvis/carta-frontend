@@ -1,12 +1,11 @@
 import {ImageType} from "enums";
-import {AppStore, FrameStore} from "stores";
+import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
 
 const mockUpdateActiveImage = jest.fn();
 const mockIsActiveImage = jest.fn();
 const mockSetActiveImage = jest.fn();
-const mockSetSpatialReference = jest.fn();
 
 // Mock RenderConfigStore to handle import chain
 jest.mock("stores/Frame", () => ({
@@ -33,11 +32,9 @@ jest.mock("stores/Frame", () => ({
 jest.mock("stores", () => {
     const instance = {
         activeImage: null,
-        spatialReference: null,
         updateActiveImage: x => mockUpdateActiveImage(x),
         isActiveImage: () => mockIsActiveImage(),
-        setActiveImage: x => mockSetActiveImage(x),
-        setSpatialReference: (...args) => mockSetSpatialReference(...args)
+        setActiveImage: x => mockSetActiveImage(x)
     };
 
     class MockColorBlendingStore {
@@ -56,16 +53,7 @@ jest.mock("stores", () => {
         },
         FrameStore: jest.fn(frameInfo => ({
             id: frameInfo.fileId,
-            clearContours: jest.fn(),
-            secondarySpatialImages: [],
-            spatialReference: null,
-            setSpatialReference: jest.fn(function (frame) {
-                this.spatialReference = frame;
-                if (!frame.secondarySpatialImages.includes(this)) {
-                    frame.secondarySpatialImages.push(this);
-                }
-                return true;
-            })
+            clearContours: jest.fn()
         })),
         ColorBlendingStore: MockColorBlendingStore
     };
@@ -250,143 +238,6 @@ describe("ImageViewConfigStore", () => {
             imageViewConfigStore.addFrame(mockFrame1);
             const summary = imageViewConfigStore.imageListSummary;
             expect(Object.keys(summary[0]).sort()).toEqual(["id", "type"]);
-        });
-    });
-
-    describe("createColorBlendingFromFrames", () => {
-        beforeEach(() => {
-            imageViewConfigStore.removeAllImages();
-            mockSetSpatialReference.mockClear();
-            mockSetSpatialReference.mockImplementation(frame => {
-                AppStore.Instance.spatialReference = frame;
-            });
-            AppStore.Instance.spatialReference = null;
-            mockFrame1.secondarySpatialImages = [];
-            mockFrame2.secondarySpatialImages = [];
-            mockFrame3.secondarySpatialImages = [];
-            mockFrame1.spatialReference = null;
-            mockFrame2.spatialReference = null;
-            mockFrame3.spatialReference = null;
-            (mockFrame1.setSpatialReference as jest.Mock).mockClear();
-            (mockFrame2.setSpatialReference as jest.Mock).mockClear();
-            (mockFrame3.setSpatialReference as jest.Mock).mockClear();
-        });
-
-        it("returns {id} and creates a color blending with exactly frames.slice(1) as layers", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            imageViewConfigStore.addFrame(mockFrame3);
-
-            const result = imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2, mockFrame3]);
-            expect(result).not.toBeNull();
-            const cbImages = imageViewConfigStore.colorBlendingImages;
-            expect(cbImages.length).toBe(1);
-            expect(result!.id).toBe(cbImages[0].id);
-            expect(cbImages[0].selectedFrames).toEqual([mockFrame2, mockFrame3]);
-            expect(cbImages[0].alpha.length).toBe(3);
-        });
-
-        it("sets frames[0] as the spatial reference and matches the rest", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            imageViewConfigStore.addFrame(mockFrame3);
-
-            imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2, mockFrame3]);
-
-            expect(mockSetSpatialReference).toHaveBeenCalledWith(mockFrame1, false);
-            expect(mockFrame2.setSpatialReference).toHaveBeenCalledWith(mockFrame1);
-            expect(mockFrame3.setSpatialReference).toHaveBeenCalledWith(mockFrame1);
-        });
-
-        it("returns null when frames is empty", () => {
-            expect(imageViewConfigStore.createColorBlendingFromFrames([])).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-        });
-
-        it("returns null when frames contains a falsy entry", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            expect(imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, null as any])).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-        });
-
-        it("returns null when frames exceeds the layer-count limit", () => {
-            const manyFrames: any[] = [];
-            for (let i = 0; i < 11; i++) {
-                manyFrames.push(mockFrame1);
-            }
-            imageViewConfigStore.addFrame(mockFrame1);
-            expect(imageViewConfigStore.createColorBlendingFromFrames(manyFrames)).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-        });
-
-        it("does not mutate or close existing color blendings", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            AppStore.Instance.spatialReference = mockFrame1;
-            const existingCb = imageViewConfigStore.createColorBlending();
-            const existingId = existingCb!.id;
-
-            imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2]);
-
-            const ids = imageViewConfigStore.colorBlendingImages.map(cb => cb.id);
-            expect(ids).toContain(existingId);
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(2);
-        });
-
-        it("returns null instead of rebasing existing color blendings onto a new base frame", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            imageViewConfigStore.addFrame(mockFrame3);
-            AppStore.Instance.spatialReference = mockFrame1;
-            imageViewConfigStore.createColorBlending();
-
-            expect(imageViewConfigStore.createColorBlendingFromFrames([mockFrame2, mockFrame3])).toBeNull();
-            expect(mockSetSpatialReference).not.toHaveBeenCalled();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(1);
-            expect(AppStore.Instance.spatialReference).toBe(mockFrame1);
-        });
-
-        it("does not re-set the spatial reference when the requested base frame is already active", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            imageViewConfigStore.addFrame(mockFrame3);
-            AppStore.Instance.spatialReference = mockFrame1;
-            mockFrame2.spatialReference = mockFrame1;
-
-            const result = imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2, mockFrame3]);
-
-            expect(result).not.toBeNull();
-            expect(mockSetSpatialReference).not.toHaveBeenCalled();
-            expect(mockFrame2.setSpatialReference).not.toHaveBeenCalled();
-            expect(mockFrame3.setSpatialReference).toHaveBeenCalledWith(mockFrame1);
-        });
-
-        it("returns null when frames contain duplicate entries", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-
-            expect(imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2, mockFrame2])).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-        });
-
-        it("returns null when any frame is not in the current image list", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            // mockFrame2 intentionally not added.
-
-            expect(imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2])).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-        });
-
-        it("returns null and does not create a color blending when a non-base frame fails to spatially match", () => {
-            imageViewConfigStore.addFrame(mockFrame1);
-            imageViewConfigStore.addFrame(mockFrame2);
-            imageViewConfigStore.addFrame(mockFrame3);
-            (mockFrame3.setSpatialReference as jest.Mock).mockReturnValueOnce(false);
-
-            expect(imageViewConfigStore.createColorBlendingFromFrames([mockFrame1, mockFrame2, mockFrame3])).toBeNull();
-            expect(imageViewConfigStore.colorBlendingImages.length).toBe(0);
-            // Session-wide spatial reference is still updated to the base frame (documented side effect).
-            expect(mockSetSpatialReference).toHaveBeenCalledWith(mockFrame1, false);
         });
     });
 });

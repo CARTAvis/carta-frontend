@@ -69,69 +69,6 @@ export class ImageViewConfigStore {
     };
 
     /**
-     * Creates a color blending image from an explicit list of frames.
-     *
-     * The first frame becomes the spatial reference (base layer);
-     * the remaining frames are spatially matched to it and added as
-     * layers in the given order.
-     *
-     * @param frames - Non-empty list of frames; layer 0 is the base layer.
-     * @returns `{id}` of the new color blending store, or `null` on failure.
-     */
-    @action createColorBlendingFromFrames = (frames: FrameStore[]): {id: number} | null => {
-        if (!frames?.length || frames.some(f => !f)) {
-            console.error("createColorBlendingFromFrames: `frames` must be a non-empty list of valid frames.");
-            return null;
-        }
-        if (frames.length > ColorBlendingStore.DefaultLayerLimit) {
-            console.error(`createColorBlendingFromFrames: ${frames.length} frames exceeds the layer limit of ${ColorBlendingStore.DefaultLayerLimit}.`);
-            return null;
-        }
-        if (new Set(frames).size !== frames.length) {
-            console.error("createColorBlendingFromFrames: `frames` must not contain duplicate entries.");
-            return null;
-        }
-        const loadedFrames = this.frames;
-        if (frames.some(f => !loadedFrames.includes(f))) {
-            console.error("createColorBlendingFromFrames: all frames must be in the current image list.");
-            return null;
-        }
-
-        const appStore = AppStore.Instance;
-        const baseFrame = frames[0];
-        const currentRef = appStore.spatialReference;
-        const hasExistingBlendings = this.colorBlendingImages.length > 0;
-
-        if (hasExistingBlendings && currentRef !== baseFrame) {
-            console.error("createColorBlendingFromFrames: refusing to change the global spatial reference while color blending images already exist.");
-            return null;
-        }
-
-        if (currentRef !== baseFrame) {
-            appStore.setSpatialReference(baseFrame, false);
-        }
-        for (let i = 1; i < frames.length; i++) {
-            if (frames[i].spatialReference === baseFrame) {
-                continue;
-            }
-            if (!frames[i].setSpatialReference(baseFrame)) {
-                console.error(`createColorBlendingFromFrames: failed to spatially match frames[${i}] to the base frame.`);
-                return null;
-            }
-        }
-
-        const newImage = this.createColorBlending();
-        if (!newImage) {
-            return null;
-        }
-
-        newImage.selectedFrames = frames.slice(1);
-        newImage.alpha = new Array(frames.length).fill(1);
-
-        return {id: newImage.id};
-    };
-
-    /**
      * Removes a color blended image from the image list.
      * @param image - The color blended image to remove.
      */
