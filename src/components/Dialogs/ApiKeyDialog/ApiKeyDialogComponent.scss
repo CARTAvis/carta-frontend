@@ -1,4 +1,11 @@
 .api-key-dialog {
+    .api-key-dialog-body {
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
     .api-key-dialog-description {
         margin-bottom: 12px;
         line-height: 1.5;
@@ -9,14 +16,59 @@
         margin-bottom: 16px;
     }
 
+    .api-key-list-section {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .api-key-create-section {
+        flex: 0 0 auto;
+        margin-bottom: 0;
+    }
+
     .api-key-loading {
         min-height: 48px;
         display: flex;
         align-items: center;
     }
 
+    .api-key-list-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow: auto;
+        border: 1px solid rgba(16, 22, 26, 0.15);
+        border-radius: 3px;
+    }
+
     .api-key-list {
         width: 100%;
+        table-layout: fixed;
+        margin: 0;
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: #f5f8fa;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 58%;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 24%;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 18%;
+        }
 
         th,
         td {
@@ -28,18 +80,17 @@
         opacity: 0.65;
     }
 
-    .api-key-created-table {
-        width: 100%;
-
-        th,
-        td {
-            vertical-align: middle;
-        }
+    .api-key-id-cell {
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
-    .api-key-secret-value {
-        word-break: break-all;
-        font-family: monospace;
+    .api-key-expiry-cell {
+        overflow-wrap: anywhere;
+    }
+
+    .api-key-actions-cell {
+        text-align: right;
     }
 
     input.bp6-input[type="date"] {
@@ -54,9 +105,54 @@
 }
 
 .api-key-credentials-dialog {
-    width: min(720px, calc(100vw - 32px));
+    width: min(760px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+
+    .bp6-dialog-body {
+        overflow-x: hidden;
+    }
 
     .bp6-callout {
         margin-bottom: 12px;
+    }
+
+    .api-key-created-table {
+        width: 100%;
+        table-layout: fixed;
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 20%;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 80%;
+        }
+
+        th,
+        td {
+            vertical-align: top;
+        }
+
+        td {
+            min-width: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+    }
+
+    .api-key-secret-value {
+        font-family: monospace;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .api-key-credentials-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 10px;
     }
 }

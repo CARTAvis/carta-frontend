@@ -141,7 +141,7 @@ export class ApiKeyDialogComponent extends React.Component {
         AppToaster.show(SuccessToast("trash", `Deleted API key ${keyId}.`));
     };
 
-    private onCancelClicked = () => {
+    private onCloseClicked = () => {
         AppStore.Instance.dialogStore.hideDialog(DialogId.ApiKey);
     };
 
@@ -177,51 +177,53 @@ export class ApiKeyDialogComponent extends React.Component {
                 enableResizing={false}
                 dialogId={DialogId.ApiKey}
             >
-                <div className={Classes.DIALOG_BODY}>
+                <div className={classNames(Classes.DIALOG_BODY, "api-key-dialog-body")}>
                     <p className="api-key-dialog-description">Manage API keys for scripted access. New keys are shown once and must be copied immediately.</p>
 
                     <div className="api-key-list-section">
                         <H5>Existing API keys</H5>
-                        {this.isLoading ? (
-                            <div className="api-key-loading">
-                                <Spinner size={24} />
-                            </div>
-                        ) : (
-                            <HTMLTable className={listClassName}>
-                                <thead>
-                                    <tr>
-                                        <th>Key ID</th>
-                                        <th>Expiry date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {this.keys.map(entry => (
-                                        <tr key={entry.key_id}>
-                                            <td>{entry.key_id}</td>
-                                            <td>{entry.expiry || "-"}</td>
-                                            <td>
-                                                <Button
-                                                    small={true}
-                                                    icon="trash"
-                                                    intent={Intent.DANGER}
-                                                    disabled={this.deletingKeyId === entry.key_id}
-                                                    loading={this.deletingKeyId === entry.key_id}
-                                                    onClick={() => this.onDeleteClicked(entry.key_id)}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {isListEmpty && (
+                        <div className="api-key-list-scroll">
+                            {this.isLoading ? (
+                                <div className="api-key-loading">
+                                    <Spinner size={24} />
+                                </div>
+                            ) : (
+                                <HTMLTable className={listClassName}>
+                                    <thead>
                                         <tr>
-                                            <td colSpan={3}>No API keys found for this user.</td>
+                                            <th>Key ID</th>
+                                            <th>Expiry date</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </HTMLTable>
-                        )}
+                                    </thead>
+                                    <tbody>
+                                        {this.keys.map(entry => (
+                                            <tr key={entry.key_id}>
+                                                <td className="api-key-id-cell">{entry.key_id}</td>
+                                                <td className="api-key-expiry-cell">{entry.expiry || "-"}</td>
+                                                <td className="api-key-actions-cell">
+                                                    <Button
+                                                        small={true}
+                                                        icon="trash"
+                                                        intent={Intent.DANGER}
+                                                        disabled={this.deletingKeyId === entry.key_id}
+                                                        loading={this.deletingKeyId === entry.key_id}
+                                                        onClick={() => this.onDeleteClicked(entry.key_id)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {isListEmpty && (
+                                            <tr>
+                                                <td colSpan={3}>No API keys found for this user.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </HTMLTable>
+                            )}
+                        </div>
                     </div>
 
                     <div className="api-key-create-section">
@@ -233,10 +235,10 @@ export class ApiKeyDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Button onClick={this.onCancelClicked}>Cancel</Button>
                         <Button intent={Intent.PRIMARY} onClick={this.onCreateClicked} loading={this.isCreating} disabled={this.isCreating}>
                             Create Key
                         </Button>
+                        <Button onClick={this.onCloseClicked}>Close</Button>
                     </div>
                 </div>
 
@@ -259,29 +261,26 @@ export class ApiKeyDialogComponent extends React.Component {
                                     <tbody>
                                         <tr>
                                             <th>Key ID</th>
-                                            <td>{this.latestCreatedKey.keyId}</td>
-                                            <td>
-                                                <Button small={true} icon="clipboard" onClick={() => this.copyValue("Key ID", this.latestCreatedKey?.keyId ?? "")}>
-                                                    Copy Key ID
-                                                </Button>
-                                            </td>
+                                            <td className="api-key-secret-value">{this.latestCreatedKey.keyId}</td>
                                         </tr>
                                         <tr>
                                             <th>Access key</th>
                                             <td className="api-key-secret-value">{this.latestCreatedKey.accessKey}</td>
-                                            <td>
-                                                <Button small={true} icon="clipboard" onClick={() => this.copyValue("Access key", this.latestCreatedKey?.accessKey ?? "")}>
-                                                    Copy Access Key
-                                                </Button>
-                                            </td>
                                         </tr>
                                         <tr>
                                             <th>Expiry date</th>
                                             <td>{this.latestCreatedKey.expiry}</td>
-                                            <td />
                                         </tr>
                                     </tbody>
                                 </HTMLTable>
+                                <div className="api-key-credentials-actions">
+                                    <Button small={true} icon="clipboard" onClick={() => this.copyValue("Key ID", this.latestCreatedKey?.keyId ?? "")}>
+                                        Copy Key ID
+                                    </Button>
+                                    <Button small={true} icon="clipboard" onClick={() => this.copyValue("Access key", this.latestCreatedKey?.accessKey ?? "")}>
+                                        Copy Access Key
+                                    </Button>
+                                </div>
                             </div>
                             <div className={Classes.DIALOG_FOOTER}>
                                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
