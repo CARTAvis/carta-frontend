@@ -325,9 +325,6 @@ export class AppStore {
         return estimatedFinishTime - dt;
     }
 
-    /**
-     * (carta-python) Frontend version string from the current CARTA build.
-     */
     @computed get frontendVersion(): string {
         return CARTA_INFO.version;
     }
