@@ -65,6 +65,12 @@ export default [
                     format: ["UPPER_CASE"],
                 },
                 {
+                    selector: "variable",
+                    types: ["function"],
+                    modifiers: ["const", "global"],
+                    format: ["PascalCase"],
+                },
+                {
                     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                     format: ["camelCase"],
                     leadingUnderscore: "allow",
