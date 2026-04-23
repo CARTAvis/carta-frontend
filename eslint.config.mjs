@@ -65,20 +65,35 @@ export default [
                     format: ["UPPER_CASE"],
                 },
                 {
+                    selector: "variable",
+                    types: ["function"],
+                    modifiers: ["const", "global"],
+                    format: ["PascalCase"],
+                },
+                {
                     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                     format: ["camelCase"],
                     leadingUnderscore: "allow",
                 },
                 {
                     selector: ["classicAccessor"],
-                    modifiers: ["public"],
+                    modifiers: ["public", "static"],
                     format: ["PascalCase"],
-                },
+                },  
                 {
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
                     prefix: ["is", "should", "has", "can", "did", "will"]
+                },
+                // exceptions for certain patterns and don't follow the above conventions
+                {
+                    selector: ["classProperty", "classicAccessor", "variable", "parameter"],
+                    filter: {
+                        regex: "N|M|p|UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
+                        match: true
+                    },
+                    format: null,
                 },
             ],
             "@typescript-eslint/no-unused-expressions": "error",
