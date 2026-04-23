@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, ColorMap, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
@@ -91,7 +91,7 @@ export class CatalogWidgetStore {
     @observable colorMapColumn: string = CatalogOverlay.NONE;
     @observable colorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
     @observable colorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable colorMap: string = "viridis";
+    @observable colorMap: string = ColorMap.Viridis;
     @observable colorScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable invertedColorMap: boolean = false;
     // orientation
@@ -275,7 +275,7 @@ export class CatalogWidgetStore {
         this.colorMapColumn = CatalogOverlay.NONE;
         this.colorColumnMax = {default: undefined, clipd: undefined};
         this.colorColumnMin = {default: undefined, clipd: undefined};
-        this.colorMap = "jet";
+        this.colorMap = ColorMap.Jet;
         this.colorScalingType = FrameScaling.LINEAR;
         this.invertedColorMap = false;
         // orientation
