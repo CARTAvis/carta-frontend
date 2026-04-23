@@ -95,15 +95,6 @@ export default [
                     },
                     format: null,
                 },
-                {
-                    selector: ["classicAccessor"],
-                    modifiers: ["public"],
-                    format: ["PascalCase"],
-                    filter: {
-                        regex: "Instance",
-                        match: true
-                    }
-                },
             ],
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
