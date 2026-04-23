@@ -95,7 +95,6 @@ export default [
                     },
                     format: null,
                 },
-
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public"],
