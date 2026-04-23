@@ -5,10 +5,10 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SWATCH_COLORS, SystemType} from "enums";
+import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
-import {toFixed} from "utilities";
+import {NUMBER_FORMAT_LABEL, SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
 
