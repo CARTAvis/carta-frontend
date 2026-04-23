@@ -129,7 +129,7 @@ interface Disposable {
 export class WidgetsStore {
     private static staticInstance: WidgetsStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!WidgetsStore.staticInstance) {
             WidgetsStore.staticInstance = new WidgetsStore();
         }

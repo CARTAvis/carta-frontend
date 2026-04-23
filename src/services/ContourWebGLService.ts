@@ -37,7 +37,7 @@ export class ContourWebGLService {
     vertexPositionAttribute: number;
     vertexNormalAttribute: number;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ContourWebGLService.staticInstance) {
             ContourWebGLService.staticInstance = new ContourWebGLService();
         }

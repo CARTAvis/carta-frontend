@@ -25,8 +25,8 @@ export declare type CustomIconName =
     | "vectorOverlay";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
-    static readonly SIZE_STANDARD = 16;
-    static readonly SIZE_LARGE = 20;
+    public static readonly SIZE_STANDARD = 16;
+    public static readonly SIZE_LARGE = 20;
 
     public render() {
         const className = classNames("custom-icon", Classes.ICON, {"dark-theme": AppStore.Instance.darkTheme});

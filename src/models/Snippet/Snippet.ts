@@ -9,6 +9,6 @@ export class Snippet {
     categories: string[];
     requires?: string[];
 
-    static readonly FrontendVersion = version;
-    static readonly SnippetVersion = 1;
+    public static readonly FrontendVersion = version;
+    public static readonly SnippetVersion = 1;
 }

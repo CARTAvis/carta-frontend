@@ -88,7 +88,7 @@ export const PREVIEW_PV_FILEID = -2;
 export class AppStore {
     private static staticInstance: AppStore;
 
-    static get Instance() {
+    public static get Instance() {
         return AppStore.staticInstance || new AppStore();
     }
 

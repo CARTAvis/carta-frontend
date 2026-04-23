@@ -20,7 +20,7 @@ export interface RuntimeConfig {
 export class ApiService {
     private static staticInstance: ApiService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ApiService.staticInstance) {
             ApiService.staticInstance = new ApiService();
         }

@@ -40,7 +40,7 @@ export class VectorOverlayWebGLService {
     private cmapTexture: WebGLTexture;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!VectorOverlayWebGLService.staticInstance) {
             VectorOverlayWebGLService.staticInstance = new VectorOverlayWebGLService();
         }

@@ -32,7 +32,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    static readonly axisDataType = [
+    public static readonly axisDataType = [
         CARTA.ColumnType.Double,
         CARTA.ColumnType.Float,
         CARTA.ColumnType.Int8,

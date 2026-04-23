@@ -16,7 +16,7 @@ const IMAGE_REGION_ID = -1;
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ImageFittingStore.staticInstance) {
             ImageFittingStore.staticInstance = new ImageFittingStore();
         }

@@ -10,7 +10,7 @@ import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "u
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!AnimatorStore.staticInstance) {
             AnimatorStore.staticInstance = new AnimatorStore();
         }

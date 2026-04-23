@@ -10,7 +10,7 @@ import {exampleSnippets} from "./ExampleSnippets";
 export class SnippetStore {
     private static staticInstance: SnippetStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SnippetStore.staticInstance) {
             SnippetStore.staticInstance = new SnippetStore();
         }

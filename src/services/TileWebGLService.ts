@@ -57,7 +57,7 @@ export class TileWebGLService {
     shaderProgram: WebGLProgram | null;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!TileWebGLService.staticInstance) {
             TileWebGLService.staticInstance = new TileWebGLService();
         }
@@ -194,7 +194,7 @@ export class TileWebGLService {
 export class PreviewWebGLService extends TileWebGLService {
     protected static staticInstance: PreviewWebGLService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreviewWebGLService.staticInstance) {
             PreviewWebGLService.staticInstance = new PreviewWebGLService();
         }

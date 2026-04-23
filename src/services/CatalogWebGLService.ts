@@ -60,7 +60,7 @@ export class CatalogWebGLService {
     readonly gl: WebGL2RenderingContext | null;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogWebGLService.staticInstance) {
             CatalogWebGLService.staticInstance = new CatalogWebGLService();
         }
