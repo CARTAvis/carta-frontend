@@ -71,6 +71,14 @@ export default [
                     format: ["PascalCase"],
                 },
                 {
+                    selector: ["classProperty", "classicAccessor", "variable", "parameter"],
+                    filter: {
+                        regex: "N|M|p|UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
+                        match: true
+                    },
+                    format: null,
+                },
+                {
                     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                     format: ["camelCase"],
                     leadingUnderscore: "allow",
@@ -79,7 +87,16 @@ export default [
                     selector: ["classicAccessor"],
                     modifiers: ["public"],
                     format: ["PascalCase"],
+                    filter: {
+                        regex: "Instance",
+                        match: true
+                    }
                 },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public", "static"],
+                    format: ["UPPER_CASE"],
+                },  
                 {
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
