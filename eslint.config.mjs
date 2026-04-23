@@ -71,6 +71,23 @@ export default [
                     format: ["PascalCase"],
                 },
                 {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public", "static"],
+                    format: ["PascalCase"],
+                },  
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "should", "has", "can", "did", "will"]
+                },
+                // exceptions for certain patterns and don't follow the above conventions
+                {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
                         regex: "N|M|p|UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
@@ -78,11 +95,7 @@ export default [
                     },
                     format: null,
                 },
-                {
-                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                    format: ["camelCase"],
-                    leadingUnderscore: "allow",
-                },
+
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public"],
@@ -91,17 +104,6 @@ export default [
                         regex: "Instance",
                         match: true
                     }
-                },
-                {
-                    selector: ["classicAccessor"],
-                    modifiers: ["public", "static"],
-                    format: ["UPPER_CASE"],
-                },  
-                {
-                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                    types: ["boolean"],
-                    format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
                 },
             ],
             "@typescript-eslint/no-unused-expressions": "error",
