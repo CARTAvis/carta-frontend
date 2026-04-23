@@ -70,6 +70,11 @@ export default [
                     leadingUnderscore: "allow",
                 },
                 {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public"],
+                    format: ["PascalCase"],
+                },
+                {
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
