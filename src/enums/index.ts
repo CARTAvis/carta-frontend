@@ -18,7 +18,6 @@ export * from "./plot";
 export * from "./polarization";
 export * from "./preference";
 export * from "./pv";
-export * from "./pythonSharedEnumRegistry";
 export * from "./region";
 export * from "./spectral";
 export * from "./tab";
