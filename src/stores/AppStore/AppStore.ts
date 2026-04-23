@@ -12,6 +12,7 @@ import * as Semver from "semver";
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {AnimationMode, BrowserMode, CatalogType, CatalogUpdateMode, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType} from "enums";
+import * as Enums from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -1646,7 +1647,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveImageByFileId(message.fileId ?? -1);
+        this.setActiveImageById(ImageType.FRAME, message.fileId ?? -1);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -1886,6 +1887,7 @@ export class AppStore {
         window["app"] = this;
         window["carta"] = this;
         window["utils"] = Utils;
+        window["enums"] = Enums;
 
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -3005,12 +3007,11 @@ export class AppStore {
         if (frame.isPreview) {
             this.setActiveImage({type: ImageType.PV_PREVIEW, store: frame});
         } else {
-            this.setActiveImageByFileId(frame.id);
+            this.setActiveImageById(ImageType.FRAME, frame.id);
         }
     };
 
     /**
-     * (carta-python)
      * Sets the active image by its type and stable store id.
      *
      * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).
@@ -3039,19 +3040,6 @@ export class AppStore {
         } else {
             console.error(`Can't find image of type ${type} with id ${id}`);
         }
-    };
-
-    /**
-     * Sets the active image with a loaded image.
-     *
-     * Thin wrapper around {@link setActiveImageById} kept for backward
-     * compatibility with existing frontend call sites (e.g.
-     * `onFrameViewUpdated`, `ProfileFittingComponent`).
-     *
-     * @param fileId - The file id of the loaded image.
-     */
-    @action setActiveImageByFileId = (fileId: number) => {
-        this.setActiveImageById(ImageType.FRAME, fileId);
     };
 
     /**
