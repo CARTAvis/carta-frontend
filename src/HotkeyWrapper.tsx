@@ -3,18 +3,10 @@ import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
+import {BrowserMode, DialogId, HotkeyGroup, ImageViewLayer, RegionMode} from "enums";
 import {AppStore} from "stores";
 
 import "./HotkeyWrapper.scss";
-
-enum HotkeyGroup {
-    Navigation = "Navigation",
-    Regions = "Regions",
-    FrameControls = "Frame controls",
-    FileControls = "File controls",
-    Other = "Other"
-}
 
 @observer
 export class HotkeyService extends React.Component<{}> {
