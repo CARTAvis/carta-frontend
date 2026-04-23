@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
-import {DialogId, HelpType} from "enums";
+import {DialogId, HelpType, RegionDialogTabs} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -21,11 +21,6 @@ import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 
 import "./RegionDialogComponent.scss";
-
-enum RegionDialogTabs {
-    Configuration,
-    Styling
-}
 
 @observer
 export class RegionDialogComponent extends React.Component {

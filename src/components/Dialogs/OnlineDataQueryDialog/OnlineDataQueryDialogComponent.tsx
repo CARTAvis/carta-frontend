@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {DialogId, HelpType} from "enums";
+import {DialogId, HelpType, OnlineDataQueryDialogTabs} from "enums";
 import {AppStore} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
@@ -15,11 +15,6 @@ const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 550;
 const MIN_WIDTH = 450;
 const MIN_HEIGHT = 200;
-
-enum OnlineDataQueryDialogTabs {
-    Catalog,
-    Hips
-}
 
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
