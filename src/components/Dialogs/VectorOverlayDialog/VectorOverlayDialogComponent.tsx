@@ -22,6 +22,7 @@ enum VectorOverlayDialogTabs {
     Styling
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const DataSourceSelect = Select<FrameStore>;
 
 @observer

@@ -2,7 +2,7 @@ import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
-import {vectorOverlayShaders} from "./GLSL";
+import {VECTOR_OVERLAY_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     DataTexture: WebGLUniformLocation | null;
@@ -60,7 +60,7 @@ export class VectorOverlayWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, vectorOverlayShaders.vertexShader, vectorOverlayShaders.fragmentShader);
+        const shaderProgram = getShaderProgram(this.gl, VECTOR_OVERLAY_SHADERS.vertexShader, VECTOR_OVERLAY_SHADERS.fragmentShader);
 
         if (shaderProgram) {
             this.gl.useProgram(shaderProgram);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 const {version} = require("../../../package.json");
 
 export class Snippet {
@@ -12,3 +13,4 @@ export class Snippet {
     public static readonly FrontendVersion = version;
     public static readonly SnippetVersion = 1;
 }
+/* eslint-enable @typescript-eslint/naming-convention */

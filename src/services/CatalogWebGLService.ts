@@ -3,7 +3,7 @@ import {createTextureFromArray, getShaderProgram, GL2, initWebGL2, loadImageText
 
 import allMaps from "../static/allmaps.png";
 
-import {catalogShaders} from "./GLSL";
+import {CATALOG_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     LineThickness: WebGLUniformLocation | null;
@@ -158,7 +158,7 @@ export class CatalogWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, catalogShaders.vertexShader, catalogShaders.fragmentShader);
+        const shaderProgram = getShaderProgram(this.gl, CATALOG_SHADERS.vertexShader, CATALOG_SHADERS.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         if (shaderProgram) {

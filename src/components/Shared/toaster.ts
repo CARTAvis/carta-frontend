@@ -3,7 +3,8 @@ import {type IconName, OverlayToaster, Position, type ToastProps} from "@bluepri
 
 import {copyToClipboard} from "utilities";
 
-const toaster = OverlayToaster.create(
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const Toaster = OverlayToaster.create(
     {
         className: "app-toaster",
         position: Position.BOTTOM
@@ -15,10 +16,10 @@ const toaster = OverlayToaster.create(
 
 export const AppToaster = {
     show: async (toast: ToastProps) => {
-        (await toaster).show(toast);
+        (await Toaster).show(toast);
     },
     clear: async () => {
-        (await toaster).clear();
+        (await Toaster).clear();
     }
 };
 

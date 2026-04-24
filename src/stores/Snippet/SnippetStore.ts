@@ -5,7 +5,7 @@ import {Snippet} from "models";
 import {ApiService} from "services";
 import {AlertStore} from "stores";
 
-import {exampleSnippets} from "./ExampleSnippets";
+import {ExampleSnippets} from "./ExampleSnippets";
 
 export class SnippetStore {
     private static staticInstance: SnippetStore;
@@ -44,7 +44,7 @@ export class SnippetStore {
             this.snippets = new Map<string, Snippet>();
         }
         this.snippets.clear();
-        for (const example of exampleSnippets) {
+        for (const example of ExampleSnippets) {
             let category = "Examples";
             if (example.section) {
                 category += `/${example.section}`;

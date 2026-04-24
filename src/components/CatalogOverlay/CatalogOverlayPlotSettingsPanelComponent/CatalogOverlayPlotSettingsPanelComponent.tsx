@@ -28,12 +28,12 @@ const IconWrapper = (path: React.ReactNode, color: string, fill: boolean, stroke
     );
 };
 
-const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z" />;
-const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z" />;
-const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-const hexagon2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z" />;
-const hexagon = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
-const ellipse = <ellipse cx="8" cy="8" rx="4" ry="7" />;
+const TRIANGLE_UP = <path d="M 2 14 L 14 14 L 8 3 Z" />;
+const TRIANGLE_DOWN = <path d="M 2 2 L 14 2 L 8 13 Z" />;
+const RHOMB = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
+const HEXAGON2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z" />;
+const HEXAGON = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
+const ELLIPSE = <ellipse cx="8" cy="8" rx="4" ry="7" />;
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -881,17 +881,17 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             case CatalogOverlayShape.X_FILLED:
                 return <Icon icon="cross" color={color} />;
             case CatalogOverlayShape.TRIANGLE_LINED_UP:
-                return IconWrapper(triangleUp, color, false);
+                return IconWrapper(TRIANGLE_UP, color, false);
             case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
-                return IconWrapper(triangleDown, color, false);
+                return IconWrapper(TRIANGLE_DOWN, color, false);
             case CatalogOverlayShape.RHOMB_LINED:
-                return IconWrapper(rhomb, color, false);
+                return IconWrapper(RHOMB, color, false);
             case CatalogOverlayShape.HEXAGON_LINED_2:
-                return IconWrapper(hexagon2, color, false);
+                return IconWrapper(HEXAGON2, color, false);
             case CatalogOverlayShape.HEXAGON_LINED:
-                return IconWrapper(hexagon, color, false);
+                return IconWrapper(HEXAGON, color, false);
             case CatalogOverlayShape.ELLIPSE_LINED:
-                return IconWrapper(ellipse, color, false);
+                return IconWrapper(ELLIPSE, color, false);
             case CatalogOverlayShape.LineSegment_FILLED:
                 return <Icon icon="minus" style={{transform: "rotate(90deg)"}} color={color} />;
             default:

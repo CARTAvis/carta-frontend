@@ -1,4 +1,4 @@
-export const exampleSnippets: {name: string; section?: string; code: string}[] = [
+export const ExampleSnippets: {name: string; section?: string; code: string}[] = [
     {
         name: "01. Quick start",
         section: "Tutorial",

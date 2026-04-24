@@ -185,6 +185,7 @@ function initContextWithSize(width: number, height: number) {
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const imageObj = new Image();
 imageObj.src = allMaps;
 imageObj.onload = () => {
