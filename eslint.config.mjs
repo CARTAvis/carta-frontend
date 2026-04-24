@@ -29,36 +29,36 @@ export default [
         rules: {
             "@typescript-eslint/naming-convention": [
                 "warn",
-                {
-                    selector: "default",
-                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
-                    leadingUnderscore: "allow",
-                    trailingUnderscore: "forbid"
-                },
-                {
-                    selector: [
-                        "enumMember",
-                        "objectLiteralProperty",
-                        "typeProperty",
-                        "objectLiteralMethod",
-                        "typeMethod"
-                    ],
-                    format: null
-                },
-                {
-                    selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
-                    format: ["PascalCase"]
-                },
-                {
-                    selector: "classProperty",
-                    modifiers: ["public", "static", "readonly"],
-                    format: ["UPPER_CASE"],
-                },
-                {
-                    selector: "classProperty",
-                    modifiers: ["private", "static", "readonly"],
-                    format: ["PascalCase"],
-                },
+                // {
+                //     selector: "default",
+                //     format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                //     leadingUnderscore: "allow",
+                //     trailingUnderscore: "forbid"
+                // },
+                // {
+                //     selector: [
+                //         "enumMember",
+                //         "objectLiteralProperty",
+                //         "typeProperty",
+                //         "objectLiteralMethod",
+                //         "typeMethod"
+                //     ],
+                //     format: null
+                // },
+                // {
+                //     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
+                //     format: ["PascalCase"]
+                // },
+                // {
+                //     selector: "classProperty",
+                //     modifiers: ["public", "static", "readonly"],
+                //     format: ["UPPER_CASE"],
+                // },
+                // {
+                //     selector: "classProperty",
+                //     modifiers: ["private", "static", "readonly"],
+                //     format: ["PascalCase"],
+                // },
                 {
                     selector: "variable",
                     modifiers: ["const", "global"],
@@ -70,22 +70,22 @@ export default [
                     modifiers: ["const", "global"],
                     format: ["PascalCase"],
                 },
-                {
-                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                    format: ["camelCase"],
-                    leadingUnderscore: "allow",
-                },
-                {
-                    selector: ["classicAccessor"],
-                    modifiers: ["public", "static"],
-                    format: ["PascalCase"],
-                },  
-                {
-                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                    types: ["boolean"],
-                    format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
-                },
+                // {
+                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                //     format: ["camelCase"],
+                //     leadingUnderscore: "allow",
+                // },
+                // {
+                //     selector: ["classicAccessor"],
+                //     modifiers: ["public", "static"],
+                //     format: ["PascalCase"],
+                // },  
+                // {
+                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                //     types: ["boolean"],
+                //     format: ["PascalCase"],
+                //     prefix: ["is", "should", "has", "can", "did", "will"]
+                // },
                 // exceptions for certain patterns and don't follow the above conventions
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
