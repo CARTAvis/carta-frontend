@@ -24,19 +24,6 @@ for (const val of [allMaps, linearPng, logPng, sqrtPng, squaredPng, gammaPng, po
 // Remove focus on tabs
 FocusStyleManager.onlyShowFocusOnTabs();
 
-// GoldenLayout requires these in the global namespace
-window["React"] = React; // tslint:disable-line
-// Ensure any roots created by GoldenLayout are wrapped with providers
-window["createRoot"] = (container: Element | DocumentFragment) => {
-    const root = createRoot(container);
-    const originalRender = root.render.bind(root);
-    root.render = (children: React.ReactNode) => {
-        const wrappedChildren = React.createElement(HotkeysProvider, {renderDialog: () => React.createElement(React.Fragment)}, React.createElement(OverlaysProvider, null, children));
-        originalRender(wrappedChildren);
-    };
-    return root;
-}; // tslint:disable-line
-
 async function fetchConfig() {
     const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");
     const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
