@@ -87,6 +87,13 @@ export class LayoutStore {
         return this.userLayoutNames.length;
     }
 
+    private clearCurrentLayout = () => {
+        const appStore = AppStore.Instance;
+        appStore.widgetsStore.removeFloatingWidgets();
+        appStore.widgetsStore.clearDockedWidgets();
+        this.layoutModel = null;
+    };
+
     @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
@@ -95,11 +102,7 @@ export class LayoutStore {
 
         const config = this.layouts[layoutName];
         const appStore = AppStore.Instance;
-        // clear floating widgets
-        appStore.widgetsStore.removeFloatingWidgets();
-        // clear docked widget stores and old layout before applying a new layout
-        appStore.widgetsStore.clearDockedWidgets();
-        this.layoutModel = null;
+        this.clearCurrentLayout();
 
         // generate docked config & collect docked components
         const dockedConfig = {

@@ -410,16 +410,16 @@ export class WidgetsStore {
                 }
             }
             widgets.delete(widgetId);
-            if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                CatalogStore.Instance.catalogProfiles.delete(widgetId);
-            }
-            if (widgetType === CatalogPlotComponent.WIDGET_CONFIG.type) {
-                CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
-            }
+            this.removeCatalogAssociations(widgetId, widgetType);
         }
-        const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
-        if (floatingSettings) {
-            this.floatingSettingsWidgets.delete(widgetId);
+        this.floatingSettingsWidgets.delete(widgetId);
+    };
+
+    private removeCatalogAssociations = (widgetId: string, widgetType: string) => {
+        if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            CatalogStore.Instance.catalogProfiles.delete(widgetId);
+        } else if (widgetType === CatalogPlotComponent.WIDGET_CONFIG.type) {
+            CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
         }
     };
 
@@ -472,24 +472,13 @@ export class WidgetsStore {
                 itemId = this.addPvGeneratorWidget(preAssignedId);
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
-                    itemId = this.addCatalogWidget(widgetSettings["catalogFileId"], preAssignedId, widgetSettings);
-                } else {
-                    itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-                    CatalogStore.Instance.catalogProfiles.set(itemId, 1);
-                }
+                itemId = this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId);
                 break;
             case CatalogPlotType.D2Scatter:
-                const scatterProps: CatalogPlotWidgetStoreProps = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
-                itemId = this.addCatalogPlotWidget(scatterProps, preAssignedId);
-                const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId);
                 break;
             case CatalogPlotType.Histogram:
-                const histogramProps: CatalogPlotWidgetStoreProps = {xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram};
-                itemId = this.addCatalogPlotWidget(histogramProps, preAssignedId);
-                const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId);
                 break;
             default:
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -501,10 +490,26 @@ export class WidgetsStore {
         return itemId;
     };
 
-    public removeFloatingWidgets = () => {
-        if (this.floatingWidgets) {
-            this.floatingWidgets.forEach(widgetConfig => this.removeFloatingWidget(widgetConfig.id));
+    private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
+        if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
+            return this.addCatalogWidget(widgetSettings["catalogFileId"], preAssignedId, widgetSettings);
         }
+        const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+        CatalogStore.Instance.catalogProfiles.set(itemId, 1);
+        return itemId;
+    };
+
+    private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null): string | null => {
+        const itemId = this.addCatalogPlotWidget(props, preAssignedId);
+        if (itemId) {
+            const componentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
+            CatalogStore.Instance.setCatalogPlots(componentId, 1, itemId);
+        }
+        return itemId;
+    };
+
+    public removeFloatingWidgets = () => {
+        this.floatingWidgets.slice().forEach(widgetConfig => this.removeFloatingWidget(widgetConfig.id));
     };
 
     @action public clearDockedWidgets = () => {
