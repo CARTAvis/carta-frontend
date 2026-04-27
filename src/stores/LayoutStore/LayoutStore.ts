@@ -97,6 +97,9 @@ export class LayoutStore {
         const appStore = AppStore.Instance;
         // clear floating widgets
         appStore.widgetsStore.removeFloatingWidgets();
+        // clear docked widget stores and old layout before applying a new layout
+        appStore.widgetsStore.clearDockedWidgets();
+        this.layoutModel = null;
 
         // generate docked config & collect docked components
         const dockedConfig = {

@@ -410,6 +410,12 @@ export class WidgetsStore {
                 }
             }
             widgets.delete(widgetId);
+            if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                CatalogStore.Instance.catalogProfiles.delete(widgetId);
+            }
+            if (widgetType === CatalogPlotComponent.WIDGET_CONFIG.type) {
+                CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
+            }
         }
         const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
         if (floatingSettings) {
@@ -466,10 +472,11 @@ export class WidgetsStore {
                 itemId = this.addPvGeneratorWidget(preAssignedId);
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.catalogProfiles.set(itemId, 1);
-                if (widgetSettings) {
-                    this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);
+                if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
+                    itemId = this.addCatalogWidget(widgetSettings["catalogFileId"], preAssignedId, widgetSettings);
+                } else {
+                    itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+                    CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 }
                 break;
             case CatalogPlotType.D2Scatter:
@@ -498,6 +505,13 @@ export class WidgetsStore {
         if (this.floatingWidgets) {
             this.floatingWidgets.forEach(widgetConfig => this.removeFloatingWidget(widgetConfig.id));
         }
+    };
+
+    @action public clearDockedWidgets = () => {
+        this.widgetsMap.forEach((widgets, widgetType) => {
+            const widgetIds = Array.from(widgets.keys());
+            widgetIds.forEach(widgetId => this.removeWidget(widgetId, widgetType));
+        });
     };
 
     createFloatingWidget = (savedConfig: any) => {
@@ -646,22 +660,24 @@ export class WidgetsStore {
         }
 
         if (WidgetsStore.showCogWidgets.includes(component)) {
-            buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "cog-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: "settings",
-                        "data-testid": nodeId + "-header-settings-button",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onCogPinedClick(selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
-                )
-            );
+            if (!(component === RenderConfigComponent.WIDGET_CONFIG.type && AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING)) {
+                buttons.push(
+                    React.createElement(
+                        "button",
+                        {
+                            key: "cog-" + nodeId,
+                            className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
+                            title: "settings",
+                            "data-testid": nodeId + "-header-settings-button",
+                            onClick: (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                this.onCogPinedClick(selectedNode);
+                            }
+                        },
+                        React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
+                    )
+                );
+            }
         }
 
         if (!WidgetsStore.hideHelpButtonWidgets.includes(component)) {
