@@ -37,13 +37,13 @@ const file1 = await app.openFile("testfile1.fits");
 const file2 = await app.appendFile("testfile2.fits");
 const file3 = await app.appendFile("testfile3.fits");
 
-// The active image can be changed with "setActiveImage", as well as the wrapper
+// The active image can be changed with "updateActiveImageByFrame", as well as the wrapper
 // functions "setActiveImageById" and "setActiveImageByIndex".
 app.setActiveImageByIndex(0);
 // "setActiveImageById" takes an image type (enums.ImageType) and a stable store id.
 // For a regular frame, use enums.ImageType.FRAME and the frame's fileId.
 app.setActiveImageById(enums.ImageType.FRAME, file2.frameInfo.fileId);
-app.setActiveImage(file3);
+app.updateActiveImageByFrame(file3);
 
 // # Closing images
 

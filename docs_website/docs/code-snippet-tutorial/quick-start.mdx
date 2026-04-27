@@ -52,6 +52,8 @@ The active image can be changed with <ApiLink path="/.-stores/class/AppStore/#up
 
 ```javascript
 app.setActiveImageByIndex(0);
+// "setActiveImageById" takes an image type (enums.ImageType) and a stable store id.
+// For a regular frame, use enums.ImageType.FRAME and the frame's fileId.
 app.setActiveImageById(enums.ImageType.FRAME, file2.frameInfo.fileId);
 app.updateActiveImageByFrame(file3);
 ```
