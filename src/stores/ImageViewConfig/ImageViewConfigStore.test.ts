@@ -1,4 +1,4 @@
-import {ImageType} from "enums";
+import {ImagePanelMode, ImageType} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
@@ -6,6 +6,8 @@ import {ImageViewConfigStore} from "./ImageViewConfigStore";
 const mockUpdateActiveImage = jest.fn();
 const mockIsActiveImage = jest.fn();
 const mockSetActiveImage = jest.fn();
+var mockChannelMapStore;
+var mockPreferenceStore;
 
 // Mock RenderConfigStore to handle import chain
 jest.mock("stores/Frame", () => ({
@@ -37,14 +39,26 @@ jest.mock("stores", () => {
         }
     }
 
+    mockChannelMapStore = {channelMapEnabled: false};
+    mockPreferenceStore = {
+        imagePanelColumns: 3,
+        imagePanelRows: 2,
+        imagePanelMode: ImagePanelMode.None,
+        imageMultiPanelEnabled: true
+    };
+
     return {
         AppStore: {
             Instance: {
                 activeImage: null,
+                channelMapStore: mockChannelMapStore,
                 updateActiveImage: x => mockUpdateActiveImage(x),
                 isActiveImage: () => mockIsActiveImage(),
                 setActiveImage: x => mockSetActiveImage(x)
             }
+        },
+        PreferenceStore: {
+            Instance: mockPreferenceStore
         },
         FrameStore: jest.fn(frameInfo => ({
             id: frameInfo.fileId,
@@ -185,6 +199,43 @@ describe("ImageViewConfigStore", () => {
         it("removes all images correctly", () => {
             imageViewConfigStore.removeAllImages();
             expect(imageViewConfigStore.imageNum).toBe(0);
+        });
+    });
+
+    describe("image panel dimensions", () => {
+        beforeEach(() => {
+            imageViewConfigStore.removeAllImages();
+            mockChannelMapStore.channelMapEnabled = false;
+            mockPreferenceStore.imageMultiPanelEnabled = true;
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Dynamic;
+            mockPreferenceStore.imagePanelColumns = 4;
+            mockPreferenceStore.imagePanelRows = 3;
+        });
+
+        it("uses dynamic panel counts when multi-panel mode is dynamic", () => {
+            imageViewConfigStore.addFrame(mockFrame1);
+            imageViewConfigStore.addFrame(mockFrame2);
+            imageViewConfigStore.addFrame(mockFrame3);
+
+            expect(imageViewConfigStore.numImageColumns).toBe(3);
+            expect(imageViewConfigStore.numImageRows).toBe(1);
+        });
+
+        it("uses fixed panel counts when multi-panel mode is fixed", () => {
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Fixed;
+            mockPreferenceStore.imagePanelColumns = 5;
+            mockPreferenceStore.imagePanelRows = 4;
+
+            expect(imageViewConfigStore.numImageColumns).toBe(5);
+            expect(imageViewConfigStore.numImageRows).toBe(4);
+        });
+
+        it("collapses to a single panel when channel map mode is enabled", () => {
+            mockChannelMapStore.channelMapEnabled = true;
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Fixed;
+
+            expect(imageViewConfigStore.numImageColumns).toBe(1);
+            expect(imageViewConfigStore.numImageRows).toBe(1);
         });
     });
 });

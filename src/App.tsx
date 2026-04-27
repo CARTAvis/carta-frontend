@@ -93,6 +93,7 @@ export class App extends React.Component {
                             onRenderTabSet={widgetsStore.onRenderTabSet}
                             onModelChange={widgetsStore.onModelChange}
                             onAction={widgetsStore.onAction}
+                            supportsPopout={true}
                         />
                     )}
                 </div>

@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
 import {HelpType, ImageType} from "enums";
+import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
@@ -13,6 +14,7 @@ import "./FloatingWidgetComponent.scss";
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
     showPinButton: boolean;
+    canPopout?: boolean;
     showFloatingSettingsButton?: boolean;
     children?: any;
     zIndex?: number;
@@ -47,6 +49,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    private handlePopout = () => {
+        AppStore.Instance.widgetsStore.popoutFloatingWidget(this.props.widgetConfig);
+    };
+
     private handlePinDragStart = (e: React.DragEvent) => {
         const layoutStore = LayoutStore.Instance;
         const layoutRef = layoutStore.layoutRef;
@@ -57,7 +63,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 type: "tab",
                 component: widgetConfig.type,
                 name: widgetConfig.title || widgetConfig.type,
-                id: widgetConfig.id
+                id: widgetConfig.id,
+                // remove the below line if we migrate plotly.js to chart.js
+                ...(widgetConfig.type === "catalog-plot" && {enablePopout: false})
             };
 
             if (widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
@@ -218,6 +226,13 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                                 <span>
                                     <Icon icon={"help"} />
                                 </span>
+                            </Tooltip>
+                        </div>
+                    )}
+                    {this.props.showPinButton && this.props.canPopout && (
+                        <div className={buttonClass} onClick={this.handlePopout}>
+                            <Tooltip content="Pop out to new window" position={Position.BOTTOM_RIGHT}>
+                                <CustomIcon icon="popout" viewBox="1 1.5 16 16" />
                             </Tooltip>
                         </div>
                     )}

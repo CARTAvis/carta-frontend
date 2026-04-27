@@ -2096,6 +2096,13 @@ export class AppStore {
             }
         );
 
+        // Update image panel page buttons (now handled reactively via onRenderTab in FlexLayout)
+        autorun(() => {
+            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
+                // FlexLayout re-renders tab buttons automatically via onRenderTab
+            }
+        });
+
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 

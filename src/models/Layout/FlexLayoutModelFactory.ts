@@ -12,7 +12,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     tabSetMinHeight: 200,
     splitterSize: 4,
     splitterExtra: 4,
-    tabEnablePopout: false,
+    tabEnablePopout: true,
     tabSetEnableClose: false,
     tabSetEnableDeleteWhenEmpty: true,
     tabEnableRenderOnDemand: true
@@ -42,7 +42,8 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["layer-list", {type: "tab", component: "layer-list", name: "Image List", id: "layer-list"}],
     ["log", {type: "tab", component: "log", name: "Log", id: "log"}],
     ["catalog-overlay", {type: "tab", component: "catalog-overlay", name: "Catalog Overlay", id: "catalog-overlay"}],
-    ["catalog-plot", {type: "tab", component: "catalog-plot", name: "Catalog Plot", id: "catalog-plot"}],
+    // remove ", enablePopout: false" if we migrate plotly.js to chart.js
+    ["catalog-plot", {type: "tab", component: "catalog-plot", name: "Catalog Plot", id: "catalog-plot", enablePopout: false}],
     ["spectral-line-query", {type: "tab", component: "spectral-line-query", name: "Spectral Line Query", id: "spectral-line-query"}],
     ["cursor-info", {type: "tab", component: "cursor-info", name: "Cursor Info", id: "cursor-info"}],
     ["pv-generator", {type: "tab", component: "pv-generator", name: "PV Generator", id: "pv-generator"}],

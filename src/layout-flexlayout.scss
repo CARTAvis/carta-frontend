@@ -248,3 +248,26 @@ $pt-dark-app-background-color: #252a31;
         }
     }
 }
+
+// =====================================================
+// Popout window body overrides
+// =====================================================
+// When .layout-container is added to the popout <body> for dark theme,
+// override the main-window offsets (top: 48px etc.) so content fills the window.
+body.layout-container {
+    position: relative;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    margin: 0;
+    z-index: auto;
+}
+
+// Hide the built-in popout button in popout windows (tab is already popped out)
+.flexlayout__floating_window_content {
+    .flexlayout__tab_toolbar_button-float {
+        display: none;
+    }
+}
