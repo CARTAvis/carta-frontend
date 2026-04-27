@@ -2096,13 +2096,6 @@ export class AppStore {
             }
         );
 
-        // Update image panel page buttons
-        autorun(() => {
-            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
-                this.widgetsStore.updateImagePanelPageButtons();
-            }
-        });
-
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
