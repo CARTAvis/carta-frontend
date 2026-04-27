@@ -3013,9 +3013,9 @@ export class AppStore {
      *
      * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).
      * For `ImageType.COLOR_BLENDING`, `id` is `ColorBlendingStore.id`.
-     *
-     * `ImageType.PV_PREVIEW` is intentionally unsupported by this action:
-     * `getImageListIndex` also restricts itself to `FRAME | COLOR_BLENDING`.
+     * For `ImageType.PV_PREVIEW`, `id` is `FrameStore.id`, which is always
+     * `PREVIEW_PV_FILEID` (-2). Only one PV preview can exist at a time
+     * (creating a new one replaces the old), so this id is unique in practice.
      *
      * Preferred over `setActiveImageByIndex` for programmatic activation,
      * because `imageList` indices are volatile (images can be added,
@@ -3025,6 +3025,16 @@ export class AppStore {
      * @param id - The stable store id for that type.
      */
     @action setActiveImageById = (type: ImageType, id: number) => {
+        if (type === ImageType.PV_PREVIEW) {
+            const previewFrame = [...this.previewFrames.values()].find(f => f.id === id);
+            if (previewFrame) {
+                this.setActiveImage({type: ImageType.PV_PREVIEW, store: previewFrame});
+            } else {
+                console.error(`Can't find image of type ${type} with id ${id}`);
+            }
+            return;
+        }
+
         if (type !== ImageType.FRAME && type !== ImageType.COLOR_BLENDING) {
             console.error(`setActiveImageById: unsupported image type ${type}`);
             return;
