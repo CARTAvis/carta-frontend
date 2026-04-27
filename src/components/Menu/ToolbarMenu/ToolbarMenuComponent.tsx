@@ -161,6 +161,8 @@ export class ToolbarMenuComponent extends React.Component {
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
+                                    draggable={true}
+                                    onDragStart={(e: React.DragEvent) => WidgetsStore.Instance.handleToolbarWidgetDragStart(e, widgetConfig.widgetConfig)}
                                 />
                             </Tooltip>
                         );
