@@ -29,22 +29,22 @@ export default [
         rules: {
             "@typescript-eslint/naming-convention": [
                 "warn",
-                {
-                    selector: "default",
-                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
-                    leadingUnderscore: "allow",
-                    trailingUnderscore: "forbid"
-                },
-                {
-                    selector: [
-                        "enumMember",
-                        "objectLiteralProperty",
-                        "typeProperty",
-                        "objectLiteralMethod",
-                        "typeMethod"
-                    ],
-                    format: null
-                },
+                // {
+                //     selector: "default",
+                //     format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                //     leadingUnderscore: "allow",
+                //     trailingUnderscore: "forbid"
+                // },
+                // {
+                //     selector: [
+                //         "enumMember",
+                //         "objectLiteralProperty",
+                //         "typeProperty",
+                //         "objectLiteralMethod",
+                //         "typeMethod"
+                //     ],
+                //     format: null
+                // },
                 {
                     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
                     format: ["PascalCase"]
@@ -59,38 +59,38 @@ export default [
                     modifiers: ["private", "static", "readonly"],
                     format: ["PascalCase"],
                 },
-                {
-                    selector: "variable",
-                    modifiers: ["const", "global"],
-                    format: ["UPPER_CASE"],
-                },
-                {
-                    selector: "variable",
-                    types: ["function"],
-                    modifiers: ["const", "global"],
-                    format: ["PascalCase"],
-                },
-                {
-                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                    format: ["camelCase"],
-                    leadingUnderscore: "allow",
-                },
-                {
-                    selector: ["classicAccessor"],
-                    modifiers: ["public", "static"],
-                    format: ["PascalCase"],
-                },  
-                {
-                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                    types: ["boolean"],
-                    format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
-                },
+                // {
+                //     selector: "variable",
+                //     modifiers: ["const", "global"],
+                //     format: ["UPPER_CASE"],
+                // },
+                // {
+                //     selector: "variable",
+                //     types: ["function"],
+                //     modifiers: ["const", "global"],
+                //     format: ["PascalCase"],
+                // },
+                // {
+                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                //     format: ["camelCase"],
+                //     leadingUnderscore: "allow",
+                // },
+                // {
+                //     selector: ["classicAccessor"],
+                //     modifiers: ["public", "static"],
+                //     format: ["PascalCase"],
+                // },
+                // {
+                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                //     types: ["boolean"],
+                //     format: ["PascalCase"],
+                //     prefix: ["is", "should", "has", "can", "did", "will"]
+                // },
                 // exceptions for certain patterns and don't follow the above conventions
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: "N|M|p|UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: " N | M | p |UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
                         match: true
                     },
                     format: null,
