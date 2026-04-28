@@ -20,16 +20,16 @@ enum CatalogMapType {
 }
 
 export class CatalogWidgetStore {
-    public static readonly MinOverlaySize = 1;
-    public static readonly MaxOverlaySize = 50;
-    public static readonly MaxAreaSize = 4000;
-    public static readonly MinTableSeparatorPosition = 0;
-    public static readonly MaxTableSeparatorPosition = 100;
-    public static readonly MinThickness = 1.0;
-    public static readonly MaxThickness = 10;
-    public static readonly MinAngle = 0;
-    public static readonly MaxAngle = 720;
-    public static readonly SizeMapMin = 0;
+    public static readonly MIN_OVERLAY_SIZE = 1;
+    public static readonly MAX_OVERLAY_SIZE = 50;
+    public static readonly MAX_AREA_SIZE = 4000;
+    public static readonly MIN_TABLE_SEPARATOR_POSITION = 0;
+    public static readonly MAX_TABLE_SEPARATOR_POSITION = 100;
+    public static readonly MIN_THICKNESS = 1.0;
+    public static readonly MAX_THICKNESS = 10;
+    public static readonly MIN_ANGLE = 0;
+    public static readonly MAX_ANGLE = 720;
+    public static readonly SIZE_MAP_MIN = 0;
 
     OverlaySize = new Map<string, {min: number; max: number}>([
         [CatalogSizeUnits.SCREENPIXEL, {min: 1, max: 50}],
@@ -108,8 +108,8 @@ export class CatalogWidgetStore {
     @observable orientationMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
     @observable orientationMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
     @observable orientationScalingType: FrameScaling = FrameScaling.LINEAR;
-    @observable angleMax: number = CatalogWidgetStore.MaxAngle;
-    @observable angleMin: number = CatalogWidgetStore.MinAngle;
+    @observable angleMax: number = CatalogWidgetStore.MAX_ANGLE;
+    @observable angleMin: number = CatalogWidgetStore.MIN_ANGLE;
 
     private readonly disposers: IReactionDisposer[] = [];
 
@@ -292,8 +292,8 @@ export class CatalogWidgetStore {
         this.orientationMax = {default: undefined, clipd: undefined};
         this.orientationMin = {default: undefined, clipd: undefined};
         this.orientationScalingType = FrameScaling.LINEAR;
-        this.angleMax = CatalogWidgetStore.MaxAngle;
-        this.angleMin = CatalogWidgetStore.MinAngle;
+        this.angleMax = CatalogWidgetStore.MAX_ANGLE;
+        this.angleMin = CatalogWidgetStore.MIN_ANGLE;
     }
 
     /**
@@ -301,7 +301,7 @@ export class CatalogWidgetStore {
      * @param max - max degree of orientation
      */
     @action setAngleMax(max: number) {
-        this.angleMax = clamp(max, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
+        this.angleMax = clamp(max, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
     }
 
     /**
@@ -309,7 +309,7 @@ export class CatalogWidgetStore {
      * @param min - min degree of orientation
      */
     @action setAngleMin(min: number) {
-        this.angleMin = clamp(min, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
+        this.angleMin = clamp(min, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
     }
 
     /**
@@ -778,11 +778,11 @@ export class CatalogWidgetStore {
     }
 
     @computed get minOverlaySize(): number {
-        return this.OverlaySize.get(this.canvasSizeUnit)?.min ?? CatalogWidgetStore.MinOverlaySize;
+        return this.OverlaySize.get(this.canvasSizeUnit)?.min ?? CatalogWidgetStore.MIN_OVERLAY_SIZE;
     }
 
     @computed get maxOverlaySize(): number {
-        return this.OverlaySize.get(this.canvasSizeUnit)?.max ?? CatalogWidgetStore.MaxOverlaySize;
+        return this.OverlaySize.get(this.canvasSizeUnit)?.max ?? CatalogWidgetStore.MAX_OVERLAY_SIZE;
     }
 
     /**
@@ -845,7 +845,7 @@ export class CatalogWidgetStore {
      * @param val - thickness of catalog source
      */
     @action setThickness(val: number) {
-        this.thickness = clamp(val, CatalogWidgetStore.MinThickness, CatalogWidgetStore.MaxThickness);
+        this.thickness = clamp(val, CatalogWidgetStore.MIN_THICKNESS, CatalogWidgetStore.MAX_THICKNESS);
     }
 
     /**
@@ -988,7 +988,7 @@ export class CatalogWidgetStore {
             areaMode = this.sizeMinorArea;
         }
         if (areaMode) {
-            return CatalogWidgetStore.MaxAreaSize;
+            return CatalogWidgetStore.MAX_AREA_SIZE;
         } else {
             return this.maxOverlaySize;
         }
@@ -1040,7 +1040,7 @@ export class CatalogWidgetStore {
             this.catalogFileId = catalogFileId;
         }
         const catalogSize = widgetSettings.catalogSize;
-        if (typeof catalogSize === "number" && catalogSize >= CatalogWidgetStore.MinOverlaySize && catalogSize <= CatalogWidgetStore.MaxOverlaySize) {
+        if (typeof catalogSize === "number" && catalogSize >= CatalogWidgetStore.MIN_OVERLAY_SIZE && catalogSize <= CatalogWidgetStore.MAX_OVERLAY_SIZE) {
             this.catalogSize = catalogSize;
         }
         this.catalogShape = widgetSettings.catalogShape;

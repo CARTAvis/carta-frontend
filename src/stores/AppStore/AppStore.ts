@@ -2949,7 +2949,7 @@ export class AppStore {
         try {
             const success = await this.apiService.clearWorkspace(name);
             if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 return;
             }
         } catch (err) {
