@@ -60,6 +60,11 @@ export default [
                     format: ["PascalCase"],
                 },
                 {
+                    selector: "classProperty",
+                    modifiers: ["protected"],
+                    format: ["camelCase"],
+                },
+                {
                     selector: "variable",
                     modifiers: ["const", "global"],
                     format: ["UPPER_CASE"],
@@ -90,7 +95,7 @@ export default [
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: " N | M | p |UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: "^([N]|[M]|[p]|[UIn8]|[Iz]|[Jys])|^CARTA.*|^HDU.*|^WCS.*",
                         match: true
                     },
                     format: null,
