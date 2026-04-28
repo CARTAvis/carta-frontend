@@ -448,7 +448,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         {region.nameString}
                     </div>
                     <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                        {RegionStore.RegionTypeString(region.regionType)}
+                        {RegionStore.regionTypeString(region.regionType)}
                     </div>
                     {centerEntry}
                     {showSizeColumn && sizeEntry}

@@ -101,7 +101,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     wcsDisabled={!this.props.wcsInfo || !pointWCS}
                 />
             );
-            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : pointWCS ? WCSPoint2D.ToString(pointWCS) : ""}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : pointWCS ? WCSPoint2D.toString(pointWCS) : ""}` : `Image: ${Point2D.toString(point, "px", 3)}`;
             return (
                 <FormGroup label={`Point ${index}`} labelInfo={pxUnit} inline={true} key={index}>
                     {xInput}

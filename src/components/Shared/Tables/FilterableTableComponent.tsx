@@ -52,7 +52,7 @@ export class FilterableTableComponentProps {
 
 @observer
 export class FilterableTableComponent extends React.Component<FilterableTableComponentProps> {
-    private readonly SortingTypelinkedList = {
+    private readonly sortingTypelinkedList = {
         head: {
             value: null as CARTA.SortingType | null,
             next: {
@@ -216,7 +216,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private getNextSortingType = (): CARTA.SortingType | null => {
-        let currentNode: any = this.SortingTypelinkedList.head;
+        let currentNode: any = this.sortingTypelinkedList.head;
         while (currentNode?.next) {
             if (currentNode.value === this.props.sortingInfo?.sortingType) {
                 return currentNode.next.value;

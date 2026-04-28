@@ -339,7 +339,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private static GetDataType(type: CARTA.ColumnType) {
+    private static getDataType(type: CARTA.ColumnType) {
         switch (type) {
             case CARTA.ColumnType.Bool:
                 return "bool";
@@ -389,7 +389,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             headerNames.push(header.name);
             headerDescriptions.push(header.description);
             units.push(header.units);
-            types.push(CatalogOverlayComponent.GetDataType(header.dataType));
+            types.push(CatalogOverlayComponent.getDataType(header.dataType));
         }
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);

@@ -338,7 +338,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const highResPlaceholders: TileCoordinate[] = [];
 
         for (const tile of tiles) {
-            const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
+            const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, peek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
@@ -374,7 +374,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                         x: Math.floor(tile.x / 2.0),
                         y: Math.floor(tile.y / 2.0)
                     };
-                    placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
+                    placeholderTileMap.set(TileCoordinate.encodeCoordinate(lowResTile), true);
                 }
             }
         }
@@ -385,7 +385,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         if (renderLowRes) {
             const placeholderTileList: TileCoordinate[] = [];
-            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
+            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.decode(encodedTile)));
             if (placeholderTileList.length) {
                 this.renderTiles(frame, placeholderTileList, channel, mip * 2, true, 0, true);
             }
