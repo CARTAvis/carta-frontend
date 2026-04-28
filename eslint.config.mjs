@@ -79,7 +79,7 @@ export default [
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
                     format: ["PascalCase"],
-                },  
+                },
                 {
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
@@ -90,7 +90,7 @@ export default [
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: "N|M|p|UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: " N | M | p |UIn8|Iz|Jys|^CARTA.*|^HDU.*|^WCS.*",
                         match: true
                     },
                     format: null,
