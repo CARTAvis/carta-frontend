@@ -7,7 +7,6 @@ export * from "./export/export";
 export * from "./fitting_heuristics/fitting_heuristics";
 export * from "./math/math";
 export * from "./math2d/math2d";
-export * from "./overlay/numberFormat";
 export * from "./parsing/parsing";
 export * from "./Processed/Processed";
 export * from "./sorting/sorting";
