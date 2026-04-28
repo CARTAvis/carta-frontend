@@ -47,17 +47,17 @@ export default [
                 },
                 {
                     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
-                    format: ["PascalCase"]
+                    format: null
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["public", "static", "readonly"],
-                    format: ["UPPER_CASE"],
+                    format: null,
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["private", "static", "readonly"],
-                    format: ["PascalCase"],
+                    format: null,
                 },
                 {
                     selector: "classProperty",
@@ -67,13 +67,13 @@ export default [
                 {
                     selector: "variable",
                     modifiers: ["const", "global"],
-                    format: ["UPPER_CASE"],
+                    format: null,
                 },
                 {
                     selector: "variable",
                     types: ["function"],
                     modifiers: ["const", "global"],
-                    format: ["PascalCase"],
+                    format: null,
                 },
                 {
                     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
@@ -83,14 +83,14 @@ export default [
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
-                    format: ["PascalCase"],
+                    format: null,
                 },
-                {
-                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                    types: ["boolean"],
-                    format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
-                },
+                // {
+                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                //     types: ["boolean"],
+                //     format: ["PascalCase"],
+                //     prefix: ["is", "should", "has", "can", "did", "will"]
+                // },
                 // exceptions for certain patterns and don't follow the above conventions
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
