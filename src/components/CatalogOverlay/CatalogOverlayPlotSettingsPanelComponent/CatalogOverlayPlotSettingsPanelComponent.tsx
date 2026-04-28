@@ -95,7 +95,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         profileStore?.catalogControlHeader?.forEach((header, columnName) => {
             if (header.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (dataType && CatalogOverlayComponent.AXIS_DATA_TYPE.includes(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }
@@ -475,12 +475,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Collapse>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={disabledOverlayPanel}
-                            min={CatalogWidgetStore.MinThickness}
-                            max={CatalogWidgetStore.MaxThickness}
+                            min={CatalogWidgetStore.MIN_THICKNESS}
+                            max={CatalogWidgetStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
                             value={widgetStore.thickness}
                             stepSize={0.5}
@@ -545,12 +545,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={disabledOverlayPanel}
-                            min={CatalogWidgetStore.MinThickness}
-                            max={CatalogWidgetStore.MaxThickness}
+                            min={CatalogWidgetStore.MIN_THICKNESS}
+                            max={CatalogWidgetStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
                             value={widgetStore.thickness}
                             stepSize={0.5}
@@ -805,7 +805,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         switch (type) {
             case "size-min":
-                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
+                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SIZE_MAP_MIN) {
                     const inputVal = val;
                     if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
                         widgetStore.setMinorSizeMin(inputVal);

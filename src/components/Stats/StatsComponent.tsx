@@ -87,7 +87,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
+    private static readonly StatsNameMap = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.FluxDensity, "FluxDensity"],
@@ -100,7 +100,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
-    private static readonly NAME_COLUMN_WIDTH = 90;
+    private static readonly NameColumnWidth = 90;
 
     constructor(props: WidgetProps) {
         super(props);
@@ -233,7 +233,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+            StatsComponent.StatsNameMap.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                     if (index >= 0 && index < this.statsData.statistics.length) {
@@ -270,17 +270,17 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let exportDataComponent: JSX.Element | null = null;
         if (this.statsData) {
             // stretch value column to cover width
-            const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
+            const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
             const rows: JSX.Element[] = [];
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+            StatsComponent.StatsNameMap.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                     if (index >= 0 && index < this.statsData.statistics.length) {
                         const value = this.getTableValue(index, type);
                         rows.push(
                             <tr key={type}>
-                                <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
+                                <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
                                 <td style={{width: valueWidth}}>
                                     {value.num} {value.unit}
                                 </td>
@@ -294,7 +294,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 <HTMLTable data-testid="statistics-table">
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
+                            <th style={{width: StatsComponent.NameColumnWidth}}>Statistic</th>
                             <th style={{width: valueWidth}}>Value</th>
                         </tr>
                     </thead>

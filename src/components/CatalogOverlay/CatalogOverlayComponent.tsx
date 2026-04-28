@@ -32,7 +32,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    static readonly axisDataType = [
+    static readonly AXIS_DATA_TYPE = [
         CARTA.ColumnType.Double,
         CARTA.ColumnType.Float,
         CARTA.ColumnType.Int8,
@@ -289,7 +289,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (dataType && CatalogOverlayComponent.AXIS_DATA_TYPE.includes(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }
@@ -668,7 +668,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @action private handleSplitChange = (sizes: number[]) => {
         const newSize = sizes[1]; // second pane (data table) size
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION, CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
@@ -693,7 +693,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
-        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
@@ -835,11 +835,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         const systemOptions: CatalogSystemType[] = [];
-        AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
+        AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.forEach((value, key) => {
             systemOptions.push(key);
         });
 
-        const activeSystem = AbstractCatalogProfileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
+        const activeSystem = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.get(profileStore.catalogCoordinateSystem.system);
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
         const disable = profileStore.loadOntoImage;
@@ -895,8 +895,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
                         <Pane
                             className={"catalog-overlay-data-container"}
-                            minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
-                            maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
+                            minSize={`${CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION}%`}
+                            maxSize={`${CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION}%`}
                             size={catalogWidgetStore.tableSeparatorPosition}
                         >
                             <FilterableTableComponent {...dataTableProps} />
