@@ -3,7 +3,7 @@ import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {BrowserMode, DialogId, HotkeyGroup, ImageViewLayer, RegionMode} from "enums";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
 import {AppStore} from "stores";
 
 import "./HotkeyWrapper.scss";
@@ -110,8 +110,7 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static NavigationDisplayHotkeys() {
-        const group = HotkeyGroup.Navigation;
-        const base = {group, global: true};
+        const base = {group: "Navigation", global: true};
         const items = [
             {combo: "click", label: "Pan image"},
             {combo: "middle-click", label: "Pan image (inside region)"},
@@ -123,8 +122,7 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static RegionDisplayHotkeys() {
-        const group = HotkeyGroup.Regions;
-        const base = {group, global: true};
+        const base = {group: "Regions", global: true};
         const items = [
             {combo: "mod", label: "Switch region creation mode"},
             {combo: "shift", label: "Symmetric region creation"},
@@ -135,8 +133,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static RegionHotkeys() {
         const appStore = AppStore.Instance;
-        const group = HotkeyGroup.Regions;
-        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
             {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.ToggleRegionLock},
@@ -151,8 +148,7 @@ export class HotkeyService extends React.Component<{}> {
     static FrameControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = HotkeyGroup.FrameControls;
-        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}[`, label: "Previous image", onKeyDown: appStore.prevImage},
@@ -168,8 +164,7 @@ export class HotkeyService extends React.Component<{}> {
     static FrameControlHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = HotkeyGroup.FrameControls;
-        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}“`, label: "Previous image", onKeyDown: appStore.prevImage}
@@ -180,8 +175,7 @@ export class HotkeyService extends React.Component<{}> {
     static FileControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = HotkeyGroup.FileControls;
-        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const base = {group: "File controls", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}O`, label: "Open image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)},
             {combo: `${modString}L`, label: "Append image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)},
@@ -195,8 +189,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static OtherHotkeys() {
         const appStore = AppStore.Instance;
-        const group = HotkeyGroup.Other;
-        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const base = {group: "Other", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "shift + d", label: "Toggle light/dark theme", onKeyDown: HotkeyService.ToggleDarkTheme},
             {combo: "f", label: "Freeze/unfreeze cursor position", onKeyDown: appStore.toggleCursorFrozen},

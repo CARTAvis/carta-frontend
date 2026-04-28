@@ -9,7 +9,6 @@ export * from "./dialog";
 export * from "./fileBrowser";
 export * from "./help";
 export * from "./hips";
-export * from "./hotkey";
 export * from "./imageView";
 export * from "./input";
 export * from "./lineQuery";
