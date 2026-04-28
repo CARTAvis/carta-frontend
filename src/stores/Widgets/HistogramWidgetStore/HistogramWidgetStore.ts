@@ -192,7 +192,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return !(!this.currentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetHistogramRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -260,7 +260,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetHistogramRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetHistogramRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffHistoRequirements(originalRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>) {
+    public static diffHistoRequirements(originalRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>) {
         const diffList: CARTA.SetHistogramRequirements[] = [];
 
         // Fill updated requirements with missing entries

@@ -31,7 +31,7 @@ export class CatalogWidgetStore {
     public static readonly MaxAngle = 720;
     public static readonly SizeMapMin = 0;
 
-    OverlaySize = new Map<string, {min: number; max: number}>([
+    private overlaySize = new Map<string, {min: number; max: number}>([
         [CatalogSizeUnits.SCREENPIXEL, {min: 1, max: 50}],
         [CatalogSizeUnits.IMAGEPIXEL, {min: 1, max: 50}],
         [CatalogSizeUnits.MILLIARCSEC, {min: 0.01, max: 200}],
@@ -41,7 +41,7 @@ export class CatalogWidgetStore {
     ]);
 
     // -1 : apply different featherWidth according shape size
-    private OverlayShapeSettings = new Map<number, {featherWidth: number; diameterBase: number; areaBase: number; thicknessBase: number}>([
+    private overlayShapeSettings = new Map<number, {featherWidth: number; diameterBase: number; areaBase: number; thicknessBase: number}>([
         [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100, thicknessBase: 1.5}],
         [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 70, thicknessBase: 1}],
         [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, diameterBase: 1.5, areaBase: 70, thicknessBase: 1}],
@@ -778,11 +778,11 @@ export class CatalogWidgetStore {
     }
 
     @computed get minOverlaySize(): number {
-        return this.OverlaySize.get(this.canvasSizeUnit)?.min ?? CatalogWidgetStore.MinOverlaySize;
+        return this.overlaySize.get(this.canvasSizeUnit)?.min ?? CatalogWidgetStore.MinOverlaySize;
     }
 
     @computed get maxOverlaySize(): number {
-        return this.OverlaySize.get(this.canvasSizeUnit)?.max ?? CatalogWidgetStore.MaxOverlaySize;
+        return this.overlaySize.get(this.canvasSizeUnit)?.max ?? CatalogWidgetStore.MaxOverlaySize;
     }
 
     /**
@@ -1024,7 +1024,7 @@ export class CatalogWidgetStore {
 
     @computed get shapeSettings(): {featherWidth: number | undefined; diameterBase: number; areaBase: number; thicknessBase: number | undefined} | undefined {
         const pointSize = this.sizeMajor ? this.pointSizebyType : this.minorPointSizebyType;
-        const config = this.OverlayShapeSettings.get(this.catalogShape);
+        const config = this.overlayShapeSettings.get(this.catalogShape);
         if (pointSize.min === 0) {
             return {featherWidth: config?.featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: config?.thicknessBase};
         }

@@ -76,19 +76,19 @@ export class RenderConfigStore {
         makeObservable(this);
     }
 
-    public static IsScalingValid(scaling: FrameScaling): boolean {
+    public static isScalingValid(scaling: FrameScaling): boolean {
         return RenderConfigStore.SCALING_TYPES.has(scaling);
     }
 
-    public static IsGammaValid(gamma: number): boolean {
+    public static isGammaValid(gamma: number): boolean {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
     }
 
-    public static IsColormapValid(colormap: string): boolean {
+    public static isColormapValid(colormap: string): boolean {
         return COLOR_MAPS_SELECTED.includes(colormap);
     }
 
-    public static IsPercentileValid(percentile: number): boolean {
+    public static isPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
     }
 

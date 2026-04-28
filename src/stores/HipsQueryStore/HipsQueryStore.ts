@@ -45,15 +45,15 @@ export class HipsQueryStore {
     }
 
     @computed get isDimensionValid(): boolean {
-        return this.size.x >= this.HipsConstraint.MinDimension && this.size.y >= this.HipsConstraint.MinDimension && this.size.x * this.size.y <= this.HipsConstraint.MaxDimension;
+        return this.size.x >= this.hipsConstraint.MinDimension && this.size.y >= this.hipsConstraint.MinDimension && this.size.x * this.size.y <= this.hipsConstraint.MaxDimension;
     }
 
     @computed get isFovValid(): boolean {
-        return this.fov > this.HipsConstraint.MinFov && this.fov <= this.HipsConstraint.MaxFov;
+        return this.fov > this.hipsConstraint.MinFov && this.fov <= this.hipsConstraint.MaxFov;
     }
 
     @computed get isRotAngleValid(): boolean {
-        return this.rotationAngle >= this.HipsConstraint.MinRotAngle && this.rotationAngle <= this.HipsConstraint.MaxRotAngle;
+        return this.rotationAngle >= this.hipsConstraint.MinRotAngle && this.rotationAngle <= this.hipsConstraint.MaxRotAngle;
     }
 
     @computed get pixelSize(): number {
@@ -93,7 +93,7 @@ export class HipsQueryStore {
         [HipsProjection.XPH, "HEALPix polar, aka “butterfly”"]
     ]);
 
-    readonly HipsConstraint = {
+    readonly hipsConstraint = {
         MinDimension: 5,
         MaxDimension: 5e7,
         MinFov: 0,

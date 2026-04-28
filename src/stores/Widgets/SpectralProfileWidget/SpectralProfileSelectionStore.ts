@@ -48,11 +48,11 @@ export class SpectralProfileSelectionStore {
     @observable selectedCoordinates: string[] = [];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
-    private readonly DEFAULT_COORDINATE: string;
+    private readonly defaultCoordinate: string;
     private readonly disposers: IReactionDisposer[] = [];
 
     // getFormattedSpectralConfigs() is a simple converter to transform this.profileConfigs to SpectralConfig,
-    // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
+    // and SpectralConfig is specially for calculateRequirementsMap in SpectralProfileWidgetStore.
     // P.S. this.profileConfigs has the key statType & SpectralConfig has the key statsType's'
     public getFormattedSpectralConfigs = (): SpectralConfig[] => {
         const formattedSpectralConfigs: SpectralConfig[] = [];
@@ -484,7 +484,7 @@ export class SpectralProfileSelectionStore {
         if (this.selectedCoordinates?.length === 1) {
             this.selectCoordinateSingleMode(this.selectedCoordinates[0]);
         } else if (this.selectedCoordinates?.length > 1) {
-            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
+            this.selectCoordinateSingleMode(this.defaultCoordinate);
         }
     };
 
@@ -688,7 +688,7 @@ export class SpectralProfileSelectionStore {
         this.activeProfileCategory = MultiProfileCategory.NONE;
         this.selectedRegionIds = [RegionId.ACTIVE];
         this.selectedStatsTypes = [CARTA.StatsType.Mean];
-        this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+        this.selectedCoordinates = [this.defaultCoordinate];
         const widgetStore = this.widgetStore;
         widgetStore.clearProfileColors();
         widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, widgetStore.primaryLineColor);
@@ -698,7 +698,7 @@ export class SpectralProfileSelectionStore {
         makeObservable(this);
 
         this.widgetStore = widgetStore;
-        this.DEFAULT_COORDINATE = coordinate;
+        this.defaultCoordinate = coordinate;
         this.initSingleMode();
 
         // Handle empty frame: reset
@@ -736,7 +736,7 @@ export class SpectralProfileSelectionStore {
         this.disposers.push(
             autorun(() => {
                 if (this.selectedCoordinates?.some(coordinate => !this.coordinateOptions?.find(coordinateOption => coordinate === coordinateOption.value))) {
-                    this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
+                    this.selectCoordinateSingleMode(this.defaultCoordinate);
                 }
             })
         );

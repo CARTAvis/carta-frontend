@@ -728,7 +728,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return "";
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -782,7 +782,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffSpectralRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>) {
+    public static diffSpectralRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>) {
         const diffList: CARTA.SetSpectralRequirements[] = [];
 
         // Fill updated requirements with missing entries
