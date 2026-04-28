@@ -148,10 +148,10 @@ const COMPONENT_CONFIG = new Map<string, any>([
 ]);
 
 export class LayoutConfig {
-    public static LayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
-    public static CurrentSchemaVersion = 2;
+    public static layoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
+    public static currentSchemaVersion = 2;
 
-    public static GetPresetConfig = (presetName: string) => {
+    public static getPresetConfig = (presetName: string) => {
         if (!presetName) {
             return null;
         }
@@ -162,7 +162,7 @@ export class LayoutConfig {
         }
 
         return {
-            layoutVersion: LayoutConfig.CurrentSchemaVersion,
+            layoutVersion: LayoutConfig.currentSchemaVersion,
             docked: {
                 type: "row",
                 content: [
@@ -181,7 +181,7 @@ export class LayoutConfig {
         };
     };
 
-    public static UpgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
+    public static upgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
         // Upgrade to V2 if required
         if (layout.layoutVersion === 1) {
             const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
@@ -212,7 +212,7 @@ export class LayoutConfig {
     };
 
     // Note: layoutConfig is formalized(modified) during validation if valid
-    public static IsUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
+    public static isUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
         if (!layoutName || !layoutConfig) {
             return false;
         }
@@ -221,22 +221,22 @@ export class LayoutConfig {
             return false;
         }
 
-        const validLayout = LayoutConfig.LayoutValidator(layoutConfig);
+        const validLayout = LayoutConfig.layoutValidator(layoutConfig);
         if (validLayout) {
             return true;
         } else {
-            console.log(LayoutConfig.LayoutValidator.errors);
+            console.log(LayoutConfig.layoutValidator.errors);
             return false;
         }
     };
 
-    public static CreateConfigToSave = (appStore: AppStore, rootConfig: any) => {
+    public static createConfigToSave = (appStore: AppStore, rootConfig: any) => {
         if (!appStore || !rootConfig || !("type" in rootConfig) || !("content" in rootConfig)) {
             return null;
         }
 
         const configToSave = {
-            layoutVersion: LayoutConfig.CurrentSchemaVersion,
+            layoutVersion: LayoutConfig.currentSchemaVersion,
             docked: {
                 type: rootConfig.type,
                 content: []
@@ -245,7 +245,7 @@ export class LayoutConfig {
         };
 
         // 1. generate config from current docked widgets
-        LayoutConfig.GenSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
+        LayoutConfig.genSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
@@ -284,7 +284,7 @@ export class LayoutConfig {
         return configToSave;
     };
 
-    private static GenSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
+    private static genSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -308,7 +308,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
+                        LayoutConfig.genSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/(-component)?-\d+$/, "");
@@ -345,7 +345,7 @@ export class LayoutConfig {
         });
     };
 
-    public static CreateConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
         if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -369,7 +369,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.createConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");

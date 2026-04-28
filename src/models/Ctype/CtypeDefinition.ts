@@ -42,7 +42,7 @@ export const CtypeName = new Map<string, string>([
     ["RM", "Rotation Measure"]
 ]);
 
-export function CtypeAbbrToName(ctypes: string): string {
+export const CtypeAbbrToName = (ctypes: string): string => {
     const ctypeName: string[] = [];
 
     ctypes.split(",").forEach(ctype => {
@@ -50,9 +50,9 @@ export function CtypeAbbrToName(ctypes: string): string {
     });
 
     return ctypeName.join(", ");
-}
+};
 
-export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} {
+export const FileCtypeInfo = (headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} => {
     if (headerEntries === null) {
         console.debug("no header");
         return {ctype: "", rank: 0};
@@ -115,9 +115,9 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     const ctypeRank = ctypes.length > 0 ? ctypes[ctypes.length - 1].rank : showedXY[showedXY.length - 1].rank;
 
     return {ctype: ctypeString, rank: ctypeRank};
-}
+};
 
-export function HyperCubeCtypeTransform(ctypes: {ctype: string[]; rank: number[]}): {ctype: string[]; rank: number[]} {
+export const HyperCubeCtypeTransform = (ctypes: {ctype: string[]; rank: number[]}): {ctype: string[]; rank: number[]} => {
     const ctypeString = ctypes.ctype.map(ctype => {
         return ctype + ",P";
     });
@@ -126,4 +126,4 @@ export function HyperCubeCtypeTransform(ctypes: {ctype: string[]; rank: number[]
     });
 
     return {ctype: ctypeString, rank: ctypeRank};
-}
+};

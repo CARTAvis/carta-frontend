@@ -27,7 +27,7 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
-export function IsSpectralMatchingTypeValid(type: SpectralType) {
+export function isSpectralMatchingTypeValid(type: SpectralType) {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
 }
 
