@@ -119,23 +119,23 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     const flippedSumStddev = fitHistogramResult.stddev;
 
     let INDEX_FROM, INDEX_TO;
-    let SWITCH = false;
+    let switchVal = false;
     const xMeanSegment: number[] = [];
     const yMeanSegment: number[] = [];
     const SN = 2;
-    const FLOOR = flippedSumMean - SN * flippedSumStddev;
-    const CEILING = flippedSumMean + SN * flippedSumStddev;
+    const floor = flippedSumMean - SN * flippedSumStddev;
+    const ceiling = flippedSumMean + SN * flippedSumStddev;
     for (let i = 0; i < yDataFlippedSum.length; i++) {
         const value = yDataFlippedSum[i];
-        if (value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
+        if (value < ceiling && value > floor && switchVal === false && i <= yDataFlippedSum.length - 2) {
             INDEX_FROM = i;
-            SWITCH = true;
-        } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
+            switchVal = true;
+        } else if ((value > ceiling || value < floor) && switchVal === true) {
             INDEX_TO = i;
-            SWITCH = false;
+            switchVal = false;
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
-        } else if (value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
+        } else if (value < ceiling && value > floor && switchVal === true && i === yDataFlippedSum.length - 1) {
             INDEX_TO = i;
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));

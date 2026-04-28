@@ -35,7 +35,7 @@ type VizierTable = {
 };
 
 export class CatalogApiProcessing {
-    static ProcessSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
+    static processSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
         const headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
             const header = metaData[index];
@@ -70,7 +70,7 @@ export class CatalogApiProcessing {
         return headers;
     }
 
-    static ProcessSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
+    static processSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
@@ -138,7 +138,7 @@ export class CatalogApiProcessing {
         }
     }
 
-    static ProcessVizierData(data: string): Map<string, VizierResource> {
+    static processVizierData(data: string): Map<string, VizierResource> {
         const resources: Map<string, VizierResource> = new Map();
         const parser = new DOMParser();
         const dom = parser.parseFromString(data, "application/xml");
@@ -173,7 +173,7 @@ export class CatalogApiProcessing {
         return resources;
     }
 
-    static ProcessVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
+    static processVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
         const headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
