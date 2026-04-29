@@ -31,6 +31,7 @@ import {
     type Workspace,
     type WorkspaceFile
 } from "models";
+import {getEnumSnapshots as getEnumSnapshotsFromRegistry, listEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -3517,6 +3518,10 @@ export class AppStore {
         }
         return val;
     };
+
+    // For carta-python
+    listEnumSnapshots = listEnumSnapshotsFromRegistry;
+    getEnumSnapshots = getEnumSnapshotsFromRegistry;
 
     getFileList = async (directory: string) => {
         return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
