@@ -142,6 +142,15 @@ $pt-dark-app-background-color: #252a31;
         &-selected {
             background-color: $white;
         }
+
+        .flexlayout__tabset_tabbar_outer {
+            height: 20px;
+        }
+
+        .flexlayout__tabset_tabbar_inner_tab_container {
+            padding: 0px;
+            border: 0px;
+        }
     }
 
     // --- Drag proxy ---
@@ -231,7 +240,7 @@ $pt-dark-app-background-color: #252a31;
         }
 
         .flexlayout__tabset {
-            border: 1px solid $dark-gray2;
+            border: 1px solid $dark-gray5;
 
             &-selected {
                 background-color: $dark-gray4;
