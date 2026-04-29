@@ -7,8 +7,6 @@ import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
-// import {extractAbstractConfig} from "../../models/Layout/FlexLayoutModelFactory";
-
 const MAX_LAYOUT = 10;
 
 export class LayoutStore {

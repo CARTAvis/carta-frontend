@@ -270,7 +270,8 @@ function extractNode(node: any): any {
 function extractRowNode(node: any): any {
     const children = node.children || [];
     const result: any = {
-        type: determineRowOrColumn(node),
+        // always save as "row" in the abstract format and let convertNode handle the "row"/"column" conversion
+        type: "row",
         content: []
     };
 
@@ -290,25 +291,6 @@ function extractRowNode(node: any): any {
     }
 
     return result;
-}
-
-/**
- * Determines whether a FlexLayout row corresponds to an abstract "row" or "column".
- * FlexLayout alternates orientation at each nesting level, starting horizontal.
- * The parent context determines the direction, but for our abstract config,
- * we check if the node's parent would make this a vertical layout.
- *
- * Since FlexLayout alternates row orientation at each level automatically,
- * and our abstract format uses explicit "row"/"column", we need to figure out
- * the direction. The top-level is always "row" (horizontal), and nested rows alternate.
- *
- * For simplicity, we always save as "row" in the abstract format and let
- * CreateConfigToApply handle the conversion back. The GL-\>abstract mapping
- * already worked this way since GL's "row" and "column" were structurally identical.
- */
-function determineRowOrColumn(_node: any): string {
-    // We keep the original convention: top-level is "row"
-    return "row";
 }
 
 function extractTabSetNode(node: any): any {
