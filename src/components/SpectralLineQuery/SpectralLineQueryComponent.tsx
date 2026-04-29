@@ -27,7 +27,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-line-query",
             type: "spectral-line-query",

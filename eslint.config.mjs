@@ -75,11 +75,11 @@ export default [
                 //     format: ["camelCase"],
                 //     leadingUnderscore: "allow",
                 // },
-                // {
-                //     selector: ["classicAccessor"],
-                //     modifiers: ["public", "static"],
-                //     format: ["PascalCase"],
-                // },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public", "static"],
+                    format: ["PascalCase"],
+                },
                 // {
                 //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                 //     types: ["boolean"],

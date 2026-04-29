@@ -24,7 +24,7 @@ const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler",
             type: "spatial-profiler",
@@ -338,7 +338,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === SpatialProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {

@@ -45,7 +45,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Uint64
     ];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
@@ -718,7 +718,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
 
     private onCompleteRender = () => {

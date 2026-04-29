@@ -20,7 +20,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
@@ -109,7 +109,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === StatsComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addStatsWidget();
             if (id) {

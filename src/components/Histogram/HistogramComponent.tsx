@@ -22,7 +22,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -145,7 +145,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === HistogramComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {

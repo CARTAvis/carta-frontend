@@ -30,7 +30,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly HeaderRowHeight = 25;
     private listRef = React.createRef<any>();
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",

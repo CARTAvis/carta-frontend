@@ -38,7 +38,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stokes",
             type: "stokes",
@@ -103,7 +103,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
-        if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === StokesAnalysisComponent.WidgetConfig.type) {
             const id = appStore.widgetsStore.addStokesWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);

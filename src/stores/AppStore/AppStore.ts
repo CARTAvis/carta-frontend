@@ -1537,8 +1537,8 @@ export class AppStore {
                         const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
                         pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
                         pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
-                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
-                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
+                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WidgetConfig.type);
+                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
                     }
                 }
             } else {
@@ -2415,7 +2415,7 @@ export class AppStore {
         if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
             return;
         }
-        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WidgetConfig.id + "-" + pvPreviewData.previewId)?.previewFrame;
 
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);

@@ -27,7 +27,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
@@ -69,7 +69,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === SpectralProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpectralProfileWidget();
             if (id) {

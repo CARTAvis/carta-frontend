@@ -29,7 +29,7 @@ const COLORSCALE_LENGTH = 2048;
 export class RenderConfigComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",
@@ -116,7 +116,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === RenderConfigComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addRenderConfigWidget();
             if (id) {

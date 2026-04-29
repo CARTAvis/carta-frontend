@@ -57,7 +57,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogOverlayShape.LineSegment_FILLED
     ];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
