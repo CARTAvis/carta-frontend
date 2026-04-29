@@ -1,11 +1,9 @@
 import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
-import {PresetLayout} from "models";
+import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, PresetLayout} from "models";
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
 import {findDeep} from "utilities";
-
-import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight} from "./FlexLayoutModelFactory";
 
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 

@@ -53,6 +53,34 @@ import {
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
 
+type FlexLayoutDomMarkerTarget = "tab" | "tabset-toolbar";
+
+const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithChildren<{nodeId: string; target: FlexLayoutDomMarkerTarget}>) => {
+    const markerRef = React.useRef<HTMLSpanElement>(null);
+
+    React.useLayoutEffect(() => {
+        if (target === "tab") {
+            const closeButton = markerRef.current?.closest(".flexlayout__tab_button")?.querySelector<HTMLDivElement>(".flexlayout__tab_button_trailing");
+            if (closeButton) {
+                closeButton.setAttribute("data-testid", nodeId + "-header-close-button");
+            }
+
+            const headerTitle = markerRef.current?.closest(".flexlayout__tab_button")?.querySelector<HTMLDivElement>(".flexlayout__tab_button_content");
+            if (headerTitle) {
+                headerTitle.setAttribute("data-testid", nodeId + "-header-title");
+            }
+            return;
+        }
+
+        const maximizeButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/max']");
+        if (maximizeButton) {
+            maximizeButton.setAttribute("data-testid", nodeId + "-header-maximize-button");
+        }
+    });
+
+    return React.createElement("span", {ref: markerRef, style: children ? undefined : {display: "none"}}, children);
+};
+
 export interface DefaultWidgetConfig {
     id: string;
     type: string;
@@ -583,7 +611,8 @@ export class WidgetsStore {
 
     // FlexLayout callback for App.tsx
     onRenderTab = (node: TabNode, renderValues: ITabRenderValues) => {
-        renderValues.content = renderValues.content || node.getName();
+        const content = renderValues.content || node.getName();
+        renderValues.content = React.createElement(FlexLayoutDomMarker, {nodeId: node.getId(), target: "tab"}, content);
     };
 
     // FlexLayout callback for App.tsx
@@ -595,6 +624,7 @@ export class WidgetsStore {
 
         const component = selectedNode.getComponent() || "";
         const nodeId = selectedNode.getId();
+        const canMaximize = "canMaximize" in tabSetNode && typeof tabSetNode.canMaximize === "function" && tabSetNode.canMaximize();
         const buttons: React.ReactNode[] = [];
 
         // Button order from left to right: channel-map, previous, multi-panel, next, settings, help, detach
@@ -613,6 +643,7 @@ export class WidgetsStore {
                         key: "channel-map-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "enable/disable channel map",
+                        "data-testid": nodeId + "-header-channel-map-button",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.onChannelMapButtonClick();
@@ -626,6 +657,7 @@ export class WidgetsStore {
                         key: "prev-page-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page",
+                        "data-testid": nodeId + "-header-previous-page-button",
                         disabled: !hasPrevious,
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -640,7 +672,7 @@ export class WidgetsStore {
                         key: "image-panel-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: this.getImagePanelButtonTooltip(imagePanelMode),
-                        "data-testid": nodeId + "-multipanel-view-switch",
+                        "data-testid": nodeId + "-header-multipanel-view-switch",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.onImagePanelButtonClick();
@@ -654,6 +686,7 @@ export class WidgetsStore {
                         key: "next-page-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page",
+                        "data-testid": nodeId + "-header-next-page-button",
                         disabled: !hasNext,
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -694,6 +727,7 @@ export class WidgetsStore {
                         key: "help-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "help",
+                        "data-testid": nodeId + "-header-help-button",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.onHelpPinedClick(e, selectedNode);
@@ -712,6 +746,7 @@ export class WidgetsStore {
                         key: "unpin-" + nodeId,
                         className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
                         title: "detach",
+                        "data-testid": nodeId + "-header-dock-button",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.unpinWidget(selectedNode);
@@ -720,6 +755,10 @@ export class WidgetsStore {
                     React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("unpin"))})
                 )
             );
+        }
+
+        if (canMaximize) {
+            buttons.push(React.createElement(FlexLayoutDomMarker, {key: "maximize-marker-" + nodeId, nodeId, target: "tabset-toolbar"}));
         }
 
         if (buttons.length > 0) {

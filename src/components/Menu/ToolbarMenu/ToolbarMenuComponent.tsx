@@ -232,7 +232,7 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} />
+                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} data-testid={DialogId.Snippet + "-button"} />
                         </Tooltip>
                     )}
                 </ButtonGroup>

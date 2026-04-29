@@ -103,7 +103,8 @@ const idCounters = new Map<string, number>();
  */
 function getUniqueId(baseId: string): string {
     // If it already has a numeric suffix (e.g., "spatial-profiler-0"), use as-is if unique
-    if (!usedIds.has(baseId)) {
+    const hasNumericSuffix = baseId !== "image-view" ? !!baseId.match(/(-\d+)/) : true;
+    if (hasNumericSuffix && !usedIds.has(baseId)) {
         usedIds.add(baseId);
         return baseId;
     }

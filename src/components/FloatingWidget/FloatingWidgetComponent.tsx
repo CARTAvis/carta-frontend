@@ -213,7 +213,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {widgetConfig.helpType && (
-                        <div className={buttonClass} onClick={this.onClickHelpButton}>
+                        <div className={buttonClass} onClick={this.onClickHelpButton} data-testid={this.props.widgetConfig?.id + "-header-help-button"}>
                             <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                                 <span>
                                     <Icon icon={"help"} />
