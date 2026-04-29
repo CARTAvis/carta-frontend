@@ -5,15 +5,10 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, HelpType, PlayMode} from "enums";
+import {AnimationMode, HelpType, NumericInputType, PlayMode} from "enums";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
-
-enum NumericInputType {
-    FrameRate = "Frame rate",
-    Step = "Step"
-}
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
