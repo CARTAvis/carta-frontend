@@ -1,7 +1,7 @@
 import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {ColorMap} from "enums";
+import {ColorMap, ColormapSet} from "enums";
 import {AppStore, type FrameStore, RenderConfigStore} from "stores";
 import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 
@@ -24,10 +24,10 @@ export class ColorBlendingStore {
     /** The filename of the color blended image. */
     readonly filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
-    static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
-        ["RGB", {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
-        ["CMY", {type: "collection", colormaps: [ColorMap.Magenta, ColorMap.Yellow, ColorMap.Cyan]}],
-        ["Rainbow", {type: "gradient", colormap: ColorMap.Rainbow, inverted: true}]
+    static readonly ColormapSets: ReadonlyMap<ColormapSet, ColormapSetConfig> = new Map([
+        [ColormapSet.RGB, {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
+        [ColormapSet.CMY, {type: "collection", colormaps: [ColorMap.Magenta, ColorMap.Yellow, ColorMap.Cyan]}],
+        [ColormapSet.Rainbow, {type: "gradient", colormap: ColorMap.Rainbow, inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
     static readonly DefaultLayerLimit = 10;
@@ -168,7 +168,7 @@ export class ColorBlendingStore {
      * - If the colormap set is a collection of multiple colormaps, it interpolates between the indexes and selects a colormap from the collection to match the number of frames.
      * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
-    applyColormapSet = (set: string) => {
+    applyColormapSet = (set: ColormapSet) => {
         const colormapSetConfig = ColorBlendingStore.ColormapSets.get(set);
         if (!colormapSetConfig) {
             console.error("Invalid colormap set name.");
