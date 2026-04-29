@@ -4,7 +4,7 @@ import type {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
+import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
@@ -19,7 +19,7 @@ const DEFAULTS = {
     linePlotPointSize: 1.5,
     scatterPlotPointSize: 3,
     equalAxes: true,
-    colorMap: "jet",
+    colorMap: ColorMap.Jet,
     pointTransparency: 1,
     invertedColorMap: false
 };

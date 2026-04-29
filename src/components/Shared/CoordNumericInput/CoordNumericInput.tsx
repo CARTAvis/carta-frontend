@@ -1,7 +1,8 @@
 import {Position, Tooltip} from "@blueprintjs/core";
 
 import {CoordinateMode, InputType} from "enums";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore} from "stores";
+import {NUMBER_FORMAT_LABEL} from "utilities";
 
 import {SafeNumericInput} from "..";
 

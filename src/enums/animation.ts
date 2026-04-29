@@ -10,3 +10,8 @@ export enum PlayMode {
     BOUNCING = 2,
     BLINK = 3
 }
+
+export enum NumericInputType {
+    FrameRate = "Frame rate",
+    Step = "Step"
+}

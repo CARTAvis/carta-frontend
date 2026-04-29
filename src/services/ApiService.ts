@@ -3,7 +3,7 @@ import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {ConvertToGB, PreferenceKeys} from "enums";
+import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
 import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
@@ -224,19 +224,8 @@ export class ApiService {
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
-            enum ASTColors {
-                black = 0,
-                white = 1,
-                red = 2,
-                forest = 3,
-                blue = 4,
-                turquoise = 5,
-                violet = 6,
-                gold = 7,
-                gray = 8
-            }
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
+            const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
 

@@ -6,18 +6,13 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, RegionId, type SpectralSystem} from "enums";
+import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
-
-enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
 
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {

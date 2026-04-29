@@ -9,8 +9,8 @@ import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "co
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
-import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {AppStore, CatalogOnlineQueryConfigStore, type VizierItem} from "stores";
+import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, NUMBER_FORMAT_LABEL} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
 
