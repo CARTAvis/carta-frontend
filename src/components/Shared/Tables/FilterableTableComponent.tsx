@@ -8,19 +8,13 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {ProcessedColumnData} from "utilities";
 
-import {CatalogType, SpectralLineHeaders} from "enums";
+import {CatalogType, RowSelectionType, SpectralLineHeaders} from "enums";
 import {CatalogApiService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
-
-enum RowSelectionType {
-    None,
-    Indeterminate,
-    All
-}
 
 const KEYCODE_ENTER = 13;
 
