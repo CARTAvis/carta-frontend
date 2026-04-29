@@ -8,8 +8,6 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     tabEnableRename: false,
     tabSetEnableMaximize: true,
     tabSetEnableTabStrip: true,
-    tabSetMinWidth: 250,
-    tabSetMinHeight: 200,
     splitterSize: 4,
     splitterExtra: 4,
     tabEnablePopout: false,
