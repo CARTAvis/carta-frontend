@@ -18,7 +18,7 @@ $pt-dark-app-background-color: #252a31;
         bottom: 0;
 
         --color-tabset-divider-line: white;
-        --color-icon: #{$gray1};
+        --color-icon: #{$dark-gray4};
 
         // Remove browser focus outlines (e.g. canvas click, button click)
         *:focus {
@@ -112,6 +112,7 @@ $pt-dark-app-background-color: #252a31;
         opacity: 0.5;
         cursor: pointer;
         visibility: visible;
+        background-color: transparent;
 
         &:hover {
             opacity: 1;
@@ -172,6 +173,7 @@ $pt-dark-app-background-color: #252a31;
             --color-background: #{$dark-gray4};
             --color-tabset-divider-line: #{$dark-gray4};
             --color-tab-content: #{$pt-dark-app-background-color};
+            --color-icon: #{$light-gray3};
         }
 
         .flexlayout__tab_button {
@@ -220,11 +222,6 @@ $pt-dark-app-background-color: #252a31;
                     fill: $light-gray5;
                 }
             }
-        }
-
-        .flexlayout__tab_button_trailing {
-            color: $light-gray3;
-            visibility: visible;
         }
 
         .flexlayout__tab_button_overflow {
