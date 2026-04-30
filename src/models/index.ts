@@ -32,6 +32,8 @@ export * from "./TypeDefinition/TypeDefinition";
 export * from "./Wcs/WCSMatchingType";
 export * from "./Wcs/WCSType";
 export * from "./Wcs/WCSValidation";
+export * from "./Widget/Widget";
+export * from "./Widget/WidgetButton";
 export * from "./Workspace";
 export * from "./zindex/zindex";
 export * from "./Zoom/Zoom";

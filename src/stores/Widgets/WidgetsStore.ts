@@ -1,39 +1,30 @@
 import * as React from "react";
 import {Classes} from "@blueprintjs/core";
-import classNames from "classnames";
 import {Actions, type BorderNode, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
     AnimatorComponent,
     CatalogOverlayComponent,
-    CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
     ChannelMapControlComponent,
     CursorInfoComponent,
     HistogramComponent,
-    HistogramSettingsPanelComponent,
     ImageViewComponent,
-    ImageViewSettingsPanelComponent,
     LayerListComponent,
-    LayerListSettingsPanelComponent,
     LogComponent,
-    PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
-    RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
-    SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
     SpectralProfilerComponent,
-    SpectralProfilerSettingsPanelComponent,
     StatsComponent,
-    StokesAnalysisComponent,
-    StokesAnalysisSettingsPanelComponent
+    StokesAnalysisComponent
 } from "components";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
+import {COMPONENT_MAP, createWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, GetDefaultWidgetConfig, GetDefaultWidgetSettingsConfig} from "models";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -53,50 +44,7 @@ import {
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
 
-type FlexLayoutDomMarkerTarget = "tab" | "tabset-toolbar";
-
-const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithChildren<{nodeId: string; target: FlexLayoutDomMarkerTarget}>) => {
-    const markerRef = React.useRef<HTMLSpanElement>(null);
-
-    React.useLayoutEffect(() => {
-        if (target === "tab") {
-            const closeButton = markerRef.current?.closest(".flexlayout__tab_button")?.querySelector<HTMLDivElement>(".flexlayout__tab_button_trailing");
-            if (closeButton) {
-                closeButton.setAttribute("data-testid", nodeId + "-header-close-button");
-            }
-
-            const headerTitle = markerRef.current?.closest(".flexlayout__tab_button")?.querySelector<HTMLDivElement>(".flexlayout__tab_button_content");
-            if (headerTitle) {
-                headerTitle.setAttribute("data-testid", nodeId + "-header-title");
-            }
-            return;
-        }
-
-        const maximizeButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/max']");
-        if (maximizeButton) {
-            maximizeButton.setAttribute("data-testid", nodeId + "-header-maximize-button");
-        }
-    });
-
-    return React.createElement("span", {ref: markerRef, style: children ? undefined : {display: "none"}}, children);
-};
-
-export interface DefaultWidgetConfig {
-    id: string;
-    type: string;
-    minWidth: number;
-    minHeight: number;
-    defaultWidth: number;
-    defaultHeight: number;
-    defaultX?: number;
-    defaultY?: number;
-    isCloseable: boolean;
-    title?: string;
-    parentId?: string;
-    parentType?: string;
-    helpType?: HelpType | HelpType[];
-    componentId?: string;
-}
+export type {DefaultWidgetConfig} from "models";
 
 export class WidgetConfig implements DefaultWidgetConfig {
     id: string;
@@ -286,96 +234,6 @@ export class WidgetsStore {
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
-    private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
-        switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListComponent.WIDGET_CONFIG;
-            case LogComponent.WIDGET_CONFIG.type:
-                return LogComponent.WIDGET_CONFIG;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                return AnimatorComponent.WIDGET_CONFIG;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
-                return ChannelMapControlComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerComponent.WIDGET_CONFIG;
-            case StatsComponent.WIDGET_CONFIG.type:
-                return StatsComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramComponent.WIDGET_CONFIG;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                return RegionListComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
-                return CatalogPlotComponent.WIDGET_CONFIG;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                return SpectralLineQueryComponent.WIDGET_CONFIG;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
-                return CursorInfoComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvGeneratorComponent.WIDGET_CONFIG;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
-            default:
-                return PlaceholderComponent.WIDGET_CONFIG;
-        }
-    }
-
-    private static GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
-        switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramSettingsPanelComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListSettingsPanelComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
-            default:
-                return PlaceholderComponent.WIDGET_CONFIG;
-        }
-    }
-
-    private static readonly COMPONENT_MAP: Map<string, any> = new Map<string, any>([
-        ["placeholder", PlaceholderComponent],
-        ["image-view", ImageViewComponent],
-        ["spatial-profiler", SpatialProfilerComponent],
-        ["spectral-profiler", SpectralProfilerComponent],
-        ["spectral-line-query", SpectralLineQueryComponent],
-        ["stats", StatsComponent],
-        ["histogram", HistogramComponent],
-        ["render-config", RenderConfigComponent],
-        ["region-list", RegionListComponent],
-        ["layer-list", LayerListComponent],
-        ["cursor-info", CursorInfoComponent],
-        ["pv-generator", PvGeneratorComponent],
-        ["pv-preview", PvPreviewComponent],
-        ["log", LogComponent],
-        ["animator", AnimatorComponent],
-        ["channel-map-control", ChannelMapControlComponent],
-        ["stokes", StokesAnalysisComponent],
-        ["catalog-overlay", CatalogOverlayComponent],
-        ["catalog-plot", CatalogPlotComponent]
-    ]);
-
     private getNextId = (defaultId: string) => {
         const widgets = this.widgetsMap.get(defaultId);
         if (!widgets) {
@@ -554,7 +412,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, GetDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -594,7 +452,7 @@ export class WidgetsStore {
         if (!component) {
             return null;
         }
-        const ComponentClass = WidgetsStore.COMPONENT_MAP.get(component);
+        const ComponentClass = COMPONENT_MAP.get(component);
         if (!ComponentClass) {
             return null;
         }
@@ -624,6 +482,7 @@ export class WidgetsStore {
 
         const component = selectedNode.getComponent() || "";
         const nodeId = selectedNode.getId();
+        const isDarkTheme = AppStore.Instance.darkTheme;
         const canMaximize = "canMaximize" in tabSetNode && typeof tabSetNode.canMaximize === "function" && tabSetNode.canMaximize();
         const buttons: React.ReactNode[] = [];
 
@@ -637,123 +496,81 @@ export class WidgetsStore {
             const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
 
             buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "channel-map-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: "enable/disable channel map",
-                        "data-testid": nodeId + "-header-channel-map-button",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onChannelMapButtonClick();
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("heat-grid"))})
-                ),
-                React.createElement(
-                    "button",
-                    {
-                        key: "prev-page-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page",
-                        "data-testid": nodeId + "-header-previous-page-button",
-                        disabled: !hasPrevious,
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onPreviousPageClick();
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("step-backward"))})
-                ),
-                React.createElement(
-                    "button",
-                    {
-                        key: "image-panel-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: this.getImagePanelButtonTooltip(imagePanelMode),
-                        "data-testid": nodeId + "-header-multipanel-view-switch",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onImagePanelButtonClick();
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, this.getImagePanelButtonIcon(imagePanelMode))})
-                ),
-                React.createElement(
-                    "button",
-                    {
-                        key: "next-page-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page",
-                        "data-testid": nodeId + "-header-next-page-button",
-                        disabled: !hasNext,
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onNextPageClick();
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("step-forward"))})
-                )
+                createWidgetButton({
+                    buttonKey: "channel-map-" + nodeId,
+                    iconClassName: Classes.iconClass("heat-grid"),
+                    isDarkTheme,
+                    onClick: () => this.onChannelMapButtonClick(),
+                    testId: nodeId + "-header-channel-map-button",
+                    title: "enable/disable channel map"
+                }),
+                createWidgetButton({
+                    buttonKey: "prev-page-" + nodeId,
+                    iconClassName: Classes.iconClass("step-backward"),
+                    isDarkTheme,
+                    isDisabled: !hasPrevious,
+                    onClick: () => this.onPreviousPageClick(),
+                    testId: nodeId + "-header-previous-page-button",
+                    title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
+                }),
+                createWidgetButton({
+                    buttonKey: "image-panel-" + nodeId,
+                    iconClassName: this.getImagePanelButtonIcon(imagePanelMode),
+                    isDarkTheme,
+                    onClick: () => this.onImagePanelButtonClick(),
+                    testId: nodeId + "-header-multipanel-view-switch",
+                    title: this.getImagePanelButtonTooltip(imagePanelMode)
+                }),
+                createWidgetButton({
+                    buttonKey: "next-page-" + nodeId,
+                    iconClassName: Classes.iconClass("step-forward"),
+                    isDarkTheme,
+                    isDisabled: !hasNext,
+                    onClick: () => this.onNextPageClick(),
+                    testId: nodeId + "-header-next-page-button",
+                    title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page"
+                })
             );
         }
 
         if (WidgetsStore.showCogWidgets.includes(component)) {
             if (!(component === RenderConfigComponent.WIDGET_CONFIG.type && AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING)) {
                 buttons.push(
-                    React.createElement(
-                        "button",
-                        {
-                            key: "cog-" + nodeId,
-                            className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                            title: "settings",
-                            "data-testid": nodeId + "-header-settings-button",
-                            onClick: (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                this.onCogPinedClick(selectedNode);
-                            }
-                        },
-                        React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
-                    )
+                    createWidgetButton({
+                        buttonKey: "cog-" + nodeId,
+                        iconClassName: Classes.iconClass("cog"),
+                        isDarkTheme,
+                        onClick: () => this.onCogPinedClick(selectedNode),
+                        testId: nodeId + "-header-settings-button",
+                        title: "settings"
+                    })
                 );
             }
         }
 
         if (!WidgetsStore.hideHelpButtonWidgets.includes(component)) {
             buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "help-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: "help",
-                        "data-testid": nodeId + "-header-help-button",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onHelpPinedClick(e, selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("help"))})
-                )
+                createWidgetButton({
+                    buttonKey: "help-" + nodeId,
+                    iconClassName: Classes.iconClass("help"),
+                    isDarkTheme,
+                    onClick: event => this.onHelpPinedClick(event, selectedNode),
+                    testId: nodeId + "-header-help-button",
+                    title: "help"
+                })
             );
         }
 
         if (component !== "image-view") {
             buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "unpin-" + nodeId,
-                        className: classNames("flexlayout__tab_toolbar_button", {[Classes.DARK]: AppStore.Instance.darkTheme}),
-                        title: "detach",
-                        "data-testid": nodeId + "-header-dock-button",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.unpinWidget(selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("unpin"))})
-                )
+                createWidgetButton({
+                    buttonKey: "unpin-" + nodeId,
+                    iconClassName: Classes.iconClass("unpin"),
+                    isDarkTheme,
+                    onClick: () => this.unpinWidget(selectedNode),
+                    testId: nodeId + "-header-dock-button",
+                    title: "detach"
+                })
             );
         }
 
@@ -855,7 +672,7 @@ export class WidgetsStore {
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
         }
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = GetDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const widgetConfig = new WidgetConfig(id, defaultConfig);
@@ -876,7 +693,7 @@ export class WidgetsStore {
             return;
         }
 
-        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, GetDefaultWidgetConfig(type));
         widgetConfig.title = title;
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
             widgetConfig.componentId = id;
@@ -908,7 +725,7 @@ export class WidgetsStore {
 
     @action onHelpPinedClick = (ev: React.MouseEvent, node: TabNode) => {
         const type = node.getComponent() || "";
-        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const widgetConfig = GetDefaultWidgetConfig(type);
         const rect = node.getRect();
         let centerX = 0;
         if (rect && rect.width) {
@@ -1206,7 +1023,7 @@ export class WidgetsStore {
     }
 
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = GetDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
