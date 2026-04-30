@@ -78,31 +78,22 @@ $pt-dark-app-background-color: #252a31;
         border: none;
         background: transparent;
         cursor: pointer;
-        color: $gray3;
+        color: $dark-gray3;
+        opacity: 0.5;
 
         &:hover {
-            color: $dark-gray3;
             background-color: transparent;
+            opacity: 1;
         }
 
         &:disabled {
-            color: $gray5;
-            cursor: default;
+            color: $gray3;
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         span {
             font-size: 16px;
-        }
-
-        svg {
-            fill: $gray3;
-            stroke-width: 0;
-            width: 20px !important;
-            height: 20px !important;
-
-            &:hover {
-                fill: $dark-gray1;
-            }
         }
     }
 
@@ -206,21 +197,11 @@ $pt-dark-app-background-color: #252a31;
         }
 
         .flexlayout__tab_toolbar_button {
-            color: $gray3;
+            color: $gray5;
             background: transparent;
 
-            &:hover {
-                color: $light-gray5;
-                background-color: transparent;
-            }
-
-            svg {
-                fill: $gray3;
-                stroke-width: 0;
-
-                &:hover {
-                    fill: $light-gray5;
-                }
+            &:disabled {
+                color: $gray2;
             }
         }
 
