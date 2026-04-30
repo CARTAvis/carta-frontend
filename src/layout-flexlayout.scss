@@ -116,6 +116,22 @@ $pt-dark-app-background-color: #252a31;
         color: $gray1;
     }
 
+    .flexlayout__popup_menu_container {
+        background: $light-gray5;
+        border: 0.5px solid $gray4;
+
+        span {
+            color: $gray2;
+            font-size: 14px;
+        }
+
+        .flexlayout__popup_menu_item {
+            &:hover {
+                background-color: $light-gray1;
+            }
+        }
+    }
+
     // --- Splitter bars ---
     .flexlayout__splitter {
         background-color: white;
@@ -207,6 +223,21 @@ $pt-dark-app-background-color: #252a31;
 
         .flexlayout__tab_button_overflow {
             color: $light-gray3;
+        }
+
+        .flexlayout__popup_menu_container {
+            background: $dark-gray4;
+            border: 0.5px solid $gray2;
+
+            span {
+                color: $gray5;
+            }
+
+            .flexlayout__popup_menu_item {
+                &:hover {
+                    background-color: $dark-gray2;
+                }
+            }
         }
 
         .flexlayout__splitter {

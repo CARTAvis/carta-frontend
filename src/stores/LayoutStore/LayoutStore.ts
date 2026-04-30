@@ -274,48 +274,4 @@ export class LayoutStore {
             AlertStore.Instance.showAlert("Deleting user-defined layout failed!");
         }
     };
-
-    // Helper to add a tab to the currently active tabset in the layout
-    @action addTabToLayout = (componentType: string, name: string, config?: any) => {
-        if (!this.layoutModel) {
-            return;
-        }
-
-        const tabJson: any = {
-            type: "tab",
-            component: componentType,
-            name: name,
-            id: config?.id || componentType,
-            config: config || {}
-        };
-
-        // Try to add to active tabset
-        const activeTabset = this.layoutModel.getActiveTabset();
-        if (activeTabset) {
-            this.layoutModel.doAction({
-                type: "FlexLayout_AddNode",
-                data: {
-                    toNode: activeTabset.getId(),
-                    json: tabJson,
-                    location: "center",
-                    select: true
-                }
-            } as any);
-        }
-    };
-
-    // Helper to remove a tab from the layout by its node ID
-    @action removeTabFromLayout = (nodeId: string) => {
-        if (!this.layoutModel) {
-            return;
-        }
-
-        const node = this.layoutModel.getNodeById(nodeId);
-        if (node) {
-            this.layoutModel.doAction({
-                type: "FlexLayout_DeleteTab",
-                data: {node: nodeId}
-            } as any);
-        }
-    };
 }
