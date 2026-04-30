@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {HelpType, POLARIZATIONS} from "enums";
+import {HelpType, Polarizations} from "enums";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
@@ -182,9 +182,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (frame && frame.headerUnit) {
                 let unit: string;
                 const effectivePolarization = this.widgetStore.effectivePolarization;
-                if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
+                if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                     unit = "%";
-                } else if (effectivePolarization === POLARIZATIONS.Pangle) {
+                } else if (effectivePolarization === Polarizations.Pangle) {
                     unit = "degree";
                 } else {
                     unit = frame.headerUnit;

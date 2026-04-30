@@ -8,7 +8,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {HelpType, PlotType, POLARIZATIONS, RegionId, SmoothingType, TickType} from "enums";
+import {HelpType, PlotType, Polarizations, RegionId, SmoothingType, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -602,9 +602,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.profileStore && this.frame) {
                 if (this.frame.headerUnit) {
                     let unit: string;
-                    if (this.widgetStore.effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                    if (this.widgetStore.effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                         unit = "%";
-                    } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+                    } else if (this.widgetStore.effectivePolarization === Polarizations.Pangle) {
                         unit = "degree";
                     } else {
                         unit = this.frame.headerUnit;

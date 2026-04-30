@@ -6,7 +6,7 @@ import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
-import {HelpType, POLARIZATIONS, TickType} from "enums";
+import {HelpType, Polarizations, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -283,9 +283,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         let unit = "";
         if (frame && frame.headerUnit) {
             const effectivePolarization = this.widgetStore.effectivePolarization;
-            if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
+            if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                 unit = "%";
-            } else if (effectivePolarization === POLARIZATIONS.Pangle) {
+            } else if (effectivePolarization === Polarizations.Pangle) {
                 unit = "degree";
             } else {
                 unit = frame.headerUnit;
