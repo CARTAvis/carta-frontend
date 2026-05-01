@@ -95,7 +95,7 @@ export default [
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: "^([N]|[M]|[p]|[UIn8]|[Iz]|[Jys])|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: "^([N]|[M]|[p]|[UIn8]|[Iz]|[Jys]|[SN])|^CARTA.*|^HDU.*|^WCS.*",
                         match: true
                     },
                     format: null,
