@@ -9,6 +9,7 @@ import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {clamp, getDefaultScalingParameter, minMaxArray, sanitizeScalingParameter} from "utilities";
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
+type CatalogSourceRadiusMode = "diameter" | "radius";
 
 const PARAMETERIZED_SCALINGS = [FrameScaling.LOG, FrameScaling.GAMMA, FrameScaling.POWER, FrameScaling.SINH, FrameScaling.ASINH];
 
@@ -39,6 +40,11 @@ export class CatalogWidgetStore {
         [CatalogSizeUnits.ARCMIN, {min: 0.01, max: 120}],
         [CatalogSizeUnits.ARCSEC, {min: 0.01, max: 120}],
         [CatalogSizeUnits.DEG, {min: 0.01, max: 10}]
+    ]);
+
+    catalogSourceRadiusTypes = new Map<CatalogSourceRadiusMode, {label: string; value: number}>([
+        ["diameter", {label: "Diameter", value: 1}],
+        ["radius", {label: "Radius", value: 0.5}]
     ]);
 
     // -1 : apply different featherWidth according shape size
@@ -94,6 +100,7 @@ export class CatalogWidgetStore {
     @observable isSizeColumnMaxLocked: boolean = false;
     @observable canvasSizeUnit: CatalogSizeUnits = CatalogSizeUnits.SCREENPIXEL;
     @observable worldSizeUnit: AngularSizeUnit = AngularSizeUnit.ARCSEC;
+    @observable catalogSourceRadiusType: number = this.catalogSourceRadiusTypes.get(PreferenceStore.Instance.catalogSourceRadiusType as CatalogSourceRadiusMode)?.value ?? 1;
     // size map minor
     @observable sizeMinorMapColumn: string = CatalogOverlay.NONE;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
@@ -256,6 +263,16 @@ export class CatalogWidgetStore {
                     if (orientation.length) {
                         CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, orientation, CatalogTextureType.Orientation);
                     }
+                }
+            )
+        );
+
+        this.disposers.push(
+            reaction(
+                () => PreferenceStore.Instance.catalogSourceRadiusType,
+                catalogSourceRadiusType => {
+                    this.catalogSourceRadiusType = this.catalogSourceRadiusTypes.get(catalogSourceRadiusType as CatalogSourceRadiusMode)?.value ?? 1;
+                    this.setCatalogSize(this.showedCatalogSize);
                 }
             )
         );
@@ -1021,7 +1038,7 @@ export class CatalogWidgetStore {
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
             const pixelAngularSize = (frame?.spatialReference?.pixelUnitSizeArcsec && frame?.spatialReference?.pixelUnitSizeArcsec.x) ?? (frame?.pixelUnitSizeArcsec && frame?.pixelUnitSizeArcsec.x) ?? 1;
             const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.worldSizeUnit : this.canvasSizeUnit;
-            return (FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize;
+            return ((FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize) * this.catalogSourceRadiusType;
         }
     }
 

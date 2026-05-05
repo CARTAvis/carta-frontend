@@ -21,7 +21,8 @@ const DEFAULTS = {
         imagePanelRows: 2,
         checkNewRelease: true,
         latestRelease: "v" + CARTA_INFO.version,
-        pvAxesOrderReverse: false
+        pvAxesOrderReverse: false,
+        catalogSourceRadiusType: "diameter"
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -599,6 +600,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
     }
 
+    @computed get catalogSourceRadiusType(): string {
+        return this.preferences.get(PreferenceKeys.SILENT_CATALOG_SOURCE_RADIUS_TYPE) ?? DEFAULTS.SILENT.catalogSourceRadiusType;
+    }
+
     @computed get isPixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
@@ -757,7 +762,8 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
             PreferenceKeys.IMAGE_PANEL_ROWS,
-            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE,
+            PreferenceKeys.SILENT_CATALOG_SOURCE_RADIUS_TYPE
         ]);
     };
 

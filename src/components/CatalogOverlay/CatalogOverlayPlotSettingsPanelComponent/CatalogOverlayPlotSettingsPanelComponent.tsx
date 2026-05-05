@@ -6,8 +6,8 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable} from 
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, PreferenceKeys} from "enums";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
@@ -694,6 +694,19 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     >
                         <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} endIcon="double-caret-vertical" />
                     </Select>
+                </FormGroup>
+                <FormGroup inline={true} label="Axis type">
+                    <ButtonGroup>
+                        {Array.from(widgetStore.catalogSourceRadiusTypes.entries()).map(([type, option]) => (
+                            <AnchorButton
+                                key={type}
+                                disabled={!widgetStore.isAngularSize}
+                                text={option.label}
+                                active={widgetStore.catalogSourceRadiusType === option.value}
+                                onClick={() => PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_CATALOG_SOURCE_RADIUS_TYPE, type)}
+                            />
+                        ))}
+                    </ButtonGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={isOverlayPanelDisabled}>
                     <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
