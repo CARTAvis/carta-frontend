@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 
@@ -37,7 +37,7 @@ const DEFAULTS = {
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
-        colormap: "inferno",
+        colormap: ColorMap.Inferno,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
@@ -55,7 +55,7 @@ const DEFAULTS = {
         contourThickness: 1,
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
-        contourColormap: "viridis"
+        contourColormap: ColorMap.Viridis
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
@@ -63,7 +63,7 @@ const DEFAULTS = {
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
-        vectorOverlayColormap: "viridis"
+        vectorOverlayColormap: ColorMap.Viridis
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",

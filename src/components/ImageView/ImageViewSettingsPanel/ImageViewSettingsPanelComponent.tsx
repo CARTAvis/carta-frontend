@@ -5,27 +5,12 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {BeamType, CoordinateMode, HelpType, ImagePanelMode, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
-import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, type WidgetProps} from "stores";
+import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
-import {SWATCH_COLORS, toFixed} from "utilities";
+import {NUMBER_FORMAT_LABEL, SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
-
-enum ImageViewSettingsPanelTabs {
-    PAN_AND_ZOOM = "Pan and Zoom",
-    GLOBAL = "Global",
-    TITLE = "Title",
-    TICKS = "Ticks",
-    GRIDS = "Grids",
-    BORDER = "Border",
-    AXES = "Axes",
-    NUMBERS = "Numbers",
-    LABELS = "Labels",
-    BEAM = "Beam",
-    COLORBAR = "Colorbar",
-    CONVERSION = "Conversion"
-}
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
