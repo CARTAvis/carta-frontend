@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-* Fixed a spectral matching case effected by the default Helio rest frame setting ([#2736](https://github.com/CARTAvis/carta-frontend/issues/2736)).
+* Fixed a spectral matching case affected by the default Helio rest frame setting ([#2736](https://github.com/CARTAvis/carta-frontend/issues/2736)).
 
 ## [6.0.0-beta.1]
 
