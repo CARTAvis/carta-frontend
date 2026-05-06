@@ -4,7 +4,7 @@ import {List} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
@@ -58,37 +58,46 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     @observable regionsLock: boolean = false;
-    private readonly disposers: IReactionDisposer[] = [];
+    private lastScrolledRegionId: number | null = null;
+    private lastScrolledRowCount: number = -1;
+    private lastScrolledSelectedIndex: number = -1;
 
-    private scrollToSelected = (selected: any) => {
+    private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent || !isFinite(selected) || selected < 0) {
+        const rowCount = this.validRegions.length;
+        if (!listRefCurrent || !isFinite(selected) || selected < 0 || selected >= rowCount) {
             return;
-        } else {
-            this.listRef.current.scrollToRow({index: selected, align: "smart"});
         }
+        listRefCurrent.scrollToRow({index: selected, align: "smart"});
+    };
+
+    private syncScrollToSelectedRegion = () => {
+        const selectedRegionId = AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId ?? null;
+        const rowCount = this.validRegions.length;
+        const selectedIndex = selectedRegionId && selectedRegionId > 0 ? this.validRegions.findIndex(region => region.regionId === selectedRegionId) : -1;
+
+        if (selectedRegionId === this.lastScrolledRegionId && rowCount === this.lastScrolledRowCount && selectedIndex === this.lastScrolledSelectedIndex) {
+            return;
+        }
+
+        this.lastScrolledRegionId = selectedRegionId;
+        this.lastScrolledRowCount = rowCount;
+        this.lastScrolledSelectedIndex = selectedIndex;
+
+        this.scrollToSelected(selectedIndex);
     };
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-
-        this.disposers.push(
-            reaction(
-                () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
-                id => {
-                    if (id && id > 0) {
-                        const validRegionId = this.validRegions.map(el => el.regionId);
-                        this.scrollToSelected(validRegionId.findIndex(element => element === id));
-                    }
-                }
-            )
-        );
     }
 
-    componentWillUnmount() {
-        this.disposers.forEach(disposer => disposer());
-        this.disposers.length = 0;
+    componentDidMount() {
+        this.syncScrollToSelectedRegion();
+    }
+
+    componentDidUpdate() {
+        this.syncScrollToSelectedRegion();
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -436,8 +445,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             }
 
-            const style = {...props.style};
-            style.overflowX = "hidden";
+            const style = {...props.style, overflowX: "hidden" as const};
 
             return (
                 <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
