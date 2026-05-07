@@ -60,6 +60,11 @@ export default [
                 //     format: ["PascalCase"],
                 // },
                 {
+                    selector: "classProperty",
+                    modifiers: ["protected"],
+                    format: ["camelCase"],
+                },
+                {
                     selector: "variable",
                     modifiers: ["const", "global"],
                     format: ["UPPER_CASE"],
@@ -79,7 +84,7 @@ export default [
                 //     selector: ["classicAccessor"],
                 //     modifiers: ["public", "static"],
                 //     format: ["PascalCase"],
-                // },  
+                // },
                 // {
                 //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                 //     types: ["boolean"],

@@ -14,6 +14,7 @@ const Toaster = OverlayToaster.create(
     }
 );
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const AppToaster = {
     show: async (toast: ToastProps) => {
         (await Toaster).show(toast);
