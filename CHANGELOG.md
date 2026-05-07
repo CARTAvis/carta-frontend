@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Fix the spatial profile chart that occasionally disappears when the line region is outside the image ([#2775](https://github.com/CARTAvis/carta-frontend/issues/2775)).
+
 ## [6.0.0-beta.1]
 
 ### Fixed
