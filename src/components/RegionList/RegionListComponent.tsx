@@ -4,7 +4,7 @@ import {List} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
@@ -29,6 +29,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ROW_HEIGHT = 35;
     private static readonly HEADER_ROW_HEIGHT = 25;
     private listRef = React.createRef<any>();
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -58,9 +59,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     @observable regionsLock: boolean = false;
-    private lastScrolledRegionId: number | null = null;
-    private lastScrolledRowCount: number = -1;
-    private lastScrolledSelectedIndex: number = -1;
 
     private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
@@ -71,33 +69,31 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         listRefCurrent.scrollToRow({index: selected, align: "smart"});
     };
 
-    private syncScrollToSelectedRegion = () => {
-        const selectedRegionId = AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId ?? null;
-        const rowCount = this.validRegions.length;
-        const selectedIndex = selectedRegionId && selectedRegionId > 0 ? this.validRegions.findIndex(region => region.regionId === selectedRegionId) : -1;
-
-        if (selectedRegionId === this.lastScrolledRegionId && rowCount === this.lastScrolledRowCount && selectedIndex === this.lastScrolledSelectedIndex) {
-            return;
-        }
-
-        this.lastScrolledRegionId = selectedRegionId;
-        this.lastScrolledRowCount = rowCount;
-        this.lastScrolledSelectedIndex = selectedIndex;
-
-        this.scrollToSelected(selectedIndex);
-    };
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
     componentDidMount() {
-        this.syncScrollToSelectedRegion();
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
+                id => {
+                    if (id && id > 0) {
+                        const idx = this.validRegions.findIndex(r => r.regionId === id);
+                        // Defer scroll to after React re-renders the List with updated rowCount,
+                        // and to avoid modifying observables (via onListRendered) inside a reaction
+                        setTimeout(() => this.scrollToSelected(idx), 0);
+                    }
+                },
+                {fireImmediately: true}
+            )
+        );
     }
 
-    componentDidUpdate() {
-        this.syncScrollToSelectedRegion();
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {
