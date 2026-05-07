@@ -30,6 +30,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly HEADER_ROW_HEIGHT = 25;
     private listRef = React.createRef<any>();
     private readonly disposers: IReactionDisposer[] = [];
+    private pendingScrollTarget = -1;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -81,14 +82,29 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 id => {
                     if (id && id > 0) {
                         const idx = this.validRegions.findIndex(r => r.regionId === id);
-                        // Defer scroll to after React re-renders the List with updated rowCount,
-                        // and to avoid modifying observables (via onListRendered) inside a reaction
-                        setTimeout(() => this.scrollToSelected(idx), 0);
+                        // Store scroll target; componentDidUpdate will process it after the List
+                        // re-renders with the updated rowCount, avoiding an out-of-range error.
+                        this.pendingScrollTarget = idx;
                     }
                 },
                 {fireImmediately: true}
             )
         );
+        // For the fireImmediately case the List is already rendered, but we still need to run
+        // outside the reaction to avoid modifying observables (via onListRendered).
+        if (this.pendingScrollTarget >= 0) {
+            const target = this.pendingScrollTarget;
+            this.pendingScrollTarget = -1;
+            setTimeout(() => this.scrollToSelected(target), 0);
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.pendingScrollTarget >= 0) {
+            const target = this.pendingScrollTarget;
+            this.pendingScrollTarget = -1;
+            this.scrollToSelected(target);
+        }
     }
 
     componentWillUnmount() {
