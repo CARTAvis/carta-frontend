@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
-import {DialogId, HelpType} from "enums";
+import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
@@ -21,12 +21,6 @@ import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGen
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 
 import "./ContourDialogComponent.scss";
-
-enum ContourDialogTabs {
-    Levels,
-    Configuration,
-    Styling
-}
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const DataSourceSelect = Select<FrameStore>;

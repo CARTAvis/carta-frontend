@@ -2,6 +2,7 @@ export * from "./array/array";
 export * from "./ast/ast";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
 export * from "./color/color";
+export * from "./color/constants";
 export * from "./export/export";
 export * from "./fitting_heuristics/fitting_heuristics";
 export * from "./math/math";

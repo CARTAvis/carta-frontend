@@ -1,6 +1,7 @@
 import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
+import {ColorMap} from "enums";
 import {AppStore, type FrameStore, RenderConfigStore} from "stores";
 import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 
@@ -8,12 +9,12 @@ import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 type ColormapSetConfig =
     | {
           type: "gradient";
-          colormap: string;
+          colormap: ColorMap;
           inverted: boolean;
       }
     | {
           type: "collection";
-          colormaps: readonly string[];
+          colormaps: readonly ColorMap[];
       };
 
 /** Configuration of a color blended image. */
@@ -24,9 +25,9 @@ export class ColorBlendingStore {
     readonly filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
     public static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
-        ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
-        ["CMY", {type: "collection", colormaps: ["Magenta", "Yellow", "Cyan"]}],
-        ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
+        ["RGB", {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
+        ["CMY", {type: "collection", colormaps: [ColorMap.Magenta, ColorMap.Yellow, ColorMap.Cyan]}],
+        ["Rainbow", {type: "gradient", colormap: ColorMap.Rainbow, inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
     public static readonly DefaultLayerLimit = 10;
