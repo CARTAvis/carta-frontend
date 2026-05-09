@@ -66,7 +66,15 @@
             display: flex;
 
             &.selected {
+                background: rgba($blue3, 0.08);
+            }
+
+            &.selected-primary {
                 background: rgba($blue3, 0.1);
+            }
+
+            &.hidden {
+                opacity: 0.4;
             }
 
             &.#{$ns}-dark {
@@ -77,6 +85,10 @@
                 }
 
                 &.selected {
+                    background: rgba($blue3, 0.16);
+                }
+
+                &.selected-primary {
                     background: rgba($blue3, 0.2);
                 }
             }

@@ -1,7 +1,7 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
 import {List} from "react-window";
-import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Icon, Menu, MenuDivider, MenuItem, NonIdealState, Position, showContextMenu, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
@@ -154,11 +154,91 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportAllClicked = () => {
-        FileBrowserStore.Instance.showExportRegions();
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        const isMultiSelected = (regionSet?.selectedRegionsList.length ?? 0) > 1;
+        if (isMultiSelected) {
+            FileBrowserStore.Instance.showExportSelectedRegions();
+        } else {
+            FileBrowserStore.Instance.showExportRegions();
+        }
     };
 
     private handleRegionListDoubleClick = () => {
-        DialogStore.Instance.showDialog(DialogId.Region);
+        const isMultiSelected = (AppStore.Instance.activeFrame?.regionSet.selectedRegionsList.length ?? 0) > 1;
+        DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
+    };
+
+    private handleRegionContextMenu = (ev: React.MouseEvent<HTMLDivElement>, region: RegionStore) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (!frame) {
+            return;
+        }
+        const regionSet = frame.regionSet;
+        // If the right-clicked region is not in the selection, replace selection with it
+        if (!regionSet.selectedRegions.has(region)) {
+            regionSet.selectRegion(region);
+        }
+        const isMultiSelected = regionSet.selectedRegionsList.length > 1;
+        const allLocked = regionSet.selectedRegionsList.length > 0 && regionSet.selectedRegionsList.every(r => r.locked);
+        const anyVisible = regionSet.selectedRegionsList.some(r => r.visible);
+
+        const menuContent = (
+            <Menu>
+                <MenuDivider title={isMultiSelected ? `${regionSet.selectedRegionsList.length} regions selected` : region.nameString} />
+                <MenuItem
+                    icon={anyVisible ? "eye-off" : "eye-open"}
+                    text={anyVisible ? "Hide" : "Show"}
+                    onClick={() => {
+                        if (isMultiSelected) {
+                            regionSet.toggleSelectedRegionsVisibility();
+                        } else {
+                            region.toggleVisible();
+                        }
+                    }}
+                />
+                <MenuItem
+                    icon={allLocked ? "unlock" : "lock"}
+                    text={allLocked ? "Unlock" : "Lock"}
+                    onClick={() => {
+                        if (isMultiSelected) {
+                            regionSet.selectedRegionsList.forEach(r => r.setLocked(!allLocked));
+                        } else {
+                            region.toggleLock();
+                        }
+                    }}
+                />
+                <MenuDivider />
+                <MenuItem
+                    icon="settings"
+                    text="Region Settings"
+                    onClick={() => {
+                        DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
+                    }}
+                />
+                <MenuDivider />
+                <MenuItem
+                    icon="trash"
+                    intent="danger"
+                    text="Delete"
+                    onClick={() => {
+                        if (isMultiSelected) {
+                            appStore.deleteSelectedRegion();
+                        } else {
+                            appStore.deleteRegion(region);
+                        }
+                    }}
+                />
+            </Menu>
+        );
+
+        showContextMenu({
+            content: menuContent,
+            targetOffset: {left: ev.clientX, top: ev.clientY},
+            isDarkTheme: appStore.darkTheme
+        });
     };
 
     private handleRegionDeleteClicked = async () => {
@@ -249,13 +329,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
+            const _visible = region.visible;
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
-        const selectedRegion = frame.regionSet.selectedRegion;
-
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
+            const isMultiSelected = (frame.regionSet.selectedRegionsList.length ?? 0) > 1;
+            const exportTooltip = isMultiSelected ? "Export selected regions" : "Export all regions";
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
@@ -264,7 +345,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
                     </Tooltip>
-                    <Tooltip content="Export all regions" position={Position.BOTTOM}>
+                    <Tooltip content={exportTooltip} position={Position.BOTTOM}>
                         <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
                     </Tooltip>
                 </ButtonGroup>
@@ -324,7 +405,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {[Classes.DARK]: darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {
+                [Classes.DARK]: darkTheme,
+                selected: frame.regionSet.selectedRegions.has(region),
+                "selected-primary": region === frame.regionSet.selectedRegion,
+                hidden: !region.visible
+            });
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -440,7 +526,20 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             style.overflowX = "hidden";
 
             return (
-                <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
+                <div
+                    className={className}
+                    key={region.regionId}
+                    onClick={ev => {
+                        if (ev.shiftKey) {
+                            frame.regionSet.toggleRegionSelection(region);
+                        } else {
+                            frame.regionSet.selectRegion(region);
+                        }
+                    }}
+                    onContextMenu={ev => this.handleRegionContextMenu(ev, region)}
+                    style={style}
+                    data-testid={"region-list-table-row-" + (props.index + 1)}
+                >
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}
