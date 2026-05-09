@@ -10,6 +10,7 @@ import {
     FileBrowserDialogComponent,
     FileInfoDialogComponent,
     FittingDialogComponent,
+    GroupRegionDialogComponent,
     LayoutDialogComponent,
     OnlineDataQueryDialogComponent,
     PreferenceDialogComponent,
@@ -28,6 +29,7 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <RootMenuComponent />
                 <RegionDialogComponent />
+                <GroupRegionDialogComponent />
                 <OnlineDataQueryDialogComponent />
                 <ContourDialogComponent />
                 <VectorOverlayDialogComponent />
