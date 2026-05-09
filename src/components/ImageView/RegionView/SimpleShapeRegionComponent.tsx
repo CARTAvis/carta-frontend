@@ -20,9 +20,10 @@ interface SimpleShapeRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    isPrimary: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, shiftKey?: boolean) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -57,8 +58,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            this.props.onSelect?.(this.props.region);
+            this.props.onSelect?.(this.props.region, mouseEvent.shiftKey);
         }
+    };
+
+    private getSelectionProps = () => {
+        return {};
     };
 
     private startEditing = (anchor: string) => {
@@ -225,12 +230,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     private handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
+        if (!this.props.selected) {
+            this.props.onSelect?.(this.props.region);
+        }
         this.props.region.beginEditing();
+        this.props.frame.regionSet.beginGroupEditing(this.props.region);
     };
 
     private handleDragEnd = () => {
         this.props.region.endEditing();
+        this.props.frame.regionSet.endGroupEditing(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -241,7 +250,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
+            const delta = subtract2D(positionImageSpace, this.props.region.center);
             this.props.region.setCenter(positionImageSpace);
+            this.props.frame.regionSet.moveSelectedRegions(this.props.region, delta);
         }
     };
 
@@ -424,7 +435,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private genAnchors = (): React.ReactNode[] => {
+    private genAnchors = (interactive: boolean): React.ReactNode[] => {
         const region = this.props.region;
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
@@ -469,6 +480,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     y={posCanvas.y}
                     rotation={-region.rotation}
                     isRotator={config.anchor === "rotator"}
+                    interactive={interactive}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}
                     onDragStart={this.handleAnchorDragStart}
@@ -557,7 +569,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel,
             fontFamily: region.font,
             fontStyle: region.fontStyle,
-            hitStrokeWidth: 5
+            hitStrokeWidth: 5,
+            ...this.getSelectionProps()
         };
     };
 
@@ -593,6 +606,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     <Line
                         x={centerPixelSpace.x}
                         y={centerPixelSpace.y}
+                        {...this.getSelectionProps()}
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         strokeScaleEnabled={false}
@@ -627,6 +641,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 rotation: -rotation,
                 x: centerPixelSpace.x,
                 y: centerPixelSpace.y,
+                ...this.getSelectionProps(),
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
                 opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
@@ -655,7 +670,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors() : null}
+                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors(this.props.isPrimary) : null}
             </Group>
         );
     }

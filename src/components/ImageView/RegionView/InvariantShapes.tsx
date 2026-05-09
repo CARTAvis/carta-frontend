@@ -120,6 +120,7 @@ interface AnchorProps {
     y: number;
     rotation: number;
     isRotator: boolean;
+    interactive?: boolean;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
@@ -157,7 +158,8 @@ export const Anchor = (props: AnchorProps) => {
             strokeWidth={1}
             stroke={"black"}
             strokeScaleEnabled={false}
-            draggable={true}
+            draggable={props.interactive ?? true}
+            listening={props.interactive ?? true}
             key={props.anchor}
             id={props.anchor}
             onMouseEnter={props.onMouseEnter}

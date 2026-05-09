@@ -784,6 +784,14 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
 
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
+            const handleSelect = (region: RegionStore, shiftKey?: boolean) => {
+                if (shiftKey) {
+                    regionSet.toggleRegionSelection(region);
+                } else {
+                    regionSet.selectRegion(region);
+                }
+            };
+
             return regions.map(r => {
                 const commonProps = {
                     region: r,
@@ -791,8 +799,9 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageRef: this.props.stageRef,
-                    selected: r === regionSet.selectedRegion,
-                    onSelect: regionSet.selectRegion,
+                    selected: regionSet.selectedRegions.has(r),
+                    isPrimary: r === regionSet.selectedRegion,
+                    onSelect: handleSelect,
                     onDoubleClick: this.handleRegionDoubleClicked
                 };
 

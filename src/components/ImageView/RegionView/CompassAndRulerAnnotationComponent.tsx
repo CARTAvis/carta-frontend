@@ -19,8 +19,9 @@ interface CompassRulerAnnotationProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    isPrimary: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, shiftKey?: boolean) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -35,7 +36,10 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const mousePoint = React.useRef({x: 0, y: 0});
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        const mouseEvent = event.evt;
+        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
+            props.onSelect?.(region, mouseEvent.shiftKey);
+        }
     };
 
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -44,14 +48,18 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
+            if (!props.selected) {
+                props.onSelect?.(props.region);
+            }
             props.region.beginEditing();
+            frame.regionSet.beginGroupEditing(props.region);
             mousePoint.current = konvaEvent.currentTarget.position();
         }
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         props.region.endEditing();
+        frame.regionSet.endGroupEditing(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -63,6 +71,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
             const newPoints = region.controlPoints.map((p, i) => (i === 0 ? add2D(p, deltaPosition) : p));
             region.setControlPoints(newPoints, false, false);
+            frame.regionSet.moveSelectedRegions(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -91,7 +100,6 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
             props.region.beginEditing();
         }
     };
@@ -242,6 +250,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const anchorCommonProps = {
         rotation: 0,
         isRotator: false,
+        interactive: props.isPrimary,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
@@ -251,7 +260,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group ref={shapeRef} listening={!region.locked} draggable={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
                 {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
@@ -297,20 +306,27 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const region = props.region as RulerAnnotationStore;
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        const mouseEvent = event.evt;
+        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
+            props.onSelect?.(region, mouseEvent.shiftKey);
+        }
     };
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onDoubleClick?.(region);
     };
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(props.region);
+        if (!props.selected) {
+            props.onSelect?.(props.region);
+        }
         props.region.beginEditing();
+        frame.regionSet.beginGroupEditing(props.region);
         mousePoint.current = konvaEvent.target.position();
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         props.region.endEditing();
+        frame.regionSet.endGroupEditing(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -324,6 +340,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
             const deltaPosition = subtract2D(transformedImagePosition, transformedOldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
+            frame.regionSet.moveSelectedRegions(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -585,6 +602,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosStart.y}
                             rotation={0}
                             isRotator={false}
+                            interactive={props.isPrimary}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
@@ -597,6 +615,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosFinish.y}
                             rotation={0}
                             isRotator={false}
+                            interactive={props.isPrimary}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}

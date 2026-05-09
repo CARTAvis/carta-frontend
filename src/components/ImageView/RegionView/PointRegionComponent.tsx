@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
-import {transformPoint} from "utilities";
+import {subtract2D, transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -17,7 +17,8 @@ interface PointRegionComponentProps {
     layerHeight: number;
     selected: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    isPrimary: boolean;
+    onSelect?: (region: RegionStore, shiftKey?: boolean) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -34,17 +35,21 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            this.props.onSelect?.(this.props.region);
+            this.props.onSelect?.(this.props.region, mouseEvent.shiftKey);
         }
     };
 
     private handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
+        if (!this.props.selected) {
+            this.props.onSelect?.(this.props.region);
+        }
         this.props.region.beginEditing();
+        this.props.frame.regionSet.beginGroupEditing(this.props.region);
     };
 
     private handleDragEnd = () => {
         this.props.region.endEditing();
+        this.props.frame.regionSet.endGroupEditing(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -55,7 +60,9 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
+            const delta = subtract2D(positionImageSpace, this.props.region.center);
             this.props.region.setCenter(positionImageSpace);
+            this.props.frame.regionSet.moveSelectedRegions(this.props.region, delta);
         }
     };
 
