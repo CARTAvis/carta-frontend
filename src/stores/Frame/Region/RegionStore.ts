@@ -679,6 +679,16 @@ export class RegionStore {
         }
     };
 
+    @observable visible: boolean = true;
+
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action toggleVisible = () => {
+        this.visible = !this.visible;
+    };
+
     @action focusCenter = () => {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);

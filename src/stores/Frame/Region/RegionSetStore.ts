@@ -7,13 +7,13 @@ import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {add2D, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
-    @observable selectedRegion: RegionStore | null;
+    @observable selectedRegions: Set<RegionStore> = new Set();
     @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
     @observable opacity: number = 1;
@@ -31,7 +31,6 @@ export class RegionSetStore {
         this.preference = preference;
         this.newRegionType = preference.regionType;
         this.addPointRegion(frame.center, true);
-        this.selectedRegion = this.regions[0] ?? null;
         makeObservable(this);
     }
 
@@ -83,8 +82,16 @@ export class RegionSetStore {
         return regionMap;
     }
 
+    @computed get selectedRegionsList(): RegionStore[] {
+        return Array.from(this.selectedRegions).filter(region => region.regionId !== CURSOR_REGION_ID);
+    }
+
+    @computed get selectedRegion(): RegionStore | null {
+        return this.selectedRegionsList[0] ?? null;
+    }
+
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
-        return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
+        return this.regions?.filter(r => r.isValid && r.regionId !== 0 && r.visible)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
     @computed get isNewRegionAnnotation(): boolean {
@@ -269,27 +276,56 @@ export class RegionSetStore {
     };
 
     @action selectRegion = (region: RegionStore) => {
+        this.selectedRegions.clear();
         if (this.regions.indexOf(region) >= 0) {
-            this.selectedRegion = region;
+            this.selectedRegions.add(region);
+        }
+    };
+
+    @action toggleRegionSelection = (region: RegionStore) => {
+        if (this.regions.indexOf(region) < 0) {
+            return;
+        }
+
+        if (this.selectedRegions.has(region)) {
+            this.selectedRegions.delete(region);
+        } else {
+            this.selectedRegions.add(region);
         }
     };
 
     @action selectRegionByIndex = (index: number) => {
+        this.selectedRegions.clear();
         if (index >= 0 && index < this.regions.length) {
-            this.selectedRegion = this.regions[index];
+            this.selectedRegions.add(this.regions[index]);
         }
     };
 
     @action deselectRegion = () => {
-        this.selectedRegion = null;
+        this.selectedRegions.clear();
+    };
+
+    @action beginGroupEditing = (primaryRegion: RegionStore) => {
+        this.getGroupSelectedRegions(primaryRegion).forEach(region => region.beginEditing());
+    };
+
+    @action moveSelectedRegions = (primaryRegion: RegionStore, delta: Point2D) => {
+        this.getGroupSelectedRegions(primaryRegion).forEach(region => this.moveRegionByDelta(region, delta));
+    };
+
+    @action endGroupEditing = (primaryRegion: RegionStore) => {
+        this.getGroupSelectedRegions(primaryRegion).forEach(region => region.endEditing());
+    };
+
+    @action toggleSelectedRegionsVisibility = () => {
+        const anyVisible = this.selectedRegionsList.some(r => r.visible);
+        this.selectedRegionsList.forEach(r => r.setVisible(!anyVisible));
     };
 
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
-            if (region === this.selectedRegion) {
-                this.selectedRegion = this.regions[0];
-            }
+            this.selectedRegions.delete(region);
             const selectedInd = this.regions.findIndex(r => r === region);
             const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
@@ -428,4 +464,26 @@ export class RegionSetStore {
             this.selectRegionByIndex(0);
         }
     }
+
+    private getGroupSelectedRegions = (primaryRegion: RegionStore): RegionStore[] => {
+        return this.selectedRegionsList.filter(region => region !== primaryRegion && !region.locked);
+    };
+
+    private moveRegionByDelta = (region: RegionStore, delta: Point2D) => {
+        switch (region.regionType) {
+            case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYGON:
+            case CARTA.RegionType.ANNPOLYLINE:
+                region.setControlPoints(
+                    region.controlPoints.map(point => add2D(point, delta)),
+                    false,
+                    false
+                );
+                break;
+            default:
+                region.setCenter(add2D(region.center, delta));
+                break;
+        }
+    };
 }

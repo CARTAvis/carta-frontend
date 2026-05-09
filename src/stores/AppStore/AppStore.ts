@@ -3125,9 +3125,12 @@ export class AppStore {
     }
 
     @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
-            this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
+        const regionSet = this.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
         }
+
+        regionSet.selectedRegionsList.filter(region => !region.locked).forEach(region => this.deleteRegion(region));
     };
 
     @action deleteRegion = (region: RegionStore) => {
