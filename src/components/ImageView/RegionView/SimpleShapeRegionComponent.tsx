@@ -469,16 +469,14 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const isKeepAspectMode = evt.shiftKey;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 const isRegionCornerMode = (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed);
-                if (SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
-                    this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
-                } else if (isRegionCornerMode) {
+                if (isRegionCornerMode) {
                     this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
                 } else {
                     this.applyCenterScaling(region, offsetPoint.x, offsetPoint.y, anchorName, isKeepAspectMode);
                 }
 
                 if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
-                    const dragBoundedPos = this.getDragBoundedAnchorPos(region, anchorName, SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) || isRegionCornerMode);
+                    const dragBoundedPos = this.getDragBoundedAnchorPos(region, anchorName, isRegionCornerMode);
                     if (dragBoundedPos) {
                         anchor.position(dragBoundedPos);
                     }
