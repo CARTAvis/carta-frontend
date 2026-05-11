@@ -201,11 +201,11 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     AstShiftMap* shiftMapToOrigin = astShiftMap(2, offsetToOrigin, "");
     AstShiftMap* shiftMapFromOrigin = astShiftMap(2, offsetFromOrigin, "");
 
-    //  Combined mapping
+    // Combined mapping
     AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
     AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
 
-    auto cleanUpTransformedFramesetFailure = [&]() {
+    auto cleanUpAfterFailure = [&]() {
         if (wcsInfoTransformed) {
             astDelete(wcsInfoTransformed);
         }
@@ -240,7 +240,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
 
     if (!astOK || !pixFrame || !pixFrameCopy || !skyFrame || !pixToSkyMapping || !wcsInfoTransformed || !shiftMapToOrigin || !shiftMapFromOrigin || !combinedMap || !combinedMap2) {
         cout << "Creating transformed frame set failed." << endl;
-        cleanUpTransformedFramesetFailure();
+        cleanUpAfterFailure();
         return clearStatusAndReturnNull();
     }
 
@@ -249,7 +249,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     astSetI(wcsInfoTransformed, "Current", 3);
     if (!astOK) {
         cout << "Creating transformed frame set failed." << endl;
-        cleanUpTransformedFramesetFailure();
+        cleanUpAfterFailure();
         return clearStatusAndReturnNull();
     }
     return wcsInfoTransformed;

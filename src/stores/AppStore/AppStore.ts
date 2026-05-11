@@ -3234,10 +3234,14 @@ export class AppStore {
             }
         }
 
-        if (this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame))) {
+        if (this.isFrameInColorBlendingImages(frame)) {
             return await this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
         }
         return true;
+    };
+
+    private isFrameInColorBlendingImages = (frame: FrameStore): boolean => {
+        return this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame));
     };
 
     @action toggleSpatialMatching = (frame: FrameStore) => {
@@ -3256,7 +3260,7 @@ export class AppStore {
         const shouldEnable = !this.frames.some(frame => frame !== this.spatialReference && frame.spatialReference);
         const framesToUpdate = this.frames.filter(frame => frame !== this.spatialReference && (shouldEnable || frame.spatialReference));
 
-        if (!shouldEnable && framesToUpdate.some(frame => this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame)))) {
+        if (!shouldEnable && framesToUpdate.some(frame => this.isFrameInColorBlendingImages(frame))) {
             const confirmed = yield this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
             if (!confirmed) {
                 return;
@@ -3331,10 +3335,6 @@ export class AppStore {
         }
 
         const eligibleFrames = this.frames.filter(frame => frame !== this.spectralReference && frame.frameInfo.fileInfoExtended.depth > 1);
-        if (!eligibleFrames.length) {
-            return;
-        }
-
         const shouldEnable = !eligibleFrames.some(frame => frame.spectralReference);
         for (const frame of eligibleFrames) {
             this.setSpectralMatchingEnabled(frame, shouldEnable);
@@ -3423,10 +3423,9 @@ export class AppStore {
         }
 
         const shouldEnable = !this.frames.some(frame => frame !== this.rasterScalingReference && frame.rasterScalingReference);
-        for (const frame of this.frames) {
-            if (frame !== this.rasterScalingReference) {
-                this.setRasterScalingMatchingEnabled(frame, shouldEnable);
-            }
+        const framesToUpdate = this.frames.filter(frame => frame !== this.rasterScalingReference);
+        for (const frame of framesToUpdate) {
+            this.setRasterScalingMatchingEnabled(frame, shouldEnable);
         }
     };
 
