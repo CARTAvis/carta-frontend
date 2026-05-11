@@ -3413,7 +3413,7 @@ export class AppStore {
             return;
         }
 
-        const shouldEnable = this.frames.some(frame => frame !== this.rasterScalingReference && !frame.rasterScalingReference);
+        const shouldEnable = !this.frames.some(frame => frame !== this.rasterScalingReference && frame.rasterScalingReference);
         for (const frame of this.frames) {
             if (frame !== this.rasterScalingReference) {
                 this.setRasterScalingMatchingEnabled(frame, shouldEnable);
