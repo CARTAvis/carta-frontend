@@ -3253,6 +3253,33 @@ export class AppStore {
         }
     };
 
+    private getLinePositionAngle = (points: Point2D[]): number => {
+        if (points.length < 2) {
+            return 0;
+        }
+
+        let angle = (Math.atan((points[1].x - points[0].x) / (points[0].y - points[1].y)) * 180.0) / Math.PI;
+        if (points[1].y > points[0].y) {
+            angle += 180;
+        }
+
+        return (angle + 360) % 360;
+    };
+
+    private getPasteShiftDelta = (points: Point2D[], regionType: CARTA.RegionType): Point2D => {
+        switch (regionType) {
+            case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR: {
+                const positionAngle = this.getLinePositionAngle(points);
+                const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
+                return shouldShiftYOnly ? {x: 0, y: AppStore.PasteOffset} : {x: AppStore.PasteOffset, y: 0};
+            }
+            default:
+                return {x: AppStore.PasteOffset, y: AppStore.PasteOffset};
+        }
+    };
+
     private shiftRegionPoints = (points: Point2D[], regionType: CARTA.RegionType, offsetX: number, offsetY: number): Point2D[] => {
         switch (regionType) {
             case CARTA.RegionType.POINT:
@@ -3277,6 +3304,7 @@ export class AppStore {
     private offsetPointsToAvoidCollision = (points: Point2D[], regionType: CARTA.RegionType, regions: RegionStore[], shouldApplyInitialOffset: boolean): Point2D[] => {
         let shiftedPoints = points.map(point => ({x: point.x, y: point.y}));
         let attempts = 0;
+        const shiftDelta = this.getPasteShiftDelta(points, regionType);
 
         const hasCollision = (center: Point2D) => {
             return regions.some(region => {
@@ -3289,11 +3317,11 @@ export class AppStore {
         };
 
         if (shouldApplyInitialOffset) {
-            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, AppStore.PasteOffset, AppStore.PasteOffset);
+            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
         }
 
         while (attempts < 20 && hasCollision(this.getRegionCenter(shiftedPoints, regionType))) {
-            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, AppStore.PasteOffset, AppStore.PasteOffset);
+            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
             attempts++;
         }
 
