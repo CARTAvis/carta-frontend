@@ -3253,7 +3253,7 @@ export class AppStore {
             return;
         }
 
-        const shouldEnable = this.frames.some(frame => frame !== this.spatialReference && !frame.spatialReference);
+        const shouldEnable = !this.frames.some(frame => frame !== this.spatialReference && frame.spatialReference);
         for (const frame of this.frames) {
             if (frame !== this.spatialReference) {
                 this.setSpatialMatchingEnabled(frame, shouldEnable);
@@ -3323,7 +3323,7 @@ export class AppStore {
             return;
         }
 
-        const shouldEnable = eligibleFrames.some(frame => !frame.spectralReference);
+        const shouldEnable = !eligibleFrames.some(frame => frame.spectralReference);
         for (const frame of eligibleFrames) {
             this.setSpectralMatchingEnabled(frame, shouldEnable);
         }
