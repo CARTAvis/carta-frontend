@@ -109,16 +109,20 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             const regionSet = appStore.activeFrame.regionSet;
-            // If there is multi-selection, clear it and return
+            if (regionSet.selectedRegion) {
+                if (regionSet.selectedRegion.hasSelectedPoint) {
+                    regionSet.selectedRegion.deselectPoint();
+                    return;
+                }
+            }
+            // If there is selection, clear it and return
             if (regionSet.selectedCount > 0) {
                 regionSet.clearSelection();
                 return;
             }
-            // Otherwise follow existing behavior: cancel point or creation mode
+            // Otherwise follow existing behavior: deselect region or cancel creation mode
             if (regionSet.selectedRegion) {
-                if (regionSet.selectedRegion.hasSelectedPoint) {
-                    regionSet.selectedRegion.deselectPoint();
-                } else if (regionSet.selectedRegion.regionId !== CURSOR_REGION_ID) {
+                if (regionSet.selectedRegion.regionId !== CURSOR_REGION_ID) {
                     // Do not deselect the cursor region on ESC
                     regionSet.deselectRegion();
                 }
