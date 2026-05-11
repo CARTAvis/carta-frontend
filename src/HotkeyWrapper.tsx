@@ -442,21 +442,21 @@ export class HotkeyService extends React.Component<{}> {
                 return <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
             });
 
-        // 1) Navigation
+        // Navigation
         const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.NavigationDisplayHotkeys());
 
-        // 2) Regions
+        // Regions
         const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionHotkeys());
         const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.RegionDisplayHotkeys());
         regionHotKeys.push(...regionDisplayOnlyHotkeys);
 
-        // 3) Frame controls
+        // Frame controls
         const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.FrameControlHotkeys());
 
-        // 4) File controls
+        // File controls
         const fileHotkeys: React.ReactElement[] = toElements(HotkeyService.FileControlHotkeys());
 
-        // 5) Other
+        // Other
         const otherHotKeys: React.ReactElement[] = toElements(HotkeyService.OtherHotkeys());
 
         return {
