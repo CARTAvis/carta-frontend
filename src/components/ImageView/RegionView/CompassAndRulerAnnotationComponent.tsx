@@ -147,32 +147,47 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const eastPointArray: number[] = [];
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const targetStageLength = (region.length * imageRatio) / zoomLevel;
+
+    const getCompassPointArray = (approxPoints: number[]) => {
+        const pointArray: number[] = [];
+        let previousPoint = originPoints;
+        let previousDistance = 0;
+
+        pointArray.push(originPoints.x - mousePoint.current.x, originPoints.y - mousePoint.current.y);
+
+        for (let i = 0; i < approxPoints.length; i += 2) {
+            const point = transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+            const distance = pointDistance(point, originPoints);
+
+            if (distance >= targetStageLength) {
+                const segmentLength = distance - previousDistance;
+                const ratio = segmentLength > 0 ? (targetStageLength - previousDistance) / segmentLength : 0;
+                const interpolatedPoint = {
+                    x: previousPoint.x + (point.x - previousPoint.x) * ratio,
+                    y: previousPoint.y + (point.y - previousPoint.y) * ratio
+                };
+                pointArray.push(interpolatedPoint.x - mousePoint.current.x, interpolatedPoint.y - mousePoint.current.y);
+                break;
+            }
+
+            pointArray.push(point.x - mousePoint.current.x, point.y - mousePoint.current.y);
+            previousPoint = point;
+            previousDistance = distance;
+        }
+
+        return pointArray;
+    };
 
     if (!frame.validWcs) {
         const originX = originPoints.x - mousePoint.current.x;
         const originY = originPoints.y - mousePoint.current.y;
-        const compassStageLength = (region.length * imageRatio) / zoomLevel;
 
-        northPointArray.push(originX, originY, originX, originY - compassStageLength);
-        eastPointArray.push(originX, originY, originX - compassStageLength, originY);
+        northPointArray.push(originX, originY, originX, originY - targetStageLength);
+        eastPointArray.push(originX, originY, originX - targetStageLength, originY);
     } else {
-        for (let i = 0; i < northApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            northPointArray[i] = point.x - mousePoint.current.x;
-            northPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
-
-        for (let i = 0; i < eastApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            eastPointArray[i] = point.x - mousePoint.current.x;
-            eastPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
+        northPointArray.push(...getCompassPointArray(northApproxPoints));
+        eastPointArray.push(...getCompassPointArray(eastApproxPoints));
     }
 
     // Dummy variables for triggering re-render
