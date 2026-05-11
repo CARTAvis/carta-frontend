@@ -1,3 +1,6 @@
+import * as AST from "ast_wrapper";
+
+import {SkyRefIs} from "enums";
 import {type FrameInfo, FrameStore} from "stores";
 
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
@@ -67,6 +70,24 @@ const emptyframeInfo: FrameInfo = {
 };
 
 describe("FrameStore", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe("offset coordinates", () => {
+        test("rebuilds the offset frameset with the selected sky reference mode", () => {
+            const frame = new FrameStore(stokesCubeframeInfo);
+            frame.setOffsetCenter(1, 2);
+            (AST.createOffsetFrameset as jest.Mock).mockClear();
+
+            frame.toggleOffsetCoord();
+            frame.setSkyRefIs(SkyRefIs.Pole);
+
+            expect(frame.skyRefIs).toBe(SkyRefIs.Pole);
+            expect(AST.createOffsetFrameset).toHaveBeenLastCalledWith(frame.wcsInfo, 0, 0, 1, 2, SkyRefIs.Pole);
+        });
+    });
+
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
             const frame = new FrameStore(stokesCubeframeInfo);

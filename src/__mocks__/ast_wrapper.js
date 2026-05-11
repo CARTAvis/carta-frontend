@@ -38,6 +38,7 @@ const mockAstWrapper = {
     setD: jest.fn(),
     createTransformedFrameset: jest.fn(() => 1),
     createShiftmapFrameset: jest.fn(() => 1),
+    createOffsetFrameset: jest.fn(() => 1),
     fillTransformGrid: jest.fn(() => 1),
     pointList: jest.fn(() => 1),
     axPointList: jest.fn(() => 1),
