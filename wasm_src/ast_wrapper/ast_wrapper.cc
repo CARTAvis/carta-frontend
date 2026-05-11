@@ -205,11 +205,42 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
     AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
 
-    if (!astOK || !pixFrame || !pixFrameCopy || !skyFrame || !pixToSkyMapping || !wcsInfoTransformed || !shiftMapToOrigin || !shiftMapFromOrigin || !combinedMap || !combinedMap2) {
-        cout << "Creating transformed frame set failed." << endl;
+    auto cleanUpTransformedFramesetFailure = [&]() {
         if (wcsInfoTransformed) {
             astDelete(wcsInfoTransformed);
         }
+        if (combinedMap2) {
+            astAnnul(combinedMap2);
+        }
+        if (combinedMap) {
+            astAnnul(combinedMap);
+        }
+        if (shiftMapFromOrigin) {
+            astAnnul(shiftMapFromOrigin);
+        }
+        if (shiftMapToOrigin) {
+            astAnnul(shiftMapToOrigin);
+        }
+        if (pixToSkyMapping) {
+            astAnnul(pixToSkyMapping);
+        }
+        if (skyFrame) {
+            astAnnul(skyFrame);
+        }
+        if (pixFrameCopy) {
+            astAnnul(pixFrameCopy);
+        }
+        if (pixFrame) {
+            astAnnul(pixFrame);
+        }
+        if (matrixMap) {
+            astAnnul(matrixMap);
+        }
+    };
+
+    if (!astOK || !pixFrame || !pixFrameCopy || !skyFrame || !pixToSkyMapping || !wcsInfoTransformed || !shiftMapToOrigin || !shiftMapFromOrigin || !combinedMap || !combinedMap2) {
+        cout << "Creating transformed frame set failed." << endl;
+        cleanUpTransformedFramesetFailure();
         return clearStatusAndReturnNull();
     }
 
@@ -218,7 +249,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     astSetI(wcsInfoTransformed, "Current", 3);
     if (!astOK) {
         cout << "Creating transformed frame set failed." << endl;
-        astDelete(wcsInfoTransformed);
+        cleanUpTransformedFramesetFailure();
         return clearStatusAndReturnNull();
     }
     return wcsInfoTransformed;
