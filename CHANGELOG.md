@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750))
+
 ## [6.0.0-beta.1]
 
 ### Fixed
