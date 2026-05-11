@@ -3248,18 +3248,30 @@ export class AppStore {
         this.setSpatialMatchingEnabled(frame, !frame.spatialReference);
     };
 
-    @action matchAllSpatial = () => {
+    @flow.bound *matchAllSpatial() {
         if (!this.spatialReference) {
             return;
         }
 
         const shouldEnable = !this.frames.some(frame => frame !== this.spatialReference && frame.spatialReference);
-        for (const frame of this.frames) {
-            if (frame !== this.spatialReference) {
-                this.setSpatialMatchingEnabled(frame, shouldEnable);
+        const framesToUpdate = this.frames.filter(frame => frame !== this.spatialReference && (shouldEnable || frame.spatialReference));
+
+        if (!shouldEnable && framesToUpdate.some(frame => this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame)))) {
+            const confirmed = yield this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
+            if (!confirmed) {
+                return;
             }
+
+            for (const frame of framesToUpdate) {
+                frame.clearSpatialReference();
+            }
+            return;
         }
-    };
+
+        for (const frame of framesToUpdate) {
+            yield this.setSpatialMatchingEnabled(frame, shouldEnable);
+        }
+    }
 
     @action setSpectralReference = (frame: FrameStore) => {
         const oldRef = this.spectralReference;
