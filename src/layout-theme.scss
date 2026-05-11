@@ -1,5 +1,9 @@
 // Color variables (appears count calculates by raw css)
+@use "sass:color";
 @import "~@blueprintjs/core/lib/scss/variables.scss";
+
+// Restore BP5 dark background color (BP6 changed #252a31 → #1c2127)
+$pt-dark-app-background-color: $dark-gray2;
 
 $pane-background: $light-gray5;
 $tab-background: $light-gray5;
@@ -157,7 +161,7 @@ $custom-pane-controls-color-dark: white;
 .lm_tab {
     &:hover {
         background: $tab-background;
-        color: mix($inactive-title-color, $title-color, 75%);
+        color: color.mix($inactive-title-color, $title-color, 75%);
     }
     &.lm_active // If Tab is active, so if it's in foreground
     {
@@ -396,7 +400,7 @@ $custom-pane-controls-color-dark: white;
     .lm_tab {
         &:hover {
             background: $tab-background-dark;
-            color: mix($inactive-title-color-dark, $title-color-dark, 75%);
+            color: color.mix($inactive-title-color-dark, $title-color-dark, 75%);
         }
         &.lm_active // If Tab is active, so if it's in foreground
         {

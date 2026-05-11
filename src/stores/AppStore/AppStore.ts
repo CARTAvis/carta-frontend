@@ -1,4 +1,4 @@
-import {Classes, Colors, OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Colors, type OptionProps} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
@@ -9,41 +9,34 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
+import {AnimationMode, BrowserMode, CatalogType, CatalogUpdateMode, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType} from "enums";
 import {
     CARTA_INFO,
-    CatalogInfo,
-    CatalogType,
+    type CatalogInfo,
     COMPUTED_POLARIZATIONS,
-    FileId,
+    type FileId,
     FloatingObjzIndexManager,
-    FrameView,
-    ImageItem,
-    ImageType,
-    ImageViewItem,
-    Point2D,
+    type FrameView,
+    type ImageItem,
+    type ImageViewItem,
+    type Point2D,
     PresetLayout,
-    RegionId,
-    SpectralType,
+    type RegionId,
     Theme,
-    TileCoordinate,
+    type TileCoordinate,
     ToFileListFilterMode,
-    WCSMatchingType,
-    Workspace,
-    WorkspaceFile
+    type Workspace,
+    type WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
-    AnimationMode,
     AnimatorStore,
-    BrowserMode,
     CatalogProfileStore,
     CatalogStore,
-    CatalogUpdateMode,
     ChannelMapStore,
-    DialogId,
     DialogStore,
     DynamicLayoutStore,
     FileBrowserStore,
@@ -52,21 +45,20 @@ import {
     ImageFittingStore,
     ImageViewConfigStore,
     LayoutStore,
-    LogEntry,
+    type LogEntry,
     LogStore,
     OverlaySettings,
-    PreferenceKeys,
     PreferenceStore,
-    RegionFileType,
+    type RegionFileType,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    SystemType,
     WidgetsStore
 } from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, PvGeneratorWidgetStore, RegionId as RegionIdType, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -129,52 +121,52 @@ export class AppStore {
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
     // WebAssembly Module status
-    @observable astReady: boolean;
-    @observable cartaComputeReady: boolean;
+    @observable astReady: boolean = false;
+    @observable cartaComputeReady: boolean = false;
     // Frames
-    @observable previewFrames = new ObservableMap<number, FrameStore>();
+    @observable previewFrames: ObservableMap<number, FrameStore> = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
     @observable activeImage: ImageItem | null = null;
     @observable hoveredFrame: FrameStore | null = null;
     @observable contourDataSource: FrameStore | null = null;
-    @observable syncContourToFrame = true;
-    @observable syncFrameToContour = true;
+    @observable syncContourToFrame: boolean = true;
+    @observable syncFrameToContour: boolean = true;
     @observable activeWorkspace: Workspace | undefined = undefined;
 
     // Profiles and region data
-    @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
-    @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
-    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
+    @observable spatialProfiles: Map<string, SpatialProfileStore> = new Map();
+    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>> = new Map();
+    @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>> = new Map();
+    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>> = new Map();
 
     // Reference images
-    @observable spatialReference: FrameStore | null;
-    @observable spectralReference: FrameStore | null;
-    @observable rasterScalingReference: FrameStore | null;
+    @observable spatialReference: FrameStore | null = null;
+    @observable spectralReference: FrameStore | null = null;
+    @observable rasterScalingReference: FrameStore | null = null;
 
     // ImageViewer
-    @observable activeLayer = ImageViewLayer.RegionMoving;
-    @observable cursorFrozen: boolean;
-    @observable cursorMirror = false;
-    @observable toolbarExpanded = true;
-    @observable imageRatio = 1;
-    @observable isExportingImage = false;
-    @observable private isCanvasUpdated: boolean;
-    @observable private devicePixelRatio: number;
+    @observable activeLayer: ImageViewLayer = ImageViewLayer.RegionMoving;
+    @observable cursorFrozen: boolean = false;
+    @observable cursorMirror: boolean = false;
+    @observable toolbarExpanded: boolean = true;
+    @observable imageRatio: number = 1;
+    @observable isExportingImage: boolean = false;
+    @observable private isCanvasUpdated: boolean = false;
+    @observable private devicePixelRatio: number = devicePixelRatio;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    private appContainer: HTMLElement;
+    private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
-    private canvasUpdatedTimer;
+    private canvasUpdatedTimer: ReturnType<typeof setTimeout> | undefined;
 
-    public getAppContainer = (): HTMLElement => {
+    public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
     };
 
-    public setAppContainer = (container: HTMLElement) => {
+    public setAppContainer = (container: HTMLElement | null) => {
         this.appContainer = container;
     };
 
@@ -188,8 +180,8 @@ export class AppStore {
     };
 
     // Image view
-    @observable fullViewWidth = 1;
-    @observable fullViewHeight = 1;
+    @observable fullViewWidth: number = 1;
+    @observable fullViewHeight: number = 1;
 
     @action setImageViewDimensions = (w: number, h: number) => {
         this.fullViewWidth = w;
@@ -223,9 +215,9 @@ export class AppStore {
         // Remove query parameters and replace protocol
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws");
         if (process.env.NODE_ENV === "development") {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
+            wsURL = process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS ? process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
+            wsURL = process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
         }
 
         // Check for URL query parameters as a final override
@@ -305,13 +297,13 @@ export class AppStore {
     };
 
     // Tasks
-    @observable taskProgress: number;
-    @observable taskStartTime: number;
-    @observable taskCurrentTime: number;
-    @observable fileLoading: boolean;
-    @observable fileSaving: boolean;
-    @observable resumingSession: boolean;
-    @observable loadingWorkspace: boolean;
+    @observable taskProgress: number = 0;
+    @observable taskStartTime: number = 0;
+    @observable taskCurrentTime: number = 0;
+    @observable fileLoading: boolean = false;
+    @observable fileSaving: boolean = false;
+    @observable resumingSession: boolean = false;
+    @observable loadingWorkspace: boolean = false;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -354,16 +346,16 @@ export class AppStore {
         // - OSX/iOS use '⌘'
         // - Windows/Linux uses 'Ctrl + '
         // - Browser uses 'alt +' for compatibility reasons
-        if (process.env.REACT_APP_TARGET === "linux") {
+        if (process.env.PUBLIC_REACT_APP_TARGET === "linux") {
             return "ctrl + ";
-        } else if (process.env.REACT_APP_TARGET === "darwin") {
+        } else if (process.env.PUBLIC_REACT_APP_TARGET === "darwin") {
             return "cmd +";
         }
         return "alt + ";
     }
 
     // System theme, based on media query
-    @observable systemTheme: string;
+    @observable systemTheme: string = "";
 
     // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
@@ -375,10 +367,10 @@ export class AppStore {
     }
 
     // Spectral matching type, initialized by global preferences, modified by the Image List Settings
-    @observable spectralMatchingType: SpectralType;
+    @observable spectralMatchingType: SpectralType = SpectralType.VRAD;
 
     // Match generated moment image(s) to the spatial reference image
-    @observable momentToMatch: boolean;
+    @observable momentToMatch: boolean = true;
 
     /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {
@@ -483,7 +475,7 @@ export class AppStore {
     }
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
-        let matchedIds: number[] = [];
+        const matchedIds: number[] = [];
         const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
         const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
 
@@ -583,7 +575,7 @@ export class AppStore {
             generated
         );
 
-        let newFrame = new FrameStore(frameInfo);
+        const newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId ?? 0);
@@ -776,7 +768,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             return ack.openFileAck?.fileId;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.alertStore.showAlert(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
@@ -1054,6 +1046,8 @@ export class AppStore {
                         CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
                 }
+
+                frame.dispose?.();
             }
         }
     };
@@ -1076,6 +1070,7 @@ export class AppStore {
                 this.widgetsStore.removeFloatingWidget(key);
             });
             this.frames.forEach(frame => {
+                frame.dispose?.();
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
@@ -1095,6 +1090,8 @@ export class AppStore {
      * @param previewId - The file id of the image cube from which the PV preview was created.
      */
     @action removePreviewFrame = (previewId: number) => {
+        const previewFrame = this.previewFrames.get(previewId);
+        previewFrame?.dispose?.();
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
@@ -1145,9 +1142,9 @@ export class AppStore {
             const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
             this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
                 if (catalogWidgetId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                     this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
@@ -1176,7 +1173,7 @@ export class AppStore {
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
         const catalogComponentSize = catalogStore.catalogProfiles.size;
-        let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+        const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;
         } else {
@@ -1881,6 +1878,7 @@ export class AppStore {
         AppStore.staticInstance = this;
         window["app"] = this;
         window["carta"] = this;
+        window["utils"] = Utils;
 
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -1906,8 +1904,6 @@ export class AppStore {
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
 
-        this.astReady = false;
-        this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
@@ -1934,13 +1930,12 @@ export class AppStore {
 
         // Log the frontend git commit hash
         this.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+
         this.previousConnectionStatus = ConnectionStatus.CLOSED;
 
         // Adjust document background when theme changes
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
-            const className = this.darkTheme ? Classes.DARK : "";
-            setHotkeysDialogProps({className});
         });
 
         // Watch for system theme preference changes
@@ -2136,7 +2131,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, !!this.apiService?.authenticated);
+            this.initCarta(this.astReady, this.tileService?.zfpReady ?? false, this.cartaComputeReady, !!this.apiService?.authenticated);
         });
 
         autorun(() => {
@@ -2202,7 +2197,7 @@ export class AppStore {
         }
     };
 
-    handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
+    @action handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
         const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
         if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
@@ -2223,13 +2218,13 @@ export class AppStore {
                 }
             }
 
-            for (let profile of spectralProfileData.profiles) {
+            for (const profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
         }
     };
 
-    handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
+    @action handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
         if (!regionHistogramData) {
             return;
         }
@@ -2484,7 +2479,7 @@ export class AppStore {
             }
         } catch (err) {
             this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -2538,7 +2533,7 @@ export class AppStore {
                         yMin: 0,
                         yMax: frame.frameInfo.fileInfoExtended.height
                     },
-                    smoothingFactor: frame.vectorOverlayConfig.pixelAveragingEnabled ? frame.vectorOverlayConfig.pixelAveraging : 1,
+                    smoothingFactor: frame.vectorOverlayConfig.pixelAveraging,
                     fractional: frame.vectorOverlayConfig.fractionalIntensity,
                     threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
                     thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,
@@ -3537,6 +3532,7 @@ export class AppStore {
 
     setCanvasUpdated = () => {
         clearTimeout(this.canvasUpdatedTimer);
+        this.canvasUpdatedTimer = undefined;
         this.canvasUpdatedTimer = setTimeout(() => this.setIsCanvasUpdated(true), EXPORT_IMAGE_DELAY);
     };
 
@@ -3544,7 +3540,7 @@ export class AppStore {
         if (val && val instanceof Map) {
             const obj = {};
             const map = val as Map<any, any>;
-            for (let [key, value] of map) {
+            for (const [key, value] of map) {
                 obj[key] = value;
             }
             return obj;
@@ -3657,7 +3653,7 @@ export class AppStore {
                     stats.dom.style.left = "initial";
                 })
                 .catch(err => {
-                    console.log(err);
+                    console.error(err);
                 });
         }
     };

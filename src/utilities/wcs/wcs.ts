@@ -1,10 +1,17 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
-import {NumberFormatType, OverlaySettings} from "stores";
-import {FrameStore} from "stores/Frame";
+import {NumberFormatType, SpectralType} from "enums";
+import {type Point2D, SPECTRAL_DEFAULT_UNIT, type WCSPoint2D} from "models";
+import {OverlaySettings} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
+
+export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
+    [NumberFormatType.HMS, "H:M:S"],
+    [NumberFormatType.DMS, "D:M:S"],
+    [NumberFormatType.Degrees, "Degrees"]
+]);
 
 export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {

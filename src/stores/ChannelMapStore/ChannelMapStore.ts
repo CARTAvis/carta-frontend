@@ -1,9 +1,10 @@
 import {debounce, throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {ImageType, ImageViewItem} from "models";
+import {ImageType} from "enums";
+import {type ImageViewItem} from "models";
 import {TileService} from "services";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, type FrameStore} from "stores";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
@@ -35,7 +36,7 @@ export class ChannelMapStore {
                 const zoomLevel = this.displayedFrame.zoomLevel;
                 const spatialReference = this.displayedFrame.spatialReference;
                 const channel = this.displayedFrame.channel;
-                /* eslint-disable @typescript-eslint/no-unused-vars */
+
                 this.throttledRequestChannels(this.displayedFrame);
             }
         });

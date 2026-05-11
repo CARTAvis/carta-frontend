@@ -5,7 +5,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {HelpType} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
@@ -26,8 +27,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 490;
+    @observable height: number = 600;
 
     constructor(props: any) {
         super(props);
@@ -108,7 +109,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
-                        value={appStore.imageViewConfigStore.getImageListIndex(channelMapSettings.displayedImage?.type, channelMapSettings.displayedImage?.store.id)}
+                        value={channelMapSettings.displayedImage ? appStore.imageViewConfigStore.getImageListIndex(channelMapSettings.displayedImage.type, channelMapSettings.displayedImage.store.id) : -1}
                         options={AppStore.Instance.imageViewConfigStore.imageNames.map((name, index) => ({value: index, label: `${index}: ${name}`}))}
                         onChange={ev => appStore.setActiveImageByIndex(parseInt(ev.currentTarget.value))}
                         disabled={!channelMapSettings.channelMapEnabled}

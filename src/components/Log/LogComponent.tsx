@@ -1,10 +1,11 @@
 import * as React from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
-import {Button, Code, Colors, FormGroup, HTMLSelect, Intent, NonIdealState, Tag} from "@blueprintjs/core";
+import {Button, Code, Colors, FormGroup, HTMLSelect, type Intent, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {DefaultWidgetConfig, HelpType, LogStore, WidgetProps} from "stores";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig, LogStore, type WidgetProps} from "stores";
 
 import "./LogComponent.scss";
 
@@ -69,8 +70,8 @@ export class LogComponent extends React.Component<WidgetProps> {
         const entries = logStore.logEntries;
         const hiddenTags = logStore.hiddenTags;
 
-        let tagList = [];
-        let entryElements = [];
+        const tagList: string[] = [];
+        const entryElements: JSX.Element[] = [];
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
 
@@ -78,8 +79,8 @@ export class LogComponent extends React.Component<WidgetProps> {
                 continue;
             }
 
-            let entryTagSpans = [];
-            let visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
+            const entryTagSpans: JSX.Element[] = [];
+            const visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
             for (let j = 0; j < entry.tags.length; j++) {
                 const tag = entry.tags[j];
 

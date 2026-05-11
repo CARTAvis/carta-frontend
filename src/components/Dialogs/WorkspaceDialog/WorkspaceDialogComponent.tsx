@@ -1,26 +1,21 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {AnchorButton, Classes, DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {AnchorButton, Classes, type DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Cell, Column, type Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {WorkspaceListItem} from "models";
-import {AlertStore, AppStore, DialogId, HelpType} from "stores";
+import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
+import {AlertStore, AppStore} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
 import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
 
 import "./WorkspaceDialogComponent.scss";
-
-export enum WorkspaceDialogMode {
-    Hidden,
-    Save,
-    Open
-}
 
 export const WorkspaceDialogComponent = observer(() => {
     const [workspaceList, setWorkspaceList] = useState<WorkspaceListItem[]>();
@@ -82,7 +77,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     return;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
             AppToaster.show(ErrorToast("Error saving workspace"));
             setIsFetching(false);
@@ -105,7 +100,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     return;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
             setIsFetching(false);
         },
@@ -131,7 +126,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleOpenClicked = () => {
-        if (!workspaceName || !workspaceList.find(item => item.name === workspaceName)) {
+        if (!workspaceName || !workspaceList?.find(item => item.name === workspaceName)) {
             return;
         }
         openWorkspace(workspaceName);
@@ -204,7 +199,7 @@ export const WorkspaceDialogComponent = observer(() => {
             }
 
             const unixDate = entry.date;
-            let dateString: string;
+            let dateString: string = "";
             if (unixDate > 0) {
                 const t = moment.unix(unixDate);
                 const isToday = moment(0, "HH").diff(t) <= 0;
@@ -229,7 +224,7 @@ export const WorkspaceDialogComponent = observer(() => {
     );
 
     const selectedItemIndex = workspaceList?.findIndex(item => item.name === workspaceName);
-    const selectedRegions: Region[] = selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
+    const selectedRegions: Region[] = selectedItemIndex !== undefined && selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
 
     let tableContent: React.ReactNode;
     if (isFetching) {
@@ -254,7 +249,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 enableRowHeader={false}
                 numRows={workspaceList?.length}
                 loadingOptions={isFetching ? [TableLoadingOption.CELLS] : []}
-                getCellClipboardData={null}
+                getCellClipboardData={undefined}
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
                 <Column name="Last modified" cellRenderer={renderDates} />

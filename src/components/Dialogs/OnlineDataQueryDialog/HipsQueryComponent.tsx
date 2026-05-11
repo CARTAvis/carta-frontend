@@ -1,12 +1,13 @@
 import {useState} from "react";
 import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRenderer, Suggest} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AngularSize, AngularSizeUnit} from "models";
-import {HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
+import {AngularSizeUnit, HipsCoord, HipsProjection} from "enums";
+import {AngularSize} from "models";
+import {HipsQueryStore, type HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
@@ -179,7 +180,7 @@ export const HipsQueryComponent = observer(() => {
             </div>
             <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={hipsQueryStore.isLoading} usePortal={false}>
                 <div className="query-loading-overlay">
-                    <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                    <Spinner intent={Intent.PRIMARY} size={30} />
                 </div>
             </Overlay2>
             <div className={classNames(Classes.DIALOG_FOOTER_ACTIONS, "query-footer")}>

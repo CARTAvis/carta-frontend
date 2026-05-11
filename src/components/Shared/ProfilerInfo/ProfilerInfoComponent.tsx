@@ -1,4 +1,5 @@
 import * as React from "react";
+import {Pre} from "@blueprintjs/core";
 
 import "./ProfilerInfoComponent.scss";
 
@@ -24,7 +25,7 @@ export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = props
 
     return (
         <div className="profiler-info">
-            <pre className={props.type === "pre-line" ? "pre-line" : "pre"}>{infoString}</pre>
+            <Pre className={props.type === "pre-line" ? "pre-line" : "pre"}>{infoString}</Pre>
         </div>
     );
 };

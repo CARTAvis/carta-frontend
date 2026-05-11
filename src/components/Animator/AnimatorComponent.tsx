@@ -1,18 +1,14 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, Popover, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
+import {AnimationMode, HelpType, NumericInputType, PlayMode} from "enums";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
-
-enum NumericInputType {
-    FrameRate = "Frame rate",
-    Step = "Step"
-}
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
@@ -30,14 +26,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
-    @observable numericInputType: NumericInputType;
+    @observable width: number = 650;
+    @observable height: number = 200;
+    @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.numericInputType = NumericInputType.FrameRate;
     }
 
     @action onResize = (width: number, height: number) => {
@@ -52,10 +47,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onChannelChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
+            const depth = frame.frameInfo.fileInfoExtended.depth;
             if (val < 0) {
-                val += frame.frameInfo.fileInfoExtended.depth;
+                val += depth;
             }
-            if (val >= frame.frameInfo.fileInfoExtended.depth) {
+            if (val >= depth) {
                 val = 0;
             }
             frame.setChannel(val);
@@ -65,7 +61,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;
         if (range && range.length === 2 && frame) {
-            if (range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
+            const depth = frame.frameInfo.fileInfoExtended.depth;
+            if (range[0] >= 0 && range[0] < range[1] && range[1] < depth) {
                 frame.setAnimationRange(range);
             }
         }
@@ -129,10 +126,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.setActiveImageByIndex(appStore.imageViewConfigStore.imageNum - 1);
                 break;
             case AnimationMode.CHANNEL:
-                frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
+                const depth = frame.frameInfo.fileInfoExtended.depth;
+                frame.setChannels(depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : frame.frameInfo.fileInfoExtended.stokes - 1, true);
+                const stokes = frame.frameInfo.fileInfoExtended.stokes;
+                frame.setChannels(frame.channel, stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : stokes - 1, true);
                 break;
             default:
                 break;
@@ -221,7 +220,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
                     {hideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
-                    {!hideSliders && (
+                    {!hideSliders && appStore.activeImage?.store.filename && (
                         <React.Fragment>
                             <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.animationActive} />
                             <div className="slider-info">{appStore.activeImage.store.filename}</div>
@@ -232,7 +231,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Channel Control
-        if (numChannels > 1) {
+        if (numChannels > 1 && activeFrame) {
             const numLabels = 5;
             const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
             const channelTickPre =
@@ -262,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info" data-testid="animator-slider-info">
-                                <pre>{activeFrame.depthAxisInfo}</pre>
+                                <Pre>{activeFrame.depthAxisInfo}</Pre>
                             </div>
                         </React.Fragment>
                     )}
@@ -290,7 +289,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Stokes Control
-        if (numStokes > 1) {
+        if (numStokes > 1 && activeFrame) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
                     <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
@@ -313,7 +312,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 showTrackFill={false}
                                 max={activeFrame.polarizations.length - 1}
                                 labelRenderer={(val: number) => {
-                                    return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
+                                    return isFinite(val) && val >= 0 && val < (activeFrame?.polarizationInfo?.length ?? 0) ? (activeFrame.polarizationInfo?.[val] ?? `${val}`) : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}

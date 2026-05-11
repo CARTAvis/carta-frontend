@@ -1,4 +1,5 @@
 import * as React from "react";
+import {Pre} from "@blueprintjs/core";
 
 import {ScrollShadow} from "components/Shared";
 
@@ -28,7 +29,7 @@ export const SpectralProfilerInfoComponent: React.FC<{profileInfo: ProfileInfo[]
                         <div key={index} className="profile-legend" data-testid={"spectral-profiler-info-" + index}>
                             <div className="profile-info">
                                 {colorSquare}
-                                <pre>{info.infoString}</pre>
+                                <Pre>{info.infoString}</Pre>
                             </div>
                         </div>
                     );

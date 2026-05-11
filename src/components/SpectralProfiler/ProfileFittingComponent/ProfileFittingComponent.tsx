@@ -1,11 +1,12 @@
 import * as React from "react";
 import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, Popover, Pre, Slider, Switch, Text, Tooltip} from "@blueprintjs/core";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore, FittingContinuum, FittingFunction, ProfileFittingStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {FittingContinuum, FittingFunction} from "enums";
+import {AppStore, type ProfileFittingStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
@@ -17,54 +18,57 @@ export interface ProfileFittingComponentProps {
 
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
-    @observable isShowingLog: boolean;
-    @observable isShowingResultButton: boolean;
+    @observable isShowingLog: boolean = false;
+    @observable isShowingResultButton: boolean = false;
+    private fittingStore: ProfileFittingStore;
+    private widgetStore: SpectralProfileWidgetStore;
+    private readonly disposers: IReactionDisposer[] = [];
 
     private onFunctionChanged = ev => {
         this.reset();
-        this.props.fittingStore.setFunction(parseInt(ev.target.value));
+        this.fittingStore.setFunction(parseInt(ev.target.value));
     };
 
     private onContinuumValueChanged = ev => {
-        this.props.fittingStore.setYIntercept(0);
-        this.props.fittingStore.setSlope(0);
-        this.props.fittingStore.setContinuum(parseInt(ev.target.value));
+        this.fittingStore.setYIntercept(0);
+        this.fittingStore.setSlope(0);
+        this.fittingStore.setContinuum(parseInt(ev.target.value));
     };
 
     private onYInterceptValueChanged = (val: number) => {
-        this.props.fittingStore.setYIntercept(val);
+        this.fittingStore.setYIntercept(val);
     };
 
     private onSlopeValueChanged = (val: number) => {
-        this.props.fittingStore.setSlope(val);
+        this.fittingStore.setSlope(val);
     };
 
     private onYInterceptValueLocked = () => {
-        this.props.fittingStore.setLockedYIntercept(!this.props.fittingStore.lockedYIntercept);
+        this.fittingStore.setLockedYIntercept(!this.fittingStore.lockedYIntercept);
     };
 
     private onSlopeValueLocked = () => {
-        this.props.fittingStore.setLockedSlope(!this.props.fittingStore.lockedSlope);
+        this.fittingStore.setLockedSlope(!this.fittingStore.lockedSlope);
     };
 
     private cursorSelectingYIntercept = () => {
-        this.props.fittingStore.setIsCursorSelectingYIntercept(!this.props.fittingStore.isCursorSelectingYIntercept);
+        this.fittingStore.setIsCursorSelectingYIntercept(!this.fittingStore.isCursorSelectingYIntercept);
     };
 
     private cursorSelectingSlope = () => {
-        this.props.fittingStore.setIsCursorSelectingSlope(!this.props.fittingStore.isCursorSelectingSlope);
+        this.fittingStore.setIsCursorSelectingSlope(!this.fittingStore.isCursorSelectingSlope);
     };
 
     private onCenterValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setCenter(val);
+        this.props.fittingStore.selectedComponent?.setCenter(val);
     };
 
     private onAmpValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setAmp(val);
+        this.props.fittingStore.selectedComponent?.setAmp(val);
     };
 
     private onFwhmValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setFwhm(val);
+        this.props.fittingStore.selectedComponent?.setFwhm(val);
     };
 
     private onMouseOverResult = () => {
@@ -76,35 +80,38 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private autoDetect = () => {
-        this.props.fittingStore.setHasResult(false);
-        this.props.fittingStore.setComponents(1, true);
-        if (this.props.widgetStore?.plotData?.fittingData) {
-            this.props.fittingStore.autoDetect();
-            if (this.props.fittingStore.isAutoDetectWithFitting) {
+        this.fittingStore.setHasResult(false);
+        this.fittingStore.setComponents(1, true);
+        if (this.widgetStore?.plotData?.fittingData) {
+            this.fittingStore.autoDetect();
+            if (this.fittingStore.isAutoDetectWithFitting) {
                 this.fitData();
             }
         }
-        this.props.fittingStore.setHasAutoDetectResult(true);
+        this.fittingStore.setHasAutoDetectResult(true);
     };
 
     private deleteComponent = () => {
-        this.props.fittingStore.deleteSelectedComponent();
+        this.fittingStore.deleteSelectedComponent();
     };
 
     private cursorSelecting = () => {
-        this.props.fittingStore.setIsCursorSelectingComponentOn(!this.props.fittingStore.isCursorSelectingComponent);
+        this.fittingStore.setIsCursorSelectingComponentOn(!this.fittingStore.isCursorSelectingComponent);
     };
 
     private onCenterLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedCenter(!this.props.fittingStore.selectedComponent.lockedCenter);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedCenter(!selectComponent.lockedCenter);
     };
 
     private onAmpLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedAmp(!this.props.fittingStore.selectedComponent.lockedAmp);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedAmp(!selectComponent.lockedAmp);
     };
 
     private onFwhmLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedFwhm(!selectComponent.lockedFwhm);
     };
 
     private showLog = () => {
@@ -117,16 +124,16 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private saveLog = () => {
         let headerString = "";
-        const frame = this.props.widgetStore.effectiveFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             headerString += `# image: ${frame.filename}\n`;
 
-            const regionId = this.props.widgetStore.effectiveRegionId;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             // statistic type, ignore when region == cursor
             if (regionId !== 0) {
-                headerString += `# statistic: ${this.props.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
+                headerString += `# statistic: ${this.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
             }
             // region info
             if (region) {
@@ -137,13 +144,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `${headerString}\n${this.props.fittingStore.resultLog}`;
+        const content = `${headerString}\n${this.fittingStore.resultLog}`;
         const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
         exportTxtFile(fileName, content);
     };
 
     @action private reset = () => {
-        const fittingStore = this.props.fittingStore;
+        const fittingStore = this.fittingStore;
         fittingStore.setComponents(1, true);
         fittingStore.setHasResult(false);
         fittingStore.setContinuum(FittingContinuum.NONE);
@@ -158,8 +165,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private fitData = () => {
-        if (this.props.fittingStore.readyToFit) {
-            this.props.fittingStore.fitData();
+        if (this.fittingStore.readyToFit) {
+            this.fittingStore.fitData();
         }
     };
 
@@ -186,24 +193,34 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     constructor(props: ProfileFittingComponentProps) {
         super(props);
-        this.isShowingLog = false;
         makeObservable(this);
-        autorun(() => {
-            // clear fitting data when the profile data changed
-            if (this.props.widgetStore?.profileSelectionStore?.profiles[0]) {
-                this.reset();
-            }
 
-            if (this.props.widgetStore?.smoothingStore?.type) {
-                this.reset();
-            }
-        });
+        this.fittingStore = props.fittingStore;
+        this.widgetStore = props.widgetStore;
+
+        this.disposers.push(
+            autorun(() => {
+                // clear fitting data when the profile data changed
+                if (this.widgetStore?.profileSelectionStore?.profiles[0]) {
+                    this.reset();
+                }
+
+                if (this.widgetStore?.smoothingStore?.type) {
+                    this.reset();
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     render() {
         const appStore = AppStore.Instance;
-        const fittingStore = this.props.fittingStore;
-        const disabled = this.props.widgetStore.profileNum > 1;
+        const fittingStore = this.fittingStore;
+        const disabled = this.widgetStore.profileNum > 1;
 
         const cursorSelectionButton = (
             <Tooltip
@@ -292,72 +309,78 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     )}
                                 </div>
                             </FormGroup>
-                            <FormGroup label="Center" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.center}
-                                        onValueChange={this.onCenterValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedCenter || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-center-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
-                            <FormGroup label="Amplitude" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.amp}
-                                        onValueChange={this.onAmpValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedAmp || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-amplitude-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
-                            <FormGroup label="FWHM" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.fwhm}
-                                        onValueChange={this.onFwhmValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-fwhm-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="Center" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.center}
+                                            onValueChange={this.onCenterValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedCenter || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-center-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="Amplitude" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.amp}
+                                            onValueChange={this.onAmpValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedAmp || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-amplitude-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="FWHM" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.fwhm}
+                                            onValueChange={this.onFwhmValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-fwhm-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
                             <FormGroup label="Continuum" inline={true}>
                                 <div className="component-input">
                                     <HTMLSelect

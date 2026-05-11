@@ -1,22 +1,17 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {Pane, SplitPane} from "react-split-pane";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore} from "stores/Widgets";
+import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
+import {HeaderTableColumnName, HelpType, RedshiftType, type SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
-
-enum HeaderTableColumnName {
-    Name = "Name",
-    Description = "Description",
-    Display = "Display"
-}
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
@@ -24,13 +19,13 @@ const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
-    @observable widgetId: string;
-    @observable headerTableColumnWidths: Array<number>;
-    private headerTableRef: Table2;
-    private resultTableRef: Table2;
-    private scrollToTopHandle;
+    @observable width: number = 750;
+    @observable height: number = 600;
+    @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
+    private widgetId: string;
+    private headerTableRef: Table2 | undefined;
+    private resultTableRef: Table2 | undefined;
+    private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -49,20 +44,24 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
+    }
 
-        this.headerTableColumnWidths = [150, 70, 300];
+    componentWillUnmount() {
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
     }
 
     @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return null;
+        throw new Error("Widget store not found");
     }
 
     @action onResize = (width: number, height: number) => {
@@ -156,23 +155,29 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     }
 
     private createHeaderTable() {
-        const headerNames = [];
-        const headerDescriptions = [];
+        const headerNames: string[] = [];
+        const headerDescriptions: string[] = [];
+        const spectralHeaders: SpectralLineHeaders[] = [];
         this.widgetStore.columnHeaders?.forEach(header => {
-            headerNames.push(header.name);
-            headerDescriptions.push(header.description);
+            if (header.name != null) {
+                headerNames.push(header.name);
+                spectralHeaders.push(header.name as SpectralLineHeaders);
+            }
+            if (header.description != null) {
+                headerDescriptions.push(header.description);
+            }
         });
-        const tableColumns = [];
+        const tableColumns: React.ReactElement[] = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
-        const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
+        const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, spectralHeaders);
         tableColumns.push(columnDisplaySwitch);
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
         tableColumns.push(columnDescription);
 
         return (
             <Table2
-                ref={ref => (this.headerTableRef = ref)}
+                ref={ref => (this.headerTableRef = ref ?? undefined)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
@@ -213,12 +218,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
         this.widgetStore.filter();
         clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
         this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handleResetFilter = () => {
         this.widgetStore.resetFilter();
         clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
         this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
@@ -243,9 +250,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setSortingInfo(columnName, sortingType);
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType) => {
+        this.widgetStore.setSortingInfo(columnName, sortingType);
     };
 
     render() {
@@ -382,13 +388,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             numVisibleRows: widgetStore.numVisibleRows > 0 ? widgetStore.numVisibleRows + 3 : widgetStore.numVisibleRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: ref => {
-                this.resultTableRef = ref;
+                this.resultTableRef = ref ?? undefined;
             },
             updateSortRequest: this.updateSortRequest,
-            sortingInfo: widgetStore.sortingInfo,
+            sortingInfo: {
+                columnName: widgetStore.sortingInfo.columnName ?? "",
+                sortingType: widgetStore.sortingInfo.sortingType
+            },
             disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
-            columnWidths: widgetStore.resultTableColumnWidths,
+            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter
@@ -419,9 +428,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <div className="spectral-line-query-widget">
                     <div className={Classes.DIALOG_BODY}>
                         {queryPanel}
-                        <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
+                        <SplitPane className="body-split-pane" direction="vertical" onResize={this.onTableResize}>
                             <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
-                            <Pane className={"result-table-container"}>
+                            <Pane className={"result-table-container"} defaultSize={"60%"} minSize={"5%"}>
                                 {redshiftPanel}
                                 <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
                             </Pane>
@@ -429,7 +438,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="result-table-info" data-testid="spectral-line-query-result-info">
-                            <pre>{widgetStore.resultTableInfo}</pre>
+                            <Pre>{widgetStore.resultTableInfo}</Pre>
                         </div>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
@@ -445,7 +454,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                     <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                         <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
-                            <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                            <Spinner intent={Intent.PRIMARY} size={30} value={undefined} />
                         </div>
                     </Overlay2>
                 </div>

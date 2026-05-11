@@ -1,20 +1,14 @@
 import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, ChartDataset, ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, Plugin, PointElement, Scale, Tick} from "chart.js";
+import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
-import {PlotType} from "components/Shared";
+import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
 Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
-
-export enum TickType {
-    Automatic,
-    Scientific,
-    Integer
-}
 
 export class PlotContainerProps {
     width?: number;
@@ -140,7 +134,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private filterLinearTicks = (axis: Scale, removeAdditionalTicks: boolean = true) => {
         let removeFirstTick = false;
         let removeLastTick = false;
-        let roundingDecimalDigits: number;
+        let roundingDecimalDigits: number | undefined;
         const ticks = removeAdditionalTicks ? this.removeAdditionalTicks(axis.ticks) : axis.ticks;
         // Get inter-tick distance
         if (ticks && ticks.length >= 4) {
@@ -214,8 +208,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private skipLinearLongTicks = (axis: Scale) => {
         if (axis.ticks && axis.ticks.length >= 4) {
             const interTickPixelDist = axis.getPixelForValue(axis.ticks[2].value) - axis.getPixelForValue(axis.ticks[1].value);
-            if (interTickPixelDist < axis.ticks[0].label.length * 6 + 5) {
-                const ticks = [];
+            const firstTickLabel = axis.ticks[0].label;
+            if (interTickPixelDist < (firstTickLabel?.length || 0) * 6 + 5) {
+                const ticks: Tick[] = [];
                 // keep the last tick label for skipping the last one might cause a loop change between axis.width and interTickDisk
                 const skipOdd = axis.ticks.length % 2 === 0;
                 for (let i = skipOdd ? 1 : 0; i < axis.ticks.length; i = i + 2) {
@@ -366,7 +361,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
 
         // ChartJS plot
-        let plotOptions: ChartOptions<"scatter"> = {
+        const plotOptions: ChartOptions<"scatter"> = {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
@@ -389,7 +384,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
                         maxRotation: 0,
                         color: labelColor,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -412,7 +407,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         maxRotation: 0,
-                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
+                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     }
                 },
                 y: {
@@ -427,7 +422,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -444,15 +439,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         };
 
-        if (this.props.logY) {
-            plotOptions.scales["y"].afterBuildTicks = this.filterYLogTicks;
-            plotOptions.scales["y"].type = "logarithmic";
-        } else {
-            plotOptions.scales["y"].afterBuildTicks = this.filterYLinearTicks;
-            plotOptions.scales["y"].type = "linear";
+        if (this.props.logY && plotOptions.scales?.y) {
+            plotOptions.scales.y.afterBuildTicks = this.filterYLogTicks;
+            plotOptions.scales.y.type = "logarithmic";
+        } else if (plotOptions.scales?.y) {
+            plotOptions.scales.y.afterBuildTicks = this.filterYLinearTicks;
+            plotOptions.scales.y.type = "linear";
         }
 
-        let plotData: ChartDataset<"scatter">[] = [];
+        const plotData: ChartDataset<"scatter">[] = [];
         if (this.props.data?.length) {
             const datasetConfig: ChartDataset<"scatter"> = {
                 label: "LineGraph",
@@ -488,7 +483,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     datasetConfig.pointStyle = "line";
                     datasetConfig.segment = {
                         borderColor: segment => {
-                            return this.props.multiColorSingleLineColors[segment.p0DataIndex];
+                            return this.props.multiColorSingleLineColors?.[segment.p0DataIndex] || lineColor;
                         }
                     };
                 }
@@ -500,14 +495,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotData.push(datasetConfig);
         }
 
-        if (this.props.multiPlotPropsMap?.size > 0) {
+        if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
                 if (props.hidden) {
                     return;
                 }
 
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
-                let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
+                const currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
                 if (currentOpacity < 1.0) {
                     currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }
@@ -538,8 +533,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     }
                 }
 
-                let currentPointRadius = props.pointRadius ? props.pointRadius : this.props.pointRadius;
-                let currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
+                const currentPointRadius = props.pointRadius ? props.pointRadius : this.props.pointRadius;
+                const currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
 
                 if (props.type === PlotType.POINTS) {
                     multiPlotDatasetConfig.pointStyle = "circle";
@@ -562,7 +557,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             });
         }
 
-        let plugins: Plugin[] = [
+        const plugins: Plugin[] = [
             {
                 id: "afterLayout",
                 afterLayout: this.afterChartLayout

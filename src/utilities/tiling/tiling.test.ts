@@ -1,4 +1,6 @@
-import {FrameView, Point2D, TileCoordinate} from "models";
+import {type FrameView} from "../../models/FrameView/FrameView";
+import {type Point2D} from "../../models/Point2D/Point2D";
+import {TileCoordinate} from "../../models/Tile/TileCoordinate";
 
 import {GetRequiredTiles, LayerToMip, MipToLayer, TileSortEncoded} from "./tiling";
 
@@ -13,16 +15,16 @@ const WideTile: Point2D = {x: 1024, y: 512};
 export const DefaultFrameView: FrameView = {xMin: 0, xMax: 512, yMin: 0, yMax: 512, mip: 1};
 
 test("returns an empty array if FrameView is invalid", () => {
-    expect(GetRequiredTiles(null, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles(undefined, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles("test_string", Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles(1, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({yMin: 0, xMax: 1024, yMax: 1024, mip: 1}, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({xMin: 0, xMax: 1024, yMax: 1024, mip: 1}, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({xMin: 0, yMin: 0, yMax: 1024, mip: 1}, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, mip: 1}, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024}, Tile256, Tile1024)).toEqual([]);
-    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024, mip: "bob"}, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles(null as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles(undefined as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles("test_string" as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles(1 as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({yMin: 0, xMax: 1024, yMax: 1024, mip: 1} as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({xMin: 0, xMax: 1024, yMax: 1024, mip: 1} as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({xMin: 0, yMin: 0, yMax: 1024, mip: 1} as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, mip: 1} as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024} as any, Tile256, Tile1024)).toEqual([]);
+    expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024, mip: "bob"} as any, Tile256, Tile1024)).toEqual([]);
 });
 
 test("returns an empty array if FrameView bounds are inconsistent", () => {
@@ -38,14 +40,14 @@ test("returns an empty array if FrameView mip is out of bounds", () => {
 });
 
 test("returns an empty array if image size is invalid", () => {
-    expect(GetRequiredTiles(DefaultFrameView, null, Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, undefined, Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, 1, Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, [1, 1], Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, "bob", Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, {w: 10, h: 10}, Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, {x: 10}, Tile256)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, {y: 10}, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, null as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, undefined as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, 1 as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, [1, 1] as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, "bob" as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, {w: 10, h: 10} as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, {x: 10} as any, Tile256)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, {y: 10} as any, Tile256)).toEqual([]);
 });
 
 test("returns an empty array if image size is out of bounds", () => {
@@ -65,14 +67,14 @@ test("returns an empty array if frame view is outside of the image", () => {
 });
 
 test("returns an empty array if tile size is invalid", () => {
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, null)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, undefined)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, 1)).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, [1, 1])).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, "bob")).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {w: 10, h: 10})).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {x: 10})).toEqual([]);
-    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {y: 10})).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, null as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, undefined as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, 1 as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, [1, 1] as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, "bob" as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {w: 10, h: 10} as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {x: 10} as any)).toEqual([]);
+    expect(GetRequiredTiles(DefaultFrameView, Tile1024, {y: 10} as any)).toEqual([]);
 });
 
 test("returns an empty array if tile size is out of bounds", () => {
@@ -99,7 +101,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
     const expected: TileCoordinate[] = [];
     [0, 1].forEach(x => {
         [0, 1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -116,7 +118,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
     const expected: TileCoordinate[] = [];
     [0, 1, 2, 3].forEach(x => {
         [0, 1, 2, 3].forEach(y => {
-            expected.push({x, y, layer: 2});
+            expected.push(new TileCoordinate(x, y, 2));
         });
     });
 
@@ -130,7 +132,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
     const expected: TileCoordinate[] = [];
     [0, 1].forEach(x => {
         [0, 1, 2].forEach(y => {
-            expected.push({x, y, layer: 2});
+            expected.push(new TileCoordinate(x, y, 2));
         });
     });
 
@@ -144,7 +146,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
     const expected: TileCoordinate[] = [];
     [0, 1, 2, 3].forEach(x => {
         [3].forEach(y => {
-            expected.push({x, y, layer: 2});
+            expected.push(new TileCoordinate(x, y, 2));
         });
     });
 
@@ -158,7 +160,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
     const expected: TileCoordinate[] = [];
     [0].forEach(x => {
         [0, 1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -172,7 +174,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
     const expected: TileCoordinate[] = [];
     [0, 1].forEach(x => {
         [1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -186,7 +188,7 @@ test("returns the correct list of tiles when viewing a wide section partially ab
     const expected: TileCoordinate[] = [];
     [0, 1].forEach(x => {
         [1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -200,7 +202,7 @@ test("returns the correct list of tiles when viewing a wide section partially be
     const expected: TileCoordinate[] = [];
     [0, 1].forEach(x => {
         [0].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -214,7 +216,7 @@ test("returns the correct list of tiles when viewing a tall section partially le
     const expected: TileCoordinate[] = [];
     [0].forEach(x => {
         [0, 1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -228,7 +230,7 @@ test("returns the correct list of tiles when viewing a tall section partially ri
     const expected: TileCoordinate[] = [];
     [1].forEach(x => {
         [0, 1].forEach(y => {
-            expected.push({x, y, layer: 1});
+            expected.push(new TileCoordinate(x, y, 1));
         });
     });
 
@@ -240,13 +242,13 @@ test("returns the correct list of tiles when viewing a tall section partially ri
 test("give correct result when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
     const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
 
-    let xRange = Array.from({length: 64}, (v, k) => k);
-    let yRange = Array.from({length: 64}, (v, k) => k);
+    const xRange = Array.from({length: 64}, (v, k) => k);
+    const yRange = Array.from({length: 64}, (v, k) => k);
 
     const expected: TileCoordinate[] = [];
     xRange.forEach(x => {
         yRange.forEach(y => {
-            expected.push({x, y, layer: 6});
+            expected.push(new TileCoordinate(x, y, 6));
         });
     });
 

@@ -60,7 +60,7 @@ export async function exportScreenshot(imageOnly = true, maxWidth = 512, format 
         ctx?.drawImage(canvas, 0, 0, width, height);
         return thumbnailCanvas.toDataURL(format, quality);
     } catch (err) {
-        console.log(err);
+        console.error(err);
     }
     return undefined;
 }

@@ -7,11 +7,12 @@
 # ///
 """Generate a stacked colormap PNG from CARTA's colormap definitions.
 
-This script reads COLOR_MAPS_ALL and COLOR_MAPS_MONO from color.ts,
-filters out monochrome colormaps, and generates a single PNG image with each
-colormap rendered as a horizontal stripe. The output is used by the CARTA
-frontend for both colormap previews (in the dropdown selector) and as a lookup
-texture for WebGL rendering of image tiles, contours, and overlays.
+This script reads the ColorMap enum from src/enums/color.ts and
+COLOR_MAPS_MONO from src/utilities/color/constants.ts, filters out monochrome
+colormaps, and generates a single PNG image with each colormap rendered as a
+horizontal stripe. The output is used by the CARTA frontend for both colormap
+previews (in the dropdown selector) and as a lookup texture for WebGL rendering
+of image tiles, contours, and overlays.
 
 Usage (uv):
     uv run make_colormaps.py              # Output to src/static/allmaps.png
@@ -39,26 +40,60 @@ MPL_CMAP_MAPPING = {
 }
 
 
-def extract_color_maps(file: str | PathLike) -> tuple[list[str], list[str]]:
-    """Extract COLOR_MAPS_ALL and COLOR_MAPS_MONO from color.ts."""
-    results = {
-        "COLOR_MAPS_ALL": [],
-        "COLOR_MAPS_MONO": [],
-    }
-    current = None
-    with open(file, "r") as f:
-        for line in f:
-            for name in results:
-                if f"{name} = " in line:
-                    current = name
-                    break
-            else:
-                if current:
-                    if ";" in line:
-                        current = None
-                    elif match := re.search(r'"(.*?)"', line):
-                        results[current].append(match.group(1))
-    return results["COLOR_MAPS_ALL"], results["COLOR_MAPS_MONO"]
+def extract_color_map_enum(file: str | PathLike) -> dict[str, str]:
+    """Extract the ColorMap enum member/value mapping from color.ts."""
+    text = Path(file).read_text()
+    match = re.search(
+        r"export enum ColorMap \{(?P<body>.*?)^\}",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not match:
+        raise ValueError("ColorMap enum not found in src/enums/color.ts")
+
+    body = match.group("body")
+    entries = dict(
+        re.findall(r'^\s*([A-Za-z0-9_]+)\s*=\s*"([^"]+)"\s*,?\s*$', body, re.MULTILINE)
+    )
+    if not entries:
+        raise ValueError("No ColorMap enum entries found in src/enums/color.ts")
+
+    return entries
+
+
+def extract_mono_color_maps(
+    file: str | PathLike, color_map_enum: dict[str, str]
+) -> list[str]:
+    """Extract COLOR_MAPS_MONO values from constants.ts."""
+    text = Path(file).read_text()
+    match = re.search(
+        r"export const COLOR_MAPS_MONO\s*=\s*new Map<string, string>\(\[(?P<body>.*?)\]\);",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not match:
+        raise ValueError("COLOR_MAPS_MONO not found in src/utilities/color/constants.ts")
+
+    body = match.group("body")
+    mono_names: list[str] = []
+    for enum_name, literal_name in re.findall(
+        r'\[(?:ColorMap\.([A-Za-z0-9_]+)|"([^"]+)")\s*,\s*"[^"]+"\]',
+        body,
+    ):
+        if enum_name:
+            try:
+                mono_names.append(color_map_enum[enum_name])
+            except KeyError as exc:
+                raise ValueError(
+                    f"Unknown ColorMap member referenced by COLOR_MAPS_MONO: {enum_name}"
+                ) from exc
+        else:
+            mono_names.append(literal_name)
+
+    if not mono_names:
+        raise ValueError("COLOR_MAPS_MONO is empty in src/utilities/color/constants.ts")
+
+    return mono_names
 
 
 def validate_colormap_order(
@@ -66,9 +101,9 @@ def validate_colormap_order(
 ) -> None:
     """Validate COLOR_MAPS_MONO entries exist and are the trailing block of COLOR_MAPS_ALL."""
     if not color_maps_all:
-        raise ValueError("COLOR_MAPS_ALL not found in color.ts")
+        raise ValueError("ColorMap enum is empty in src/enums/color.ts")
     if not color_maps_mono:
-        raise ValueError("COLOR_MAPS_MONO not found in color.ts")
+        raise ValueError("COLOR_MAPS_MONO not found in src/utilities/color/constants.ts")
 
     missing = [name for name in color_maps_mono if name not in color_maps_all]
     if missing:
@@ -128,15 +163,14 @@ def main():
     # Create parent directory if it does not exist
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    # Extract COLOR_MAPS_ALL and COLOR_MAPS_MONO
-    file = (
-        Path(__file__).parent.parent
-        / "src"
-        / "utilities"
-        / "color"
-        / "color.ts"
-    )
-    color_maps_all, color_maps_mono = extract_color_maps(file)
+    root = Path(__file__).parent.parent
+    color_enum_file = root / "src" / "enums" / "color.ts"
+    color_constants_file = root / "src" / "utilities" / "color" / "constants.ts"
+
+    # Extract ColorMap enum values and monochrome subset.
+    color_map_enum = extract_color_map_enum(color_enum_file)
+    color_maps_all = list(color_map_enum.values())
+    color_maps_mono = extract_mono_color_maps(color_constants_file, color_map_enum)
 
     # Ensure COLOR_MAPS_MONO is the last entries of COLOR_MAPS_ALL
     validate_colormap_order(color_maps_all, color_maps_mono)

@@ -1,9 +1,9 @@
 import {createRoot} from "react-dom/client";
-import {IconName, OverlayToaster, Position, ToastProps} from "@blueprintjs/core";
+import {type IconName, OverlayToaster, Position, type ToastProps} from "@blueprintjs/core";
 
 import {copyToClipboard} from "utilities";
 
-const toaster = OverlayToaster.createAsync(
+const toaster = OverlayToaster.create(
     {
         className: "app-toaster",
         position: Position.BOTTOM

@@ -2,19 +2,20 @@ import * as React from "react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {Tick} from "chart.js";
+import type {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {HelpType, PlotType, POLARIZATIONS, RegionId, SmoothingType, TickType} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {SpatialProfileWidgetStore} from "stores/Widgets";
 import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import "./SpatialProfilerComponent.scss";
 
@@ -38,18 +39,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFormattedCoordinates: string[];
+    private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 650;
+    @observable height: number = 250;
 
     // auto-scaling range
-    @observable autoScaleHorizontalMin: number;
-    @observable autoScaleHorizontalMax: number;
+    @observable autoScaleHorizontalMin: number = 0;
+    @observable autoScaleHorizontalMax: number = 1;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -58,18 +61,21 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return new SpatialProfileWidgetStore();
     }
 
-    @computed get profileStore(): SpatialProfileStore {
+    @computed get profileStore(): SpatialProfileStore | undefined {
         const widgetStore = this.widgetStore;
         if (widgetStore.effectiveFrame) {
-            const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
-            return AppStore.Instance.spatialProfiles.get(profileKey);
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
+                const profileKey = `${fileId}-${widgetStore.effectiveRegionId}`;
+                return AppStore.Instance.spatialProfiles.get(profileKey);
+            }
         }
         return undefined;
     }
 
-    @computed get frame(): FrameStore {
+    @computed get frame(): FrameStore | undefined {
         if (this.widgetStore) {
-            return AppStore.Instance.getFrame(this.widgetStore.fileId);
+            return AppStore.Instance.getFrame(this.widgetStore.fileId) || undefined;
         } else {
             return undefined;
         }
@@ -87,7 +93,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         yRms: number;
         ySmoothedMean: number;
         ySmoothedRms: number;
-    } {
+    } | null {
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
@@ -104,16 +110,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     xMin = this.autoScaleHorizontalMin;
                     xMax = this.autoScaleHorizontalMax;
                 } else {
-                    xMin = clamp(this.widgetStore.minX, this.lineAxis.min, this.lineAxis.max);
-                    xMax = clamp(this.widgetStore.maxX, this.lineAxis.min, this.lineAxis.max);
+                    xMin = clamp(this.widgetStore.minX ?? this.lineAxis.min, this.lineAxis.min, this.lineAxis.max);
+                    xMax = clamp(this.widgetStore.maxX ?? this.lineAxis.max, this.lineAxis.min, this.lineAxis.max);
                 }
             } else {
                 if (this.widgetStore.isAutoScaledX) {
                     xMin = this.autoScaleHorizontalMin;
                     xMax = this.autoScaleHorizontalMax;
                 } else {
-                    xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
+                    xMin = clamp(this.widgetStore.minX ?? 0, 0, this.frame.frameInfo.fileInfoExtended.width);
+                    xMax = clamp(
+                        this.widgetStore.maxX ?? (this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height),
+                        0,
+                        this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height
+                    );
                 }
                 xMin = Math.floor(xMin);
                 xMax = Math.floor(xMax);
@@ -121,33 +131,36 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
             let yMin = Number.MAX_VALUE;
             let yMax = -Number.MAX_VALUE;
-            let yMean;
-            let yRms;
-            let ySmoothedMean = undefined;
-            let ySmoothedRms = undefined;
+            let yMean: number = 0;
+            let yRms: number = 0;
+            let ySmoothedMean: number = 0;
+            let ySmoothedRms: number = 0;
 
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
             let yCount = 0;
 
-            let values: Array<Point2D>;
-            let fullResolutionValues: Array<Point2D>;
-            let smoothingValues: Array<{x: number; y: number}>;
+            let values: Array<Point2D> = [];
+            let fullResolutionValues: Array<Point2D> = [];
+            let smoothingValues: Array<{x: number; y: number}> = [];
             let N: number;
 
             if (this.lineAxis) {
                 N = coordinateData.values.length;
                 values = new Array(N);
                 fullResolutionValues = new Array(N);
-                let xArray: number[] = new Array(N);
+                const xArray: number[] = new Array(N);
                 const numPixels = this.width;
                 const decimationFactor = Math.round(N / numPixels);
-                let startIndex: number;
-                let endIndex: number;
+                let startIndex: number | undefined;
+                let endIndex: number | undefined;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i];
-                    const x = this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE ? (i - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt : i * coordinateData.lineAxis.cdelt;
+                    const x =
+                        this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE && coordinateData.lineAxis
+                            ? (i - (coordinateData.lineAxis.crpix ?? 0)) * (coordinateData.lineAxis.cdelt ?? 1)
+                            : i * (coordinateData.lineAxis?.cdelt ?? 1);
                     if (x >= xMin && x <= xMax && isFinite(y)) {
                         yMin = Math.min(yMin, y);
                         yMax = Math.max(yMax, y);
@@ -166,16 +179,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         fullResolutionValues[i] = {x, y};
                     }
                 }
-                if (decimationFactor > 1) {
+                if (decimationFactor > 1 && startIndex !== undefined && endIndex !== undefined) {
                     values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, startIndex, endIndex);
                 }
                 smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
-            } else if (coordinateData.mip > 1 || coordinateData.start > 0 || coordinateData.end < xMax) {
+            } else if ((coordinateData.mip ?? 0) > 1 || (coordinateData.start ?? 0) > 0 || (coordinateData.end ?? xMax) < xMax) {
                 N = coordinateData.values.length;
                 values = new Array(N);
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i];
-                    const x = coordinateData.start + i * coordinateData.mip;
+                    const x = (coordinateData.start ?? 0) + i * (coordinateData.mip ?? 1);
                     if (x >= xMin && x <= xMax && isFinite(y)) {
                         yMin = Math.min(yMin, y);
                         yMax = Math.max(yMax, y);
@@ -188,7 +201,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             } else {
                 N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
                 if (N > 0) {
-                    let xArray: number[] = new Array(coordinateData.values.length);
+                    const xArray: number[] = new Array(coordinateData.values.length);
                     for (let i = 0; i < coordinateData.values.length; i++) {
                         xArray[i] = i;
                     }
@@ -200,7 +213,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         values = new Array(N);
                         for (let i = 0; i < N; i++) {
                             const y = coordinateData.values[i + xMin];
-                            const x = coordinateData.start + i + xMin;
+                            const x = (coordinateData.start ?? 0) + i + xMin;
                             if (x >= xMin && x <= xMax && isFinite(y)) {
                                 yMin = Math.min(yMin, y);
                                 yMax = Math.max(yMax, y);
@@ -215,7 +228,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         fullResolutionValues = new Array(N);
                         for (let i = 0; i < N; i++) {
                             const val = coordinateData.values[i + xMin];
-                            const x = coordinateData.start + i + xMin;
+                            const x = (coordinateData.start ?? 0) + i + xMin;
                             if (isFinite(val)) {
                                 yMin = Math.min(yMin, val);
                                 yMax = Math.max(yMax, val);
@@ -237,8 +250,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
 
             if (yMin === Number.MAX_VALUE) {
-                yMin = undefined;
-                yMax = undefined;
+                yMin = 0;
+                yMax = 0;
             } else {
                 // extend y range a bit
                 const range = yMax - yMin;
@@ -272,26 +285,26 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeader(): string[] {
         const headerString: string[] = [];
-        if (this.widgetStore.effectiveRegion) {
+        if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId !== null) {
             headerString.push(...this.widgetStore.effectiveFrame.getRegionProperties(this.widgetStore.effectiveRegionId));
         }
         return headerString;
     }
 
     // displaying offset/distance in the x axis for line and polyline regions
-    @computed get lineAxis(): {label: string; min: number; max: number; unit: string} {
+    @computed get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
         const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
         if (coordinateData?.lineAxis && this.widgetStore.isLineOrPolyline) {
             const lineAxis = coordinateData.lineAxis;
-            const min = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? (0 - lineAxis.crpix) * lineAxis.cdelt : 0;
-            const max = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? (coordinateData.end - lineAxis.crpix) * lineAxis.cdelt : coordinateData.end * lineAxis.cdelt;
-            return {label: lineAxis.axisType === CARTA.ProfileAxisType.Offset ? "Offset" : "Distance", min, max, unit: lineAxis.unit};
+            const min = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? (0 - (lineAxis.crpix ?? 0)) * (lineAxis.cdelt ?? 1) : 0;
+            const max = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? ((coordinateData.end ?? 0) - (lineAxis.crpix ?? 0)) * (lineAxis.cdelt ?? 1) : (coordinateData.end ?? 0) * (lineAxis.cdelt ?? 1);
+            return {label: lineAxis.axisType === CARTA.ProfileAxisType.Offset ? "Offset" : "Distance", min, max, unit: lineAxis.unit ?? ""};
         }
         return null;
     }
 
-    @computed get nearestCursorPoint(): Point2D {
-        if (this.widgetStore.isMouseMoveIntoLinePlots) {
+    @computed get nearestCursorPoint(): Point2D | null {
+        if (this.widgetStore.isMouseMoveIntoLinePlots && this.plotData) {
             return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
         }
         return null;
@@ -302,12 +315,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         posWCS: any;
         infoWCS: any;
         precision: Point2D;
-    } {
+    } | null {
         if (this.plotData) {
-            if (this.nearestCursorPoint) {
-                const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y: this.profileStore.y} : {x: this.profileStore.x, y: this.nearestCursorPoint.x};
-                return this.frame.getCursorInfo(pixelPoint);
-            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+            if (this.nearestCursorPoint && this.profileStore && this.frame) {
+                const y = this.profileStore.y;
+                const x = this.profileStore.x;
+                if (y != null && x != null) {
+                    const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y} : {x, y: this.nearestCursorPoint.x};
+                    return this.frame.getCursorInfo(pixelPoint);
+                }
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT && this.frame) {
                 return this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
             }
         }
@@ -318,51 +335,64 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpatialProfileWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
+            }
         } else {
-            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
+            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.spatialProfileWidgets.set(this.widgetId, new SpatialProfileWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                const currentData = this.plotData;
-                if (appStore && coordinate) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString} Profile: ${regionString}`);
-                }
-                if (currentData) {
-                    this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-                }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
-            }
-        });
-
-        autorun(
-            () => {
-                if (!this.frame || !this.width) {
-                    return null;
-                }
-                if (this.lineAxis) {
-                    this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
-                } else if (this.widgetStore.isXProfile) {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const coordinate = this.widgetStore.coordinate;
+                    const currentData = this.plotData;
+                    if (appStore && coordinate) {
+                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                        appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
+                    }
+                    if (currentData) {
+                        this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                    }
                 } else {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `X Profile: Cursor`);
                 }
-            },
-            {delay: AUTOSCALE_THROTTLE_TIME}
+            })
         );
+
+        this.disposers.push(
+            autorun(
+                () => {
+                    if (!this.frame || !this.width) {
+                        return;
+                    }
+                    if (this.lineAxis) {
+                        this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
+                    } else if (this.widgetStore.isXProfile) {
+                        this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+                    } else {
+                        this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    }
+                },
+                {delay: AUTOSCALE_THROTTLE_TIME}
+            )
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private setAutoScaleBounds = (min: number, max: number) => {
@@ -383,21 +413,21 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         const global = AppStore.Instance.overlaySettings.global;
         setAstStringSystem(astString, global.explicitSystem, global);
 
-        if (this.widgetStore.isXProfile) {
+        if (this.widgetStore.isXProfile && this.profileStore?.y != null) {
             for (let i = 0; i < ticks.length; i++) {
                 const pointWCS = transformPoint(this.frame.wcsInfo, {x: ticks[i].value, y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString(), true).x;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, 0, astString.toString(), true).x;
             }
-        } else {
+        } else if (this.profileStore?.x != null) {
             for (let i = 0; i < ticks.length; i++) {
                 const pointWCS = transformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: ticks[i].value});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString(), true).y;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, 0, normVals.y, astString.toString(), true).y;
             }
         }
         this.trimDecimals();
@@ -419,13 +449,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
         const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
         // Skip lists with no more decimals than pointInfo
-        if (this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+        if (pointInfoPrecision === undefined || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
             return;
         }
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
         const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
-            let trimmedArray = this.cachedFormattedCoordinates.slice();
+            const trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
                 trimmedArray[i] = trimmedArray[i].slice(0, -trim);
             }
@@ -464,7 +494,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
@@ -488,9 +518,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (this.pointInfo?.posImageSpace) {
                     const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
                     const imageLabel = `Image: ${toFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
-                    const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
+                    const valueLabel = `${this.profileStore?.value != null ? formattedExponential(this.profileStore.value, 5) : ""}`;
 
-                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
+                    const smoothedProfilerInfo = this.profileStore && this.plotData?.smoothingValues ? this.genSmoothedProfilerInfo(this.plotData.smoothingValues, this.profileStore.x ?? undefined) : null;
 
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
@@ -512,22 +542,23 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
+    private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string | null => {
         let profilerInfo = "";
         const nearest = binarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
-        const smoothedXLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest?.point?.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest?.point?.x} px, `;
+        const smoothedXLabel =
+            this.lineAxis && nearest?.point?.x != null ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : nearest?.point?.x != null ? `Image: ${nearest.point.x} px, ` : "";
 
-        if (pointXValue) {
-            profilerInfo += formattedExponential(nearest?.point?.y, 5);
+        if (pointXValue && nearest?.point?.y != null) {
+            profilerInfo += formattedExponential(nearest.point.y, 5);
         } else {
             // handle the value when cursor is in profiler
-            if (nearest?.point) {
-                const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+            if (nearest?.point?.y != null) {
+                const valueLabel = formattedExponential(nearest.point.y, 5);
                 profilerInfo += valueLabel;
             }
         }
 
-        return nearest && `${smoothedXLabel}${profilerInfo}`;
+        return nearest && profilerInfo ? `${smoothedXLabel}${profilerInfo}` : null;
     };
 
     onGraphCursorMoved = _.throttle(x => {
@@ -545,7 +576,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const xLabel = this.lineAxis ? `${this.lineAxis.label} (${this.lineAxis.unit ?? ""})` : `${isXProfile ? "X" : "Y"} coordinate`;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${this.lineAxis ? "" : isXProfile ? "X " : "Y "}profile`;
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -571,7 +602,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.profileStore && this.frame) {
                 if (this.frame.headerUnit) {
                     let unit: string;
-                    if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                    if (this.widgetStore.effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                         unit = "%";
                     } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
                         unit = "degree";
@@ -594,7 +625,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.fullResolutionData = currentPlotData.fullResolutionValues;
 
                     // set line color
-                    let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
+                    const primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
@@ -602,8 +633,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
 
-                        let smoothingPlotProps: MultiPlotProps = {
-                            imageName: imageName,
+                        const smoothingPlotProps: MultiPlotProps = {
+                            imageName: imageName || "Unknown",
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothingValues,
                             type: smoothingStore.lineType,
@@ -613,7 +644,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             order: 0,
                             comments: smoothingStore.comments
                         };
-                        linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
+                        linePlotProps.multiPlotPropsMap?.set("smoothed", smoothingPlotProps);
                     }
 
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -644,15 +675,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     image: isXProfile ? this.profileStore.x : this.profileStore.y,
                     unit: "px"
                 };
-                linePlotProps.markers = [
-                    {
+                linePlotProps.markers = [];
+                if (cursorX.image != null) {
+                    linePlotProps.markers.push({
                         value: cursorX.image,
                         id: "marker-image-cursor",
                         draggable: false,
                         horizontal: false,
                         opacity: this.widgetStore.isLineOrPolyline ? 0.1 : 1
-                    }
-                ];
+                    });
+                }
                 linePlotProps.markers.push({
                     value: cursorX.profiler,
                     id: "marker-profiler-cursor",

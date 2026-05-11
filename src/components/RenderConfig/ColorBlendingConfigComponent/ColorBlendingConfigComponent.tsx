@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
@@ -44,7 +44,10 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     };
 
     const setSelectedFrame = (index: number, fileId: number) => {
-        colorBlendingStore.setSelectedFrame(index, AppStore.Instance.getFrame(fileId));
+        const frame = AppStore.Instance.getFrame(fileId);
+        if (frame) {
+            colorBlendingStore.setSelectedFrame(index, frame);
+        }
     };
 
     const getLayerSettings = (frame: FrameStore, alphaIndex: number) => {
@@ -133,12 +136,16 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
-                <Tooltip content={baseFrameTooltip}>
-                    <Text className="image-column image-text" ellipsize={true}>
-                        {colorBlendingStore.baseFrame.filename}
-                    </Text>
-                </Tooltip>
-                {getLayerSettings(colorBlendingStore.baseFrame, 0)}
+                {colorBlendingStore.baseFrame && (
+                    <>
+                        <Tooltip content={baseFrameTooltip}>
+                            <Text className="image-column image-text" ellipsize={true}>
+                                {colorBlendingStore.baseFrame.filename}
+                            </Text>
+                        </Tooltip>
+                        {getLayerSettings(colorBlendingStore.baseFrame, 0)}
+                    </>
+                )}
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>

@@ -1,42 +1,36 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {Pane, SplitPane} from "react-split-pane";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
-import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {RegionMode} from "stores/Frame";
-import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, ProcessedColumnData, toFixed} from "utilities";
+import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
+import {AbstractCatalogProfileStore} from "models";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
+import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
-enum HeaderTableColumnName {
-    Name = "Name",
-    Unit = "Unit",
-    Type = "Type",
-    Display = "Display",
-    Description = "Description"
-}
-
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable private catalogTableRef: Table2 = undefined;
-    @observable private height: number;
-    @observable private width: number;
+    @observable private catalogTableRef: Table2 | undefined = undefined;
+    @observable private height: number = 600;
+    @observable private width: number = 720;
 
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
+    private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
+    private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
-    private catalogHeaderTableRef: Table2 = undefined;
+    private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
     static readonly axisDataType = [
         CARTA.ColumnType.Double,
@@ -67,28 +61,36 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    @computed get widgetStore(): CatalogWidgetStore {
-        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+    @computed get widgetStore(): CatalogWidgetStore | undefined {
+        const catalogFileId = this.catalogFileId;
+        const widgetStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
+        return widgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
     }
 
-    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
-        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+        const catalogFileId = this.catalogFileId;
+        return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
         const catalogWidgetStore = this.widgetStore;
-        const widgetId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        appStore.removeCatalog(this.catalogFileId, widgetId, this.props.id);
-        catalogWidgetStore?.resetMaps();
+        const catalogFileId = this.catalogFileId;
+        if (catalogFileId !== undefined) {
+            const widgetId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+            if (!widgetId) {
+                return;
+            }
+            appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
+            catalogWidgetStore?.resetMaps();
+        }
     };
 
     // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
@@ -111,10 +113,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData>; numVisibleRows: number} {
+    @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData> | undefined; numVisibleRows: number} {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        let dataset: Map<number, ProcessedColumnData>;
+        let dataset: Map<number, ProcessedColumnData> | undefined;
         let numVisibleRows = 0;
         if (profileStore && catalogWidgetStore) {
             dataset = profileStore.catalogData;
@@ -132,46 +134,54 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE;
-        if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
+        const enable = !profileStore?.loadingData && !profileStore?.updatingDataStream && catalogWidgetStore?.xAxis !== CatalogOverlay.NONE;
+        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.Histogram) {
             return enable;
         } else {
-            return catalogWidgetStore.yAxis !== CatalogOverlay.NONE && enable;
+            return catalogWidgetStore?.yAxis !== CatalogOverlay.NONE && enable;
         }
     }
 
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
 
-        if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
-            CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
+        if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
+            CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
         }
         this.catalogFileNames = new Map<number, string>();
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            const frame = appStore.activeFrame;
-            const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-            const profileStore = this.profileStore;
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                const frame = appStore.activeFrame;
+                const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+                const profileStore = this.profileStore;
 
-            if (profileStore) {
-                let progressString = "";
-                const fileName = profileStore.catalogInfo.fileInfo.name;
-                const progress = profileStore.progress;
-                if (progress && isFinite(progress) && progress < 1) {
-                    progressString = `[${toFixed(progress * 100)}% complete]`;
-                }
+                if (profileStore) {
+                    let progressString = "";
+                    const fileName = profileStore.catalogInfo.fileInfo.name;
+                    const progress = profileStore.progress;
+                    if (progress && isFinite(progress) && progress < 1) {
+                        progressString = `[${toFixed(progress * 100)}% complete]`;
+                    }
 
-                if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                    if (frame && catalogFileIds?.length) {
+                        WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
+                    } else {
+                        WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
+                    }
                 } else {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
                 }
-            } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onCatalogDataTableRefUpdated = ref => {
@@ -214,20 +224,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const val = changeEvent.target.checked;
-        const header = profileStore.catalogControlHeader.get(columnName);
-        profileStore.setHeaderDisplay(val, columnName);
+        const header = profileStore?.catalogControlHeader.get(columnName);
+        profileStore?.setHeaderDisplay(val, columnName);
 
-        const shouldUpdateFilter = (val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog;
+        const shouldUpdateFilter = (val === true || (header?.filter !== "" && val === false)) && profileStore?.isFileBasedCatalog;
 
         if (shouldUpdateFilter) {
-            profileStore.setIsUpdateColumn(true);
+            profileStore?.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
 
-        if (catalogWidgetStore.xAxis === columnName) {
+        if (catalogWidgetStore?.xAxis === columnName) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
         }
-        if (catalogWidgetStore.yAxis === columnName) {
+        if (catalogWidgetStore?.yAxis === columnName) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
     }
@@ -250,8 +260,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: string) {
         const profileStore = this.profileStore;
-        const display = profileStore.catalogControlHeader.get(columnName).display;
-        let disable = profileStore.loadingData;
+        const headerInfo = profileStore?.catalogControlHeader.get(columnName);
+        const display = headerInfo?.display ?? false;
+        const disable = profileStore?.loadingData;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <>
@@ -268,14 +279,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get axisOption() {
+    @computed get axisOption(): string[] {
         const profileStore = this.profileStore;
-        let axisOptions = [];
+        if (!profileStore) {
+            return [CatalogOverlay.NONE];
+        }
+        const axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
         profileStore.catalogControlHeader.forEach((header, columnName) => {
-            const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
-            if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
-                axisOptions.push(columnName);
+            if (header?.dataIndex !== undefined) {
+                const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
+                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                    axisOptions.push(columnName);
+                }
             }
         });
         return axisOptions;
@@ -290,25 +306,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable() {
+    @computed get xAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
-        const plotType = catalogWidgetStore.catalogPlotType;
+        const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
             case CatalogPlotType.ImageOverlay:
                 const profileStore = this.profileStore;
-                return profileStore.activedSystem.x;
+                return profileStore?.activedSystem?.x ?? CatalogOverlay.X;
             default:
                 return CatalogOverlay.X;
         }
     }
 
-    @computed get yAxisLable() {
+    @computed get yAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
-        const plotType = catalogWidgetStore.catalogPlotType;
+        const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
             case CatalogPlotType.ImageOverlay:
                 const profileStore = this.profileStore;
-                return profileStore.activedSystem.y;
+                return profileStore?.activedSystem?.y ?? CatalogOverlay.Y;
             default:
                 return CatalogOverlay.Y;
         }
@@ -355,12 +371,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private createHeaderTable() {
-        const tableColumns = [];
-        const headerNames = [];
-        const headerDescriptions = [];
-        const units = [];
-        const types = [];
-        const headerDataset = this.profileStore.catalogHeader;
+        const profileStore = this.profileStore;
+        const widgetStore = this.widgetStore;
+        if (!profileStore || !widgetStore) {
+            return null;
+        }
+
+        const tableColumns: React.ReactElement[] = [];
+        const headerNames: string[] = [];
+        const headerDescriptions: string[] = [];
+        const units: string[] = [];
+        const types: string[] = [];
+        const headerDataset = profileStore.catalogHeader;
         const numResultsRows = headerDataset.length;
         for (let index = 0; index < headerDataset.length; index++) {
             const header = headerDataset[index];
@@ -380,8 +402,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
         tableColumns.push(columnDescription);
 
-        const headerDisplays = [];
-        this.profileStore.catalogControlHeader.forEach(header => headerDisplays.push(header.display));
+        const headerDisplays: boolean[] = [];
+        profileStore.catalogControlHeader.forEach(header => headerDisplays.push(header?.display ?? false));
+
+        // Ensure columnWidths array matches the number of expected columns
+        const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
+        let columnWidths = widgetStore.headerTableColumnWidths;
+        if (!columnWidths || columnWidths.length !== expectedColumnCount) {
+            columnWidths = new Array(expectedColumnCount).fill(undefined);
+        }
 
         return (
             <Table2
@@ -395,10 +424,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.widgetStore.headerTableColumnWidths}
+                columnWidths={columnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
-                cellRendererDependencies={[headerDisplays, this.profileStore.loadingData]} // trigger re-render on controlHeader change
+                cellRendererDependencies={[headerDisplays, profileStore.loadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
             </Table2>
@@ -407,7 +436,24 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore.headerTableColumnWidths) {
+        if (!widgetsStore) {
+            return;
+        }
+
+        // Ensure the array exists and has the correct length (5 columns)
+        const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
+        if (!widgetsStore.headerTableColumnWidths) {
+            widgetsStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
+        } else if (widgetsStore.headerTableColumnWidths.length !== expectedColumnCount) {
+            // Resize array to match expected column count
+            const newArray = new Array(expectedColumnCount).fill(undefined);
+            for (let i = 0; i < Math.min(widgetsStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
+                newArray[i] = widgetsStore.headerTableColumnWidths[i];
+            }
+            widgetsStore.headerTableColumnWidths = newArray;
+        }
+
+        if (index >= 0 && index < widgetsStore.headerTableColumnWidths.length) {
             widgetsStore.headerTableColumnWidths[index] = size;
         }
     };
@@ -415,12 +461,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private resetSelectedPointIndices = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        profileStore.setSelectedPointIndices([], false);
-        catalogWidgetStore.setShowSelectedData(false);
+        profileStore?.setSelectedPointIndices([], false);
+        catalogWidgetStore?.setShowSelectedData(false);
     };
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
+            return;
+        }
 
         // Skip if normal conditions prevent filtering AND we're not in column update mode
         const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
@@ -429,17 +481,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
+            appStore.catalogStore.clearImageCoordsData(catalogFileId);
             if (profileStore.isFileBasedCatalog) {
                 profileStore.updateTableStatus(false);
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
-                filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
-                filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
+                const filter = profileStore.updateRequestDataSize;
+                if (filter.imageBounds) {
+                    filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
+                    filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
+                }
                 filter.fileId = profileStore.catalogInfo.fileId;
                 filter.filterConfigs = profileStore.getUserFilters();
                 filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
@@ -450,17 +503,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType | null) => {
         const profileStore = this.profileStore;
+        const catalogFileId = this.catalogFileId;
         const appStore = AppStore.Instance;
 
-        if (profileStore && appStore) {
+        if (profileStore && appStore && catalogFileId !== undefined) {
             this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
+            appStore.catalogStore.clearImageCoordsData(catalogFileId);
             profileStore.setSortingInfo(columnName, sortingType);
             if (profileStore.isFileBasedCatalog) {
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
+                const filter = profileStore.updateRequestDataSize;
                 filter.sortColumn = columnName;
                 filter.sortingType = sortingType;
                 appStore.sendCatalogFilter(filter);
@@ -471,10 +525,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateByInfiniteScroll = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const selectedOnly = catalogWidgetStore.showSelectedData;
-        if (profileStore.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
+        const selectedOnly = catalogWidgetStore?.showSelectedData;
+        if (profileStore?.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-            const filter = this.profileStore.updateRequestDataSize;
+            const filter = profileStore.updateRequestDataSize;
             filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
             AppStore.Instance.sendCatalogFilter(filter);
             profileStore.setLoadingDataStatus(true);
@@ -484,17 +538,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handleResetClick = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
-        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
+            return;
+        }
+
+        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
 
         appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
-        frame.regionSet.setMode(RegionMode.MOVING);
+        frame?.regionSet.setMode(RegionMode.MOVING);
 
         if (profileStore && catalogWidgetStore) {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
+            appStore.catalogStore.clearImageCoordsData(catalogFileId);
             if (profileStore.isFileBasedCatalog) {
                 appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
             }
@@ -507,22 +567,39 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
+            return;
+        }
+
         // init plot data
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (frame) {
                     const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
-                    catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system, 0, 0);
+                    if (imageCoords.wcsX && imageCoords.wcsY) {
+                        catalogStore.convertToImageCoordinate(
+                            catalogFileId,
+                            imageCoords.wcsX,
+                            imageCoords.wcsY,
+                            wcs,
+                            imageCoords.xHeaderInfo?.units ?? "",
+                            imageCoords.yHeaderInfo?.units ?? "",
+                            profileStore.catalogCoordinateSystem.system,
+                            0,
+                            0
+                        );
+                    }
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
-                    let catalogFilter = profileStore.updateRequestDataSize;
+                    const catalogFilter = profileStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);
                 }
                 break;
@@ -533,7 +610,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     plotType: catalogWidgetStore.catalogPlotType
                 };
                 const scatterPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(scatterProps);
-                catalogStore.setCatalogPlots(scatterPlot.widgetComponentId, this.catalogFileId, scatterPlot.widgetStoreId);
+                if (scatterPlot.widgetComponentId) {
+                    catalogStore.setCatalogPlots(scatterPlot.widgetComponentId, catalogFileId, scatterPlot.widgetStoreId ?? "");
+                }
                 break;
             case CatalogPlotType.Histogram:
                 const historgramProps: CatalogPlotWidgetStoreProps = {
@@ -541,7 +620,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     plotType: catalogWidgetStore.catalogPlotType
                 };
                 const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(historgramProps);
-                catalogStore.setCatalogPlots(histogramPlot.widgetComponentId, this.catalogFileId, histogramPlot.widgetStoreId);
+                if (histogramPlot.widgetComponentId) {
+                    catalogStore.setCatalogPlots(histogramPlot.widgetComponentId, catalogFileId, histogramPlot.widgetStoreId ?? "");
+                }
                 break;
             default:
                 break;
@@ -549,34 +630,34 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private handlePlotTypeChange = (plotType: CatalogPlotType) => {
-        this.widgetStore.setCatalogPlotType(plotType);
+        this.widgetStore?.setCatalogPlotType(plotType);
     };
 
     // source selected in table
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        if (!catalogWidgetStore.showSelectedData) {
+        if (!catalogWidgetStore?.showSelectedData) {
             if (selectedDataIndices.length === 1) {
-                const selectedPointIndexs = profileStore.selectedPointIndices;
+                const selectedPointIndexs = profileStore?.selectedPointIndices;
                 let highlighted = false;
-                if (selectedPointIndexs.length === 1) {
+                if (selectedPointIndexs?.length === 1) {
                     highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
                 }
                 if (!highlighted) {
-                    profileStore.setSelectedPointIndices(selectedDataIndices, true);
+                    profileStore?.setSelectedPointIndices(selectedDataIndices, true);
                 } else {
-                    profileStore.setSelectedPointIndices([], false);
+                    profileStore?.setSelectedPointIndices([], false);
                 }
             } else {
-                profileStore.setSelectedPointIndices(selectedDataIndices, true);
+                profileStore?.setSelectedPointIndices(selectedDataIndices, true);
             }
         }
     };
 
     private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
+        const text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -584,13 +665,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    @action private handleSplitChange = (newSize: number) => {
+    @action private handleSplitChange = (sizes: number[]) => {
+        const newSize = sizes[1]; // second pane (data table) size
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
-            this.widgetStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            this.widgetStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
 
@@ -604,9 +686,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleHideHeader = () => {
-        const position = this.widgetStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        const widgetStore = this.widgetStore;
+        const position = widgetStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
         this.isShowHeader = position === 100 ? false : true;
-        this.widgetStore.setTableSeparatorPosition(`${position}%`);
+        widgetStore?.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -634,19 +717,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
-        this.widgetStore.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title, this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        this.widgetStore?.setSettingsTabId(type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     private onCompleteRender = () => {
-        if (this.profileStore.regionSelected) {
-            if (this.widgetStore.showSelectedData) {
+        const profileStore = this.profileStore;
+        const widgetStore = this.widgetStore;
+        if (profileStore?.regionSelected) {
+            if (widgetStore?.showSelectedData) {
                 // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
             } else {
-                if (this.widgetStore.catalogTableAutoScroll) {
-                    this.scrollToRegion(this.catalogTableRef, this.profileStore.autoScrollRowNumber);
-                    this.widgetStore.setCatalogTableAutoScroll(false);
+                if (widgetStore?.catalogTableAutoScroll) {
+                    this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
+                    widgetStore.setCatalogTableAutoScroll(false);
                 }
             }
         }
@@ -666,12 +751,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const catalogTable = this.catalogDataInfo;
+
+        // Ensure columnWidths matches the number of displayed columns
+        const expectedColumnCount = profileStore.displayedColumnHeaders.length;
+        let tableColumnWidths = profileStore.tableColumnWidths;
+        if (!tableColumnWidths || tableColumnWidths.length !== expectedColumnCount) {
+            tableColumnWidths = new Array(expectedColumnCount).fill(undefined);
+        }
+
+        // Filter out undefined values to match expected Array<number> type
+        const validColumnWidths = tableColumnWidths.filter((w): w is number => w !== undefined);
+
         const dataTableProps: FilterableTableComponentProps = {
-            dataset: catalogTable.dataset,
+            dataset: catalogTable.dataset ?? new Map(),
             filter: profileStore.catalogControlHeader,
             columnHeaders: profileStore.displayedColumnHeaders,
             numVisibleRows: catalogTable.numVisibleRows,
-            columnWidths: profileStore.tableColumnWidths,
+            columnWidths: validColumnWidths.length === expectedColumnCount ? validColumnWidths : undefined,
             loadingCell: profileStore.loadingData,
             selectedDataIndex: profileStore.selectedPointIndices,
             showSelectedData: catalogWidgetStore.showSelectedData,
@@ -681,7 +777,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateTableColumnWidth: profileStore.setTableColumnWidth,
             updateSelectedRow: this.onCatalogTableDataSelected,
             updateSortRequest: this.updateSortRequest,
-            sortingInfo: profileStore.sortingInfo,
+            sortingInfo: {
+                columnName: profileStore.sortingInfo.columnName ?? "",
+                sortingType: profileStore.sortingInfo.sortingType
+            },
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
@@ -707,34 +806,35 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const maxRow = profileStore.maxRows;
         const tableVisibleRows = catalogTable.numVisibleRows;
         let info = `Showing ${startIndex} to ${tableVisibleRows} of total ${catalogFileDataSize} entries`;
-        if (profileStore.hasFilter && isFinite(profileStore.filterDataSize)) {
-            info = `Showing ${startIndex} to ${tableVisibleRows} of ${profileStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+        const filterDataSize = profileStore.filterDataSize;
+        if (profileStore.hasFilter && filterDataSize !== undefined && isFinite(filterDataSize)) {
+            info = `Showing ${startIndex} to ${tableVisibleRows} of ${filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
         }
         if (maxRow < catalogFileDataSize && maxRow > 0) {
             info = `Showing ${startIndex} to ${tableVisibleRows} of top ${maxRow} entries. Total ${catalogFileDataSize} entries`;
         }
-        if (maxRow < catalogFileDataSize && maxRow > 0 && profileStore.hasFilter && isFinite(profileStore.filterDataSize)) {
-            if (profileStore.filterDataSize >= maxRow) {
-                info = `Showing ${startIndex} to ${tableVisibleRows} of top ${maxRow} entries. Total ${profileStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+        if (maxRow < catalogFileDataSize && maxRow > 0 && profileStore.hasFilter && filterDataSize !== undefined && isFinite(filterDataSize)) {
+            if (filterDataSize >= maxRow) {
+                info = `Showing ${startIndex} to ${tableVisibleRows} of top ${maxRow} entries. Total ${filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
             } else {
-                info = `Showing ${startIndex} to ${tableVisibleRows} of ${profileStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+                info = `Showing ${startIndex} to ${tableVisibleRows} of ${filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
             }
         }
         const tableInfo = catalogFileDataSize ? (
             <tr>
                 <td className="td-label">
-                    <pre>{info}</pre>
+                    <Pre>{info}</Pre>
                 </td>
             </tr>
         ) : null;
 
-        let catalogFileItems = [];
+        const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
-        let systemOptions = [];
+        const systemOptions: CatalogSystemType[] = [];
         AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
         });
@@ -791,26 +891,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
                         </ButtonGroup>
                     </div>
-                    <SplitPane
-                        className="catalog-table"
-                        split="horizontal"
-                        primary={"second"}
-                        minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
-                        maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
-                        size={catalogWidgetStore.tableSeparatorPosition}
-                        onDragFinished={this.handleSplitChange}
-                        onResizerDoubleClick={this.handleHideHeader}
-                    >
+                    <SplitPane className="catalog-table" direction="vertical" onResizeEnd={this.handleSplitChange}>
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
-                        <Pane className={"catalog-overlay-data-container"}>
+                        <Pane
+                            className={"catalog-overlay-data-container"}
+                            minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
+                            maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
+                            size={catalogWidgetStore.tableSeparatorPosition}
+                        >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>
                     </SplitPane>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={"table-info"}>
-                            <table className="info-display">
+                            <HTMLTable className="info-display">
                                 <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
-                            </table>
+                            </HTMLTable>
                         </div>
                         <div className="footer-action-container">
                             <div className={footerDropdownClass}>

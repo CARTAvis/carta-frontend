@@ -2,13 +2,13 @@ import * as React from "react";
 import {Arrow, Group, Line} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import Konva from "konva";
+import type Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, VectorAnnotationStore} from "stores/Frame";
+import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "stores/Frame";
 import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
@@ -33,11 +33,11 @@ const DOUBLE_CLICK_THRESHOLD = 300;
 
 @observer
 export class LineSegmentRegionComponent extends React.Component<LineSegmentRegionComponentProps> {
-    @observable hoverIndex: number;
-    @observable hoverIntersection: Point2D;
+    @observable hoverIndex: number = -1;
+    @observable hoverIntersection: Point2D | null = null;
 
     private previousCursorStyle: string;
-    private addControlPointTimer;
+    private addControlPointTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(props: any) {
         super(props);
@@ -48,12 +48,18 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         AppStore.Instance.resetImageRatio();
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.addControlPointTimer);
+        this.addControlPointTimer = undefined;
+    }
+
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
     };
 
     private handleDoubleClick = () => {
         clearTimeout(this.addControlPointTimer);
+        this.addControlPointTimer = undefined;
         this.props.onDoubleClick?.(this.props.region);
     };
 
@@ -77,6 +83,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
                 clearTimeout(this.addControlPointTimer);
+                this.addControlPointTimer = undefined;
                 this.addControlPointTimer = setTimeout(() => {
                     region.setControlPoints(currentControlPoints, true, false);
                     this.hoverIntersection = null;
@@ -106,7 +113,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
-                if (frame.spatialReference) {
+                if (frame.spatialReference && frame.spatialTransformAST) {
                     newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
@@ -115,7 +122,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 region.setRotation(region.rotation + angle);
             } else if (index >= 0 && index < region.controlPoints.length) {
                 let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
-                if (frame.spatialReference) {
+                if (frame.spatialReference && frame.spatialTransformAST) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
@@ -154,16 +161,20 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     @action private handleStrokeMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target?.getStage()) {
-            this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
+        const stage = konvaEvent.target?.getStage();
+        const container = stage?.container();
+        if (container) {
+            this.previousCursorStyle = container.style.cursor;
         }
         this.handleMouseMove(konvaEvent);
     };
 
     @action private handleStrokeMouseLeave = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.hoverIntersection = null;
-        if (konvaEvent.target?.getStage()) {
-            konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+        const stage = konvaEvent.target?.getStage();
+        const container = stage?.container();
+        if (container) {
+            container.style.cursor = this.previousCursorStyle;
         }
     };
 
@@ -174,12 +185,12 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
         if (this.props.selected && region.controlPoints.length >= 2) {
             let positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
-            if (frame.spatialReference) {
+            if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
             let minDistance = Number.MAX_VALUE;
             let closestIndex = -1;
-            let closestPoint: Point2D = null;
+            let closestPoint: Point2D | null = null;
             // Find closest point on each line segment, select the closest overall that actually lies on the line segment
             for (let i = 0; i < (region.regionType === CARTA.RegionType.POLYLINE ? region.controlPoints.length - 1 : region.controlPoints.length); i++) {
                 const pointCheck = closestPointOnLine(positionImageSpace, region.controlPoints[i], region.controlPoints[(i + 1) % region.controlPoints.length]);
@@ -193,28 +204,36 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (closestIndex >= 0 && minDistance <= NEW_ANCHOR_MAX_DISTANCE) {
                 this.hoverIntersection = closestPoint;
                 this.hoverIndex = closestIndex;
-                if (konvaEvent.target?.getStage()) {
-                    konvaEvent.target.getStage().container().style.cursor = "crosshair";
+                const stage = konvaEvent.target?.getStage();
+                const container = stage?.container();
+                if (container) {
+                    container.style.cursor = "crosshair";
                 }
             } else {
                 this.hoverIntersection = null;
-                if (konvaEvent.target?.getStage()) {
-                    konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+                const stage = konvaEvent.target?.getStage();
+                const container = stage?.container();
+                if (container) {
+                    container.style.cursor = this.previousCursorStyle;
                 }
             }
         }
     };
 
     private handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target?.getStage()) {
-            this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
-            konvaEvent.target.getStage().container().style.cursor = "move";
+        const stage = konvaEvent.target?.getStage();
+        const container = stage?.container();
+        if (container) {
+            this.previousCursorStyle = container.style.cursor;
+            container.style.cursor = "move";
         }
     };
 
     private handleAnchorMouseOut = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target?.getStage()) {
-            konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+        const stage = konvaEvent.target?.getStage();
+        const container = stage?.container();
+        if (container) {
+            container.style.cursor = this.previousCursorStyle;
         }
     };
 
@@ -235,7 +254,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const centerImageSpace = average2D(region.controlPoints);
             const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
             let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
-            if (frame.spatialReference) {
+            if (frame.spatialReference && frame.spatialTransformAST) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
             const deltaPosition = subtract2D(newPosition, centerImageSpace);
@@ -259,7 +278,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
                 onDblClick={
-                    this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR ? null : this.handleAnchorDoubleClick
+                    this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR
+                        ? undefined
+                        : this.handleAnchorDoubleClick
                 }
                 isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR}
             />
@@ -274,15 +295,15 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
-        let anchors = null;
-        let newAnchor = null;
+        let anchors: React.ReactNode[] | null = null;
+        let newAnchor: React.ReactNode | null = null;
         let pointArray: Array<number>;
         const imageRatio = AppStore.Instance.imageRatio;
         // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
         /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
         const pixelRatio = AppStore.Instance.pixelRatio;
 
-        if (frame.spatialReference) {
+        if (frame.spatialReference && frame.spatialTransformAST) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -298,7 +319,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             // Construct anchors if region is selected
             if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = controlPoints.map((p, i) => {
-                    const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
+                    const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
@@ -315,7 +336,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
-                const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
+                const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
@@ -388,9 +409,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     <Line
                         {...commonProps}
                         closed={!region.creating && (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON)}
-                        onMouseEnter={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseEnter}
-                        onMouseLeave={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseLeave}
-                        onMouseMove={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleMouseMove}
+                        onMouseEnter={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleStrokeMouseEnter}
+                        onMouseLeave={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleStrokeMouseLeave}
+                        onMouseMove={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleMouseMove}
                     />
                 )}
                 <Group>

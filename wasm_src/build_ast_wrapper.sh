@@ -9,7 +9,7 @@ npx tsc post.ts --outFile build/post.js
 emcc -std=c++11 -o build/ast_wrapper.js ast_wrapper.cc grf_debug.cc --pre-js build/pre.js --post-js build/post.js \
     -I../../wasm_libs/built/include -L../../wasm_libs/built/lib -last -last_pal -lm -g0 -O2 -msimd128 \
     -s ALLOW_MEMORY_GROWTH=1 -s NO_EXIT_RUNTIME=1 -s EXPORTED_RUNTIME_METHODS='["cwrap", "UTF8ToString", "HEAPF32", "HEAPF64"]' \
-    -s EXPORTED_FUNCTIONS='["_malloc", "_free", "_plotGrid", "_emptyFitsChan", "_putFits", "_getFrameFromFitsChan", "_initDummyFrame", "_format", "_set", "_clear", "_transform", "_transform3D", "_getString", "_norm", "_axDistance", "_deleteObject", "_copy", "_invert", "_convert", "_createTransformedFrameset", "_createShiftmapFrameset", "_fillTransformGrid", "_frame", "_addFrame", "_scaleMap2D", "_setI", "_setD"]'
+    -s EXPORTED_FUNCTIONS='["_malloc", "_free", "_plotGrid", "_emptyFitsChan", "_putFits", "_getFrameFromFitsChan", "_initDummyFrame", "_format", "_set", "_clear", "_transform", "_transform3D", "_getString", "_norm", "_axDistance", "_deleteObject", "_copy", "_invert", "_convert", "_createTransformedFrameset", "_createOffsetFrameset", "_fillTransformGrid", "_frame", "_addFrame", "_scaleMap2D", "_setI", "_setD"]'
 
 printf "Checking for AST wrapper WASM..."
 if [[ $(find build/ast_wrapper.js -type f -size +1000c 2>/dev/null) ]]; then

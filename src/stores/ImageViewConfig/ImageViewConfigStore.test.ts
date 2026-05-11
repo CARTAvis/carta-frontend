@@ -1,4 +1,4 @@
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
@@ -6,6 +6,28 @@ import {ImageViewConfigStore} from "./ImageViewConfigStore";
 const mockUpdateActiveImage = jest.fn();
 const mockIsActiveImage = jest.fn();
 const mockSetActiveImage = jest.fn();
+
+// Mock RenderConfigStore to handle import chain
+jest.mock("stores/Frame", () => ({
+    RenderConfigStore: {
+        COLOR_MAPS_SELECTED: ["viridis", "plasma", "inferno", "magma"],
+        COLOR_MAPS_MONO: new Map([
+            ["red", "#ff0000"],
+            ["green", "#00ff00"],
+            ["blue", "#0000ff"]
+        ]),
+        COLOR_MAPS_CUSTOM: "custom",
+        COLOR_MAPS_PANEL: "panel",
+        COLOR_MAPS_ALL: ["viridis", "plasma", "inferno", "magma", "red", "green", "blue", "custom", "panel"],
+        SCALING_TYPES: new Map([
+            ["linear", "Linear"],
+            ["log", "Log"],
+            ["sqrt", "Square Root"],
+            ["square", "Square"],
+            ["power", "Power"]
+        ])
+    }
+}));
 
 jest.mock("stores", () => {
     class MockColorBlendingStore {
@@ -24,8 +46,8 @@ jest.mock("stores", () => {
                 setActiveImage: x => mockSetActiveImage(x)
             }
         },
-        FrameStore: jest.fn(id => ({
-            id,
+        FrameStore: jest.fn(frameInfo => ({
+            id: frameInfo.fileId,
             clearContours: jest.fn()
         })),
         ColorBlendingStore: MockColorBlendingStore
@@ -34,9 +56,50 @@ jest.mock("stores", () => {
 
 describe("ImageViewConfigStore", () => {
     const imageViewConfigStore = ImageViewConfigStore.Instance;
-    const mockFrame1 = new FrameStore(0);
-    const mockFrame2 = new FrameStore(1);
-    const mockFrame3 = new FrameStore(2);
+
+    // Create mock FrameInfo objects
+    const mockFrameInfo1 = {
+        fileId: 0,
+        directory: "/mock/path",
+        lelExpr: false,
+        hdu: "",
+        fileInfo: {} as any,
+        fileInfoExtended: {} as any,
+        fileFeatureFlags: 0,
+        renderMode: 0, // Use number instead of enum
+        beamTable: [],
+        generated: false
+    };
+
+    const mockFrameInfo2 = {
+        fileId: 1,
+        directory: "/mock/path",
+        lelExpr: false,
+        hdu: "",
+        fileInfo: {} as any,
+        fileInfoExtended: {} as any,
+        fileFeatureFlags: 0,
+        renderMode: 0,
+        beamTable: [],
+        generated: false
+    };
+
+    const mockFrameInfo3 = {
+        fileId: 2,
+        directory: "/mock/path",
+        lelExpr: false,
+        hdu: "",
+        fileInfo: {} as any,
+        fileInfoExtended: {} as any,
+        fileFeatureFlags: 0,
+        renderMode: 0,
+        beamTable: [],
+        generated: false
+    };
+
+    const mockFrame1 = new FrameStore(mockFrameInfo1);
+    const mockFrame2 = new FrameStore(mockFrameInfo2);
+    const mockFrame3 = new FrameStore(mockFrameInfo3);
     let colorBlendingImage1, colorBlendingImage2;
 
     // let mock frames become instance of FrameStore

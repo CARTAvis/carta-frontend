@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, MenuItem, PopoverProps} from "@blueprintjs/core";
+import {Button, MenuItem, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import gammaPng from "static/equations/gamma.png";
 // Equation PNG images
@@ -9,7 +9,8 @@ import powerPng from "static/equations/power.png";
 import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 
-import {FrameScaling, RenderConfigStore} from "stores/Frame";
+import {FrameScaling} from "enums";
+import {RenderConfigStore} from "stores/Frame";
 
 import "./ScalingSelectComponent.scss";
 

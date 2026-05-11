@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {Font, ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp, getColorForTheme} from "utilities";
 
 import "./ColorbarComponent.scss";
@@ -21,7 +21,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     @observable hoverInfoText: string = "";
     @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
-    private mouseEnterHandle;
+    private mouseEnterHandle: ReturnType<typeof setTimeout> | undefined;
     private layerRef = React.createRef<any>();
 
     private static readonly HoverDelay = 500;
@@ -42,9 +42,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     };
 
     @action onMouseEnter = () => {
-        if (this.mouseEnterHandle) {
-            clearTimeout(this.mouseEnterHandle);
-        }
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
         this.mouseEnterHandle = setTimeout(() => {
             this.setMouseHovering(true);
         }, ColorbarComponent.HoverDelay);
@@ -52,9 +51,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     @action onMouseLeave = () => {
         this.setMouseHovering(false);
-        if (this.mouseEnterHandle) {
-            clearTimeout(this.mouseEnterHandle);
-        }
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
         this.props.onCursorHoverValueChanged(NaN);
     };
 
@@ -64,6 +62,11 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.mouseEnterHandle);
+        this.mouseEnterHandle = undefined;
     }
 
     private handleMouseMove = event => {
@@ -112,13 +115,13 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
-        let getColor = (customColor: boolean, color: string): string => {
+        const getColor = (customColor: boolean, color: string): string => {
             return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
         const isOnePixBorder = colorbarSettings.borderWidth * appStore.imageRatio <= 1;
-        let isIntPosition = (position: number): boolean => {
+        const isIntPosition = (position: number): boolean => {
             return (position * devicePixelRatio) % 1 === 0;
         };
 
@@ -127,11 +130,11 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let stageTop = 0;
         let stageLeft = 0;
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
-        let rectY = yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+        let rectY = yOffset - (isOnePixBorder ? (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0) : 0);
         let rectWidth = colorbarSettings.width;
-        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
-        let rectGradientStart = {x: 0, y: 0};
-        let rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
+        let rectHeight = colorbarSettingsHeight + (isOnePixBorder ? (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0) : 0);
+        const rectGradientStart = {x: 0, y: 0};
+        const rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
         let labelYPos = yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
@@ -151,7 +154,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             stageHeight = stageWidth;
             stageWidth = viewWidth;
             rectY = rectX;
-            rectX = yOffset + (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+            rectX = yOffset + (isOnePixBorder ? (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0) : 0);
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
             [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [rectGradientEnd.y, rectGradientEnd.x, rectGradientStart.y, rectGradientStart.x];
             [labelXPos, labelYPos] = [labelYPos, labelXPos];
@@ -173,14 +176,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 height={rectHeight}
                 fillLinearGradientStartPoint={rectGradientStart}
                 fillLinearGradientEndPoint={rectGradientEnd}
-                fillLinearGradientColorStops={colorbarSettings.gradientVisible ? frame.renderConfig.colorscaleArray : null}
-                stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
+                fillLinearGradientColorStops={colorbarSettings.gradientVisible ? frame.renderConfig.colorscaleArray : undefined}
+                stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : undefined}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
             />
         );
 
-        let ticks = [];
-        let numbers = [];
+        const ticks: JSX.Element[] = [];
+        const numbers: JSX.Element[] = [];
         if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
             const texts = frame.colorbarStore.texts;
             const positions = frame.colorbarStore.positions;
@@ -188,7 +191,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position
-                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
+                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 ? positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio : 0);
                     let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
@@ -230,7 +233,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             text={texts[i]}
                             x={numberXPos}
                             y={numberYPos}
-                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : null}
+                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : undefined}
                             align={"center"}
                             fill={getColor(colorbarSettings.numberCustomColor, colorbarSettings.numberColor)}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
