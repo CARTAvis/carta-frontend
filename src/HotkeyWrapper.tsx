@@ -216,6 +216,16 @@ export class HotkeyService extends React.Component<{}> {
             const actualDeltaX = deltaX * baseIncrement * acceleratedMultiplier * zoomMultiplier;
             const actualDeltaY = deltaY * baseIncrement * acceleratedMultiplier * zoomMultiplier;
 
+            if (region.supportsPointSelection && region.hasSelectedRotationPoint) {
+                region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
+                return;
+            }
+
+            if (region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
+                region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
+                return;
+            }
+
             // Check if a specific point is selected for polygon/polyline regions
             if (region.supportsPointSelection && region.hasSelectedPoint) {
                 // Move only the selected point

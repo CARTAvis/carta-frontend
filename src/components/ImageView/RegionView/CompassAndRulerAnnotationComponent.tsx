@@ -94,6 +94,16 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         if (konvaEvent.target) {
             props.onSelect?.(props.region);
             props.region.beginEditing();
+            if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
+                props.region.selectPoint(0);
+            }
+        }
+    };
+
+    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        props.onSelect?.(props.region);
+        if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
+            props.region.selectPoint(0);
         }
     };
 
@@ -247,8 +257,10 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
         onDragEnd: handleAnchorDragEnd,
-        onDragMove: handleAnchorDrag
+        onDragMove: handleAnchorDrag,
+        onClick: handleAnchorClick
     };
+    const isLengthSelected = region.hasSelectedPoint;
 
     return (
         <>
@@ -282,6 +294,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
                             anchor={"northTip"}
                             x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
                             y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
+                            isSelected={isLengthSelected}
                             selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                             {...anchorCommonProps}
                         />
@@ -289,6 +302,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
                             anchor={"eastTip"}
                             x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
                             y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
+                            isSelected={isLengthSelected}
                             selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                             {...anchorCommonProps}
                         />
@@ -359,7 +373,24 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
 
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
+            props.onSelect?.(props.region);
             region.beginEditing();
+            const anchorName = konvaEvent.target.id();
+            if (anchorName === "start") {
+                region.selectPoint(0);
+            } else if (anchorName === "finish") {
+                region.selectPoint(1);
+            }
+        }
+    };
+
+    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        props.onSelect?.(props.region);
+        const anchorName = konvaEvent.target.id();
+        if (anchorName === "start") {
+            region.selectPoint(0);
+        } else if (anchorName === "finish") {
+            region.selectPoint(1);
         }
     };
 
@@ -603,6 +634,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             onDragStart={handleAnchorDragStart}
                             onDragEnd={handleAnchorDragEnd}
                             onDragMove={handleAnchorDrag}
+                            onClick={handleAnchorClick}
+                            isSelected={region.selectedPointIndex === 0}
                             selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                         />
                         <Anchor
@@ -616,6 +649,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             onDragStart={handleAnchorDragStart}
                             onDragEnd={handleAnchorDragEnd}
                             onDragMove={handleAnchorDrag}
+                            onClick={handleAnchorClick}
+                            isSelected={region.selectedPointIndex === 1}
                             selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                         />
                     </>

@@ -7,7 +7,16 @@ import {observer} from "mobx-react";
 
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {type FrameStore, type RegionStore, type TextAnnotationStore} from "stores/Frame";
+import {
+    type FrameStore,
+    type RegionStore,
+    SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
+    SIMPLE_SHAPE_LEFT_POINT_INDEX,
+    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_POINT_INDEX,
+    type TextAnnotationStore
+} from "stores/Frame";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
@@ -47,6 +56,47 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             this.props.region.setControlPoint(1, {x: (this.textRef.current.textWidth * devicePixelRatio) / this.props.frame.aspectRatio, y: (this.textRef.current.textHeight * devicePixelRatio) / this.props.frame.aspectRatio}, true);
         }
     }
+
+    private static IsSideSelectableSimpleShape = (region: RegionStore) =>
+        region.regionType === CARTA.RegionType.RECTANGLE ||
+        region.regionType === CARTA.RegionType.ANNRECTANGLE ||
+        region.regionType === CARTA.RegionType.ELLIPSE ||
+        region.regionType === CARTA.RegionType.ANNELLIPSE ||
+        region.regionType === CARTA.RegionType.ANNTEXT;
+
+    private static GetSelectedSimpleShapeAnchor = (selectedPointIndex: number): string => {
+        switch (selectedPointIndex) {
+            case SIMPLE_SHAPE_TOP_POINT_INDEX:
+                return "top";
+            case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
+                return "right";
+            case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
+                return "bottom";
+            case SIMPLE_SHAPE_LEFT_POINT_INDEX:
+                return "left";
+            case SIMPLE_SHAPE_ROTATION_POINT_INDEX:
+                return "rotator";
+            default:
+                return "";
+        }
+    };
+
+    private static GetSimpleShapeAnchorPointIndex = (anchor: string): number => {
+        switch (anchor) {
+            case "top":
+                return SIMPLE_SHAPE_TOP_POINT_INDEX;
+            case "right":
+                return SIMPLE_SHAPE_RIGHT_POINT_INDEX;
+            case "bottom":
+                return SIMPLE_SHAPE_BOTTOM_POINT_INDEX;
+            case "left":
+                return SIMPLE_SHAPE_LEFT_POINT_INDEX;
+            case "rotator":
+                return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
+            default:
+                return -1;
+        }
+    };
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
@@ -313,7 +363,23 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (konvaEvent.target) {
             const node = konvaEvent.target;
             const anchor = node.id();
+            this.selectSimpleShapeAnchor(anchor);
             this.startEditing(anchor);
+        }
+    };
+
+    @action private handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        this.selectSimpleShapeAnchor(konvaEvent.target.id());
+    };
+
+    @action private selectSimpleShapeAnchor = (anchor: string) => {
+        if (!SimpleShapeRegionComponent.IsSideSelectableSimpleShape(this.props.region)) {
+            return;
+        }
+
+        const selectedPointIndex = SimpleShapeRegionComponent.GetSimpleShapeAnchorPointIndex(anchor);
+        if (selectedPointIndex >= 0) {
+            this.props.region.selectPoint(selectedPointIndex);
         }
     };
 
@@ -403,14 +469,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const isKeepAspectMode = evt.shiftKey;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 const isRegionCornerMode = (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed);
-                if (isRegionCornerMode) {
+                if (SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
+                    this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
+                } else if (isRegionCornerMode) {
                     this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
                 } else {
                     this.applyCenterScaling(region, offsetPoint.x, offsetPoint.y, anchorName, isKeepAspectMode);
                 }
 
                 if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
-                    const dragBoundedPos = this.getDragBoundedAnchorPos(region, anchorName, isRegionCornerMode);
+                    const dragBoundedPos = this.getDragBoundedAnchorPos(region, anchorName, SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) || isRegionCornerMode);
                     if (dragBoundedPos) {
                         anchor.position(dragBoundedPos);
                     }
@@ -453,7 +521,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
 
-        return anchorConfigs.map(config => {
+        const anchors = anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
             const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
             let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
@@ -463,6 +531,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
 
             const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const isSelectedSimpleShapeAnchor =
+                SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) && region.hasSelectedPoint && config.anchor === SimpleShapeRegionComponent.GetSelectedSimpleShapeAnchor(region.selectedPointIndex);
             return (
                 <Anchor
                     key={config.anchor}
@@ -471,15 +541,19 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     y={posCanvas.y}
                     rotation={-region.rotation}
                     isRotator={config.anchor === "rotator"}
+                    isSelected={isSelectedSimpleShapeAnchor}
                     selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}
                     onDragStart={this.handleAnchorDragStart}
                     onDragEnd={this.handleAnchorDragEnd}
                     onDragMove={this.handleAnchorDrag}
+                    onClick={this.handleAnchorClick}
                 />
             );
         });
+
+        return anchors;
     };
 
     private getTextProps = (region: TextAnnotationStore, centerPixelSpace: Point2D) => {

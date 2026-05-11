@@ -98,13 +98,15 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
 
-        // Select the specific point being dragged for polygon/polyline regions
+        // Select the specific point being dragged for keyboard follow-up edits
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const index = node.index;
             const anchor = node.id();
 
-            if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
+            if (anchor.includes("rotator") && this.props.region.supportsPointSelection) {
+                this.props.region.selectPoint(this.props.region.rotationPointIndex);
+            } else if (index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
                 this.props.region.selectPoint(index);
             }
         }
@@ -251,13 +253,15 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     private handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        // Select the specific point for polygon/polyline regions
+        // Select the specific point for keyboard follow-up edits
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const index = node.index;
             const anchor = node.id();
 
-            if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
+            if (anchor.includes("rotator") && this.props.region.supportsPointSelection) {
+                this.props.region.selectPoint(this.props.region.rotationPointIndex);
+            } else if (index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
                 this.props.region.selectPoint(index);
             }
         }
@@ -290,7 +294,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false): React.ReactNode {
-        const isSelected = !isRotator && this.props.region.supportsPointSelection && this.props.region.selectedPointIndex === key;
+        const selectedPointIndex = isRotator ? this.props.region.rotationPointIndex : key;
+        const isSelected = this.props.region.supportsPointSelection && this.props.region.selectedPointIndex === selectedPointIndex;
         return (
             <Anchor
                 key={key}

@@ -17,6 +17,11 @@ export const FOCUS_REGION_RATIO = 0.4;
 
 export const CENTER_POINT_INDEX = 0;
 export const SIZE_POINT_INDEX = 1;
+export const SIMPLE_SHAPE_TOP_POINT_INDEX = 0;
+export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;
+export const SIMPLE_SHAPE_BOTTOM_POINT_INDEX = 2;
+export const SIMPLE_SHAPE_LEFT_POINT_INDEX = 3;
+export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 4;
 
 export class RegionStore {
     readonly fileId: number;
@@ -348,11 +353,78 @@ export class RegionStore {
     }
 
     @computed get supportsPointSelection(): boolean {
-        return this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.POLYLINE || this.regionType === CARTA.RegionType.ANNPOLYGON || this.regionType === CARTA.RegionType.ANNPOLYLINE;
+        return (
+            this.regionType === CARTA.RegionType.LINE ||
+            this.regionType === CARTA.RegionType.ANNLINE ||
+            this.regionType === CARTA.RegionType.RECTANGLE ||
+            this.regionType === CARTA.RegionType.ANNRECTANGLE ||
+            this.regionType === CARTA.RegionType.ELLIPSE ||
+            this.regionType === CARTA.RegionType.ANNELLIPSE ||
+            this.regionType === CARTA.RegionType.ANNTEXT ||
+            this.regionType === CARTA.RegionType.ANNCOMPASS ||
+            this.regionType === CARTA.RegionType.POLYGON ||
+            this.regionType === CARTA.RegionType.POLYLINE ||
+            this.regionType === CARTA.RegionType.ANNPOLYGON ||
+            this.regionType === CARTA.RegionType.ANNPOLYLINE ||
+            this.regionType === CARTA.RegionType.ANNVECTOR ||
+            this.regionType === CARTA.RegionType.ANNRULER
+        );
+    }
+
+    @computed get selectablePointCount(): number {
+        if (this.isSideSelectableSimpleShape) {
+            return this.activeFrame?.hasSquarePixels ? 5 : 4;
+        }
+        if (this.isRotationSelectableLineLikeRegion) {
+            return this.controlPoints.length + (this.activeFrame?.hasSquarePixels ? 1 : 0);
+        }
+        if (this.isLineLikeRegion) {
+            return this.controlPoints.length;
+        }
+        if (this.isCompassRegion) {
+            return 1;
+        }
+        return this.controlPoints.length;
+    }
+
+    @computed get isSideSelectableSimpleShape(): boolean {
+        return (
+            this.regionType === CARTA.RegionType.RECTANGLE ||
+            this.regionType === CARTA.RegionType.ANNRECTANGLE ||
+            this.regionType === CARTA.RegionType.ELLIPSE ||
+            this.regionType === CARTA.RegionType.ANNELLIPSE ||
+            this.regionType === CARTA.RegionType.ANNTEXT
+        );
+    }
+
+    @computed get isLineLikeRegion(): boolean {
+        return this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER;
+    }
+
+    @computed get isRotationSelectableLineLikeRegion(): boolean {
+        return this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR;
+    }
+
+    @computed get isCompassRegion(): boolean {
+        return this.regionType === CARTA.RegionType.ANNCOMPASS;
+    }
+
+    @computed get rotationPointIndex(): number {
+        if (this.isSideSelectableSimpleShape) {
+            return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
+        }
+        if (this.isRotationSelectableLineLikeRegion) {
+            return this.controlPoints.length;
+        }
+        return -1;
+    }
+
+    @computed get hasSelectedRotationPoint(): boolean {
+        return this.activeFrame?.hasSquarePixels && this.selectedPointIndex === this.rotationPointIndex;
     }
 
     @computed get hasSelectedPoint(): boolean {
-        return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.controlPoints.length;
+        return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.selectablePointCount;
     }
 
     public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
@@ -689,7 +761,7 @@ export class RegionStore {
     };
 
     @action selectPoint = (index: number) => {
-        if (this.supportsPointSelection && index >= 0 && index < this.controlPoints.length) {
+        if (this.supportsPointSelection && index >= 0 && index < this.selectablePointCount) {
             this.selectedPointIndex = index;
         }
     };
@@ -699,27 +771,38 @@ export class RegionStore {
     };
 
     @action selectNextPoint = () => {
-        if (this.supportsPointSelection && this.controlPoints.length > 0) {
+        if (this.supportsPointSelection && this.selectablePointCount > 0) {
             if (this.selectedPointIndex < 0) {
                 this.selectedPointIndex = 0;
             } else {
-                this.selectedPointIndex = (this.selectedPointIndex + 1) % this.controlPoints.length;
+                this.selectedPointIndex = (this.selectedPointIndex + 1) % this.selectablePointCount;
             }
         }
     };
 
     @action selectPreviousPoint = () => {
-        if (this.supportsPointSelection && this.controlPoints.length > 0) {
+        if (this.supportsPointSelection && this.selectablePointCount > 0) {
             if (this.selectedPointIndex < 0) {
-                this.selectedPointIndex = this.controlPoints.length - 1;
+                this.selectedPointIndex = this.selectablePointCount - 1;
             } else {
-                this.selectedPointIndex = (this.selectedPointIndex - 1 + this.controlPoints.length) % this.controlPoints.length;
+                this.selectedPointIndex = (this.selectedPointIndex - 1 + this.selectablePointCount) % this.selectablePointCount;
             }
         }
     };
 
     @action moveSelectedPoint = (deltaX: number, deltaY: number) => {
         if (this.hasSelectedPoint) {
+            if (this.hasSelectedRotationPoint) {
+                return;
+            }
+            if (this.isCompassRegion) {
+                this.moveSelectedCompassLength(deltaX);
+                return;
+            }
+            if (this.isSideSelectableSimpleShape) {
+                this.moveSelectedSimpleShapeSide(deltaX, deltaY);
+                return;
+            }
             const currentPoint = this.controlPoints[this.selectedPointIndex];
             const newPoint = {
                 x: currentPoint.x + deltaX,
@@ -727,6 +810,71 @@ export class RegionStore {
             };
             this.setControlPoint(this.selectedPointIndex, newPoint);
         }
+    };
+
+    private moveSelectedCompassLength = (deltaX: number) => {
+        if (deltaX === 0) {
+            return;
+        }
+
+        const compassRegion = this as unknown as RegionStore & {length: number; setLength: (length: number) => void};
+        compassRegion.setLength(Math.max(1e-3, compassRegion.length + deltaX));
+    };
+
+    @action rotateSelectedPoint = (deltaDegrees: number) => {
+        if (this.hasSelectedRotationPoint && deltaDegrees !== 0) {
+            this.setRotation(this.rotation + deltaDegrees);
+        }
+    };
+
+    private moveSelectedSimpleShapeSide = (deltaX: number, deltaY: number) => {
+        const rotation = (this.rotation * Math.PI) / 180.0;
+        const delta = rotate2D({x: deltaX, y: deltaY}, -rotation);
+        const minSize = 1e-3;
+        const isRectangle = this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE;
+        const isText = this.regionType === CARTA.RegionType.ANNTEXT;
+        const zoomLevel = this.activeFrame?.spatialReference?.zoomLevel || this.activeFrame?.zoomLevel || 1;
+        const textScale = AppStore.Instance.imageRatio / zoomLevel;
+        const halfWidth = isRectangle ? this.size.x / 2 : isText ? (this.size.x * textScale) / 2 : this.size.y;
+        const halfHeight = isRectangle ? this.size.y / 2 : isText ? (this.size.y * textScale) / 2 : this.size.x;
+
+        let left = -halfWidth;
+        let right = halfWidth;
+        let bottom = -halfHeight;
+        let top = halfHeight;
+
+        switch (this.selectedPointIndex) {
+            case SIMPLE_SHAPE_TOP_POINT_INDEX:
+                top += delta.y;
+                if (top - bottom < minSize) {
+                    top = bottom + minSize;
+                }
+                break;
+            case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
+                right += delta.x;
+                if (right - left < minSize) {
+                    right = left + minSize;
+                }
+                break;
+            case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
+                bottom += delta.y;
+                if (top - bottom < minSize) {
+                    bottom = top - minSize;
+                }
+                break;
+            case SIMPLE_SHAPE_LEFT_POINT_INDEX:
+                left += delta.x;
+                if (right - left < minSize) {
+                    left = right - minSize;
+                }
+                break;
+            default:
+                return;
+        }
+
+        const centerOffset = rotate2D({x: (left + right) / 2, y: (bottom + top) / 2}, rotation);
+        const size = isRectangle ? {x: right - left, y: top - bottom} : isText ? {x: (right - left) / textScale, y: (top - bottom) / textScale} : {x: (top - bottom) / 2, y: (right - left) / 2};
+        this.setControlPoints([{x: this.center.x + centerOffset.x, y: this.center.y + centerOffset.y}, size]);
     };
 
     @action focusCenter = () => {
