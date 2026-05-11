@@ -171,6 +171,13 @@ EMSCRIPTEN_KEEPALIVE AstCmpMap* getSpatialMapping(AstFrameSet* src, AstFrameSet*
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
+    auto clearStatusAndReturnNull = []() -> AstFrameSet* {
+        if (!astOK) {
+            astClearStatus;
+        }
+        return nullptr;
+    };
+
     // 2D scale and rotation matrix
     double sinTheta = sin(angle);
     double cosTheta = cos(angle);
@@ -179,7 +186,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
 
     if (matrixMap == AST__NULL) {
         cout << "Creating matrix map failed." << endl;
-        return nullptr;
+        return clearStatusAndReturnNull();
     }
 
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsInfo, AST__BASE);
@@ -198,9 +205,22 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
     AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
 
+    if (!astOK || !pixFrame || !pixFrameCopy || !skyFrame || !pixToSkyMapping || !wcsInfoTransformed || !shiftMapToOrigin || !shiftMapFromOrigin || !combinedMap || !combinedMap2) {
+        cout << "Creating transformed frame set failed." << endl;
+        if (wcsInfoTransformed) {
+            astDelete(wcsInfoTransformed);
+        }
+        return clearStatusAndReturnNull();
+    }
+
     astAddFrame(wcsInfoTransformed, 1, combinedMap2, pixFrameCopy);
     astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
     astSetI(wcsInfoTransformed, "Current", 3);
+    if (!astOK) {
+        cout << "Creating transformed frame set failed." << endl;
+        astDelete(wcsInfoTransformed);
+        return clearStatusAndReturnNull();
+    }
     return wcsInfoTransformed;
 }
 
