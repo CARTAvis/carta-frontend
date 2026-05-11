@@ -3374,14 +3374,11 @@ export class AppStore {
     };
 
     @flow.bound *setAllReferences(frame: FrameStore) {
-        if (!frame) {
-            return;
-        }
-
         if (this.spatialReference !== frame) {
             yield this.setSpatialReference(frame);
         }
 
+        // User cancelled the color-blending alert; abort setting the remaining references.
         if (this.spatialReference !== frame) {
             return;
         }
