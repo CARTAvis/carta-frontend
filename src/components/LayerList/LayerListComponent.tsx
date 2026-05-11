@@ -252,7 +252,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             const isSpectralReference = frame === appStore.spectralReference;
             let tooltipSubtitle: string;
             if (isSpectralReference) {
-                tooltipSubtitle = "Click to match or unmatch all spectral images to this reference";
+                tooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
