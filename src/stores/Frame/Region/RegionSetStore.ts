@@ -1,29 +1,21 @@
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Point2D, Transform2D} from "models";
-import {BackendService} from "services";
-import {FileBrowserStore, PreferenceStore} from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {RegionMode, type RegionsOpacity} from "enums";
+import {type Point2D, Transform2D} from "models";
+import {type BackendService} from "services";
+import {FileBrowserStore, type PreferenceStore} from "stores";
+import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
-export enum RegionMode {
-    MOVING,
-    CREATING
-}
-
-export enum RegionsOpacity {
-    Visible = 1,
-    SemiTransparent = 0.5,
-    Invisible = 0
-}
+import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
-    @observable regions: RegionStore[];
-    @observable selectedRegion: RegionStore;
+    @observable regions: RegionStore[] = [];
+    @observable selectedRegion: RegionStore | null;
     @observable selectedRegionIds: Set<number> = new Set();
-    @observable mode: RegionMode;
+    @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
     @observable opacity: number = 1;
     @observable locked: boolean = false;
@@ -35,15 +27,13 @@ export class RegionSetStore {
     private readonly preference: PreferenceStore;
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
-        makeObservable(this);
         this.frame = frame;
         this.backendService = backendService;
         this.preference = preference;
-        this.regions = [];
         this.newRegionType = preference.regionType;
-        this.mode = RegionMode.MOVING;
         this.addPointRegion(frame.center, true);
-        this.selectedRegion = this.regions[0];
+        this.selectedRegion = this.regions[0] ?? null;
+        makeObservable(this);
     }
 
     /**
@@ -77,7 +67,10 @@ export class RegionSetStore {
         }
 
         if (focusRegionId && ids.includes(focusRegionId) && this.regionMap.has(focusRegionId)) {
-            this.selectRegion(this.regionMap.get(focusRegionId));
+            const region = this.regionMap.get(focusRegionId);
+            if (region) {
+                this.selectRegion(region);
+            }
         } else if (ids.length > 0) {
             const last = ids[ids.length - 1];
             const region = this.regionMap.get(last);
@@ -114,7 +107,7 @@ export class RegionSetStore {
     private getTempRegionId = () => {
         let regionId = -1;
         if (this.regions.length) {
-            let minRegionId = Math.min(...this.regions.map(r => r.regionId));
+            const minRegionId = Math.min(...this.regions.map(r => r.regionId));
             regionId = Math.min(regionId, minRegionId - 1);
         }
         return regionId;
@@ -300,8 +293,11 @@ export class RegionSetStore {
                 return new RulerAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNTEXT:
                 return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
-            case CARTA.RegionType.ANNPOINT:
-                return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.pointAnnotationShape, this.preference.pointAnnotationWidth);
+            case CARTA.RegionType.ANNPOINT: {
+                const region = new PointAnnotationStore(...commonInputs, ...annotationStyles);
+                region.initializeStyles({pointShape: this.pointShapeCache || this.preference.pointAnnotationShape, pointWidth: this.preference.pointAnnotationWidth});
+                return region;
+            }
             case CARTA.RegionType.ANNVECTOR:
                 return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNELLIPSE:
@@ -319,9 +315,11 @@ export class RegionSetStore {
         try {
             const ack = await this.backendService.setRegion(fileId, -1, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-            region.setRegionId(ack.regionId);
+            if (ack.regionId != null) {
+                region.setRegionId(ack.regionId);
+            }
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -355,7 +353,7 @@ export class RegionSetStore {
             return;
         }
 
-        const currentIndex = this.regions.indexOf(this.selectedRegion);
+        const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
         const nextIndex = currentPos === -1 ? selectableIndices[0] : selectableIndices[(currentPos + 1) % selectableIndices.length];
         this.selectRegionByIndex(nextIndex);
@@ -379,7 +377,7 @@ export class RegionSetStore {
             return;
         }
 
-        const currentIndex = this.regions.indexOf(this.selectedRegion);
+        const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
         const prevIndex = currentPos === -1 ? selectableIndices[selectableIndices.length - 1] : selectableIndices[(currentPos - 1 + selectableIndices.length) % selectableIndices.length];
         this.selectRegionByIndex(prevIndex);
@@ -400,7 +398,7 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             const selectedInd = this.regions.findIndex(r => r === region);
-            let exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
+            const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
             if (!region.isTemporary) {

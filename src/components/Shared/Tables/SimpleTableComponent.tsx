@@ -1,7 +1,7 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 export class SimpleTableComponentProps {
@@ -21,8 +21,8 @@ export class SimpleTableComponentProps {
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-    private getFontStyle = (rowIndex: number): CSSProperties => {
-        return this.props.boldIndex?.includes(rowIndex) ? {fontWeight: "bold"} : null;
+    private getFontStyle = (rowIndex: number): CSSProperties | undefined => {
+        return this.props.boldIndex?.includes(rowIndex) ? {fontWeight: "bold"} : undefined;
     };
 
     private renderRowHeaderCell = (rowIndex: number) => {
@@ -53,19 +53,19 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     render() {
         const table = this.props;
-        const tableColumns = [];
+        const tableColumns: React.ReactElement[] = [];
         const tableData = table.dataset;
 
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
-            let dataArray = tableData.get(columnIndex)?.data;
+            const dataArray = tableData.get(columnIndex)?.data;
             const column = this.renderDataColumn(header.name, dataArray);
             tableColumns.push(column);
         });
 
         return (
             <Table2
-                ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
+                ref={table.updateTableRef ? ref => ref && table.updateTableRef?.(ref) : undefined}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
@@ -77,7 +77,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
                 cellRendererDependencies={this.props.cellRendererDependencies}
-                getCellClipboardData={null}
+                getCellClipboardData={undefined}
             >
                 {tableColumns}
             </Table2>

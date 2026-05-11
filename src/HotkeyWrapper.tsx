@@ -4,9 +4,9 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {AppStore, BrowserMode, DialogId} from "stores";
-import {CURSOR_REGION_ID, RegionMode} from "stores/Frame";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
+import {AppStore} from "stores";
+import {CURSOR_REGION_ID} from "stores/Frame";
 
 import "./HotkeyWrapper.scss";
 

@@ -2,9 +2,10 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
-import {AppStore, NumberFormatType} from "stores";
-import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {AngularSizeUnit, NumberFormatType} from "enums";
+import {AngularSize, isValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
+import {AppStore} from "stores";
+import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
@@ -27,11 +28,11 @@ export class ImageFittingStore {
     /** ID of the region currently selected for fitting. Set to 0 for the current field of view, or -1 for the full image. */
     @observable selectedRegionId: number = FOV_REGION_ID;
     /** Stores the initial values and fixed flags for each Gaussian component. */
-    @observable components: ImageFittingIndividualStore[];
+    @observable components: ImageFittingIndividualStore[] = [];
     /** Indicates whether to auto‑generate initial values when requesting for fitting. */
     @observable isAutoInitVal: boolean = true;
     /** Index of the component currently selected in the UI. */
-    @observable selectedComponentIndex: number;
+    @observable selectedComponentIndex: number = 0;
     /** Constant background offset. */
     @observable backgroundOffset: number = 0;
     /** Indicates whether to fix the background offset when fitting. */
@@ -45,7 +46,7 @@ export class ImageFittingStore {
     /** Whether a fitting request is currently being processed. */
     @observable isFitting: boolean = false;
     /** Progress of the current fitting request, from 0 to 1 (multiply by 100 for %). */
-    @observable progress: number = 0;
+    @observable progress: number;
     /** Whether cancel is in progress. */
     @observable isCancelling: boolean = false;
 
@@ -391,7 +392,7 @@ export class ImageFittingStore {
                 if (formatTypeY === NumberFormatType.Degrees && centerValueWCS) {
                     centerValueWCS.y += " (deg)";
                 }
-                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D) ?? {x: NaN, y: NaN};
                 if (formatTypeX === NumberFormatType.HMS) {
                     centerErrorWCS.x /= 15; // convert from arcsec to sec
                 }
@@ -401,10 +402,12 @@ export class ImageFittingStore {
                 const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
                 const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
 
-                let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
-                let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                const fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
+                const fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                const isValidFwhmValueWCS = !isNaN(fwhmValueWCS.x) && !isNaN(fwhmValueWCS.y) && isFinite(fwhmValueWCS.x) && isFinite(fwhmValueWCS.y);
+                const isValidFwhmErrorWCS = !isNaN(fwhmErrorWCS.x) && !isNaN(fwhmErrorWCS.y) && isFinite(fwhmErrorWCS.x) && isFinite(fwhmErrorWCS.y);
                 let fwhmUnit = AngularSizeUnit.ARCSEC;
-                if (fwhmValueWCS && fwhmErrorWCS) {
+                if (isValidFwhmValueWCS && isValidFwhmErrorWCS) {
                     if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
                         ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
                         fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
@@ -470,7 +473,7 @@ export class ImageFittingStore {
             newRegions?.forEach(r => r?.setDashLength(2));
             AppToaster.show(SuccessToast("tick", `Created ${params?.length} ellipse regions.`));
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -612,14 +615,14 @@ export class ImageFittingStore {
 }
 
 class ImageFittingIndividualStore {
-    @observable center: Point2D;
-    @observable amplitude: number;
-    @observable fwhm: Point2D;
-    @observable pa: number;
-    @observable centerFixed: {x: boolean; y: boolean};
-    @observable amplitudeFixed: boolean;
-    @observable fwhmFixed: {x: boolean; y: boolean};
-    @observable paFixed: boolean;
+    @observable center: Point2D = {x: NaN, y: NaN};
+    @observable amplitude: number = NaN;
+    @observable fwhm: Point2D = {x: NaN, y: NaN};
+    @observable pa: number = NaN;
+    @observable centerFixed: {x: boolean; y: boolean} = {x: false, y: false};
+    @observable amplitudeFixed: boolean = false;
+    @observable fwhmFixed: {x: boolean; y: boolean} = {x: false, y: false};
+    @observable paFixed: boolean = false;
 
     @action setCenterX = (val: number): boolean => {
         if (isFinite(val)) {
@@ -703,14 +706,6 @@ class ImageFittingIndividualStore {
 
     constructor() {
         makeObservable(this);
-        this.center = {x: NaN, y: NaN};
-        this.amplitude = NaN;
-        this.fwhm = {x: NaN, y: NaN};
-        this.pa = NaN;
-        this.centerFixed = {x: false, y: false};
-        this.amplitudeFixed = false;
-        this.fwhmFixed = {x: false, y: false};
-        this.paFixed = false;
     }
 
     @computed get centerWcs(): WCSPoint2D | null {
@@ -727,7 +722,7 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        if (!wcsSize) {
+        if (!isValidWcsPoint(wcsSize)) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);
@@ -800,7 +795,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmX(frame.getImageXValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageXValueFromArcsec(sizeInArcsec);
+            if (!isNaN(imageValue) && isFinite(imageValue)) {
+                return this.setFwhmX(imageValue);
+            }
         }
         return false;
     };
@@ -809,7 +807,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmY(frame.getImageYValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageYValueFromArcsec(sizeInArcsec);
+            if (imageValue !== null) {
+                return this.setFwhmY(imageValue);
+            }
         }
         return false;
     };

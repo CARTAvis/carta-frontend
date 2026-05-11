@@ -1,11 +1,11 @@
 import {CARTA} from "carta-protobuf";
-import LRUCache from "mnemonist/lru-cache";
+import {LRUCache} from "mnemonist";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
-import {Point2D, TileCoordinate} from "models";
+import {type Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {AppStore, FrameStore, PREVIEW_PV_FILEID} from "stores";
+import {AppStore, type FrameStore, PREVIEW_PV_FILEID} from "stores";
 import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -87,15 +87,15 @@ export class TileService {
     private currentlyStreamingChannelRange: {min: number; max: number};
     private currentlyStreamingTileRange: number[];
 
-    @observable remainingTiles: number;
-    @observable workersReady: boolean[];
+    @observable remainingTiles: number = 0;
+    @observable workersReady: boolean[] | undefined;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);
     }
 
     @action setWorkerReady(index: number) {
-        if (index >= 0 && index < this.workersReady.length) {
+        if (this.workersReady && index >= 0 && index < this.workersReady.length) {
             this.workersReady[index] = true;
             this.workers[index].postMessage(["setid", index]);
         }
@@ -104,7 +104,7 @@ export class TileService {
     public decompressPreviewRasterData(previewData: CARTA.PvPreviewData) {
         const compressedArray = previewData.imageData;
         const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
+        const compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
         compressedView.set(compressedArray);
 
         const eventArgs = {
@@ -146,7 +146,6 @@ export class TileService {
     };
 
     private constructor() {
-        makeObservable(this);
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 
@@ -161,7 +160,6 @@ export class TileService {
         this.syncIdTileCountMap = new Map<number, number>();
 
         this.compressionRequestCounter = 0;
-        this.remainingTiles = 0;
         this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();
@@ -173,15 +171,15 @@ export class TileService {
         for (let i = 0; i < this.workers.length; i++) {
             this.workers[i] = new ZFPWorker();
             this.workers[i].onmessage = (event: MessageEvent) => {
-                if (event.data[0] === "ready") {
+                if (event.data?.[0] === "ready") {
                     this.setWorkerReady(i);
-                } else if (event.data[0] === "decompress") {
+                } else if (event.data?.[0] === "decompress") {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2] as TileMessageArgs;
                     const length = (eventArgs.width ?? NaN) * (eventArgs.subsetHeight ?? NaN);
                     const resultArray = new Float32Array(buffer, 0, length);
                     this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate, eventArgs.syncId);
-                } else if (event.data[0] === "preview decompress") {
+                } else if (event.data?.[0] === "preview decompress") {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const frame = AppStore.Instance.previewFrames.get(eventArgs.previewId);
@@ -191,6 +189,7 @@ export class TileService {
                 }
             };
         }
+        makeObservable(this);
     }
 
     private resetCoordinateQueue() {
@@ -608,7 +607,7 @@ export class TileService {
             this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
         }
 
-        for (let tile of tileMessage.tiles ?? []) {
+        for (const tile of tileMessage.tiles ?? []) {
             const encodedCoordinate = TileCoordinate.Encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
             const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
@@ -647,7 +646,7 @@ export class TileService {
         const compressedArray = tile.imageData;
         const workerIndex = this.compressionRequestCounter % this.workers.length;
         const nanEncodings32 = new Int32Array((tile.nanEncodings ?? new Uint8Array()).slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray?.byteLength ?? NaN, (tile.width ?? NaN) * (tile.height ?? NaN) * 4));
+        const compressedView = new Uint8Array(Math.max(compressedArray?.byteLength ?? NaN, (tile.width ?? NaN) * (tile.height ?? NaN) * 4));
         compressedView.set(compressedArray ?? new Uint8Array());
 
         const key = `${fileId}_${stokes}_${channel}`;

@@ -1,15 +1,15 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageItem, ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {LayerListSettingsTabs} from "stores/Widgets";
+import {HelpType, ImageType, LayerListSettingsTabs} from "enums";
+import {type ImageItem} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./LayerListComponent.scss";
 
@@ -29,8 +29,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 650;
+    @observable height: number = 180;
     @observable columnWidths = [132, 97, 110, 75, 95];
 
     constructor(props: any) {
@@ -123,6 +123,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
         const frame = isColorBlending ? image.store?.baseFrame : image?.store;
+
+        if (!frame) {
+            return <Cell className={classNames("row-cell", {active: rowIndex === appStore.activeImageIndex})} />;
+        }
 
         const rasterVisible = isColorBlending ? image.store.rasterVisible : frame.renderConfig.visible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
@@ -326,7 +330,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private columnHeaderRenderer = (columnIndex: number) => {
-        let name: string;
+        let name: string = "";
         switch (columnIndex) {
             case 0:
                 name = "Image";
@@ -344,6 +348,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Polarization";
                 break;
             default:
+                name = "";
                 break;
         }
 
@@ -358,23 +363,29 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
         const widgetsStore = AppStore.Instance.widgetsStore;
         const layerListWidget = widgetsStore.layerListWidgets?.get(this.props.id);
-        widgetsStore.createFloatingSettingsWidget(LayerListComponent.WIDGET_CONFIG.title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
+        const title = LayerListComponent.WIDGET_CONFIG.title;
+        if (title) {
+            widgetsStore.createFloatingSettingsWidget(title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
+        }
         if (layerListWidget) {
             layerListWidget.setSettingsTabId(LayerListSettingsTabs.REST_FREQ);
             layerListWidget.setSelectedFrameIndex(selectedFrameIndex);
         }
     };
 
-    private contextMenuRenderer = (context: MenuContext) => {
+    private contextMenuRenderer = (context: MenuContext): JSX.Element => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
+        if (!rows || !rows.length) {
+            return <Menu />;
+        }
         const image = appStore.imageViewConfigStore?.getImage(rows[0]);
         if (rows && rows.length && image) {
             if (image.type === ImageType.COLOR_BLENDING) {
                 return (
                     <Menu>
                         <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
-                        <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
+                        <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                     </Menu>
                 );
             } else {
@@ -391,13 +402,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <MenuDivider />
                             <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
                             <MenuItem text="Close other images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(frame)} />
-                            <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
+                            <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                         </Menu>
                     );
                 }
             }
         }
-        return null;
+        return <Menu />;
     };
 
     render() {
@@ -467,7 +478,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             onColumnWidthChanged={this.onColumnWidthsChange}
                             bodyContextMenuRenderer={this.contextMenuRenderer}
                             cellRendererDependencies={cellRendererDependencies}
-                            getCellClipboardData={null}
+                            getCellClipboardData={undefined}
                         >
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />

@@ -1,56 +1,13 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
+import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
-import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
-import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, toFixed} from "utilities";
+import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
+import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
+import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
-
-export enum AstColorsIndex {
-    GLOBAL = 0,
-    TITLE = 1,
-    GRID = 2,
-    BORDER = 3,
-    TICK = 4,
-    AXIS = 5,
-    NUMBER = 6,
-    LABEL = 7,
-    DISTANCE_MEASURE = 8
-}
-
-export enum LabelType {
-    Interior = "Interior",
-    Exterior = "Exterior"
-}
-
-export enum SystemType {
-    Auto = "AUTO",
-    Ecliptic = "ECLIPTIC",
-    FK4 = "FK4",
-    FK5 = "FK5",
-    Galactic = "GALACTIC",
-    ICRS = "ICRS",
-    Image = "CARTESIAN"
-}
-
-export enum NumberFormatType {
-    HMS = "hms",
-    DMS = "dms",
-    Degrees = "d"
-}
-
-export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
-    [NumberFormatType.HMS, "H:M:S"],
-    [NumberFormatType.DMS, "D:M:S"],
-    [NumberFormatType.Degrees, "Degrees"]
-]);
-
-export enum BeamType {
-    Open = "open",
-    Solid = "solid"
-}
 
 export class Padding {
     left: number;
@@ -59,59 +16,37 @@ export class Padding {
     bottom: number;
 }
 
-export class ASTSettingsString {
-    stringList: Array<string>;
-
-    constructor() {
-        this.stringList = [];
-    }
-
-    add(name: string, value: any, storeIf: boolean = true) {
-        if (value !== undefined && storeIf) {
-            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-            this.stringList.push(`${name}=${storedValue}`);
-        }
-    }
-
-    addSection(section: string) {
-        if (section !== undefined) {
-            this.stringList.push(section);
-        }
-    }
-
-    toString() {
-        return this.stringList.filter(str => str.length > 0).join(", ");
-    }
-}
-
 export class OverlayGlobalSettings {
-    @observable labelType: LabelType;
+    @observable labelType: LabelType = LabelType.Exterior;
     @observable color: string;
-    @observable tolerance: number; // percentage
-    @observable system: SystemType;
+    @observable tolerance: number = 2; // percentage
+    @observable system: SystemType = SystemType.Auto;
 
     // We need this so that we know what to do if it's set to native
-    @observable defaultSystem: SystemType;
-    @observable validWcs: boolean;
+    @observable defaultSystem: SystemType = SystemType.Auto;
+    @observable defaultEquinox: string;
+    @observable defaultEpoch: string;
+    @observable validWcs: boolean = false;
 
     public styleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
-        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
         if (isWcsFrameAndSystem) {
-            astString.add("System", this.explicitSystem);
+            setAstStringSystem(astString, this.explicitSystem, this);
         }
 
-        if (!AppStore.Instance.overlaySettings.labels?.customText) {
-            const symbolX = AST.getString(frame?.wcsInfo, "Symbol(1)");
-            const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
-            const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
-            const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
-            const haveUnitX = AST.getString(frame?.wcsInfo, "Unit(1)") !== "";
-            const haveUnitY = AST.getString(frame?.wcsInfo, "Unit(2)") !== "";
+        const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoOffset ?? frame?.wcsInfo) : frame?.wcsInfo;
+        if (!AppStore.Instance.overlaySettings.labels?.customText && labelFrameSet) {
+            const symbolX = AST.getString(labelFrameSet, "Symbol(1)");
+            const symbolY = AST.getString(labelFrameSet, "Symbol(2)");
+            const labelX = AST.getString(labelFrameSet, "Label(1)");
+            const labelY = AST.getString(labelFrameSet, "Label(2)");
+            const haveUnitX = AST.getString(labelFrameSet, "Unit(1)") !== "";
+            const haveUnitY = AST.getString(labelFrameSet, "Unit(2)") !== "";
 
             const isSysPixel = (this.explicitSystem === undefined && !(frame?.isPVImage || frame?.isSwappedZ)) || this.explicitSystem === SystemType.Image;
             const getSystemName = (symbolXY: string, isSysPixel: boolean, haveUnit: boolean, explicitSystem: SystemType) => {
@@ -123,18 +58,10 @@ export class OverlayGlobalSettings {
                     return "";
                 }
             };
-            const systemNameX = getSystemName(symbolX, isSysPixel, haveUnitX, this?.explicitSystem);
-            const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem);
+            const systemNameX = getSystemName(symbolX, isSysPixel, haveUnitX, this?.explicitSystem ?? SystemType.Image);
+            const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem ?? SystemType.Image);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
-        }
-
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
-            if (this.system === SystemType.FK4) {
-                astString.add("Equinox", "1950");
-            } else {
-                astString.add("Equinox", "2000");
-            }
         }
 
         return astString.toString();
@@ -154,14 +81,8 @@ export class OverlayGlobalSettings {
     }
 
     constructor() {
-        makeObservable(this);
-        this.system = SystemType.Auto;
-        this.labelType = LabelType.Exterior;
         this.setColor(PreferenceStore.Instance.astColor);
-        this.tolerance = 2; // percentage
-
-        this.defaultSystem = SystemType.Auto;
-        this.validWcs = false;
+        makeObservable(this);
     }
 
     @action setColor = (color: string) => {
@@ -194,22 +115,30 @@ export class OverlayGlobalSettings {
         this.defaultSystem = system;
     }
 
+    @action setDefaultEquinox(equinox: string) {
+        this.defaultEquinox = equinox;
+    }
+
+    @action setDefaultEpoch(epoch: string) {
+        this.defaultEpoch = epoch;
+    }
+
     @action setValidWcs(validWcs: boolean) {
         this.validWcs = validWcs;
     }
 }
 
 export class OverlayTitleSettings {
-    @observable visible: boolean;
-    @observable font: number;
-    @observable fontSize: number;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable hidden: boolean;
-    @observable customText: boolean;
+    @observable visible: boolean = false;
+    @observable font: number = 2;
+    @observable fontSize: number = 18;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable hidden: boolean = false;
+    @observable customText: boolean = false;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("DrawTitle", this.show);
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize * AppStore.Instance.imageRatio);
@@ -219,13 +148,6 @@ export class OverlayTitleSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = false;
-        this.hidden = false;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.font = 2;
-        this.fontSize = 18;
-        this.customText = false;
     }
 
     @computed get show() {
@@ -263,16 +185,16 @@ export class OverlayTitleSettings {
 }
 
 export class OverlayGridSettings {
-    @observable visible: boolean;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable width: number;
-    @observable customGap: boolean;
-    @observable gapX: number;
-    @observable gapY: number;
+    @observable visible: boolean = PreferenceStore.Instance.astGridVisible;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable width: number = 1;
+    @observable customGap: boolean = false;
+    @observable gapX: number = 0.2;
+    @observable gapY: number = 0.2;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
         astString.add("Width(Grid)", this.width * AppStore.Instance.imageRatio, this.width > 0);
@@ -283,13 +205,6 @@ export class OverlayGridSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = PreferenceStore.Instance.astGridVisible;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.width = 1;
-        this.customGap = false;
-        this.gapX = 0.2;
-        this.gapY = 0.2;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -323,13 +238,13 @@ export class OverlayGridSettings {
 }
 
 export class OverlayBorderSettings {
-    @observable visible: boolean;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable width: number;
+    @observable visible: boolean = true;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable width: number = 1;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Border", this.visible);
         astString.add("Color(Border)", AstColorsIndex.BORDER, this.customColor);
         astString.add("Width(Border)", this.width * AppStore.Instance.imageRatio, this.width > 0);
@@ -338,10 +253,6 @@ export class OverlayBorderSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = true;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.width = 1;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -363,19 +274,19 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
-    @observable visible: boolean;
-    @observable drawAll: boolean;
-    @observable densityX: number;
-    @observable densityY: number;
-    @observable customDensity: boolean;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable width: number;
-    @observable length: number; // percentage
-    @observable majorLength: number; // percentage
+    @observable visible: boolean = true;
+    @observable drawAll: boolean = true;
+    @observable densityX: number = 4;
+    @observable densityY: number = 4;
+    @observable customDensity: boolean = false;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable width: number = 1;
+    @observable length: number = 1; // percentage
+    @observable majorLength: number = 2; // percentage
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("TickAll", this.drawAll);
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
@@ -388,16 +299,6 @@ export class OverlayTickSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = true;
-        this.drawAll = true;
-        this.customDensity = false;
-        this.densityX = 4;
-        this.densityY = 4;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.width = 1;
-        this.length = 1; // percentage
-        this.majorLength = 2; // percentage
     }
 
     @action setVisible(visible: boolean) {
@@ -443,21 +344,17 @@ export class OverlayTickSettings {
 }
 
 export class OverlayAxisSettings {
-    @observable visible: boolean;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable width: number;
+    @observable visible: boolean = false;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable width: number = 1;
 
     constructor() {
         makeObservable(this);
-        this.visible = false;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.width = 1;
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         astString.add("DrawAxes", this.visible);
         astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
@@ -485,51 +382,37 @@ export class OverlayAxisSettings {
 }
 
 export class OverlayNumberSettings {
-    @observable visible: boolean;
-    @observable hidden: boolean;
-    @observable font: number;
-    @observable fontSize: number;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable customFormat: boolean;
-    @observable formatX: NumberFormatType;
-    @observable formatY: NumberFormatType;
-    @observable customPrecision: boolean;
-    @observable precision: number;
+    @observable visible: boolean = true;
+    @observable hidden: boolean = false;
+    @observable font: number = 0;
+    @observable fontSize: number = 12;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable customFormat: boolean = false;
+    @observable formatX: NumberFormatType = NumberFormatType.Degrees;
+    @observable formatY: NumberFormatType = NumberFormatType.Degrees;
+    @observable customPrecision: boolean = false;
+    @observable precision: number = 3;
 
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
-    @observable defaultFormatX: NumberFormatType;
-    @observable defaultFormatY: NumberFormatType;
-    @observable validWcs: boolean;
+    @observable defaultFormatX: NumberFormatType | undefined = NumberFormatType.Degrees;
+    @observable defaultFormatY: NumberFormatType | undefined = NumberFormatType.Degrees;
+    @observable validWcs: boolean = false;
 
     constructor() {
         makeObservable(this);
-        this.visible = true;
-        this.hidden = false;
-        this.fontSize = 12;
-        this.font = 0;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.customFormat = false;
-        this.defaultFormatX = NumberFormatType.Degrees;
-        this.defaultFormatY = NumberFormatType.Degrees;
-        this.formatX = NumberFormatType.Degrees;
-        this.formatY = NumberFormatType.Degrees;
-        this.customPrecision = false;
-        this.precision = 3;
-        this.validWcs = false;
     }
 
-    @computed get formatTypeX(): NumberFormatType {
+    @computed get formatTypeX(): NumberFormatType | undefined {
         if (!this.validWcs) {
             return undefined;
         }
         return this.customFormat ? this.formatX : this.defaultFormatX;
     }
 
-    @computed get formatTypeY(): NumberFormatType {
+    @computed get formatTypeY(): NumberFormatType | undefined {
         if (!this.validWcs) {
             return undefined;
         }
@@ -559,7 +442,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = this.customFormat ? this.formatX : this.defaultFormatX;
+        const format = this.customFormat ? this.formatX : this.defaultFormatX;
         return `${format}.${precision}`;
     }
 
@@ -568,12 +451,12 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = this.customFormat ? this.formatY : this.defaultFormatY;
+        const format = this.customFormat ? this.formatY : this.defaultFormatY;
         return `${format}.${precision}`;
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
@@ -624,11 +507,11 @@ export class OverlayNumberSettings {
         this.formatY = format;
     }
 
-    @action setDefaultFormatX(format: NumberFormatType) {
+    @action setDefaultFormatX(format: NumberFormatType | undefined) {
         this.defaultFormatX = format;
     }
 
-    @action setDefaultFormatY(format: NumberFormatType) {
+    @action setDefaultFormatY(format: NumberFormatType | undefined) {
         this.defaultFormatY = format;
     }
 
@@ -646,33 +529,23 @@ export class OverlayNumberSettings {
 }
 
 export class OverlayLabelSettings {
-    @observable visible: boolean;
-    @observable hidden: boolean;
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable font: number;
-    @observable fontSize: number;
-    @observable raDecReference: boolean;
-    @observable customText: boolean;
-    @observable customLabelX: string;
-    @observable customLabelY: string;
+    @observable visible: boolean = PreferenceStore.Instance.astLabelsVisible;
+    @observable hidden: boolean = false;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable font: number = 0;
+    @observable fontSize: number = 15;
+    @observable raDecReference: boolean = true;
+    @observable customText: boolean = false;
+    @observable customLabelX: string = "";
+    @observable customLabelY: string = "";
 
     constructor() {
         makeObservable(this);
-        this.visible = PreferenceStore.Instance.astLabelsVisible;
-        this.hidden = false;
-        this.fontSize = 15;
-        this.font = 0;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.raDecReference = true;
-        this.customText = false;
-        this.customLabelX = "";
-        this.customLabelY = "";
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         const appStore = AppStore.Instance;
 
@@ -734,77 +607,43 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayColorbarSettings {
-    @observable visible: boolean;
-    @observable interactive: boolean;
-    @observable width: number;
-    @observable offset: number;
-    @observable position: "right" | "top" | "bottom";
-    @observable customColor: boolean;
-    @observable color: string;
-    @observable borderVisible: boolean;
-    @observable borderWidth: number;
-    @observable borderCustomColor: boolean;
-    @observable borderColor: string;
-    @observable tickVisible: boolean;
-    @observable tickDensity: number;
-    @observable tickLen: number;
-    @observable tickWidth: number;
-    @observable tickCustomColor: boolean;
-    @observable tickColor: string;
-    @observable numberVisible: boolean;
-    @observable numberRotation: number;
-    @observable numberFont: number;
-    @observable numberFontSize: number;
-    @observable numberCustomPrecision: boolean;
-    @observable numberPrecision: number;
-    @observable numberCustomColor: boolean;
-    @observable numberColor: string;
-    @observable labelVisible: boolean;
-    @observable labelRotation: number;
-    @observable labelFont: number;
-    @observable labelFontSize: number;
-    @observable labelCustomText: boolean;
-    @observable labelCustomColor: boolean;
-    @observable labelColor: string;
-    @observable gradientVisible: boolean;
+    @observable visible: boolean = PreferenceStore.Instance.colorbarVisible;
+    @observable interactive: boolean = PreferenceStore.Instance.colorbarInteractive;
+    @observable width: number = PreferenceStore.Instance.colorbarWidth;
+    @observable offset: number = 5;
+    @observable position: "right" | "top" | "bottom" = PreferenceStore.Instance.colorbarPosition;
+    @observable customColor: boolean = false;
+    @observable color: string = AST_DEFAULT_COLOR;
+    @observable borderVisible: boolean = true;
+    @observable borderWidth: number = 1;
+    @observable borderCustomColor: boolean = false;
+    @observable borderColor: string = AST_DEFAULT_COLOR;
+    @observable tickVisible: boolean = true;
+    @observable tickDensity: number = PreferenceStore.Instance.colorbarTicksDensity;
+    @observable tickLen: number = 6;
+    @observable tickWidth: number = 1;
+    @observable tickCustomColor: boolean = false;
+    @observable tickColor: string = AST_DEFAULT_COLOR;
+    @observable numberVisible: boolean = true;
+    @observable numberRotation: number = -90;
+    @observable numberFont: number = 0;
+    @observable numberFontSize: number = 12;
+    @observable numberCustomPrecision: boolean = false;
+    @observable numberPrecision: number = 3;
+    @observable numberCustomColor: boolean = false;
+    @observable numberColor: string = AST_DEFAULT_COLOR;
+    @observable labelVisible: boolean = PreferenceStore.Instance.colorbarLabelVisible;
+    @observable labelRotation: number = -90;
+    @observable labelFont: number = 0;
+    @observable labelFontSize: number = 15;
+    @observable labelCustomText: boolean = false;
+    @observable labelCustomColor: boolean = false;
+    @observable labelColor: string = AST_DEFAULT_COLOR;
+    @observable gradientVisible: boolean = true;
     private textRatio = [0.56, 0.51, 0.56, 0.51, 0.6];
 
     constructor() {
         makeObservable(this);
-        const preference = PreferenceStore.Instance;
-        this.visible = preference.colorbarVisible;
-        this.interactive = preference.colorbarInteractive;
-        this.width = preference.colorbarWidth;
-        this.offset = 5;
-        this.position = preference.colorbarPosition;
-        this.customColor = false;
-        this.color = AST_DEFAULT_COLOR;
-        this.borderVisible = true;
-        this.borderWidth = 1;
-        this.borderCustomColor = false;
-        this.borderColor = AST_DEFAULT_COLOR;
-        this.tickVisible = true;
-        this.tickDensity = preference.colorbarTicksDensity;
-        this.tickLen = 6;
-        this.tickWidth = 1;
-        this.tickCustomColor = false;
-        this.tickColor = AST_DEFAULT_COLOR;
-        this.numberVisible = true;
-        this.numberRotation = -90;
-        this.numberFont = 0;
-        this.numberFontSize = 12;
-        this.numberCustomPrecision = false;
-        this.numberPrecision = 3;
-        this.numberCustomColor = false;
-        this.numberColor = AST_DEFAULT_COLOR;
-        this.labelVisible = preference.colorbarLabelVisible;
-        this.labelRotation = -90;
-        this.labelFont = 0;
-        this.labelFontSize = 15;
-        this.labelCustomText = false;
-        this.labelCustomColor = false;
-        this.labelColor = AST_DEFAULT_COLOR;
-        this.gradientVisible = true;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -954,7 +793,7 @@ export class OverlayColorbarSettings {
             textWidth = 0;
             const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
             for (const frame of AppStore.Instance.imageViewConfigStore.visibleFrames) {
-                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : x.match(/[.-]/g)?.length * 0.5 || 0))) * this.textRatio[textFontIndex];
+                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : (x.match(/[.-]/g)?.length ?? 0) * 0.5))) * this.textRatio[textFontIndex];
                 textWidth = Math.max(textWidth, frameTextWidth);
             }
         }
@@ -977,13 +816,11 @@ export class OverlayColorbarSettings {
 }
 
 export class OverlayBeamSettings {
-    @observable selectedFileId: number;
-    @observable settingsForDisplay: OverlayBeamStore;
+    @observable selectedFileId: number = -1;
+    @observable settingsForDisplay: OverlayBeamStore | null = null;
 
     constructor() {
         makeObservable(this);
-        this.selectedFileId = -1;
-        this.settingsForDisplay = null;
 
         autorun(() => {
             const appStore = AppStore.Instance;
@@ -1020,32 +857,22 @@ export class OverlaySettings {
     @observable visible: boolean = true;
 
     // Individual settings
-    @observable global: OverlayGlobalSettings;
-    @observable title: OverlayTitleSettings;
-    @observable grid: OverlayGridSettings;
-    @observable border: OverlayBorderSettings;
-    @observable axes: OverlayAxisSettings;
-    @observable numbers: OverlayNumberSettings;
-    @observable labels: OverlayLabelSettings;
-    @observable ticks: OverlayTickSettings;
-    @observable colorbar: OverlayColorbarSettings;
-    @observable beam: OverlayBeamSettings;
+    @observable global: OverlayGlobalSettings = new OverlayGlobalSettings();
+    @observable title: OverlayTitleSettings = new OverlayTitleSettings();
+    @observable grid: OverlayGridSettings = new OverlayGridSettings();
+    @observable border: OverlayBorderSettings = new OverlayBorderSettings();
+    @observable axes: OverlayAxisSettings = new OverlayAxisSettings();
+    @observable numbers: OverlayNumberSettings = new OverlayNumberSettings();
+    @observable labels: OverlayLabelSettings = new OverlayLabelSettings();
+    @observable ticks: OverlayTickSettings = new OverlayTickSettings();
+    @observable colorbar: OverlayColorbarSettings = new OverlayColorbarSettings();
+    @observable beam: OverlayBeamSettings = new OverlayBeamSettings();
 
     private base = 5;
     defaultGap = 5;
 
     private constructor() {
         makeObservable(this);
-        this.global = new OverlayGlobalSettings();
-        this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings();
-        this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings();
-        this.numbers = new OverlayNumberSettings();
-        this.labels = new OverlayLabelSettings();
-        this.ticks = new OverlayTickSettings();
-        this.colorbar = new OverlayColorbarSettings();
-        this.beam = new OverlayBeamSettings();
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1054,7 +881,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
         });
@@ -1101,7 +928,7 @@ export class OverlaySettings {
                     break;
                 case WCSType.AUTOMATIC:
                 default:
-                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                    if (this.global.explicitSystem && [SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX(NumberFormatType.HMS);
                         this.numbers.setDefaultFormatY(NumberFormatType.DMS);
                     } else {
@@ -1115,8 +942,12 @@ export class OverlaySettings {
 
         // Set starting values for custom format only if format is not already custom
         if (!this.numbers.customFormat) {
-            this.numbers.setFormatX(this.numbers.defaultFormatX);
-            this.numbers.setFormatY(this.numbers.defaultFormatY);
+            if (this.numbers.defaultFormatX) {
+                this.numbers.setFormatX(this.numbers.defaultFormatX);
+            }
+            if (this.numbers.defaultFormatY) {
+                this.numbers.setFormatY(this.numbers.defaultFormatY);
+            }
         }
     }
 
@@ -1125,6 +956,9 @@ export class OverlaySettings {
         this.numbers.setValidWcs(frame.validWcs);
 
         this.global.setDefaultSystem(frame.defaultWcsSystem);
+        this.global.setDefaultEquinox(frame.defaultWcsEquinox);
+        this.global.setDefaultEpoch(frame.defaultWcsEpoch);
+
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {
@@ -1262,7 +1096,7 @@ export class ImageViewOverlayStore {
     }
 
     defaultStyleString(frame?: FrameStore): ASTSettingsString {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.addSection(OverlaySettings.Instance.global.styleString(frame));
         astString.addSection(OverlaySettings.Instance.title.styleString);
         astString.addSection(OverlaySettings.Instance.grid.styleString);
@@ -1297,12 +1131,12 @@ export class PvPreviewOverlayStore extends ImageViewOverlayStore {
 
     /** The width of the entire widget on which the overlay is displayed. */
     get fullViewWidth() {
-        return this.previewWidgetStore?.previewFullViewWidth;
+        return this.previewWidgetStore?.previewFullViewWidth ?? 0;
     }
 
     /** The height of the entire widget on which the overlay is displayed. */
     get fullViewHeight() {
-        return this.previewWidgetStore?.previewFullViewHeight;
+        return this.previewWidgetStore?.previewFullViewHeight ?? 0;
     }
 
     /** The width of the overlay canvas. */

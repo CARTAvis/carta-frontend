@@ -2,16 +2,12 @@ import * as GoldenLayout from "golden-layout";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
+import {LayoutDialogMode} from "enums";
 import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
 const MAX_LAYOUT = 10;
-
-export enum LayoutDialogMode {
-    DynamicLayout,
-    Layout
-}
 
 export class LayoutStore {
     private static staticInstance: LayoutStore;
@@ -27,20 +23,15 @@ export class LayoutStore {
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout | null;
+    @observable dockedLayout: GoldenLayout | null = null;
     @observable currentLayoutName: string;
-    @observable private layouts: any;
-    @observable supportsServer: boolean;
-    @observable layoutDialogMode: LayoutDialogMode | undefined;
+    @observable private layouts: any = {};
+    @observable supportsServer: boolean = false;
+    @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
-        this.dockedLayout = null;
-        this.layouts = {};
-        this.supportsServer = false;
         this.initLayoutsFromPresets();
-
-        this.layoutDialogMode = LayoutDialogMode.Layout;
     }
 
     public layoutExists = (layoutName: string): boolean => {
@@ -61,7 +52,7 @@ export class LayoutStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined layout failed!");
-            console.log(err);
+            console.error(err);
         }
     }
 
@@ -83,7 +74,7 @@ export class LayoutStore {
     }
 
     @computed get orderedLayoutNames(): string[] {
-        let orderedLayouts = [...PresetLayout.PRESETS];
+        const orderedLayouts = [...PresetLayout.PRESETS];
         return this.userLayoutNames?.length ? orderedLayouts.concat(this.userLayoutNames) : orderedLayouts;
     }
 
@@ -106,11 +97,11 @@ export class LayoutStore {
         }
 
         // generate docked config & collect docked components
-        let dockedConfig = {
+        const dockedConfig = {
             type: config.docked.type,
             content: []
         };
-        let dockedComponentConfigs = [];
+        const dockedComponentConfigs = [];
         LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -181,7 +172,7 @@ export class LayoutStore {
                     this.handleSaveResult(success);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleSaveResult(false);
             }
         }
@@ -237,7 +228,7 @@ export class LayoutStore {
                     yield dynamicLayout.modifyLayoutMapping(oldName, newName);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleRenameResult(oldName, newName, false);
             }
         }
@@ -273,7 +264,7 @@ export class LayoutStore {
                 }
                 this.handleDeleteResult(layoutName, success);
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleDeleteResult(layoutName, false);
             }
         }

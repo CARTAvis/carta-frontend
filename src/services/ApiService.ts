@@ -1,10 +1,11 @@
 import Ajv from "ajv";
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {ConvertToGB, LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
-import {AppStore, PreferenceKeys} from "stores";
+import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
+import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
+import {AppStore} from "stores";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
@@ -48,9 +49,9 @@ export class ApiService {
     private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
     private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
-    @observable private _accessToken: string | undefined;
-    private _tokenLifetime: number;
-    private _tokenExpiryHandler: any;
+    @observable private _accessToken: string | undefined = "";
+    @observable private _tokenLifetime: number = 0;
+    private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
@@ -101,6 +102,7 @@ export class ApiService {
 
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
         const tokenRefreshed = await this.refreshAccessToken();
         if (tokenRefreshed) {
             console.debug("Authenticated");
@@ -112,7 +114,13 @@ export class ApiService {
         }
     };
 
+    public dispose = () => {
+        clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
+    };
+
     private handleAuthLost = () => {
+        this.dispose();
         if (ApiService.RuntimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
@@ -137,7 +145,7 @@ export class ApiService {
                 }
             } catch (err) {
                 this.clearToken();
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -146,6 +154,7 @@ export class ApiService {
     };
 
     public logout = async () => {
+        this.dispose();
         // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
         window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
@@ -158,7 +167,7 @@ export class ApiService {
                 await this.axiosInstance.post(url);
             } catch (err) {
                 AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
-                console.log(err);
+                console.error(err);
             }
         }
     };
@@ -175,7 +184,7 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
                 return undefined;
             }
@@ -187,7 +196,7 @@ export class ApiService {
             this.upgradePreferences(preferences);
             console.log(preferences);
             const valid = ApiService.PreferenceValidator(preferences);
-            let deletedKeys: string[] = [];
+            const deletedKeys: string[] = [];
             if (!valid) {
                 for (const error of ApiService.PreferenceValidator.errors ?? []) {
                     if (error.instancePath) {
@@ -215,50 +224,39 @@ export class ApiService {
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
-            enum ASTColors {
-                black = 0,
-                white = 1,
-                red = 2,
-                forest = 3,
-                blue = 4,
-                turquoise = 5,
-                violet = 6,
-                gold = 7,
-                gray = 8
-            }
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
+            const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
+
+            // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
+            const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+            if (/[A-Z]/.test(preferences[key])) {
+                preferences[key] = preferences[key].toLowerCase();
+                this.setPreference(key, preferences[key]);
+            }
+
+            // This is to ensure consistency in the unit used for the preview cube size limit
+            const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+            const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
+
+            const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+            if (typeof conversionFactor === "number") {
+                const gbSize = preferences[cubeSizeKey] * conversionFactor;
+                if (gbSize !== preferences[cubeSizeKey]) {
+                    preferences[cubeSizeKey] = gbSize;
+                    this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+                }
+            } else if (cubeSizeUnitKey in preferences) {
+                // set an invalid value to cubeSizeKey to be removed by the validator
+                preferences[cubeSizeKey] = -1;
+            }
+            delete preferences[cubeSizeUnitKey];
+            this.clearPreferences([cubeSizeUnitKey]);
 
             preferences["version"] = 2;
             this.setPreference("version", 2);
         }
-
-        // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
-        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-        if (/[A-Z]/.test(preferences[key])) {
-            preferences[key] = preferences[key].toLowerCase();
-            this.setPreference(key, preferences[key]);
-        }
-
-        // This is to ensure consistency in the unit used for the preview cube size limit
-        const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
-        const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
-
-        const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
-        if (typeof conversionFactor === "number") {
-            let gbSize = preferences[cubeSizeKey] * conversionFactor;
-            if (gbSize !== preferences[cubeSizeKey]) {
-                preferences[cubeSizeKey] = gbSize;
-                this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
-            }
-        } else if (cubeSizeUnitKey in preferences) {
-            // set an invalid value to cubeSizeKey to be removed by the validator
-            preferences[cubeSizeKey] = -1;
-        }
-        delete preferences[cubeSizeUnitKey];
-        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {
@@ -274,7 +272,7 @@ export class ApiService {
                 const response = await this.axiosInstance.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -292,6 +290,7 @@ export class ApiService {
                 localStorage.setItem("preferences", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -304,7 +303,7 @@ export class ApiService {
                 const response = await this.axiosInstance.delete(url, {data: {keys}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -316,6 +315,7 @@ export class ApiService {
                 localStorage.setItem("preferences", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -333,14 +333,14 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
@@ -369,7 +369,7 @@ export class ApiService {
                 const response = await this.axiosInstance.put(url, {layoutName, layout});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -379,6 +379,7 @@ export class ApiService {
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -391,7 +392,7 @@ export class ApiService {
                 const response = await this.axiosInstance.delete(url, {data: {layoutName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -401,6 +402,7 @@ export class ApiService {
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -418,14 +420,14 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedSnippets = JSON.parse(localStorage.getItem("savedSnippets") ?? "{}");
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
@@ -453,7 +455,7 @@ export class ApiService {
                 const response = await this.axiosInstance.put(url, {snippetName, snippet});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -463,6 +465,7 @@ export class ApiService {
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -475,7 +478,7 @@ export class ApiService {
                 const response = await this.axiosInstance.delete(url, {data: {snippetName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -485,6 +488,7 @@ export class ApiService {
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -501,7 +505,7 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -522,7 +526,7 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
@@ -537,7 +541,7 @@ export class ApiService {
                     return response.data.workspace;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         } else if (!isKey) {
             try {
@@ -552,7 +556,7 @@ export class ApiService {
                     }
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
         return undefined;
@@ -568,7 +572,7 @@ export class ApiService {
                 }
                 return {...workspace, editable: res.data?.workspace?.editable, name: workspaceName};
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -578,6 +582,7 @@ export class ApiService {
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return workspace;
             } catch (err) {
+                console.error(err);
                 return undefined;
             }
         }
@@ -590,7 +595,7 @@ export class ApiService {
                 const response = await this.axiosInstance.post(url);
                 return response?.data?.success ? response.data.shareKey : undefined;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -605,7 +610,7 @@ export class ApiService {
                 const response = await this.axiosInstance.delete(url, {data: {workspaceName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -615,6 +620,7 @@ export class ApiService {
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }

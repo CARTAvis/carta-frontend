@@ -1,14 +1,15 @@
-import {Colors, IconName} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import {Colors, type IconName} from "@blueprintjs/core";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CustomIconName} from "icons/CustomIcons";
-import {Point2D} from "models";
-import {BackendService} from "services";
+import {CoordinateMode} from "enums";
+import type {CustomIconName} from "icons/CustomIcons";
+import {isValidWcsPoint, type Point2D} from "models";
+import {type BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
-import {CoordinateMode, FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
@@ -19,21 +20,21 @@ export const SIZE_POINT_INDEX = 1;
 
 export class RegionStore {
     readonly fileId: number;
-    @observable regionId: number;
-    @observable name: string;
-    @observable color: string;
-    @observable lineWidth: number;
-    @observable dashLength: number;
-    @observable regionType: CARTA.RegionType;
-    @observable coordinate: CoordinateMode;
+    @observable regionId: number = -1;
+    @observable name: string = "";
+    @observable color: string = "";
+    @observable lineWidth: number = 2;
+    @observable dashLength: number = 0;
+    @observable regionType: CARTA.RegionType = CARTA.RegionType.POINT;
+    @observable coordinate: CoordinateMode = CoordinateMode.Image;
     // Shallow observable, since control point updates are atomic
-    @observable.shallow controlPoints: Point2D[];
-    @observable rotation: number;
-    @observable editing: boolean;
-    @observable creating: boolean;
+    @observable.shallow controlPoints: Point2D[] = [];
+    @observable rotation: number = 0;
+    @observable editing: boolean = false;
+    @observable creating: boolean = false;
     @observable locked: boolean = false;
-    @observable isSimplePolygon: boolean;
-    @observable activeFrame: FrameStore;
+    @observable isSimplePolygon: boolean = true;
+    @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
     @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
@@ -226,16 +227,17 @@ export class RegionStore {
                 const size = subtract2D(this.controlPoints[0], this.controlPoints[1]);
                 return {x: Math.abs(size.x), y: Math.abs(size.y)};
             default:
-                return {x: undefined, y: undefined};
+                return {x: 0, y: 0};
         }
     }
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.size || !frame?.validWcs) {
-            return {x: undefined, y: undefined};
+            return {x: 0, y: 0};
         }
-        return frame.getWcsSizeInArcsec(this.size);
+        const wcsSize = frame.getWcsSizeInArcsec(this.size);
+        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {
@@ -399,8 +401,8 @@ export class RegionStore {
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
-                let halfWidth = this.size.x / 2;
-                let halfHeight = this.size.y / 2;
+                const halfWidth = this.size.x / 2;
+                const halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
@@ -526,7 +528,11 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+                if (PreferenceStore.Instance.lowBandwidthMode) {
+                    this.lowBandWidthThrottledUpdateRegion(true);
+                } else {
+                    this.throttledUpdateRegion(true);
+                }
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
@@ -564,7 +570,11 @@ export class RegionStore {
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+            if (PreferenceStore.Instance.lowBandwidthMode) {
+                this.lowBandWidthThrottledUpdateRegion(true);
+            } else {
+                this.throttledUpdateRegion(true);
+            }
         }
     };
 
@@ -652,7 +662,7 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
     }
@@ -749,7 +759,7 @@ export class RegionStore {
                     await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 }
             }
         }

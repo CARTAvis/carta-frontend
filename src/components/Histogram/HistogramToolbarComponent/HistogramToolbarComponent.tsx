@@ -1,17 +1,19 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect} from "@blueprintjs/core";
-import {autorun} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent} from "components/Shared";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore} from "stores";
-import {HistogramWidgetStore} from "stores/Widgets";
+import {type HistogramWidgetStore} from "stores/Widgets";
 
 import "./HistogramToolbarComponent.scss";
 
 @observer
 export class HistogramToolbarComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
+    private readonly disposers: IReactionDisposer[] = [];
+
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.widgetStore.setCoordinate(changeEvent.target.value);
     };
@@ -20,11 +22,18 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         super(props);
         const widgetStore = this.props.widgetStore;
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
-        autorun(() => {
-            if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === widgetStore.coordinate) || !widgetStore.effectiveFrame.polarizationInfo)) {
-                widgetStore.setCoordinate("z");
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === widgetStore.coordinate) || !widgetStore.effectiveFrame.polarizationInfo)) {
+                    widgetStore.setCoordinate("z");
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     public render() {

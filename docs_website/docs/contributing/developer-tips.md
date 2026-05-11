@@ -34,3 +34,28 @@ To automatically fix the identified errors, particularly those related to import
 ```
 npm run fix-eslint
 ```
+
+## Git hooks
+
+This repository uses Husky and lint-staged to run checks automatically during commit and push.
+
+-   `pre-commit`: runs Prettier on staged files in `src/` (repo root Prettier) and on staged files in `docs_website/` using `docs_website/node_modules/.bin/prettier`, and runs ESLint auto-fix on staged JS/TS files in `src/`.
+-   `pre-push`: runs `npm run check-eslint` and `npm run checkformat`, and additionally runs `npm --prefix docs_website run checkformat` when pushed commits include `docs_website/` changes.
+
+Hooks are installed automatically when running:
+
+```
+npm install
+```
+
+If install scripts are skipped (for example, `npm ci --ignore-scripts`), run:
+
+```
+npm run prepare
+```
+
+If you modify files under `docs_website/`, make sure docs dependencies are installed first:
+
+```
+npm --prefix docs_website install
+```

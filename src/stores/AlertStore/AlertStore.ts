@@ -1,15 +1,10 @@
-import React from "react";
-import {MaybeElement} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type React from "react";
+import type {MaybeElement} from "@blueprintjs/core";
+import type {IconName} from "@blueprintjs/icons";
 import {action, makeObservable, observable} from "mobx";
 
+import {AlertType} from "enums";
 import {Deferred} from "services";
-
-export enum AlertType {
-    Info,
-    Interactive,
-    Retry
-}
 
 export class AlertStore {
     private static staticInstance: AlertStore;
@@ -21,12 +16,12 @@ export class AlertStore {
         return AlertStore.staticInstance;
     }
 
-    @observable alertVisible: boolean;
-    @observable alertText: string | React.ReactNode;
-    @observable alertIcon: IconName | MaybeElement;
-    @observable alertType: AlertType;
-    @observable interactiveAlertText: string | React.ReactNode;
-    @observable showDashboardLink: boolean;
+    @observable alertVisible: boolean = false;
+    @observable alertText: string | React.ReactNode = "";
+    @observable alertIcon: IconName | MaybeElement = undefined;
+    @observable alertType: AlertType = AlertType.Info;
+    @observable interactiveAlertText: string | React.ReactNode = "";
+    @observable showDashboardLink: boolean = false;
     private interactionPromise: Deferred<boolean> | null;
 
     private keyDownHandler = (e: KeyboardEvent) => {
@@ -92,7 +87,5 @@ export class AlertStore {
 
     private constructor() {
         makeObservable(this);
-        this.alertVisible = false;
-        this.showDashboardLink = false;
     }
 }

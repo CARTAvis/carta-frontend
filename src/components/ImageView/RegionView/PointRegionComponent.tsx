@@ -1,10 +1,10 @@
 import * as React from "react";
-import Konva from "konva";
+import type Konva from "konva";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
 import {transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
@@ -54,7 +54,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const frame = this.props.frame;
             const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
             let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
-            if (frame.spatialReference) {
+            if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
             this.props.region.setCenter(positionImageSpace);
@@ -73,7 +73,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        if (frame.spatialReference) {
+        if (frame.spatialReference && frame.spatialTransformAST && frame.spatialTransform) {
             const pointReferenceImage = region.center;
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
             centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);

@@ -1,4 +1,5 @@
-import {AngularSize, AngularSizeUnit} from "models";
+import {AngularSizeUnit} from "enums";
+import {AngularSize} from "models";
 
 export const SPEED_OF_LIGHT = 299792458;
 

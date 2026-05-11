@@ -1,16 +1,15 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, override} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {SpatialProfilerSettingsTabs} from "components";
-import {LineSettings, PlotType} from "components/Shared";
-import {LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
+import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
+import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
-import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 const DEFAULT_STOKES = "current";
 
@@ -35,6 +34,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -136,14 +136,21 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
 
-        autorun(() => {
-            if (this.effectiveFrame) {
-                action(() => {
-                    this.selectedStokes = DEFAULT_STOKES;
-                })();
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (this.effectiveFrame) {
+                    action(() => {
+                        this.selectedStokes = DEFAULT_STOKES;
+                    })();
+                }
+            })
+        );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 
     @computed get isXProfile(): boolean {
         return this.coordinate?.includes("x");
@@ -158,7 +165,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get stokesOptions(): LineOption[] {
-        let options = [{value: DEFAULT_STOKES, label: "Current"}];
+        const options = [{value: DEFAULT_STOKES, label: "Current"}];
         if (this.effectiveFrame?.hasStokes) {
             options.push(...this.effectiveFrame.coordinateOptions);
         }
@@ -280,13 +287,13 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

@@ -1,16 +1,17 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
+import {List} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
+import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
+import {CURSOR_REGION_ID, type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
@@ -29,6 +30,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly HEADER_ROW_HEIGHT = 25;
     private listRef = React.createRef<any>();
     private tableRef = React.createRef<HTMLDivElement>();
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -62,11 +64,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        const height = listRefCurrent?.props.height;
-        if (!listRefCurrent || height < 0) {
+        if (!listRefCurrent || !isFinite(selected) || selected < 0) {
             return;
         } else {
-            this.listRef.current.scrollToItem(selected, "smart");
+            this.listRef.current.scrollToRow({index: selected, align: "smart"});
         }
     };
 
@@ -85,15 +86,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
-        reaction(
-            () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
-            id => {
-                if (id > 0) {
-                    const validRegionId = this.validRegions.map(el => el.regionId);
-                    this.scrollToSelected(validRegionId.findIndex(element => element === id));
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
+                id => {
+                    if (id && id > 0) {
+                        const validRegionId = this.validRegions.map(el => el.regionId);
+                        this.scrollToSelected(validRegionId.findIndex(element => element === id));
+                    }
                 }
-            }
+            )
         );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -116,7 +124,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private syncRegionsLocked = () => {
-        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
+        AppStore.Instance.activeFrame?.regionSet.setLocked(this.regionsLock);
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
@@ -132,13 +140,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
-            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (this.regionsLock !== activeFrame?.regionSet.locked) {
                 this.syncRegionsLocked();
             }
             this.toggleRegionVisibility();
-            AppStore.Instance.activeFrame.regionSet.setOpacity(this.regionsVisibility);
+            activeFrame?.regionSet.setOpacity(this.regionsVisibility);
             if (this.regionsVisibility === RegionsOpacity.Invisible) {
-                AppStore.Instance.activeFrame.regionSet.setLocked(true);
+                activeFrame?.regionSet.setLocked(true);
             }
             ev.stopPropagation();
         };
@@ -323,11 +332,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action private onListRendered = (view: ListOnItemsRenderedProps) => {
+    @action private onListRendered = (_visibleRows: {startIndex: number; stopIndex: number}, allRows: {startIndex: number; stopIndex: number}) => {
         // Update view bounds
-        if (view && this.firstVisibleRow !== view.overscanStopIndex && this.lastVisibleRow !== view.overscanStopIndex) {
-            this.firstVisibleRow = view.overscanStartIndex;
-            this.lastVisibleRow = view.overscanStopIndex;
+        if (allRows && (this.firstVisibleRow !== allRows.startIndex || this.lastVisibleRow !== allRows.stopIndex)) {
+            this.firstVisibleRow = allRows.startIndex;
+            this.lastVisibleRow = allRows.stopIndex;
         }
     };
 
@@ -335,7 +344,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const darkTheme = appStore.darkTheme;
-        const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {
             return (
@@ -346,6 +354,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 </ResizeDetector>
             );
         }
+
+        const regionSet = frame.regionSet;
 
         if (appStore.fileBrowserStore.isLoadingDialogOpen) {
             return (
@@ -512,7 +522,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     if (frame.validWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                                formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
+                                formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : Number.NaN, WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
                                     {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
@@ -521,7 +531,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size ? length2D(region.size) : undefined, 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size ? length2D(region.size) : Number.NaN, 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
@@ -637,19 +647,25 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         // Ensure clicks focus this container so it receives key events
                         onMouseDown={ev => (ev.currentTarget as HTMLDivElement).focus()}
                     >
-                        <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                            {headerRenderer(this.regionsVisibility, this.regionsLock)}
-                        </FixedSizeList>
-                        <FixedSizeList
-                            onItemsRendered={this.onListRendered}
-                            height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
-                            itemCount={this.validRegions.length}
-                            itemSize={RegionListComponent.ROW_HEIGHT}
-                            width="100%"
-                            ref={this.listRef}
-                        >
-                            {rowRenderer}
-                        </FixedSizeList>
+                        <List
+                            rowHeight={RegionListComponent.HEADER_ROW_HEIGHT}
+                            defaultHeight={RegionListComponent.HEADER_ROW_HEIGHT}
+                            rowCount={1}
+                            style={{height: RegionListComponent.HEADER_ROW_HEIGHT, width: "100%"}}
+                            className="list-header"
+                            rowComponent={headerRenderer(this.regionsVisibility, this.regionsLock)}
+                            rowProps={{} as any}
+                        />
+                        <List
+                            onRowsRendered={this.onListRendered}
+                            defaultHeight={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
+                            rowCount={this.validRegions.length}
+                            rowHeight={RegionListComponent.ROW_HEIGHT}
+                            style={{height: tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2, width: "100%"}}
+                            listRef={this.listRef}
+                            rowComponent={rowRenderer}
+                            rowProps={{} as any}
+                        />
                     </div>
                     {floatRenderer()}
                 </div>

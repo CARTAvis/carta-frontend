@@ -1,9 +1,10 @@
-import {Classes, DialogProps, Tab, Tabs} from "@blueprintjs/core";
+import {Classes, type DialogProps, Tab, Tabs} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId, HelpType} from "stores";
+import {DialogId, HelpType, OnlineDataQueryDialogTabs} from "enums";
+import {AppStore} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 import {HipsQueryComponent} from "./HipsQueryComponent";
@@ -15,21 +16,16 @@ const DEFAULT_HEIGHT = 550;
 const MIN_WIDTH = 450;
 const MIN_HEIGHT = 200;
 
-enum OnlineDataQueryDialogTabs {
-    Catalog,
-    Hips
-}
-
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
-    const className = classNames("online-data-query-dialog", {"bp3-dark": appStore.darkTheme});
+    const className = classNames("online-data-query-dialog", {[Classes.DARK]: appStore.darkTheme});
     const dialogProps: DialogProps = {
         icon: "geosearch",
         className: className,
         backdropClassName: "minimal-dialog-backdrop",
         canOutsideClickClose: false,
         lazy: true,
-        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.OnlineDataQuery),
+        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.OnlineDataQuery) || false,
         title: "Online Data Query"
     };
 

@@ -4,47 +4,14 @@ import allMaps from "static/allmaps.png";
 import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
 
-export const SWATCH_COLORS = [
-    Colors.BLUE3,
-    Colors.ORANGE3,
-    Colors.GREEN3,
-    Colors.RED3,
-    Colors.VIOLET3,
-    Colors.SEPIA3,
-    Colors.INDIGO3,
-    Colors.GRAY3,
-    Colors.LIME3,
-    Colors.TURQUOISE3,
-    Colors.FOREST3,
-    Colors.GOLD3,
-    Colors.CERULEAN3,
-    Colors.ROSE3,
-    Colors.VERMILION3,
-    Colors.LIGHT_GRAY3,
-    Colors.DARK_GRAY3,
-    Colors.WHITE,
-    Colors.BLACK
-];
-export const DEFAULT_COLOR = SWATCH_COLORS[0];
-
-const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cerulean", "rose", "vermilion", "light_gray", "dark_gray"];
-export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
-    return `auto-${color}`;
-});
-
-const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
-
-// Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
-// Validate with regex ^auto-(blue|orange|green...)$
-const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
+import {COLOR_MAPS_ALL, SELECTABLE_COLORS, SUPPORTED_AUTO_COLORS_REGEX} from "./constants";
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     canvas.width = width;
     canvas.height = height;
-    return canvas.getContext("2d");
+    return canvas.getContext("2d", {willReadFrequently: true});
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
@@ -57,8 +24,7 @@ imageObj.onload = () => {
 
 // return color map as Uint8ClampedArray according colorMap
 export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
-    const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
-    const colorMapIndex = colorMaps.indexOf(colorMap);
+    const colorMapIndex = COLOR_MAPS_ALL.indexOf(colorMap);
 
     if (colormapContext) {
         const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width, 1);

@@ -2,16 +2,11 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {Subject, throwError} from "rxjs";
 
-import {ApiService, TelemetryAction, TelemetryService} from "services";
+import {ConnectionStatus, TelemetryAction} from "enums";
+import {ApiService, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
-import {RegionStore} from "stores/Frame";
+import {type RegionStore} from "stores/Frame";
 import {mapToObject} from "utilities";
-
-export enum ConnectionStatus {
-    CLOSED = 0,
-    PENDING = 1,
-    ACTIVE = 2
-}
 
 export const INVALID_ANIMATION_ID = -1;
 
@@ -60,10 +55,10 @@ export class BackendService {
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
 
-    @observable connectionStatus: ConnectionStatus;
+    @observable connectionStatus: ConnectionStatus = ConnectionStatus.CLOSED;
     readonly loggingEnabled: boolean;
-    @observable connectionDropped: boolean;
-    @observable endToEndPing: number;
+    @observable connectionDropped: boolean = false;
+    @observable endToEndPing: number = NaN;
 
     public animationId: number;
     public sessionId: number;
@@ -75,6 +70,7 @@ export class BackendService {
     private lastPongTime: number;
     private deferredMap: Map<number, Deferred<IBackendResponse>>;
     private eventCounter: number;
+    private pingIntervalHandle: ReturnType<typeof setInterval> | undefined;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
@@ -96,14 +92,13 @@ export class BackendService {
 
     private constructor() {
         makeObservable(this);
+
         this.loggingEnabled = true;
         this.deferredMap = new Map<number, Deferred<IBackendResponse>>();
 
         this.eventCounter = 1;
         this.sessionId = 0;
-        this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
-        this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
@@ -162,8 +157,15 @@ export class BackendService {
         ]);
 
         // check ping every 5 seconds
-        setInterval(this.sendPing, 5000);
+        this.pingIntervalHandle = setInterval(this.sendPing, 5000);
+        window.addEventListener("unload", this.dispose);
     }
+
+    public dispose = () => {
+        clearInterval(this.pingIntervalHandle);
+        this.pingIntervalHandle = undefined;
+        window.removeEventListener("unload", this.dispose);
+    };
 
     @action("connect")
     async connect(url: string): Promise<CARTA.IRegisterViewerAck> {
@@ -894,7 +896,7 @@ export class BackendService {
             this.lastPongTime = performance.now();
             this.updateEndToEndPing();
             return;
-        } else if (event.data.byteLength < 8) {
+        } else if (!event.data || event.data.byteLength < 8) {
             console.log("Unknown event format");
             return;
         }

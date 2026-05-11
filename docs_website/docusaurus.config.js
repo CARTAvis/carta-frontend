@@ -1,18 +1,21 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+const {themes} = require("prism-react-renderer");
+const path = require("path");
+const versions = require("./versions.json");
+const packageJson = require("../package.json");
+
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-const path = require("path");
-const versions = require('./versions.json');
+const devVersion = packageJson.version;
 
 const apiOnClick = `
     const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
     const currentVersion = versionLink?.textContent;
     let version = '';
     if (currentVersion) {
-        if (currentVersion === 'Next') {
+        if (currentVersion === 'Next' || currentVersion === '${devVersion}') {
             version = '/next';
         } else if (currentVersion !== '${versions?.[0]}') {
             version = '/' + currentVersion;
@@ -26,6 +29,7 @@ const apiButton = `
     <a class="navbar__link menu__link api_link" onclick="${apiOnClick}">API</a>
 `;
 
+// eslint-disable-next-line tsdoc/syntax
 /** @type {import('@docusaurus/types').Config} */
 const config = {
     title: "CARTA Frontend Documentation",
@@ -44,8 +48,13 @@ const config = {
     projectName: "carta-frontend", // Usually your repo name.
     trailingSlash: false,
 
-    onBrokenLinks: "throw",
-    onBrokenMarkdownLinks: "warn",
+    onBrokenLinks: "warn",
+
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: "warn"
+        }
+    },
 
     // Even if you don't use internalization, you can use this field to set useful
     // metadata like html lang. For example, if your site is Chinese, you may want
@@ -58,12 +67,16 @@ const config = {
     presets: [
         [
             "classic",
+            // eslint-disable-next-line tsdoc/syntax
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
                 docs: {
                     versions: {
+                        current: {
+                            label: devVersion
+                        },
                         "5.0.0": {
-                            banner: "none",
+                            banner: "none"
                         }
                     },
                     sidebarPath: require.resolve("./sidebars.js")
@@ -76,6 +89,7 @@ const config = {
     ],
 
     themeConfig:
+        // eslint-disable-next-line tsdoc/syntax
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             navbar: {
@@ -95,12 +109,12 @@ const config = {
                         type: "html",
                         position: "left",
                         value: apiButton,
-                        className: "navbar__link",
+                        className: "navbar__link"
                     },
                     {
-                        type: 'docsVersionDropdown',
-                        position: 'right',
-                        dropdownActiveClassDisabled: true,
+                        type: "docsVersionDropdown",
+                        position: "right",
+                        dropdownActiveClassDisabled: true
                     },
                     {
                         href: "https://github.com/CARTAvis/carta-frontend",
@@ -121,7 +135,7 @@ const config = {
 
     plugins: [
         [
-            "docusaurus-plugin-typedoc-api",
+            "@loveluthien/docusaurus-plugin-typedoc-api",
             {
                 projectRoot: path.join(__dirname, ".."),
                 packages: [
@@ -130,8 +144,9 @@ const config = {
                         entry: {
                             index: {path: "src/index.tsx", entry: "."}, // index.tsx has no exports; work-around for displaying the overview page
                             components: {path: "src/components/index.ts", entry: ".", label: "Components"},
-                            "components/Dialogs": { path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs" },
+                            "components/Dialogs": {path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs"},
                             "components/Shared": {path: "src/components/Shared/index.ts", entry: ".", label: "Components - Shared"},
+                            enums: {path: "src/enums/index.ts", entry: ".", label: "Enums"},
                             models: {path: "src/models/index.ts", entry: ".", label: "Models"},
                             services: {path: "src/services/index.ts", entry: ".", label: "Services"},
                             stores: {path: "src/stores/index.ts", entry: ".", label: "Stores"},
@@ -140,7 +155,7 @@ const config = {
                     }
                 ],
                 readmes: true,
-                readmeName: "docs_website/api/api.md", // api overview page
+                readmeName: "docs_website/api/api.md",
                 changelogs: true,
                 tsconfigName: "tsconfig.json"
             }

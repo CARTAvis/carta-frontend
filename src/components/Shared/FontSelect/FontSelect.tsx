@@ -1,5 +1,5 @@
 import {Button, MenuItem} from "@blueprintjs/core";
-import {ItemRenderer, Select} from "@blueprintjs/select";
+import {type ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 
 // Font selector
