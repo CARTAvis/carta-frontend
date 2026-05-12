@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "stores/Frame";
-import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
+import {angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -268,13 +268,12 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     @action handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
-        this.props.region.beginEditing();
+        this.props.frame.regionSet.beginMovingRegionSelection(this.props.region);
         this.hoverIntersection = null;
     };
 
     @action handleDragEnd = () => {
-        this.props.region.endEditing();
+        this.props.frame.regionSet.endMovingRegionSelection(this.props.region);
     };
 
     @action handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -287,9 +286,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (frame.spatialReference && frame.spatialTransformAST) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
-            const deltaPosition = subtract2D(newPosition, centerImageSpace);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            region.setControlPoints(newPoints, false, false);
+            this.props.frame.regionSet.translateMovingRegionSelection(region, subtract2D(newPosition, centerImageSpace));
         }
     };
 

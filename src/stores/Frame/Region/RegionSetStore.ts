@@ -87,6 +87,44 @@ export class RegionSetStore {
         this.selectRegion(region);
     };
 
+    private getMovableSelection = (origin: RegionStore): RegionStore[] => {
+        if (!origin || origin.regionId === CURSOR_REGION_ID) {
+            return [];
+        }
+
+        const selectedRegions = this.selectedRegionIds.has(origin.regionId)
+            ? Array.from(this.selectedRegionIds)
+                  .map(id => this.regionMap.get(id))
+                  .filter((region): region is RegionStore => !!region)
+            : [origin];
+
+        return selectedRegions.filter(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+    };
+
+    @action beginMovingRegionSelection = (origin: RegionStore) => {
+        if (!this.selectedRegionIds.has(origin.regionId)) {
+            this.selectSingleRegion(origin);
+        } else {
+            this.selectRegion(origin);
+        }
+
+        for (const region of this.getMovableSelection(origin)) {
+            region.beginEditing();
+        }
+    };
+
+    @action endMovingRegionSelection = (origin: RegionStore) => {
+        for (const region of this.getMovableSelection(origin)) {
+            region.endEditing();
+        }
+    };
+
+    @action translateMovingRegionSelection = (origin: RegionStore, delta: Point2D) => {
+        for (const region of this.getMovableSelection(origin)) {
+            region.translate(delta);
+        }
+    };
+
     public updateCursorRegionPosition = (pos: Point2D) => {
         if (pos && this.regions.length > 0) {
             const cursorRegion = this.regions[0];

@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
-import {transformPoint} from "utilities";
+import {subtract2D, transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -41,12 +41,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     };
 
     private handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
-        this.props.region.beginEditing();
+        this.props.frame.regionSet.beginMovingRegionSelection(this.props.region);
     };
 
     private handleDragEnd = () => {
-        this.props.region.endEditing();
+        this.props.frame.regionSet.endMovingRegionSelection(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -57,7 +56,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            this.props.region.setCenter(positionImageSpace);
+            this.props.frame.regionSet.translateMovingRegionSelection(this.props.region, subtract2D(positionImageSpace, this.props.region.center));
         }
     };
 

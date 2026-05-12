@@ -194,10 +194,8 @@ export class HotkeyService extends React.Component<{}> {
 
         if (region.supportsPointSelection && region.hasSelectedPoint) {
             region.moveSelectedPoint(actualDeltaX, actualDeltaY);
-        } else if (region.isPolygonalRegion) {
-            region.setControlPoints(region.controlPoints.map(point => ({x: point.x + actualDeltaX, y: point.y + actualDeltaY})));
         } else {
-            region.setCenter({x: region.center.x + actualDeltaX, y: region.center.y + actualDeltaY});
+            frame.regionSet.translateMovingRegionSelection(region, {x: actualDeltaX, y: actualDeltaY});
         }
     };
 

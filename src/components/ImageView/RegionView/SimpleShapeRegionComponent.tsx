@@ -270,12 +270,11 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     private handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
-        this.props.region.beginEditing();
+        this.props.frame.regionSet.beginMovingRegionSelection(this.props.region);
     };
 
     private handleDragEnd = () => {
-        this.props.region.endEditing();
+        this.props.frame.regionSet.endMovingRegionSelection(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -286,7 +285,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            this.props.region.setCenter(positionImageSpace);
+            this.props.frame.regionSet.translateMovingRegionSelection(this.props.region, subtract2D(positionImageSpace, this.props.region.center));
         }
     };
 

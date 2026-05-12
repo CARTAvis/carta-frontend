@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
+import {pointDistance, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -21,7 +21,7 @@ interface CompassRulerAnnotationProps {
     layerHeight: number;
     selected: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -36,7 +36,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const mousePoint = React.useRef({x: 0, y: 0});
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        props.onSelect?.(region, event.evt);
     };
 
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -45,14 +45,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
-            props.region.beginEditing();
+            props.frame.regionSet.beginMovingRegionSelection(props.region);
             mousePoint.current = konvaEvent.currentTarget.position();
         }
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.region.endEditing();
+        props.frame.regionSet.endMovingRegionSelection(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -62,8 +61,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
             const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
-            const newPoints = region.controlPoints.map((p, i) => (i === 0 ? add2D(p, deltaPosition) : p));
-            region.setControlPoints(newPoints, false, false);
+            props.frame.regionSet.translateMovingRegionSelection(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -92,7 +90,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
 
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
+            props.onSelect?.(props.region, konvaEvent.evt);
             props.region.beginEditing();
             if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
                 props.region.selectPoint(0);
@@ -101,7 +99,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     };
 
     const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(props.region);
+        props.onSelect?.(props.region, konvaEvent.evt);
         if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
             props.region.selectPoint(0);
         }
@@ -339,20 +337,19 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
     const region = props.region as RulerAnnotationStore;
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        props.onSelect?.(region, event.evt);
     };
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onDoubleClick?.(region);
     };
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(props.region);
-        props.region.beginEditing();
+        props.frame.regionSet.beginMovingRegionSelection(props.region);
         mousePoint.current = konvaEvent.target.position();
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.region.endEditing();
+        props.frame.regionSet.endMovingRegionSelection(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -364,8 +361,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const transformedImagePosition = frame.spatialReference && frame.spatialTransform ? frame.spatialTransform.transformCoordinate(imagePosition) : imagePosition;
             const deltaPosition = subtract2D(transformedImagePosition, transformedOldImagePosition);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            region.setControlPoints(newPoints, false, false);
+            props.frame.regionSet.translateMovingRegionSelection(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };

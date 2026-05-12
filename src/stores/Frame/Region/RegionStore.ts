@@ -563,6 +563,23 @@ export class RegionStore {
         }
     };
 
+    @action translate = (delta: Point2D, skipUpdate = false) => {
+        if (!delta || (delta.x === 0 && delta.y === 0)) {
+            return;
+        }
+
+        if (this.isPolygonalRegion || this.isLineLikeRegion) {
+            this.setControlPoints(
+                this.controlPoints.map(point => add2D(point, delta)),
+                skipUpdate,
+                false
+            );
+            return;
+        }
+
+        this.setCenter(add2D(this.center, delta), skipUpdate);
+    };
+
     /**
      * Sets the size for regions and annotations
      *

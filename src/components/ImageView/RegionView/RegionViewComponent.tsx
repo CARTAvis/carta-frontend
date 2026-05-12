@@ -802,8 +802,11 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                 if (r) ids.push(r.regionId);
             }
             regionSet.setSelectionByIds(ids, region.regionId);
-        } else {
+        } else if (!regionSet.selectedRegionIds.has(region.regionId) || !regionSet.selectedRegionIds.size) {
             regionSet.selectSingleRegion(region);
+            this.pivotIndex = index;
+        } else {
+            regionSet.selectRegion(region);
             this.pivotIndex = index;
         }
     };
