@@ -84,6 +84,9 @@ export class RegionSetStore {
             return;
         }
         this.selectedRegionIds = new Set([region.regionId]);
+        if (region.supportsPointSelection) {
+            region.deselectPoint();
+        }
         this.selectRegion(region);
     };
 

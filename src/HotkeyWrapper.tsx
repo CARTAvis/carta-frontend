@@ -181,18 +181,19 @@ export class HotkeyService extends React.Component<{}> {
         const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
+        const hasMultiSelection = frame.regionSet.selectedCount > 1;
 
-        if (region.supportsPointSelection && region.hasSelectedRotationPoint) {
+        if (!hasMultiSelection && region.supportsPointSelection && region.hasSelectedRotationPoint) {
             region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
             return;
         }
 
-        if (region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
+        if (!hasMultiSelection && region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
             region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
             return;
         }
 
-        if (region.supportsPointSelection && region.hasSelectedPoint) {
+        if (!hasMultiSelection && region.supportsPointSelection && region.hasSelectedPoint) {
             region.moveSelectedPoint(actualDeltaX, actualDeltaY);
         } else {
             frame.regionSet.translateMovingRegionSelection(region, {x: actualDeltaX, y: actualDeltaY});
