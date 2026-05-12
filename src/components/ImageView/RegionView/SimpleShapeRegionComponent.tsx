@@ -57,13 +57,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     }
 
-    private static IsSideSelectableSimpleShape = (region: RegionStore) =>
-        region.regionType === CARTA.RegionType.RECTANGLE ||
-        region.regionType === CARTA.RegionType.ANNRECTANGLE ||
-        region.regionType === CARTA.RegionType.ELLIPSE ||
-        region.regionType === CARTA.RegionType.ANNELLIPSE ||
-        region.regionType === CARTA.RegionType.ANNTEXT;
-
     private static GetSelectedSimpleShapeAnchor = (selectedPointIndex: number): string => {
         switch (selectedPointIndex) {
             case SIMPLE_SHAPE_TOP_POINT_INDEX:
@@ -373,7 +366,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     @action private selectSimpleShapeAnchor = (anchor: string) => {
-        if (!SimpleShapeRegionComponent.IsSideSelectableSimpleShape(this.props.region)) {
+        if (!this.props.region.isSideSelectableSimpleShape) {
             return;
         }
 
@@ -519,7 +512,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
 
-        const anchors = anchorConfigs.map(config => {
+        return anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
             const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
             let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
@@ -529,8 +522,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
 
             const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            const isSelectedSimpleShapeAnchor =
-                SimpleShapeRegionComponent.IsSideSelectableSimpleShape(region) && region.hasSelectedPoint && config.anchor === SimpleShapeRegionComponent.GetSelectedSimpleShapeAnchor(region.selectedPointIndex);
+            const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === SimpleShapeRegionComponent.GetSelectedSimpleShapeAnchor(region.selectedPointIndex);
             return (
                 <Anchor
                     key={config.anchor}
@@ -550,8 +542,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 />
             );
         });
-
-        return anchors;
     };
 
     private getTextProps = (region: TextAnnotationStore, centerPixelSpace: Point2D) => {

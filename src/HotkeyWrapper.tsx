@@ -1,6 +1,5 @@
 import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -107,29 +106,27 @@ export class HotkeyService extends React.Component<{}> {
 
     static HandleRegionEsc = () => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.selectedRegion) {
-                if (regionSet.selectedRegion.hasSelectedPoint) {
-                    regionSet.selectedRegion.deselectPoint();
-                    return;
-                }
-            }
-            // If there is selection, clear it and return
-            if (regionSet.selectedCount > 0) {
-                regionSet.clearSelection();
-                return;
-            }
-            // Otherwise follow existing behavior: deselect region or cancel creation mode
-            if (regionSet.selectedRegion) {
-                if (regionSet.selectedRegion.regionId !== CURSOR_REGION_ID) {
-                    // Do not deselect the cursor region on ESC
-                    regionSet.deselectRegion();
-                }
-            } else if (regionSet.mode === RegionMode.CREATING) {
-                regionSet.setMode(RegionMode.MOVING);
-                appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
-            }
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const selectedRegion = regionSet.selectedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.deselectPoint();
+            return;
+        }
+
+        if (regionSet.selectedCount > 0) {
+            regionSet.clearSelection();
+            return;
+        }
+
+        if (selectedRegion && selectedRegion.regionId !== CURSOR_REGION_ID) {
+            regionSet.deselectRegion();
+        } else if (!selectedRegion && regionSet.mode === RegionMode.CREATING) {
+            regionSet.setMode(RegionMode.MOVING);
+            appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
         }
     };
 
@@ -143,30 +140,6 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static SelectNextPoint = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame?.regionSet.selectedRegion?.supportsPointSelection) {
-            appStore.activeFrame.regionSet.selectedRegion.selectNextPoint();
-        }
-    };
-
-    static SelectPreviousPoint = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame?.regionSet.selectedRegion?.supportsPointSelection) {
-            appStore.activeFrame.regionSet.selectedRegion.selectPreviousPoint();
-        }
-    };
-
-    static SelectNextRegion = () => {
-        const appStore = AppStore.Instance;
-        appStore.activeFrame?.regionSet.selectNextRegion();
-    };
-
-    static SelectPreviousRegion = () => {
-        const appStore = AppStore.Instance;
-        appStore.activeFrame?.regionSet.selectPreviousRegion();
-    };
-
     static SelectNextRegionOrPoint = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
@@ -174,10 +147,9 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const region = regionSet.selectedRegion;
-        // Only cycle points if a control point is already selected; otherwise go to next region
-        if (region?.hasSelectedPoint) {
-            region.selectNextPoint();
+        const selectedRegion = regionSet.selectedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.selectNextPoint();
         } else {
             regionSet.selectNextRegion();
         }
@@ -190,10 +162,9 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const region = regionSet.selectedRegion;
-        // Only cycle points if a control point is already selected; otherwise go to previous region
-        if (region?.hasSelectedPoint) {
-            region.selectPreviousPoint();
+        const selectedRegion = regionSet.selectedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.selectPreviousPoint();
         } else {
             regionSet.selectPreviousRegion();
         }
@@ -201,50 +172,32 @@ export class HotkeyService extends React.Component<{}> {
 
     static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame?.regionSet.selectedRegion) {
-            const region = appStore.activeFrame.regionSet.selectedRegion;
+        const frame = appStore.activeFrame;
+        const region = frame?.regionSet.selectedRegion;
+        if (!frame || !region || region.regionId === CURSOR_REGION_ID) {
+            return;
+        }
 
-            // Do not move the cursor region with arrow keys
-            if (!region || region.regionId === CURSOR_REGION_ID) {
-                return;
-            }
+        const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
+        const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
+        const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
 
-            // Calculate movement distance based on acceleration and zoom level
-            const baseIncrement = 1;
-            const zoomMultiplier = Math.max(1, 1 / appStore.activeFrame.zoomLevel);
+        if (region.supportsPointSelection && region.hasSelectedRotationPoint) {
+            region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
+            return;
+        }
 
-            const actualDeltaX = deltaX * baseIncrement * acceleratedMultiplier * zoomMultiplier;
-            const actualDeltaY = deltaY * baseIncrement * acceleratedMultiplier * zoomMultiplier;
+        if (region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
+            region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
+            return;
+        }
 
-            if (region.supportsPointSelection && region.hasSelectedRotationPoint) {
-                region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
-                return;
-            }
-
-            if (region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
-                region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
-                return;
-            }
-
-            // Check if a specific point is selected for polygon/polyline regions
-            if (region.supportsPointSelection && region.hasSelectedPoint) {
-                // Move only the selected point
-                region.moveSelectedPoint(actualDeltaX, actualDeltaY);
-            } else if (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.POLYLINE || region.regionType === CARTA.RegionType.ANNPOLYGON || region.regionType === CARTA.RegionType.ANNPOLYLINE) {
-                // Move all control points (entire region)
-                const newControlPoints = region.controlPoints.map(point => ({
-                    x: point.x + actualDeltaX,
-                    y: point.y + actualDeltaY
-                }));
-                region.setControlPoints(newControlPoints);
-            } else {
-                // For other region types, use setCenter
-                const newCenter = {
-                    x: region.center.x + actualDeltaX,
-                    y: region.center.y + actualDeltaY
-                };
-                region.setCenter(newCenter);
-            }
+        if (region.supportsPointSelection && region.hasSelectedPoint) {
+            region.moveSelectedPoint(actualDeltaX, actualDeltaY);
+        } else if (region.isPolygonalRegion) {
+            region.setControlPoints(region.controlPoints.map(point => ({x: point.x + actualDeltaX, y: point.y + actualDeltaY})));
+        } else {
+            region.setCenter({x: region.center.x + actualDeltaX, y: region.center.y + actualDeltaY});
         }
     };
 
@@ -284,19 +237,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
             {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.EnterPointSelection},
-            // Make Tab/Shift+Tab effective only when a non-cursor active region exists
-            {
-                combo: "tab",
-                label: "Select next region/point",
-                preventDefault: false,
-                onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabNext(e)
-            },
-            {
-                combo: "shift + tab",
-                label: "Select previous region/point",
-                preventDefault: false,
-                onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)
-            },
+            {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabNext(e)},
+            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)},
             {combo: "up + down", label: "Move region/point vertically", onKeyDown: undefined},
             {combo: "left + right", label: "Move region/point horizontally", onKeyDown: undefined}
         ];

@@ -174,11 +174,78 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         DialogStore.Instance.showDialog(DialogId.Region);
     };
 
+    private scrollToRegionId = (regionId: number) => {
+        const validIndex = this.validRegions.findIndex(region => region.regionId === regionId);
+        if (validIndex >= 0) {
+            this.scrollToSelected(validIndex);
+        }
+    };
+
+    private getKeyboardNavigationList = (includeCursor: boolean): RegionStore[] => {
+        return includeCursor ? this.validRegions : this.validRegions.filter(region => region.regionId !== CURSOR_REGION_ID);
+    };
+
+    private getPivotIndex = (list: RegionStore[], focusedIndex: number, direction: number): number => {
+        let pivotIndex = -1;
+
+        if (this.rowPivotIndex >= 0) {
+            const pivotRegion = this.validRegions[this.rowPivotIndex];
+            if (pivotRegion) {
+                pivotIndex = list.findIndex(region => region.regionId === pivotRegion.regionId);
+            }
+        }
+
+        if (pivotIndex < 0 || pivotIndex >= list.length) {
+            return focusedIndex >= 0 ? focusedIndex : direction > 0 ? 0 : list.length - 1;
+        }
+
+        return pivotIndex;
+    };
+
+    private handleRangeKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number, isArrowUp: boolean) => {
+        if ((isArrowUp && focusedIndex <= 0) || (!isArrowUp && focusedIndex >= list.length - 1)) {
+            if (focusedIndex >= 0) {
+                this.scrollToRegionId(list[focusedIndex]?.regionId);
+            }
+            return;
+        }
+
+        const pivotIndex = this.getPivotIndex(list, focusedIndex, direction);
+        this.rowPivotIndex = this.validRegions.findIndex(region => region.regionId === list[pivotIndex]?.regionId);
+
+        const startIndex = focusedIndex < 0 ? (direction > 0 ? -1 : list.length) : focusedIndex;
+        const nextIndex = clamp(startIndex + direction, 0, list.length - 1);
+        const rangeStart = Math.min(pivotIndex, nextIndex);
+        const rangeEnd = Math.max(pivotIndex, nextIndex);
+        const selectedIds = list.slice(rangeStart, rangeEnd + 1).map(region => region.regionId);
+        const nextRegionId = list[nextIndex]?.regionId;
+
+        regionSet.setSelectionByIds(selectedIds, nextRegionId);
+        this.scrollToRegionId(nextRegionId);
+    };
+
+    private handleSingleKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number, shouldWrap: boolean) => {
+        const startIndex = focusedIndex < 0 ? (direction > 0 ? -1 : list.length) : focusedIndex;
+        const nextIndex = shouldWrap ? (startIndex + direction + list.length) % list.length : clamp(startIndex + direction, 0, list.length - 1);
+        const region = list[nextIndex];
+        if (!region) {
+            return;
+        }
+
+        regionSet.selectSingleRegion(region);
+        this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
+        if (this.rowPivotIndex >= 0) {
+            this.scrollToSelected(this.rowPivotIndex);
+        }
+    };
+
     // When the Region List has focus, arrow keys navigate selection instead of moving regions
     @action private handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
-        if (!regionSet) return;
+        if (!regionSet) {
+            return;
+        }
 
         const key = ev.key;
         const isArrowUp = key === "ArrowUp";
@@ -186,91 +253,31 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isArrowLeft = key === "ArrowLeft";
         const isArrowRight = key === "ArrowRight";
         const isArrow = isArrowUp || isArrowDown || isArrowLeft || isArrowRight;
-        if (!isArrow) return;
+        if (!isArrow) {
+            return;
+        }
 
-        // Prevent global hotkeys from moving regions on canvas
         ev.preventDefault();
         ev.stopPropagation();
 
-        // Left/Right: no-op in this focused mode (explicitly do nothing)
         if (isArrowLeft || isArrowRight) {
             return;
         }
 
-        // Up/Down: navigate selection; with Shift => range (multi) selection
-        const dir = isArrowUp ? -1 : 1;
-        const allList = this.validRegions; // includes cursor
-        const listNoCursor = allList.filter(r => r.regionId !== CURSOR_REGION_ID);
         const noModifier = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey;
-        // Use full list (including cursor) when no modifiers; otherwise use list without cursor
-        const list = noModifier ? allList : listNoCursor;
-        const count = list.length;
-        if (count === 0) return;
+        const direction = isArrowUp ? -1 : 1;
+        const list = this.getKeyboardNavigationList(noModifier);
+        if (list.length === 0) {
+            return;
+        }
 
         const focusedId = regionSet.selectedRegion?.regionId ?? -1;
-        let focusedIndex = list.findIndex(r => r.regionId === focusedId);
+        const focusedIndex = list.findIndex(region => region.regionId === focusedId);
 
         if (ev.shiftKey) {
-            // If already at boundaries, do nothing (avoid wrap-around)
-            if ((isArrowUp && focusedIndex <= 0) || (isArrowDown && focusedIndex >= count - 1)) {
-                if (focusedIndex >= 0) {
-                    const validIdx = this.validRegions.findIndex(r => r.regionId === list[focusedIndex]?.regionId);
-                    if (validIdx >= 0) this.scrollToSelected(validIdx);
-                }
-                return;
-            }
-            // Establish pivot if not set yet; normalize existing pivot (from clicks) to filtered list
-            let pivotIndex = -1;
-            if (this.rowPivotIndex >= 0) {
-                const pivotRegion = this.validRegions?.[this.rowPivotIndex];
-                if (pivotRegion) {
-                    pivotIndex = list.findIndex(r => r.regionId === pivotRegion.regionId);
-                }
-            }
-            if (pivotIndex < 0 || pivotIndex >= count) {
-                pivotIndex = focusedIndex >= 0 ? focusedIndex : dir > 0 ? 0 : count - 1;
-            }
-            this.rowPivotIndex = this.validRegions.findIndex(r => r.regionId === list[pivotIndex]?.regionId);
-
-            // Determine next focused index
-            if (focusedIndex < 0) {
-                // If nothing focused yet, start from boundary toward dir
-                focusedIndex = dir > 0 ? -1 : count;
-            }
-            const nextIndex = clamp(focusedIndex + dir, 0, count - 1);
-
-            const start = Math.min(pivotIndex, nextIndex);
-            const end = Math.max(pivotIndex, nextIndex);
-            const ids: number[] = [];
-            for (let i = start; i <= end; i++) {
-                const r = list[i];
-                if (r) ids.push(r.regionId);
-            }
-            // Focus on a non-cursor region id (list excludes cursor already)
-            regionSet.setSelectionByIds(ids, list[nextIndex]?.regionId);
-            const nextValidIdx = this.validRegions.findIndex(r => r.regionId === list[nextIndex]?.regionId);
-            if (nextValidIdx >= 0) this.scrollToSelected(nextValidIdx);
+            this.handleRangeKeyboardSelection(regionSet, list, focusedIndex, direction, isArrowUp);
         } else {
-            // Single selection navigation
-            let next: number;
-            if (noModifier) {
-                // Wrap around at boundaries when no modifiers are pressed
-                if (focusedIndex < 0) {
-                    next = dir > 0 ? 0 : count - 1;
-                } else {
-                    next = (focusedIndex + dir + count) % count;
-                }
-            } else {
-                // With any modifier (except Shift), keep clamped behavior
-                next = clamp((focusedIndex < 0 ? (dir > 0 ? -1 : count) : focusedIndex) + dir, 0, count - 1);
-            }
-            const region = list[next];
-            if (region) {
-                regionSet.selectSingleRegion(region);
-                // Store pivot in the unfiltered index space used by clicks/rows
-                this.rowPivotIndex = this.validRegions.findIndex(r => r.regionId === region.regionId);
-                if (this.rowPivotIndex >= 0) this.scrollToSelected(this.rowPivotIndex);
-            }
+            this.handleSingleKeyboardSelection(regionSet, list, focusedIndex, direction, noModifier);
         }
     };
 

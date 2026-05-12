@@ -22,6 +22,17 @@ export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;
 export const SIMPLE_SHAPE_BOTTOM_POINT_INDEX = 2;
 export const SIMPLE_SHAPE_LEFT_POINT_INDEX = 3;
 export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 4;
+const MIN_POINT_SELECTION_SIZE = 1e-3;
+
+// New region types should support point selection by default. Add a type here only
+// when selecting individual control points is intentionally unsupported.
+const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT, CARTA.RegionType.ANNULUS]);
+
+const SIDE_SELECTABLE_SIMPLE_SHAPE_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
+
+const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
+const ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR]);
+const POLYGONAL_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POLYGON, CARTA.RegionType.POLYLINE, CARTA.RegionType.ANNPOLYGON, CARTA.RegionType.ANNPOLYLINE]);
 
 export class RegionStore {
     readonly fileId: number;
@@ -353,22 +364,7 @@ export class RegionStore {
     }
 
     @computed get supportsPointSelection(): boolean {
-        return (
-            this.regionType === CARTA.RegionType.LINE ||
-            this.regionType === CARTA.RegionType.ANNLINE ||
-            this.regionType === CARTA.RegionType.RECTANGLE ||
-            this.regionType === CARTA.RegionType.ANNRECTANGLE ||
-            this.regionType === CARTA.RegionType.ELLIPSE ||
-            this.regionType === CARTA.RegionType.ANNELLIPSE ||
-            this.regionType === CARTA.RegionType.ANNTEXT ||
-            this.regionType === CARTA.RegionType.ANNCOMPASS ||
-            this.regionType === CARTA.RegionType.POLYGON ||
-            this.regionType === CARTA.RegionType.POLYLINE ||
-            this.regionType === CARTA.RegionType.ANNPOLYGON ||
-            this.regionType === CARTA.RegionType.ANNPOLYLINE ||
-            this.regionType === CARTA.RegionType.ANNVECTOR ||
-            this.regionType === CARTA.RegionType.ANNRULER
-        );
+        return !POINT_SELECTION_UNSUPPORTED_REGION_TYPES.has(this.regionType);
     }
 
     @computed get selectablePointCount(): number {
@@ -388,21 +384,19 @@ export class RegionStore {
     }
 
     @computed get isSideSelectableSimpleShape(): boolean {
-        return (
-            this.regionType === CARTA.RegionType.RECTANGLE ||
-            this.regionType === CARTA.RegionType.ANNRECTANGLE ||
-            this.regionType === CARTA.RegionType.ELLIPSE ||
-            this.regionType === CARTA.RegionType.ANNELLIPSE ||
-            this.regionType === CARTA.RegionType.ANNTEXT
-        );
+        return SIDE_SELECTABLE_SIMPLE_SHAPE_TYPES.has(this.regionType);
     }
 
     @computed get isLineLikeRegion(): boolean {
-        return this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER;
+        return LINE_LIKE_REGION_TYPES.has(this.regionType);
     }
 
     @computed get isRotationSelectableLineLikeRegion(): boolean {
-        return this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR;
+        return ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES.has(this.regionType);
+    }
+
+    @computed get isPolygonalRegion(): boolean {
+        return POLYGONAL_REGION_TYPES.has(this.regionType);
     }
 
     @computed get isCompassRegion(): boolean {
@@ -771,45 +765,38 @@ export class RegionStore {
     };
 
     @action selectNextPoint = () => {
-        if (this.supportsPointSelection && this.selectablePointCount > 0) {
-            if (this.selectedPointIndex < 0) {
-                this.selectedPointIndex = 0;
-            } else {
-                this.selectedPointIndex = (this.selectedPointIndex + 1) % this.selectablePointCount;
-            }
+        if (!this.supportsPointSelection || this.selectablePointCount <= 0) {
+            return;
         }
+
+        this.selectedPointIndex = this.selectedPointIndex < 0 ? 0 : (this.selectedPointIndex + 1) % this.selectablePointCount;
     };
 
     @action selectPreviousPoint = () => {
-        if (this.supportsPointSelection && this.selectablePointCount > 0) {
-            if (this.selectedPointIndex < 0) {
-                this.selectedPointIndex = this.selectablePointCount - 1;
-            } else {
-                this.selectedPointIndex = (this.selectedPointIndex - 1 + this.selectablePointCount) % this.selectablePointCount;
-            }
+        if (!this.supportsPointSelection || this.selectablePointCount <= 0) {
+            return;
         }
+
+        this.selectedPointIndex = this.selectedPointIndex < 0 ? this.selectablePointCount - 1 : (this.selectedPointIndex - 1 + this.selectablePointCount) % this.selectablePointCount;
     };
 
     @action moveSelectedPoint = (deltaX: number, deltaY: number) => {
-        if (this.hasSelectedPoint) {
-            if (this.hasSelectedRotationPoint) {
-                return;
-            }
-            if (this.isCompassRegion) {
-                this.moveSelectedCompassLength(deltaX);
-                return;
-            }
-            if (this.isSideSelectableSimpleShape) {
-                this.moveSelectedSimpleShapeSide(deltaX, deltaY);
-                return;
-            }
-            const currentPoint = this.controlPoints[this.selectedPointIndex];
-            const newPoint = {
-                x: currentPoint.x + deltaX,
-                y: currentPoint.y + deltaY
-            };
-            this.setControlPoint(this.selectedPointIndex, newPoint);
+        if (!this.hasSelectedPoint || this.hasSelectedRotationPoint) {
+            return;
         }
+
+        if (this.isCompassRegion) {
+            this.moveSelectedCompassLength(deltaX);
+            return;
+        }
+
+        if (this.isSideSelectableSimpleShape) {
+            this.moveSelectedSimpleShapeSide(deltaX, deltaY);
+            return;
+        }
+
+        const currentPoint = this.controlPoints[this.selectedPointIndex];
+        this.setControlPoint(this.selectedPointIndex, {x: currentPoint.x + deltaX, y: currentPoint.y + deltaY});
     };
 
     private moveSelectedCompassLength = (deltaX: number) => {
@@ -818,7 +805,7 @@ export class RegionStore {
         }
 
         const compassRegion = this as unknown as RegionStore & {length: number; setLength: (length: number) => void};
-        compassRegion.setLength(Math.max(1e-3, compassRegion.length + deltaX));
+        compassRegion.setLength(Math.max(MIN_POINT_SELECTION_SIZE, compassRegion.length + deltaX));
     };
 
     @action rotateSelectedPoint = (deltaDegrees: number) => {
@@ -830,13 +817,23 @@ export class RegionStore {
     private moveSelectedSimpleShapeSide = (deltaX: number, deltaY: number) => {
         const rotation = (this.rotation * Math.PI) / 180.0;
         const delta = rotate2D({x: deltaX, y: deltaY}, -rotation);
-        const minSize = 1e-3;
         const isRectangle = this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE;
         const isText = this.regionType === CARTA.RegionType.ANNTEXT;
         const zoomLevel = this.activeFrame?.spatialReference?.zoomLevel || this.activeFrame?.zoomLevel || 1;
         const textScale = AppStore.Instance.imageRatio / zoomLevel;
-        const halfWidth = isRectangle ? this.size.x / 2 : isText ? (this.size.x * textScale) / 2 : this.size.y;
-        const halfHeight = isRectangle ? this.size.y / 2 : isText ? (this.size.y * textScale) / 2 : this.size.x;
+        let halfWidth: number;
+        let halfHeight: number;
+
+        if (isRectangle) {
+            halfWidth = this.size.x / 2;
+            halfHeight = this.size.y / 2;
+        } else if (isText) {
+            halfWidth = (this.size.x * textScale) / 2;
+            halfHeight = (this.size.y * textScale) / 2;
+        } else {
+            halfWidth = this.size.y;
+            halfHeight = this.size.x;
+        }
 
         let left = -halfWidth;
         let right = halfWidth;
@@ -846,26 +843,26 @@ export class RegionStore {
         switch (this.selectedPointIndex) {
             case SIMPLE_SHAPE_TOP_POINT_INDEX:
                 top += delta.y;
-                if (top - bottom < minSize) {
-                    top = bottom + minSize;
+                if (top - bottom < MIN_POINT_SELECTION_SIZE) {
+                    top = bottom + MIN_POINT_SELECTION_SIZE;
                 }
                 break;
             case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
                 right += delta.x;
-                if (right - left < minSize) {
-                    right = left + minSize;
+                if (right - left < MIN_POINT_SELECTION_SIZE) {
+                    right = left + MIN_POINT_SELECTION_SIZE;
                 }
                 break;
             case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
                 bottom += delta.y;
-                if (top - bottom < minSize) {
-                    bottom = top - minSize;
+                if (top - bottom < MIN_POINT_SELECTION_SIZE) {
+                    bottom = top - MIN_POINT_SELECTION_SIZE;
                 }
                 break;
             case SIMPLE_SHAPE_LEFT_POINT_INDEX:
                 left += delta.x;
-                if (right - left < minSize) {
-                    left = right - minSize;
+                if (right - left < MIN_POINT_SELECTION_SIZE) {
+                    left = right - MIN_POINT_SELECTION_SIZE;
                 }
                 break;
             default:
@@ -873,7 +870,14 @@ export class RegionStore {
         }
 
         const centerOffset = rotate2D({x: (left + right) / 2, y: (bottom + top) / 2}, rotation);
-        const size = isRectangle ? {x: right - left, y: top - bottom} : isText ? {x: (right - left) / textScale, y: (top - bottom) / textScale} : {x: (top - bottom) / 2, y: (right - left) / 2};
+        let size: Point2D;
+        if (isRectangle) {
+            size = {x: right - left, y: top - bottom};
+        } else if (isText) {
+            size = {x: (right - left) / textScale, y: (top - bottom) / textScale};
+        } else {
+            size = {x: (top - bottom) / 2, y: (right - left) / 2};
+        }
         this.setControlPoints([{x: this.center.x + centerOffset.x, y: this.center.y + centerOffset.y}, size]);
     };
 
