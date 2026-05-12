@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 
@@ -37,7 +37,7 @@ const DEFAULTS = {
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
-        colormap: "inferno",
+        colormap: ColorMap.Inferno,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
@@ -55,7 +55,7 @@ const DEFAULTS = {
         contourThickness: 1,
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
-        contourColormap: "viridis"
+        contourColormap: ColorMap.Viridis
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
@@ -63,7 +63,7 @@ const DEFAULTS = {
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
-        vectorOverlayColormap: "viridis"
+        vectorOverlayColormap: ColorMap.Viridis
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -125,7 +125,8 @@ const DEFAULTS = {
     },
     CATALOG: {
         catalogDisplayedColumnSize: 10,
-        catalogTableSeparatorPosition: "60%"
+        catalogTableSeparatorPosition: "60%",
+        catalogAutoSelectImageOverlayColumns: true
     },
     STATS_PANEL: {
         statsPanelEnabled: false,
@@ -535,6 +536,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
+    @computed get autoSelectImageOverlayCoordinateColumns(): boolean {
+        return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
+    }
+
     @computed get pixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
@@ -856,7 +861,7 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS]);
     };
 
     /**

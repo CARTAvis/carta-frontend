@@ -2,22 +2,13 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, type CatalogSystemType, CatalogTextureType, ColorMap, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {clamp, minMaxArray} from "utilities";
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
-
-// defined to be consistent with the enum in carta_computation.cc
-enum CatalogMapType {
-    SIZE_DIAMETER = 0,
-    SIZE_AREA = 1,
-    COLOR = 2,
-    ORIENTATION = 3,
-    SIZE_DIAMETER_ANGULAR = 4
-}
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
@@ -62,12 +53,18 @@ export class CatalogWidgetStore {
     @observable showSelectedData: boolean = false;
     @observable catalogTableAutoScroll: boolean = false;
     @observable catalogPlotType: CatalogPlotType = CatalogPlotType.ImageOverlay;
+    @observable autoSelectImageOverlayAxesAttempted: boolean = false;
     @observable catalogSize: number = 10.0; // in pixel
     @observable showedCatalogSize: number = 10.0;
     @observable catalogColor: string = Colors.TURQUOISE3;
     @observable catalogShape: CatalogOverlayShape = CatalogOverlayShape.CIRCLE_LINED;
     @observable xAxis: string = CatalogOverlay.NONE;
     @observable yAxis: string = CatalogOverlay.NONE;
+    @observable hasPlottedImageOverlay: boolean = false;
+    @observable plottedImageOverlayXAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlayYAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlaySystem: CatalogSystemType | undefined = undefined;
+    @observable plottedImageOverlayMaxRows: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     @observable highlightColor: string = Colors.RED2;
     @observable settingsTabId: CatalogSettingsTabs = CatalogSettingsTabs.SIZE;
@@ -100,7 +97,7 @@ export class CatalogWidgetStore {
     @observable colorMapColumn: string = CatalogOverlay.NONE;
     @observable colorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
     @observable colorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable colorMap: string = "viridis";
+    @observable colorMap: string = ColorMap.Viridis;
     @observable colorScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable invertedColorMap: boolean = false;
     // orientation
@@ -259,6 +256,7 @@ export class CatalogWidgetStore {
      * Reset all settings of catalog source plot to default
      */
     @action resetMaps() {
+        this.clearPlottedImageOverlayState();
         // size
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
@@ -284,7 +282,7 @@ export class CatalogWidgetStore {
         this.colorMapColumn = CatalogOverlay.NONE;
         this.colorColumnMax = {default: undefined, clipd: undefined};
         this.colorColumnMin = {default: undefined, clipd: undefined};
-        this.colorMap = "jet";
+        this.colorMap = ColorMap.Jet;
         this.colorScalingType = FrameScaling.LINEAR;
         this.invertedColorMap = false;
         // orientation
@@ -821,6 +819,28 @@ export class CatalogWidgetStore {
 
     @action setyAxis(yColumnName: string) {
         this.yAxis = yColumnName;
+    }
+
+    @action setAutoSelectImageOverlayAxesAttempted(attempted: boolean) {
+        this.autoSelectImageOverlayAxesAttempted = attempted;
+    }
+
+    @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
+        this.hasPlottedImageOverlay = true;
+        this.plottedImageOverlayXAxis = xColumnName;
+        this.plottedImageOverlayYAxis = yColumnName;
+        this.plottedImageOverlaySystem = system;
+        if (maxRows !== undefined) {
+            this.plottedImageOverlayMaxRows = maxRows;
+        }
+    }
+
+    @action clearPlottedImageOverlayState() {
+        this.hasPlottedImageOverlay = false;
+        this.plottedImageOverlayXAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlayYAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlaySystem = undefined;
+        this.plottedImageOverlayMaxRows = undefined;
     }
 
     @action setTableSeparatorPosition(position: string) {

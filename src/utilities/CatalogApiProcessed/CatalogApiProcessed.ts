@@ -2,18 +2,8 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import type {ProcessedColumnData} from "utilities";
 
-import {CatalogSystemType, NumberFormatType, SystemType} from "enums";
+import {CatalogSystemType, DataType, NumberFormatType, SystemType} from "enums";
 import {AppStore} from "stores";
-
-enum DataType {
-    CHAR = "CHAR",
-    SHORT = "SHORT",
-    FLOAT = "FLOAT",
-    LONG = "LONG",
-    INT = "INT",
-    DOUBLE = "DOUBLE",
-    UNSIGNEDBYTE = "UNSIGNEDBYTE"
-}
 
 export type VizierResource = {
     id: string | null;
