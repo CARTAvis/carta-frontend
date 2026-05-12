@@ -2,7 +2,7 @@ import * as React from "react";
 import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
 
-export type FlexLayoutDomMarkerTarget = "tab" | "tabset-toolbar";
+export type FlexLayoutDomMarkerTarget = "tab" | "tab-content" | "tabset-toolbar";
 
 export interface FlexLayoutDomMarkerProps {
     nodeId: string;
@@ -23,6 +23,14 @@ export const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithC
             const headerTitle = tabButton?.querySelector<HTMLDivElement>(".flexlayout__tab_button_content");
             if (headerTitle) {
                 headerTitle.setAttribute("data-testid", nodeId + "-header-title");
+            }
+            return;
+        }
+
+        if (target === "tab-content") {
+            const contentContainer = markerRef.current?.parentElement;
+            if (contentContainer) {
+                contentContainer.setAttribute("data-testid", nodeId + "-content");
             }
             return;
         }

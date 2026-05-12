@@ -1035,9 +1035,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                            <AnchorButton data-testid="catalog-size-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>
+                                Size
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-color-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>
+                                Color
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-orientation-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>
+                                Orientation
+                            </AnchorButton>
                         </ButtonGroup>
                     </div>
                     <SplitPane className="catalog-table" direction="vertical" onResizeEnd={this.handleSplitChange}>

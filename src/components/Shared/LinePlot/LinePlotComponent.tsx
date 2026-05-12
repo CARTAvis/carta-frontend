@@ -53,6 +53,7 @@ export interface LinePlotInsideTextMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
+    testId?: string;
     data?: Point2D[];
     comments?: string[];
     xMin?: number;
@@ -1159,7 +1160,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onMouseMove={this.onMouseMove}
                     onMouseLeave={this.onMouseLeave}
                     tabIndex={0}
-                    data-testid="profiler-plot"
+                    data-testid={this.props.testId ? this.props.testId + "-plot" : "profiler-plot"}
                 >
                     {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
                     {this.width > 0 && this.height > 0 && (
