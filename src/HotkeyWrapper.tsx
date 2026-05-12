@@ -425,7 +425,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static RenderHotkeyGroups() {
         const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
-        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.otherHotKeys];
+        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.animatorHotkeys, hotkeys.regionHotKeys, hotkeys.otherHotKeys];
 
         // Render each group; placement handled purely by CSS multi-column
         return hotkeyGroups.map((group, idx) => (
