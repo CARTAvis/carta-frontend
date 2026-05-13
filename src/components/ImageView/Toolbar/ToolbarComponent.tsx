@@ -372,7 +372,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         </Tooltip>
                         {!frame.isPreview && (
                             <Tooltip position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
-                                <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked} data-testid="zoom-to-fit-button">
+                                <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked} data-testid="zoom-to-1x-fit-button">
                                     1.0x
                                 </AnchorButton>
                             </Tooltip>
