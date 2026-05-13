@@ -365,7 +365,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     @action private selectSimpleShapeAnchor = (anchor: string) => {
-        if (!this.props.region.isSideSelectableSimpleShape) {
+        if (!this.props.region.isSimpleShapeRegion) {
             return;
         }
 

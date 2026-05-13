@@ -28,7 +28,7 @@ const MIN_POINT_SELECTION_SIZE = 1e-3;
 // when selecting individual control points is intentionally unsupported.
 const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT, CARTA.RegionType.ANNULUS]);
 
-const SIDE_SELECTABLE_SIMPLE_SHAPE_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
+const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
 
 const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
 const ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR]);
@@ -368,7 +368,7 @@ export class RegionStore {
     }
 
     @computed get selectablePointCount(): number {
-        if (this.isSideSelectableSimpleShape) {
+        if (this.isSimpleShapeRegion) {
             return this.activeFrame?.hasSquarePixels ? 5 : 4;
         }
         if (this.isRotationSelectableLineLikeRegion) {
@@ -383,8 +383,8 @@ export class RegionStore {
         return this.controlPoints.length;
     }
 
-    @computed get isSideSelectableSimpleShape(): boolean {
-        return SIDE_SELECTABLE_SIMPLE_SHAPE_TYPES.has(this.regionType);
+    @computed get isSimpleShapeRegion(): boolean {
+        return SIMPLE_SHAPE_REGION_TYPES.has(this.regionType);
     }
 
     @computed get isLineLikeRegion(): boolean {
@@ -404,7 +404,7 @@ export class RegionStore {
     }
 
     @computed get rotationPointIndex(): number {
-        if (this.isSideSelectableSimpleShape) {
+        if (this.isSimpleShapeRegion) {
             return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
         }
         if (this.isRotationSelectableLineLikeRegion) {
@@ -807,7 +807,7 @@ export class RegionStore {
             return;
         }
 
-        if (this.isSideSelectableSimpleShape) {
+        if (this.isSimpleShapeRegion) {
             this.moveSelectedSimpleShapeSide(deltaX, deltaY);
             return;
         }

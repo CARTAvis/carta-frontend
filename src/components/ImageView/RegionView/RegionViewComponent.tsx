@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Layer, Line, Stage} from "react-konva";
+import {Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
@@ -10,8 +10,23 @@ import {observer} from "mobx-react";
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
-import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
+import {
+    add2D,
+    average2D,
+    doSelectionRectAndRegionPointsIntersect,
+    doSelectionRectAndRulerPathsIntersect,
+    getRectFromPoints,
+    getRegionSelectionPoints,
+    getRegionSelectionSegments,
+    getRotatedBoxPoints,
+    length2D,
+    pointDistanceSquared,
+    type Rect2D,
+    scale2D,
+    subtract2D,
+    transformPoint
+} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
@@ -37,11 +52,18 @@ const LINE_HEIGHT = 15;
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
 const KEYCODE_ESC = 27;
+const REGION_SELECTION_DRAG_THRESHOLD = 4;
+
+interface RegionSelectionBox {
+    start: Point2D;
+    end: Point2D;
+}
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore | null = null;
     @observable currentCursorPos: Point2D = {x: 0, y: 0};
+    @observable private regionSelectionBox: RegionSelectionBox | null = null;
     @observable private frame: FrameStore;
 
     private readonly disposers: IReactionDisposer[] = [];
@@ -55,6 +77,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+    private suppressNextClick = false;
+    private suppressNextRegionClickSelection = false;
+    private regionSelectionStartedOnRegion = false;
+    private regionSelectionDragNode: Konva.Node | null = null;
     private layerRef = React.createRef<any>();
 
     constructor(props: any) {
@@ -110,6 +136,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 
     componentWillUnmount() {
+        this.restoreRegionSelectionDragNode();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
     }
@@ -272,8 +299,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Handle region completion
         if (
             this.creatingRegion.isValid &&
-            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE && regionType !== CARTA.RegionType.ANNPOLYGON && regionType !== CARTA.RegionType.ANNPOLYLINE) ||
-                this.creatingRegion.controlPoints.length > 2) &&
+            (!this.creatingRegion.isPolygonalRegion || this.creatingRegion.controlPoints.length > 2) &&
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
@@ -282,7 +308,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
 
-        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
+        if (this.creatingRegion?.isPolygonalRegion) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
                 this.creatingRegion = null;
@@ -390,6 +416,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragStart = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
@@ -409,6 +439,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragMove = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             let isPanDrag = true;
@@ -438,6 +472,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragEnd = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             this.dragPanning = false;
@@ -494,6 +532,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         const frame = this.frame;
+
+        if (this.suppressNextClick) {
+            this.suppressNextClick = false;
+            return;
+        }
 
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
@@ -574,6 +617,62 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private isRegionSelectionStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): boolean => {
+        const mouseEvent = konvaEvent.evt;
+        const targetId = konvaEvent.target?.id?.();
+        return mouseEvent.button === 0 && mouseEvent.shiftKey && !targetId && !this.frame.regionSet.locked;
+    };
+
+    private getRegionSelectionCanvasPoint = (mouseEvent: MouseEvent): Point2D => {
+        return adjustPosToMutatedStage({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, this.stageRef.current);
+    };
+
+    private restoreRegionSelectionDragNode = (): void => {
+        if (this.regionSelectionDragNode) {
+            this.regionSelectionDragNode.draggable(true);
+        }
+        this.regionSelectionDragNode = null;
+    };
+
+    private getRegionSelectionDragNode = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): Konva.Node | null => {
+        let node: Konva.Node | null = konvaEvent.target;
+        while (node && node !== konvaEvent.currentTarget) {
+            if (node.draggable()) {
+                return node;
+            }
+            node = node.getParent();
+        }
+        return null;
+    };
+
+    private shouldSuppressRegionSelect = (evt?: MouseEvent): boolean => {
+        if (evt?.button === 0 && this.suppressNextRegionClickSelection) {
+            this.suppressNextRegionClickSelection = false;
+            return true;
+        }
+        return false;
+    };
+
+    @action private handleStageMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (this.frame.regionSet.mode === RegionMode.CREATING) {
+            this.handleMouseDown(konvaEvent);
+            return;
+        }
+
+        const mouseEvent = konvaEvent.evt;
+        if (this.isRegionSelectionStart(konvaEvent)) {
+            const start = this.getRegionSelectionCanvasPoint(mouseEvent);
+            this.regionSelectionBox = {start, end: start};
+            this.regionSelectionStartedOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
+            const dragNode = this.regionSelectionStartedOnRegion ? this.getRegionSelectionDragNode(konvaEvent) : null;
+            if (dragNode) {
+                this.regionSelectionDragNode = dragNode;
+                dragNode.draggable(false);
+            }
+            this.suppressNextClick = true;
+        }
+    };
+
     private handleMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -595,6 +694,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 break;
             default:
                 break;
+        }
+    };
+
+    @action private handleStageMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (this.regionSelectionBox) {
+            this.finishRegionSelection();
+            return;
+        }
+
+        if (this.frame.regionSet.mode === RegionMode.CREATING) {
+            this.handleMouseUp(konvaEvent);
         }
     };
 
@@ -627,8 +737,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
+        if (this.regionSelectionBox) {
+            this.regionSelectionBox.end = this.getRegionSelectionCanvasPoint(mouseEvent);
+            return;
+        }
+
         if (this.props.dragPanningEnabled && this.dragPanning) {
             return;
         }
@@ -666,17 +781,150 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private getRegionSelectionRect = (): Rect2D | undefined => {
+        if (!this.regionSelectionBox) {
+            return undefined;
+        }
+        const {start, end} = this.regionSelectionBox;
+        return getRectFromPoints(start, end);
+    };
+
+    private isSelectionRectLargeEnough = (rect: Rect2D): boolean => {
+        return rect.width >= REGION_SELECTION_DRAG_THRESHOLD && rect.height >= REGION_SELECTION_DRAG_THRESHOLD;
+    };
+
+    private regionImagePointToSelectionCanvas = (point: Point2D): Point2D => {
+        let transformedPoint = point;
+        if (this.frame.spatialReference && this.frame.spatialTransformAST) {
+            transformedPoint = transformPoint(this.frame.spatialTransformAST, point, false);
+        }
+        return transformedImageToCanvasPos(transformedPoint, this.frame, this.props.width, this.props.height, this.stageRef.current);
+    };
+
+    private getTextSelectionCanvasPoints = (region: RegionStore): Point2D[] => {
+        const zoomLevel = this.frame.spatialReference?.zoomLevel || this.frame.zoomLevel;
+        const transformScale = this.frame.spatialTransform?.scale ?? 1;
+        const halfWidth = (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
+        const halfHeight = (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
+        const rotation = (region.rotation * Math.PI) / 180.0;
+        const center = this.frame.spatialReference && this.frame.spatialTransformAST ? transformPoint(this.frame.spatialTransformAST, region.center, false) : region.center;
+        return getRotatedBoxPoints(center, halfWidth, halfHeight, rotation).map(point => transformedImageToCanvasPos(point, this.frame, this.props.width, this.props.height, this.stageRef.current));
+    };
+
+    private getCompassSelectionCanvasPoints = (region: CompassAnnotationStore): Point2D[] => {
+        const controlPoint = this.frame.spatialReference && this.frame.spatialTransformAST ? transformPoint(this.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
+        const originPoint = transformedImageToCanvasPos(controlPoint, this.frame, this.props.width, this.props.height, this.stageRef.current);
+        const zoomLevel = this.frame.spatialReference?.zoomLevel || this.frame.zoomLevel;
+        const targetStageLength = (region.length * AppStore.Instance.imageRatio) / zoomLevel;
+
+        if (!this.frame.validWcs) {
+            return [originPoint, {x: originPoint.x, y: originPoint.y - targetStageLength}, {x: originPoint.x - targetStageLength, y: originPoint.y}];
+        }
+
+        const getCompassEndpoint = (approxPoints: number[]): Point2D => {
+            let previousPoint = originPoint;
+            let previousDistance = 0;
+
+            for (let i = 0; i < approxPoints.length; i += 2) {
+                const point = transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current);
+                const distance = length2D(subtract2D(point, originPoint));
+
+                if (distance >= targetStageLength) {
+                    const segmentLength = distance - previousDistance;
+                    const ratio = segmentLength > 0 ? (targetStageLength - previousDistance) / segmentLength : 0;
+                    return {
+                        x: previousPoint.x + (point.x - previousPoint.x) * ratio,
+                        y: previousPoint.y + (point.y - previousPoint.y) * ratio
+                    };
+                }
+
+                previousPoint = point;
+                previousDistance = distance;
+            }
+
+            return previousPoint;
+        };
+
+        const wcsInfo = this.frame.wcsInfoForTransformation;
+        const approxPoints = region.getCompassApproximation(wcsInfo, !!this.frame.spatialReference, this.frame.spatialTransformAST || undefined);
+        return [originPoint, getCompassEndpoint(approxPoints.northApproximatePoints), getCompassEndpoint(approxPoints.eastApproximatePoints)];
+    };
+
+    private getRulerSelectionCanvasPaths = (region: RulerAnnotationStore): Point2D[][] => {
+        const wcsInfoSelected = this.frame.isOffsetCoord ? this.frame.wcsInfoOffset : this.frame.wcsInfoForTransformation;
+        const wcsInfo = this.frame.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : this.frame.wcsInfo;
+        const approxPoints = region.getCurveApproximation(wcsInfo, this.frame.spatialTransformAST || undefined);
+        const toCanvasPath = (points: number[]): Point2D[] => {
+            const canvasPoints: Point2D[] = [];
+            for (let i = 0; i < points.length; i += 2) {
+                canvasPoints.push(transformedImageToCanvasPos({x: points[i], y: points[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current));
+            }
+            return canvasPoints;
+        };
+
+        const paths = [toCanvasPath(approxPoints.hypotenuseApproximatePoints)];
+        if (region.auxiliaryLineVisible) {
+            paths.push(toCanvasPath(approxPoints.xApproximatePoints), toCanvasPath(approxPoints.yApproximatePoints));
+        }
+        return paths;
+    };
+
+    private getSelectionCanvasPoints = (region: RegionStore): Point2D[] => {
+        if (region.regionType === CARTA.RegionType.ANNCOMPASS) {
+            return this.getCompassSelectionCanvasPoints(region as CompassAnnotationStore);
+        }
+
+        if (region.regionType === CARTA.RegionType.ANNTEXT) {
+            return this.getTextSelectionCanvasPoints(region);
+        }
+
+        return getRegionSelectionPoints(region).map(this.regionImagePointToSelectionCanvas);
+    };
+
+    private isRegionInSelectionRect = (region: RegionStore, selectionRect: Rect2D): boolean => {
+        if (region.regionType === CARTA.RegionType.ANNRULER) {
+            const ruler = region as RulerAnnotationStore;
+            const paths = this.getRulerSelectionCanvasPaths(ruler);
+            return doSelectionRectAndRulerPathsIntersect(selectionRect, paths, ruler.auxiliaryLineVisible);
+        }
+
+        const points = this.getSelectionCanvasPoints(region);
+        const segments = getRegionSelectionSegments(region, points);
+        return doSelectionRectAndRegionPointsIntersect(selectionRect, points, segments);
+    };
+
+    @action private finishRegionSelection = () => {
+        const selectionRect = this.getRegionSelectionRect();
+        const isLargeEnough = !!selectionRect && this.isSelectionRectLargeEnough(selectionRect);
+        this.suppressNextRegionClickSelection = this.regionSelectionStartedOnRegion && isLargeEnough;
+        this.regionSelectionStartedOnRegion = false;
+        this.regionSelectionBox = null;
+        this.restoreRegionSelectionDragNode();
+
+        if (!selectionRect || !isLargeEnough) {
+            return;
+        }
+
+        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => !region.locked && this.isRegionInSelectionRect(region, selectionRect)).map(region => region.regionId);
+
+        const nextSelection = new Set(this.frame.regionSet.selectedRegionIds);
+        selectedIds.forEach(id => {
+            if (nextSelection.has(id)) {
+                nextSelection.delete(id);
+            } else {
+                nextSelection.add(id);
+            }
+        });
+        const nextIds = Array.from(nextSelection);
+        this.frame.regionSet.setSelectionByIds(nextIds, selectedIds[selectedIds.length - 1] ?? nextIds[nextIds.length - 1]);
+    };
+
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (
-            this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
-            this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
-            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
-            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE
-        ) {
+        if (this.creatingRegion?.isPolygonalRegion) {
             this.regionCreationEnd();
         }
     };
@@ -699,14 +947,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
         let creatingLine: JSX.Element | null = null;
-        if (
-            this.currentCursorPos &&
-            (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
-                this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
-                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
-                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) &&
-            this.creatingRegion.isValid
-        ) {
+        const selectionRect = this.getRegionSelectionRect();
+        const selectionBox =
+            selectionRect && this.isSelectionRectLargeEnough(selectionRect) ? (
+                <Rect x={selectionRect.x} y={selectionRect.y} width={selectionRect.width} height={selectionRect.height} fill={"rgba(45, 114, 210, 0.12)"} stroke={"#2D72D2"} strokeWidth={1} listening={false} />
+            ) : null;
+        if (this.currentCursorPos && this.creatingRegion?.isPolygonalRegion && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
@@ -749,9 +995,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     onWheel={this.handleWheel}
                     onMouseMove={this.handleMove}
                     onDblClick={this.handleStageDoubleClick}
-                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : undefined}
-                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : undefined}
-                    draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
+                    onMouseDown={this.handleStageMouseDown}
+                    onMouseUp={this.handleStageMouseUp}
+                    draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled && !this.regionSelectionBox}
                     onDragStart={this.handleDragStart}
                     onDragMove={this.handleDragMove}
                     onDragEnd={this.handleDragEnd}
@@ -759,9 +1005,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
-                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                        <RegionComponents
+                            frame={frame}
+                            regions={frame?.regionSet?.regionsAndAnnotationsForRender}
+                            width={this.props.width}
+                            height={this.props.height}
+                            stageRef={this.stageRef}
+                            shouldSuppressSelect={this.shouldSuppressRegionSelect}
+                        />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
+                        {selectionBox}
                     </Layer>
                 </Stage>
             </div>
@@ -769,11 +1023,24 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
+interface RegionComponentsProps {
+    frame: FrameStore;
+    regions: RegionStore[];
+    width: number;
+    height: number;
+    stageRef: any;
+    shouldSuppressSelect?: (evt?: MouseEvent) => boolean;
+}
+
 @observer
-class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageRef: any}> {
+class RegionComponents extends React.Component<RegionComponentsProps> {
     private pivotIndex: number = -1;
 
     private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
+        if (this.props.shouldSuppressSelect?.(evt)) {
+            return;
+        }
+
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const regions = this.props.regions;
@@ -852,17 +1119,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         listening: regionSet.mode !== RegionMode.CREATING,
                         isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
                     };
-                    return r.regionType === CARTA.RegionType.POLYGON ||
-                        r.regionType === CARTA.RegionType.LINE ||
-                        r.regionType === CARTA.RegionType.POLYLINE ||
-                        r.regionType === CARTA.RegionType.ANNPOLYGON ||
-                        r.regionType === CARTA.RegionType.ANNLINE ||
-                        r.regionType === CARTA.RegionType.ANNVECTOR ||
-                        r.regionType === CARTA.RegionType.ANNPOLYLINE ? (
-                        <LineSegmentRegionComponent {...allProps} key={r.regionId} />
-                    ) : (
-                        <SimpleShapeRegionComponent {...allProps} key={r.regionId} />
-                    );
+                    return r.isPolygonalRegion || r.isLineLikeRegion ? <LineSegmentRegionComponent {...allProps} key={r.regionId} /> : <SimpleShapeRegionComponent {...allProps} key={r.regionId} />;
                 }
             });
         }

@@ -1,6 +1,8 @@
 import {type Point2D} from "models";
 
 type Point3D = {x: number; y: number; z?: number};
+export type LineSegment2D = [Point2D, Point2D];
+export type Rect2D = {x: number; y: number; width: number; height: number};
 
 export function dot2D(a: Point2D, b: Point2D): number {
     return a.x * b.x + a.y * b.y;
@@ -155,7 +157,7 @@ export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): {poin
     };
 }
 
-function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+function strictLineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
     const lineCD = subtract2D(d, c);
     const crossA = cross2D(lineCD, subtract2D(a, d));
     const crossB = cross2D(lineCD, subtract2D(b, d));
@@ -168,6 +170,98 @@ function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): 
     } else {
         return false;
     }
+}
+
+function lineOrientation(a: Point2D, b: Point2D, c: Point2D): number {
+    const value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+    if (Math.abs(value) < 1e-9) {
+        return 0;
+    }
+    return value > 0 ? 1 : 2;
+}
+
+function isPointOnLineSegment(point: Point2D, start: Point2D, end: Point2D): boolean {
+    return point.x <= Math.max(start.x, end.x) && point.x >= Math.min(start.x, end.x) && point.y <= Math.max(start.y, end.y) && point.y >= Math.min(start.y, end.y);
+}
+
+export function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+    const orientationA = lineOrientation(a, b, c);
+    const orientationB = lineOrientation(a, b, d);
+    const orientationC = lineOrientation(c, d, a);
+    const orientationD = lineOrientation(c, d, b);
+
+    if (orientationA !== orientationB && orientationC !== orientationD) {
+        return true;
+    }
+
+    return (orientationA === 0 && isPointOnLineSegment(c, a, b)) || (orientationB === 0 && isPointOnLineSegment(d, a, b)) || (orientationC === 0 && isPointOnLineSegment(a, c, d)) || (orientationD === 0 && isPointOnLineSegment(b, c, d));
+}
+
+export function isPointInRect(point: Point2D, rect: Rect2D): boolean {
+    return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
+}
+
+export function doRectsIntersect(a: Rect2D, b: Rect2D): boolean {
+    return a.x <= b.x + b.width && a.x + a.width >= b.x && a.y <= b.y + b.height && a.y + a.height >= b.y;
+}
+
+export function getRectFromPoints(start: Point2D, end: Point2D): Rect2D {
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    return {x, y, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y)};
+}
+
+export function getRectCorners(rect: Rect2D): Point2D[] {
+    return [
+        {x: rect.x, y: rect.y},
+        {x: rect.x + rect.width, y: rect.y},
+        {x: rect.x + rect.width, y: rect.y + rect.height},
+        {x: rect.x, y: rect.y + rect.height}
+    ];
+}
+
+export function doesLineSegmentIntersectRect(start: Point2D, end: Point2D, rect: Rect2D): boolean {
+    if (isPointInRect(start, rect) || isPointInRect(end, rect)) {
+        return true;
+    }
+
+    const corners = getRectCorners(rect);
+    return corners.some((corner, index) => lineSegmentsIntersect(start, end, corner, corners[(index + 1) % corners.length]));
+}
+
+export function getPathSegments(points: Point2D[], closed: boolean = false): LineSegment2D[] {
+    if (points.length < 2) {
+        return [];
+    }
+
+    const segmentCount = closed ? points.length : points.length - 1;
+    return Array.from({length: segmentCount}, (_, index) => [points[index], points[(index + 1) % points.length]]);
+}
+
+export function isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const a = polygon[i];
+        const b = polygon[j];
+        const intersects = a.y > point.y !== b.y > point.y && point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x;
+        if (intersects) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+export function getRotatedBoxPoints(center: Point2D, halfWidth: number, halfHeight: number, rotation: number): Point2D[] {
+    return [
+        {x: -halfWidth, y: -halfHeight},
+        {x: 0, y: -halfHeight},
+        {x: halfWidth, y: -halfHeight},
+        {x: halfWidth, y: 0},
+        {x: halfWidth, y: halfHeight},
+        {x: 0, y: halfHeight},
+        {x: -halfWidth, y: halfHeight},
+        {x: -halfWidth, y: 0}
+    ].map(offset => add2D(center, rotate2D(offset, rotation)));
 }
 
 // Brute-force method of checking if a polygon is simple
@@ -183,7 +277,7 @@ export function simplePolygonTest(points: Point2D[]) {
         for (let j = i + 2; j < points.length; j++) {
             const c = points[j];
             const d = points[(j + 1) % points.length];
-            const intersection = lineSegmentsIntersect(a, b, c, d);
+            const intersection = strictLineSegmentsIntersect(a, b, c, d);
             if (intersection) {
                 return false;
             }
@@ -205,7 +299,7 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     for (let j = 1; j < points.length; j++) {
         const c = points[(j + pointIndex) % points.length];
         const d = points[(j + pointIndex + 1) % points.length];
-        const intersection = lineSegmentsIntersect(a, b, c, d);
+        const intersection = strictLineSegmentsIntersect(a, b, c, d);
         if (intersection) {
             return false;
         }
