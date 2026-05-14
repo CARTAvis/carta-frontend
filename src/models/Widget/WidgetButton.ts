@@ -2,7 +2,7 @@ import * as React from "react";
 import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
 
-export type FlexLayoutDomMarkerTarget = "tab" | "tab-content" | "tabset-toolbar";
+export type FlexLayoutDomMarkerTarget = "tab" | "tab-content" | "tabset-toolbar" | "tabset-tabstrip";
 
 export interface FlexLayoutDomMarkerProps {
     nodeId: string;
@@ -13,6 +13,8 @@ export const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithC
     const markerRef = React.useRef<HTMLSpanElement>(null);
 
     React.useLayoutEffect(() => {
+        let cleanup: (() => void) | undefined;
+
         if (target === "tab") {
             const tabButton = markerRef.current?.closest(".flexlayout__tab_button");
             const closeButton = tabButton?.querySelector<HTMLDivElement>(".flexlayout__tab_button_trailing");
@@ -24,21 +26,31 @@ export const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithC
             if (headerTitle) {
                 headerTitle.setAttribute("data-testid", nodeId + "-header-title");
             }
-            return;
-        }
-
-        if (target === "tab-content") {
+        } else if (target === "tab-content") {
             const contentContainer = markerRef.current?.parentElement;
             if (contentContainer) {
                 contentContainer.setAttribute("data-testid", nodeId + "-content");
             }
-            return;
+        } else if (target === "tabset-tabstrip") {
+            const tabStrip = markerRef.current?.closest<HTMLElement>("[data-layout-path$='/tabstrip']");
+            if (tabStrip) {
+                const handleDoubleClick = (event: MouseEvent) => {
+                    event.stopPropagation();
+                };
+
+                tabStrip.addEventListener("dblclick", handleDoubleClick, true);
+                cleanup = () => {
+                    tabStrip.removeEventListener("dblclick", handleDoubleClick, true);
+                };
+            }
+        } else {
+            const maximizeButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/max']");
+            if (maximizeButton) {
+                maximizeButton.setAttribute("data-testid", nodeId + "-header-maximize-button");
+            }
         }
 
-        const maximizeButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/max']");
-        if (maximizeButton) {
-            maximizeButton.setAttribute("data-testid", nodeId + "-header-maximize-button");
-        }
+        return cleanup;
     });
 
     return React.createElement("span", {ref: markerRef, style: children ? undefined : {display: "none"}}, children);

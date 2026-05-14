@@ -2,6 +2,7 @@ import * as React from "react";
 import {Classes} from "@blueprintjs/core";
 import {Actions, type BorderNode, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {Observer} from "mobx-react";
 
 import {
     AnimatorComponent,
@@ -495,45 +496,54 @@ export class WidgetsStore {
         // (built-in maximize is appended by FlexLayout after these)
 
         if (component === "image-view") {
-            const config = AppStore.Instance.imageViewConfigStore;
-            const imagePanelMode = config.imagePanelMode;
-            const hasPrevious = config.currentImagePage > 0;
-            const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
-
             buttons.push(
-                createWidgetButton({
-                    buttonKey: "channel-map-" + nodeId,
-                    iconClassName: Classes.iconClass("heat-grid"),
-                    isDarkTheme,
-                    onClick: () => this.onChannelMapButtonClick(),
-                    testId: nodeId + "-header-channel-map-button",
-                    title: "enable/disable channel map"
-                }),
-                createWidgetButton({
-                    buttonKey: "prev-page-" + nodeId,
-                    iconClassName: Classes.iconClass("step-backward"),
-                    isDarkTheme,
-                    isDisabled: !hasPrevious,
-                    onClick: () => this.onPreviousPageClick(),
-                    testId: nodeId + "-header-previous-page-button",
-                    title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
-                }),
-                createWidgetButton({
-                    buttonKey: "image-panel-" + nodeId,
-                    iconClassName: this.getImagePanelButtonIcon(imagePanelMode),
-                    isDarkTheme,
-                    onClick: () => this.onImagePanelButtonClick(),
-                    testId: nodeId + "-header-multipanel-view-switch",
-                    title: this.getImagePanelButtonTooltip(imagePanelMode)
-                }),
-                createWidgetButton({
-                    buttonKey: "next-page-" + nodeId,
-                    iconClassName: Classes.iconClass("step-forward"),
-                    isDarkTheme,
-                    isDisabled: !hasNext,
-                    onClick: () => this.onNextPageClick(),
-                    testId: nodeId + "-header-next-page-button",
-                    title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page"
+                React.createElement(Observer, {
+                    key: "image-view-controls-" + nodeId,
+                    children: () => {
+                        const config = AppStore.Instance.imageViewConfigStore;
+                        const imagePanelMode = config.imagePanelMode;
+                        const hasPrevious = config.currentImagePage > 0;
+                        const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
+
+                        return React.createElement(
+                            React.Fragment,
+                            null,
+                            createWidgetButton({
+                                buttonKey: "channel-map-" + nodeId,
+                                iconClassName: Classes.iconClass("heat-grid"),
+                                isDarkTheme,
+                                onClick: () => this.onChannelMapButtonClick(),
+                                testId: nodeId + "-header-channel-map-button",
+                                title: "enable/disable channel map"
+                            }),
+                            createWidgetButton({
+                                buttonKey: "prev-page-" + nodeId,
+                                iconClassName: Classes.iconClass("step-backward"),
+                                isDarkTheme,
+                                isDisabled: !hasPrevious,
+                                onClick: () => this.onPreviousPageClick(),
+                                testId: nodeId + "-header-previous-page-button",
+                                title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
+                            }),
+                            createWidgetButton({
+                                buttonKey: "image-panel-" + nodeId,
+                                iconClassName: this.getImagePanelButtonIcon(imagePanelMode),
+                                isDarkTheme,
+                                onClick: () => this.onImagePanelButtonClick(),
+                                testId: nodeId + "-header-multipanel-view-switch",
+                                title: this.getImagePanelButtonTooltip(imagePanelMode)
+                            }),
+                            createWidgetButton({
+                                buttonKey: "next-page-" + nodeId,
+                                iconClassName: Classes.iconClass("step-forward"),
+                                isDarkTheme,
+                                isDisabled: !hasNext,
+                                onClick: () => this.onNextPageClick(),
+                                testId: nodeId + "-header-next-page-button",
+                                title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page"
+                            })
+                        );
+                    }
                 })
             );
         }
@@ -580,7 +590,10 @@ export class WidgetsStore {
         }
 
         if (canMaximize) {
-            buttons.push(React.createElement(FlexLayoutDomMarker, {key: "maximize-marker-" + nodeId, nodeId, target: "tabset-toolbar"}));
+            buttons.push(
+                React.createElement(FlexLayoutDomMarker, {key: "maximize-marker-" + nodeId, nodeId, target: "tabset-toolbar"}),
+                React.createElement(FlexLayoutDomMarker, {key: "tabstrip-marker-" + nodeId, nodeId, target: "tabset-tabstrip"})
+            );
         }
 
         if (buttons.length > 0) {
