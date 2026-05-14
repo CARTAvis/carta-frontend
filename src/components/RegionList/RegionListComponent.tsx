@@ -31,6 +31,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private listRef = React.createRef<any>();
     private tableRef = React.createRef<HTMLDivElement>();
     private readonly disposers: IReactionDisposer[] = [];
+    private pendingScrollTarget = -1;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -62,13 +63,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable regionsLock: boolean = false;
     private rowPivotIndex: number = -1;
 
-    private scrollToSelected = (selected: any) => {
+    private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent || !isFinite(selected) || selected < 0) {
+        const rowCount = this.validRegions.length;
+        if (!listRefCurrent || !isFinite(selected) || selected < 0 || selected >= rowCount) {
             return;
-        } else {
-            this.listRef.current.scrollToRow({index: selected, align: "smart"});
         }
+        listRefCurrent.scrollToRow({index: selected, align: "smart"});
     };
 
     @action private handleBackgroundClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -85,18 +86,38 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
 
+    componentDidMount() {
         this.disposers.push(
             reaction(
                 () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
                 id => {
                     if (id && id > 0) {
-                        const validRegionId = this.validRegions.map(el => el.regionId);
-                        this.scrollToSelected(validRegionId.findIndex(element => element === id));
+                        const idx = this.validRegions.findIndex(r => r.regionId === id);
+                        // Store scroll target; componentDidUpdate will process it after the List
+                        // re-renders with the updated rowCount, avoiding an out-of-range error.
+                        this.pendingScrollTarget = idx;
                     }
-                }
+                },
+                {fireImmediately: true}
             )
         );
+        // For the fireImmediately case the List is already rendered, but we still need to run
+        // outside the reaction to avoid modifying observables (via onListRendered).
+        if (this.pendingScrollTarget >= 0) {
+            const target = this.pendingScrollTarget;
+            this.pendingScrollTarget = -1;
+            setTimeout(() => this.scrollToSelected(target), 0);
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.pendingScrollTarget >= 0) {
+            const target = this.pendingScrollTarget;
+            this.pendingScrollTarget = -1;
+            this.scrollToSelected(target);
+        }
     }
 
     componentWillUnmount() {
@@ -615,8 +636,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             }
 
-            const style = {...props.style};
-            style.overflowX = "hidden";
+            const style = {...props.style, overflowX: "hidden" as const};
 
             return (
                 <div className={className} key={region.regionId} onClick={ev => this.handleRowClicked(ev, region, props.index)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
