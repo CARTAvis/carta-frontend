@@ -220,6 +220,10 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: "mod", label: "Switch region creation mode"},
             {combo: "shift", label: "Symmetric region creation"},
+            {combo: "shift + drag", label: "Toggle region box selection"},
+            {combo: "up", label: "Move region/point (↑ ↓ ← →)"},
+            {combo: "shift + up", label: "Coarse move (↑ ↓ ← →)"},
+            {combo: "mod + up", label: "Fine move (↑ ↓ ← →)"},
             {combo: "double-click", label: "Region properties"}
         ];
         return items.map(item => ({...base, ...item}));
@@ -237,9 +241,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
             {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.EnterPointSelection},
             {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabNext(e)},
-            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)},
-            {combo: "up + down", label: "Move region/point vertically", onKeyDown: undefined},
-            {combo: "left + right", label: "Move region/point horizontally", onKeyDown: undefined}
+            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)}
         ];
         return items.map(item => ({...base, ...item}));
     }
