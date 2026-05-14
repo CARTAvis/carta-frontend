@@ -484,7 +484,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private genAnchors = (): React.ReactNode[] => {
+    private genAnchors = (interactive: boolean): React.ReactNode[] => {
         const region = this.props.region;
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
@@ -531,6 +531,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     rotation={-region.rotation}
                     isRotator={config.anchor === "rotator"}
                     isSelected={isSelectedSimpleShapeAnchor}
+                    interactive={interactive}
                     selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}
@@ -719,7 +720,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors() : null}
+                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors(!!this.props.activeSelected) : null}
             </Group>
         );
     }

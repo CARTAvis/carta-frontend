@@ -1085,8 +1085,13 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
-                frame.regionSet.selectSingleRegion(region);
-                appStore.dialogStore.showDialog(DialogId.Region);
+                const isMultiSelected = frame.regionSet.selectedRegionsList.length > 1 && frame.regionSet.selectedRegionIds.has(region.regionId);
+                if (!isMultiSelected) {
+                    frame.regionSet.selectSingleRegion(region);
+                } else {
+                    frame.regionSet.selectRegion(region);
+                }
+                appStore.dialogStore.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
             }
         }
     };

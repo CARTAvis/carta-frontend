@@ -43,6 +43,12 @@ export class RegionSetStore {
         return this.selectedRegionIds.size;
     }
 
+    @computed get selectedRegionsList(): RegionStore[] {
+        return Array.from(this.selectedRegionIds)
+            .map(id => this.regionMap.get(id))
+            .filter((region): region is RegionStore => !!region && region.regionId !== CURSOR_REGION_ID);
+    }
+
     @action clearSelection = () => {
         this.selectedRegionIds = new Set();
         // Keep cursor region focused when clearing selection
@@ -177,7 +183,7 @@ export class RegionSetStore {
     }
 
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
-        return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
+        return this.regions?.filter(r => r.isValid && r.regionId !== 0 && r.visible)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
     @computed get isNewRegionAnnotation(): boolean {
@@ -357,7 +363,14 @@ export class RegionSetStore {
             const ack = await this.backendService.setRegion(fileId, -1, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
             if (ack.regionId != null) {
+                const previousRegionId = region.regionId;
                 region.setRegionId(ack.regionId);
+                if (this.selectedRegionIds.has(previousRegionId)) {
+                    const selectedIds = new Set(this.selectedRegionIds);
+                    selectedIds.delete(previousRegionId);
+                    selectedIds.add(ack.regionId);
+                    this.selectedRegionIds = selectedIds;
+                }
             }
         } catch (err) {
             console.error(err);
@@ -441,11 +454,22 @@ export class RegionSetStore {
         this.selectedRegion = null;
     };
 
+    @action toggleSelectedRegionsVisibility = () => {
+        const selectedRegions = this.selectedRegionsList;
+        const anyVisible = selectedRegions.some(region => region.visible);
+        selectedRegions.forEach(region => region.setVisible(!anyVisible));
+    };
+
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
+            }
+            if (this.selectedRegionIds.has(region.regionId)) {
+                const selectedIds = new Set(this.selectedRegionIds);
+                selectedIds.delete(region.regionId);
+                this.selectedRegionIds = selectedIds;
             }
             const selectedInd = this.regions.findIndex(r => r === region);
             const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
@@ -582,7 +606,7 @@ export class RegionSetStore {
     @action setLocked(locked?: boolean) {
         this.locked = locked === undefined ? !this.locked : locked;
         if (this.locked) {
-            this.selectRegionByIndex(0);
+            this.clearSelection();
         }
     }
 }

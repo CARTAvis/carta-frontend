@@ -10,6 +10,7 @@ export enum DialogId {
     Layout = "layout-dialog",
     Preference = "preference-dialog",
     Region = "region-dialog",
+    GroupRegion = "group-region-dialog",
     Stokes = "stokes-dialog",
     Vector = "vector-dialog",
     Workspace = "workspace-dialog",

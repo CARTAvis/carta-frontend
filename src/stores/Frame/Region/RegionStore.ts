@@ -49,6 +49,7 @@ export class RegionStore {
     @observable editing: boolean = false;
     @observable creating: boolean = false;
     @observable locked: boolean = false;
+    @observable visible: boolean = true;
     @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
@@ -768,6 +769,18 @@ export class RegionStore {
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.locked = locked;
+        }
+    };
+
+    @action setVisible = (visible: boolean) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.visible = visible;
+        }
+    };
+
+    @action toggleVisible = () => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.visible = !this.visible;
         }
     };
 
