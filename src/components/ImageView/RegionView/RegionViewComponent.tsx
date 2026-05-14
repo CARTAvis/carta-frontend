@@ -1039,6 +1039,17 @@ interface RegionComponentsProps {
 class RegionComponents extends React.Component<RegionComponentsProps> {
     private pivotIndex: number = -1;
 
+    private getRegionIdsInRange = (startIndex: number, endIndex: number): number[] => {
+        const ids: number[] = [];
+        for (let i = startIndex; i <= endIndex; i++) {
+            const region = this.props.regions[i];
+            if (region) {
+                ids.push(region.regionId);
+            }
+        }
+        return ids;
+    };
+
     private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
         if (this.props.shouldSuppressSelect?.(evt)) {
             return;
@@ -1053,25 +1064,11 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         const index = regions.findIndex(r => r.regionId === region.regionId);
 
         if (isCtrl && regionSet.selectedRegionIds.size > 0) {
-            const current = new Set(regionSet.selectedRegionIds);
-            if (current.has(region.regionId)) {
-                // Toggle off even if it's the only selected region
-                current.delete(region.regionId);
-            } else {
-                current.add(region.regionId);
-            }
-            // If nothing remains selected, clear focus to allow full deselect
-            const ids = Array.from(current);
-            regionSet.setSelectionByIds(ids, ids.includes(region.regionId) ? region.regionId : undefined);
+            regionSet.toggleRegionSelection(region);
         } else if (isShift && regionSet.selectedRegionIds.size > 0 && this.pivotIndex >= 0 && index >= 0) {
             const start = Math.min(this.pivotIndex, index);
             const end = Math.max(this.pivotIndex, index);
-            const ids: number[] = [];
-            for (let i = start; i <= end; i++) {
-                const r = regions?.[i];
-                if (r) ids.push(r.regionId);
-            }
-            regionSet.setSelectionByIds(ids, region.regionId);
+            regionSet.setSelectionByIds(this.getRegionIdsInRange(start, end), region.regionId);
         } else if (!regionSet.selectedRegionIds.has(region.regionId) || !regionSet.selectedRegionIds.size) {
             regionSet.selectSingleRegion(region);
             this.pivotIndex = index;

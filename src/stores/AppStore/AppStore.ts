@@ -3144,10 +3144,12 @@ export class AppStore {
 
     @action deleteSelectedRegion = () => {
         const frame = this.activeFrame;
-        if (!frame || !frame.regionSet) return;
+        if (!frame || !frame.regionSet) {
+            return;
+        }
+
         const regionSet = frame.regionSet;
 
-        // If multi-selection exists, delete all selected (except locked/cursor)
         if (regionSet.selectedRegionIds?.size > 0) {
             const toDelete = frame.regionSet.regions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
             toDelete.forEach(r => this.deleteRegion(r));
@@ -3155,7 +3157,6 @@ export class AppStore {
             return;
         }
 
-        // Fallback: single selectedRegion
         if (regionSet.selectedRegion && !regionSet.selectedRegion.locked) {
             this.deleteRegion(regionSet.selectedRegion);
         }

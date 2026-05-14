@@ -36,9 +36,6 @@ export class RegionSetStore {
         makeObservable(this);
     }
 
-    /**
-     * Multi-selection helpers
-     */
     @computed get selectedCount(): number {
         return this.selectedRegionIds.size;
     }
@@ -51,36 +48,28 @@ export class RegionSetStore {
 
     @action clearSelection = () => {
         this.selectedRegionIds = new Set();
-        // Keep cursor region focused when clearing selection
-        const cursor = this.regions?.find(r => r.regionId === CURSOR_REGION_ID);
-        this.selectedRegion = cursor ?? null;
+        this.selectedRegion = this.cursorRegion;
     };
 
     @action setSelectionByIds = (ids: number[], focusRegionId?: number) => {
+        const regionMap = this.regionMap;
         const newSet = new Set<number>();
         for (const id of ids) {
-            if (id !== CURSOR_REGION_ID && this.regionMap.has(id)) {
+            if (id !== CURSOR_REGION_ID && regionMap.has(id)) {
                 newSet.add(id);
             }
         }
         this.selectedRegionIds = newSet;
 
         if (ids.length === 0) {
-            // When no ids provided, clear multi-selection and focus cursor region
-            const cursor = this.regions?.find(r => r.regionId === CURSOR_REGION_ID);
-            this.selectedRegion = cursor ?? null;
+            this.selectedRegion = this.cursorRegion;
             return;
         }
 
-        if (focusRegionId && ids.includes(focusRegionId) && this.regionMap.has(focusRegionId)) {
-            const region = this.regionMap.get(focusRegionId);
-            if (region) {
-                this.selectRegion(region);
-            }
-        } else if (ids.length > 0) {
-            const last = ids[ids.length - 1];
-            const region = this.regionMap.get(last);
-            if (region) this.selectRegion(region);
+        const selectedIds = Array.from(newSet);
+        const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
+        if (focusRegion) {
+            this.selectRegion(focusRegion);
         }
     };
 
@@ -94,6 +83,23 @@ export class RegionSetStore {
             region.deselectPoint();
         }
         this.selectRegion(region);
+    };
+
+    @action toggleRegionSelection = (region: RegionStore) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+
+        const selectedIds = new Set(this.selectedRegionIds);
+        if (selectedIds.has(region.regionId)) {
+            selectedIds.delete(region.regionId);
+        } else {
+            selectedIds.add(region.regionId);
+        }
+
+        const ids = Array.from(selectedIds);
+        this.setSelectionByIds(ids, selectedIds.has(region.regionId) ? region.regionId : undefined);
     };
 
     private getMovableSelection = (origin: RegionStore): RegionStore[] => {
@@ -180,6 +186,10 @@ export class RegionSetStore {
         }
 
         return regionMap;
+    }
+
+    @computed private get cursorRegion(): RegionStore | null {
+        return this.regions.find(region => region.regionId === CURSOR_REGION_ID) ?? null;
     }
 
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
