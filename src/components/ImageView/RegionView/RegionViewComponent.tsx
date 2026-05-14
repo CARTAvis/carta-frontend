@@ -900,6 +900,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.regionSelectionStartedOnRegion = false;
         this.regionSelectionBox = null;
         this.restoreRegionSelectionDragNode();
+        this.suppressNextClick = false;
 
         if (!selectionRect || !isLargeEnough) {
             return;
