@@ -41,6 +41,11 @@ export class HotkeyService extends React.Component<{}> {
 
     static NextChannel = () => {
         const appStore = AppStore.Instance;
+        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        if (region && region.regionId !== CURSOR_REGION_ID) {
+            return;
+        }
+
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(1, 0);
         }
@@ -48,6 +53,10 @@ export class HotkeyService extends React.Component<{}> {
 
     static PrevChannel = () => {
         const appStore = AppStore.Instance;
+        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        if (region && region.regionId !== CURSOR_REGION_ID) {
+            return;
+        }
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(-1, 0);
         }
