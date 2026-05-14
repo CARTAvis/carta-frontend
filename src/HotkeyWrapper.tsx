@@ -132,11 +132,14 @@ export class HotkeyService extends React.Component<{}> {
 
     static EnterPointSelection = () => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame?.regionSet.selectedRegion) {
-            const region = appStore.activeFrame.regionSet.selectedRegion;
-            if (region.supportsPointSelection && !region.hasSelectedPoint) {
-                region.selectPoint(0);
-            }
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet?.selectedRegion || regionSet.selectedCount > 1) {
+            return;
+        }
+
+        const region = regionSet.selectedRegion;
+        if (region.supportsPointSelection && !region.hasSelectedPoint) {
+            region.selectPoint(0);
         }
     };
 

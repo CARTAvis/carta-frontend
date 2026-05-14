@@ -380,15 +380,35 @@ export class RegionSetStore {
         }
     };
 
+    private getKeyboardNavigationIndices = (): number[] => {
+        const selectedIds = this.selectedRegionIds;
+        const useMultiSelection = selectedIds.size > 1;
+        return this.regions
+            .map((r, i) => ({r, i}))
+            .filter(({r}) => r.regionId !== CURSOR_REGION_ID && (!useMultiSelection || selectedIds.has(r.regionId)))
+            .map(({i}) => i);
+    };
+
+    private selectRegionByKeyboardIndex = (index: number) => {
+        const region = this.regions[index];
+        if (!region) {
+            return;
+        }
+
+        if (this.selectedRegionIds.size > 1) {
+            this.selectRegion(region);
+        } else {
+            this.selectSingleRegion(region);
+        }
+        region.deselectPoint();
+    };
+
     @action selectNextRegion = () => {
         if (!this.regions || this.regions.length <= 1) {
             return;
         }
 
-        const selectableIndices = this.regions
-            .map((r, i) => ({r, i}))
-            .filter(({r}) => r.regionId !== CURSOR_REGION_ID)
-            .map(({i}) => i);
+        const selectableIndices = this.getKeyboardNavigationIndices();
 
         if (selectableIndices.length === 0) {
             return;
@@ -397,11 +417,7 @@ export class RegionSetStore {
         const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
         const nextIndex = currentPos === -1 ? selectableIndices[0] : selectableIndices[(currentPos + 1) % selectableIndices.length];
-        this.selectRegionByIndex(nextIndex);
-        // When navigating via keyboard, do not auto-select any control point on the newly selected region
-        if (this.selectedRegion?.supportsPointSelection) {
-            this.selectedRegion.deselectPoint();
-        }
+        this.selectRegionByKeyboardIndex(nextIndex);
     };
 
     @action selectPreviousRegion = () => {
@@ -409,10 +425,7 @@ export class RegionSetStore {
             return;
         }
 
-        const selectableIndices = this.regions
-            .map((r, i) => ({r, i}))
-            .filter(({r}) => r.regionId !== CURSOR_REGION_ID)
-            .map(({i}) => i);
+        const selectableIndices = this.getKeyboardNavigationIndices();
 
         if (selectableIndices.length === 0) {
             return;
@@ -421,11 +434,7 @@ export class RegionSetStore {
         const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
         const prevIndex = currentPos === -1 ? selectableIndices[selectableIndices.length - 1] : selectableIndices[(currentPos - 1 + selectableIndices.length) % selectableIndices.length];
-        this.selectRegionByIndex(prevIndex);
-        // When navigating via keyboard, do not auto-select any control point on the newly selected region
-        if (this.selectedRegion?.supportsPointSelection) {
-            this.selectedRegion.deselectPoint();
-        }
+        this.selectRegionByKeyboardIndex(prevIndex);
     };
 
     @action deselectRegion = () => {
