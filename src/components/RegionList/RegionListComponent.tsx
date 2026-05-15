@@ -19,7 +19,7 @@ import "./RegionListComponent.scss";
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
-    private static readonly ACTIONS_COLUMN_DEFAULT_WIDTH = 75;
+    private static readonly ACTIONS_COLUMN_DEFAULT_WIDTH = RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 4;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
@@ -144,6 +144,20 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             regionSet.toggleSelectedRegionsLocked();
         } else {
             region.toggleLock();
+        }
+        ev.stopPropagation();
+    };
+
+    private handleRegionHideClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (regionSet) {
+            const selectedRegionIds = regionSet.selectedRegionIds;
+            const isMultiSelectedRegion = selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
+            if (!isMultiSelectedRegion) {
+                regionSet.selectSingleRegion(region);
+                this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
+            }
+            regionSet.toggleSelectedRegionsVisibility();
         }
         ev.stopPropagation();
     };
@@ -549,7 +563,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const floatRenderer = () => {
             const exportTooltip = frame.regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
             return (
-                <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                <ButtonGroup className="float" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
                         <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
                     </Tooltip>
@@ -573,7 +587,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
                 return (
                     <div className={className} style={props.style}>
-                        <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                        <div className="cell" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
                             <Icon icon={"blank"} style={{width: 16}} />
                             <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
@@ -621,9 +635,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const className = classNames("row", {
                 [Classes.DARK]: darkTheme,
                 active: isActive,
-                selected: isSecondarySelected,
-                "semi-hidden": region.visible && region.opacity === RegionsOpacity.SemiTransparent,
-                hidden: !region.visible
+                selected: isSecondarySelected
             });
 
             let centerContent: React.ReactNode;
@@ -719,6 +731,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
+                        <Icon icon={"blank"} />
+                    </div>
+                );
+            }
+
+            let hideEntry: React.ReactNode;
+            if (region.regionId) {
+                const regionVisible = region.opacity !== RegionsOpacity.Invisible;
+                hideEntry = (
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionHideClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
+                        <Icon icon={regionVisible ? "eye-open" : "eye-off"} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
                     </div>
                 );
             }
@@ -761,6 +784,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     data-testid={"region-list-table-row-" + (props.index + 1)}
                 >
                     {lockEntry}
+                    {hideEntry}
                     {focusEntry}
                     {exportEntry}
                     <div className="cell" style={{width: nameWidth}}>

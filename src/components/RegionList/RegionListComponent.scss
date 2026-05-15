@@ -74,14 +74,6 @@
                 background: rgba($blue3, 0.2);
             }
 
-            &.hidden {
-                opacity: 0.45;
-            }
-
-            &.semi-hidden {
-                opacity: 0.7;
-            }
-
             &.#{$ns}-dark {
                 background: $dark-gray3;
 
@@ -95,14 +87,6 @@
 
                 &.active {
                     background: rgba($blue3, 0.35);
-                }
-
-                &.hidden {
-                    opacity: 0.45;
-                }
-
-                &.semi-hidden {
-                    opacity: 0.7;
                 }
             }
 
