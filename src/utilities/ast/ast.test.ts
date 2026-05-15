@@ -17,9 +17,9 @@ const AstOut = (system: SystemType | CatalogSystemType, global: any) => {
     return s.toString();
 };
 
-const DEFAULT_F_K4 = GS(SystemType.FK4, "B1950.0", "B1953.2");
-const DEFAULT_F_K5 = GS(SystemType.FK5, "J2012.0", "J2000.0");
-const DEFAULT_I_C_R_S = GS(SystemType.ICRS, "J2000.0", "J2000.0");
+const DEFAULT_FK4 = GS(SystemType.FK4, "B1950.0", "B1953.2");
+const DEFAULT_FK5 = GS(SystemType.FK5, "J2012.0", "J2000.0");
+const DEFAULT_ICRS = GS(SystemType.ICRS, "J2000.0", "J2000.0");
 
 jest.mock("ast_wrapper", () => ({
     __esModule: true,
@@ -111,7 +111,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies FK4 overlay defaults for %s", (_description, system, expected) => {
-        expect(AstOut(system, DEFAULT_F_K4)).toBe(expected);
+        expect(AstOut(system, DEFAULT_FK4)).toBe(expected);
     });
 
     test.each([
@@ -121,7 +121,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies FK5 overlay defaults for %s", (_description, system, expected) => {
-        expect(AstOut(system, DEFAULT_F_K5)).toBe(expected);
+        expect(AstOut(system, DEFAULT_FK5)).toBe(expected);
     });
 
     test.each([
@@ -131,7 +131,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies ICRS overlay defaults and fallback for %s", (_description, system, expected) => {
-        expect(AstOut(system, DEFAULT_I_C_R_S)).toBe(expected);
+        expect(AstOut(system, DEFAULT_ICRS)).toBe(expected);
     });
 
     test.each([
@@ -159,15 +159,15 @@ describe("setAstStringSystem", () => {
         ["Catalog Pixel0", CatalogSystemType.Pixel0, "System=Pixel0"],
         ["Catalog Pixel1", CatalogSystemType.Pixel1, "System=Pixel1"]
     ] as Array<[string, SystemType | CatalogSystemType, string]>)("%s system adds only System and no equinox/epoch", (_desc, system, expected) => {
-        expect(AstOut(system, DEFAULT_F_K5)).toBe(expected);
+        expect(AstOut(system, DEFAULT_FK5)).toBe(expected);
     });
 
     test.each([
-        ["FK4", CatalogSystemType.FK4, DEFAULT_F_K5, "System=FK4, Equinox=B1950.0, Epoch=B1950.0"],
-        ["FK5", CatalogSystemType.FK5, DEFAULT_F_K4, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
-        ["ICRS", CatalogSystemType.ICRS, DEFAULT_F_K4, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
-        ["Galactic", CatalogSystemType.Galactic, DEFAULT_F_K5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
-        ["Ecliptic", CatalogSystemType.Ecliptic, DEFAULT_F_K4, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
+        ["FK4", CatalogSystemType.FK4, DEFAULT_FK5, "System=FK4, Equinox=B1950.0, Epoch=B1950.0"],
+        ["FK5", CatalogSystemType.FK5, DEFAULT_FK4, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
+        ["ICRS", CatalogSystemType.ICRS, DEFAULT_FK4, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
+        ["Galactic", CatalogSystemType.Galactic, DEFAULT_FK5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
+        ["Ecliptic", CatalogSystemType.Ecliptic, DEFAULT_FK4, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, CatalogSystemType, any, string]>)("Catalog %s system uses standard equinox and epoch", (_desc, system, globalSettings, expected) => {
         expect(AstOut(system, globalSettings)).toBe(expected);
     });
@@ -181,9 +181,9 @@ describe("setAstStringSystem", () => {
     });
 
     test.each([
-        ["Ecliptic", SystemType.Ecliptic, DEFAULT_F_K4, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"],
-        ["FK5", SystemType.FK5, DEFAULT_F_K4, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
-        ["Galactic", SystemType.Galactic, DEFAULT_F_K5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"]
+        ["Ecliptic", SystemType.Ecliptic, DEFAULT_FK4, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"],
+        ["FK5", SystemType.FK5, DEFAULT_FK4, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
+        ["Galactic", SystemType.Galactic, DEFAULT_FK5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, any, string]>)("%s system uses standard values when defaultSystem is different", (_desc, system, globalSettings, expected) => {
         expect(AstOut(system, globalSettings)).toBe(expected);
     });
@@ -197,15 +197,15 @@ describe("setAstSystem", () => {
     });
 
     test("calls AST.set with correct settings string for a standard system", () => {
-        setAstSystem(frameSet, SystemType.Galactic, DEFAULT_F_K5);
+        setAstSystem(frameSet, SystemType.Galactic, DEFAULT_FK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
-        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(SystemType.Galactic, DEFAULT_F_K5));
+        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(SystemType.Galactic, DEFAULT_FK5));
     });
 
     test("calls AST.set for Image system", () => {
-        setAstSystem(frameSet, SystemType.Image, DEFAULT_F_K5);
+        setAstSystem(frameSet, SystemType.Image, DEFAULT_FK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
@@ -213,10 +213,10 @@ describe("setAstSystem", () => {
     });
 
     test("calls AST.set for catalog systems", () => {
-        setAstSystem(frameSet, CatalogSystemType.ICRS, DEFAULT_F_K5);
+        setAstSystem(frameSet, CatalogSystemType.ICRS, DEFAULT_FK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
-        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(CatalogSystemType.ICRS, DEFAULT_F_K5));
+        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(CatalogSystemType.ICRS, DEFAULT_FK5));
     });
 });
