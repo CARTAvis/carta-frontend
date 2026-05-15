@@ -157,7 +157,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
             this.toggleRegionVisibility();
-            activeFrame?.regionSet.setOpacity(this.regionsVisibility);
+            activeFrame?.regionSet.setOpacity(RegionsOpacity.Visible);
+            activeFrame?.regionSet.setEditableRegionsOpacity(this.regionsVisibility);
             activeFrame?.regionSet.setLocked(this.regionsVisibility === RegionsOpacity.Invisible);
             ev.stopPropagation();
         };

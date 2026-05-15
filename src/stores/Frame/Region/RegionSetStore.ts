@@ -519,6 +519,10 @@ export class RegionSetStore {
         this.editableRegionsList.forEach(region => region.setLocked(locked));
     };
 
+    @action setEditableRegionsOpacity = (opacity: RegionsOpacity) => {
+        this.editableRegionsList.forEach(region => region.setOpacity(opacity));
+    };
+
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
