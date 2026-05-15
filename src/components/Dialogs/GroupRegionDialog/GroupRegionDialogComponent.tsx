@@ -163,7 +163,7 @@ export class GroupRegionDialogComponent extends React.Component {
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
                                 </Tooltip>
                                 <Tooltip content="Delete all selected regions">
-                                    <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} />
+                                    <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />
                                 </Tooltip>
                             </>
                         )}

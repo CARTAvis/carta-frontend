@@ -161,7 +161,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} />}
+                        {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>
