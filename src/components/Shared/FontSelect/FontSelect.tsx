@@ -35,7 +35,7 @@ export class Font {
 }
 
 /* eslint-disable @typescript-eslint/naming-convention */
-const AstFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
+export const AstFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
 const FontSelect = Select<Font>;
 /* eslint-enable @typescript-eslint/naming-convention */
 

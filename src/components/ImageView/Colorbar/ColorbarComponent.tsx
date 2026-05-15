@@ -1,10 +1,9 @@
 import * as React from "react";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
-import {fonts} from "ast_wrapper";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {Font, ProfilerInfoComponent} from "components/Shared";
+import {AstFonts, ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, getColorForTheme} from "utilities";
@@ -25,8 +24,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     private layerRef = React.createRef<any>();
 
     private static readonly HoverDelay = 500;
-
-    private astFonts: Font[] = fonts.map((x, i) => new Font(x, i));
 
     constructor(props) {
         super(props);
@@ -236,8 +233,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : undefined}
                             align={"center"}
                             fill={getColor(colorbarSettings.numberCustomColor, colorbarSettings.numberColor)}
-                            fontFamily={this.astFonts[colorbarSettings.numberFont].family}
-                            fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
+                            fontFamily={AstFonts[colorbarSettings.numberFont].family}
+                            fontStyle={`${AstFonts[colorbarSettings.numberFont].style} ${AstFonts[colorbarSettings.numberFont].weight}`}
                             fontSize={colorbarSettings.numberFontSize}
                             rotation={colorbarSettings.position === "right" ? colorbarSettings.numberRotation : 0}
                             key={i.toString()}
@@ -269,9 +266,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 width={colorbarSettingsHeight}
                 align={"center"}
                 fill={getColor(colorbarSettings.labelCustomColor, colorbarSettings.labelColor)}
-                fontFamily={this.astFonts[colorbarSettings.labelFont].family}
+                fontFamily={AstFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
-                fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
+                fontStyle={`${AstFonts[colorbarSettings.labelFont].style} ${AstFonts[colorbarSettings.labelFont].weight}`}
                 rotation={colorbarSettings.position === "right" ? colorbarSettings.labelRotation : 0}
                 key={"0"}
             />
