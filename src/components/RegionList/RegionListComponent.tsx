@@ -172,6 +172,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         FileBrowserStore.Instance.showExportRegions(region.regionId);
     };
 
+    private stopDoubleClickPropagation = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        ev.stopPropagation();
+    };
+
     private handleRegionImportClicked = () => {
         FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionImport, false);
     };
@@ -185,8 +189,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private handleRegionListDoubleClick = () => {
-        const isMultiSelected = (AppStore.Instance.activeFrame?.regionSet.selectedRegionsList.length ?? 0) > 1;
+    private handleRegionListDoubleClick = (region?: RegionStore) => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const isMultiSelected = region ? regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1 : regionSet.selectedRegionsList.length > 1;
+        if (!isMultiSelected && region && region.regionId !== CURSOR_REGION_ID) {
+            regionSet.selectSingleRegion(region);
+        }
         DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
     };
 
@@ -423,9 +435,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const isCtrlPressed = event.ctrlKey || event.metaKey;
         const isShiftPressed = event.shiftKey;
-
         const regionSet = frame.regionSet;
         const current = new Set(regionSet.selectedRegionIds);
+
+        if (event.detail > 1 && !isCtrlPressed && !isShiftPressed) {
+            this.handleRegionListDoubleClick(region);
+            return;
+        }
+
         if (isCtrlPressed && current.size > 0) {
             regionSet.toggleRegionSelection(region);
         } else if (isShiftPressed && current.size > 0 && this.rowPivotIndex >= 0) {
@@ -618,7 +635,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 centerContent = "Invalid";
             }
             const centerEntry = (
-                <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
                     {centerContent}
                 </div>
             );
@@ -665,7 +682,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Width and height";
                 }
                 sizeEntry = (
-                    <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
                         {region.regionType !== CARTA.RegionType.POINT && (
                             <Tooltip content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}
@@ -684,6 +701,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         className="cell"
                         style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
                         onClick={lockDisabled ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        onDoubleClick={this.stopDoubleClickPropagation}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
                         <Icon icon={lockIcon} style={{opacity: lockDisabled ? 0.3 : 1}} />
@@ -702,7 +720,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)} data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}>
+                    <div
+                        className="cell"
+                        style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
+                        onClick={ev => this.handleFocusClicked(ev, region)}
+                        onDoubleClick={this.stopDoubleClickPropagation}
+                        data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}
+                    >
                         <CustomIcon icon="center" />
                     </div>
                 );
@@ -711,7 +735,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let exportEntry: React.ReactNode;
             if (region.regionId) {
                 exportEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
                         <Tooltip content="Export region" position={Position.BOTTOM}>
                             <Icon icon="cloud-upload" />
                         </Tooltip>
@@ -733,16 +757,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}
-                    <div className="cell" style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: nameWidth}}>
                         {region.nameString}
                     </div>
-                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>
                         {RegionStore.RegionTypeString(region.regionType)}
                     </div>
                     {centerEntry}
                     {showSizeColumn && sizeEntry}
                     {showRotationColumn && (
-                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
                             {toFixed(region.rotation, 1)}
                         </div>
                     )}
