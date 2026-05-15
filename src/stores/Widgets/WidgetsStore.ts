@@ -447,10 +447,12 @@ export class WidgetsStore {
         floating.forEach(savedConfig => this.createFloatingWidget(savedConfig));
     };
 
-    private getWidgetNodeId = (node: TabNode): string => {
+    private getWidgetComponentId = (node: TabNode): string => {
         const config = node.getConfig() || {};
         return typeof config.id === "string" && config.id.length > 0 ? config.id : node.getId();
     };
+
+    private getWidgetTestId = (node: TabNode): string => node.getId();
 
     // FlexLayout callback for App.tsx
     renderWidgetFactory = (node: TabNode): React.ReactNode => {
@@ -462,21 +464,22 @@ export class WidgetsStore {
         if (!ComponentClass) {
             return null;
         }
-        const nodeId = this.getWidgetNodeId(node);
+        const componentId = this.getWidgetComponentId(node);
+        const testId = this.getWidgetTestId(node);
         const config = node.getConfig() || {};
         const props: WidgetProps = {
-            id: nodeId,
+            id: componentId,
             docked: true,
             floatingSettingsId: config.floatingSettingsId
         };
         const element = React.createElement(ComponentClass, props);
-        return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId, target: "tab-content"}), element);
+        return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
     };
 
     // FlexLayout callback for App.tsx
     onRenderTab = (node: TabNode, renderValues: ITabRenderValues) => {
         const content = renderValues.content || node.getName();
-        renderValues.content = React.createElement(FlexLayoutDomMarker, {nodeId: this.getWidgetNodeId(node), target: "tab"}, content);
+        renderValues.content = React.createElement(FlexLayoutDomMarker, {nodeId: this.getWidgetTestId(node), target: "tab"}, content);
     };
 
     // FlexLayout callback for App.tsx
@@ -487,7 +490,7 @@ export class WidgetsStore {
         }
 
         const component = selectedNode.getComponent() || "";
-        const nodeId = this.getWidgetNodeId(selectedNode);
+        const nodeId = this.getWidgetTestId(selectedNode);
         const isDarkTheme = AppStore.Instance.darkTheme;
         const canMaximize = "canMaximize" in tabSetNode && typeof tabSetNode.canMaximize === "function" && tabSetNode.canMaximize();
         const buttons: React.ReactNode[] = [];
