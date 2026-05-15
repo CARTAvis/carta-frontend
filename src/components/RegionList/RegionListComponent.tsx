@@ -587,12 +587,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
                 return (
                     <div className={className} style={props.style}>
-                        <div className="cell" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
-                            <Icon icon={"blank"} style={{width: 16}} />
+                        <div className="cell" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH, justifyContent: "center", gap: 8}}>
                             <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                             </Tooltip>
-                            <Icon icon={"blank"} style={{width: 5}} />
                             <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
