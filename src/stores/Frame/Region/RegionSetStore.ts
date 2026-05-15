@@ -46,6 +46,10 @@ export class RegionSetStore {
             .filter((region): region is RegionStore => !!region && region.regionId !== CURSOR_REGION_ID);
     }
 
+    @computed get editableRegionsList(): RegionStore[] {
+        return this.regions.filter(region => !region.isTemporary && region.regionId !== CURSOR_REGION_ID);
+    }
+
     @computed get selectedRegionsAllLocked(): boolean {
         const selectedRegions = this.selectedRegionsList;
         return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
@@ -53,6 +57,11 @@ export class RegionSetStore {
 
     @computed get selectedRegionsAnyVisible(): boolean {
         return this.selectedRegionsList.some(region => region.visible);
+    }
+
+    @computed get editableRegionsAllLocked(): boolean {
+        const editableRegions = this.editableRegionsList;
+        return editableRegions.length > 0 && editableRegions.every(region => region.locked);
     }
 
     @action clearSelection = () => {
@@ -482,6 +491,11 @@ export class RegionSetStore {
     @action toggleSelectedRegionsLocked = () => {
         const locked = !this.selectedRegionsAllLocked;
         this.selectedRegionsList.forEach(region => region.setLocked(locked));
+    };
+
+    @action toggleEditableRegionsLocked = () => {
+        const locked = !this.editableRegionsAllLocked;
+        this.editableRegionsList.forEach(region => region.setLocked(locked));
     };
 
     @action deleteRegion = (region: RegionStore) => {

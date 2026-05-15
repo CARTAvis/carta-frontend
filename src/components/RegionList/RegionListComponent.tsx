@@ -60,7 +60,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
-    @observable regionsLock: boolean = false;
     private rowPivotIndex: number = -1;
 
     private scrollToSelected = (selected: number) => {
@@ -139,14 +138,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action private toggleRegionsLock = (locked?: boolean) => {
-        this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
-    };
-
-    private syncRegionsLocked = () => {
-        AppStore.Instance.activeFrame?.regionSet.setLocked(this.regionsLock);
-    };
-
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         if (regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1) {
@@ -158,22 +149,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleAllRegionsLockClicked = (ev: React.MouseEvent<Element, MouseEvent>) => {
-        this.toggleRegionsLock();
-        this.syncRegionsLocked();
+        AppStore.Instance.activeFrame?.regionSet.toggleEditableRegionsLocked();
         ev.stopPropagation();
     };
 
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
-            if (this.regionsLock !== activeFrame?.regionSet.locked) {
-                this.syncRegionsLocked();
-            }
             this.toggleRegionVisibility();
             activeFrame?.regionSet.setOpacity(this.regionsVisibility);
-            if (this.regionsVisibility === RegionsOpacity.Invisible) {
-                activeFrame?.regionSet.setLocked(true);
-            }
+            activeFrame?.regionSet.setLocked(this.regionsVisibility === RegionsOpacity.Invisible);
             ev.stopPropagation();
         };
     };
@@ -561,17 +546,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
+        const headerRenderer = (regionsVisibility: RegionsOpacity) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
                 const lockDisabled = regionsVisibility === RegionsOpacity.Invisible;
-                const lockIcon = regionsLock || lockDisabled ? "lock" : "unlock";
+                const allRegionsLocked = frame.regionSet.editableRegionsAllLocked;
+                const lockIcon = allRegionsLocked || lockDisabled ? "lock" : "unlock";
+                const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
 
                 return (
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip disabled={lockDisabled} content="Lock all regions" position={Position.BOTTOM}>
+                            <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                             </Tooltip>
                             <Icon icon={"blank"} style={{width: 5}} />
@@ -783,7 +770,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             rowCount={1}
                             style={{height: RegionListComponent.HEADER_ROW_HEIGHT, width: "100%"}}
                             className="list-header"
-                            rowComponent={headerRenderer(this.regionsVisibility, this.regionsLock)}
+                            rowComponent={headerRenderer(this.regionsVisibility)}
                             rowProps={{} as any}
                         />
                         <List
