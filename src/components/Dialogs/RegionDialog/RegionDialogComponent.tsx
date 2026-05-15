@@ -58,6 +58,17 @@ export class RegionDialogComponent extends React.Component {
         }
     };
 
+    private handleHideClicked = () => {
+        AppStore.Instance.activeFrame?.regionSet.toggleSelectedRegionsVisibility();
+    };
+
+    private handleExportClicked = () => {
+        const region = AppStore.Instance.activeFrame?.regionSet.selectedRegion;
+        if (region) {
+            AppStore.Instance.fileBrowserStore.showExportRegions(region.regionId);
+        }
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("region-dialog", {[Classes.DARK]: appStore.darkTheme});
@@ -135,13 +146,20 @@ export class RegionDialogComponent extends React.Component {
 
         const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionsOpacity.Invisible);
         const lockDisplayed = lockDisabled || !!region?.locked;
+        const regionVisible = !!region && region.opacity !== RegionsOpacity.Invisible;
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
                 <Tooltip content={`Region is ${lockDisplayed ? "locked" : "unlocked"}`}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
+                <Tooltip content={regionVisible ? "Hide region" : "Show region"}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
+                </Tooltip>
                 <Tooltip content={"Focus"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
+                </Tooltip>
+                <Tooltip content="Export region">
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
                 </Tooltip>
             </React.Fragment>
         );
