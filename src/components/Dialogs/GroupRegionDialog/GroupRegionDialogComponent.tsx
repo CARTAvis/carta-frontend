@@ -50,6 +50,10 @@ export class GroupRegionDialogComponent extends React.Component {
         AppStore.Instance.activeFrame?.regionSet.toggleSelectedRegionsVisibility();
     };
 
+    private handleExportClicked = () => {
+        AppStore.Instance.fileBrowserStore.showExportSelectedRegions();
+    };
+
     private getHandlers = (): AppearanceFormHandlers => {
         return {
             setColor: value => this.applyToSelected(region => region.setColor(value)),
@@ -157,6 +161,9 @@ export class GroupRegionDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {editableRegion && (
                             <>
+                                <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
+                                </Tooltip>
                                 <Tooltip content={selectedRegionsVisible ? "Hide all selected regions" : "Show all selected regions"}>
                                     <AnchorButton
                                         intent={Intent.WARNING}
@@ -166,8 +173,8 @@ export class GroupRegionDialogComponent extends React.Component {
                                         style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
                                     />
                                 </Tooltip>
-                                <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
-                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
+                                <Tooltip content="Export all selected regions">
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
                                 </Tooltip>
                                 <Tooltip content="Delete all selected regions">
                                     <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />
