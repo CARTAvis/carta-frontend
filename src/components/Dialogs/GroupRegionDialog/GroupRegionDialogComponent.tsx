@@ -36,8 +36,8 @@ export class GroupRegionDialogComponent extends React.Component {
         });
     };
 
-    private setAllLocks = (locked: boolean) => {
-        this.applyToSelected(region => region.setLocked(locked));
+    private handleLockClicked = () => {
+        AppStore.Instance.activeFrame?.regionSet.toggleSelectedRegionsLocked();
     };
 
     private handleDeleteClicked = () => {
@@ -118,8 +118,8 @@ export class GroupRegionDialogComponent extends React.Component {
         const primaryRegion = activeFrame?.regionSet.selectedRegion;
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
         const editableRegion = !!primaryRegion && selectedRegions.length > 1;
-        const allLocked = selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
-        const anyVisible = selectedRegions.some(region => region.visible);
+        const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
+        const anyVisible = activeFrame?.regionSet.selectedRegionsAnyVisible ?? false;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -157,10 +157,10 @@ export class GroupRegionDialogComponent extends React.Component {
                         {editableRegion && (
                             <>
                                 <Tooltip content={anyVisible ? "Hide all selected regions" : "Show all selected regions"}>
-                                    <AnchorButton minimal={true} icon={anyVisible ? "eye-off" : "eye-open"} onClick={this.handleHideClicked} />
+                                    <AnchorButton minimal={true} icon={anyVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} />
                                 </Tooltip>
                                 <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
-                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "unlock" : "lock"} onClick={() => this.setAllLocks(!allLocked)} />
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
                                 </Tooltip>
                                 <Tooltip content="Delete all selected regions">
                                     <AnchorButton intent={Intent.DANGER} minimal={true} icon="trash" onClick={this.handleDeleteClicked} />

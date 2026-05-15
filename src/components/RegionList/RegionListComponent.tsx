@@ -148,7 +148,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
-        region.toggleLock();
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1) {
+            regionSet.toggleSelectedRegionsLocked();
+        } else {
+            region.toggleLock();
+        }
         ev.stopPropagation();
     };
 
@@ -219,8 +224,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const selectedRegions = regionSet.selectedRegionsList;
         const isMultiSelected = selectedRegions.length > 1;
-        const allLocked = selectedRegions.length > 0 && selectedRegions.every(selectedRegion => selectedRegion.locked);
-        const anyVisible = selectedRegions.some(selectedRegion => selectedRegion.visible);
+        const allLocked = regionSet.selectedRegionsAllLocked;
+        const anyVisible = regionSet.selectedRegionsAnyVisible;
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -228,7 +233,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <Menu>
                     <MenuDivider title={title} />
                     <MenuItem
-                        icon={anyVisible ? "eye-off" : "eye-open"}
+                        icon={anyVisible ? "eye-open" : "eye-off"}
                         text={anyVisible ? "Hide" : "Show"}
                         onClick={() => {
                             if (isMultiSelected) {
@@ -239,11 +244,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuItem
-                        icon={allLocked ? "unlock" : "lock"}
+                        icon={allLocked ? "lock" : "unlock"}
                         text={allLocked ? "Unlock" : "Lock"}
                         onClick={() => {
                             if (isMultiSelected) {
-                                selectedRegions.forEach(selectedRegion => selectedRegion.setLocked(!allLocked));
+                                regionSet.toggleSelectedRegionsLocked();
                             } else {
                                 region.toggleLock();
                             }
