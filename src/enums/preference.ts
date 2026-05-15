@@ -98,6 +98,7 @@ export enum PreferenceKeys {
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
+    CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS = "catalogAutoSelectImageOverlayColumns",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
