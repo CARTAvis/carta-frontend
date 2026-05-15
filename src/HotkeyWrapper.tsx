@@ -227,6 +227,8 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static RegionDisplayHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
         const group = HotkeyGroup.Regions;
         const base = {group, global: true};
         const items = [
@@ -235,7 +237,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift + drag", label: "Toggle region box selection"},
             {combo: "up", label: "Move region/point (↑ ↓ ← →)"},
             {combo: "shift + up", label: "Coarse move (↑ ↓ ← →)"},
-            {combo: "mod + up", label: "Fine move (↑ ↓ ← →)"},
+            {combo: `${modString}up`, label: "Fine move (1 px, ↑ ↓ ← →)"},
             {combo: "double-click", label: "Region properties"}
         ];
         return items.map(item => ({...base, ...item}));
