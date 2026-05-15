@@ -157,13 +157,13 @@ export class GroupRegionDialogComponent extends React.Component {
                         {editableRegion && (
                             <>
                                 <Tooltip content={anyVisible ? "Hide all selected regions" : "Show all selected regions"}>
-                                    <AnchorButton minimal={true} icon={anyVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} />
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={anyVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} />
                                 </Tooltip>
                                 <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
                                 </Tooltip>
                                 <Tooltip content="Delete all selected regions">
-                                    <AnchorButton intent={Intent.DANGER} minimal={true} icon="trash" onClick={this.handleDeleteClicked} />
+                                    <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} />
                                 </Tooltip>
                             </>
                         )}
