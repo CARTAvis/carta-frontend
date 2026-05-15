@@ -3,7 +3,7 @@ import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionsOpacity} from "enums";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID} from "stores/Frame";
 
@@ -97,7 +97,7 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.selectedRegion) {
+            if (regionSet.selectedRegion && !regionSet.locked && regionSet.selectedRegion.opacity !== RegionsOpacity.Invisible) {
                 regionSet.selectedRegion.toggleLock();
             }
         }
@@ -107,8 +107,13 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
+            if (regionSet.locked) {
+                return;
+            }
             for (const region of regionSet.regions) {
-                region.setLocked(false);
+                if (region.opacity !== RegionsOpacity.Invisible) {
+                    region.setLocked(false);
+                }
             }
         }
     };

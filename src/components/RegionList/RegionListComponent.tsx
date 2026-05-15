@@ -224,6 +224,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const allLocked = regionSet.selectedRegionsAllLocked;
         const selectedRegionsVisibility = regionSet.selectedRegionsVisibility;
         const anyVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
+        const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
+        const lockDisplayed = lockDisabled || allLocked;
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -231,8 +233,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <Menu>
                     <MenuDivider title={title} />
                     <MenuItem
-                        icon={allLocked ? "lock" : "unlock"}
-                        text={allLocked ? "Unlock" : "Lock"}
+                        icon={lockDisplayed ? "lock" : "unlock"}
+                        text={lockDisplayed ? "Unlock" : "Lock"}
+                        disabled={lockDisabled}
                         onClick={() => {
                             if (isMultiSelected) {
                                 regionSet.toggleSelectedRegionsLocked();
@@ -696,8 +699,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId) {
-                const lockDisabled = regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible;
-                const lockIcon = region.locked || this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock";
+                const lockDisabled = regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible;
+                const lockIcon = region.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible ? "lock" : "unlock";
                 lockEntry = (
                     <div
                         className="cell"

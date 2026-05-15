@@ -125,6 +125,8 @@ export class GroupRegionDialogComponent extends React.Component {
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
         const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionsOpacity.Invisible;
         const selectedRegionsVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
+        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
+        const lockDisplayed = lockDisabled || allLocked;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -161,8 +163,8 @@ export class GroupRegionDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {editableRegion && (
                             <>
-                                <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
-                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />
+                                <Tooltip content={lockDisplayed ? "Unlock all selected regions" : "Lock all selected regions"}>
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={this.handleLockClicked} disabled={lockDisabled} />
                                 </Tooltip>
                                 <Tooltip content={selectedRegionsVisible ? "Hide all selected regions" : "Show all selected regions"}>
                                     <AnchorButton

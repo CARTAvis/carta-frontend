@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, RegionDialogTabs} from "enums";
+import {DialogId, HelpType, RegionDialogTabs, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -133,10 +133,12 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
+        const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionsOpacity.Invisible);
+        const lockDisplayed = lockDisabled || !!region?.locked;
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
-                <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock} />
+                <Tooltip content={`Region is ${lockDisplayed ? "locked" : "unlocked"}`}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
                 <Tooltip content={"Focus"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
