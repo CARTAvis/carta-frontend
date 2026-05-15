@@ -407,20 +407,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const regionSet = frame.regionSet;
-        const selected = this.validRegions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
-
-        if (selected.length > 0) {
-            const confirmed = await appStore.alertStore.showInteractiveAlert(`Delete ${selected.length} selected region(s)?`);
-            if (confirmed) {
-                selected.forEach(r => appStore.deleteRegion(r));
-                regionSet.clearSelection();
-            }
-        } else {
-            const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
-            if (confirmed) {
-                appStore.deleteAllRegions();
-            }
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+        if (confirmed) {
+            appStore.deleteAllRegions();
         }
     };
 
@@ -542,14 +531,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
-            const hasDeletableSelection = this.validRegions.some(r => frame.regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
-            const deleteTooltip = hasDeletableSelection ? "Delete selected regions" : "Delete all regions";
-            const deleteDisabled = !hasDeletableSelection && this.validRegions.length <= 1;
             const exportTooltip = frame.regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Tooltip content={deleteTooltip} position={Position.TOP_LEFT} openOnTargetFocus={false}>
-                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={deleteDisabled} />
+                    <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
+                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
