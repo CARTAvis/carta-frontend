@@ -222,7 +222,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegions = regionSet.selectedRegionsList;
         const isMultiSelected = selectedRegions.length > 1;
         const allLocked = regionSet.selectedRegionsAllLocked;
-        const anyVisible = regionSet.selectedRegionsAnyVisible;
+        const selectedRegionsVisibility = regionSet.selectedRegionsVisibility;
+        const anyVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -230,7 +231,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <Menu>
                     <MenuDivider title={title} />
                     <MenuItem
-                        icon={anyVisible ? "eye-open" : "eye-off"}
+                        icon={<Icon icon={anyVisible ? "eye-open" : "eye-off"} style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />}
                         text={anyVisible ? "Hide" : "Show"}
                         onClick={() => {
                             regionSet.toggleSelectedRegionsVisibility();
