@@ -231,13 +231,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <Menu>
                     <MenuDivider title={title} />
                     <MenuItem
-                        icon={<Icon icon={anyVisible ? "eye-open" : "eye-off"} style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />}
-                        text={anyVisible ? "Hide" : "Show"}
-                        onClick={() => {
-                            regionSet.toggleSelectedRegionsVisibility();
-                        }}
-                    />
-                    <MenuItem
                         icon={allLocked ? "lock" : "unlock"}
                         text={allLocked ? "Unlock" : "Lock"}
                         onClick={() => {
@@ -245,6 +238,25 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 regionSet.toggleSelectedRegionsLocked();
                             } else {
                                 region.toggleLock();
+                            }
+                        }}
+                    />
+                    <MenuItem
+                        icon={<Icon icon={anyVisible ? "eye-open" : "eye-off"} style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />}
+                        text={anyVisible ? "Hide" : "Show"}
+                        onClick={() => {
+                            regionSet.toggleSelectedRegionsVisibility();
+                        }}
+                    />
+                    {!isMultiSelected && <MenuItem icon={<CustomIcon icon="center" />} text="Focus" onClick={() => region.focusCenter()} />}
+                    <MenuItem
+                        icon="cloud-upload"
+                        text={isMultiSelected ? "Export regions" : "Export region"}
+                        onClick={() => {
+                            if (isMultiSelected) {
+                                FileBrowserStore.Instance.showExportSelectedRegions();
+                            } else {
+                                FileBrowserStore.Instance.showExportRegions(region.regionId);
                             }
                         }}
                     />
