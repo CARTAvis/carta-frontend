@@ -315,8 +315,6 @@ export class HotkeyService extends React.Component<{}> {
         }
 
         if (toDelete.length > 0) {
-            const confirmed = await appStore.alertStore.showInteractiveAlert(`Delete ${toDelete.length} selected region(s)?`);
-            if (!confirmed) return;
             toDelete.forEach(r => appStore.deleteRegion(r));
             regionSet.clearSelection();
             return;
