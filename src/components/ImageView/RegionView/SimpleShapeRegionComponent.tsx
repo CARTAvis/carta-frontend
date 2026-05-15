@@ -613,7 +613,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.visualOpacity,
             dash: [region.dashLength],
             draggable: true,
             listening: this.props.listening && !region.locked,
@@ -680,7 +680,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         strokeScaleEnabled={false}
-                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        opacity={region.visualOpacity}
                         dash={[region.dashLength]}
                         closed={true}
                         listening={this.props.listening && !region.locked}
@@ -713,7 +713,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 y: centerPixelSpace.y,
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
-                opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+                opacity: region.visualOpacity,
                 dash: [region.dashLength],
                 draggable: true,
                 listening: this.props.listening && !region.locked,

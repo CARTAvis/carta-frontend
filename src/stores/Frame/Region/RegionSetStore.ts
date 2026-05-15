@@ -2,7 +2,7 @@ import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {RegionMode, type RegionsOpacity} from "enums";
+import {RegionMode, RegionsOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
@@ -57,6 +57,17 @@ export class RegionSetStore {
 
     @computed get selectedRegionsAnyVisible(): boolean {
         return this.selectedRegionsList.some(region => region.visible);
+    }
+
+    @computed get selectedRegionsVisibility(): RegionsOpacity {
+        const selectedRegions = this.selectedRegionsList;
+        if (!selectedRegions.length || selectedRegions.every(region => !region.visible || region.opacity === RegionsOpacity.Invisible)) {
+            return RegionsOpacity.Invisible;
+        }
+        if (selectedRegions.every(region => region.visible && region.opacity === RegionsOpacity.SemiTransparent)) {
+            return RegionsOpacity.SemiTransparent;
+        }
+        return RegionsOpacity.Visible;
     }
 
     @computed get editableRegionsAllLocked(): boolean {
@@ -483,9 +494,19 @@ export class RegionSetStore {
     };
 
     @action toggleSelectedRegionsVisibility = () => {
-        const selectedRegions = this.selectedRegionsList;
-        const visible = !this.selectedRegionsAnyVisible;
-        selectedRegions.forEach(region => region.setVisible(visible));
+        let opacity: RegionsOpacity;
+        switch (this.selectedRegionsVisibility) {
+            case RegionsOpacity.Visible:
+                opacity = RegionsOpacity.SemiTransparent;
+                break;
+            case RegionsOpacity.SemiTransparent:
+                opacity = RegionsOpacity.Invisible;
+                break;
+            default:
+                opacity = RegionsOpacity.Visible;
+                break;
+        }
+        this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
 
     @action toggleSelectedRegionsLocked = () => {
@@ -629,6 +650,7 @@ export class RegionSetStore {
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.locked);
+                    newRegion.setOpacity(region.opacity);
                     // Link the two regions together
                     newRegion.modifiedTimestamp = region.modifiedTimestamp;
                     newId--;

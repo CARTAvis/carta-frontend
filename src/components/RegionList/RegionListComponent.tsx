@@ -233,11 +233,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         icon={anyVisible ? "eye-open" : "eye-off"}
                         text={anyVisible ? "Hide" : "Show"}
                         onClick={() => {
-                            if (isMultiSelected) {
-                                regionSet.toggleSelectedRegionsVisibility();
-                            } else {
-                                region.toggleVisible();
-                            }
+                            regionSet.toggleSelectedRegionsVisibility();
                         }}
                     />
                     <MenuItem
@@ -537,6 +533,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
             const _visible = region.visible;
+            const _opacity = region.opacity;
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
@@ -618,7 +615,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
             const isActive = selectedRegion?.regionId === region.regionId;
             const isSecondarySelected = !isActive && frame.regionSet.selectedRegionIds.has(region.regionId);
-            const className = classNames("row", {[Classes.DARK]: darkTheme, active: isActive, selected: isSecondarySelected, hidden: !region.visible});
+            const className = classNames("row", {
+                [Classes.DARK]: darkTheme,
+                active: isActive,
+                selected: isSecondarySelected,
+                "semi-hidden": region.visible && region.opacity === RegionsOpacity.SemiTransparent,
+                hidden: !region.visible
+            });
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {

@@ -413,7 +413,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             y: centerPointCanvasSpace.y,
             stroke: region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR,
             strokeWidth: region.lineWidth,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.visualOpacity,
             dash: [region.dashLength],
             listening: this.props.listening && !region.locked,
             onClick: this.handleClick,

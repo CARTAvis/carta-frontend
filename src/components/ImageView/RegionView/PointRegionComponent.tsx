@@ -88,7 +88,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 y={centerPixelSpace.y}
                 rotation={rotation}
                 color={region.color}
-                opacity={region.locked ? 0.7 : 1}
+                opacity={region.visualOpacity}
                 selectionOpacity={region.locked ? 0 : this.props.selected ? 1 : 0}
                 listening={!region.locked}
                 onDragStart={this.handleDragStart}

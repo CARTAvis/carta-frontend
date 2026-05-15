@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
-import {DialogId, HelpType} from "enums";
+import {DialogId, HelpType, RegionsOpacity} from "enums";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore, type VectorAnnotationStore} from "stores/Frame";
 
@@ -119,7 +119,8 @@ export class GroupRegionDialogComponent extends React.Component {
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
         const editableRegion = !!primaryRegion && selectedRegions.length > 1;
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
-        const anyVisible = activeFrame?.regionSet.selectedRegionsAnyVisible ?? false;
+        const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionsOpacity.Invisible;
+        const selectedRegionsVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -156,8 +157,14 @@ export class GroupRegionDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {editableRegion && (
                             <>
-                                <Tooltip content={anyVisible ? "Hide all selected regions" : "Show all selected regions"}>
-                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={anyVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} />
+                                <Tooltip content={selectedRegionsVisible ? "Hide all selected regions" : "Show all selected regions"}>
+                                    <AnchorButton
+                                        intent={Intent.WARNING}
+                                        minimal={true}
+                                        icon={selectedRegionsVisible ? "eye-open" : "eye-off"}
+                                        onClick={this.handleHideClicked}
+                                        style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
+                                    />
                                 </Tooltip>
                                 <Tooltip content={allLocked ? "Unlock all selected regions" : "Lock all selected regions"}>
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={allLocked ? "lock" : "unlock"} onClick={this.handleLockClicked} />

@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CoordinateMode} from "enums";
+import {CoordinateMode, RegionsOpacity} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
 import {isValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
@@ -50,6 +50,8 @@ export class RegionStore {
     @observable creating: boolean = false;
     @observable locked: boolean = false;
     @observable visible: boolean = true;
+    @observable opacity: RegionsOpacity = RegionsOpacity.Visible;
+    @observable lockedByVisibility: boolean = false;
     @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
@@ -103,6 +105,10 @@ export class RegionStore {
             default:
                 return "Not Implemented";
         }
+    }
+
+    @computed get visualOpacity(): number {
+        return (this.isTemporary ? 0.5 : this.locked ? 0.7 : 1) * this.opacity;
     }
 
     public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
@@ -768,19 +774,36 @@ export class RegionStore {
 
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
+            this.lockedByVisibility = false;
             this.locked = locked;
         }
     };
 
     @action setVisible = (visible: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.visible = visible;
+            this.setOpacity(visible ? RegionsOpacity.Visible : RegionsOpacity.Invisible);
         }
     };
 
     @action toggleVisible = () => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.visible = !this.visible;
+            this.setVisible(!this.visible);
+        }
+    };
+
+    @action setOpacity = (opacity: RegionsOpacity) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.opacity = opacity;
+            this.visible = opacity !== RegionsOpacity.Invisible;
+            if (opacity === RegionsOpacity.Invisible) {
+                if (!this.locked) {
+                    this.lockedByVisibility = true;
+                }
+                this.locked = true;
+            } else if (this.lockedByVisibility) {
+                this.locked = false;
+                this.lockedByVisibility = false;
+            }
         }
     };
 

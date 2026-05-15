@@ -241,7 +241,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
             fill: region.color,
             strokeWidth: region.lineWidth,
             strokeScaleEnabled: false,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.visualOpacity,
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
@@ -257,7 +257,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         fill: region.color,
         strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
         strokeScaleEnabled: false,
-        opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+        opacity: region.visualOpacity,
         fontSize: (region.fontSize * imageRatio) / zoomLevel,
         fontFamily: region.font,
         fontStyle: region.fontStyle
@@ -543,7 +543,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.visualOpacity}
                     dash={[region.dashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -556,7 +556,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.auxiliaryLineVisible ? region.visualOpacity : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -569,7 +569,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.auxiliaryLineVisible ? region.visualOpacity : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -588,7 +588,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.visualOpacity}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
@@ -606,7 +606,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.auxiliaryTextVisible ? region.visualOpacity : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -622,7 +622,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.auxiliaryTextVisible ? region.visualOpacity : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
