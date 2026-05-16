@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750))
+* Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
+* Fixed a spectral matching case affected by the default Helio rest frame setting ([#2736](https://github.com/CARTAvis/carta-frontend/issues/2736)).
+* Fix the spatial profile chart that occasionally disappears when the line region is outside the image ([#2775](https://github.com/CARTAvis/carta-frontend/issues/2775)).
 
 ## [6.0.0-beta.1]
 
@@ -34,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 * Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
 * Changed offset coordinate system to use spherical geometry instead of linear geometry ([#2663](https://github.com/CARTAvis/carta-frontend/issues/2663)).
+### Added
+* Added automatic coordinate-column selection for catalog overlays using common equatorial, galactic, ecliptic, and pixel/image column aliases ([#2407](https://github.com/CARTAvis/carta-frontend/issues/2407)).
 
 ## [5.1.0]
 
