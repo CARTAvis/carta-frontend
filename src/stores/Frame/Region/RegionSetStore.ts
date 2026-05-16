@@ -344,7 +344,7 @@ export class RegionSetStore {
         try {
             await this.requestSetRegion(this.frame.frameInfo.fileId, region);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
 
         return region;
