@@ -184,7 +184,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
-        FileBrowserStore.Instance.showExportRegions(region.regionId);
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        const isMultiSelectedRegion = !!regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
+        if (isMultiSelectedRegion) {
+            FileBrowserStore.Instance.showExportSelectedRegions();
+        } else {
+            FileBrowserStore.Instance.showExportRegions(region.regionId);
+        }
+        ev.stopPropagation();
     };
 
     private stopDoubleClickPropagation = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
