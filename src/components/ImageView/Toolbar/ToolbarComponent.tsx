@@ -5,8 +5,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewComponent} from "components";
-import {OffsetCoordinateControlsComponent} from "components/ImageView/OffsetCoordinateControls";
+import {ImageViewComponent, OffsetCoordinateControlsComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {ImageViewLayer, RegionMode, SystemType} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
