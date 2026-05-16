@@ -285,33 +285,13 @@ export class HotkeyService extends React.Component<{}> {
         // Only show confirmation when Region List has focus; otherwise delete immediately
         const activeEl = (document?.activeElement as Element) || null;
         const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
-        if (!isRegionListFocused) {
-            appStore.deleteSelectedRegion();
+        const isSelectedRegionDeletionHandled = appStore.deleteSelectedRegions();
+        if (!isRegionListFocused || isSelectedRegionDeletionHandled) {
             return;
         }
 
-        // All non-cursor regions
-        const nonCursorRegions = regionSet.regions.filter(r => r.regionId !== CURSOR_REGION_ID);
-        if (nonCursorRegions.length === 0) return; // nothing deletable
-
-        // Build selection list from multi-select set or single selectedRegion
-        const selectedIds = Array.from(regionSet.selectedRegionIds ?? []);
-        const hasExplicitSelection = selectedIds.length > 0 || (!!regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID);
-        let toDelete = nonCursorRegions.filter(r => selectedIds.includes(r.regionId) && !r.locked);
-
-        if (toDelete.length === 0 && regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && !regionSet.focusedRegion.locked) {
-            toDelete = [regionSet.focusedRegion];
-        }
-
-        if (toDelete.length > 0) {
-            toDelete.forEach(r => appStore.deleteRegion(r));
-            regionSet.clearSelection();
-            return;
-        }
-
-        if (hasExplicitSelection) {
-            return;
-        }
+        const hasDeletableRegions = regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID);
+        if (!hasDeletableRegions) return;
 
         // No explicit selection; confirm deleting all regions
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");

@@ -3142,10 +3142,10 @@ export class AppStore {
         return null;
     }
 
-    @action deleteSelectedRegion = () => {
+    @action deleteSelectedRegions = (): boolean => {
         const frame = this.activeFrame;
         if (!frame || !frame.regionSet) {
-            return;
+            return false;
         }
 
         const regionSet = frame.regionSet;
@@ -3156,12 +3156,17 @@ export class AppStore {
                 toDelete.forEach(r => this.deleteRegion(r));
                 regionSet.clearSelection();
             }
-            return;
+            return true;
         }
 
-        if (regionSet.focusedRegion && !regionSet.focusedRegion.locked) {
-            this.deleteRegion(regionSet.focusedRegion);
+        if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+            if (!regionSet.focusedRegion.locked) {
+                this.deleteRegion(regionSet.focusedRegion);
+            }
+            return true;
         }
+
+        return false;
     };
 
     @action deleteRegion = (region: RegionStore) => {

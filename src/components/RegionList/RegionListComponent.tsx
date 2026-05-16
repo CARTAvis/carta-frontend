@@ -296,7 +296,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         text="Delete"
                         onClick={() => {
                             if (isMultiSelected) {
-                                appStore.deleteSelectedRegion();
+                                appStore.deleteSelectedRegions();
                             } else {
                                 appStore.deleteRegion(region);
                             }

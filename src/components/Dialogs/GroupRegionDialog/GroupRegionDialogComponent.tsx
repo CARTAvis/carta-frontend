@@ -45,7 +45,7 @@ export class GroupRegionDialogComponent extends React.Component {
 
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
-        appStore.deleteSelectedRegion();
+        appStore.deleteSelectedRegions();
         appStore.dialogStore.hideDialog(DialogId.GroupRegion);
     };
 
