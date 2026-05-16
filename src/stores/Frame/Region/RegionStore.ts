@@ -425,7 +425,7 @@ export class RegionStore {
     }
 
     @computed get hasSelectedRotationPoint(): boolean {
-        return this.activeFrame?.hasSquarePixels && this.rotationPointIndex >= 0 && this.selectedPointIndex === this.rotationPointIndex;
+        return !!this.activeFrame?.hasSquarePixels && this.rotationPointIndex >= 0 && this.selectedPointIndex === this.rotationPointIndex;
     }
 
     @computed get hasSelectedPoint(): boolean {
