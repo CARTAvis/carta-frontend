@@ -55,10 +55,6 @@ export class RegionSetStore {
         return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
     }
 
-    @computed get selectedRegionsAnyVisible(): boolean {
-        return this.selectedRegionsList.some(region => region.visible);
-    }
-
     @computed get selectedRegionsVisibility(): RegionsOpacity {
         const selectedRegions = this.selectedRegionsList;
         if (!selectedRegions.length || selectedRegions.every(region => !region.visible || region.opacity === RegionsOpacity.Invisible)) {

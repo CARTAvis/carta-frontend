@@ -156,8 +156,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         if (regionSet) {
             const selectedRegionIds = regionSet.selectedRegionIds;
-            const isMultiSelectedRegion = selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
-            if (!isMultiSelectedRegion) {
+            const isRegionInMultiSelection = selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
+            if (!isRegionInMultiSelection) {
                 regionSet.selectSingleRegion(region);
                 this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
             }
@@ -188,8 +188,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionExportClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         ev.stopPropagation();
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        const isMultiSelectedRegion = !!regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
-        if (isMultiSelectedRegion) {
+        const isRegionInMultiSelection = !!regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
+        if (isRegionInMultiSelection) {
             FileBrowserStore.Instance.showExportSelectedRegions();
         } else {
             FileBrowserStore.Instance.showExportRegions(region.regionId);
@@ -247,9 +247,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isMultiSelected = selectedRegions.length > 1;
         const allLocked = regionSet.selectedRegionsAllLocked;
         const selectedRegionsVisibility = regionSet.selectedRegionsVisibility;
-        const anyVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
+        const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
-        const lockDisplayed = lockDisabled || allLocked;
+        const showLockedIcon = lockDisabled || allLocked;
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -257,8 +257,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <Menu>
                     <MenuDivider title={title} />
                     <MenuItem
-                        icon={lockDisplayed ? "lock" : "unlock"}
-                        text={lockDisplayed ? "Unlock" : "Lock"}
+                        icon={showLockedIcon ? "lock" : "unlock"}
+                        text={showLockedIcon ? "Unlock" : "Lock"}
                         disabled={lockDisabled}
                         onClick={() => {
                             if (isMultiSelected) {
@@ -269,8 +269,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuItem
-                        icon={<Icon icon={anyVisible ? "eye-open" : "eye-off"} style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />}
-                        text={anyVisible ? "Hide" : "Show"}
+                        icon={<Icon icon={hasVisibleSelectedRegions ? "eye-open" : "eye-off"} style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />}
+                        text={hasVisibleSelectedRegions ? "Hide" : "Show"}
                         onClick={() => {
                             regionSet.toggleSelectedRegionsVisibility();
                         }}
@@ -589,9 +589,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
                 const lockDisabled = regionsVisibility === RegionsOpacity.Invisible;
                 const allRegionsLocked = frame.regionSet.editableRegionsAllLocked;
-                const lockDisplayed = allRegionsLocked || lockDisabled;
-                const lockIcon = lockDisplayed ? "lock" : "unlock";
-                const lockTooltip = lockDisplayed ? "Unlock all regions" : "Lock all regions";
+                const showLockedIcon = allRegionsLocked || lockDisabled;
+                const lockIcon = showLockedIcon ? "lock" : "unlock";
+                const lockTooltip = showLockedIcon ? "Unlock all regions" : "Lock all regions";
 
                 return (
                     <div className={className} style={props.style}>

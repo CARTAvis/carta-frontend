@@ -86,7 +86,7 @@ export class RegionDialogComponent extends React.Component {
 
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
-        let editableRegion = false;
+        let canEditRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
         } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
@@ -99,41 +99,41 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
                     configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
                     configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
                     configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                     configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
                     configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    editableRegion = true;
+                    canEditRegion = true;
                     break;
                 default:
                     bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
-            if (editableRegion) {
+            if (canEditRegion) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
@@ -145,12 +145,12 @@ export class RegionDialogComponent extends React.Component {
         }
 
         const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionsOpacity.Invisible);
-        const lockDisplayed = lockDisabled || !!region?.locked;
+        const showLockedIcon = lockDisabled || !!region?.locked;
         const regionVisible = !!region && region.opacity !== RegionsOpacity.Invisible;
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
-                <Tooltip content={lockDisplayed ? "Unlock region" : "Lock region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
+                <Tooltip content={showLockedIcon ? "Unlock region" : "Lock region"}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
                 <Tooltip content={regionVisible ? "Hide region" : "Show region"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
@@ -181,7 +181,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />}
+                        {canEditRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>

@@ -101,12 +101,12 @@ export class GroupRegionDialogComponent extends React.Component {
         const activeFrame = appStore.activeFrame;
         const primaryRegion = activeFrame?.regionSet.selectedRegion;
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
-        const editableRegion = !!primaryRegion && selectedRegions.length > 1;
+        const canEditSelectedRegions = !!primaryRegion && selectedRegions.length > 1;
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
         const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionsOpacity.Invisible;
         const selectedRegionsVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
-        const lockDisplayed = lockDisabled || allLocked;
+        const showLockedIcon = lockDisabled || allLocked;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -120,7 +120,7 @@ export class GroupRegionDialogComponent extends React.Component {
         };
 
         let bodyContent = GroupRegionDialogComponent.MissingRegionNode;
-        if (editableRegion && activeFrame) {
+        if (canEditSelectedRegions && activeFrame) {
             dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
             bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} handlers={this.getHandlers()} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         }
@@ -141,10 +141,10 @@ export class GroupRegionDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        {editableRegion && (
+                        {canEditSelectedRegions && (
                             <>
-                                <Tooltip content={lockDisplayed ? "Unlock selected regions" : "Lock selected regions"}>
-                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={this.handleLockClicked} disabled={lockDisabled} />
+                                <Tooltip content={showLockedIcon ? "Unlock selected regions" : "Lock selected regions"}>
+                                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={this.handleLockClicked} disabled={lockDisabled} />
                                 </Tooltip>
                                 <Tooltip content={selectedRegionsVisible ? "Hide selected regions" : "Show selected regions"}>
                                     <AnchorButton
