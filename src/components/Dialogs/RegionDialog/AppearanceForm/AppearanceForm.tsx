@@ -6,7 +6,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
-import {Font, FontStyle} from "enums";
+import {AppearanceControl, Font, FontStyle} from "enums";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type PointAnnotationStore, RegionStore, type RulerAnnotationStore, type TextAnnotationStore, type VectorAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
@@ -48,6 +48,7 @@ interface AppearanceFormProps {
     region: RegionStore;
     darkTheme: boolean;
     handlers?: AppearanceFormHandlers;
+    visibleControls?: Set<AppearanceControl>;
 }
 
 @observer
@@ -65,6 +66,55 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         {value: CARTA.TextAnnotationPosition.LEFT, label: "Left"},
         {value: CARTA.TextAnnotationPosition.RIGHT, label: "Right"}
     ];
+
+    public static getControlsForRegion(region: RegionStore): Set<AppearanceControl> {
+        const controls = new Set<AppearanceControl>([AppearanceControl.Color]);
+        const regionType = region.regionType;
+        const isPoint = regionType === CARTA.RegionType.POINT || regionType === CARTA.RegionType.ANNPOINT;
+        const isText = regionType === CARTA.RegionType.ANNTEXT;
+
+        if (!isPoint && !isText) {
+            controls.add(AppearanceControl.LineWidth);
+            controls.add(AppearanceControl.DashLength);
+        }
+        if (regionType === CARTA.RegionType.ANNCOMPASS || regionType === CARTA.RegionType.ANNTEXT || regionType === CARTA.RegionType.ANNRULER) {
+            controls.add(AppearanceControl.Font);
+        }
+        if (regionType === CARTA.RegionType.ANNPOINT) {
+            controls.add(AppearanceControl.Point);
+        }
+        if (regionType === CARTA.RegionType.ANNVECTOR) {
+            controls.add(AppearanceControl.VectorPointer);
+        }
+        if (regionType === CARTA.RegionType.ANNCOMPASS) {
+            controls.add(AppearanceControl.Compass);
+        }
+        if (regionType === CARTA.RegionType.ANNRULER) {
+            controls.add(AppearanceControl.Ruler);
+        }
+        if (regionType === CARTA.RegionType.ANNTEXT) {
+            controls.add(AppearanceControl.TextAlignment);
+        }
+        return controls;
+    }
+
+    public static getCommonControls(regions: RegionStore[]): Set<AppearanceControl> {
+        if (!regions.length) {
+            return new Set();
+        }
+
+        const [firstRegion, ...remainingRegions] = regions;
+        const commonControls = AppearanceForm.getControlsForRegion(firstRegion);
+        remainingRegions.forEach(region => {
+            const controls = AppearanceForm.getControlsForRegion(region);
+            commonControls.forEach(control => {
+                if (!controls.has(control)) {
+                    commonControls.delete(control);
+                }
+            });
+        });
+        return commonControls;
+    }
 
     private applyOrSet = <T,>(handler: ((value: T) => void) | undefined, value: T, fallback: (value: T) => void) => {
         if (handler) {
@@ -132,19 +182,22 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         if (!region || !region.isValid) {
             return null;
         }
+        const visibleControls = this.props.visibleControls ?? AppearanceForm.getControlsForRegion(region);
 
         return (
             <div className="appearance-form">
-                <FormGroup label="Color" inline={true}>
-                    <ColorPickerComponent
-                        color={region.color}
-                        presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => this.applyOrSet(this.props.handlers?.setColor, color.hex, value => region.setColor(value))}
-                        disableAlpha={true}
-                        darkTheme={this.props.darkTheme}
-                    />
-                </FormGroup>
-                {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
+                {visibleControls.has(AppearanceControl.Color) && (
+                    <FormGroup label="Color" inline={true}>
+                        <ColorPickerComponent
+                            color={region.color}
+                            presetColors={SWATCH_COLORS}
+                            setColor={(color: ColorResult) => this.applyOrSet(this.props.handlers?.setColor, color.hex, value => region.setColor(value))}
+                            disableAlpha={true}
+                            darkTheme={this.props.darkTheme}
+                        />
+                    </FormGroup>
+                )}
+                {visibleControls.has(AppearanceControl.LineWidth) && (
                     <FormGroup inline={true} label="Line width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line width"
@@ -157,12 +210,12 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         />
                     </FormGroup>
                 )}
-                {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
+                {visibleControls.has(AppearanceControl.DashLength) && (
                     <FormGroup inline={true} label="Dash length" labelInfo="(px)">
                         <SafeNumericInput placeholder="Dash length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
                     </FormGroup>
                 )}
-                {(region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNRULER) && (
+                {visibleControls.has(AppearanceControl.Font) && (
                     <>
                         <FormGroup inline={true} label="Font size" labelInfo="(px)">
                             <SafeNumericInput
@@ -190,7 +243,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNPOINT && (
+                {visibleControls.has(AppearanceControl.Point) && (
                     <>
                         <FormGroup inline={true} label="Shape">
                             <PointShapeSelectComponent handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
@@ -207,7 +260,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNVECTOR && (
+                {visibleControls.has(AppearanceControl.VectorPointer) && (
                     <>
                         <FormGroup inline={true} label="Arrowhead length" labelInfo="(px)">
                             <SafeNumericInput
@@ -231,7 +284,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                {visibleControls.has(AppearanceControl.Compass) && (
                     <>
                         <Label>North label offset</Label>
                         <FormGroup inline={true} label="X" labelInfo="(px)">
@@ -307,7 +360,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNRULER && (
+                {visibleControls.has(AppearanceControl.Ruler) && (
                     <>
                         <FormGroup inline={true} label="Number of decimals">
                             <SafeNumericInput
@@ -413,7 +466,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNTEXT && (
+                {visibleControls.has(AppearanceControl.TextAlignment) && (
                     <FormGroup label="Text alignment" inline={true}>
                         <HTMLSelect
                             options={AppearanceForm.TextAlignmentOptions}

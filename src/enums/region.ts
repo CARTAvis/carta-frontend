@@ -23,6 +23,18 @@ export enum RegionsType {
     LINE
 }
 
+export enum AppearanceControl {
+    Color = "color",
+    LineWidth = "lineWidth",
+    DashLength = "dashLength",
+    Font = "font",
+    Point = "point",
+    VectorPointer = "vectorPointer",
+    Compass = "compass",
+    Ruler = "ruler",
+    TextAlignment = "textAlignment"
+}
+
 export enum FontStyle {
     NORMAL = "Normal",
     BOLD = "Bold",

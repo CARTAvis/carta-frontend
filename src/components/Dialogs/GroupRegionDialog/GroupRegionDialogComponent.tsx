@@ -142,7 +142,7 @@ export class GroupRegionDialogComponent extends React.Component {
         let bodyContent = GroupRegionDialogComponent.MissingRegionNode;
         if (editableRegion && activeFrame) {
             dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
-            bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} handlers={this.getHandlers()} />;
+            bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} handlers={this.getHandlers()} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         }
 
         return (
