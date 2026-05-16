@@ -296,6 +296,7 @@ export class HotkeyService extends React.Component<{}> {
 
         // Build selection list from multi-select set or single selectedRegion
         const selectedIds = Array.from(regionSet.selectedRegionIds ?? []);
+        const hasExplicitSelection = selectedIds.length > 0 || (!!regionSet.selectedRegion && regionSet.selectedRegion.regionId !== CURSOR_REGION_ID);
         let toDelete = nonCursorRegions.filter(r => selectedIds.includes(r.regionId) && !r.locked);
 
         if (toDelete.length === 0 && regionSet.selectedRegion && regionSet.selectedRegion.regionId !== CURSOR_REGION_ID && !regionSet.selectedRegion.locked) {
@@ -305,6 +306,10 @@ export class HotkeyService extends React.Component<{}> {
         if (toDelete.length > 0) {
             toDelete.forEach(r => appStore.deleteRegion(r));
             regionSet.clearSelection();
+            return;
+        }
+
+        if (hasExplicitSelection) {
             return;
         }
 

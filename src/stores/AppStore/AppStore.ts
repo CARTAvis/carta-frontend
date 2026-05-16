@@ -3152,8 +3152,10 @@ export class AppStore {
 
         if (regionSet.selectedRegionIds?.size > 0) {
             const toDelete = frame.regionSet.regions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
-            toDelete.forEach(r => this.deleteRegion(r));
-            regionSet.clearSelection();
+            if (toDelete.length > 0) {
+                toDelete.forEach(r => this.deleteRegion(r));
+                regionSet.clearSelection();
+            }
             return;
         }
 
