@@ -129,12 +129,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     @action private toggleRegionVisibility = () => {
-        if (this.regionsVisibility === RegionsOpacity.Visible) {
-            this.regionsVisibility = RegionsOpacity.SemiTransparent;
-        } else if (this.regionsVisibility === RegionsOpacity.SemiTransparent) {
-            this.regionsVisibility = RegionsOpacity.Invisible;
-        } else if (this.regionsVisibility === RegionsOpacity.Invisible) {
-            this.regionsVisibility = RegionsOpacity.Visible;
+        switch (this.regionsVisibility) {
+            case RegionsOpacity.Visible:
+                this.regionsVisibility = RegionsOpacity.SemiTransparent;
+                break;
+            case RegionsOpacity.SemiTransparent:
+                this.regionsVisibility = RegionsOpacity.Invisible;
+                break;
+            default:
+                this.regionsVisibility = RegionsOpacity.Visible;
+                break;
         }
     };
 
@@ -167,15 +171,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         ev.stopPropagation();
     };
 
-    private handleToggleHideClicked = () => {
-        return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
-            const activeFrame = AppStore.Instance.activeFrame;
-            this.toggleRegionVisibility();
-            activeFrame?.regionSet.setOpacity(RegionsOpacity.Visible);
-            activeFrame?.regionSet.setEditableRegionsOpacity(this.regionsVisibility);
-            activeFrame?.regionSet.setLocked(this.regionsVisibility === RegionsOpacity.Invisible);
-            ev.stopPropagation();
-        };
+    private handleToggleHideClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        const activeFrame = AppStore.Instance.activeFrame;
+        this.toggleRegionVisibility();
+        activeFrame?.regionSet.setOpacity(RegionsOpacity.Visible);
+        activeFrame?.regionSet.setEditableRegionsOpacity(this.regionsVisibility);
+        activeFrame?.regionSet.setLocked(this.regionsVisibility === RegionsOpacity.Invisible);
+        ev.stopPropagation();
     };
 
     private handleFocusClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
@@ -184,6 +186,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
+        ev.stopPropagation();
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         const isMultiSelectedRegion = !!regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
         if (isMultiSelectedRegion) {
@@ -191,7 +194,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         } else {
             FileBrowserStore.Instance.showExportRegions(region.regionId);
         }
-        ev.stopPropagation();
     };
 
     private stopDoubleClickPropagation = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -203,8 +205,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportAllClicked = () => {
-        const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if ((regionSet?.selectedRegionsList.length ?? 0) > 1) {
+        const selectedCount = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList.length ?? 0;
+        if (selectedCount > 1) {
             FileBrowserStore.Instance.showExportSelectedRegions();
         } else {
             FileBrowserStore.Instance.showExportRegions();
@@ -404,22 +406,20 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const key = ev.key;
-        const isArrowUp = key === "ArrowUp";
-        const isArrowDown = key === "ArrowDown";
-        const isArrowLeft = key === "ArrowLeft";
-        const isArrowRight = key === "ArrowRight";
-        const isArrow = isArrowUp || isArrowDown || isArrowLeft || isArrowRight;
-        if (!isArrow) {
+        const isArrowVertical = key === "ArrowUp" || key === "ArrowDown";
+        const isArrowHorizontal = key === "ArrowLeft" || key === "ArrowRight";
+        if (!isArrowVertical && !isArrowHorizontal) {
             return;
         }
 
         ev.preventDefault();
         ev.stopPropagation();
 
-        if (isArrowLeft || isArrowRight) {
+        if (isArrowHorizontal) {
             return;
         }
 
+        const isArrowUp = key === "ArrowUp";
         const noModifier = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey;
         const direction = isArrowUp ? -1 : 1;
         const list = this.getKeyboardNavigationList(noModifier);
@@ -602,7 +602,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
-                                    onClick={this.handleToggleHideClicked()}
+                                    onClick={this.handleToggleHideClicked}
                                     style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
                                 />
                             </Tooltip>

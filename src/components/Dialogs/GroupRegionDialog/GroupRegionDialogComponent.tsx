@@ -14,6 +14,8 @@ import {AppearanceForm, type AppearanceFormHandlers} from "../RegionDialog/Appea
 
 import "./GroupRegionDialogComponent.scss";
 
+const FONT_REGION_TYPES: ReadonlyArray<CARTA.RegionType> = [CARTA.RegionType.ANNTEXT, CARTA.RegionType.ANNCOMPASS, CARTA.RegionType.ANNRULER];
+
 @observer
 export class GroupRegionDialogComponent extends React.Component {
     private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No regions selected"} description={"Select multiple regions using the region list or image view"} />);
@@ -28,9 +30,10 @@ export class GroupRegionDialogComponent extends React.Component {
         selectedRegions.forEach(handler);
     };
 
-    private applyByType = (type: CARTA.RegionType, handler: (region: RegionStore) => void) => {
+    private applyByType = (types: CARTA.RegionType | ReadonlyArray<CARTA.RegionType>, handler: (region: RegionStore) => void) => {
+        const typeSet = new Set(Array.isArray(types) ? types : [types as CARTA.RegionType]);
         this.applyToSelected(region => {
-            if (region.regionType === type) {
+            if (typeSet.has(region.regionType)) {
                 handler(region);
             }
         });
@@ -61,24 +64,9 @@ export class GroupRegionDialogComponent extends React.Component {
             setDashLength: value => this.applyToSelected(region => region.setDashLength(value)),
             setPointShape: value => this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointShape(value)),
             setPointWidth: value => this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointWidth(value)),
-            setFontSize: value =>
-                this.applyToSelected(region => {
-                    if (region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNRULER) {
-                        (region as TextAnnotationStore).setFontSize(value);
-                    }
-                }),
-            setFont: value =>
-                this.applyToSelected(region => {
-                    if (region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNRULER) {
-                        (region as TextAnnotationStore).setFont(value);
-                    }
-                }),
-            setFontStyle: value =>
-                this.applyToSelected(region => {
-                    if (region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNRULER) {
-                        (region as TextAnnotationStore).setFontStyle(value);
-                    }
-                }),
+            setFontSize: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontSize(value)),
+            setFont: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFont(value)),
+            setFontStyle: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontStyle(value)),
             setVectorPointerLength: value => this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerLength(value)),
             setVectorPointerWidth: value => this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerWidth(value)),
             setCompassNorthTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setNorthTextOffset(value, true)),
@@ -88,16 +76,8 @@ export class GroupRegionDialogComponent extends React.Component {
             setCompassArrowheads: selection =>
                 this.applyByType(CARTA.RegionType.ANNCOMPASS, region => {
                     const compassRegion = region as CompassAnnotationStore;
-                    if (selection === "north") {
-                        compassRegion.setNorthArrowhead(true);
-                        compassRegion.setEastArrowhead(false);
-                    } else if (selection === "east") {
-                        compassRegion.setNorthArrowhead(false);
-                        compassRegion.setEastArrowhead(true);
-                    } else {
-                        compassRegion.setNorthArrowhead(true);
-                        compassRegion.setEastArrowhead(true);
-                    }
+                    compassRegion.setNorthArrowhead(selection !== "east");
+                    compassRegion.setEastArrowhead(selection !== "north");
                 }),
             setCompassPointerLength: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerLength(value)),
             setCompassPointerWidth: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerWidth(value)),

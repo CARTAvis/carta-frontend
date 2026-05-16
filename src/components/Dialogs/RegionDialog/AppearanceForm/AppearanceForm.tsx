@@ -105,14 +105,14 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
 
         const [firstRegion, ...remainingRegions] = regions;
         const commonControls = AppearanceForm.getControlsForRegion(firstRegion);
-        remainingRegions.forEach(region => {
+        for (const region of remainingRegions) {
             const controls = AppearanceForm.getControlsForRegion(region);
-            commonControls.forEach(control => {
+            for (const control of commonControls) {
                 if (!controls.has(control)) {
                     commonControls.delete(control);
                 }
-            });
-        });
+            }
+        }
         return commonControls;
     }
 
@@ -153,6 +153,12 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         }
     };
 
+    private static getCompassArrowheadSelection(region: CompassAnnotationStore): "north" | "east" | "both" {
+        if (region.northArrowhead && region.eastArrowhead) return "both";
+        if (region.eastArrowhead) return "east";
+        return "north";
+    }
+
     private handleCompassAnnotationArrowhead = (selection: string) => {
         const value = selection as "north" | "east" | "both";
         if (this.props.handlers?.setCompassArrowheads) {
@@ -161,20 +167,8 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         }
 
         const region = this.props.region as CompassAnnotationStore;
-        switch (value) {
-            case "north":
-                region.setNorthArrowhead(true);
-                region.setEastArrowhead(false);
-                break;
-            case "east":
-                region.setNorthArrowhead(false);
-                region.setEastArrowhead(true);
-                break;
-            case "both":
-                region.setNorthArrowhead(true);
-                region.setEastArrowhead(true);
-                break;
-        }
+        region.setNorthArrowhead(value !== "east");
+        region.setEastArrowhead(value !== "north");
     };
 
     public render() {
@@ -329,10 +323,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show arrowhead">
-                            <HTMLSelect
-                                value={(region as CompassAnnotationStore).eastArrowhead ? ((region as CompassAnnotationStore).northArrowhead ? "both" : "east") : "north"}
-                                onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
-                            >
+                            <HTMLSelect value={AppearanceForm.getCompassArrowheadSelection(region as CompassAnnotationStore)} onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}>
                                 <option value={"north"}>North</option>
                                 <option value={"east"}>East</option>
                                 <option value={"both"}>Both</option>

@@ -131,7 +131,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        if (regionSet.selectedCount > 0) {
+        if (regionSet.selectedRegionCount > 0) {
             regionSet.clearSelection();
             return;
         }
@@ -147,7 +147,7 @@ export class HotkeyService extends React.Component<{}> {
     static EnterPointSelection = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
-        if (!regionSet?.selectedRegion || regionSet.selectedCount > 1) {
+        if (!regionSet?.selectedRegion || regionSet.selectedRegionCount > 1) {
             return;
         }
 
@@ -198,19 +198,19 @@ export class HotkeyService extends React.Component<{}> {
         const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
-        const hasMultiSelection = frame.regionSet.selectedCount > 1;
+        const isSinglePointEdit = frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
 
-        if (!hasMultiSelection && region.supportsPointSelection && region.hasSelectedRotationPoint) {
+        if (isSinglePointEdit && region.hasSelectedRotationPoint) {
             region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
             return;
         }
 
-        if (!hasMultiSelection && region.supportsPointSelection && region.isCompassRegion && region.hasSelectedPoint) {
+        if (isSinglePointEdit && region.isCompassRegion && region.hasSelectedPoint) {
             region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
             return;
         }
 
-        if (!hasMultiSelection && region.supportsPointSelection && region.hasSelectedPoint) {
+        if (isSinglePointEdit && region.hasSelectedPoint) {
             region.moveSelectedPoint(actualDeltaX, actualDeltaY);
         } else {
             frame.regionSet.translateMovingRegionSelection(region, {x: actualDeltaX, y: actualDeltaY});
@@ -259,33 +259,21 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
             {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.EnterPointSelection},
-            {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabNext(e)},
-            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)}
+            {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.HandleTab(e, HotkeyService.SelectNextRegionOrPoint)},
+            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.HandleTab(e, HotkeyService.SelectPreviousRegionOrPoint)}
         ];
         return items.map(item => ({...base, ...item}));
     }
 
     // Only handle Tab/Shift+Tab when there is an active non-cursor region
-    static HasActiveRegion(): boolean {
-        const appStore = AppStore.Instance;
-        const region = appStore.activeFrame?.regionSet.selectedRegion;
-        return !!region && region.regionId !== CURSOR_REGION_ID;
-    }
-
-    static OnTabNext(e: KeyboardEvent) {
-        if (HotkeyService.HasActiveRegion()) {
-            e.preventDefault();
-            e.stopPropagation();
-            HotkeyService.SelectNextRegionOrPoint();
+    static HandleTab(e: KeyboardEvent, action: () => void) {
+        const region = AppStore.Instance.activeFrame?.regionSet.selectedRegion;
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            return;
         }
-    }
-
-    static OnTabPrev(e: KeyboardEvent) {
-        if (HotkeyService.HasActiveRegion()) {
-            e.preventDefault();
-            e.stopPropagation();
-            HotkeyService.SelectPreviousRegionOrPoint();
-        }
+        e.preventDefault();
+        e.stopPropagation();
+        action();
     }
 
     static ConfirmDeleteRegions = async () => {

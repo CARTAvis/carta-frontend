@@ -619,7 +619,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private isRegionSelectionStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): boolean => {
+    private shouldStartRegionSelection = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): boolean => {
         const mouseEvent = konvaEvent.evt;
         const targetId = konvaEvent.target?.id?.();
         return mouseEvent.button === 0 && mouseEvent.shiftKey && !targetId && !this.frame.regionSet.locked;
@@ -647,7 +647,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return null;
     };
 
-    private shouldSuppressRegionSelect = (evt?: MouseEvent): boolean => {
+    private shouldSuppressRegionSelection = (evt?: MouseEvent): boolean => {
         if (evt?.button === 0 && this.suppressNextRegionClickSelection) {
             this.suppressNextRegionClickSelection = false;
             return true;
@@ -662,7 +662,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         const mouseEvent = konvaEvent.evt;
-        if (this.isRegionSelectionStart(konvaEvent)) {
+        if (this.shouldStartRegionSelection(konvaEvent)) {
             const start = this.getRegionSelectionCanvasPoint(mouseEvent);
             this.regionSelectionBox = {start, end: start};
             this.regionSelectionStartedOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
@@ -1014,7 +1014,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             width={this.props.width}
                             height={this.props.height}
                             stageRef={this.stageRef}
-                            shouldSuppressSelect={this.shouldSuppressRegionSelect}
+                            shouldSuppressSelect={this.shouldSuppressRegionSelection}
                         />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}

@@ -36,7 +36,7 @@ export class RegionSetStore {
         makeObservable(this);
     }
 
-    @computed get selectedCount(): number {
+    @computed get selectedRegionCount(): number {
         return this.selectedRegionIds.size;
     }
 
@@ -432,16 +432,23 @@ export class RegionSetStore {
         }
     };
 
-    private getKeyboardNavigationIndices = (): number[] => {
+    private getCyclableRegionIndices = (): number[] => {
         const selectedIds = this.selectedRegionIds;
         const useMultiSelection = selectedIds.size > 1;
-        return this.regions
-            .map((r, i) => ({r, i}))
-            .filter(({r}) => r.regionId !== CURSOR_REGION_ID && (!useMultiSelection || selectedIds.has(r.regionId)))
-            .map(({i}) => i);
+        const indices: number[] = [];
+        this.regions.forEach((region, index) => {
+            if (region.regionId === CURSOR_REGION_ID) {
+                return;
+            }
+            if (useMultiSelection && !selectedIds.has(region.regionId)) {
+                return;
+            }
+            indices.push(index);
+        });
+        return indices;
     };
 
-    private selectRegionByKeyboardIndex = (index: number) => {
+    private selectCycledRegion = (index: number) => {
         const region = this.regions[index];
         if (!region) {
             return;
@@ -455,38 +462,29 @@ export class RegionSetStore {
         region.deselectPoint();
     };
 
-    @action selectNextRegion = () => {
+    private cycleSelectedRegion = (direction: 1 | -1) => {
         if (!this.regions || this.regions.length <= 1) {
             return;
         }
 
-        const selectableIndices = this.getKeyboardNavigationIndices();
-
+        const selectableIndices = this.getCyclableRegionIndices();
         if (selectableIndices.length === 0) {
             return;
         }
 
         const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
-        const nextIndex = currentPos === -1 ? selectableIndices[0] : selectableIndices[(currentPos + 1) % selectableIndices.length];
-        this.selectRegionByKeyboardIndex(nextIndex);
+        const length = selectableIndices.length;
+        const nextIndex = currentPos === -1 ? (direction > 0 ? selectableIndices[0] : selectableIndices[length - 1]) : selectableIndices[(currentPos + direction + length) % length];
+        this.selectCycledRegion(nextIndex);
+    };
+
+    @action selectNextRegion = () => {
+        this.cycleSelectedRegion(1);
     };
 
     @action selectPreviousRegion = () => {
-        if (!this.regions || this.regions.length <= 1) {
-            return;
-        }
-
-        const selectableIndices = this.getKeyboardNavigationIndices();
-
-        if (selectableIndices.length === 0) {
-            return;
-        }
-
-        const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
-        const currentPos = selectableIndices.indexOf(currentIndex);
-        const prevIndex = currentPos === -1 ? selectableIndices[selectableIndices.length - 1] : selectableIndices[(currentPos - 1 + selectableIndices.length) % selectableIndices.length];
-        this.selectRegionByKeyboardIndex(prevIndex);
+        this.cycleSelectedRegion(-1);
     };
 
     @action deselectRegion = () => {
@@ -494,20 +492,20 @@ export class RegionSetStore {
     };
 
     @action toggleSelectedRegionsVisibility = () => {
-        let opacity: RegionsOpacity;
-        switch (this.selectedRegionsVisibility) {
-            case RegionsOpacity.Visible:
-                opacity = RegionsOpacity.SemiTransparent;
-                break;
-            case RegionsOpacity.SemiTransparent:
-                opacity = RegionsOpacity.Invisible;
-                break;
-            default:
-                opacity = RegionsOpacity.Visible;
-                break;
-        }
+        const opacity = RegionSetStore.NextOpacity(this.selectedRegionsVisibility);
         this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
+
+    private static NextOpacity(current: RegionsOpacity): RegionsOpacity {
+        switch (current) {
+            case RegionsOpacity.Visible:
+                return RegionsOpacity.SemiTransparent;
+            case RegionsOpacity.SemiTransparent:
+                return RegionsOpacity.Invisible;
+            default:
+                return RegionsOpacity.Visible;
+        }
+    }
 
     @action toggleSelectedRegionsLocked = () => {
         const locked = !this.selectedRegionsAllLocked;

@@ -108,7 +108,13 @@ export class RegionStore {
     }
 
     @computed get visualOpacity(): number {
-        return (this.isTemporary ? 0.5 : this.locked ? 0.7 : 1) * this.opacity;
+        let baseOpacity = 1;
+        if (this.isTemporary) {
+            baseOpacity = 0.5;
+        } else if (this.locked) {
+            baseOpacity = 0.7;
+        }
+        return baseOpacity * this.opacity;
     }
 
     public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
@@ -375,14 +381,12 @@ export class RegionStore {
     }
 
     @computed get selectablePointCount(): number {
+        const hasSquarePixels = !!this.activeFrame?.hasSquarePixels;
         if (this.isSimpleShapeRegion) {
-            return this.activeFrame?.hasSquarePixels ? 5 : 4;
+            return hasSquarePixels ? 5 : 4;
         }
         if (this.isRotationSelectableLineLikeRegion) {
-            return this.controlPoints.length + (this.activeFrame?.hasSquarePixels ? 1 : 0);
-        }
-        if (this.isLineLikeRegion) {
-            return this.controlPoints.length;
+            return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
         }
         if (this.isCompassRegion) {
             return 1;
@@ -818,19 +822,25 @@ export class RegionStore {
     };
 
     @action selectNextPoint = () => {
-        if (!this.supportsPointSelection || this.selectablePointCount <= 0) {
-            return;
-        }
-
-        this.selectedPointIndex = this.selectedPointIndex < 0 ? 0 : (this.selectedPointIndex + 1) % this.selectablePointCount;
+        this.cyclePointSelection(1);
     };
 
     @action selectPreviousPoint = () => {
-        if (!this.supportsPointSelection || this.selectablePointCount <= 0) {
+        this.cyclePointSelection(-1);
+    };
+
+    private cyclePointSelection = (direction: 1 | -1) => {
+        const count = this.selectablePointCount;
+        if (!this.supportsPointSelection || count <= 0) {
             return;
         }
 
-        this.selectedPointIndex = this.selectedPointIndex < 0 ? this.selectablePointCount - 1 : (this.selectedPointIndex - 1 + this.selectablePointCount) % this.selectablePointCount;
+        if (this.selectedPointIndex < 0) {
+            this.selectedPointIndex = direction > 0 ? 0 : count - 1;
+            return;
+        }
+
+        this.selectedPointIndex = (this.selectedPointIndex + direction + count) % count;
     };
 
     @action moveSelectedPoint = (deltaX: number, deltaY: number) => {
