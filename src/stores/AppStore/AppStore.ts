@@ -2778,7 +2778,7 @@ export class AppStore {
                                 region.setLocked(regionInfo.locked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
-                                    frame.regionSet.selectRegion(region);
+                                    frame.regionSet.selectSingleRegion(region);
                                 }
                             }
                         }
