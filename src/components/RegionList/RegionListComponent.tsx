@@ -89,7 +89,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     componentDidMount() {
         this.disposers.push(
             reaction(
-                () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
+                () => AppStore.Instance.activeFrame?.regionSet?.focusedRegion?.regionId,
                 id => {
                     if (id && id > 0) {
                         const idx = this.validRegions.findIndex(r => r.regionId === id);
@@ -240,7 +240,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             regionSet.selectSingleRegion(region);
             this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
         } else {
-            regionSet.selectRegion(region);
+            regionSet.setFocusedRegion(region);
         }
 
         const selectedRegions = regionSet.selectedRegionsList;
@@ -427,7 +427,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const focusedId = regionSet.selectedRegion?.regionId ?? -1;
+        const focusedId = regionSet.focusedRegion?.regionId ?? -1;
         const focusedIndex = list.findIndex(region => region.regionId === focusedId);
 
         if (ev.shiftKey) {
@@ -564,7 +564,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
-        const selectedRegion = frame.regionSet.selectedRegion;
+        const selectedRegion = frame.regionSet.focusedRegion;
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {

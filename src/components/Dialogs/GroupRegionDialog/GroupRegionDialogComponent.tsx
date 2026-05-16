@@ -99,7 +99,7 @@ export class GroupRegionDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const className = classNames("group-region-dialog", {[Classes.DARK]: appStore.darkTheme});
         const activeFrame = appStore.activeFrame;
-        const primaryRegion = activeFrame?.regionSet.selectedRegion;
+        const primaryRegion = activeFrame?.regionSet.focusedRegion;
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
         const canEditSelectedRegions = !!primaryRegion && selectedRegions.length > 1;
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;

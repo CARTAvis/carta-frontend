@@ -229,7 +229,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
                 };
-                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
+                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.focusedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
                 const requestMessage: CARTA.IMomentRequest = {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
@@ -652,7 +652,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (this.momentRegionId === RegionId.IMAGE) {
                 return true;
             } else if (this.momentRegionId === RegionId.ACTIVE) {
-                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                const region = this.effectiveFrame.regionSet?.focusedRegion;
                 return !region || region?.regionId === RegionId.CURSOR ? true : region?.isClosedRegion;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);
@@ -667,7 +667,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (this.momentRegionId === RegionId.IMAGE) {
                 return "Image";
             } else if (this.momentRegionId === RegionId.ACTIVE) {
-                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                const region = this.effectiveFrame.regionSet?.focusedRegion;
                 return !region || region.regionId === RegionId.CURSOR ? "Image" : region.nameString;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);

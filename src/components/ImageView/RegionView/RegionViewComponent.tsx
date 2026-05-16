@@ -980,9 +980,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
-        } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
+        } else if (regionSet.focusedRegion && regionSet.focusedRegion.editing) {
             cursor = "move";
-        } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
+        } else if (regionSet.focusedRegion === regionSet.regions[0] || !regionSet.focusedRegion) {
             cursor = "default";
         }
 
@@ -1073,7 +1073,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
             regionSet.selectSingleRegion(region);
             this.pivotIndex = index;
         } else {
-            regionSet.selectRegion(region);
+            regionSet.setFocusedRegion(region);
             this.pivotIndex = index;
         }
     };
@@ -1086,7 +1086,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
                 if (!isMultiSelected) {
                     frame.regionSet.selectSingleRegion(region);
                 } else {
-                    frame.regionSet.selectRegion(region);
+                    frame.regionSet.setFocusedRegion(region);
                 }
                 appStore.dialogStore.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
             }
@@ -1099,7 +1099,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
-                const isActive = r === regionSet.selectedRegion;
+                const isActive = r === regionSet.focusedRegion;
                 const commonProps = {
                     region: r,
                     frame: this.props.frame,

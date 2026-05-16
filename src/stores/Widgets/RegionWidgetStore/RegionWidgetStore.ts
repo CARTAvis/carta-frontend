@@ -58,7 +58,7 @@ export class RegionWidgetStore {
             } else if (regionId === RegionId.NONE) {
                 return null;
             } else {
-                const selectedRegion = this.effectiveFrame.regionSet?.selectedRegion;
+                const selectedRegion = this.effectiveFrame.regionSet?.focusedRegion;
                 if (selectedRegion) {
                     switch (this.type) {
                         case RegionsType.CLOSED:

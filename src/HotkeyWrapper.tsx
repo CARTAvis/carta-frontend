@@ -41,7 +41,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static NextChannel = () => {
         const appStore = AppStore.Instance;
-        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        const region = appStore.activeFrame?.regionSet.focusedRegion;
         if (region && region.regionId !== CURSOR_REGION_ID) {
             return;
         }
@@ -53,7 +53,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static PrevChannel = () => {
         const appStore = AppStore.Instance;
-        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        const region = appStore.activeFrame?.regionSet.focusedRegion;
         if (region && region.regionId !== CURSOR_REGION_ID) {
             return;
         }
@@ -97,8 +97,8 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.selectedRegion && !regionSet.locked && regionSet.selectedRegion.opacity !== RegionsOpacity.Invisible) {
-                regionSet.selectedRegion.toggleLock();
+            if (regionSet.focusedRegion && !regionSet.locked && regionSet.focusedRegion.opacity !== RegionsOpacity.Invisible) {
+                regionSet.focusedRegion.toggleLock();
             }
         }
     };
@@ -125,7 +125,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const selectedRegion = regionSet.selectedRegion;
+        const selectedRegion = regionSet.focusedRegion;
         if (selectedRegion?.hasSelectedPoint) {
             selectedRegion.deselectPoint();
             return;
@@ -147,11 +147,11 @@ export class HotkeyService extends React.Component<{}> {
     static EnterPointSelection = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
-        if (!regionSet?.selectedRegion || regionSet.selectedRegionCount > 1) {
+        if (!regionSet?.focusedRegion || regionSet.selectedRegionCount > 1) {
             return;
         }
 
-        const region = regionSet.selectedRegion;
+        const region = regionSet.focusedRegion;
         if (region.supportsPointSelection && !region.hasSelectedPoint) {
             region.selectPoint(0);
         }
@@ -164,7 +164,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const selectedRegion = regionSet.selectedRegion;
+        const selectedRegion = regionSet.focusedRegion;
         if (selectedRegion?.hasSelectedPoint) {
             selectedRegion.selectNextPoint();
         } else {
@@ -179,7 +179,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const selectedRegion = regionSet.selectedRegion;
+        const selectedRegion = regionSet.focusedRegion;
         if (selectedRegion?.hasSelectedPoint) {
             selectedRegion.selectPreviousPoint();
         } else {
@@ -190,7 +190,7 @@ export class HotkeyService extends React.Component<{}> {
     static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number) => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const region = frame?.regionSet.selectedRegion;
+        const region = frame?.regionSet.focusedRegion;
         if (!frame || !region || region.regionId === CURSOR_REGION_ID) {
             return;
         }
@@ -267,7 +267,7 @@ export class HotkeyService extends React.Component<{}> {
 
     // Only handle Tab/Shift+Tab when there is an active non-cursor region
     static HandleTab(e: KeyboardEvent, action: () => void) {
-        const region = AppStore.Instance.activeFrame?.regionSet.selectedRegion;
+        const region = AppStore.Instance.activeFrame?.regionSet.focusedRegion;
         if (!region || region.regionId === CURSOR_REGION_ID) {
             return;
         }
@@ -296,11 +296,11 @@ export class HotkeyService extends React.Component<{}> {
 
         // Build selection list from multi-select set or single selectedRegion
         const selectedIds = Array.from(regionSet.selectedRegionIds ?? []);
-        const hasExplicitSelection = selectedIds.length > 0 || (!!regionSet.selectedRegion && regionSet.selectedRegion.regionId !== CURSOR_REGION_ID);
+        const hasExplicitSelection = selectedIds.length > 0 || (!!regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID);
         let toDelete = nonCursorRegions.filter(r => selectedIds.includes(r.regionId) && !r.locked);
 
-        if (toDelete.length === 0 && regionSet.selectedRegion && regionSet.selectedRegion.regionId !== CURSOR_REGION_ID && !regionSet.selectedRegion.locked) {
-            toDelete = [regionSet.selectedRegion];
+        if (toDelete.length === 0 && regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && !regionSet.focusedRegion.locked) {
+            toDelete = [regionSet.focusedRegion];
         }
 
         if (toDelete.length > 0) {

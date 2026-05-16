@@ -46,15 +46,15 @@ export class RegionDialogComponent extends React.Component {
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideDialog(DialogId.Region);
-        if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
-            appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
+        if (appStore.activeFrame && appStore.activeFrame.regionSet.focusedRegion) {
+            appStore.deleteRegion(appStore.activeFrame.regionSet.focusedRegion);
         }
     };
 
     private handleFocusClicked = () => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if (regionSet?.selectedRegion) {
-            regionSet.selectedRegion.focusCenter();
+        if (regionSet?.focusedRegion) {
+            regionSet.focusedRegion.focusCenter();
         }
     };
 
@@ -63,7 +63,7 @@ export class RegionDialogComponent extends React.Component {
     };
 
     private handleExportClicked = () => {
-        const region = AppStore.Instance.activeFrame?.regionSet.selectedRegion;
+        const region = AppStore.Instance.activeFrame?.regionSet.focusedRegion;
         if (region) {
             AppStore.Instance.fileBrowserStore.showExportRegions(region.regionId);
         }
@@ -87,12 +87,12 @@ export class RegionDialogComponent extends React.Component {
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
         let canEditRegion = false;
-        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
+        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.focusedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
-        } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
+        } else if (appStore.activeFrame.regionSet.focusedRegion.regionId === 0) {
             bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
-            region = appStore.activeFrame.regionSet.selectedRegion;
+            region = appStore.activeFrame.regionSet.focusedRegion;
             const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
             dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {

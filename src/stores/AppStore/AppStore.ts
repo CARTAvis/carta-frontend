@@ -2875,7 +2875,7 @@ export class AppStore {
                 workspaceFile.references.spatial = frame.spatialReference.frameInfo.fileId;
             } else if (frame.regionSet?.regions.length) {
                 workspaceFile.regionsSet = {
-                    selectedRegion: frame.regionSet.selectedRegion?.regionId
+                    selectedRegion: frame.regionSet.focusedRegion?.regionId
                 };
                 workspaceFile.regionsSet.regions = [];
                 for (const region of frame.regionSet.regions) {
@@ -3136,8 +3136,8 @@ export class AppStore {
     }
 
     @computed get selectedRegion(): RegionStore | null {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
-            return this.activeFrame.regionSet.selectedRegion;
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.focusedRegion && this.activeFrame.regionSet.focusedRegion.regionId !== 0) {
+            return this.activeFrame.regionSet.focusedRegion;
         }
         return null;
     }
@@ -3159,8 +3159,8 @@ export class AppStore {
             return;
         }
 
-        if (regionSet.selectedRegion && !regionSet.selectedRegion.locked) {
-            this.deleteRegion(regionSet.selectedRegion);
+        if (regionSet.focusedRegion && !regionSet.focusedRegion.locked) {
+            this.deleteRegion(regionSet.focusedRegion);
         }
     };
 

@@ -13,7 +13,7 @@ import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
-    @observable selectedRegion: RegionStore | null;
+    @observable focusedRegion: RegionStore | null;
     @observable selectedRegionIds: Set<number> = new Set();
     @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
@@ -32,7 +32,7 @@ export class RegionSetStore {
         this.preference = preference;
         this.newRegionType = preference.regionType;
         this.addPointRegion(frame.center, true);
-        this.selectedRegion = this.regions[0] ?? null;
+        this.focusedRegion = this.regions[0] ?? null;
         makeObservable(this);
     }
 
@@ -73,7 +73,7 @@ export class RegionSetStore {
 
     @action clearSelection = () => {
         this.selectedRegionIds = new Set();
-        this.selectedRegion = this.cursorRegion;
+        this.focusedRegion = this.cursorRegion;
     };
 
     @action setSelectionByIds = (ids: number[], focusRegionId?: number) => {
@@ -87,14 +87,14 @@ export class RegionSetStore {
         this.selectedRegionIds = newSet;
 
         if (ids.length === 0) {
-            this.selectedRegion = this.cursorRegion;
+            this.focusedRegion = this.cursorRegion;
             return;
         }
 
         const selectedIds = Array.from(newSet);
         const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
         if (focusRegion) {
-            this.selectRegion(focusRegion);
+            this.setFocusedRegion(focusRegion);
         }
     };
 
@@ -107,7 +107,7 @@ export class RegionSetStore {
         if (region.supportsPointSelection) {
             region.deselectPoint();
         }
-        this.selectRegion(region);
+        this.setFocusedRegion(region);
     };
 
     @action toggleRegionSelection = (region: RegionStore) => {
@@ -145,7 +145,7 @@ export class RegionSetStore {
         if (!this.selectedRegionIds.has(origin.regionId)) {
             this.selectSingleRegion(origin);
         } else {
-            this.selectRegion(origin);
+            this.setFocusedRegion(origin);
         }
 
         for (const region of this.getMovableSelection(origin)) {
@@ -412,19 +412,18 @@ export class RegionSetStore {
         }
     };
 
-    @action selectRegion = (region: RegionStore) => {
+    @action setFocusedRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
-            // Deselect point from previously selected region
-            if (this.selectedRegion && this.selectedRegion !== region && this.selectedRegion.supportsPointSelection) {
-                this.selectedRegion.deselectPoint();
+            if (this.focusedRegion && this.focusedRegion !== region && this.focusedRegion.supportsPointSelection) {
+                this.focusedRegion.deselectPoint();
             }
-            this.selectedRegion = region;
+            this.focusedRegion = region;
         }
     };
 
-    @action selectRegionByIndex = (index: number) => {
+    @action setFocusedRegionByIndex = (index: number) => {
         if (index >= 0 && index < this.regions.length) {
-            this.selectedRegion = this.regions[index];
+            this.focusedRegion = this.regions[index];
         }
     };
 
@@ -451,7 +450,7 @@ export class RegionSetStore {
         }
 
         if (this.selectedRegionIds.size > 1) {
-            this.selectRegion(region);
+            this.setFocusedRegion(region);
         } else {
             this.selectSingleRegion(region);
         }
@@ -468,7 +467,7 @@ export class RegionSetStore {
             return;
         }
 
-        const currentIndex = this.selectedRegion ? this.regions.indexOf(this.selectedRegion) : -1;
+        const currentIndex = this.focusedRegion ? this.regions.indexOf(this.focusedRegion) : -1;
         const currentPos = selectableIndices.indexOf(currentIndex);
         const length = selectableIndices.length;
         const nextIndex = currentPos === -1 ? (direction > 0 ? selectableIndices[0] : selectableIndices[length - 1]) : selectableIndices[(currentPos + direction + length) % length];
@@ -484,7 +483,7 @@ export class RegionSetStore {
     };
 
     @action deselectRegion = () => {
-        this.selectedRegion = null;
+        this.focusedRegion = null;
     };
 
     @action toggleSelectedRegionsVisibility = () => {
@@ -520,8 +519,8 @@ export class RegionSetStore {
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
-            if (region === this.selectedRegion) {
-                this.selectedRegion = this.regions[0];
+            if (region === this.focusedRegion) {
+                this.focusedRegion = this.regions[0];
             }
             if (this.selectedRegionIds.has(region.regionId)) {
                 const selectedIds = new Set(this.selectedRegionIds);

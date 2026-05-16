@@ -146,7 +146,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
 
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
-            const region = activeFrame.regionSet.selectedRegion;
+            const region = activeFrame.regionSet.focusedRegion;
             const frame = activeFrame.spatialReference ?? activeFrame;
             (region as PointAnnotationStore).setPointShape(item);
             frame.pointShapeCache = item;
