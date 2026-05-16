@@ -867,7 +867,11 @@ export class RegionStore {
             return;
         }
 
-        const compassRegion = this as unknown as RegionStore & {length: number; setLength: (length: number) => void};
+        const compassRegion = this as Partial<{length: number; setLength: (length: number) => void}>;
+        if (typeof compassRegion.length !== "number" || typeof compassRegion.setLength !== "function") {
+            return;
+        }
+
         compassRegion.setLength(Math.max(MIN_POINT_SELECTION_SIZE, compassRegion.length + deltaX));
     };
 
