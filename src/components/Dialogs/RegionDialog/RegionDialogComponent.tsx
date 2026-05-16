@@ -149,13 +149,13 @@ export class RegionDialogComponent extends React.Component {
         const regionVisible = !!region && region.opacity !== RegionsOpacity.Invisible;
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
-                <Tooltip content={`Region is ${lockDisplayed ? "locked" : "unlocked"}`}>
+                <Tooltip content={lockDisplayed ? "Unlock region" : "Lock region"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
                 <Tooltip content={regionVisible ? "Hide region" : "Show region"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
                 </Tooltip>
-                <Tooltip content={"Focus"}>
+                <Tooltip content="Focus">
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
                 </Tooltip>
                 <Tooltip content="Export region">

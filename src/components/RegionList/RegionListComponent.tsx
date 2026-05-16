@@ -582,8 +582,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
                 const lockDisabled = regionsVisibility === RegionsOpacity.Invisible;
                 const allRegionsLocked = frame.regionSet.editableRegionsAllLocked;
-                const lockIcon = allRegionsLocked || lockDisabled ? "lock" : "unlock";
-                const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
+                const lockDisplayed = allRegionsLocked || lockDisabled;
+                const lockIcon = lockDisplayed ? "lock" : "unlock";
+                const lockTooltip = lockDisplayed ? "Unlock all regions" : "Lock all regions";
 
                 return (
                     <div className={className} style={props.style}>
@@ -591,7 +592,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                             </Tooltip>
-                            <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
+                            <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}
@@ -712,6 +713,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId) {
                 const lockDisabled = regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible;
                 const lockIcon = region.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible ? "lock" : "unlock";
+                const lockTooltip = lockIcon === "lock" ? "Unlock region" : "Lock region";
                 lockEntry = (
                     <div
                         className="cell"
@@ -720,7 +722,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         onDoubleClick={this.stopDoubleClickPropagation}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
-                        <Icon icon={lockIcon} style={{opacity: lockDisabled ? 0.3 : 1}} />
+                        <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
+                            <Icon icon={lockIcon} style={{opacity: lockDisabled ? 0.3 : 1}} />
+                        </Tooltip>
                     </div>
                 );
             } else {
@@ -739,7 +743,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 const regionVisible = region.opacity !== RegionsOpacity.Invisible;
                 hideEntry = (
                     <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionHideClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
-                        <Icon icon={regionVisible ? "eye-open" : "eye-off"} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
+                        <Tooltip content={regionVisible ? "Hide region" : "Show region"} position={Position.BOTTOM}>
+                            <Icon icon={regionVisible ? "eye-open" : "eye-off"} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
+                        </Tooltip>
                     </div>
                 );
             }
@@ -754,7 +760,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         onDoubleClick={this.stopDoubleClickPropagation}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}
                     >
-                        <CustomIcon icon="center" />
+                        <Tooltip content="Focus" position={Position.BOTTOM}>
+                            <CustomIcon icon="center" />
+                        </Tooltip>
                     </div>
                 );
             }

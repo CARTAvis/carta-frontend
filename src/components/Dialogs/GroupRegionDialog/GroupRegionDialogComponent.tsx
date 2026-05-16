@@ -163,10 +163,10 @@ export class GroupRegionDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {editableRegion && (
                             <>
-                                <Tooltip content={lockDisplayed ? "Unlock all selected regions" : "Lock all selected regions"}>
+                                <Tooltip content={lockDisplayed ? "Unlock selected regions" : "Lock selected regions"}>
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={lockDisplayed ? "lock" : "unlock"} onClick={this.handleLockClicked} disabled={lockDisabled} />
                                 </Tooltip>
-                                <Tooltip content={selectedRegionsVisible ? "Hide all selected regions" : "Show all selected regions"}>
+                                <Tooltip content={selectedRegionsVisible ? "Hide selected regions" : "Show selected regions"}>
                                     <AnchorButton
                                         intent={Intent.WARNING}
                                         minimal={true}
@@ -175,12 +175,10 @@ export class GroupRegionDialogComponent extends React.Component {
                                         style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
                                     />
                                 </Tooltip>
-                                <Tooltip content="Export all selected regions">
+                                <Tooltip content="Export selected regions">
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
                                 </Tooltip>
-                                <Tooltip content="Delete all selected regions">
-                                    <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />
-                                </Tooltip>
+                                <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />
                             </>
                         )}
                     </div>
