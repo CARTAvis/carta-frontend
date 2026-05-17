@@ -215,7 +215,7 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: "click", label: "Pan image"},
             {combo: "middle-click", label: "Pan image (inside region)"},
-            {combo: "mod + click", label: "Pan image (outside region)"},
+            {combo: "mod + click", label: "Pan image (inside region)"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
         return items.map(item => ({...base, ...item}));
