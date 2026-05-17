@@ -12,7 +12,7 @@ import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
+import {clamp, formattedArcsec, getFormattedWCSPoint, getRegionIdsInRange, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
 
@@ -349,17 +349,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return direction > 0 ? -1 : listLength;
     };
 
-    private getRegionIdsInRange = (regions: RegionStore[], startIndex: number, endIndex: number): number[] => {
-        const ids: number[] = [];
-        for (let i = startIndex; i <= endIndex; i++) {
-            const region = regions[i];
-            if (region) {
-                ids.push(region.regionId);
-            }
-        }
-        return ids;
-    };
-
     private handleRangeKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number, isArrowUp: boolean) => {
         if ((isArrowUp && focusedIndex <= 0) || (!isArrowUp && focusedIndex >= list.length - 1)) {
             if (focusedIndex >= 0) {
@@ -375,7 +364,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const nextIndex = clamp(startIndex + direction, 0, list.length - 1);
         const rangeStart = Math.min(pivotIndex, nextIndex);
         const rangeEnd = Math.max(pivotIndex, nextIndex);
-        const selectedIds = this.getRegionIdsInRange(list, rangeStart, rangeEnd);
+        const selectedIds = getRegionIdsInRange(list, rangeStart, rangeEnd);
         const nextRegionId = list[nextIndex]?.regionId;
 
         regionSet.setSelectionByIds(selectedIds, nextRegionId);
@@ -471,7 +460,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         } else if (isShiftPressed && current.size > 0 && this.rowPivotIndex >= 0) {
             const start = Math.min(this.rowPivotIndex, index);
             const end = Math.max(this.rowPivotIndex, index);
-            regionSet.setSelectionByIds(this.getRegionIdsInRange(this.validRegions, start, end), region.regionId);
+            regionSet.setSelectionByIds(getRegionIdsInRange(this.validRegions, start, end), region.regionId);
         } else {
             regionSet.selectSingleRegion(region);
             this.rowPivotIndex = index;

@@ -49,7 +49,6 @@ export class RegionStore {
     @observable editing: boolean = false;
     @observable creating: boolean = false;
     @observable locked: boolean = false;
-    @observable visible: boolean = true;
     @observable opacity: RegionsOpacity = RegionsOpacity.Visible;
     @observable lockedByVisibility: boolean = false;
     @observable isSimplePolygon: boolean = true;
@@ -412,6 +411,10 @@ export class RegionStore {
 
     @computed get isCompassRegion(): boolean {
         return this.regionType === CARTA.RegionType.ANNCOMPASS;
+    }
+
+    @computed get visible(): boolean {
+        return this.opacity !== RegionsOpacity.Invisible;
     }
 
     @computed get rotationPointIndex(): number {
@@ -798,7 +801,6 @@ export class RegionStore {
     @action setOpacity = (opacity: RegionsOpacity) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.opacity = opacity;
-            this.visible = opacity !== RegionsOpacity.Invisible;
             if (opacity === RegionsOpacity.Invisible) {
                 if (!this.locked) {
                     this.lockedByVisibility = true;

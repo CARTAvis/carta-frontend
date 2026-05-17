@@ -17,6 +17,7 @@ import {
     doSelectionRectAndRegionPointsIntersect,
     doSelectionRectAndRulerPathsIntersect,
     getRectFromPoints,
+    getRegionIdsInRange,
     getRegionSelectionPoints,
     getRegionSelectionSegments,
     getRotatedBoxPoints,
@@ -1037,18 +1038,8 @@ interface RegionComponentsProps {
 
 @observer
 class RegionComponents extends React.Component<RegionComponentsProps> {
+    // Transient shift-selection anchor; changes do not need to trigger rendering.
     private pivotIndex: number = -1;
-
-    private getRegionIdsInRange = (startIndex: number, endIndex: number): number[] => {
-        const ids: number[] = [];
-        for (let i = startIndex; i <= endIndex; i++) {
-            const region = this.props.regions[i];
-            if (region) {
-                ids.push(region.regionId);
-            }
-        }
-        return ids;
-    };
 
     private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
         if (this.props.shouldSuppressSelect?.(evt)) {
@@ -1068,7 +1059,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         } else if (isShift && regionSet.selectedRegionIds.size > 0 && this.pivotIndex >= 0 && index >= 0) {
             const start = Math.min(this.pivotIndex, index);
             const end = Math.max(this.pivotIndex, index);
-            regionSet.setSelectionByIds(this.getRegionIdsInRange(start, end), region.regionId);
+            regionSet.setSelectionByIds(getRegionIdsInRange(regions, start, end), region.regionId);
         } else if (!regionSet.selectedRegionIds.has(region.regionId) || !regionSet.selectedRegionIds.size) {
             regionSet.selectSingleRegion(region);
             this.pivotIndex = index;
