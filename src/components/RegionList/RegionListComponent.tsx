@@ -286,7 +286,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuDivider />
-                    <MenuItem icon="settings" text="Region Settings" onClick={() => DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region)} />
+                    <MenuItem icon="settings" text="Region properties" onClick={() => DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region)} />
                     <MenuDivider />
                     <MenuItem
                         icon="trash"

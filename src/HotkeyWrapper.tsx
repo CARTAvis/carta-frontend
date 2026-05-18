@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionsOpacity} from "enums";
 import {AppStore} from "stores";
-import {CURSOR_REGION_ID} from "stores/Frame";
+import {CURSOR_REGION_ID, RegionSetStore} from "stores/Frame";
 
 import "./HotkeyWrapper.scss";
 
@@ -89,8 +89,33 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.focusedRegion && !regionSet.locked && regionSet.focusedRegion.opacity !== RegionsOpacity.Invisible) {
+            if (regionSet.locked) {
+                return;
+            }
+
+            if (regionSet.selectedRegionsList.length > 0) {
+                regionSet.toggleSelectedRegionsLocked();
+                return;
+            }
+
+            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && regionSet.focusedRegion.opacity !== RegionsOpacity.Invisible) {
                 regionSet.focusedRegion.toggleLock();
+            }
+        }
+    };
+
+    static ToggleRegionVisibility = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            const regionSet = appStore.activeFrame.regionSet;
+
+            if (regionSet.selectedRegionsList.length > 0) {
+                regionSet.toggleSelectedRegionsVisibility();
+                return;
+            }
+
+            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+                regionSet.focusedRegion.setOpacity(RegionSetStore.NextOpacity(regionSet.focusedRegion.opacity));
             }
         }
     };
@@ -223,17 +248,51 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static RegionDisplayHotkeys() {
-        const appStore = AppStore.Instance;
-        const modString = appStore.modifierString;
         const base = {group: "Regions", global: true};
         const items = [
+            {combo: "l", label: "Toggle selected region(s) lock"},
+            {combo: "h", label: "Toggle selected region(s) visibility"},
+            {combo: "shift + l", label: "Unlock all regions"},
+            {combo: "delete", label: "Delete selected region(s)"},
+            {combo: "backspace", label: "Delete selected region(s)"},
+            {combo: "double-click", label: "Region properties"}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // For display in custom hotkeys dialog
+    static RegionImageViewerDisplayHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const base = {group: "Regions (Image Viewer)", global: true};
+        const items = [
+            {combo: "c", label: "Toggle region creation mode"},
             {combo: "mod", label: "Switch region creation mode"},
             {combo: "shift", label: "Symmetric region creation"},
             {combo: "shift + drag", label: "Toggle region box selection"},
+            {combo: "esc", label: "Deselect region/point or cancel creation"},
+            {combo: "enter", label: "Enter point selection mode"},
+            {combo: "tab", label: "Select next region/point"},
+            {combo: "shift + tab", label: "Select previous region/point"},
             {combo: "up", label: "Move region/point (↑ ↓ ← →)"},
             {combo: "shift + up", label: "Coarse move (↑ ↓ ← →)"},
-            {combo: `${modString}up`, label: "Fine move (1 px, ↑ ↓ ← →)"},
-            {combo: "double-click", label: "Region properties"}
+            {combo: `${modString}up`, label: "Fine move (1 pixel, ↑ ↓ ← →)"}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // For display in custom hotkeys dialog
+    static RegionListDisplayHotkeys() {
+        const base = {group: "Regions (Region List)", global: true};
+        const items = [
+            {combo: "click", label: "Select region"},
+            {combo: "mod + click", label: "Toggle region selection"},
+            {combo: "shift + click", label: "Select region range"},
+            {combo: "up", label: "Select previous region"},
+            {combo: "down", label: "Select next region"},
+            {combo: "shift + up", label: "Extend selection upward"},
+            {combo: "shift + down", label: "Extend selection downward"},
+            {combo: "right-click", label: "Region context menu"}
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -242,7 +301,8 @@ export class HotkeyService extends React.Component<{}> {
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
-            {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.ToggleRegionLock},
+            {combo: "l", label: "Toggle selected region(s) lock", onKeyDown: HotkeyService.ToggleRegionLock},
+            {combo: "h", label: "Toggle selected region(s) visibility", onKeyDown: HotkeyService.ToggleRegionVisibility},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
             {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
             {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
@@ -377,9 +437,9 @@ export class HotkeyService extends React.Component<{}> {
         const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.NavigationDisplayHotkeys());
 
         // Regions
-        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionHotkeys());
-        const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.RegionDisplayHotkeys());
-        regionHotKeys.push(...regionDisplayOnlyHotkeys);
+        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionDisplayHotkeys());
+        const regionImageViewerHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionImageViewerDisplayHotkeys());
+        const regionListHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionListDisplayHotkeys());
 
         // Frame controls
         const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.FrameControlHotkeys());
@@ -393,6 +453,8 @@ export class HotkeyService extends React.Component<{}> {
         return {
             navigationHotKeys,
             regionHotKeys,
+            regionImageViewerHotKeys,
+            regionListHotKeys,
             animatorHotkeys,
             fileHotkeys,
             otherHotKeys
@@ -401,7 +463,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static RenderHotkeyGroups() {
         const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
-        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.animatorHotkeys, hotkeys.regionHotKeys, hotkeys.otherHotKeys];
+        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.animatorHotkeys, hotkeys.regionHotKeys, hotkeys.regionImageViewerHotKeys, hotkeys.regionListHotKeys, hotkeys.otherHotKeys];
 
         // Render each group; placement handled purely by CSS multi-column
         return hotkeyGroups.map((group, idx) => (
