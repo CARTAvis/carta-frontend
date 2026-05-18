@@ -144,7 +144,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if (regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1) {
+        if (regionSet?.isRegionInMultiSelection(region)) {
             regionSet.toggleSelectedRegionsLocked();
         } else {
             region.toggleLock();
@@ -155,9 +155,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionHideClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         if (regionSet) {
-            const selectedRegionIds = regionSet.selectedRegionIds;
-            const isRegionInMultiSelection = selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
-            if (!isRegionInMultiSelection) {
+            if (!regionSet.isRegionInMultiSelection(region)) {
                 regionSet.selectSingleRegion(region);
                 this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
             }
@@ -188,8 +186,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionExportClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         ev.stopPropagation();
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        const isRegionInMultiSelection = !!regionSet && regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1;
-        if (isRegionInMultiSelection) {
+        if (regionSet?.isRegionInMultiSelection(region)) {
             FileBrowserStore.Instance.showExportSelectedRegions();
         } else {
             FileBrowserStore.Instance.showExportRegions(region.regionId);
@@ -219,7 +216,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const isMultiSelected = region ? regionSet.selectedRegionIds.has(region.regionId) && regionSet.selectedRegionsList.length > 1 : regionSet.selectedRegionsList.length > 1;
+        const isMultiSelected = region ? regionSet.isRegionInMultiSelection(region) : regionSet.selectedRegionsList.length > 1;
         if (!isMultiSelected && region && region.regionId !== CURSOR_REGION_ID) {
             regionSet.selectSingleRegion(region);
         }

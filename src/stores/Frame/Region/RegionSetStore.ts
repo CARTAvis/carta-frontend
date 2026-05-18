@@ -71,6 +71,10 @@ export class RegionSetStore {
         return editableRegions.length > 0 && editableRegions.every(region => region.locked);
     }
 
+    isRegionInMultiSelection = (region: RegionStore | null | undefined): boolean => {
+        return !!region && this.selectedRegionsList.length > 1 && this.selectedRegionIds.has(region.regionId);
+    };
+
     @action clearSelection = () => {
         this.selectedRegionIds = new Set();
         this.focusedRegion = this.cursorRegion;
