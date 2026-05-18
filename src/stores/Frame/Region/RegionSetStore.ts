@@ -20,7 +20,6 @@ export class RegionSetStore {
     @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
-    private pointShapeCache: CARTA.PointAnnotationShape;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
@@ -252,9 +251,8 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
-    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, cursorRegion = false) => {
-        this.pointShapeCache = shape;
-        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, this.getTempRegionId());
+    @action addAnnPointRegion = (center: Point2D, shape?: CARTA.PointAnnotationShape, cursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, this.getTempRegionId(), "", shape);
     };
 
     @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -354,8 +352,8 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") => {
-        const region = this.initRegion(points, rotation, regionType, regionId, regionName);
+    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "", pointShape?: CARTA.PointAnnotationShape) => {
+        const region = this.initRegion(points, rotation, regionType, regionId, regionName, pointShape);
         this.regions.push(region);
 
         if (!temporary) {
@@ -365,7 +363,7 @@ export class RegionSetStore {
         return region;
     };
 
-    private initRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string): RegionStore => {
+    private initRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string, pointShape?: CARTA.PointAnnotationShape): RegionStore => {
         type CommonInputs = [BackendService, number, FrameStore, Point2D[], CARTA.RegionType, number, number, string];
         type StyleInputs = [string, number, number];
         const commonInputs: CommonInputs = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, rotation, regionName];
@@ -381,7 +379,7 @@ export class RegionSetStore {
                 return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
             case CARTA.RegionType.ANNPOINT: {
                 const region = new PointAnnotationStore(...commonInputs, ...annotationStyles);
-                region.initializeStyles({pointShape: this.pointShapeCache || this.preference.pointAnnotationShape, pointWidth: this.preference.pointAnnotationWidth});
+                region.initializeStyles({pointShape: pointShape ?? this.preference.pointAnnotationShape, pointWidth: this.preference.pointAnnotationWidth});
                 return region;
             }
             case CARTA.RegionType.ANNVECTOR:
