@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {type Point2D} from "models";
 import {type RegionStore} from "stores/Frame";
 
-import {doesLineSegmentIntersectRect, doRectsIntersect, getPathSegments, getRectCorners, getRotatedBoxPoints, isPointInPolygon, isPointInRect, type LineSegment2D, type Rect2D} from "../math2d/math2d";
+import {doesLineSegmentIntersectRect, doRectsIntersect, getPathSegments, getRectCorners, getRotatedBoxPoints, isPointInPolygon, isPointInRect, length2D, type LineSegment2D, type Rect2D, subtract2D} from "../math2d/math2d";
 
 export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.ANNPOINT) {
@@ -16,12 +16,39 @@ export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
 
     const rotation = (region.rotation * Math.PI) / 180.0;
     if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE) {
+        // Ellipse size stores semi-major in y and semi-minor in x.
         return getRotatedBoxPoints(region.center, region.size.y, region.size.x, rotation);
     }
 
     const halfWidth = region.size.x / 2;
     const halfHeight = region.size.y / 2;
     return getRotatedBoxPoints(region.center, halfWidth, halfHeight, rotation);
+}
+
+export function getInterpolatedPathAtDistance(origin: Point2D, points: Point2D[], targetDistance: number): Point2D[] {
+    const path = [origin];
+    let previousPoint = origin;
+    let previousDistance = 0;
+
+    for (const point of points) {
+        const distance = length2D(subtract2D(point, origin));
+
+        if (distance >= targetDistance) {
+            const segmentLength = distance - previousDistance;
+            const ratio = segmentLength > 0 ? (targetDistance - previousDistance) / segmentLength : 0;
+            path.push({
+                x: previousPoint.x + (point.x - previousPoint.x) * ratio,
+                y: previousPoint.y + (point.y - previousPoint.y) * ratio
+            });
+            return path;
+        }
+
+        path.push(point);
+        previousPoint = point;
+        previousDistance = distance;
+    }
+
+    return path;
 }
 
 export function getRegionSelectionSegments(region: RegionStore, points: Point2D[]): LineSegment2D[] {

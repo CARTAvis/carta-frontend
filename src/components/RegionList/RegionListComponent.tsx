@@ -426,6 +426,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         ev.stopPropagation();
 
         if (isArrowHorizontal) {
+            // Keep horizontal arrows local to the focused Region List instead of falling through to image-view region movement hotkeys.
             return;
         }
 

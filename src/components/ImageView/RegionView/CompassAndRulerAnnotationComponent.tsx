@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {pointDistance, subtract2D, transformPoint} from "utilities";
+import {getInterpolatedPathAtDistance, pointDistance, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -148,33 +148,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const targetStageLength = (region.length * imageRatio) / zoomLevel;
 
     const getCompassPointArray = (approxPoints: number[]) => {
-        const pointArray: number[] = [];
-        let previousPoint = originPoints;
-        let previousDistance = 0;
-
-        pointArray.push(originPoints.x - mousePoint.current.x, originPoints.y - mousePoint.current.y);
+        const canvasPoints: Point2D[] = [];
 
         for (let i = 0; i < approxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            const distance = pointDistance(point, originPoints);
-
-            if (distance >= targetStageLength) {
-                const segmentLength = distance - previousDistance;
-                const ratio = segmentLength > 0 ? (targetStageLength - previousDistance) / segmentLength : 0;
-                const interpolatedPoint = {
-                    x: previousPoint.x + (point.x - previousPoint.x) * ratio,
-                    y: previousPoint.y + (point.y - previousPoint.y) * ratio
-                };
-                pointArray.push(interpolatedPoint.x - mousePoint.current.x, interpolatedPoint.y - mousePoint.current.y);
-                break;
-            }
-
-            pointArray.push(point.x - mousePoint.current.x, point.y - mousePoint.current.y);
-            previousPoint = point;
-            previousDistance = distance;
+            canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current));
         }
 
-        return pointArray;
+        return getInterpolatedPathAtDistance(originPoints, canvasPoints, targetStageLength).flatMap(point => [point.x - mousePoint.current.x, point.y - mousePoint.current.y]);
     };
 
     if (!frame.validWcs) {

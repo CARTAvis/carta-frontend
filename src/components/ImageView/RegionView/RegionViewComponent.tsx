@@ -16,6 +16,7 @@ import {
     average2D,
     doSelectionRectAndRegionPointsIntersect,
     doSelectionRectAndRulerPathsIntersect,
+    getInterpolatedPathAtDistance,
     getRectFromPoints,
     getRegionIdsInRange,
     getRegionSelectionPoints,
@@ -297,10 +298,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 return;
         }
 
+        const isCreatingPolygonalRegion = this.creatingRegion.isPolygonalRegion;
+
         // Handle region completion
         if (
             this.creatingRegion.isValid &&
-            (!this.creatingRegion.isPolygonalRegion || this.creatingRegion.controlPoints.length > 2) &&
+            (!isCreatingPolygonalRegion || this.creatingRegion.controlPoints.length > 2) &&
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
@@ -309,7 +312,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
 
-        if (this.creatingRegion?.isPolygonalRegion) {
+        if (isCreatingPolygonalRegion) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
                 runInAction(() => {
@@ -825,27 +828,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         const getCompassEndpoint = (approxPoints: number[]): Point2D => {
-            let previousPoint = originPoint;
-            let previousDistance = 0;
+            const canvasPoints: Point2D[] = [];
 
             for (let i = 0; i < approxPoints.length; i += 2) {
-                const point = transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current);
-                const distance = length2D(subtract2D(point, originPoint));
-
-                if (distance >= targetStageLength) {
-                    const segmentLength = distance - previousDistance;
-                    const ratio = segmentLength > 0 ? (targetStageLength - previousDistance) / segmentLength : 0;
-                    return {
-                        x: previousPoint.x + (point.x - previousPoint.x) * ratio,
-                        y: previousPoint.y + (point.y - previousPoint.y) * ratio
-                    };
-                }
-
-                previousPoint = point;
-                previousDistance = distance;
+                canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current));
             }
 
-            return previousPoint;
+            const path = getInterpolatedPathAtDistance(originPoint, canvasPoints, targetStageLength);
+            return path[path.length - 1];
         };
 
         const wcsInfo = this.frame.wcsInfoForTransformation;
