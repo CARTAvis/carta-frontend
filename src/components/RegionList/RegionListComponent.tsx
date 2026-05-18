@@ -60,7 +60,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
-    private rowPivotIndex: number = -1;
+    private rowPivotRegionId: number | null = null;
     private shiftAnchorRegionId: number | null = null;
     private shiftDisplacement: number = 0;
     private shiftBaseSelection: Set<number> = new Set();
@@ -236,7 +236,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         if (!regionSet.selectedRegionIds.has(region.regionId)) {
             regionSet.selectSingleRegion(region);
-            this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
+            this.rowPivotRegionId = region.regionId;
         } else {
             regionSet.setFocusedRegion(region);
         }
@@ -343,7 +343,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             anchorIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? 0 : n - 1;
             this.shiftAnchorRegionId = list[anchorIndex].regionId;
             this.shiftBaseSelection = new Set(regionSet.selectedRegionIds);
-            this.rowPivotIndex = this.validRegions.findIndex(region => region.regionId === list[anchorIndex].regionId);
+            this.rowPivotRegionId = list[anchorIndex].regionId;
             displacement = direction;
         } else {
             displacement = this.shiftDisplacement + direction;
@@ -379,10 +379,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         regionSet.selectSingleRegion(region);
-        this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
-        if (this.rowPivotIndex >= 0) {
-            this.scrollToSelected(this.rowPivotIndex);
-        }
+        this.rowPivotRegionId = region.regionId;
+        this.scrollToRegionId(region.regionId);
     };
 
     // When the Region List has focus, arrow keys navigate selection instead of moving regions
@@ -454,15 +452,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
+        const pivotIndex = this.rowPivotRegionId !== null ? this.validRegions.findIndex(r => r.regionId === this.rowPivotRegionId) : -1;
+
         if (isCtrlPressed && hasSelection) {
             regionSet.toggleRegionSelection(region);
-        } else if (isShiftPressed && hasSelection && this.rowPivotIndex >= 0) {
-            const start = Math.min(this.rowPivotIndex, index);
-            const end = Math.max(this.rowPivotIndex, index);
+        } else if (isShiftPressed && hasSelection && pivotIndex >= 0) {
+            const start = Math.min(pivotIndex, index);
+            const end = Math.max(pivotIndex, index);
             regionSet.setSelectionByIds(getRegionIdsInRange(this.validRegions, start, end), region.regionId);
         } else {
             regionSet.selectSingleRegion(region);
-            this.rowPivotIndex = index;
+            this.rowPivotRegionId = region.regionId;
         }
     };
 
