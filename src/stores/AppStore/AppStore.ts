@@ -3165,7 +3165,7 @@ export class AppStore {
 
         const regionSet = frame.regionSet;
         if (regionSet.locked) {
-            return true;
+            return false;
         }
 
         if (regionSet.selectedRegionIds?.size > 0) {
@@ -3173,15 +3173,17 @@ export class AppStore {
             if (toDelete.length > 0) {
                 toDelete.forEach(r => this.deleteRegion(r));
                 regionSet.clearSelection();
+                return true;
             }
-            return true;
+            return false;
         }
 
         if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
             if (!regionSet.focusedRegion.locked) {
                 this.deleteRegion(regionSet.focusedRegion);
+                return true;
             }
-            return true;
+            return false;
         }
 
         return false;

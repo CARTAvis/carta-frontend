@@ -366,8 +366,8 @@ export class HotkeyService extends React.Component<{}> {
         // Only show confirmation when Region List has focus; otherwise delete immediately
         const activeEl = (document?.activeElement as Element) || null;
         const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
-        const isSelectedRegionDeletionHandled = appStore.deleteSelectedRegions();
-        if (!isRegionListFocused || isSelectedRegionDeletionHandled) {
+        const isRegionDeleteHotkeyHandled = HotkeyService.TryHandleRegionDeleteHotkey();
+        if (!isRegionListFocused || isRegionDeleteHotkeyHandled) {
             return;
         }
 
@@ -379,6 +379,31 @@ export class HotkeyService extends React.Component<{}> {
         if (confirmed) {
             appStore.deleteAllRegions();
         }
+    };
+
+    static TryHandleRegionDeleteHotkey = (): boolean => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const regionSet = frame?.regionSet;
+        if (!frame || !regionSet) {
+            return false;
+        }
+
+        if (regionSet.locked) {
+            return true;
+        }
+
+        if (regionSet.selectedRegionIds?.size > 0) {
+            appStore.deleteSelectedRegions();
+            return true;
+        }
+
+        if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+            appStore.deleteSelectedRegions();
+            return true;
+        }
+
+        return false;
     };
 
     static RegionHiddenHotkeys() {
