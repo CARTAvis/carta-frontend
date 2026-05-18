@@ -213,7 +213,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionListDoubleClick = (region?: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if (!regionSet) {
+        if (!regionSet || region?.regionId === CURSOR_REGION_ID) {
             return;
         }
 
@@ -227,6 +227,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionContextMenu = (ev: React.MouseEvent<HTMLDivElement>, region: RegionStore) => {
         ev.preventDefault();
         ev.stopPropagation();
+
+        if (region.regionId === CURSOR_REGION_ID) {
+            return;
+        }
 
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
