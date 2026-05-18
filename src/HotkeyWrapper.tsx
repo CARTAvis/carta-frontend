@@ -204,7 +204,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number) => {
+    static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, scaleWithZoom: boolean = true) => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const region = frame?.regionSet.focusedRegion;
@@ -212,7 +212,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
+        const zoomMultiplier = scaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
         const canEditSelectedPoint = frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
@@ -357,10 +357,10 @@ export class HotkeyService extends React.Component<{}> {
         const normalMoveMultiplier = 10;
         const coarseMoveMultiplier = 100;
         const items = [
-            {combo: `${modString}up`, label: "Move selected region up (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, fineMoveMultiplier)},
-            {combo: `${modString}down`, label: "Move selected region down (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, fineMoveMultiplier)},
-            {combo: `${modString}left`, label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, fineMoveMultiplier)},
-            {combo: `${modString}right`, label: "Move selected region right (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0, fineMoveMultiplier)},
+            {combo: `${modString}up`, label: "Move selected region up (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, fineMoveMultiplier, false)},
+            {combo: `${modString}down`, label: "Move selected region down (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, fineMoveMultiplier, false)},
+            {combo: `${modString}left`, label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, fineMoveMultiplier, false)},
+            {combo: `${modString}right`, label: "Move selected region right (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0, fineMoveMultiplier, false)},
             {combo: "up", label: "Move selected region up", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, normalMoveMultiplier)},
             {combo: "down", label: "Move selected region down", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, normalMoveMultiplier)},
             {combo: "left", label: "Move selected region left", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, normalMoveMultiplier)},
