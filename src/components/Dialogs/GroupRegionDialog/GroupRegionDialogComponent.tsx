@@ -12,8 +12,6 @@ import {type CompassAnnotationStore, type PointAnnotationStore, type RegionStore
 
 import {AppearanceForm, type AppearanceFormHandlers} from "../RegionDialog/AppearanceForm/AppearanceForm";
 
-import "./GroupRegionDialogComponent.scss";
-
 const FONT_REGION_TYPES: ReadonlyArray<CARTA.RegionType> = [CARTA.RegionType.ANNTEXT, CARTA.RegionType.ANNCOMPASS, CARTA.RegionType.ANNRULER];
 
 @observer
