@@ -364,7 +364,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const hasDeletableRegions = regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID);
+        const hasDeletableRegions = !regionSet.locked && regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID && !r.locked);
         if (!hasDeletableRegions) return;
 
         // No explicit selection; confirm deleting all regions

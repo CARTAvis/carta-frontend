@@ -105,6 +105,7 @@ export class GroupRegionDialogComponent extends React.Component {
         const selectedRegionsVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
+        const deleteDisabled = !!activeFrame?.regionSet.locked || selectedRegions.every(region => region.locked);
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -156,7 +157,7 @@ export class GroupRegionDialogComponent extends React.Component {
                                 <Tooltip content="Export selected regions">
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
                                 </Tooltip>
-                                <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />
+                                <AnchorButton intent={Intent.DANGER} icon="trash" text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />
                             </>
                         )}
                     </div>

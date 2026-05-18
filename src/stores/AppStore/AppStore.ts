@@ -1392,9 +1392,14 @@ export class AppStore {
      * Deletes all regions including annotations.
      */
     @action deleteAllRegions = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID) {
-                this.deleteRegion(x);
+        const regionSet = this.activeFrame?.regionSet;
+        if (!regionSet || regionSet.locked) {
+            return;
+        }
+
+        regionSet.regionMap.forEach(region => {
+            if (region.regionId !== CURSOR_REGION_ID && !region.locked) {
+                this.deleteRegion(region);
             }
         });
         AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
@@ -1404,9 +1409,14 @@ export class AppStore {
      * Deletes all annotations.
      */
     @action deleteAllAnnotations = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID && x.isAnnotation) {
-                this.deleteRegion(x);
+        const regionSet = this.activeFrame?.regionSet;
+        if (!regionSet || regionSet.locked) {
+            return;
+        }
+
+        regionSet.regionMap.forEach(region => {
+            if (region.regionId !== CURSOR_REGION_ID && region.isAnnotation && !region.locked) {
+                this.deleteRegion(region);
             }
         });
     };
@@ -1415,9 +1425,14 @@ export class AppStore {
      * Deletes all regular regions.
      */
     @action deleteAllRegularRegions = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID && !x.isAnnotation) {
-                this.deleteRegion(x);
+        const regionSet = this.activeFrame?.regionSet;
+        if (!regionSet || regionSet.locked) {
+            return;
+        }
+
+        regionSet.regionMap.forEach(region => {
+            if (region.regionId !== CURSOR_REGION_ID && !region.isAnnotation && !region.locked) {
+                this.deleteRegion(region);
             }
         });
     };
@@ -3149,6 +3164,9 @@ export class AppStore {
         }
 
         const regionSet = frame.regionSet;
+        if (regionSet.locked) {
+            return true;
+        }
 
         if (regionSet.selectedRegionIds?.size > 0) {
             const toDelete = frame.regionSet.regions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);

@@ -252,6 +252,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
+        const deleteDisabled = regionSet.locked || (isMultiSelected ? selectedRegions.every(selectedRegion => selectedRegion.locked) : region.locked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -296,12 +297,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         icon="trash"
                         intent="danger"
                         text="Delete"
+                        disabled={deleteDisabled}
                         onClick={() => {
-                            if (isMultiSelected) {
-                                appStore.deleteSelectedRegions();
-                            } else {
-                                appStore.deleteRegion(region);
-                            }
+                            appStore.deleteSelectedRegions();
                         }}
                     />
                 </Menu>
@@ -440,6 +438,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (!frame) {
             return;
         }
+        const hasDeletableRegions = !frame.regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+        if (!hasDeletableRegions) {
+            return;
+        }
 
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
         if (confirmed) {
@@ -568,6 +570,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const selectedRegion = frame.regionSet.focusedRegion;
+        const hasDeletableRegions = !frame.regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
@@ -575,7 +578,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
-                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
+                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={!hasDeletableRegions} />
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />

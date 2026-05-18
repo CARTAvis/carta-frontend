@@ -46,9 +46,7 @@ export class RegionDialogComponent extends React.Component {
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideDialog(DialogId.Region);
-        if (appStore.activeFrame && appStore.activeFrame.regionSet.focusedRegion) {
-            appStore.deleteRegion(appStore.activeFrame.regionSet.focusedRegion);
-        }
+        appStore.deleteSelectedRegions();
     };
 
     private handleFocusClicked = () => {
@@ -147,6 +145,7 @@ export class RegionDialogComponent extends React.Component {
         const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionsOpacity.Invisible);
         const showLockedIcon = lockDisabled || !!region?.locked;
         const regionVisible = !!region && region.opacity !== RegionsOpacity.Invisible;
+        const deleteDisabled = !!region && (!!appStore.activeFrame?.regionSet.locked || region.locked);
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
                 <Tooltip content={showLockedIcon ? "Unlock region" : "Lock region"}>
@@ -181,7 +180,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {canEditRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} style={{userSelect: "none"}} />}
+                        {canEditRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>
