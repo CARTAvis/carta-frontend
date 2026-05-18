@@ -107,7 +107,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         const commonControls = AppearanceForm.getControlsForRegion(firstRegion);
         for (const region of remainingRegions) {
             const controls = AppearanceForm.getControlsForRegion(region);
-            for (const control of commonControls) {
+            for (const control of Array.from(commonControls)) {
                 if (!controls.has(control)) {
                     commonControls.delete(control);
                 }
