@@ -33,11 +33,6 @@ export class HotkeyService extends React.Component<{}> {
 
     static NextChannel = () => {
         const appStore = AppStore.Instance;
-        const region = appStore.activeFrame?.regionSet.focusedRegion;
-        if (region && region.regionId !== CURSOR_REGION_ID) {
-            return;
-        }
-
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(1, 0);
         }
@@ -45,10 +40,6 @@ export class HotkeyService extends React.Component<{}> {
 
     static PrevChannel = () => {
         const appStore = AppStore.Instance;
-        const region = appStore.activeFrame?.regionSet.focusedRegion;
-        if (region && region.regionId !== CURSOR_REGION_ID) {
-            return;
-        }
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(-1, 0);
         }
@@ -246,6 +237,18 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    static MoveSelectedRegionOrChangeChannel = (deltaX: number, deltaY: number, channelDelta: number) => {
+        const appStore = AppStore.Instance;
+        const region = appStore.activeFrame?.regionSet.focusedRegion;
+        if (region && region.regionId !== CURSOR_REGION_ID) {
+            HotkeyService.MoveSelectedRegion(deltaX, deltaY, 1, false);
+        } else if (channelDelta > 0) {
+            HotkeyService.NextChannel();
+        } else {
+            HotkeyService.PrevChannel();
+        }
+    };
+
     // For display in custom hotkeys dialog
     static NavigationDisplayHotkeys() {
         const base = {group: "Navigation", global: true};
@@ -386,8 +389,7 @@ export class HotkeyService extends React.Component<{}> {
         const normalMoveMultiplier = 10;
         const coarseMoveMultiplier = 100;
         const items = [
-            {combo: `${modString}up`, label: "Move selected region up (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, fineMoveMultiplier, false)},
-            {combo: `${modString}down`, label: "Move selected region down (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, fineMoveMultiplier, false)},
+            // Fine up/down movement is handled by MoveSelectedRegionOrChangeChannel because those combos also change channels.
             {combo: `${modString}left`, label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, fineMoveMultiplier, false)},
             {combo: `${modString}right`, label: "Move selected region right (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0, fineMoveMultiplier, false)},
             {combo: "up", label: "Move selected region up", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, normalMoveMultiplier)},
@@ -409,8 +411,8 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}[`, label: "Previous image", onKeyDown: appStore.prevImage},
-            {combo: `${modString}up`, label: "Next channel", onKeyDown: HotkeyService.NextChannel},
-            {combo: `${modString}down`, label: "Previous channel", onKeyDown: HotkeyService.PrevChannel},
+            {combo: `${modString}up`, label: "Next channel", onKeyDown: () => HotkeyService.MoveSelectedRegionOrChangeChannel(0, 1, 1)},
+            {combo: `${modString}down`, label: "Previous channel", onKeyDown: () => HotkeyService.MoveSelectedRegionOrChangeChannel(0, -1, -1)},
             {combo: `${modString}shift + up`, label: "Next Stokes cube", onKeyDown: HotkeyService.NextStokes},
             {combo: `${modString}shift + down`, label: "Previous Stokes cube", onKeyDown: HotkeyService.PrevStokes}
         ];
