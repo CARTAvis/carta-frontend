@@ -666,8 +666,5 @@ export class RegionSetStore {
 
     @action setLocked(locked?: boolean) {
         this.locked = locked === undefined ? !this.locked : locked;
-        if (this.locked) {
-            this.clearSelection();
-        }
     }
 }
