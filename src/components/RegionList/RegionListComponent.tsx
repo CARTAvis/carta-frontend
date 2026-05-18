@@ -377,6 +377,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         this.scrollToRegionId(region.regionId);
     };
 
+    private handleSelectAllKeyboard = (regionSet: FrameStore["regionSet"]) => {
+        const list = this.getKeyboardNavigationList(false);
+        if (list.length === 0) {
+            return;
+        }
+
+        const focusedRegionId = regionSet.focusedRegion?.regionId;
+        const focusRegionId = focusedRegionId && list.some(region => region.regionId === focusedRegionId) ? focusedRegionId : list[list.length - 1].regionId;
+        regionSet.setSelectionByIds(
+            list.map(region => region.regionId),
+            focusRegionId
+        );
+        this.rowPivotRegionId = focusRegionId;
+        this.scrollToRegionId(focusRegionId);
+    };
+
     // When the Region List has focus, arrow keys navigate selection instead of moving regions
     @action private handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
         const appStore = AppStore.Instance;
@@ -386,6 +402,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const key = ev.key;
+        if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && key.toLowerCase() === "a") {
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.handleSelectAllKeyboard(regionSet);
+            return;
+        }
+
         if (key === "Enter") {
             ev.preventDefault();
             ev.stopPropagation();

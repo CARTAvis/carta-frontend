@@ -298,8 +298,11 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static RegionListDisplayHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
         const base = {group: "Regions (Region List)", global: true};
         const items = [
+            {combo: `${modString}a`, label: "Select all regions"},
             {combo: "up", label: "Select previous region"},
             {combo: "down", label: "Select next region"},
             {combo: "shift + up", label: "Extend selection upward"},
