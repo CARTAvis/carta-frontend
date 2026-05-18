@@ -445,16 +445,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isCtrlPressed = event.ctrlKey || event.metaKey;
         const isShiftPressed = event.shiftKey;
         const regionSet = frame.regionSet;
-        const current = new Set(regionSet.selectedRegionIds);
+        const hasSelection = regionSet.selectedRegionIds.size > 0;
 
         if (event.detail > 1 && !isCtrlPressed && !isShiftPressed) {
             this.handleRegionListDoubleClick(region);
             return;
         }
 
-        if (isCtrlPressed && current.size > 0) {
+        if (isCtrlPressed && hasSelection) {
             regionSet.toggleRegionSelection(region);
-        } else if (isShiftPressed && current.size > 0 && this.rowPivotIndex >= 0) {
+        } else if (isShiftPressed && hasSelection && this.rowPivotIndex >= 0) {
             const start = Math.min(this.rowPivotIndex, index);
             const end = Math.max(this.rowPivotIndex, index);
             regionSet.setSelectionByIds(getRegionIdsInRange(this.validRegions, start, end), region.regionId);
