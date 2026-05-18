@@ -252,7 +252,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionsOpacity.Invisible;
         const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
-        const deleteDisabled = regionSet.locked || (isMultiSelected ? selectedRegions.every(selectedRegion => selectedRegion.locked) : region.locked);
+        const deleteDisabled = regionSet.locked || selectedRegions.every(selectedRegion => selectedRegion.locked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -264,11 +264,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         text={showLockedIcon ? "Unlock" : "Lock"}
                         disabled={lockDisabled}
                         onClick={() => {
-                            if (isMultiSelected) {
-                                regionSet.toggleSelectedRegionsLocked();
-                            } else {
-                                region.toggleLock();
-                            }
+                            regionSet.toggleSelectedRegionsLocked();
                         }}
                     />
                     <MenuItem
@@ -283,11 +279,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         icon="cloud-upload"
                         text={isMultiSelected ? "Export regions" : "Export region"}
                         onClick={() => {
-                            if (isMultiSelected) {
-                                FileBrowserStore.Instance.showExportSelectedRegions();
-                            } else {
-                                FileBrowserStore.Instance.showExportRegions(region.regionId);
-                            }
+                            FileBrowserStore.Instance.showExportSelectedRegions();
                         }}
                     />
                     <MenuDivider />
