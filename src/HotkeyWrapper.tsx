@@ -226,7 +226,7 @@ export class HotkeyService extends React.Component<{}> {
         const zoomMultiplier = scaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
-        const canEditSelectedPoint = frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
+        const canEditSelectedPoint = !region.locked && frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
 
         if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
             region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
