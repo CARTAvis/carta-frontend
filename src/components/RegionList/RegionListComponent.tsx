@@ -446,6 +446,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isShiftPressed = event.shiftKey;
         const regionSet = frame.regionSet;
         const hasSelection = regionSet.selectedRegionIds.size > 0;
+        const isClickedRegionInMultiSelection = regionSet.isRegionInMultiSelection(region);
 
         if (event.detail > 1 && !isCtrlPressed && !isShiftPressed) {
             this.handleRegionListDoubleClick(region);
@@ -460,6 +461,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const start = Math.min(pivotIndex, index);
             const end = Math.max(pivotIndex, index);
             regionSet.setSelectionByIds(getRegionIdsInRange(this.validRegions, start, end), region.regionId);
+        } else if (isClickedRegionInMultiSelection) {
+            regionSet.setFocusedRegion(region);
+            this.rowPivotRegionId = region.regionId;
         } else {
             regionSet.selectSingleRegion(region);
             this.rowPivotRegionId = region.regionId;
