@@ -495,7 +495,7 @@ export class RegionSetStore {
         this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
 
-    private static NextOpacity(current: RegionsOpacity): RegionsOpacity {
+    public static NextOpacity(current: RegionsOpacity): RegionsOpacity {
         switch (current) {
             case RegionsOpacity.Visible:
                 return RegionsOpacity.SemiTransparent;

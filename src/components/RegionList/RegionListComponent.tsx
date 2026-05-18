@@ -11,7 +11,7 @@ import {ResizeDetector} from "components/Shared";
 import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
-import {CURSOR_REGION_ID, type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {CURSOR_REGION_ID, type FrameStore, RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, getRegionIdsInRange, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
@@ -154,12 +154,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionHideClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if (regionSet) {
-            if (!regionSet.isRegionInMultiSelection(region)) {
-                regionSet.selectSingleRegion(region);
-                this.rowPivotIndex = this.validRegions.findIndex(validRegion => validRegion.regionId === region.regionId);
-            }
+        if (regionSet?.isRegionInMultiSelection(region)) {
             regionSet.toggleSelectedRegionsVisibility();
+        } else {
+            region.setOpacity(RegionSetStore.NextOpacity(region.opacity));
         }
         ev.stopPropagation();
     };
