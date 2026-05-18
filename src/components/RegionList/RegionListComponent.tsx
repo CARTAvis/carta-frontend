@@ -396,6 +396,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const key = ev.key;
+        if (key === "Enter") {
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.handleRegionListDoubleClick(regionSet.focusedRegion ?? undefined);
+            return;
+        }
+
         const isArrowVertical = key === "ArrowUp" || key === "ArrowDown";
         const isArrowHorizontal = key === "ArrowLeft" || key === "ArrowRight";
         if (!isArrowVertical && !isArrowHorizontal) {

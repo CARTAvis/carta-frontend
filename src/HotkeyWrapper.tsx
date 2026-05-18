@@ -304,6 +304,10 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "down", label: "Select next region"},
             {combo: "shift + up", label: "Extend selection upward"},
             {combo: "shift + down", label: "Extend selection downward"},
+            {combo: "tab", label: "Select next region in selection"},
+            {combo: "shift + tab", label: "Select previous region in selection"},
+            {combo: "esc", label: "Deselect region(s)"},
+            {combo: "enter", label: "Region properties"},
             {combo: "right-click", label: "Region context menu"}
         ];
         return items.map(item => ({...base, ...item}));
@@ -329,10 +333,18 @@ export class HotkeyService extends React.Component<{}> {
 
     // Only handle Tab/Shift+Tab when there is an active non-cursor region
     static HandleTab(e: KeyboardEvent, action: () => void) {
-        const region = AppStore.Instance.activeFrame?.regionSet.focusedRegion;
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        const region = regionSet?.focusedRegion;
         if (!region || region.regionId === CURSOR_REGION_ID) {
             return;
         }
+
+        const activeEl = (document?.activeElement as Element) || null;
+        const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
+        if (isRegionListFocused && regionSet.selectedRegionCount <= 1) {
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
         action();
