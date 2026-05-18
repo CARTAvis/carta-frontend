@@ -61,6 +61,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     private rowPivotIndex: number = -1;
+    private shiftAnchorRegionId: number | null = null;
+    private shiftDisplacement: number = 0;
+    private shiftBaseSelection: Set<number> = new Set();
 
     private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
@@ -315,27 +318,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return includeCursor ? this.validRegions : this.validRegions.filter(region => region.regionId !== CURSOR_REGION_ID);
     };
 
-    private getPivotIndex = (list: RegionStore[], focusedIndex: number, direction: number): number => {
-        let pivotIndex = -1;
-
-        if (this.rowPivotIndex >= 0) {
-            const pivotRegion = this.validRegions[this.rowPivotIndex];
-            if (pivotRegion) {
-                pivotIndex = list.findIndex(region => region.regionId === pivotRegion.regionId);
-            }
-        }
-
-        if (pivotIndex >= 0 && pivotIndex < list.length) {
-            return pivotIndex;
-        }
-
-        if (focusedIndex >= 0) {
-            return focusedIndex;
-        }
-
-        return direction > 0 ? 0 : list.length - 1;
-    };
-
     private getKeyboardStartIndex = (focusedIndex: number, direction: number, listLength: number): number => {
         if (focusedIndex >= 0) {
             return focusedIndex;
@@ -344,26 +326,48 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return direction > 0 ? -1 : listLength;
     };
 
-    private handleRangeKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number, isArrowUp: boolean) => {
-        if ((isArrowUp && focusedIndex <= 0) || (!isArrowUp && focusedIndex >= list.length - 1)) {
-            if (focusedIndex >= 0) {
-                this.scrollToRegionId(list[focusedIndex]?.regionId);
-            }
+    private handleRangeKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number) => {
+        const n = list.length;
+        if (n === 0) {
             return;
         }
+        const mod = (value: number) => ((value % n) + n) % n;
 
-        const pivotIndex = this.getPivotIndex(list, focusedIndex, direction);
-        this.rowPivotIndex = this.validRegions.findIndex(region => region.regionId === list[pivotIndex]?.regionId);
+        let anchorIndex = this.shiftAnchorRegionId !== null ? list.findIndex(region => region.regionId === this.shiftAnchorRegionId) : -1;
+        if (anchorIndex >= 0 && focusedIndex !== mod(anchorIndex + this.shiftDisplacement)) {
+            anchorIndex = -1;
+        }
 
-        const startIndex = this.getKeyboardStartIndex(focusedIndex, direction, list.length);
-        const nextIndex = clamp(startIndex + direction, 0, list.length - 1);
-        const rangeStart = Math.min(pivotIndex, nextIndex);
-        const rangeEnd = Math.max(pivotIndex, nextIndex);
-        const selectedIds = getRegionIdsInRange(list, rangeStart, rangeEnd);
-        const nextRegionId = list[nextIndex]?.regionId;
+        let displacement: number;
+        if (anchorIndex < 0) {
+            anchorIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? 0 : n - 1;
+            this.shiftAnchorRegionId = list[anchorIndex].regionId;
+            this.shiftBaseSelection = new Set(regionSet.selectedRegionIds);
+            this.rowPivotIndex = this.validRegions.findIndex(region => region.regionId === list[anchorIndex].regionId);
+            displacement = direction;
+        } else {
+            displacement = this.shiftDisplacement + direction;
+        }
 
-        regionSet.setSelectionByIds(selectedIds, nextRegionId);
-        this.scrollToRegionId(nextRegionId);
+        const limit = n - 1;
+        if (displacement > limit) {
+            displacement = limit;
+        }
+        if (displacement < -limit) {
+            displacement = -limit;
+        }
+        this.shiftDisplacement = displacement;
+
+        const selectedIds = new Set<number>(this.shiftBaseSelection);
+        const sign = displacement >= 0 ? 1 : -1;
+        const steps = Math.abs(displacement);
+        for (let i = 0; i <= steps; i++) {
+            selectedIds.add(list[mod(anchorIndex + sign * i)].regionId);
+        }
+        const focusRegionId = list[mod(anchorIndex + displacement)].regionId;
+
+        regionSet.setSelectionByIds(Array.from(selectedIds), focusRegionId);
+        this.scrollToRegionId(focusRegionId);
     };
 
     private handleSingleKeyboardSelection = (regionSet: FrameStore["regionSet"], list: RegionStore[], focusedIndex: number, direction: number, shouldWrap: boolean) => {
@@ -415,7 +419,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const focusedIndex = list.findIndex(region => region.regionId === focusedId);
 
         if (ev.shiftKey) {
-            this.handleRangeKeyboardSelection(regionSet, list, focusedIndex, direction, isArrowUp);
+            this.handleRangeKeyboardSelection(regionSet, list, focusedIndex, direction);
         } else {
             this.handleSingleKeyboardSelection(regionSet, list, focusedIndex, direction, noModifier);
         }
