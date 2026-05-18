@@ -90,12 +90,12 @@ export class RegionSetStore {
         }
         this.selectedRegionIds = newSet;
 
-        if (ids.length === 0) {
+        const selectedIds = Array.from(newSet);
+        if (selectedIds.length === 0) {
             this.focusedRegion = this.cursorRegion;
             return;
         }
 
-        const selectedIds = Array.from(newSet);
         const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
         if (focusRegion) {
             this.setFocusedRegion(focusRegion);
