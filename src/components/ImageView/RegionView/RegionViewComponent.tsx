@@ -1060,7 +1060,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
             const start = Math.min(this.pivotIndex, index);
             const end = Math.max(this.pivotIndex, index);
             regionSet.setSelectionByIds(getRegionIdsInRange(regions, start, end), region.regionId);
-        } else if (!regionSet.selectedRegionIds.has(region.regionId) || !regionSet.selectedRegionIds.size) {
+        } else if (!regionSet.selectedRegionIds.has(region.regionId)) {
             regionSet.selectSingleRegion(region);
             this.pivotIndex = index;
         } else {
