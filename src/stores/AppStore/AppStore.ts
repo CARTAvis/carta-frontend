@@ -2207,7 +2207,7 @@ export class AppStore {
             profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it is the cursor data
-            if (spatialProfileData.regionId === 0) {
+            if (spatialProfileData.regionId === CURSOR_REGION_ID) {
                 this.getFrame(spatialProfileData.fileId ?? -1)?.setCursorValue({x: spatialProfileData.x ?? 0, y: spatialProfileData.y ?? 0}, spatialProfileData.channel ?? 0, spatialProfileData.value ?? 0);
             }
         }
@@ -2880,7 +2880,7 @@ export class AppStore {
                 workspaceFile.regionsSet.regions = [];
                 for (const region of frame.regionSet.regions) {
                     // Skip cursor region
-                    if (region.regionId === 0) {
+                    if (region.regionId === CURSOR_REGION_ID) {
                         continue;
                     }
                     workspaceFile.regionsSet.regions.push({
@@ -3136,7 +3136,7 @@ export class AppStore {
     }
 
     @computed get selectedRegion(): RegionStore | null {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.focusedRegion && this.activeFrame.regionSet.focusedRegion.regionId !== 0) {
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.focusedRegion && this.activeFrame.regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
             return this.activeFrame.regionSet.focusedRegion;
         }
         return null;
