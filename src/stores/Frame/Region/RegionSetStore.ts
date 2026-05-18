@@ -57,10 +57,10 @@ export class RegionSetStore {
 
     @computed get selectedRegionsVisibility(): RegionsOpacity {
         const selectedRegions = this.selectedRegionsList;
-        if (!selectedRegions.length || selectedRegions.every(region => !region.visible || region.opacity === RegionsOpacity.Invisible)) {
+        if (!selectedRegions.length || selectedRegions.every(region => region.opacity === RegionsOpacity.Invisible)) {
             return RegionsOpacity.Invisible;
         }
-        if (selectedRegions.every(region => region.visible && region.opacity === RegionsOpacity.SemiTransparent)) {
+        if (selectedRegions.every(region => region.opacity === RegionsOpacity.SemiTransparent)) {
             return RegionsOpacity.SemiTransparent;
         }
         return RegionsOpacity.Visible;
