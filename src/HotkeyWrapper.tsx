@@ -120,6 +120,17 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    static ShowAllRegions = () => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        regionSet.setOpacity(RegionsOpacity.Visible);
+        regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
+        regionSet.setLocked(false);
+    };
+
     static UnlockAllRegions = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
@@ -250,12 +261,16 @@ export class HotkeyService extends React.Component<{}> {
     static RegionDisplayHotkeys() {
         const base = {group: "Regions", global: true};
         const items = [
+            {combo: "click", label: "Select region/point"},
+            {combo: "mod + click", label: "Toggle region selection"},
+            {combo: "shift + click", label: "Select region range"},
             {combo: "l", label: "Toggle selected region(s) lock"},
-            {combo: "h", label: "Toggle selected region(s) visibility"},
             {combo: "shift + l", label: "Unlock all regions"},
+            {combo: "h", label: "Toggle selected region(s) visibility"},
+            {combo: "shift + h", label: "Show all regions"},
+            {combo: "double-click", label: "Region properties"},
             {combo: "delete", label: "Delete selected region(s)"},
-            {combo: "backspace", label: "Delete selected region(s)"},
-            {combo: "double-click", label: "Region properties"}
+            {combo: "backspace", label: "Delete selected region(s)"}
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -285,9 +300,6 @@ export class HotkeyService extends React.Component<{}> {
     static RegionListDisplayHotkeys() {
         const base = {group: "Regions (Region List)", global: true};
         const items = [
-            {combo: "click", label: "Select region"},
-            {combo: "mod + click", label: "Toggle region selection"},
-            {combo: "shift + click", label: "Select region range"},
             {combo: "up", label: "Select previous region"},
             {combo: "down", label: "Select next region"},
             {combo: "shift + up", label: "Extend selection upward"},
@@ -303,6 +315,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
             {combo: "l", label: "Toggle selected region(s) lock", onKeyDown: HotkeyService.ToggleRegionLock},
             {combo: "h", label: "Toggle selected region(s) visibility", onKeyDown: HotkeyService.ToggleRegionVisibility},
+            {combo: "shift + h", label: "Show all regions", onKeyDown: HotkeyService.ShowAllRegions},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
             {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
             {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
