@@ -13,41 +13,50 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./AppearanceForm.scss";
 
-export interface AppearanceFormHandlers {
-    setColor?: (hex: string) => void;
-    setLineWidth?: (value: number) => void;
-    setDashLength?: (value: number) => void;
-    setPointShape?: (shape: CARTA.PointAnnotationShape) => void;
-    setPointWidth?: (value: number) => void;
-    setFontSize?: (value: number) => void;
-    setFont?: (value: Font) => void;
-    setFontStyle?: (value: FontStyle) => void;
-    setVectorPointerLength?: (value: number) => void;
-    setVectorPointerWidth?: (value: number) => void;
-    setCompassNorthTextOffsetX?: (value: number) => void;
-    setCompassNorthTextOffsetY?: (value: number) => void;
-    setCompassEastTextOffsetX?: (value: number) => void;
-    setCompassEastTextOffsetY?: (value: number) => void;
-    setCompassArrowheads?: (selection: "north" | "east" | "both") => void;
-    setCompassPointerLength?: (value: number) => void;
-    setCompassPointerWidth?: (value: number) => void;
-    setRulerDecimals?: (value: number) => void;
-    setRulerAuxiliaryLineVisible?: (value: boolean) => void;
-    setRulerAuxiliaryLineDashLength?: (value: number) => void;
-    setRulerTextOffsetX?: (value: number) => void;
-    setRulerTextOffsetY?: (value: number) => void;
-    setRulerAuxiliaryTextVisible?: (value: boolean) => void;
-    setRulerXTextOffsetX?: (value: number) => void;
-    setRulerXTextOffsetY?: (value: number) => void;
-    setRulerYTextOffsetX?: (value: number) => void;
-    setRulerYTextOffsetY?: (value: number) => void;
-    setTextAlignment?: (value: CARTA.TextAnnotationPosition) => void;
+export enum AppearanceField {
+    Color = "color",
+    LineWidth = "lineWidth",
+    DashLength = "dashLength",
+    PointShape = "pointShape",
+    PointWidth = "pointWidth",
+    FontSize = "fontSize",
+    Font = "font",
+    FontStyle = "fontStyle",
+    VectorPointerLength = "vectorPointerLength",
+    VectorPointerWidth = "vectorPointerWidth",
+    CompassNorthTextOffsetX = "compassNorthTextOffsetX",
+    CompassNorthTextOffsetY = "compassNorthTextOffsetY",
+    CompassEastTextOffsetX = "compassEastTextOffsetX",
+    CompassEastTextOffsetY = "compassEastTextOffsetY",
+    CompassArrowheads = "compassArrowheads",
+    CompassPointerLength = "compassPointerLength",
+    CompassPointerWidth = "compassPointerWidth",
+    RulerDecimals = "rulerDecimals",
+    RulerAuxiliaryLineVisible = "rulerAuxiliaryLineVisible",
+    RulerAuxiliaryLineDashLength = "rulerAuxiliaryLineDashLength",
+    RulerTextOffsetX = "rulerTextOffsetX",
+    RulerTextOffsetY = "rulerTextOffsetY",
+    RulerAuxiliaryTextVisible = "rulerAuxiliaryTextVisible",
+    RulerXTextOffsetX = "rulerXTextOffsetX",
+    RulerXTextOffsetY = "rulerXTextOffsetY",
+    RulerYTextOffsetX = "rulerYTextOffsetX",
+    RulerYTextOffsetY = "rulerYTextOffsetY",
+    TextAlignment = "textAlignment"
+}
+
+export type CompassArrowheadSelection = "north" | "east" | "both";
+export type AppearanceValue = string | number | boolean | Font | FontStyle | CARTA.PointAnnotationShape | CARTA.TextAnnotationPosition | CompassArrowheadSelection;
+
+export interface AppearanceChange {
+    control: AppearanceControl;
+    field: AppearanceField;
+    value: AppearanceValue;
 }
 
 interface AppearanceFormProps {
     region: RegionStore;
     darkTheme: boolean;
-    handlers?: AppearanceFormHandlers;
+    onChange?: (change: AppearanceChange) => void;
     visibleControls?: Set<AppearanceControl>;
 }
 
@@ -116,9 +125,9 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         return commonControls;
     }
 
-    private applyOrSet = <T,>(handler: ((value: T) => void) | undefined, value: T, fallback: (value: T) => void) => {
-        if (handler) {
-            handler(value);
+    private applyChange = <T extends AppearanceValue>(control: AppearanceControl, field: AppearanceField, value: T, fallback: (value: T) => void) => {
+        if (this.props.onChange) {
+            this.props.onChange({control, field, value});
         } else {
             fallback(value);
         }
@@ -127,48 +136,42 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
     private handleLineWidthChange = _.throttle((value: number) => {
         if (this.props.region) {
             const clampedValue = Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value));
-            this.applyOrSet(this.props.handlers?.setLineWidth, clampedValue, nextValue => this.props.region.setLineWidth(nextValue));
+            this.applyChange(AppearanceControl.LineWidth, AppearanceField.LineWidth, clampedValue, nextValue => this.props.region.setLineWidth(nextValue));
         }
     }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
 
     private handleDashLengthChange = _.throttle((value: number) => {
         if (this.props.region) {
             const clampedValue = Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value));
-            this.applyOrSet(this.props.handlers?.setDashLength, clampedValue, nextValue => this.props.region.setDashLength(nextValue));
+            this.applyChange(AppearanceControl.DashLength, AppearanceField.DashLength, clampedValue, nextValue => this.props.region.setDashLength(nextValue));
         }
     }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
-        if (this.props.handlers?.setPointShape) {
-            this.props.handlers.setPointShape(item);
-            return;
-        }
-
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            const region = activeFrame.regionSet.focusedRegion;
-            const frame = activeFrame.spatialReference ?? activeFrame;
-            (region as PointAnnotationStore).setPointShape(item);
-            frame.pointShapeCache = item;
-        }
+        this.applyChange(AppearanceControl.Point, AppearanceField.PointShape, item, value => {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (activeFrame) {
+                const region = activeFrame.regionSet.focusedRegion;
+                const frame = activeFrame.spatialReference ?? activeFrame;
+                (region as PointAnnotationStore).setPointShape(value);
+                frame.pointShapeCache = value;
+            }
+        });
     };
 
-    private static getCompassArrowheadSelection(region: CompassAnnotationStore): "north" | "east" | "both" {
+    private static getCompassArrowheadSelection(region: CompassAnnotationStore): CompassArrowheadSelection {
         if (region.northArrowhead && region.eastArrowhead) return "both";
         if (region.eastArrowhead) return "east";
         return "north";
     }
 
     private handleCompassAnnotationArrowhead = (selection: string) => {
-        const value = selection as "north" | "east" | "both";
-        if (this.props.handlers?.setCompassArrowheads) {
-            this.props.handlers.setCompassArrowheads(value);
-            return;
-        }
-
-        const region = this.props.region as CompassAnnotationStore;
-        region.setNorthArrowhead(value !== "east");
-        region.setEastArrowhead(value !== "north");
+        const value = selection as CompassArrowheadSelection;
+        this.applyChange(AppearanceControl.Compass, AppearanceField.CompassArrowheads, value, nextValue => {
+            const region = this.props.region as CompassAnnotationStore;
+            region.setNorthArrowhead(nextValue !== "east");
+            region.setEastArrowhead(nextValue !== "north");
+        });
     };
 
     public render() {
@@ -185,7 +188,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         <ColorPickerComponent
                             color={region.color}
                             presetColors={SWATCH_COLORS}
-                            setColor={(color: ColorResult) => this.applyOrSet(this.props.handlers?.setColor, color.hex, value => region.setColor(value))}
+                            setColor={(color: ColorResult) => this.applyChange(AppearanceControl.Color, AppearanceField.Color, color.hex, value => region.setColor(value))}
                             disableAlpha={true}
                             darkTheme={this.props.darkTheme}
                         />
@@ -218,21 +221,21 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={100}
                                 value={(region as TextAnnotationStore)?.fontSize}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setFontSize, value, nextValue => (region as TextAnnotationStore)?.setFontSize(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Font, AppearanceField.FontSize, value, nextValue => (region as TextAnnotationStore)?.setFontSize(nextValue))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Font">
                             <HTMLSelect
                                 options={Object.values(Font)}
                                 value={(this.props.region as TextAnnotationStore).font}
-                                onChange={ev => this.applyOrSet(this.props.handlers?.setFont, ev.target.value as Font, value => (this.props.region as TextAnnotationStore).setFont(value))}
+                                onChange={ev => this.applyChange(AppearanceControl.Font, AppearanceField.Font, ev.target.value as Font, value => (this.props.region as TextAnnotationStore).setFont(value))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Font style">
                             <HTMLSelect
                                 options={Object.values(FontStyle)}
                                 value={(this.props.region as TextAnnotationStore).fontStyle}
-                                onChange={ev => this.applyOrSet(this.props.handlers?.setFontStyle, ev.target.value as FontStyle, value => (this.props.region as TextAnnotationStore).setFontStyle(value))}
+                                onChange={ev => this.applyChange(AppearanceControl.Font, AppearanceField.FontStyle, ev.target.value as FontStyle, value => (this.props.region as TextAnnotationStore).setFontStyle(value))}
                             />
                         </FormGroup>
                     </>
@@ -249,7 +252,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={50}
                                 value={(region as PointAnnotationStore).pointWidth}
                                 stepSize={0.5}
-                                onValueChange={width => this.applyOrSet(this.props.handlers?.setPointWidth, width, value => (region as PointAnnotationStore).setPointWidth(value))}
+                                onValueChange={width => this.applyChange(AppearanceControl.Point, AppearanceField.PointWidth, width, value => (region as PointAnnotationStore).setPointWidth(value))}
                             />
                         </FormGroup>
                     </>
@@ -263,7 +266,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as VectorAnnotationStore).pointerLength}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setVectorPointerLength, value, nextValue => (region as VectorAnnotationStore).setPointerLength(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.VectorPointer, AppearanceField.VectorPointerLength, value, nextValue => (region as VectorAnnotationStore).setPointerLength(nextValue))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
@@ -273,7 +276,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as VectorAnnotationStore).pointerWidth}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setVectorPointerWidth, value, nextValue => (region as VectorAnnotationStore).setPointerWidth(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.VectorPointer, AppearanceField.VectorPointerWidth, value, nextValue => (region as VectorAnnotationStore).setPointerWidth(nextValue))}
                             />
                         </FormGroup>
                     </>
@@ -288,7 +291,9 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
                                 stepSize={0.5}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassNorthTextOffsetX, value, nextValue => (this.props.region as CompassAnnotationStore).setNorthTextOffset(nextValue, true))}
+                                onValueChange={value =>
+                                    this.applyChange(AppearanceControl.Compass, AppearanceField.CompassNorthTextOffsetX, value, nextValue => (this.props.region as CompassAnnotationStore).setNorthTextOffset(nextValue, true))
+                                }
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
@@ -298,7 +303,9 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
                                 stepSize={0.5}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassNorthTextOffsetY, value, nextValue => (this.props.region as CompassAnnotationStore).setNorthTextOffset(nextValue, false))}
+                                onValueChange={value =>
+                                    this.applyChange(AppearanceControl.Compass, AppearanceField.CompassNorthTextOffsetY, value, nextValue => (this.props.region as CompassAnnotationStore).setNorthTextOffset(nextValue, false))
+                                }
                             />
                         </FormGroup>
                         <Label>East label offset</Label>
@@ -309,7 +316,9 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
                                 stepSize={0.5}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassEastTextOffsetX, value, nextValue => (this.props.region as CompassAnnotationStore).setEastTextOffset(nextValue, true))}
+                                onValueChange={value =>
+                                    this.applyChange(AppearanceControl.Compass, AppearanceField.CompassEastTextOffsetX, value, nextValue => (this.props.region as CompassAnnotationStore).setEastTextOffset(nextValue, true))
+                                }
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
@@ -319,7 +328,9 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
                                 stepSize={0.5}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassEastTextOffsetY, value, nextValue => (this.props.region as CompassAnnotationStore).setEastTextOffset(nextValue, false))}
+                                onValueChange={value =>
+                                    this.applyChange(AppearanceControl.Compass, AppearanceField.CompassEastTextOffsetY, value, nextValue => (this.props.region as CompassAnnotationStore).setEastTextOffset(nextValue, false))
+                                }
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show arrowhead">
@@ -336,7 +347,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as CompassAnnotationStore).pointerLength}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassPointerLength, value, nextValue => (region as CompassAnnotationStore).setPointerLength(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Compass, AppearanceField.CompassPointerLength, value, nextValue => (region as CompassAnnotationStore).setPointerLength(nextValue))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
@@ -346,7 +357,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as CompassAnnotationStore).pointerWidth}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setCompassPointerWidth, value, nextValue => (region as CompassAnnotationStore).setPointerWidth(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Compass, AppearanceField.CompassPointerWidth, value, nextValue => (region as CompassAnnotationStore).setPointerWidth(nextValue))}
                             />
                         </FormGroup>
                     </>
@@ -360,14 +371,14 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={6}
                                 value={(region as RulerAnnotationStore).decimals}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerDecimals, value, nextValue => (region as RulerAnnotationStore).setDecimals(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerDecimals, value, nextValue => (region as RulerAnnotationStore).setDecimals(nextValue))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary lines">
                             <Switch
                                 checked={(region as RulerAnnotationStore).auxiliaryLineVisible}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.applyOrSet(this.props.handlers?.setRulerAuxiliaryLineVisible, ev.target.checked, value => (region as RulerAnnotationStore).setAuxiliaryLineVisible(value))
+                                    this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerAuxiliaryLineVisible, ev.target.checked, value => (region as RulerAnnotationStore).setAuxiliaryLineVisible(value))
                                 }
                             />
                         </FormGroup>
@@ -379,7 +390,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).auxiliaryLineDashLength}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerAuxiliaryLineDashLength, value, nextValue => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(nextValue))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerAuxiliaryLineDashLength, value, nextValue => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(nextValue))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Text X offset" labelInfo="(px)">
@@ -389,7 +400,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).textOffset.x}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setTextOffset(nextValue, true))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setTextOffset(nextValue, true))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Text Y offset" labelInfo="(px)">
@@ -399,7 +410,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).textOffset.y}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setTextOffset(nextValue, false))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setTextOffset(nextValue, false))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary labels">
@@ -407,7 +418,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
                                 checked={(region as RulerAnnotationStore).auxiliaryTextVisible}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.applyOrSet(this.props.handlers?.setRulerAuxiliaryTextVisible, ev.target.checked, value => (region as RulerAnnotationStore).setAuxiliaryTextVisible(value))
+                                    this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerAuxiliaryTextVisible, ev.target.checked, value => (region as RulerAnnotationStore).setAuxiliaryTextVisible(value))
                                 }
                             />
                         </FormGroup>
@@ -419,7 +430,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).xTextOffset.x}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerXTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setXTextOffset(nextValue, true))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerXTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setXTextOffset(nextValue, true))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="X label Y offset" labelInfo="(px)">
@@ -430,7 +441,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).xTextOffset.y}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerXTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setXTextOffset(nextValue, false))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerXTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setXTextOffset(nextValue, false))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Y label X offset" labelInfo="(px)">
@@ -441,7 +452,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).yTextOffset.x}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerYTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setYTextOffset(nextValue, true))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerYTextOffsetX, value, nextValue => (region as RulerAnnotationStore).setYTextOffset(nextValue, true))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Y label Y offset" labelInfo="(px)">
@@ -452,7 +463,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                                 max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).yTextOffset.y}
                                 stepSize={1}
-                                onValueChange={value => this.applyOrSet(this.props.handlers?.setRulerYTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setYTextOffset(nextValue, false))}
+                                onValueChange={value => this.applyChange(AppearanceControl.Ruler, AppearanceField.RulerYTextOffsetY, value, nextValue => (region as RulerAnnotationStore).setYTextOffset(nextValue, false))}
                             />
                         </FormGroup>
                     </>
@@ -462,7 +473,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         <HTMLSelect
                             options={AppearanceForm.TextAlignmentOptions}
                             value={(region as TextAnnotationStore).position}
-                            onChange={ev => this.applyOrSet(this.props.handlers?.setTextAlignment, parseInt(ev.target.value), value => (region as TextAnnotationStore).setPosition(value))}
+                            onChange={ev => this.applyChange(AppearanceControl.TextAlignment, AppearanceField.TextAlignment, parseInt(ev.target.value), value => (region as TextAnnotationStore).setPosition(value))}
                         />
                     </FormGroup>
                 )}

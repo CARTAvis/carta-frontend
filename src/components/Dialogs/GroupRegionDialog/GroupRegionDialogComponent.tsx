@@ -10,7 +10,7 @@ import {DialogId, HelpType, RegionsOpacity} from "enums";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore, type VectorAnnotationStore} from "stores/Frame";
 
-import {AppearanceForm, type AppearanceFormHandlers} from "../RegionDialog/AppearanceForm/AppearanceForm";
+import {type AppearanceChange, AppearanceField, AppearanceForm, type CompassArrowheadSelection} from "../RegionDialog/AppearanceForm/AppearanceForm";
 
 const FONT_REGION_TYPES: ReadonlyArray<CARTA.RegionType> = [CARTA.RegionType.ANNTEXT, CARTA.RegionType.ANNCOMPASS, CARTA.RegionType.ANNRULER];
 
@@ -55,42 +55,104 @@ export class GroupRegionDialogComponent extends React.Component {
         AppStore.Instance.fileBrowserStore.showExportSelectedRegions();
     };
 
-    private getHandlers = (): AppearanceFormHandlers => {
-        return {
-            setColor: value => this.applyToSelected(region => region.setColor(value)),
-            setLineWidth: value => this.applyToSelected(region => region.setLineWidth(value)),
-            setDashLength: value => this.applyToSelected(region => region.setDashLength(value)),
-            setPointShape: value => this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointShape(value)),
-            setPointWidth: value => this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointWidth(value)),
-            setFontSize: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontSize(value)),
-            setFont: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFont(value)),
-            setFontStyle: value => this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontStyle(value)),
-            setVectorPointerLength: value => this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerLength(value)),
-            setVectorPointerWidth: value => this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerWidth(value)),
-            setCompassNorthTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setNorthTextOffset(value, true)),
-            setCompassNorthTextOffsetY: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setNorthTextOffset(value, false)),
-            setCompassEastTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setEastTextOffset(value, true)),
-            setCompassEastTextOffsetY: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setEastTextOffset(value, false)),
-            setCompassArrowheads: selection =>
-                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => {
-                    const compassRegion = region as CompassAnnotationStore;
-                    compassRegion.setNorthArrowhead(selection !== "east");
-                    compassRegion.setEastArrowhead(selection !== "north");
-                }),
-            setCompassPointerLength: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerLength(value)),
-            setCompassPointerWidth: value => this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerWidth(value)),
-            setRulerDecimals: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setDecimals(value)),
-            setRulerAuxiliaryLineVisible: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryLineVisible(value)),
-            setRulerAuxiliaryLineDashLength: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(value)),
-            setRulerTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setTextOffset(value, true)),
-            setRulerTextOffsetY: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setTextOffset(value, false)),
-            setRulerAuxiliaryTextVisible: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryTextVisible(value)),
-            setRulerXTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setXTextOffset(value, true)),
-            setRulerXTextOffsetY: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setXTextOffset(value, false)),
-            setRulerYTextOffsetX: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setYTextOffset(value, true)),
-            setRulerYTextOffsetY: value => this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setYTextOffset(value, false)),
-            setTextAlignment: value => this.applyByType(CARTA.RegionType.ANNTEXT, region => (region as TextAnnotationStore).setPosition(value))
-        };
+    private handleAppearanceChange = (change: AppearanceChange) => {
+        const value = change.value;
+        switch (change.field) {
+            case AppearanceField.Color:
+                this.applyToSelected(region => region.setColor(value as string));
+                break;
+            case AppearanceField.LineWidth:
+                this.applyToSelected(region => region.setLineWidth(value as number));
+                break;
+            case AppearanceField.DashLength:
+                this.applyToSelected(region => region.setDashLength(value as number));
+                break;
+            case AppearanceField.PointShape:
+                this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointShape(value as CARTA.PointAnnotationShape));
+                break;
+            case AppearanceField.PointWidth:
+                this.applyByType(CARTA.RegionType.ANNPOINT, region => (region as PointAnnotationStore).setPointWidth(value as number));
+                break;
+            case AppearanceField.FontSize:
+                this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontSize(value as number));
+                break;
+            case AppearanceField.Font:
+                this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFont(value as TextAnnotationStore["font"]));
+                break;
+            case AppearanceField.FontStyle:
+                this.applyByType(FONT_REGION_TYPES, region => (region as TextAnnotationStore).setFontStyle(value as TextAnnotationStore["fontStyle"]));
+                break;
+            case AppearanceField.VectorPointerLength:
+                this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerLength(value as number));
+                break;
+            case AppearanceField.VectorPointerWidth:
+                this.applyByType(CARTA.RegionType.ANNVECTOR, region => (region as VectorAnnotationStore).setPointerWidth(value as number));
+                break;
+            case AppearanceField.CompassNorthTextOffsetX:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setNorthTextOffset(value as number, true));
+                break;
+            case AppearanceField.CompassNorthTextOffsetY:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setNorthTextOffset(value as number, false));
+                break;
+            case AppearanceField.CompassEastTextOffsetX:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setEastTextOffset(value as number, true));
+                break;
+            case AppearanceField.CompassEastTextOffsetY:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setEastTextOffset(value as number, false));
+                break;
+            case AppearanceField.CompassArrowheads:
+                this.applyCompassArrowheadChange(value as CompassArrowheadSelection);
+                break;
+            case AppearanceField.CompassPointerLength:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerLength(value as number));
+                break;
+            case AppearanceField.CompassPointerWidth:
+                this.applyByType(CARTA.RegionType.ANNCOMPASS, region => (region as CompassAnnotationStore).setPointerWidth(value as number));
+                break;
+            case AppearanceField.RulerDecimals:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setDecimals(value as number));
+                break;
+            case AppearanceField.RulerAuxiliaryLineVisible:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryLineVisible(value as boolean));
+                break;
+            case AppearanceField.RulerAuxiliaryLineDashLength:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(value as number));
+                break;
+            case AppearanceField.RulerTextOffsetX:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setTextOffset(value as number, true));
+                break;
+            case AppearanceField.RulerTextOffsetY:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setTextOffset(value as number, false));
+                break;
+            case AppearanceField.RulerAuxiliaryTextVisible:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setAuxiliaryTextVisible(value as boolean));
+                break;
+            case AppearanceField.RulerXTextOffsetX:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setXTextOffset(value as number, true));
+                break;
+            case AppearanceField.RulerXTextOffsetY:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setXTextOffset(value as number, false));
+                break;
+            case AppearanceField.RulerYTextOffsetX:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setYTextOffset(value as number, true));
+                break;
+            case AppearanceField.RulerYTextOffsetY:
+                this.applyByType(CARTA.RegionType.ANNRULER, region => (region as RulerAnnotationStore).setYTextOffset(value as number, false));
+                break;
+            case AppearanceField.TextAlignment:
+                this.applyByType(CARTA.RegionType.ANNTEXT, region => (region as TextAnnotationStore).setPosition(value as CARTA.TextAnnotationPosition));
+                break;
+            default:
+                break;
+        }
+    };
+
+    private applyCompassArrowheadChange = (selection: CompassArrowheadSelection) => {
+        this.applyByType(CARTA.RegionType.ANNCOMPASS, region => {
+            const compassRegion = region as CompassAnnotationStore;
+            compassRegion.setNorthArrowhead(selection !== "east");
+            compassRegion.setEastArrowhead(selection !== "north");
+        });
     };
 
     public render() {
@@ -121,7 +183,7 @@ export class GroupRegionDialogComponent extends React.Component {
         let bodyContent = GroupRegionDialogComponent.MissingRegionNode;
         if (canEditSelectedRegions && activeFrame) {
             dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
-            bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} handlers={this.getHandlers()} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
+            bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} onChange={this.handleAppearanceChange} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         }
 
         return (
