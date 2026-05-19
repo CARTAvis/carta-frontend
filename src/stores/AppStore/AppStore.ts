@@ -28,6 +28,7 @@ import {
     TelemetryAction,
     WCSMatchingType
 } from "enums";
+import * as Enums from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
