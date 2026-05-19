@@ -4,7 +4,7 @@ import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {CARTA} from "carta-protobuf";
+import type {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -31,18 +31,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    public static readonly axisDataType = [
-        CARTA.ColumnType.Double,
-        CARTA.ColumnType.Float,
-        CARTA.ColumnType.Int8,
-        CARTA.ColumnType.Uint8,
-        CARTA.ColumnType.Int16,
-        CARTA.ColumnType.Uint16,
-        CARTA.ColumnType.Int32,
-        CARTA.ColumnType.Uint32,
-        CARTA.ColumnType.Int64,
-        CARTA.ColumnType.Uint64
-    ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
