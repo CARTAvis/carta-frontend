@@ -91,6 +91,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
+            // move the ast setting here to ensure ast is updated before plotting
+            if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
+                const formatStringX = settings.numbers.formatStringX;
+                const formatStyingY = settings.numbers.formatStringY;
+                const explicitSystem = settings.global.explicitSystem;
+                const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+
+                if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
+                    AST.set(tempWcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
+                    setAstSystem(tempWcsInfo, explicitSystem, settings.global);
+                }
+            }
+
             if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
                 const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
@@ -243,18 +256,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
             `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
         const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+
         if (frame.isPVImage && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting);
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
         } else {
+            // Keep dummy variable reads for MobX dependency tracking
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
+            const formatStringY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
-                setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
-            }
+            const isWcsCoordinates = OverlaySettings.Instance.isWcsCoordinates;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});

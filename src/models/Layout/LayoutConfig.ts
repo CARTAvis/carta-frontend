@@ -1,11 +1,9 @@
 import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
-import {PresetLayout} from "models";
+import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, PresetLayout} from "models";
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
-import {findDeep, smoothStepOffset} from "utilities";
-
-import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson} from "./FlexLayoutModelFactory";
+import {findDeep} from "utilities";
 
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
@@ -23,7 +21,8 @@ export class LayoutConfig {
             return null;
         }
 
-        const imageViewerHeight = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify WidgetsStore.ts as well if changing this
+        const imageViewerHeight = getImageViewWeight(); // modify WidgetsStore.ts as well if changing this
+        const imageViewerWidth = 60;
 
         return {
             layoutVersion: LayoutConfig.CurrentSchemaVersion,
@@ -32,7 +31,7 @@ export class LayoutConfig {
                 content: [
                     {
                         type: "column",
-                        width: 60,
+                        width: imageViewerWidth,
                         content: [
                             {type: "component", id: "image-view", height: imageViewerHeight},
                             {...config.leftBottomContent, height: 100 - imageViewerHeight}
@@ -40,7 +39,7 @@ export class LayoutConfig {
                     },
                     {
                         type: "column",
-                        width: 40,
+                        width: 100 - imageViewerWidth,
                         content: config.rightColumnContent
                     }
                 ]

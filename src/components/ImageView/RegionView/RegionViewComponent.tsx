@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
 import * as _ from "lodash";
-import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
@@ -301,7 +301,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
-                this.creatingRegion = null;
+                runInAction(() => {
+                    this.creatingRegion = null;
+                });
             }, 1);
         } else {
             this.creatingRegion = null;

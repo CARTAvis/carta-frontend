@@ -91,7 +91,6 @@ export class App extends React.Component {
                             factory={widgetsStore.renderWidgetFactory}
                             onRenderTab={widgetsStore.onRenderTab}
                             onRenderTabSet={widgetsStore.onRenderTabSet}
-                            onModelChange={widgetsStore.onModelChange}
                             onAction={widgetsStore.onAction}
                             supportsPopout={true}
                         />

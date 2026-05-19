@@ -314,7 +314,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
                 borderWidth: this.widgetStore.lineWidth,
                 pointRadius: this.widgetStore.linePlotPointSize,
-                zeroLineWidth: 2
+                zeroLineWidth: 2,
+                testId: this.widgetId
             };
 
             if (frame.renderConfig?.histogram?.bins?.length) {

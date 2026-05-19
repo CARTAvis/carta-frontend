@@ -1,4 +1,3 @@
-import * as React from "react";
 import {createRoot} from "react-dom/client";
 import {FocusStyleManager, HotkeysProvider, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";

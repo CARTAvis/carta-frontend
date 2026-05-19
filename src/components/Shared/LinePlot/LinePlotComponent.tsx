@@ -54,6 +54,7 @@ export interface LinePlotInsideTextMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
+    testId?: string;
     data?: Point2D[];
     comments?: string[];
     xMin?: number;
@@ -134,6 +135,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private panPrevious: number;
     private previousClickTime: number;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
+    private forceUpdateHandle: ReturnType<typeof setTimeout> | undefined;
     private popoutDragCleanup: (() => void) | null = null;
 
     @observable chartArea: ChartArea;
@@ -166,6 +168,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     componentWillUnmount() {
         clearTimeout(this.pendingClickHandle);
         this.pendingClickHandle = undefined;
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = undefined;
         this.cleanupPopoutDragListeners();
     }
 
@@ -241,7 +245,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueX(value: number) {
-        if (!this.chartArea || !this.props.xMin || !this.props.xMax) {
+        if (!this.chartArea || this.props.xMin == null || this.props.xMax == null) {
             return undefined;
         }
         const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
@@ -249,7 +253,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueY(value: number, logScale: boolean = false) {
-        if (!this.chartArea || !this.props.yMin || !this.props.yMax) {
+        if (!this.chartArea || this.props.yMin == null || this.props.yMax == null) {
             return undefined;
         }
         let fraction;
@@ -263,12 +267,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private getCanvasSpaceX(x: number) {
         const pixelValue = this.getPixelForValueX(x);
-        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : 0;
+        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : NaN;
     }
 
     private getCanvasSpaceY(y: number) {
         const pixelValue = this.getPixelForValueY(y, this.props.logY);
-        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : 0;
+        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : NaN;
     }
 
     onPlotRefUpdated = plotRef => {
@@ -276,19 +280,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     @action updateChart = (chartArea: ChartArea) => {
-        const wasUndefined = this.chartArea === undefined;
         this.chartArea = chartArea;
-        if (wasUndefined) {
-            // Ensure the component re-renders after chartArea is first set.
-            // This addresses a timing issue where the MobX-triggered forceUpdate
-            // may be batched by React 18 when chartArea is set during the initial
-            // mount sequence (inside a useEffect callback from react-chartjs-2).
-            // Scheduling a forceUpdate in the next macrotask ensures the re-render
-            // is processed and markers are drawn.
-            setTimeout(() => {
-                this.forceUpdate();
-            }, 0);
-        }
+        // Ensure the component re-renders after chartArea is updated.
+        // This addresses a timing issue where the MobX-triggered re-render
+        // may be batched by React 18 when chartArea is set inside a useEffect
+        // callback from react-chartjs-2. This can happen both during the initial
+        // mount and on subsequent chart area updates (e.g. after a dialog open
+        // animation completes and the chart resizes to its final dimensions).
+        // Scheduling a forceUpdate in the next macrotask ensures the re-render
+        // is processed and markers are drawn at the correct positions.
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = setTimeout(() => {
+            this.forceUpdateHandle = undefined;
+            this.forceUpdate();
+        }, 0);
     };
 
     @action resize = (w, h) => {
@@ -1185,7 +1190,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onMouseMove={this.onMouseMove}
                     onMouseLeave={this.onMouseLeave}
                     tabIndex={0}
-                    data-testid="profiler-plot"
+                    data-testid={this.props.testId ? this.props.testId + "-plot" : "profiler-plot"}
                 >
                     {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
                     {this.width > 0 && this.height > 0 && (

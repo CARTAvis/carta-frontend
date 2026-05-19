@@ -321,7 +321,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map(),
+            testId: this.widgetId + "-histogram"
         };
 
         const scaleMinVal = frame.renderConfig.scaleMinVal;

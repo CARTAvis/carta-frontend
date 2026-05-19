@@ -7,8 +7,6 @@ import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
-// import {extractAbstractConfig} from "../../models/Layout/FlexLayoutModelFactory";
-
 const MAX_LAYOUT = 10;
 
 export class LayoutStore {
@@ -87,6 +85,13 @@ export class LayoutStore {
         return this.userLayoutNames.length;
     }
 
+    private clearCurrentLayout = () => {
+        const appStore = AppStore.Instance;
+        appStore.widgetsStore.removeFloatingWidgets();
+        appStore.widgetsStore.clearDockedWidgets();
+        this.layoutModel = null;
+    };
+
     @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
@@ -95,8 +100,7 @@ export class LayoutStore {
 
         const config = this.layouts[layoutName];
         const appStore = AppStore.Instance;
-        // clear floating widgets
-        appStore.widgetsStore.removeFloatingWidgets();
+        this.clearCurrentLayout();
         appStore.widgetsStore.clearPopoutPositions();
 
         // generate docked config & collect docked components
@@ -269,50 +273,6 @@ export class LayoutStore {
             }
         } else {
             AlertStore.Instance.showAlert("Deleting user-defined layout failed!");
-        }
-    };
-
-    // Helper to add a tab to the currently active tabset in the layout
-    @action addTabToLayout = (componentType: string, name: string, config?: any) => {
-        if (!this.layoutModel) {
-            return;
-        }
-
-        const tabJson: any = {
-            type: "tab",
-            component: componentType,
-            name: name,
-            id: config?.id || componentType,
-            config: config || {}
-        };
-
-        // Try to add to active tabset
-        const activeTabset = this.layoutModel.getActiveTabset();
-        if (activeTabset) {
-            this.layoutModel.doAction({
-                type: "FlexLayout_AddNode",
-                data: {
-                    toNode: activeTabset.getId(),
-                    json: tabJson,
-                    location: "center",
-                    select: true
-                }
-            } as any);
-        }
-    };
-
-    // Helper to remove a tab from the layout by its node ID
-    @action removeTabFromLayout = (nodeId: string) => {
-        if (!this.layoutModel) {
-            return;
-        }
-
-        const node = this.layoutModel.getNodeById(nodeId);
-        if (node) {
-            this.layoutModel.doAction({
-                type: "FlexLayout_DeleteTab",
-                data: {node: nodeId}
-            } as any);
         }
     };
 }

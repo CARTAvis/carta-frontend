@@ -8,8 +8,6 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     tabEnableRename: false,
     tabSetEnableMaximize: true,
     tabSetEnableTabStrip: true,
-    tabSetMinWidth: 250,
-    tabSetMinHeight: 200,
     splitterSize: 4,
     splitterExtra: 4,
     tabEnablePopout: true,
@@ -106,7 +104,8 @@ const idCounters = new Map<string, number>();
  */
 function getUniqueId(baseId: string): string {
     // If it already has a numeric suffix (e.g., "spatial-profiler-0"), use as-is if unique
-    if (!usedIds.has(baseId)) {
+    const hasNumericSuffix = baseId !== "image-view" ? !!baseId.match(/(-\d+)/) : true;
+    if (hasNumericSuffix && !usedIds.has(baseId)) {
         usedIds.add(baseId);
         return baseId;
     }
@@ -271,7 +270,8 @@ function extractNode(node: any): any {
 function extractRowNode(node: any): any {
     const children = node.children || [];
     const result: any = {
-        type: determineRowOrColumn(node),
+        // always save as "row" in the abstract format and let convertNode handle the "row"/"column" conversion
+        type: "row",
         content: []
     };
 
@@ -291,25 +291,6 @@ function extractRowNode(node: any): any {
     }
 
     return result;
-}
-
-/**
- * Determines whether a FlexLayout row corresponds to an abstract "row" or "column".
- * FlexLayout alternates orientation at each nesting level, starting horizontal.
- * The parent context determines the direction, but for our abstract config,
- * we check if the node's parent would make this a vertical layout.
- *
- * Since FlexLayout alternates row orientation at each level automatically,
- * and our abstract format uses explicit "row"/"column", we need to figure out
- * the direction. The top-level is always "row" (horizontal), and nested rows alternate.
- *
- * For simplicity, we always save as "row" in the abstract format and let
- * CreateConfigToApply handle the conversion back. The GL-\>abstract mapping
- * already worked this way since GL's "row" and "column" were structurally identical.
- */
-function determineRowOrColumn(_node: any): string {
-    // We keep the original convention: top-level is "row"
-    return "row";
 }
 
 function extractTabSetNode(node: any): any {

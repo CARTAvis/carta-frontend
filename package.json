@@ -102,7 +102,7 @@
         "ts-jest": "^29.4.1",
         "typescript": "^5.9.0",
         "util": "^0.12.5",
-        "uuid": "^13.0.0",
+        "uuid": "^14.0.0",
         "worker-loader": "^3.0.8",
         "worker-rspack-loader": "^3.1.2"
     },

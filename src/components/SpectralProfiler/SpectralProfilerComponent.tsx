@@ -371,7 +371,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map<string, MultiPlotProps>(),
-            exportCommentsGenerator: this.getExportComments
+            exportCommentsGenerator: this.getExportComments,
+            testId: this.widgetId
         };
 
         const frame = this.widgetStore.effectiveFrame;

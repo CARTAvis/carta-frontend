@@ -1,31 +1,13 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {LabelType, NumberFormatType, SystemType} from "enums";
+import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
-
-enum AstColorsIndex {
-    GLOBAL = 0,
-    TITLE = 1,
-    GRID = 2,
-    BORDER = 3,
-    TICK = 4,
-    AXIS = 5,
-    NUMBER = 6,
-    LABEL = 7,
-    DISTANCE_MEASURE = 8
-}
-
-export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
-    [NumberFormatType.HMS, "H:M:S"],
-    [NumberFormatType.DMS, "D:M:S"],
-    [NumberFormatType.Degrees, "Degrees"]
-]);
 
 export class Padding {
     left: number;
