@@ -328,7 +328,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         for (let i = 0; i < props.data.length; i++) {
-            if (props.data[i].x !== nextProps.data[i].x || props.data[i].y !== nextProps.data[i].y) {
+            const currentPoint = props.data[i];
+            const nextPoint = nextProps.data[i];
+            if (!currentPoint || !nextPoint || currentPoint.x !== nextPoint.x || currentPoint.y !== nextPoint.y) {
                 return true;
             }
         }
