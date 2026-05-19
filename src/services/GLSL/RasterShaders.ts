@@ -2,7 +2,7 @@ import rasterPixelShader from "./pixel_shader_raster.glsl";
 import utilities from "./utilities.glsl";
 import rasterVertexShader from "./vertex_shader_raster.glsl";
 
-const pixelMacros = `
+const PIXEL_MACROS = `
 #define LINEAR 0
 #define LOG 1
 #define SQRT 2
@@ -14,7 +14,7 @@ const pixelMacros = `
 #define FLT_MAX 3.402823466e+38
 `;
 
-export const rasterShaders = {
+export const RASTER_SHADERS = {
     vertexShader: `#version 300 es\n${utilities}\n${rasterVertexShader}`,
-    fragmentShader: `#version 300 es\n${pixelMacros}\n${rasterPixelShader}`
+    fragmentShader: `#version 300 es\n${PIXEL_MACROS}\n${rasterPixelShader}`
 };

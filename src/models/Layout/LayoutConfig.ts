@@ -6,6 +6,7 @@ import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stor
 import {findDeep} from "utilities";
 import {smoothStepOffset} from "utilities/math/math";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
 const COMPONENT_CONFIG = new Map<string, any>([

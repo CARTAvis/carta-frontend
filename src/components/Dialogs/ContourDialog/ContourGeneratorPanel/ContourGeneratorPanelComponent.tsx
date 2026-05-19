@@ -11,6 +11,7 @@ import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const GeneratorSelect = Select<ContourGeneratorType>;
 
 @observer

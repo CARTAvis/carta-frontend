@@ -7,7 +7,7 @@ import {clamp} from "utilities";
 const COLORBAR_TICK_NUM_MIN = 3;
 
 export class ColorbarStore {
-    static readonly PRECISION_MAX = 15;
+    public static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
     private readonly overlaySettings: OverlaySettings;
 

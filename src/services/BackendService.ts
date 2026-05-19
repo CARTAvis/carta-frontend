@@ -43,7 +43,7 @@ export class Deferred<T> {
 export class BackendService {
     private static staticInstance: BackendService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!BackendService.staticInstance) {
             BackendService.staticInstance = new BackendService();
         }
