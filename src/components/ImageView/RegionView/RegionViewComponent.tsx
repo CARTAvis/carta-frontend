@@ -10,29 +10,14 @@ import {observer} from "mobx-react";
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
-import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {
-    add2D,
-    average2D,
-    doSelectionRectAndRegionPointsIntersect,
-    doSelectionRectAndRulerPathsIntersect,
-    getInterpolatedPathAtDistance,
-    getRectFromPoints,
-    getRegionSelectionPoints,
-    getRegionSelectionSegments,
-    getRotatedBoxPoints,
-    length2D,
-    pointDistanceSquared,
-    type Rect2D,
-    scale2D,
-    subtract2D,
-    transformPoint
-} from "utilities";
+import {type FrameStore, type RegionStore} from "stores/Frame";
+import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {isRegionInSelectionRect} from "./regionSelectionGeometry";
 import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
@@ -798,93 +783,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return rect.width >= REGION_SELECTION_DRAG_THRESHOLD && rect.height >= REGION_SELECTION_DRAG_THRESHOLD;
     };
 
-    private regionImagePointToSelectionCanvas = (point: Point2D): Point2D => {
-        let transformedPoint = point;
-        if (this.frame.spatialReference && this.frame.spatialTransformAST) {
-            transformedPoint = transformPoint(this.frame.spatialTransformAST, point, false);
-        }
-        return transformedImageToCanvasPos(transformedPoint, this.frame, this.props.width, this.props.height, this.stageRef.current);
-    };
-
-    private getTextSelectionCanvasPoints = (region: RegionStore): Point2D[] => {
-        const zoomLevel = this.frame.spatialReference?.zoomLevel || this.frame.zoomLevel;
-        const transformScale = this.frame.spatialTransform?.scale ?? 1;
-        const halfWidth = (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
-        const halfHeight = (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
-        const rotation = (region.rotation * Math.PI) / 180.0;
-        const center = this.frame.spatialReference && this.frame.spatialTransformAST ? transformPoint(this.frame.spatialTransformAST, region.center, false) : region.center;
-        return getRotatedBoxPoints(center, halfWidth, halfHeight, rotation).map(point => transformedImageToCanvasPos(point, this.frame, this.props.width, this.props.height, this.stageRef.current));
-    };
-
-    private getCompassSelectionCanvasPoints = (region: CompassAnnotationStore): Point2D[] => {
-        const controlPoint = this.frame.spatialReference && this.frame.spatialTransformAST ? transformPoint(this.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
-        const originPoint = transformedImageToCanvasPos(controlPoint, this.frame, this.props.width, this.props.height, this.stageRef.current);
-        const zoomLevel = this.frame.spatialReference?.zoomLevel || this.frame.zoomLevel;
-        const targetStageLength = (region.length * AppStore.Instance.imageRatio) / zoomLevel;
-
-        if (!this.frame.validWcs) {
-            return [originPoint, {x: originPoint.x, y: originPoint.y - targetStageLength}, {x: originPoint.x - targetStageLength, y: originPoint.y}];
-        }
-
-        const getCompassEndpoint = (approxPoints: number[]): Point2D => {
-            const canvasPoints: Point2D[] = [];
-
-            for (let i = 0; i < approxPoints.length; i += 2) {
-                canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current));
-            }
-
-            const path = getInterpolatedPathAtDistance(originPoint, canvasPoints, targetStageLength);
-            return path[path.length - 1];
-        };
-
-        const wcsInfo = this.frame.wcsInfoForTransformation;
-        const approxPoints = region.getCompassApproximation(wcsInfo, !!this.frame.spatialReference, this.frame.spatialTransformAST || undefined);
-        return [originPoint, getCompassEndpoint(approxPoints.northApproximatePoints), getCompassEndpoint(approxPoints.eastApproximatePoints)];
-    };
-
-    private getRulerSelectionCanvasPaths = (region: RulerAnnotationStore): Point2D[][] => {
-        const wcsInfoSelected = this.frame.isOffsetCoord ? this.frame.wcsInfoOffset : this.frame.wcsInfoForTransformation;
-        const wcsInfo = this.frame.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : this.frame.wcsInfo;
-        const approxPoints = region.getCurveApproximation(wcsInfo, this.frame.spatialTransformAST || undefined);
-        const toCanvasPath = (points: number[]): Point2D[] => {
-            const canvasPoints: Point2D[] = [];
-            for (let i = 0; i < points.length; i += 2) {
-                canvasPoints.push(transformedImageToCanvasPos({x: points[i], y: points[i + 1]}, this.frame, this.props.width, this.props.height, this.stageRef.current));
-            }
-            return canvasPoints;
-        };
-
-        const paths = [toCanvasPath(approxPoints.hypotenuseApproximatePoints)];
-        if (region.auxiliaryLineVisible) {
-            paths.push(toCanvasPath(approxPoints.xApproximatePoints), toCanvasPath(approxPoints.yApproximatePoints));
-        }
-        return paths;
-    };
-
-    private getSelectionCanvasPoints = (region: RegionStore): Point2D[] => {
-        if (region.regionType === CARTA.RegionType.ANNCOMPASS) {
-            return this.getCompassSelectionCanvasPoints(region as CompassAnnotationStore);
-        }
-
-        if (region.regionType === CARTA.RegionType.ANNTEXT) {
-            return this.getTextSelectionCanvasPoints(region);
-        }
-
-        return getRegionSelectionPoints(region).map(this.regionImagePointToSelectionCanvas);
-    };
-
-    private isRegionInSelectionRect = (region: RegionStore, selectionRect: Rect2D): boolean => {
-        if (region.regionType === CARTA.RegionType.ANNRULER) {
-            const ruler = region as RulerAnnotationStore;
-            const paths = this.getRulerSelectionCanvasPaths(ruler);
-            return doSelectionRectAndRulerPathsIntersect(selectionRect, paths, ruler.auxiliaryLineVisible);
-        }
-
-        const points = this.getSelectionCanvasPoints(region);
-        const segments = getRegionSelectionSegments(region, points);
-        return doSelectionRectAndRegionPointsIntersect(selectionRect, points, segments);
-    };
-
     @action private finishRegionSelection = () => {
         const selectionRect = this.getRegionSelectionRect();
         const isLargeEnough = !!selectionRect && this.isSelectionRectLargeEnough(selectionRect);
@@ -898,7 +796,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => !region.locked && this.isRegionInSelectionRect(region, selectionRect)).map(region => region.regionId);
+        const selectionGeometryContext = {
+            frame: this.frame,
+            layerWidth: this.props.width,
+            layerHeight: this.props.height,
+            stage: this.stageRef.current
+        };
+        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => !region.locked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext)).map(region => region.regionId);
 
         const nextSelection = new Set(this.frame.regionSet.selectedRegionIds);
         selectedIds.forEach(id => {
