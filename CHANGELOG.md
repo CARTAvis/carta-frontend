@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2789](https://github.com/CARTAvis/carta-frontend/issues/2789)).
+* Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
 
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750))
