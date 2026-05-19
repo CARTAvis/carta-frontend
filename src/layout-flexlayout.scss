@@ -143,7 +143,7 @@ $pt-dark-app-background-color: #252a31;
     // --- Tabset (stack) borders ---
     .flexlayout__tabset {
         overflow: hidden;
-
+        border: 1px solid transparent;
         border-radius: 4px;
 
         &-selected {
