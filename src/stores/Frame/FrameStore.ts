@@ -2319,6 +2319,9 @@ export class FrameStore {
             for (const frame of this.secondarySpatialImages) {
                 frame.isOffsetCoord = isoffset;
             }
+            if (isoffset) {
+                this.createWcsInfoOffset();
+            }
         }
     }
 
