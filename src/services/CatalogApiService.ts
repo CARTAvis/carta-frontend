@@ -23,7 +23,7 @@ export class CatalogApiService {
     private cancelTokenSourceSimbad: CancelTokenSource;
     private cancelTokenSourceVizier: CancelTokenSource;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogApiService.staticInstance) {
             CatalogApiService.staticInstance = new CatalogApiService();
         }

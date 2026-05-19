@@ -846,7 +846,7 @@ export class OverlayBeamSettings {
 export class OverlaySettings {
     private static staticInstance: OverlaySettings;
 
-    static get Instance() {
+    public static get Instance() {
         if (!OverlaySettings.staticInstance) {
             OverlaySettings.staticInstance = new OverlaySettings();
         }

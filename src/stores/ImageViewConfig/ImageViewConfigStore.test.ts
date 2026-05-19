@@ -3,9 +3,9 @@ import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
 
-const mockUpdateActiveImage = jest.fn();
-const mockIsActiveImage = jest.fn();
-const mockSetActiveImage = jest.fn();
+const MockUpdateActiveImage = jest.fn();
+const MockIsActiveImage = jest.fn();
+const MockSetActiveImage = jest.fn();
 
 // Mock RenderConfigStore to handle import chain
 jest.mock("stores/Frame", () => ({
@@ -41,9 +41,9 @@ jest.mock("stores", () => {
         AppStore: {
             Instance: {
                 activeImage: null,
-                updateActiveImage: x => mockUpdateActiveImage(x),
-                isActiveImage: () => mockIsActiveImage(),
-                setActiveImage: x => mockSetActiveImage(x)
+                updateActiveImage: x => MockUpdateActiveImage(x),
+                isActiveImage: () => MockIsActiveImage(),
+                setActiveImage: x => MockSetActiveImage(x)
             }
         },
         FrameStore: jest.fn(frameInfo => ({
@@ -145,28 +145,28 @@ describe("ImageViewConfigStore", () => {
             expect(colorBlendingImage1.id).toBe(0);
             expect(imageViewConfigStore.getImage(1).type).toBe(ImageType.COLOR_BLENDING);
             expect(imageViewConfigStore.getImage(1).store).toBe(colorBlendingImage1);
-            expect(mockUpdateActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(1));
+            expect(MockUpdateActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(1));
 
             colorBlendingImage2 = imageViewConfigStore.createColorBlending();
             expect(colorBlendingImage2.id).toBe(1);
             expect(imageViewConfigStore.getImage(2).type).toBe(ImageType.COLOR_BLENDING);
             expect(imageViewConfigStore.getImage(2).store).toBe(colorBlendingImage2);
-            expect(mockUpdateActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(2));
+            expect(MockUpdateActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(2));
         });
     });
 
     describe("removeColorBlending", () => {
         it("removes a color blending image correctly", () => {
-            mockIsActiveImage.mockImplementationOnce(() => false);
+            MockIsActiveImage.mockImplementationOnce(() => false);
             imageViewConfigStore.removeColorBlending(colorBlendingImage1);
             expect(imageViewConfigStore.colorBlendingImages).not.toContain(colorBlendingImage1);
         });
 
         it("removes a active color blending image correctly", () => {
-            mockIsActiveImage.mockImplementationOnce(() => true);
+            MockIsActiveImage.mockImplementationOnce(() => true);
             imageViewConfigStore.removeColorBlending(colorBlendingImage2);
             expect(imageViewConfigStore.colorBlendingImages).not.toContain(colorBlendingImage2);
-            expect(mockSetActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(0));
+            expect(MockSetActiveImage).toHaveBeenCalledWith(imageViewConfigStore.getImage(0));
         });
     });
 

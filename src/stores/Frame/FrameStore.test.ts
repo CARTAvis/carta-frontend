@@ -5,7 +5,7 @@ import {type FrameInfo, FrameStore} from "stores";
 
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 
-const stokesCubeframeInfo: FrameInfo = {
+const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
@@ -54,7 +54,7 @@ const stokesCubeframeInfo: FrameInfo = {
     generated: false
 };
 
-const emptyframeInfo: FrameInfo = {
+const EMPTYFRAME_INFO: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
@@ -90,7 +90,7 @@ describe("FrameStore", () => {
 
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
-            const frame = new FrameStore(stokesCubeframeInfo);
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             const beam = frame.beamProperties;
             expect(beam).toHaveProperty("majorAxis", 0.9315811991691589);
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
@@ -100,7 +100,7 @@ describe("FrameStore", () => {
 
     describe("beamAllChannels", () => {
         test("returns a list of beams from all channels with the current stokes", () => {
-            const frame = new FrameStore(stokesCubeframeInfo);
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             let beams = frame.beamAllChannels;
             expect(beams).toHaveLength(3);
             expect(beams[1]).toHaveProperty("majorAxis", 0.9315744042396545);
@@ -142,7 +142,7 @@ describe("FrameStore", () => {
             });
             mockGetFreqInGHz.mockImplementation((a, b) => b);
 
-            const frame = new FrameStore(emptyframeInfo);
+            const frame = new FrameStore(EMPTYFRAME_INFO);
             const config = frame.intensityConfig;
             expect(config["bmaj"]).toEqual([0.9315811991691589, 0.9315744042396545, 0.9315680265426636]);
             expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);

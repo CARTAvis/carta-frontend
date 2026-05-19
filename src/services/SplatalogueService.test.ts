@@ -1,11 +1,11 @@
 import {SplatalogueService} from "services";
 
-const mockAxiosPost = jest.fn();
+const MockAxiosPost = jest.fn();
 jest.mock("axios", () => {
     return {
         create: () => {
             return {
-                post: mockAxiosPost
+                post: MockAxiosPost
             };
         }
     };
@@ -13,22 +13,22 @@ jest.mock("axios", () => {
 
 describe("SplatalogueService", () => {
     test("query with corrent parameters when intensity limit is disabled", () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {data: []};
         });
         SplatalogueService.Instance.query(300000, 300100, NaN);
-        const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        const params = JSON.parse(MockAxiosPost.mock.calls[0][1].body);
         expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
         expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "None");
     });
 
     test("query with corrent parameters when intensity limit is enabled", () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {data: []};
         });
         SplatalogueService.Instance.query(300000, 300100, -5);
-        const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        const params = JSON.parse(MockAxiosPost.mock.calls[0][1].body);
         expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
         expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "CDMS/JPL (log)");
@@ -36,11 +36,11 @@ describe("SplatalogueService", () => {
     });
 
     test("query with corrent parameters when intensity limit is 0", () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {data: []};
         });
         SplatalogueService.Instance.query(300000, 300100, 0);
-        const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        const params = JSON.parse(MockAxiosPost.mock.calls[0][1].body);
         expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
         expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "CDMS/JPL (log)");
@@ -48,17 +48,17 @@ describe("SplatalogueService", () => {
     });
 
     test("query with corrent parameters when freqMin is larger than freqMax", () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {data: []};
         });
         SplatalogueService.Instance.query(300100, 300000, NaN);
-        const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        const params = JSON.parse(MockAxiosPost.mock.calls[0][1].body);
         expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
         expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
     });
 
     test("returns correct parsed string", async () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {
                 data: [
                     {
@@ -75,7 +75,7 @@ describe("SplatalogueService", () => {
     });
 
     test("removes invalid line data", async () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {
                 data: [
                     {
@@ -90,7 +90,7 @@ describe("SplatalogueService", () => {
     });
 
     test("removes undefined line data", async () => {
-        mockAxiosPost.mockImplementationOnce(() => {
+        MockAxiosPost.mockImplementationOnce(() => {
             return {
                 data: [undefined]
             };

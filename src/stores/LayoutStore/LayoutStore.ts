@@ -12,7 +12,7 @@ const MAX_LAYOUT = 10;
 export class LayoutStore {
     private static staticInstance: LayoutStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!LayoutStore.staticInstance) {
             LayoutStore.staticInstance = new LayoutStore();
         }
