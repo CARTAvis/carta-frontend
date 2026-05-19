@@ -10,7 +10,7 @@ import {AppStore} from "stores";
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
 
-export interface runtimeConfig {
+export interface RuntimeConfig {
     dashboardAddress?: string;
     apiAddress?: string;
     tokenRefreshAddress?: string;
@@ -27,7 +27,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    public static runtimeConfig: runtimeConfig = {};
+    public static runtimeConfig: RuntimeConfig = {};
 
     public static setRuntimeConfig(data: any) {
         console.log("Setting runtime config");
@@ -40,7 +40,7 @@ export class ApiService {
                 const socketPort = socketUrl?.match(socketRegex)?.[1] ?? "";
                 data.apiAddress = data.apiAddress.replace("{port}", socketPort);
             }
-            ApiService.runtimeConfig = data as runtimeConfig;
+            ApiService.runtimeConfig = data as RuntimeConfig;
         } else {
             ApiService.runtimeConfig = {};
         }

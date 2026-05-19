@@ -27,9 +27,10 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
-export function isSpectralMatchingTypeValid(type: SpectralType) {
+
+export const IsSpectralMatchingTypeValid = (type: SpectralType) => {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
-}
+};
 
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return Object.values(SpectralUnit).includes(unit as SpectralUnit);
