@@ -25,6 +25,10 @@ export class RegionSetStore {
     private readonly backendService: BackendService;
     private readonly preference: PreferenceStore;
     private movingRegionSelection: RegionStore[] | null = null;
+    private selectionPivotRegionId: number | null = null;
+    private keyboardRangeAnchorRegionId: number | null = null;
+    private keyboardRangeDisplacement: number = 0;
+    private keyboardRangeBaseSelection: Set<number> = new Set();
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
         this.frame = frame;
@@ -78,6 +82,7 @@ export class RegionSetStore {
     @action clearSelection = () => {
         this.selectedRegionIds = new Set();
         this.focusedRegion = this.cursorRegion;
+        this.resetSelectionRangeState();
     };
 
     @action setSelectionByIds = (ids: number[], focusRegionId?: number) => {
@@ -99,6 +104,7 @@ export class RegionSetStore {
         const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
         if (focusRegion) {
             this.setFocusedRegion(focusRegion);
+            this.selectionPivotRegionId = focusRegion.regionId;
         }
     };
 
@@ -112,6 +118,8 @@ export class RegionSetStore {
             region.deselectPoint();
         }
         this.setFocusedRegion(region);
+        this.selectionPivotRegionId = region.regionId;
+        this.resetKeyboardRangeState();
     };
 
     @action toggleRegionSelection = (region: RegionStore) => {
@@ -129,6 +137,146 @@ export class RegionSetStore {
 
         const ids = Array.from(selectedIds);
         this.setSelectionByIds(ids, selectedIds.has(region.regionId) ? region.regionId : undefined);
+        this.resetKeyboardRangeState();
+    };
+
+    @action selectAllRegions = (regions: RegionStore[]) => {
+        const selectableRegions = this.getSelectableRegions(regions);
+        if (!selectableRegions.length) {
+            return;
+        }
+
+        const focusedRegionId = this.focusedRegion?.regionId;
+        const focusRegionId = focusedRegionId && selectableRegions.some(region => region.regionId === focusedRegionId) ? focusedRegionId : selectableRegions[selectableRegions.length - 1].regionId;
+        this.setSelectionByIds(
+            selectableRegions.map(region => region.regionId),
+            focusRegionId
+        );
+        this.selectionPivotRegionId = focusRegionId;
+        this.resetKeyboardRangeState();
+    };
+
+    @action selectRegionFromList = (region: RegionStore, regions: RegionStore[], options: {toggle?: boolean; range?: boolean} = {}) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+
+        const hasSelection = this.selectedRegionIds.size > 0;
+        const regionIndex = regions.findIndex(candidate => candidate.regionId === region.regionId);
+        const pivotIndex = this.selectionPivotRegionId !== null ? regions.findIndex(candidate => candidate.regionId === this.selectionPivotRegionId) : -1;
+
+        if (options.toggle && hasSelection) {
+            this.toggleRegionSelection(region);
+            return;
+        }
+
+        if (options.range && hasSelection && pivotIndex >= 0 && regionIndex >= 0) {
+            this.setSelectionRange(regions, pivotIndex, regionIndex, region.regionId);
+            this.resetKeyboardRangeState();
+            return;
+        }
+
+        if (this.isRegionInMultiSelection(region)) {
+            this.setFocusedRegion(region);
+            this.selectionPivotRegionId = region.regionId;
+            this.resetKeyboardRangeState();
+            return;
+        }
+
+        this.selectSingleRegion(region);
+    };
+
+    @action selectAdjacentRegionFromList = (regions: RegionStore[], direction: 1 | -1, options: {wrap?: boolean; range?: boolean; includeCursor?: boolean} = {}) => {
+        const list = options.includeCursor ? regions : this.getSelectableRegions(regions);
+        if (!list.length) {
+            return;
+        }
+
+        const focusedId = this.focusedRegion?.regionId ?? -1;
+        const focusedIndex = list.findIndex(region => region.regionId === focusedId);
+
+        if (options.range) {
+            this.extendKeyboardSelectionRange(list, focusedIndex, direction);
+            return;
+        }
+
+        const startIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? -1 : list.length;
+        const nextIndex = options.wrap ? this.wrapIndex(startIndex + direction, list.length) : this.clampIndex(startIndex + direction, list.length);
+        const region = list[nextIndex];
+        if (!region) {
+            return;
+        }
+
+        this.selectSingleRegion(region);
+    };
+
+    private getSelectableRegions = (regions: RegionStore[]): RegionStore[] => {
+        return regions.filter(region => region.regionId !== CURSOR_REGION_ID);
+    };
+
+    private setSelectionRange = (regions: RegionStore[], startIndex: number, endIndex: number, focusRegionId: number) => {
+        const start = Math.min(startIndex, endIndex);
+        const end = Math.max(startIndex, endIndex);
+        const ids: number[] = [];
+        for (let i = start; i <= end; i++) {
+            const region = regions[i];
+            if (region && region.regionId !== CURSOR_REGION_ID) {
+                ids.push(region.regionId);
+            }
+        }
+        this.setSelectionByIds(ids, focusRegionId);
+    };
+
+    private extendKeyboardSelectionRange = (regions: RegionStore[], focusedIndex: number, direction: 1 | -1) => {
+        const n = regions.length;
+        let anchorIndex = this.keyboardRangeAnchorRegionId !== null ? regions.findIndex(region => region.regionId === this.keyboardRangeAnchorRegionId) : -1;
+        if (anchorIndex >= 0 && focusedIndex !== this.wrapIndex(anchorIndex + this.keyboardRangeDisplacement, n)) {
+            anchorIndex = -1;
+        }
+
+        let displacement: number;
+        if (anchorIndex < 0) {
+            anchorIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? 0 : n - 1;
+            this.keyboardRangeAnchorRegionId = regions[anchorIndex].regionId;
+            this.keyboardRangeBaseSelection = new Set(this.selectedRegionIds);
+            this.selectionPivotRegionId = regions[anchorIndex].regionId;
+            displacement = direction;
+        } else {
+            displacement = this.keyboardRangeDisplacement + direction;
+        }
+
+        displacement = Math.max(-(n - 1), Math.min(n - 1, displacement));
+        this.keyboardRangeDisplacement = displacement;
+
+        const selectedIds = new Set<number>(this.keyboardRangeBaseSelection);
+        const sign = displacement >= 0 ? 1 : -1;
+        const steps = Math.abs(displacement);
+        for (let i = 0; i <= steps; i++) {
+            selectedIds.add(regions[this.wrapIndex(anchorIndex + sign * i, n)].regionId);
+        }
+
+        const focusRegionId = regions[this.wrapIndex(anchorIndex + displacement, n)].regionId;
+        this.setSelectionByIds(Array.from(selectedIds), focusRegionId);
+    };
+
+    private resetSelectionRangeState = () => {
+        this.selectionPivotRegionId = null;
+        this.resetKeyboardRangeState();
+    };
+
+    private resetKeyboardRangeState = () => {
+        this.keyboardRangeAnchorRegionId = null;
+        this.keyboardRangeDisplacement = 0;
+        this.keyboardRangeBaseSelection = new Set();
+    };
+
+    private wrapIndex = (value: number, length: number): number => {
+        return ((value % length) + length) % length;
+    };
+
+    private clampIndex = (value: number, length: number): number => {
+        return Math.max(0, Math.min(length - 1, value));
     };
 
     private getMovableSelection = (origin: RegionStore): RegionStore[] => {

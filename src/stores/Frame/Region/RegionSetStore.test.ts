@@ -139,6 +139,45 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(first);
     });
 
+    test("selectRegionFromList centralizes toggle, range, and focus selection", () => {
+        const {regionSet, first, second, third} = makeRegionSet();
+        const regions = [first, second, third];
+
+        regionSet.selectRegionFromList(first, regions);
+        regionSet.selectRegionFromList(third, regions, {range: true});
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+
+        regionSet.selectRegionFromList(second, regions, {toggle: true});
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+
+        regionSet.selectRegionFromList(third, regions);
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+    });
+
+    test("selectAdjacentRegionFromList handles single and range keyboard navigation", () => {
+        const {regionSet, first, second, third} = makeRegionSet();
+        const regions = [first, second, third];
+
+        regionSet.selectAdjacentRegionFromList(regions, 1, {wrap: true});
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([first.regionId]);
+        expect(regionSet.focusedRegion).toBe(first);
+
+        regionSet.selectAdjacentRegionFromList(regions, 1, {range: true});
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId]));
+        expect(regionSet.focusedRegion).toBe(second);
+
+        regionSet.selectAdjacentRegionFromList(regions, 1, {range: true});
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+
+        regionSet.selectAdjacentRegionFromList(regions, -1, {range: true});
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId]));
+        expect(regionSet.focusedRegion).toBe(second);
+    });
+
     test("clearSelection focuses the cursor region", () => {
         const {regionSet, first} = makeRegionSet();
 

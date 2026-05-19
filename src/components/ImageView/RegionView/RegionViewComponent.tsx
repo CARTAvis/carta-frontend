@@ -18,7 +18,6 @@ import {
     doSelectionRectAndRulerPathsIntersect,
     getInterpolatedPathAtDistance,
     getRectFromPoints,
-    getRegionIdsInRange,
     getRegionSelectionPoints,
     getRegionSelectionSegments,
     getRotatedBoxPoints,
@@ -1028,35 +1027,12 @@ interface RegionComponentsProps {
 
 @observer
 class RegionComponents extends React.Component<RegionComponentsProps> {
-    // Transient shift-selection anchor; changes do not need to trigger rendering.
-    private pivotIndex: number = -1;
-
     private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
         if (this.props.shouldSuppressSelect?.(evt)) {
             return;
         }
 
-        const frame = this.props.frame;
-        const regionSet = frame.regionSet;
-        const regions = this.props.regions;
-
-        const isCtrl = evt?.ctrlKey || evt?.metaKey;
-        const isShift = evt?.shiftKey;
-        const index = regions.findIndex(r => r.regionId === region.regionId);
-
-        if (isCtrl && regionSet.selectedRegionIds.size > 0) {
-            regionSet.toggleRegionSelection(region);
-        } else if (isShift && regionSet.selectedRegionIds.size > 0 && this.pivotIndex >= 0 && index >= 0) {
-            const start = Math.min(this.pivotIndex, index);
-            const end = Math.max(this.pivotIndex, index);
-            regionSet.setSelectionByIds(getRegionIdsInRange(regions, start, end), region.regionId);
-        } else if (!regionSet.selectedRegionIds.has(region.regionId)) {
-            regionSet.selectSingleRegion(region);
-            this.pivotIndex = index;
-        } else {
-            regionSet.setFocusedRegion(region);
-            this.pivotIndex = index;
-        }
+        this.props.frame.regionSet.selectRegionFromList(region, this.props.regions, {toggle: !!(evt?.ctrlKey || evt?.metaKey), range: !!evt?.shiftKey});
     };
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
