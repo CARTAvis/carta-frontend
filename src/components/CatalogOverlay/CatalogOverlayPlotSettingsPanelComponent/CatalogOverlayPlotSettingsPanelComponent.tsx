@@ -5,12 +5,11 @@ import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, HelpType} from "enums";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
-import {getColorForTheme, SWATCH_COLORS} from "utilities";
+import {getColorForTheme, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -95,7 +94,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         profileStore?.catalogControlHeader?.forEach((header, columnName) => {
             if (header.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (isCatalogAxisDataType(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }
