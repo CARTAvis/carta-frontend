@@ -9,7 +9,7 @@ import {type BackendService} from "services";
 import {type FrameStore} from "stores/Frame";
 import {getPixelSizes, transformPoint} from "utilities";
 
-import {RegionStore} from "./Region/RegionStore";
+import {MIN_EDITED_REGION_DIMENSION, RegionStore} from "./Region/RegionStore";
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
 
@@ -285,6 +285,12 @@ export class CompassAnnotationStore extends RegionStore {
         this.setControlPoint(1, {x: length, y: length}, skipUpdate);
         this.modifiedTimestamp = performance.now();
     };
+
+    protected override moveSelectedCompassPoint(deltaX: number) {
+        if (deltaX !== 0) {
+            this.setLength(Math.max(MIN_EDITED_REGION_DIMENSION, this.length + deltaX));
+        }
+    }
 
     @action setNorthTextOffset = (offset: number, isX: boolean, skipTimeStampUpdate: boolean = false) => {
         if (isX) {

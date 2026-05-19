@@ -26,7 +26,9 @@ jest.mock("models", () => ({
     isValidWcsPoint: jest.fn(() => true)
 }));
 
-import {CURSOR_REGION_ID, RegionStore, SIMPLE_SHAPE_RIGHT_POINT_INDEX} from "./RegionStore";
+import {CompassAnnotationStore} from "../AnnotationStore";
+
+import {CURSOR_REGION_ID, MIN_EDITED_REGION_DIMENSION, RegionStore, SIMPLE_SHAPE_RIGHT_POINT_INDEX} from "./RegionStore";
 
 const backendService = {
     setCursor: jest.fn(),
@@ -142,5 +144,28 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
 
         expect(rectangle.size.x).toBeGreaterThan(0);
         expect(rectangle.size.y).toBe(10);
+    });
+
+    test("moves selected compass point by updating compass length", () => {
+        const compass = new CompassAnnotationStore(
+            backendService as any,
+            1,
+            makeFrame(),
+            [
+                {x: 0, y: 0},
+                {x: 10, y: 10}
+            ],
+            CARTA.RegionType.ANNCOMPASS,
+            1
+        );
+
+        compass.selectPoint(0);
+        compass.moveSelectedPoint(5, 0);
+
+        expect(compass.length).toBe(15);
+        expect(compass.controlPoints[1]).toEqual({x: 15, y: 15});
+
+        compass.moveSelectedPoint(-100, 0);
+        expect(compass.length).toBe(MIN_EDITED_REGION_DIMENSION);
     });
 });

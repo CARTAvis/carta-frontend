@@ -12,7 +12,7 @@ import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
-import {getMovedSimpleShapeSide, MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_ROTATION_POINT_INDEX} from "./RegionPointEdit";
+import {getMovedSimpleShapeSide, SIMPLE_SHAPE_ROTATION_POINT_INDEX} from "./RegionPointEdit";
 
 export {
     getResizedSimpleShapeFromCenter,
@@ -851,7 +851,7 @@ export class RegionStore {
         }
 
         if (this.isCompassRegion) {
-            this.moveSelectedCompassLength(deltaX);
+            this.moveSelectedCompassPoint(deltaX);
             return;
         }
 
@@ -864,18 +864,9 @@ export class RegionStore {
         this.setControlPoint(this.selectedPointIndex, {x: currentPoint.x + deltaX, y: currentPoint.y + deltaY});
     };
 
-    private moveSelectedCompassLength = (deltaX: number) => {
-        if (deltaX === 0) {
-            return;
-        }
-
-        const compassRegion = this as Partial<{length: number; setLength: (length: number) => void}>;
-        if (typeof compassRegion.length !== "number" || typeof compassRegion.setLength !== "function") {
-            return;
-        }
-
-        compassRegion.setLength(Math.max(MIN_EDITED_REGION_DIMENSION, compassRegion.length + deltaX));
-    };
+    protected moveSelectedCompassPoint(deltaX: number) {
+        void deltaX;
+    }
 
     @action rotateSelectedPoint = (deltaDegrees: number) => {
         if (this.hasSelectedRotationPoint && deltaDegrees !== 0) {
