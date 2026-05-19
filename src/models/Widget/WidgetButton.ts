@@ -66,7 +66,7 @@ export interface WidgetButtonProps {
     isDisabled?: boolean;
 }
 
-export function createWidgetButton({buttonKey, iconClassName, isDarkTheme, onClick, testId, title, isDisabled}: WidgetButtonProps): React.ReactElement {
+export const CreateWidgetButton = ({buttonKey, iconClassName, isDarkTheme, onClick, testId, title, isDisabled}: WidgetButtonProps): React.ReactElement => {
     return React.createElement(
         "button",
         {
@@ -82,4 +82,4 @@ export function createWidgetButton({buttonKey, iconClassName, isDarkTheme, onCli
         },
         React.createElement("span", {className: classNames(Classes.ICON_STANDARD, iconClassName)})
     );
-}
+};

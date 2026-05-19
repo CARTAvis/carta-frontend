@@ -46,7 +46,7 @@ export interface DefaultWidgetConfig {
     componentId?: string;
 }
 
-export function GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
+export const GetDefaultWidgetConfig = (type: string): DefaultWidgetConfig => {
     switch (type) {
         case ImageViewComponent.WIDGET_CONFIG.type:
             return ImageViewComponent.WIDGET_CONFIG;
@@ -87,9 +87,9 @@ export function GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
         default:
             return PlaceholderComponent.WIDGET_CONFIG;
     }
-}
+};
 
-export function GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
+export const GetDefaultWidgetSettingsConfig = (type: string): DefaultWidgetConfig => {
     switch (type) {
         case ImageViewComponent.WIDGET_CONFIG.type:
             return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
@@ -112,7 +112,7 @@ export function GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfi
         default:
             return PlaceholderComponent.WIDGET_CONFIG;
     }
-}
+};
 
 export const COMPONENT_MAP: Map<string, any> = new Map<string, any>([
     ["placeholder", PlaceholderComponent],

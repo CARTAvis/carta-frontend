@@ -25,7 +25,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {COMPONENT_MAP, createWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, GetDefaultWidgetConfig, GetDefaultWidgetSettingsConfig} from "models";
+import {COMPONENT_MAP, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, GetDefaultWidgetConfig, GetDefaultWidgetSettingsConfig} from "models";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -637,7 +637,7 @@ export class WidgetsStore {
                         return React.createElement(
                             React.Fragment,
                             null,
-                            createWidgetButton({
+                            CreateWidgetButton({
                                 buttonKey: "channel-map-" + nodeId,
                                 iconClassName: Classes.iconClass("heat-grid"),
                                 isDarkTheme,
@@ -645,7 +645,7 @@ export class WidgetsStore {
                                 testId: nodeId + "-header-channel-map-button",
                                 title: "enable/disable channel map"
                             }),
-                            createWidgetButton({
+                            CreateWidgetButton({
                                 buttonKey: "prev-page-" + nodeId,
                                 iconClassName: Classes.iconClass("step-backward"),
                                 isDarkTheme,
@@ -654,7 +654,7 @@ export class WidgetsStore {
                                 testId: nodeId + "-header-previous-page-button",
                                 title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
                             }),
-                            createWidgetButton({
+                            CreateWidgetButton({
                                 buttonKey: "image-panel-" + nodeId,
                                 iconClassName: this.getImagePanelButtonIcon(imagePanelMode),
                                 isDarkTheme,
@@ -662,7 +662,7 @@ export class WidgetsStore {
                                 testId: nodeId + "-header-multipanel-view-switch",
                                 title: this.getImagePanelButtonTooltip(imagePanelMode)
                             }),
-                            createWidgetButton({
+                            CreateWidgetButton({
                                 buttonKey: "next-page-" + nodeId,
                                 iconClassName: Classes.iconClass("step-forward"),
                                 isDarkTheme,
@@ -680,7 +680,7 @@ export class WidgetsStore {
         if (WidgetsStore.showCogWidgets.includes(component)) {
             if (!(component === RenderConfigComponent.WIDGET_CONFIG.type && AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING)) {
                 buttons.push(
-                    createWidgetButton({
+                    CreateWidgetButton({
                         buttonKey: "cog-" + nodeId,
                         iconClassName: Classes.iconClass("cog"),
                         isDarkTheme,
@@ -694,7 +694,7 @@ export class WidgetsStore {
 
         if (!WidgetsStore.hideHelpButtonWidgets.includes(component)) {
             buttons.push(
-                createWidgetButton({
+                CreateWidgetButton({
                     buttonKey: "help-" + nodeId,
                     iconClassName: Classes.iconClass("help"),
                     isDarkTheme,
@@ -707,7 +707,7 @@ export class WidgetsStore {
 
         if (component !== "image-view") {
             buttons.push(
-                createWidgetButton({
+                CreateWidgetButton({
                     buttonKey: "unpin-" + nodeId,
                     iconClassName: Classes.iconClass("unpin"),
                     isDarkTheme,

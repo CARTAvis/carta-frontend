@@ -190,6 +190,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     widgetConfig.setDefaultPosition(data.lastX, data.lastY);
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
+                    // manually add the height of the root-menu div to position y
+                    // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
                     const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.RootMenuHeight};
                     widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
                     widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
