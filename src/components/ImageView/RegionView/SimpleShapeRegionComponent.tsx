@@ -9,13 +9,16 @@ import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {
     type FrameStore,
+    getResizedSimpleShapeFromCenter,
+    getResizedSimpleShapeFromCorner,
+    getSimpleShapeAnchorName,
+    getSimpleShapeAnchorPointIndex,
+    getSimpleShapeAnchorSizeScale,
+    isRectangleRegionType,
+    isTextRegionType,
     type RegionStore,
-    SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
-    SIMPLE_SHAPE_LEFT_POINT_INDEX,
-    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
-    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_POINT_INDEX,
-    type TextAnnotationStore
+    type TextAnnotationStore,
+    usesSimpleShapeBoxSize
 } from "stores/Frame";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
@@ -47,30 +50,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private previousCursorStyle: string;
     private textRef: any = React.createRef();
 
-    private static IsRectangleRegion = (region: RegionStore): boolean => {
-        return region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE;
-    };
-
-    private static IsTextRegion = (region: RegionStore): boolean => {
-        return region.regionType === CARTA.RegionType.ANNTEXT;
-    };
-
-    private static UsesBoxSize = (region: RegionStore): boolean => {
-        return SimpleShapeRegionComponent.IsRectangleRegion(region) || SimpleShapeRegionComponent.IsTextRegion(region);
-    };
-
-    private static GetAnchorSizeScale = (region: RegionStore, zoomLevel: number): number => {
-        if (SimpleShapeRegionComponent.IsRectangleRegion(region)) {
-            return 0.5;
-        }
-
-        if (SimpleShapeRegionComponent.IsTextRegion(region)) {
-            return (0.5 * AppStore.Instance.imageRatio) / zoomLevel;
-        }
-
-        return 1;
-    };
-
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
     }
@@ -80,40 +59,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             this.props.region.setControlPoint(1, {x: (this.textRef.current.textWidth * devicePixelRatio) / this.props.frame.aspectRatio, y: (this.textRef.current.textHeight * devicePixelRatio) / this.props.frame.aspectRatio}, true);
         }
     }
-
-    private static GetSelectedSimpleShapeAnchor = (selectedPointIndex: number): string => {
-        switch (selectedPointIndex) {
-            case SIMPLE_SHAPE_TOP_POINT_INDEX:
-                return "top";
-            case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
-                return "right";
-            case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
-                return "bottom";
-            case SIMPLE_SHAPE_LEFT_POINT_INDEX:
-                return "left";
-            case SIMPLE_SHAPE_ROTATION_POINT_INDEX:
-                return "rotator";
-            default:
-                return "";
-        }
-    };
-
-    private static GetSimpleShapeAnchorPointIndex = (anchor: string): number => {
-        switch (anchor) {
-            case "top":
-                return SIMPLE_SHAPE_TOP_POINT_INDEX;
-            case "right":
-                return SIMPLE_SHAPE_RIGHT_POINT_INDEX;
-            case "bottom":
-                return SIMPLE_SHAPE_BOTTOM_POINT_INDEX;
-            case "left":
-                return SIMPLE_SHAPE_LEFT_POINT_INDEX;
-            case "rotator":
-                return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
-            default:
-                return -1;
-        }
-    };
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
@@ -146,7 +91,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         this.centerCanvasPos = centerCanvasPos;
 
         let w: number, h: number;
-        if (SimpleShapeRegionComponent.UsesBoxSize(this.props.region)) {
+        if (usesSimpleShapeBoxSize(this.props.region.regionType)) {
             w = region.size.x;
             h = region.size.y;
         } else {
@@ -159,7 +104,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const relativeOppositeAnchorPointUnrotated = {x: 0, y: 0};
 
         // Ellipse control points are radii, not diameter
-        const sizeFactor = SimpleShapeRegionComponent.UsesBoxSize(this.props.region) ? 0.5 : 1.0;
+        const sizeFactor = usesSimpleShapeBoxSize(this.props.region.regionType) ? 0.5 : 1.0;
 
         if (this.editAnchor.includes("left")) {
             relativeOppositeAnchorPointUnrotated.x = +w * sizeFactor;
@@ -199,50 +144,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
-        let w: number, h: number;
-        let sizeFactor: number;
-        if (SimpleShapeRegionComponent.UsesBoxSize(region)) {
-            sizeFactor = 1.0;
-            w = region.size.x;
-            h = region.size.y;
-        } else {
-            sizeFactor = 0.5;
-            w = region.size.y;
-            h = region.size.x;
-        }
-
-        let deltaAnchors = subtract2D(newAnchorPoint, this.editOppositeAnchorPoint);
-        // Apply inverse rotation to get difference between anchors without rotation
-        const deltaAnchorsUnrotated = rotate2D(deltaAnchors, (-region.rotation * Math.PI) / 180.0);
-
-        if (anchor.includes("left") || anchor.includes("right")) {
-            w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
-        } else {
-            // anchors without "left" or "right" are purely vertical, so they are clamped in x
-            deltaAnchorsUnrotated.x = 0;
-        }
-        if (anchor.includes("top") || anchor.includes("bottom")) {
-            // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
-            h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
-        } else {
-            deltaAnchorsUnrotated.y = 0;
-        }
-
-        // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
-        deltaAnchors = rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
-        const newCenter = add2D(this.editOppositeAnchorPoint, scale2D(deltaAnchors, 0.5));
-        let newSize: Point2D;
-        if (SimpleShapeRegionComponent.IsRectangleRegion(region)) {
-            newSize = {x: Math.max(1e-3, w), y: Math.max(1e-3, h)};
-        } else if (SimpleShapeRegionComponent.IsTextRegion(region)) {
-            newSize = {
-                x: Math.max(1e-3, anchor === "top" || anchor === "bottom" ? w : (w * zoomLevel) / AppStore.Instance.imageRatio),
-                y: Math.max(1e-3, anchor === "left" || anchor === "right" ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)
-            };
-        } else {
-            newSize = {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
-        }
-        region.setControlPoints([newCenter, newSize]);
+        const edit = getResizedSimpleShapeFromCorner({
+            regionType: region.regionType,
+            size: region.size,
+            rotation: region.rotation,
+            anchor,
+            oppositeAnchorPoint: this.editOppositeAnchorPoint,
+            newAnchorPoint,
+            textScale: AppStore.Instance.imageRatio / zoomLevel
+        });
+        region.setControlPoints([edit.center, edit.size]);
     };
 
     private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
@@ -254,50 +165,18 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
-        let w: number, h: number;
-        let sizeFactor: number;
-        if (SimpleShapeRegionComponent.UsesBoxSize(region)) {
-            sizeFactor = 2.0;
-            w = region.size.x;
-            h = region.size.y;
-        } else {
-            sizeFactor = 1.0;
-            w = region.size.y;
-            h = region.size.x;
-        }
-
-        const deltaAnchorPoint = subtract2D(newAnchorPoint, region.center);
-        // Apply inverse rotation to get difference between anchor and center without rotation
-        const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-region.rotation * Math.PI) / 180.0);
-
-        if (anchor.includes("left") || anchor.includes("right")) {
-            w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
-            if (keepAspect) {
-                h = w;
-            }
-        }
-        if (anchor.includes("top") || anchor.includes("bottom")) {
-            h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
-            if (keepAspect) {
-                w = h;
-            }
-        }
-
-        const isAnchorX = anchor === "left" || anchor === "right";
-        const isAnchorY = anchor === "top" || anchor === "bottom";
-
-        let newSize: Point2D;
-        if (SimpleShapeRegionComponent.IsRectangleRegion(region)) {
-            newSize = {x: Math.max(1e-3, w), y: Math.max(1e-3, h)};
-        } else if (SimpleShapeRegionComponent.IsTextRegion(region)) {
-            newSize = {
-                x: Math.max(1e-3, !keepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio),
-                y: Math.max(1e-3, !keepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)
-            };
-        } else {
-            newSize = {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
-        }
-        region.setSize(newSize);
+        region.setSize(
+            getResizedSimpleShapeFromCenter({
+                regionType: region.regionType,
+                center: region.center,
+                size: region.size,
+                rotation: region.rotation,
+                anchor,
+                keepAspect,
+                newAnchorPoint,
+                textScale: AppStore.Instance.imageRatio / zoomLevel
+            })
+        );
     };
 
     private handleDragStart = () => {
@@ -400,7 +279,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             return;
         }
 
-        const selectedPointIndex = SimpleShapeRegionComponent.GetSimpleShapeAnchorPointIndex(anchor);
+        const selectedPointIndex = getSimpleShapeAnchorPointIndex(anchor);
         if (selectedPointIndex >= 0) {
             this.props.region.selectPoint(selectedPointIndex);
         }
@@ -417,7 +296,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
-            const size = SimpleShapeRegionComponent.UsesBoxSize(region) ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
+            const size = usesSimpleShapeBoxSize(region.regionType) ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
             let delta: Point2D;
             if (anchorName === "left") {
                 delta = {x: -size.x, y: 0};
@@ -428,7 +307,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else {
                 delta = {x: 0, y: size.y};
             }
-            const offset = rotate2D(scale2D(delta, SimpleShapeRegionComponent.GetAnchorSizeScale(region, zoomLevel)), (-region.rotation * Math.PI) / 180.0);
+            const offset = rotate2D(scale2D(delta, getSimpleShapeAnchorSizeScale(region.regionType, AppStore.Instance.imageRatio / zoomLevel)), (-region.rotation * Math.PI) / 180.0);
             return isCornerMode ? add2D(this.editOppositeAnchorCanvasPos, scale2D(offset, 2)) : add2D(this.centerCanvasPos, offset);
         }
         return undefined;
@@ -440,7 +319,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
-            const offset = rotate2D(scale2D(size, SimpleShapeRegionComponent.GetAnchorSizeScale(region, zoomLevel)), (region.rotation * Math.PI) / 180.0);
+            const offset = rotate2D(scale2D(size, getSimpleShapeAnchorSizeScale(region.regionType, AppStore.Instance.imageRatio / zoomLevel)), (region.rotation * Math.PI) / 180.0);
             if (anchorName === "top-left") {
                 return add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: -offset.y});
             } else if (anchorName === "bottom-left") {
@@ -507,9 +386,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         // Ellipse has swapped axes
         let offset: Point2D;
-        if (SimpleShapeRegionComponent.IsRectangleRegion(region)) {
+        if (isRectangleRegionType(region.regionType)) {
             offset = {x: region.size.x / 2, y: region.size.y / 2};
-        } else if (SimpleShapeRegionComponent.IsTextRegion(region)) {
+        } else if (isTextRegionType(region.regionType)) {
             const transformScale = frame.spatialTransform?.scale ?? 1;
             offset = {x: (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale), y: (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale)};
         } else {
@@ -540,7 +419,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
 
             const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === SimpleShapeRegionComponent.GetSelectedSimpleShapeAnchor(region.selectedPointIndex);
+            const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex);
             return (
                 <Anchor
                     key={config.anchor}

@@ -12,16 +12,30 @@ import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
+import {getMovedSimpleShapeSide, MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_ROTATION_POINT_INDEX} from "./RegionPointEdit";
+
+export {
+    getResizedSimpleShapeFromCenter,
+    getResizedSimpleShapeFromCorner,
+    getSimpleShapeAnchorName,
+    getSimpleShapeAnchorPointIndex,
+    getSimpleShapeAnchorSizeScale,
+    isRectangleRegionType,
+    isTextRegionType,
+    MIN_EDITED_REGION_DIMENSION,
+    SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
+    SIMPLE_SHAPE_LEFT_POINT_INDEX,
+    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_POINT_INDEX,
+    usesSimpleShapeBoxSize
+} from "./RegionPointEdit";
+
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
 export const CENTER_POINT_INDEX = 0;
 export const SIZE_POINT_INDEX = 1;
-export const SIMPLE_SHAPE_TOP_POINT_INDEX = 0;
-export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;
-export const SIMPLE_SHAPE_BOTTOM_POINT_INDEX = 2;
-export const SIMPLE_SHAPE_LEFT_POINT_INDEX = 3;
-export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 4;
 
 // New region types should support point selection by default. Add a type here only
 // when selecting individual control points is intentionally unsupported.
@@ -31,8 +45,6 @@ const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RE
 const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
 const ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR]);
 const POLYGONAL_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POLYGON, CARTA.RegionType.POLYLINE, CARTA.RegionType.ANNPOLYGON, CARTA.RegionType.ANNPOLYLINE]);
-
-type SimpleShapeBounds = {left: number; right: number; bottom: number; top: number};
 
 export class RegionStore {
     readonly fileId: number;
@@ -61,8 +73,6 @@ export class RegionStore {
     static readonly TARGET_VERTEX_COUNT = 200;
     static readonly MIN_LABEL_OFFSET = -50;
     static readonly MAX_LABEL_OFFSET = 50;
-    private static readonly MIN_EDITED_REGION_DIMENSION = 1e-3;
-
     private readonly backendService: BackendService;
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
@@ -864,7 +874,7 @@ export class RegionStore {
             return;
         }
 
-        compassRegion.setLength(Math.max(RegionStore.MIN_EDITED_REGION_DIMENSION, compassRegion.length + deltaX));
+        compassRegion.setLength(Math.max(MIN_EDITED_REGION_DIMENSION, compassRegion.length + deltaX));
     };
 
     @action rotateSelectedPoint = (deltaDegrees: number) => {
@@ -874,84 +884,24 @@ export class RegionStore {
     };
 
     private moveSelectedSimpleShapeSide = (deltaX: number, deltaY: number) => {
-        const rotation = (this.rotation * Math.PI) / 180.0;
-        const delta = rotate2D({x: deltaX, y: deltaY}, -rotation);
-        const textScale = this.textAnnotationScale;
-        const bounds = this.moveSimpleShapeBounds(this.getSimpleShapeBounds(textScale), delta);
-
-        if (!bounds) {
-            return;
+        const edit = getMovedSimpleShapeSide({
+            regionType: this.regionType,
+            center: this.center,
+            size: this.size,
+            rotation: this.rotation,
+            selectedPointIndex: this.selectedPointIndex,
+            delta: {x: deltaX, y: deltaY},
+            textScale: this.textAnnotationScale
+        });
+        if (edit) {
+            this.setControlPoints([edit.center, edit.size]);
         }
-
-        const {left, right, bottom, top} = bounds;
-        const centerOffset = rotate2D({x: (left + right) / 2, y: (bottom + top) / 2}, rotation);
-        const size = this.getSimpleShapeSize(bounds, textScale);
-        this.setControlPoints([{x: this.center.x + centerOffset.x, y: this.center.y + centerOffset.y}, size]);
     };
-
-    private get isRectangleRegion(): boolean {
-        return this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE;
-    }
-
-    private get isTextRegion(): boolean {
-        return this.regionType === CARTA.RegionType.ANNTEXT;
-    }
 
     private get textAnnotationScale(): number {
         const zoomLevel = this.activeFrame?.spatialReference?.zoomLevel || this.activeFrame?.zoomLevel || 1;
         return AppStore.Instance.imageRatio / zoomLevel;
     }
-
-    private getSimpleShapeBounds = (textScale: number): SimpleShapeBounds => {
-        let halfWidth: number;
-        let halfHeight: number;
-
-        if (this.isRectangleRegion) {
-            halfWidth = this.size.x / 2;
-            halfHeight = this.size.y / 2;
-        } else if (this.isTextRegion) {
-            halfWidth = (this.size.x * textScale) / 2;
-            halfHeight = (this.size.y * textScale) / 2;
-        } else {
-            halfWidth = this.size.y;
-            halfHeight = this.size.x;
-        }
-
-        return {left: -halfWidth, right: halfWidth, bottom: -halfHeight, top: halfHeight};
-    };
-
-    private moveSimpleShapeBounds = (bounds: SimpleShapeBounds, delta: Point2D): SimpleShapeBounds | null => {
-        const nextBounds = {...bounds};
-        switch (this.selectedPointIndex) {
-            case SIMPLE_SHAPE_TOP_POINT_INDEX:
-                nextBounds.top = Math.max(nextBounds.top + delta.y, nextBounds.bottom + RegionStore.MIN_EDITED_REGION_DIMENSION);
-                return nextBounds;
-            case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
-                nextBounds.right = Math.max(nextBounds.right + delta.x, nextBounds.left + RegionStore.MIN_EDITED_REGION_DIMENSION);
-                return nextBounds;
-            case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
-                nextBounds.bottom = Math.min(nextBounds.bottom + delta.y, nextBounds.top - RegionStore.MIN_EDITED_REGION_DIMENSION);
-                return nextBounds;
-            case SIMPLE_SHAPE_LEFT_POINT_INDEX:
-                nextBounds.left = Math.min(nextBounds.left + delta.x, nextBounds.right - RegionStore.MIN_EDITED_REGION_DIMENSION);
-                return nextBounds;
-            default:
-                return null;
-        }
-    };
-
-    private getSimpleShapeSize = (bounds: SimpleShapeBounds, textScale: number): Point2D => {
-        const width = bounds.right - bounds.left;
-        const height = bounds.top - bounds.bottom;
-
-        if (this.isRectangleRegion) {
-            return {x: width, y: height};
-        }
-        if (this.isTextRegion) {
-            return {x: width / textScale, y: height / textScale};
-        }
-        return {x: height / 2, y: width / 2};
-    };
 
     @action focusCenter = () => {
         if (this.activeFrame) {
