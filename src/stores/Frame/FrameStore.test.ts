@@ -76,7 +76,7 @@ describe("FrameStore", () => {
 
     describe("offset coordinates", () => {
         test("rebuilds the offset frameset with the selected sky reference mode", () => {
-            const frame = new FrameStore(stokesCubeframeInfo);
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             frame.setOffsetCenter(1, 2);
             (AST.createOffsetFrameset as jest.Mock).mockClear();
 
