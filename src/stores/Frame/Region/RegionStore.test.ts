@@ -30,12 +30,12 @@ import {CompassAnnotationStore} from "../AnnotationStore";
 
 import {CURSOR_REGION_ID, MIN_EDITED_REGION_DIMENSION, RegionStore, SIMPLE_SHAPE_RIGHT_POINT_INDEX} from "./RegionStore";
 
-const backendService = {
+const BACKEND_SERVICE = {
     setCursor: jest.fn(),
     setRegion: jest.fn(() => Promise.resolve({regionId: 1}))
 };
 
-const makeFrame = (overrides: Partial<any> = {}) =>
+const MakeFrame = (overrides: Partial<any> = {}) =>
     ({
         hasSquarePixels: true,
         renderHeight: 100,
@@ -47,8 +47,8 @@ const makeFrame = (overrides: Partial<any> = {}) =>
         ...overrides
     }) as any;
 
-const makeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: number; y: number}>, overrides: Partial<any> = {}) => {
-    const region = new RegionStore(backendService as any, 1, makeFrame(overrides.frame), controlPoints, regionType, overrides.regionId ?? 1, overrides.rotation ?? 0);
+const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: number; y: number}>, overrides: Partial<any> = {}) => {
+    const region = new RegionStore(BACKEND_SERVICE as any, 1, MakeFrame(overrides.frame), controlPoints, regionType, overrides.regionId ?? 1, overrides.rotation ?? 0);
     region.beginEditing();
     return region;
 };
@@ -59,11 +59,11 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("rejects unsupported and out-of-range point selections", () => {
-        const point = makeRegion(CARTA.RegionType.POINT, [{x: 1, y: 1}]);
+        const point = MakeRegion(CARTA.RegionType.POINT, [{x: 1, y: 1}]);
         point.selectPoint(0);
         expect(point.selectedPointIndex).toBe(-1);
 
-        const polygon = makeRegion(CARTA.RegionType.POLYGON, [
+        const polygon = MakeRegion(CARTA.RegionType.POLYGON, [
             {x: 0, y: 0},
             {x: 10, y: 0},
             {x: 0, y: 10}
@@ -75,7 +75,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("cycles point selection with wrapping", () => {
-        const line = makeRegion(CARTA.RegionType.LINE, [
+        const line = MakeRegion(CARTA.RegionType.LINE, [
             {x: 0, y: 0},
             {x: 10, y: 0}
         ]);
@@ -89,7 +89,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("visibility changes do not mutate explicit lock state", () => {
-        const region = makeRegion(CARTA.RegionType.RECTANGLE, [
+        const region = MakeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},
             {x: 10, y: 10}
         ]);
@@ -107,7 +107,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("does not apply visibility or lock changes to cursor region", () => {
-        const cursor = makeRegion(CARTA.RegionType.POINT, [{x: 1, y: 1}], {regionId: CURSOR_REGION_ID});
+        const cursor = MakeRegion(CARTA.RegionType.POINT, [{x: 1, y: 1}], {regionId: CURSOR_REGION_ID});
 
         cursor.setLocked(true);
         cursor.setOpacity(RegionsOpacity.Invisible);
@@ -117,7 +117,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("moves selected polygon point only", () => {
-        const polygon = makeRegion(CARTA.RegionType.POLYGON, [
+        const polygon = MakeRegion(CARTA.RegionType.POLYGON, [
             {x: 0, y: 0},
             {x: 10, y: 0},
             {x: 0, y: 10}
@@ -134,7 +134,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("simple shape side movement keeps dimensions positive", () => {
-        const rectangle = makeRegion(CARTA.RegionType.RECTANGLE, [
+        const rectangle = MakeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},
             {x: 10, y: 10}
         ]);
@@ -148,9 +148,9 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
 
     test("moves selected compass point by updating compass length", () => {
         const compass = new CompassAnnotationStore(
-            backendService as any,
+            BACKEND_SERVICE as any,
             1,
-            makeFrame(),
+            MakeFrame(),
             [
                 {x: 0, y: 0},
                 {x: 10, y: 10}

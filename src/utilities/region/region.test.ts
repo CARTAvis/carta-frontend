@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionIdsInRange, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
 
-const makeRegion = (overrides: Partial<any>) =>
+const MakeRegion = (overrides: Partial<any>) =>
     ({
         center: {x: 0, y: 0},
         controlPoints: [],
@@ -18,7 +18,7 @@ const makeRegion = (overrides: Partial<any>) =>
 
 describe("region selection utilities", () => {
     test("returns selection points for simple, polygonal, and line-like regions", () => {
-        const rectangle = makeRegion({center: {x: 5, y: 5}, size: {x: 4, y: 2}, isSimpleShapeRegion: true});
+        const rectangle = MakeRegion({center: {x: 5, y: 5}, size: {x: 4, y: 2}, isSimpleShapeRegion: true});
         expect(getRegionSelectionPoints(rectangle)).toEqual([
             {x: 3, y: 4},
             {x: 5, y: 4},
@@ -35,8 +35,8 @@ describe("region selection utilities", () => {
             {x: 1, y: 0},
             {x: 1, y: 1}
         ];
-        expect(getRegionSelectionPoints(makeRegion({controlPoints: points, isPolygonalRegion: true, regionType: CARTA.RegionType.POLYGON}))).toBe(points);
-        expect(getRegionSelectionPoints(makeRegion({controlPoints: points.slice(0, 2), isLineLikeRegion: true, regionType: CARTA.RegionType.LINE}))).toEqual(points.slice(0, 2));
+        expect(getRegionSelectionPoints(MakeRegion({controlPoints: points, isPolygonalRegion: true, regionType: CARTA.RegionType.POLYGON}))).toBe(points);
+        expect(getRegionSelectionPoints(MakeRegion({controlPoints: points.slice(0, 2), isLineLikeRegion: true, regionType: CARTA.RegionType.LINE}))).toEqual(points.slice(0, 2));
     });
 
     test("returns expected region selection segments by region type", () => {
@@ -46,10 +46,10 @@ describe("region selection utilities", () => {
             {x: 1, y: 1}
         ];
 
-        expect(getRegionSelectionSegments(makeRegion({isLineLikeRegion: true, regionType: CARTA.RegionType.LINE}), points)).toHaveLength(2);
-        expect(getRegionSelectionSegments(makeRegion({isPolygonalRegion: true, regionType: CARTA.RegionType.POLYGON}), points)).toHaveLength(3);
-        expect(getRegionSelectionSegments(makeRegion({isPolygonalRegion: true, regionType: CARTA.RegionType.POLYLINE}), points)).toHaveLength(2);
-        expect(getRegionSelectionSegments(makeRegion({isSimpleShapeRegion: true}), points)).toHaveLength(3);
+        expect(getRegionSelectionSegments(MakeRegion({isLineLikeRegion: true, regionType: CARTA.RegionType.LINE}), points)).toHaveLength(2);
+        expect(getRegionSelectionSegments(MakeRegion({isPolygonalRegion: true, regionType: CARTA.RegionType.POLYGON}), points)).toHaveLength(3);
+        expect(getRegionSelectionSegments(MakeRegion({isPolygonalRegion: true, regionType: CARTA.RegionType.POLYLINE}), points)).toHaveLength(2);
+        expect(getRegionSelectionSegments(MakeRegion({isSimpleShapeRegion: true}), points)).toHaveLength(3);
     });
 
     test("selects regions when the selection rect intersects points, segments, or bounding boxes", () => {

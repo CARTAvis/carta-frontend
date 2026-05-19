@@ -1,6 +1,6 @@
 import {BrowserMode} from "enums";
 
-const appStoreMock = {
+const APP_STORE_MOCK = {
     activeFrame: null as any,
     appendFileDisabled: false,
     backendService: {
@@ -16,7 +16,7 @@ const appStoreMock = {
 
 jest.mock("stores", () => ({
     AppStore: {
-        Instance: appStoreMock
+        Instance: APP_STORE_MOCK
     },
     DialogStore: {
         Instance: {
@@ -44,14 +44,14 @@ describe("FileBrowserStore.showExportSelectedRegions", () => {
 
     beforeEach(() => {
         jest.restoreAllMocks();
-        appStoreMock.activeFrame = null;
+        APP_STORE_MOCK.activeFrame = null;
         fileBrowserStore = new FileBrowserStore();
         fileBrowserStore.updateExportRegionIndexes([]);
         fileBrowserStore.browserMode = BrowserMode.File;
     });
 
     const setActiveRegionFrame = (regions: any[], selectedRegionsList: any[]) => {
-        appStoreMock.activeFrame = {
+        APP_STORE_MOCK.activeFrame = {
             frameInfo: {fileId: 1},
             regionSet: {
                 regions,

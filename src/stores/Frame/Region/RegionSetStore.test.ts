@@ -51,12 +51,12 @@ jest.mock("models", () => ({
 import {RegionSetStore} from "./RegionSetStore";
 import {CURSOR_REGION_ID} from "./RegionStore";
 
-const backendService = {
+const BACKEND_SERVICE = {
     setCursor: jest.fn(),
     setRegion: jest.fn(() => Promise.resolve({regionId: 100}))
 };
 
-const preference = {
+const PREFERENCE = {
     annotationColor: "#f00",
     annotationDashLength: 0,
     annotationLineWidth: 1,
@@ -69,7 +69,7 @@ const preference = {
     textAnnotationLineWidth: 1
 };
 
-const makeFrame = () =>
+const MakeFrame = () =>
     ({
         center: {x: 0, y: 0},
         frameInfo: {fileId: 1},
@@ -78,8 +78,8 @@ const makeFrame = () =>
         zoomLevel: 1
     }) as any;
 
-const makeRegionSet = () => {
-    const regionSet = new RegionSetStore(makeFrame(), preference as any, backendService as any);
+const MakeRegionSet = () => {
+    const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
     const first = regionSet.addRectangularRegion({x: 10, y: 10}, 4, 4, true);
     first.setRegionId(1);
     const second = regionSet.addRectangularRegion({x: 20, y: 20}, 4, 4, true);
@@ -108,7 +108,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("selectSingleRegion replaces the selected id set and focus", () => {
-        const {regionSet, first, second} = makeRegionSet();
+        const {regionSet, first, second} = MakeRegionSet();
 
         regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
         regionSet.selectSingleRegion(second);
@@ -118,7 +118,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("setSelectionByIds filters cursor and missing ids", () => {
-        const {regionSet, first} = makeRegionSet();
+        const {regionSet, first} = MakeRegionSet();
 
         regionSet.setSelectionByIds([CURSOR_REGION_ID, first.regionId, 999], 999);
 
@@ -127,7 +127,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("toggleRegionSelection adds and removes ids while keeping a valid focus", () => {
-        const {regionSet, first, second} = makeRegionSet();
+        const {regionSet, first, second} = MakeRegionSet();
 
         regionSet.selectSingleRegion(first);
         regionSet.toggleRegionSelection(second);
@@ -140,7 +140,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("selectRegionFromList centralizes toggle, range, and focus selection", () => {
-        const {regionSet, first, second, third} = makeRegionSet();
+        const {regionSet, first, second, third} = MakeRegionSet();
         const regions = [first, second, third];
 
         regionSet.selectRegionFromList(first, regions);
@@ -158,7 +158,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("selectAdjacentRegionFromList handles single and range keyboard navigation", () => {
-        const {regionSet, first, second, third} = makeRegionSet();
+        const {regionSet, first, second, third} = MakeRegionSet();
         const regions = [first, second, third];
 
         regionSet.selectAdjacentRegionFromList(regions, 1, {wrap: true});
@@ -179,7 +179,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("region hotkeys preserve multi-selection while cycling focus", () => {
-        const {regionSet, first, second, third} = makeRegionSet();
+        const {regionSet, first, second, third} = MakeRegionSet();
 
         regionSet.setSelectionByIds([first.regionId, third.regionId], first.regionId);
         regionSet.selectNextRegion();
@@ -198,7 +198,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("clearSelection focuses the cursor region", () => {
-        const {regionSet, first} = makeRegionSet();
+        const {regionSet, first} = MakeRegionSet();
 
         regionSet.selectSingleRegion(first);
         regionSet.clearSelection();
@@ -208,7 +208,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("translateMovingRegionSelection moves selected unlocked regions only", () => {
-        const {regionSet, first, second, third} = makeRegionSet();
+        const {regionSet, first, second, third} = MakeRegionSet();
         second.setLocked(true);
         regionSet.setSelectionByIds([first.regionId, second.regionId, third.regionId], third.regionId);
 
@@ -223,7 +223,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("bulk lock and visibility operations apply to selected regions", () => {
-        const {regionSet, first, second, third} = makeRegionSet();
+        const {regionSet, first, second, third} = MakeRegionSet();
         regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
 
         regionSet.toggleSelectedRegionsLocked();
@@ -242,7 +242,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("visibility changes do not mutate lock state", () => {
-        const {regionSet, first, second} = makeRegionSet();
+        const {regionSet, first, second} = MakeRegionSet();
         second.setLocked(true);
         regionSet.setEditableRegionsOpacity(RegionsOpacity.Invisible);
 
@@ -255,7 +255,7 @@ describe("RegionSetStore multi-selection behavior", () => {
     });
 
     test("bulk locking skips hidden regions", () => {
-        const {regionSet, first, second} = makeRegionSet();
+        const {regionSet, first, second} = MakeRegionSet();
         second.setOpacity(RegionsOpacity.Invisible);
         regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
 

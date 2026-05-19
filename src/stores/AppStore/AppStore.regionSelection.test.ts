@@ -81,28 +81,28 @@ jest.mock("services", () => ({
     }
 }));
 
-const mockMakeStore = (overrides = {}) => ({...overrides});
+const MockMakeStore = (overrides = {}) => ({...overrides});
 
 jest.mock("stores", () => ({
-    AlertStore: {Instance: mockMakeStore()},
-    AnimatorStore: {Instance: mockMakeStore()},
-    CatalogStore: {Instance: mockMakeStore()},
-    ChannelMapStore: {Instance: mockMakeStore()},
-    DialogStore: {Instance: mockMakeStore()},
-    DynamicLayoutStore: {Instance: mockMakeStore()},
-    FileBrowserStore: {Instance: mockMakeStore()},
-    HelpStore: {Instance: mockMakeStore()},
-    HipsQueryStore: {Instance: mockMakeStore()},
-    ImageFittingStore: {Instance: mockMakeStore()},
-    ImageViewConfigStore: {Instance: mockMakeStore({frames: [], visibleFrames: []})},
-    LayoutStore: {Instance: mockMakeStore()},
-    LogStore: {Instance: mockMakeStore({addDebug: jest.fn(), addInfo: jest.fn()})},
-    OverlaySettings: {Instance: mockMakeStore()},
-    PreferenceStore: {Instance: mockMakeStore({autoLaunch: false})},
-    SnippetStore: {Instance: mockMakeStore()},
+    AlertStore: {Instance: MockMakeStore()},
+    AnimatorStore: {Instance: MockMakeStore()},
+    CatalogStore: {Instance: MockMakeStore()},
+    ChannelMapStore: {Instance: MockMakeStore()},
+    DialogStore: {Instance: MockMakeStore()},
+    DynamicLayoutStore: {Instance: MockMakeStore()},
+    FileBrowserStore: {Instance: MockMakeStore()},
+    HelpStore: {Instance: MockMakeStore()},
+    HipsQueryStore: {Instance: MockMakeStore()},
+    ImageFittingStore: {Instance: MockMakeStore()},
+    ImageViewConfigStore: {Instance: MockMakeStore({frames: [], visibleFrames: []})},
+    LayoutStore: {Instance: MockMakeStore()},
+    LogStore: {Instance: MockMakeStore({addDebug: jest.fn(), addInfo: jest.fn()})},
+    OverlaySettings: {Instance: MockMakeStore()},
+    PreferenceStore: {Instance: MockMakeStore({autoLaunch: false})},
+    SnippetStore: {Instance: MockMakeStore()},
     SpatialProfileStore: jest.fn(),
     SpectralProfileStore: jest.fn(),
-    WidgetsStore: {Instance: mockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
+    WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
 }));
 
 import {ImageType} from "enums";
@@ -110,7 +110,7 @@ import {CURSOR_REGION_ID} from "stores/Frame";
 
 import {AppStore} from "./AppStore";
 
-const makeRegion = (regionId: number, locked = false) => ({fileId: 1, regionId, locked}) as any;
+const MakeRegion = (regionId: number, locked = false) => ({fileId: 1, regionId, locked}) as any;
 
 describe("AppStore.deleteSelectedRegions", () => {
     const appStore = AppStore.Instance;
@@ -145,10 +145,10 @@ describe("AppStore.deleteSelectedRegions", () => {
     };
 
     test("deletes selected unlocked regions and clears selection", () => {
-        const cursor = makeRegion(CURSOR_REGION_ID);
-        const first = makeRegion(1);
-        const locked = makeRegion(2, true);
-        const second = makeRegion(3);
+        const cursor = MakeRegion(CURSOR_REGION_ID);
+        const first = MakeRegion(1);
+        const locked = MakeRegion(2, true);
+        const second = MakeRegion(3);
         const clearSelection = jest.fn();
 
         const regionSet = {
@@ -171,9 +171,9 @@ describe("AppStore.deleteSelectedRegions", () => {
     test("does not delete when the region set is locked", () => {
         const regionSet = {
             deleteRegion: jest.fn(),
-            focusedRegion: makeRegion(1),
+            focusedRegion: MakeRegion(1),
             locked: true,
-            regions: [makeRegion(1)],
+            regions: [MakeRegion(1)],
             selectedRegionIds: new Set([1])
         };
         const {result} = callDeleteSelectedRegions(regionSet);
@@ -183,7 +183,7 @@ describe("AppStore.deleteSelectedRegions", () => {
     });
 
     test("deletes focused region when there is no explicit selection", () => {
-        const focusedRegion = makeRegion(7);
+        const focusedRegion = MakeRegion(7);
         const regionSet = {
             deleteRegion: jest.fn(),
             focusedRegion,
@@ -198,7 +198,7 @@ describe("AppStore.deleteSelectedRegions", () => {
     });
 
     test("does not delete locked focused region", () => {
-        const focusedRegion = makeRegion(7, true);
+        const focusedRegion = MakeRegion(7, true);
         const regionSet = {
             deleteRegion: jest.fn(),
             focusedRegion,
