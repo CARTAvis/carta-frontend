@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Added support for pole-mode offset coordinates ([#2786](https://github.com/CARTAvis/carta-frontend/issues/2786)).
+* Added support for pole-mode offset coordinates ([#2672](https://github.com/CARTAvis/carta-frontend/issues/2672)).
 
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750))
