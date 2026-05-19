@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Position, Radio, RadioGroup, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Position, Tooltip} from "@blueprintjs/core";
 
 import {SkyRefIs} from "enums";
 
@@ -21,14 +21,18 @@ export const OffsetCoordinateControlsComponent = ({className, isWcsCoordinates, 
     return (
         <div className={containerClassName}>
             {isWcsCoordinates ? (
-                <RadioGroup className="sky-ref-radio" inline={true} selectedValue={skyRefIs} onChange={event => onSkyRefIsChanged(Number(event.currentTarget.value) as SkyRefIs)}>
-                    <Radio label="Origin" value={SkyRefIs.Origin} />
-                    <Radio label="Pole" value={SkyRefIs.Pole} />
-                </RadioGroup>
+                <ButtonGroup className="sky-ref-buttons">
+                    <Button small={true} active={skyRefIs === SkyRefIs.Origin} onClick={() => onSkyRefIsChanged(SkyRefIs.Origin)}>
+                        Origin
+                    </Button>
+                    <Button small={true} active={skyRefIs === SkyRefIs.Pole} onClick={() => onSkyRefIsChanged(SkyRefIs.Pole)}>
+                        Pole
+                    </Button>
+                </ButtonGroup>
             ) : null}
             <Tooltip content={`Set ${currentReference} to current view center`} position={Position.BOTTOM} hoverOpenDelay={300}>
                 <span>
-                    <Button icon="locate" disabled={!isOffsetCoord} onClick={onUpdateOffsetCenter} />
+                    <Button className="offset-recenter-button" icon="locate" aria-label={`Set ${currentReference} to current view center`} disabled={!isOffsetCoord} onClick={onUpdateOffsetCenter} />
                 </span>
             </Tooltip>
         </div>

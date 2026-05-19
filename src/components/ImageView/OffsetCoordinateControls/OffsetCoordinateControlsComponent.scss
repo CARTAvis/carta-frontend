@@ -3,22 +3,30 @@
 .offset-coordinate-controls {
     min-height: 30px;
     align-items: center;
+    gap: 4px;
 
     &.offset-collapse-content {
         display: flex;
     }
 
-    .sky-ref-radio {
-        margin: 0 0 0 10px;
+    .sky-ref-buttons {
+        margin-left: 6px;
 
-        .#{$ns}-radio {
-            margin: 0 8px 0 0;
+        .#{$ns}-button {
+            height: 30px;
+            min-height: 30px;
+            min-width: 44px;
+            padding: 0 8px;
             font-size: 12px;
         }
     }
 
+    .offset-recenter-button {
+        height: 30px;
+        min-height: 30px;
+    }
+
     .#{$ns}-popover-target {
-        margin-left: 5px;
         flex: none;
     }
 }
