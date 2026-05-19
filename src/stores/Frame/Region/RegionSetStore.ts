@@ -11,6 +11,14 @@ import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
+type AdjacentRegionOptions = {
+    wrap?: boolean;
+    range?: boolean;
+    includeCursor?: boolean;
+    selectedOnly?: boolean;
+    preserveSelection?: boolean;
+};
+
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
     @observable focusedRegion: RegionStore | null;
@@ -202,8 +210,15 @@ export class RegionSetStore {
         this.selectSingleRegion(region);
     };
 
-    @action selectAdjacentRegionFromList = (regions: RegionStore[], direction: 1 | -1, options: {wrap?: boolean; range?: boolean; includeCursor?: boolean} = {}) => {
-        const list = options.includeCursor ? regions : this.getSelectableRegions(regions);
+    @action selectAdjacentRegionFromList = (regions: RegionStore[], direction: 1 | -1, options: Pick<AdjacentRegionOptions, "wrap" | "range" | "includeCursor"> = {}) => {
+        this.selectAdjacentRegion(regions, direction, options);
+    };
+
+    private selectAdjacentRegion = (regions: RegionStore[], direction: 1 | -1, options: AdjacentRegionOptions = {}) => {
+        let list = options.includeCursor ? regions : this.getSelectableRegions(regions);
+        if (options.selectedOnly) {
+            list = list.filter(region => this.selectedRegionIds.has(region.regionId));
+        }
         if (!list.length) {
             return;
         }
@@ -223,7 +238,14 @@ export class RegionSetStore {
             return;
         }
 
-        this.selectSingleRegion(region);
+        if (options.preserveSelection) {
+            this.setFocusedRegion(region);
+            this.selectionPivotRegionId = region.regionId;
+            this.resetKeyboardRangeState();
+        } else {
+            this.selectSingleRegion(region);
+        }
+        region.deselectPoint();
     };
 
     private getSelectableRegions = (regions: RegionStore[]): RegionStore[] => {
@@ -597,59 +619,21 @@ export class RegionSetStore {
         }
     };
 
-    private getCyclableRegionIndices = (): number[] => {
-        const selectedIds = this.selectedRegionIds;
-        const useMultiSelection = selectedIds.size > 1;
-        const indices: number[] = [];
-        this.regions.forEach((region, index) => {
-            if (region.regionId === CURSOR_REGION_ID) {
-                return;
-            }
-            if (useMultiSelection && !selectedIds.has(region.regionId)) {
-                return;
-            }
-            indices.push(index);
-        });
-        return indices;
-    };
-
-    private selectCycledRegion = (index: number) => {
-        const region = this.regions[index];
-        if (!region) {
-            return;
-        }
-
-        if (this.selectedRegionIds.size > 1) {
-            this.setFocusedRegion(region);
-        } else {
-            this.selectSingleRegion(region);
-        }
-        region.deselectPoint();
-    };
-
-    private cycleSelectedRegion = (direction: 1 | -1) => {
+    private selectAdjacentRegionFromHotkey = (direction: 1 | -1) => {
         if (!this.regions || this.regions.length <= 1) {
             return;
         }
 
-        const selectableIndices = this.getCyclableRegionIndices();
-        if (selectableIndices.length === 0) {
-            return;
-        }
-
-        const currentIndex = this.focusedRegion ? this.regions.indexOf(this.focusedRegion) : -1;
-        const currentPos = selectableIndices.indexOf(currentIndex);
-        const length = selectableIndices.length;
-        const nextIndex = currentPos === -1 ? (direction > 0 ? selectableIndices[0] : selectableIndices[length - 1]) : selectableIndices[(currentPos + direction + length) % length];
-        this.selectCycledRegion(nextIndex);
+        const useMultiSelection = this.selectedRegionIds.size > 1;
+        this.selectAdjacentRegion(this.regions, direction, {wrap: true, selectedOnly: useMultiSelection, preserveSelection: useMultiSelection});
     };
 
     @action selectNextRegion = () => {
-        this.cycleSelectedRegion(1);
+        this.selectAdjacentRegionFromHotkey(1);
     };
 
     @action selectPreviousRegion = () => {
-        this.cycleSelectedRegion(-1);
+        this.selectAdjacentRegionFromHotkey(-1);
     };
 
     @action deselectRegion = () => {

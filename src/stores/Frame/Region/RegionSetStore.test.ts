@@ -178,6 +178,25 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(second);
     });
 
+    test("region hotkeys preserve multi-selection while cycling focus", () => {
+        const {regionSet, first, second, third} = makeRegionSet();
+
+        regionSet.setSelectionByIds([first.regionId, third.regionId], first.regionId);
+        regionSet.selectNextRegion();
+
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+
+        regionSet.selectNextRegion();
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(first);
+
+        regionSet.selectSingleRegion(second);
+        regionSet.selectNextRegion();
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([third.regionId]);
+        expect(regionSet.focusedRegion).toBe(third);
+    });
+
     test("clearSelection focuses the cursor region", () => {
         const {regionSet, first} = makeRegionSet();
 
