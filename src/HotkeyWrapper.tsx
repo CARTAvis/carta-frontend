@@ -119,7 +119,6 @@ export class HotkeyService extends React.Component<{}> {
 
         regionSet.setOpacity(RegionsOpacity.Visible);
         regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
-        regionSet.setLocked(false);
     };
 
     static UnlockAllRegions = () => {
@@ -218,7 +217,7 @@ export class HotkeyService extends React.Component<{}> {
         const zoomMultiplier = scaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
-        const canEditSelectedPoint = !region.locked && frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
+        const canEditSelectedPoint = region.visible && !region.locked && frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
 
         if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
             region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);

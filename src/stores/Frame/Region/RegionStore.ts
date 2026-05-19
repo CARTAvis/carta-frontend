@@ -50,7 +50,6 @@ export class RegionStore {
     @observable creating: boolean = false;
     @observable locked: boolean = false;
     @observable opacity: RegionsOpacity = RegionsOpacity.Visible;
-    @observable lockedByVisibility: boolean = false;
     @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
@@ -782,7 +781,6 @@ export class RegionStore {
 
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.lockedByVisibility = false;
             this.locked = locked;
         }
     };
@@ -802,15 +800,6 @@ export class RegionStore {
     @action setOpacity = (opacity: RegionsOpacity) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.opacity = opacity;
-            if (opacity === RegionsOpacity.Invisible) {
-                if (!this.locked) {
-                    this.lockedByVisibility = true;
-                }
-                this.locked = true;
-            } else if (this.lockedByVisibility) {
-                this.locked = false;
-                this.lockedByVisibility = false;
-            }
         }
     };
 

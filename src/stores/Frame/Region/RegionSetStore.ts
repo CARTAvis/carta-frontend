@@ -54,8 +54,12 @@ export class RegionSetStore {
         return this.regions.filter(region => !region.isTemporary && region.regionId !== CURSOR_REGION_ID);
     }
 
+    @computed get visibleEditableRegionsList(): RegionStore[] {
+        return this.editableRegionsList.filter(region => region.visible);
+    }
+
     @computed get selectedRegionsAllLocked(): boolean {
-        const selectedRegions = this.selectedRegionsList;
+        const selectedRegions = this.selectedRegionsList.filter(region => region.visible);
         return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
     }
 
@@ -70,8 +74,19 @@ export class RegionSetStore {
         return RegionsOpacity.Visible;
     }
 
-    @computed get editableRegionsAllLocked(): boolean {
+    @computed get editableRegionsVisibility(): RegionsOpacity {
         const editableRegions = this.editableRegionsList;
+        if (!editableRegions.length || editableRegions.every(region => region.opacity === RegionsOpacity.Invisible)) {
+            return RegionsOpacity.Invisible;
+        }
+        if (editableRegions.every(region => region.opacity === RegionsOpacity.SemiTransparent)) {
+            return RegionsOpacity.SemiTransparent;
+        }
+        return RegionsOpacity.Visible;
+    }
+
+    @computed get editableRegionsAllLocked(): boolean {
+        const editableRegions = this.visibleEditableRegionsList;
         return editableRegions.length > 0 && editableRegions.every(region => region.locked);
     }
 
@@ -290,7 +305,7 @@ export class RegionSetStore {
                   .filter((region): region is RegionStore => !!region)
             : [origin];
 
-        return selectedRegions.filter(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+        return selectedRegions.filter(region => region.regionId !== CURSOR_REGION_ID && region.visible && !region.locked);
     };
 
     @action beginMovingRegionSelection = (origin: RegionStore) => {
@@ -658,17 +673,22 @@ export class RegionSetStore {
     }
 
     @action toggleSelectedRegionsLocked = () => {
-        const locked = !this.selectedRegionsAllLocked;
-        this.selectedRegionsList.forEach(region => region.setLocked(locked));
+        const visibleSelectedRegions = this.selectedRegionsList.filter(region => region.visible);
+        const locked = visibleSelectedRegions.length > 0 && !visibleSelectedRegions.every(region => region.locked);
+        visibleSelectedRegions.forEach(region => region.setLocked(locked));
     };
 
     @action toggleEditableRegionsLocked = () => {
         const locked = !this.editableRegionsAllLocked;
-        this.editableRegionsList.forEach(region => region.setLocked(locked));
+        this.visibleEditableRegionsList.forEach(region => region.setLocked(locked));
     };
 
     @action setEditableRegionsOpacity = (opacity: RegionsOpacity) => {
         this.editableRegionsList.forEach(region => region.setOpacity(opacity));
+    };
+
+    @action toggleEditableRegionsVisibility = () => {
+        this.setEditableRegionsOpacity(RegionSetStore.NextOpacity(this.editableRegionsVisibility));
     };
 
     @action deleteRegion = (region: RegionStore) => {

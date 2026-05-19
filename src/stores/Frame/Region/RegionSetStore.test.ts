@@ -221,4 +221,28 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(second.opacity).toBe(RegionsOpacity.SemiTransparent);
         expect(third.opacity).toBe(RegionsOpacity.Visible);
     });
+
+    test("visibility changes do not mutate lock state", () => {
+        const {regionSet, first, second} = makeRegionSet();
+        second.setLocked(true);
+        regionSet.setEditableRegionsOpacity(RegionsOpacity.Invisible);
+
+        expect(first.locked).toBe(false);
+        expect(second.locked).toBe(true);
+
+        regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
+        expect(first.locked).toBe(false);
+        expect(second.locked).toBe(true);
+    });
+
+    test("bulk locking skips hidden regions", () => {
+        const {regionSet, first, second} = makeRegionSet();
+        second.setOpacity(RegionsOpacity.Invisible);
+        regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
+
+        regionSet.toggleSelectedRegionsLocked();
+
+        expect(first.locked).toBe(true);
+        expect(second.locked).toBe(false);
+    });
 });

@@ -86,25 +86,22 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(line.selectedPointIndex).toBe(0);
     });
 
-    test("visibility locks only unlock when the lock came from visibility", () => {
+    test("visibility changes do not mutate explicit lock state", () => {
         const region = makeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},
             {x: 10, y: 10}
         ]);
 
         region.setOpacity(RegionsOpacity.Invisible);
-        expect(region.locked).toBe(true);
-        expect(region.lockedByVisibility).toBe(true);
+        expect(region.locked).toBe(false);
 
         region.setOpacity(RegionsOpacity.Visible);
         expect(region.locked).toBe(false);
-        expect(region.lockedByVisibility).toBe(false);
 
         region.setLocked(true);
         region.setOpacity(RegionsOpacity.Invisible);
         region.setOpacity(RegionsOpacity.Visible);
         expect(region.locked).toBe(true);
-        expect(region.lockedByVisibility).toBe(false);
     });
 
     test("does not apply visibility or lock changes to cursor region", () => {

@@ -59,7 +59,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
-    @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
 
     private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
@@ -127,20 +126,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    @action private toggleRegionVisibility = () => {
-        switch (this.regionsVisibility) {
-            case RegionsOpacity.Visible:
-                this.regionsVisibility = RegionsOpacity.SemiTransparent;
-                break;
-            case RegionsOpacity.SemiTransparent:
-                this.regionsVisibility = RegionsOpacity.Invisible;
-                break;
-            default:
-                this.regionsVisibility = RegionsOpacity.Visible;
-                break;
-        }
-    };
-
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         if (regionSet?.isRegionInMultiSelection(region)) {
@@ -167,11 +152,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleToggleHideClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        this.toggleRegionVisibility();
-        activeFrame?.regionSet.setOpacity(RegionsOpacity.Visible);
-        activeFrame?.regionSet.setEditableRegionsOpacity(this.regionsVisibility);
-        activeFrame?.regionSet.setLocked(this.regionsVisibility === RegionsOpacity.Invisible);
+        AppStore.Instance.activeFrame?.regionSet.toggleEditableRegionsVisibility();
         ev.stopPropagation();
     };
 
@@ -464,7 +445,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
-            const _visible = region.visible;
             const _opacity = region.opacity;
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
@@ -493,11 +473,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const headerRenderer = (regionsVisibility: RegionsOpacity) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
-                const lockDisabled = regionsVisibility === RegionsOpacity.Invisible;
+                const lockDisabled = !frame.regionSet.visibleEditableRegionsList.length;
                 const allRegionsLocked = frame.regionSet.editableRegionsAllLocked;
-                const showLockedIcon = allRegionsLocked || lockDisabled;
-                const lockIcon = showLockedIcon ? "lock" : "unlock";
-                const lockTooltip = showLockedIcon ? "Unlock all regions" : "Lock all regions";
+                const lockIcon = allRegionsLocked ? "lock" : "unlock";
+                const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
 
                 return (
                     <div className={className} style={props.style}>
@@ -624,8 +603,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId) {
-                const lockDisabled = regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible;
-                const lockIcon = region.locked || this.regionsVisibility === RegionsOpacity.Invisible || region.opacity === RegionsOpacity.Invisible ? "lock" : "unlock";
+                const lockDisabled = regionSet.locked || !region.visible;
+                const lockIcon = region.locked || !region.visible ? "lock" : "unlock";
                 const lockTooltip = lockIcon === "lock" ? "Unlock region" : "Lock region";
                 lockEntry = (
                     <div
@@ -743,7 +722,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             rowCount={1}
                             style={{height: RegionListComponent.HEADER_ROW_HEIGHT, width: "100%"}}
                             className="list-header"
-                            rowComponent={headerRenderer(this.regionsVisibility)}
+                            rowComponent={headerRenderer(frame.regionSet.editableRegionsVisibility)}
                             rowProps={{} as any}
                         />
                         <List
