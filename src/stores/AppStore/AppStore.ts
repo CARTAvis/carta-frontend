@@ -3316,6 +3316,10 @@ export class AppStore {
                 f.setSpectralReference(frame);
             }
         }
+
+        if (oldRef?.secondarySpectralImages.length) {
+            oldRef.secondarySpectralImages = [];
+        }
     };
 
     @action clearSpectralReference = () => {
@@ -3388,6 +3392,10 @@ export class AppStore {
             } else if (f.rasterScalingReference) {
                 f.setRasterScalingReference(frame);
             }
+        }
+
+        if (oldRef?.secondaryRasterScalingImages.length) {
+            oldRef.secondaryRasterScalingImages = [];
         }
     };
 

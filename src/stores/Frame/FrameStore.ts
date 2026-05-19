@@ -3155,7 +3155,7 @@ export class FrameStore {
     // Spectral WCS matching
     @action setSpectralReference = (frame: FrameStore) => {
         if (frame === this) {
-            this.clearSpatialReference();
+            this.clearSpectralReference();
             console.log(`Skipping spectral self-reference`);
             return false;
         }
@@ -3236,6 +3236,11 @@ export class FrameStore {
             return;
         }
 
+        if (this.rasterScalingReference && this.rasterScalingReference !== frame) {
+            this.clearRasterScalingReference();
+        }
+
+        this.secondaryRasterScalingImages = [];
         this.rasterScalingReference = frame;
         this.rasterScalingReference.addSecondaryRasterScalingImage(this);
         this.renderConfig.updateFrom(frame.renderConfig);
