@@ -31,18 +31,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    static readonly AXIS_DATA_TYPE = [
-        CARTA.ColumnType.Double,
-        CARTA.ColumnType.Float,
-        CARTA.ColumnType.Int8,
-        CARTA.ColumnType.Uint8,
-        CARTA.ColumnType.Int16,
-        CARTA.ColumnType.Uint16,
-        CARTA.ColumnType.Int32,
-        CARTA.ColumnType.Uint32,
-        CARTA.ColumnType.Int64,
-        CARTA.ColumnType.Uint64
-    ];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
