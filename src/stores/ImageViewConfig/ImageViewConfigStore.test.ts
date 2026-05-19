@@ -32,9 +32,9 @@ jest.mock("stores/Frame", () => ({
 jest.mock("stores", () => {
     const instance = {
         activeImage: null,
-        updateActiveImage: x => mockUpdateActiveImage(x),
-        isActiveImage: () => mockIsActiveImage(),
-        setActiveImage: x => mockSetActiveImage(x)
+        updateActiveImage: x => MockUpdateActiveImage(x),
+        isActiveImage: () => MockIsActiveImage(),
+        setActiveImage: x => MockSetActiveImage(x)
     };
 
     class MockColorBlendingStore {
@@ -113,9 +113,9 @@ describe("ImageViewConfigStore", () => {
     const resetStoreState = () => {
         imageViewConfigStore.removeAllImages();
         (imageViewConfigStore as any).nextColorBlendingId = 0;
-        mockUpdateActiveImage.mockReset();
-        mockIsActiveImage.mockReset();
-        mockSetActiveImage.mockReset();
+        MockUpdateActiveImage.mockReset();
+        MockIsActiveImage.mockReset();
+        MockSetActiveImage.mockReset();
     };
 
     const setupColorBlendings = () => {
@@ -193,7 +193,7 @@ describe("ImageViewConfigStore", () => {
         it("does not reuse ids after a color blending is removed", () => {
             imageViewConfigStore.addFrame(mockFrame1);
             const first = imageViewConfigStore.createColorBlending();
-            mockIsActiveImage.mockReturnValue(false);
+            MockIsActiveImage.mockReturnValue(false);
             imageViewConfigStore.removeColorBlending(first);
 
             const second = imageViewConfigStore.createColorBlending();
@@ -267,7 +267,7 @@ describe("ImageViewConfigStore", () => {
             imageViewConfigStore.reorderImage(2, 0, 1);
             expect(imageViewConfigStore.imageListSummary[0]).toEqual({type: ImageType.FRAME, id: mockFrame2.id});
 
-            mockIsActiveImage.mockImplementationOnce(() => false);
+            MockIsActiveImage.mockImplementationOnce(() => false);
             imageViewConfigStore.removeColorBlending(cb);
             expect(imageViewConfigStore.imageListSummary.some(entry => entry.type === ImageType.COLOR_BLENDING)).toBe(false);
 
