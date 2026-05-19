@@ -47,7 +47,7 @@ import {
     type Workspace,
     type WorkspaceFile
 } from "models";
-import {getEnumSnapshots as getEnumSnapshotsFromRegistry, listEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
+import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,

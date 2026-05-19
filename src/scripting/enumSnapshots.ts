@@ -46,9 +46,9 @@ const FRONTEND_REGISTRY: Record<string, EnumLike> = buildRegistry(FrontendEnums)
 const PROTOBUF_REGISTRY: Record<string, EnumLike> = buildRegistry(CARTA);
 const SNAPSHOT_NAMES: string[] = [...Object.keys(FRONTEND_REGISTRY), ...Object.keys(PROTOBUF_REGISTRY).map(name => `${PROTOBUF_PREFIX}${name}`)].sort();
 
-export const listEnumSnapshots = (): string[] => [...SNAPSHOT_NAMES];
+export const ListEnumSnapshots = (): string[] => [...SNAPSHOT_NAMES];
 
-export const getEnumSnapshots = (names: string[]): EnumSnapshot[] =>
+export const GetEnumSnapshots = (names: string[]): EnumSnapshot[] =>
     names.map(name => {
         const isProtobufEnum = name.startsWith(PROTOBUF_PREFIX);
         const registry = isProtobufEnum ? PROTOBUF_REGISTRY : FRONTEND_REGISTRY;
