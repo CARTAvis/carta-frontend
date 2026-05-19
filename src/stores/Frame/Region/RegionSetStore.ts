@@ -226,7 +226,7 @@ export class RegionSetStore {
     }
 
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
-        return this.regions?.filter(r => r.isValid && r.regionId !== 0 && r.visible)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
+        return this.regions?.filter(r => r.isValid && r.regionId !== CURSOR_REGION_ID && r.visible)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
     @computed get isNewRegionAnnotation(): boolean {
