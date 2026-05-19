@@ -15,6 +15,7 @@ import {
     ImageViewComponent,
     LayerListComponent,
     LogComponent,
+    PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
@@ -1726,45 +1727,6 @@ export class WidgetsStore {
         }
         return id;
     }
-
-    handleToolbarWidgetDragStart = (e: React.DragEvent, widgetConfig: DefaultWidgetConfig) => {
-        const layoutRef = LayoutStore.Instance.layoutRef;
-        if (!layoutRef?.current) {
-            return;
-        }
-
-        const id = this.addWidgetByType(widgetConfig.type);
-        if (!id) {
-            return;
-        }
-
-        const tabJson: any = {
-            type: "tab",
-            component: widgetConfig.type,
-            name: widgetConfig.title || widgetConfig.type,
-            id,
-            config: {id},
-            // remove the below line if we migrate plotly.js to chart.js
-            ...(widgetConfig.type === CatalogPlotComponent.WIDGET_CONFIG.type && {enablePopout: false})
-        };
-
-        let dropped = false;
-        layoutRef.current.addTabWithDragAndDrop(e.nativeEvent, tabJson, (node: TabNode | undefined) => {
-            if (node) {
-                dropped = true;
-            }
-        });
-
-        // Clean up widget store if drag was cancelled (no drop)
-        const target = e.currentTarget;
-        const onDragEnd = () => {
-            target.removeEventListener("dragend", onDragEnd);
-            if (!dropped) {
-                this.removeWidget(id, widgetConfig.type);
-            }
-        };
-        target.addEventListener("dragend", onDragEnd);
-    };
 
     @action selectFloatingWidget = (id: string) => {
         const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
