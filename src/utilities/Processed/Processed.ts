@@ -34,7 +34,7 @@ export interface ProcessedColumnData {
 }
 
 export class ProtobufProcessing {
-    static ProcessSpatialProfile(profile: CARTA.ISpatialProfile): ProcessedSpatialProfile {
+    public static ProcessSpatialProfile(profile: CARTA.ISpatialProfile): ProcessedSpatialProfile {
         if (profile.rawValuesFp32 && profile.rawValuesFp32.length && profile.rawValuesFp32.length % 4 === 0) {
             return {
                 coordinate: profile.coordinate,
@@ -56,7 +56,7 @@ export class ProtobufProcessing {
         };
     }
 
-    static ProcessSpectralProfile(profile: CARTA.ISpectralProfile, progress: number): ProcessedSpectralProfile {
+    public static ProcessSpectralProfile(profile: CARTA.ISpectralProfile, progress: number): ProcessedSpectralProfile {
         if (profile.rawValuesFp64 && profile.rawValuesFp64.length && profile.rawValuesFp64.length % 8 === 0) {
             return {
                 coordinate: profile.coordinate,
@@ -81,7 +81,7 @@ export class ProtobufProcessing {
         };
     }
 
-    static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
+    public static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
         const isCompressed = contourSet.decimationFactor && contourSet.decimationFactor >= 1;
 
         let floatCoordinates: Float32Array | undefined;
@@ -109,7 +109,7 @@ export class ProtobufProcessing {
         };
     }
 
-    static ProcessContourData(contourData: CARTA.IContourImageData): ProcessedContourData {
+    public static ProcessContourData(contourData: CARTA.IContourImageData): ProcessedContourData {
         return {
             fileId: contourData.fileId,
             channel: contourData.channel,
@@ -120,7 +120,7 @@ export class ProtobufProcessing {
         };
     }
 
-    static GetProcessedData(column: CARTA.IColumnData): ProcessedColumnData {
+    public static GetProcessedData(column: CARTA.IColumnData): ProcessedColumnData {
         let data: TypedArray;
         switch (column.dataType) {
             case CARTA.ColumnType.Uint8:
@@ -168,7 +168,7 @@ export class ProtobufProcessing {
         return {dataType: column.dataType, data: data};
     }
 
-    static ProcessCatalogData(catalogData: {[k: string]: CARTA.IColumnData}): Map<number, ProcessedColumnData> {
+    public static ProcessCatalogData(catalogData: {[k: string]: CARTA.IColumnData}): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const originalMap = new Map(Object.entries(catalogData));
         originalMap.forEach((column, i) => {

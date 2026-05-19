@@ -73,7 +73,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -104,7 +104,7 @@ export const PREVIEW_PV_FILEID = -2;
 export class AppStore {
     private static staticInstance: AppStore;
 
-    static get Instance() {
+    public static get Instance() {
         return AppStore.staticInstance || new AppStore();
     }
 
@@ -894,7 +894,7 @@ export class AppStore {
             }
 
             // Display confirmation if image has secondary images
-            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
+            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(Distinct);
             const numSecondaries = secondaries.length;
             if (numSecondaries) {
                 const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);

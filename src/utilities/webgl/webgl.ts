@@ -1,5 +1,5 @@
 import {AlertStore} from "stores";
-import {TemplateNodes} from "utilities";
+import {TEMPLATE_NODES} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
 
@@ -99,7 +99,7 @@ export function initWebGL() {
     const gl = document.createElement("canvas").getContext("webgl");
     const floatExtension = gl?.getExtension("OES_texture_float");
     if (!gl || !floatExtension) {
-        AlertStore.Instance.showAlert(TemplateNodes.WebGLErrorMessage, "issue");
+        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGLErrorMessage, "issue");
         return null;
     }
     return gl;
@@ -108,7 +108,7 @@ export function initWebGL() {
 export function initWebGL2() {
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
-        AlertStore.Instance.showAlert(TemplateNodes.WebGL2ErrorMessage, "issue");
+        AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGL2ErrorMessage, "issue");
         return null;
     }
     return gl;

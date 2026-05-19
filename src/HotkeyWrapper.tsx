@@ -31,35 +31,35 @@ export class HotkeyService extends React.Component<{}> {
         );
     }
 
-    static NextChannel = () => {
+    public static NextChannel = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(1, 0);
         }
     };
 
-    static PrevChannel = () => {
+    public static PrevChannel = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(-1, 0);
         }
     };
 
-    static NextStokes = () => {
+    public static NextStokes = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, 1);
         }
     };
 
-    static PrevStokes = () => {
+    public static PrevStokes = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, -1);
         }
     };
 
-    static ToggleDarkTheme = () => {
+    public static ToggleDarkTheme = () => {
         const appStore = AppStore.Instance;
         if (appStore.darkTheme) {
             appStore.setLightTheme();
@@ -68,7 +68,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static ToggleCreateMode = () => {
+    public static ToggleCreateMode = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.toggleActiveLayer();
@@ -76,7 +76,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static ToggleRegionLock = () => {
+    public static ToggleRegionLock = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -95,7 +95,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static ToggleRegionVisibility = () => {
+    public static ToggleRegionVisibility = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -111,7 +111,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static ShowAllRegions = () => {
+    public static ShowAllRegions = () => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         if (!regionSet) {
             return;
@@ -121,7 +121,7 @@ export class HotkeyService extends React.Component<{}> {
         regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
     };
 
-    static UnlockAllRegions = () => {
+    public static UnlockAllRegions = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -136,7 +136,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static HandleRegionEsc = () => {
+    public static HandleRegionEsc = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
         if (!regionSet) {
@@ -163,7 +163,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static EnterPointSelection = () => {
+    public static EnterPointSelection = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
         if (!regionSet?.focusedRegion || regionSet.selectedRegionCount > 1) {
@@ -176,7 +176,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static SelectNextRegionOrPoint = () => {
+    public static SelectNextRegionOrPoint = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
         if (!regionSet) {
@@ -191,7 +191,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static SelectPreviousRegionOrPoint = () => {
+    public static SelectPreviousRegionOrPoint = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
         if (!regionSet) {
@@ -206,7 +206,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, scaleWithZoom: boolean = true) => {
+    public static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, scaleWithZoom: boolean = true) => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const region = frame?.regionSet.focusedRegion;
@@ -236,7 +236,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static MoveSelectedRegionOrChangeChannel = (deltaX: number, deltaY: number, channelDelta: number) => {
+    public static MoveSelectedRegionOrChangeChannel = (deltaX: number, deltaY: number, channelDelta: number) => {
         const appStore = AppStore.Instance;
         const region = appStore.activeFrame?.regionSet.focusedRegion;
         if (region && region.regionId !== CURSOR_REGION_ID) {
@@ -249,7 +249,7 @@ export class HotkeyService extends React.Component<{}> {
     };
 
     // For display in custom hotkeys dialog
-    static NavigationDisplayHotkeys() {
+    public static NavigationDisplayHotkeys() {
         const base = {group: "Navigation", global: true};
         const items = [
             {combo: "click", label: "Pan image"},
@@ -261,7 +261,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static RegionDisplayHotkeys() {
+    public static RegionDisplayHotkeys() {
         const base = {group: "Regions", global: true};
         const items = [
             {combo: "click", label: "Select region/point"},
@@ -279,7 +279,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static RegionImageViewerDisplayHotkeys() {
+    public static RegionImageViewerDisplayHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Regions (Image Viewer)", global: true};
@@ -300,7 +300,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static RegionListDisplayHotkeys() {
+    public static RegionListDisplayHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Regions (Region List)", global: true};
@@ -319,7 +319,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static RegionHotkeys() {
+    public static RegionHotkeys() {
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
@@ -338,7 +338,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // Only handle Tab/Shift+Tab when there is an active non-cursor region
-    static HandleTab(e: KeyboardEvent, action: () => void) {
+    public static HandleTab(e: KeyboardEvent, action: () => void) {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
         const region = regionSet?.focusedRegion;
         if (!region || region.regionId === CURSOR_REGION_ID) {
@@ -356,7 +356,7 @@ export class HotkeyService extends React.Component<{}> {
         action();
     }
 
-    static ConfirmDeleteRegions = async () => {
+    public static ConfirmDeleteRegions = async () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const regionSet = frame?.regionSet;
@@ -380,7 +380,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static TryHandleRegionDeleteHotkey = (): boolean => {
+    public static TryHandleRegionDeleteHotkey = (): boolean => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const regionSet = frame?.regionSet;
@@ -405,7 +405,7 @@ export class HotkeyService extends React.Component<{}> {
         return false;
     };
 
-    static RegionHiddenHotkeys() {
+    public static RegionHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
@@ -428,7 +428,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static FrameControlHotkeys() {
+    public static FrameControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
@@ -444,7 +444,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // Hidden hotkeys for input method compatibility
-    static FrameControlHiddenHotkeys() {
+    public static FrameControlHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
@@ -455,7 +455,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static FileControlHotkeys() {
+    public static FileControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "File controls", global: true, allowInInput: false, preventDefault: true};
@@ -470,7 +470,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static OtherHotkeys() {
+    public static OtherHotkeys() {
         const appStore = AppStore.Instance;
         const base = {group: "Other", global: true, allowInInput: false, preventDefault: true};
         const items = [
@@ -482,7 +482,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static GetHotkeyDefinitionsForDisplay() {
+    public static GetHotkeyDefinitionsForDisplay() {
         const toElements = (hotkeys: any[]) =>
             hotkeys.map((hotkey, index) => {
                 return <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
@@ -516,7 +516,7 @@ export class HotkeyService extends React.Component<{}> {
         };
     }
 
-    static RenderHotkeyGroups() {
+    public static RenderHotkeyGroups() {
         const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
         const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.animatorHotkeys, hotkeys.regionHotKeys, hotkeys.regionImageViewerHotKeys, hotkeys.regionListHotKeys, hotkeys.otherHotKeys];
 

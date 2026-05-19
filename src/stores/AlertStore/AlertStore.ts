@@ -9,7 +9,7 @@ import {Deferred} from "services";
 export class AlertStore {
     private static staticInstance: AlertStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!AlertStore.staticInstance) {
             AlertStore.staticInstance = new AlertStore();
         }

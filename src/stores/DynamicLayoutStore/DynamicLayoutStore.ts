@@ -11,7 +11,7 @@ export class DynamicLayoutStore {
 
     public static readonly ToasterTimeout = 1500;
 
-    static get Instance() {
+    public static get Instance() {
         if (!DynamicLayoutStore.staticInstance) {
             DynamicLayoutStore.staticInstance = new DynamicLayoutStore();
         }
