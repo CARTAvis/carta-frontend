@@ -4,7 +4,7 @@ import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import type {CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
