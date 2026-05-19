@@ -91,6 +91,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
+            // move the ast setting here to ensure ast is updated before plotting
             if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
                 const formatStringX = settings.numbers.formatStringX;
                 const formatStyingY = settings.numbers.formatStringY;
@@ -255,6 +256,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
             `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
         const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+
         if (frame.isPVImage && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting);
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
@@ -263,7 +265,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // Keep dummy variable reads for MobX dependency tracking
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
+            const formatStringY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             const isWcsCoordinates = OverlaySettings.Instance.isWcsCoordinates;
             /* eslint-enable @typescript-eslint/no-unused-vars */
