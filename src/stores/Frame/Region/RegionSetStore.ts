@@ -24,6 +24,7 @@ export class RegionSetStore {
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
     private readonly preference: PreferenceStore;
+    private movingRegionSelection: RegionStore[] | null = null;
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
         this.frame = frame;
@@ -151,19 +152,23 @@ export class RegionSetStore {
             this.setFocusedRegion(origin);
         }
 
-        for (const region of this.getMovableSelection(origin)) {
+        this.movingRegionSelection = this.getMovableSelection(origin);
+        for (const region of this.movingRegionSelection) {
             region.beginEditing();
         }
     };
 
     @action endMovingRegionSelection = (origin: RegionStore) => {
-        for (const region of this.getMovableSelection(origin)) {
+        const movingRegionSelection = this.movingRegionSelection ?? this.getMovableSelection(origin);
+        for (const region of movingRegionSelection) {
             region.endEditing();
         }
+        this.movingRegionSelection = null;
     };
 
     @action translateMovingRegionSelection = (origin: RegionStore, delta: Point2D) => {
-        for (const region of this.getMovableSelection(origin)) {
+        const movingRegionSelection = this.movingRegionSelection ?? this.getMovableSelection(origin);
+        for (const region of movingRegionSelection) {
             region.translate(delta);
         }
     };
