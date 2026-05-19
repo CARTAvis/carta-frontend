@@ -10,7 +10,7 @@ import {clamp} from "utilities";
 export class ImageViewConfigStore {
     private static staticInstance: ImageViewConfigStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ImageViewConfigStore.staticInstance) {
             ImageViewConfigStore.staticInstance = new ImageViewConfigStore();
         }

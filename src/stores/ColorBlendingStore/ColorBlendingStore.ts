@@ -24,13 +24,13 @@ export class ColorBlendingStore {
     /** The filename of the color blended image. */
     readonly filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
-    static readonly ColormapSets: ReadonlyMap<ColormapSet, ColormapSetConfig> = new Map([
+    public static readonly ColormapSets: ReadonlyMap<ColormapSet, ColormapSetConfig> = new Map([
         [ColormapSet.RGB, {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
         [ColormapSet.CMY, {type: "collection", colormaps: [ColorMap.Magenta, ColorMap.Yellow, ColorMap.Cyan]}],
         [ColormapSet.Rainbow, {type: "gradient", colormap: ColorMap.Rainbow, inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
-    static readonly DefaultLayerLimit = 10;
+    public static readonly DefaultLayerLimit = 10;
 
     /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string = "";

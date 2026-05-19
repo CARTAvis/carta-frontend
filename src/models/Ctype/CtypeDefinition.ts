@@ -1,40 +1,40 @@
 import {type CARTA} from "carta-protobuf";
 
-const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET", "DISTANCE"];
-const ctypeSpectral = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIVE", "ENER", "WAVN", "ZOPT", "VELO", "BETA"];
-const ctypeTime = ["TIME", "EPOCH"];
-const ctypeStokes = ["STOKES"];
-const ctypeRM = ["RM"]; // Rotation Measure
+const CTYPE_SPATIAL = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET", "DISTANCE"];
+const CTYPE_SPECTRAL = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIVE", "ENER", "WAVN", "ZOPT", "VELO", "BETA"];
+const CTYPE_TIME = ["TIME", "EPOCH"];
+const CTYPE_STOKES = ["STOKES"];
+const CTYPE_RM = ["RM"]; // Rotation Measure
 
 export const DetermineCtypeAbbr = (ctype: string): {abbr: string; rank: number} => {
     const normalizedStr = ctype.toUpperCase();
 
-    for (let i = 0; i < ctypeSpatial.length; i++) {
-        if (normalizedStr.includes(ctypeSpatial[i])) {
+    for (let i = 0; i < CTYPE_SPATIAL.length; i++) {
+        if (normalizedStr.includes(CTYPE_SPATIAL[i])) {
             return {abbr: "XY", rank: 0};
         }
     }
 
-    if (ctypeSpectral.includes(normalizedStr)) {
+    if (CTYPE_SPECTRAL.includes(normalizedStr)) {
         return {abbr: "Z", rank: 1};
     }
 
-    if (ctypeStokes.includes(normalizedStr)) {
+    if (CTYPE_STOKES.includes(normalizedStr)) {
         return {abbr: "P", rank: 2};
     }
 
-    if (ctypeTime.includes(normalizedStr)) {
+    if (CTYPE_TIME.includes(normalizedStr)) {
         return {abbr: "T", rank: 3};
     }
 
-    if (ctypeRM.includes(normalizedStr)) {
+    if (CTYPE_RM.includes(normalizedStr)) {
         return {abbr: "RM", rank: 4};
     }
 
     return {abbr: normalizedStr, rank: 5};
 };
 
-export const CtypeName = new Map<string, string>([
+export const CTYPE_NAME = new Map<string, string>([
     ["XY", "Spatial"],
     ["Z", "Spectral"],
     ["P", "Stokes"],
@@ -46,7 +46,7 @@ export function CtypeAbbrToName(ctypes: string): string {
     const ctypeName: string[] = [];
 
     ctypes.split(",").forEach(ctype => {
-        ctypeName.push(CtypeName.has(ctype) ? (CtypeName.get(ctype) as string) : ctype);
+        ctypeName.push(CTYPE_NAME.has(ctype) ? (CTYPE_NAME.get(ctype) as string) : ctype);
     });
 
     return ctypeName.join(", ");

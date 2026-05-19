@@ -1,6 +1,6 @@
 // Mock for carta_computation WASM module
 
-const mockCartaComputation = {
+const MOCK_CARTA_COMPUTATION = {
     onReady: Promise.resolve(),
     ZstdReady: true,
     runtimeInit: true,
@@ -28,8 +28,8 @@ const mockCartaComputation = {
     destPtr: 0
 };
 
-module.exports = mockCartaComputation;
+module.exports = MOCK_CARTA_COMPUTATION;
 // Mark as ES module
 module.exports.__esModule = true;
 // Also export as default for different import styles
-module.exports.default = mockCartaComputation;
+module.exports.default = MOCK_CARTA_COMPUTATION;
