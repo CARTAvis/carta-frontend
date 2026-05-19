@@ -155,7 +155,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name ?? "checkbox"}
                 name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader, columnData, selectionType)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData) : undefined}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData ?? [])}
             />
         );
     };
@@ -166,7 +166,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name ?? "data"}
                 name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData, columnHeader) : undefined}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData ?? [], columnHeader)}
             />
         );
     };
@@ -180,6 +180,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         let cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         if (typeof cellContext === "boolean" && this.props.catalogType === CatalogType.FILE) {
             cellContext = cellContext.toString();
+        } else if (typeof cellContext === "number" && isNaN(cellContext)) {
+            cellContext = "NaN";
         }
         let cell = cellContext;
         if (this.props.catalogType === CatalogType.SIMBAD) {

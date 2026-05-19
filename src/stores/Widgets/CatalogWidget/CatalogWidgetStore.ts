@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, type CatalogSystemType, CatalogTextureType, ColorMap, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
@@ -53,12 +53,18 @@ export class CatalogWidgetStore {
     @observable showSelectedData: boolean = false;
     @observable catalogTableAutoScroll: boolean = false;
     @observable catalogPlotType: CatalogPlotType = CatalogPlotType.ImageOverlay;
+    @observable autoSelectImageOverlayAxesAttempted: boolean = false;
     @observable catalogSize: number = 10.0; // in pixel
     @observable showedCatalogSize: number = 10.0;
     @observable catalogColor: string = Colors.TURQUOISE3;
     @observable catalogShape: CatalogOverlayShape = CatalogOverlayShape.CIRCLE_LINED;
     @observable xAxis: string = CatalogOverlay.NONE;
     @observable yAxis: string = CatalogOverlay.NONE;
+    @observable hasPlottedImageOverlay: boolean = false;
+    @observable plottedImageOverlayXAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlayYAxis: string = CatalogOverlay.NONE;
+    @observable plottedImageOverlaySystem: CatalogSystemType | undefined = undefined;
+    @observable plottedImageOverlayMaxRows: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     @observable highlightColor: string = Colors.RED2;
     @observable settingsTabId: CatalogSettingsTabs = CatalogSettingsTabs.SIZE;
@@ -250,6 +256,7 @@ export class CatalogWidgetStore {
      * Reset all settings of catalog source plot to default
      */
     @action resetMaps() {
+        this.clearPlottedImageOverlayState();
         // size
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
@@ -812,6 +819,28 @@ export class CatalogWidgetStore {
 
     @action setyAxis(yColumnName: string) {
         this.yAxis = yColumnName;
+    }
+
+    @action setAutoSelectImageOverlayAxesAttempted(attempted: boolean) {
+        this.autoSelectImageOverlayAxesAttempted = attempted;
+    }
+
+    @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
+        this.hasPlottedImageOverlay = true;
+        this.plottedImageOverlayXAxis = xColumnName;
+        this.plottedImageOverlayYAxis = yColumnName;
+        this.plottedImageOverlaySystem = system;
+        if (maxRows !== undefined) {
+            this.plottedImageOverlayMaxRows = maxRows;
+        }
+    }
+
+    @action clearPlottedImageOverlayState() {
+        this.hasPlottedImageOverlay = false;
+        this.plottedImageOverlayXAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlayYAxis = CatalogOverlay.NONE;
+        this.plottedImageOverlaySystem = undefined;
+        this.plottedImageOverlayMaxRows = undefined;
     }
 
     @action setTableSeparatorPosition(position: string) {
