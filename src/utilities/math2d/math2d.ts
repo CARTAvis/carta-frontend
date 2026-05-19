@@ -157,7 +157,7 @@ export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): {poin
     };
 }
 
-function strictLineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+function lineSegmentsProperlyIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
     const lineCD = subtract2D(d, c);
     const crossA = cross2D(lineCD, subtract2D(a, d));
     const crossB = cross2D(lineCD, subtract2D(b, d));
@@ -277,7 +277,7 @@ export function simplePolygonTest(points: Point2D[]) {
         for (let j = i + 2; j < points.length; j++) {
             const c = points[j];
             const d = points[(j + 1) % points.length];
-            const intersection = strictLineSegmentsIntersect(a, b, c, d);
+            const intersection = lineSegmentsProperlyIntersect(a, b, c, d);
             if (intersection) {
                 return false;
             }
@@ -299,7 +299,7 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     for (let j = 1; j < points.length; j++) {
         const c = points[(j + pointIndex) % points.length];
         const d = points[(j + pointIndex + 1) % points.length];
-        const intersection = strictLineSegmentsIntersect(a, b, c, d);
+        const intersection = lineSegmentsProperlyIntersect(a, b, c, d);
         if (intersection) {
             return false;
         }
