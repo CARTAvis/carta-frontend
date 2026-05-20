@@ -34,10 +34,10 @@ export class Font {
     }
 }
 
- 
+/* eslint-disable @typescript-eslint/naming-convention */
 export const AstFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
 const FontSelect = Select<Font>;
- 
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const RenderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;

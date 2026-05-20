@@ -11,7 +11,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
- 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const DashModeSelect = Select<ContourDashMode>;
 
 @observer

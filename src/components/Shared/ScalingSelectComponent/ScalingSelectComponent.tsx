@@ -29,7 +29,7 @@ const EQUATION_PNG_MAP = new Map([
     [FrameScaling.POWER, powerPng]
 ]);
 
- 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ScalingSelect = Select<FrameScaling>;
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};

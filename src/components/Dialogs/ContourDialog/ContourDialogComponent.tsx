@@ -22,10 +22,10 @@ import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelC
 
 import "./ContourDialogComponent.scss";
 
- 
+/* eslint-disable @typescript-eslint/naming-convention */
 const DataSourceSelect = Select<FrameStore>;
 const HistogramSelect = Select<boolean>;
- 
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @observer
 export class ContourDialogComponent extends React.Component {

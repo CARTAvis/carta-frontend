@@ -19,7 +19,7 @@ import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
- 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const PercentileSelect = Select<string>;
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB

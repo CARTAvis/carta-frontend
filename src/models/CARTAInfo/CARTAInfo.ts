@@ -1,6 +1,6 @@
 import moment from "moment";
 
- 
+/* eslint-disable @typescript-eslint/naming-convention */
 const {version} = require("../../../package.json");
 
 const isDev = version.includes("-dev") || version.includes("-beta");
@@ -19,4 +19,4 @@ export const CARTA_INFO = {
     year,
     fullName: "Cube Analysis and Rendering Tool for Astronomy"
 };
- 
+/* eslint-enable @typescript-eslint/naming-convention */

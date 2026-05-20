@@ -59,17 +59,22 @@ export default [
                     modifiers: ["private", "static", "readonly"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: "variable",
-                //     modifiers: ["const", "global"],
-                //     format: ["UPPER_CASE"],
-                // },
-                // {
-                //     selector: "variable",
-                //     types: ["function"],
-                //     modifiers: ["const", "global"],
-                //     format: ["PascalCase"],
-                // },
+                {
+                    selector: "classProperty",
+                    modifiers: ["protected"],
+                    format: ["camelCase"],
+                },
+                {
+                    selector: "variable",
+                    modifiers: ["const", "global"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "variable",
+                    types: ["function"],
+                    modifiers: ["const", "global"],
+                    format: ["PascalCase"],
+                },
                 // {
                 //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                 //     format: ["camelCase"],
