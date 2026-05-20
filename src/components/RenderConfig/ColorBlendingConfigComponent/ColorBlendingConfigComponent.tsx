@@ -74,7 +74,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip>
                     <Tooltip content="Remove layer" disabled={alphaIndex <= 0}>
-                        <Button icon="small-cross" minimal={true} style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
+                        <Button icon="small-cross" variant="minimal" style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
                     </Tooltip>
                 </div>
             </>

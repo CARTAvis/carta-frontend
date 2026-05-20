@@ -390,7 +390,7 @@ export class FileInfoComponent extends React.Component<{
                 </span>
                 <Button
                     icon="caret-left"
-                    minimal={true}
+                    variant="minimal"
                     onMouseDown={() => this.handleClickMatched(-99)}
                     onMouseUp={() => this.handleClickMatched(0)}
                     onKeyDown={ev => this.handleClickMatched(-1, ev)}
@@ -398,7 +398,7 @@ export class FileInfoComponent extends React.Component<{
                 />
                 <Button
                     icon="caret-right"
-                    minimal={true}
+                    variant="minimal"
                     onMouseDown={() => this.handleClickMatched(99)}
                     onMouseUp={() => this.handleClickMatched(0)}
                     onKeyDown={ev => this.handleClickMatched(1, ev)}

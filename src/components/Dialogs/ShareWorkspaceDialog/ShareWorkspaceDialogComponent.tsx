@@ -63,7 +63,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     if (shareKey) {
         const baseUrl = window.location.href.split("?")[0];
         const link = `${baseUrl}?key=${shareKey}`;
-        const copyButton = <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => copyToClipboard(link)} />;
+        const copyButton = <AnchorButton intent={Intent.SUCCESS} variant="minimal" icon="clipboard" onClick={() => copyToClipboard(link)} />;
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
         const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;

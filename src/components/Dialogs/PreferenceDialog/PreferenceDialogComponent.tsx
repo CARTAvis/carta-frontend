@@ -884,7 +884,7 @@ export class PreferenceDialogComponent extends React.Component {
                         {preference.telemetryUuid && (
                             <div className="telemetry-id-text">
                                 <p>Anonymous user ID: {appStore.telemetryService.decodedUserId}</p>
-                                <Button minimal={true} intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
+                                <Button variant="minimal" intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
                             </div>
                         )}
                     </Callout>

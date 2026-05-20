@@ -136,10 +136,10 @@ export class RegionDialogComponent extends React.Component {
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
                 <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock} />
+                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock} />
                 </Tooltip>
                 <Tooltip content={"Focus"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
+                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
                 </Tooltip>
             </React.Fragment>
         );
