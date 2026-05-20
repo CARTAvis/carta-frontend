@@ -122,7 +122,7 @@ enum Kelvin {
 }
 
 const Jys = Object.values(Jansky);
-const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
+const INTENSITY_OPTIONS_MAP = new Map<IntensityUnitType, string[]>([
     [IntensityUnitType.Kelvin, Object.values(Kelvin)],
     [IntensityUnitType.JyBeam, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
     [IntensityUnitType.JySr, Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
@@ -131,19 +131,19 @@ const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
 ]);
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
-    const lowercaseJyBeam = IntensityOptionsMap.get(IntensityUnitType.JyBeam)?.map(unit => {
+    const lowercaseJyBeam = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyBeam)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJySr = IntensityOptionsMap.get(IntensityUnitType.JySr)?.map(unit => {
+    const lowercaseJySr = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JySr)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyArcsec2 = IntensityOptionsMap.get(IntensityUnitType.JyArcsec2)?.map(unit => {
+    const lowercaseJyArcsec2 = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyArcsec2)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyPixel = IntensityOptionsMap.get(IntensityUnitType.JyPixel)?.map(unit => {
+    const lowercaseJyPixel = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyPixel)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseKelvins = IntensityOptionsMap.get(IntensityUnitType.Kelvin)?.map(unit => {
+    const lowercaseKelvins = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.Kelvin)?.map(unit => {
         return unit.toLowerCase();
     });
     const lowercaseUnitStr = unitStr?.toLowerCase();
@@ -215,7 +215,7 @@ export const GetIntensityOptions = (config: IntensityConfig): string[] => {
     const convertibleTypes = FindConvertibleIntensityTypes(config);
     const supportedOptions: string[] = [];
     convertibleTypes?.forEach(type => {
-        supportedOptions.push(...(IntensityOptionsMap.get(type) ?? []));
+        supportedOptions.push(...(INTENSITY_OPTIONS_MAP.get(type) ?? []));
     });
     return supportedOptions;
 };

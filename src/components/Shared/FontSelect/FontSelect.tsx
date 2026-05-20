@@ -34,21 +34,23 @@ export class Font {
     }
 }
 
-const astFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
+/* eslint-disable @typescript-eslint/naming-convention */
+export const AstFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
 const FontSelect = Select<Font>;
+/* eslint-enable @typescript-eslint/naming-convention */
 
-const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
+const RenderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
 };
 
 export function fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
-    let currentFont: Font = astFonts[currentFontId];
+    let currentFont: Font = AstFonts[currentFontId];
     if (typeof currentFont === "undefined") {
-        currentFont = astFonts[0];
+        currentFont = AstFonts[0];
     }
 
     return (
-        <FontSelect activeItem={currentFont} itemRenderer={renderFont} items={astFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
+        <FontSelect activeItem={currentFont} itemRenderer={RenderFont} items={AstFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
             <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!visible} endIcon="double-caret-vertical" />
         </FontSelect>
     );

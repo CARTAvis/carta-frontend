@@ -24,6 +24,7 @@ interface ColormapComponentProps {
     customColorStart?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ColorMapSelect = Select<string>;
 const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];

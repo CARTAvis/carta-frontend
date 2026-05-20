@@ -17,6 +17,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const DataSourceSelect = Select<FrameStore>;
 
 @observer

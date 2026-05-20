@@ -6,7 +6,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CoordinateMode} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
-import {isValidWcsPoint, type Point2D} from "models";
+import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -37,12 +37,12 @@ export class RegionStore {
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
 
-    static readonly MIN_LINE_WIDTH = 0.5;
-    static readonly MAX_LINE_WIDTH = 10;
-    static readonly MAX_DASH_LENGTH = 50;
-    static readonly TARGET_VERTEX_COUNT = 200;
-    static readonly MIN_LABEL_OFFSET = -50;
-    static readonly MAX_LABEL_OFFSET = 50;
+    public static readonly MIN_LINE_WIDTH = 0.5;
+    public static readonly MAX_LINE_WIDTH = 10;
+    public static readonly MAX_DASH_LENGTH = 50;
+    public static readonly TARGET_VERTEX_COUNT = 200;
+    public static readonly MIN_LABEL_OFFSET = -50;
+    public static readonly MAX_LABEL_OFFSET = 50;
 
     private readonly backendService: BackendService;
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
@@ -133,7 +133,7 @@ export class RegionStore {
         }
     }
 
-    static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
+    public static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.POINT, "Point"],
         [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
@@ -142,7 +142,7 @@ export class RegionStore {
         [CARTA.RegionType.POLYLINE, "Polyline"]
     ]);
 
-    static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
+    public static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.ANNPOINT, "Point"],
         [CARTA.RegionType.ANNLINE, "Line"],
         [CARTA.RegionType.ANNRECTANGLE, "Rectangle"],
@@ -236,7 +236,7 @@ export class RegionStore {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
-        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
+        return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {

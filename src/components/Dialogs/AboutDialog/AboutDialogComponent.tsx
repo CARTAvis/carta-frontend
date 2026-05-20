@@ -90,6 +90,11 @@ export class AboutDialogComponent extends React.Component {
                                 Department of Physics, University of Alberta
                             </a>
                         </li>
+                        <li>
+                            <a href="https://aussrc.org" rel="noopener noreferrer" target="_blank">
+                                Australian SKA Regional Centre (AusSRC)
+                            </a>
+                        </li>
                     </ul>
                     <Button variant="minimal" icon="link" endIcon={this.extendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.toggleExtendUsefulLinks}>
                         <H6 className="extend-button-title">Useful links</H6>
@@ -168,7 +173,7 @@ export class AboutDialogComponent extends React.Component {
                     </Collapse>
                     <H4>License</H4>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, Department of Physics, University of Alberta, and AusSRC. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>
