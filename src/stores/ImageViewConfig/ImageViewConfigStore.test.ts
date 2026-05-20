@@ -41,7 +41,7 @@ jest.mock("stores", () => {
         id;
         selectedFrames: any[] = [];
         alpha: number[] = [1];
-        static readonly DefaultLayerLimit = 10;
+        public static readonly DEFAULT_LAYER_LIMIT = 10;
         constructor(id) {
             this.id = id;
         }
