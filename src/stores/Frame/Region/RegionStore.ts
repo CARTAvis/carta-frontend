@@ -797,15 +797,11 @@ export class RegionStore {
     };
 
     @action setVisible = (visible: boolean) => {
-        if (this.regionId !== CURSOR_REGION_ID) {
-            this.setOpacity(visible ? RegionsOpacity.Visible : RegionsOpacity.Invisible);
-        }
+        this.setOpacity(visible ? RegionsOpacity.Visible : RegionsOpacity.Invisible);
     };
 
     @action toggleVisible = () => {
-        if (this.regionId !== CURSOR_REGION_ID) {
-            this.setVisible(!this.visible);
-        }
+        this.setVisible(!this.visible);
     };
 
     @action setOpacity = (opacity: RegionsOpacity) => {
