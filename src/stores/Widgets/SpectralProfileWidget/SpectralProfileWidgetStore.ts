@@ -9,7 +9,7 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -49,8 +49,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // style settings
     @observable plotType: PlotType = PlotType.STEPS;
     @observable meanRmsVisible: boolean = false;
-    @observable primaryLineColor: string = genColorFromIndex(0); // default auto-blue color in Hex code
-    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, genColorFromIndex(0)]]);
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, "auto-blue"]]);
     @observable lineWidth: number = 1;
     @observable linePlotPointSize: number = 1.5;
     @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
