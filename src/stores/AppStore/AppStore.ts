@@ -1392,16 +1392,7 @@ export class AppStore {
      * Deletes all regions including annotations.
      */
     @action deleteAllRegions = () => {
-        const regionSet = this.activeFrame?.regionSet;
-        if (!regionSet || regionSet.locked) {
-            return;
-        }
-
-        regionSet.regionMap.forEach(region => {
-            if (region.regionId !== CURSOR_REGION_ID && !region.locked) {
-                this.deleteRegion(region);
-            }
-        });
+        this.deleteAllMatchingRegions(() => true);
         AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
     };
 
@@ -1409,29 +1400,24 @@ export class AppStore {
      * Deletes all annotations.
      */
     @action deleteAllAnnotations = () => {
-        const regionSet = this.activeFrame?.regionSet;
-        if (!regionSet || regionSet.locked) {
-            return;
-        }
-
-        regionSet.regionMap.forEach(region => {
-            if (region.regionId !== CURSOR_REGION_ID && region.isAnnotation && !region.locked) {
-                this.deleteRegion(region);
-            }
-        });
+        this.deleteAllMatchingRegions(region => region.isAnnotation);
     };
 
     /**
      * Deletes all regular regions.
      */
     @action deleteAllRegularRegions = () => {
+        this.deleteAllMatchingRegions(region => !region.isAnnotation);
+    };
+
+    @action private deleteAllMatchingRegions = (predicate: (region: RegionStore) => boolean) => {
         const regionSet = this.activeFrame?.regionSet;
         if (!regionSet || regionSet.locked) {
             return;
         }
 
         regionSet.regionMap.forEach(region => {
-            if (region.regionId !== CURSOR_REGION_ID && !region.isAnnotation && !region.locked) {
+            if (region.regionId !== CURSOR_REGION_ID && !region.locked && predicate(region)) {
                 this.deleteRegion(region);
             }
         });
