@@ -976,9 +976,9 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
                 if (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.ANNPOINT) {
                     return <PointRegionComponent {...commonProps} key={r.regionId} />;
                 } else if (r.regionType === CARTA.RegionType.ANNCOMPASS) {
-                    return <CompassAnnotation {...commonProps} key={r.regionId} activeSelected={isActive} />;
+                    return <CompassAnnotation {...commonProps} key={r.regionId} />;
                 } else if (r.regionType === CARTA.RegionType.ANNRULER) {
-                    return <RulerAnnotation {...commonProps} key={r.regionId} activeSelected={isActive} />;
+                    return <RulerAnnotation {...commonProps} key={r.regionId} />;
                 } else {
                     const allProps = {
                         ...commonProps,
