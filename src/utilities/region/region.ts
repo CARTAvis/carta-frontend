@@ -101,17 +101,6 @@ export function doSelectionRectAndRulerPathsIntersect(selectionRect: Rect2D, pat
     return triangle.length === 3 && getRectCorners(selectionRect).some(point => isPointInPolygon(point, triangle));
 }
 
-export function getRegionIdsInRange(regions: RegionStore[], startIndex: number, endIndex: number): number[] {
-    const ids: number[] = [];
-    for (let i = startIndex; i <= endIndex; i++) {
-        const region = regions[i];
-        if (region) {
-            ids.push(region.regionId);
-        }
-    }
-    return ids;
-}
-
 function getBoundingRect(points: Point2D[]): Rect2D {
     let minX = Infinity;
     let maxX = -Infinity;

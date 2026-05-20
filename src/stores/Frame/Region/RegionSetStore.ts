@@ -613,12 +613,6 @@ export class RegionSetStore {
         }
     };
 
-    @action setFocusedRegionByIndex = (index: number) => {
-        if (index >= 0 && index < this.regions.length) {
-            this.focusedRegion = this.regions[index];
-        }
-    };
-
     private selectAdjacentRegionFromHotkey = (direction: 1 | -1) => {
         if (!this.regions || this.regions.length <= 1) {
             return;

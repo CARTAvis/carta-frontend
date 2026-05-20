@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionIdsInRange, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
+import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
 
 const MakeRegion = (overrides: Partial<any>) =>
     ({
@@ -97,11 +97,5 @@ describe("region selection utilities", () => {
             {x: 0, y: 0},
             {x: 4, y: 0}
         ]);
-    });
-
-    test("returns region ids in a contiguous range and skips missing rows", () => {
-        const regions = [{regionId: 1}, undefined, {regionId: 3}, {regionId: 4}] as any[];
-
-        expect(getRegionIdsInRange(regions, 0, 3)).toEqual([1, 3, 4]);
     });
 });
