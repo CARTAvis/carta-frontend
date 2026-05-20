@@ -159,7 +159,7 @@ export const HipsQueryComponent = observer(() => {
                     </FormGroup>
                     <FormGroup inline={true} label="Projection" disabled={hipsQueryStore.isLoading}>
                         <HTMLSelect
-                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.ProjectionOptionMap.get(val)}`, value: val}))}
+                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.PROJECTION_OPTION_MAP.get(val)}`, value: val}))}
                             value={hipsQueryStore.projection}
                             onChange={ev => hipsQueryStore.setProjection(ev.currentTarget.value as HipsProjection)}
                             disabled={hipsQueryStore.isLoading}

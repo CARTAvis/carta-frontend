@@ -14,7 +14,7 @@ import "./CursorInfoComponent.scss";
 
 @observer
 export class CursorInfoComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "cursor-info",
             type: "cursor-info",
