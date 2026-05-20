@@ -28,6 +28,7 @@ import {
     TelemetryAction,
     WCSMatchingType
 } from "enums";
+import * as Enums from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -46,6 +47,7 @@ import {
     type Workspace,
     type WorkspaceFile
 } from "models";
+import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -338,6 +340,10 @@ export class AppStore {
         const dt = this.taskCurrentTime - this.taskStartTime;
         const estimatedFinishTime = dt / this.taskProgress;
         return estimatedFinishTime - dt;
+    }
+
+    @computed get frontendVersion(): string {
+        return CARTA_INFO.version;
     }
 
     @action startFileLoading = () => {
@@ -1655,7 +1661,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveImageByFileId(message.fileId ?? -1);
+        this.setActiveImageById(ImageType.FRAME, message.fileId ?? -1);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -1895,6 +1901,7 @@ export class AppStore {
         window["app"] = this;
         window["carta"] = this;
         window["utils"] = Utils;
+        window["enums"] = Enums;
 
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -3016,22 +3023,48 @@ export class AppStore {
         if (frame.isPreview) {
             this.setActiveImage({type: ImageType.PV_PREVIEW, store: frame});
         } else {
-            this.setActiveImageByFileId(frame.id);
+            this.setActiveImageById(ImageType.FRAME, frame.id);
         }
     };
 
     /**
-     * Sets the active image with a loaded image.
-     * @param fileId - The file id of the loaded image.
+     * Sets the active image by its type and stable store id.
+     *
+     * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).
+     * For `ImageType.COLOR_BLENDING`, `id` is `ColorBlendingStore.id`.
+     * For `ImageType.PV_PREVIEW`, `id` is `FrameStore.id`, which is always
+     * `PREVIEW_PV_FILEID` (-2). Only one PV preview can exist at a time
+     * (creating a new one replaces the old), so this id is unique in practice.
+     *
+     * Preferred over `setActiveImageByIndex` for programmatic activation,
+     * because `imageList` indices are volatile (images can be added,
+     * removed, or reordered), whereas `(type, id)` is stable.
+     *
+     * @param type - The image-view item type.
+     * @param id - The stable store id for that type.
      */
-    @action setActiveImageByFileId = (fileId: number) => {
-        const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, fileId);
+    @action setActiveImageById = (type: ImageType, id: number) => {
+        if (type === ImageType.PV_PREVIEW) {
+            const previewFrame = [...this.previewFrames.values()].find(f => f.id === id);
+            if (previewFrame) {
+                this.setActiveImage({type: ImageType.PV_PREVIEW, store: previewFrame});
+            } else {
+                console.error(`Can't find image of type ${type} with id ${id}`);
+            }
+            return;
+        }
+
+        if (type !== ImageType.FRAME && type !== ImageType.COLOR_BLENDING) {
+            console.error(`setActiveImageById: unsupported image type ${type}`);
+            return;
+        }
+        const index = this.imageViewConfigStore.getImageListIndex(type, id);
         const image = this.imageViewConfigStore.getImage(index);
 
         if (image) {
             this.setActiveImage(image);
         } else {
-            console.log(`Can't find required frame ${fileId}`);
+            console.error(`Can't find image of type ${type} with id ${id}`);
         }
     };
 
@@ -3046,7 +3079,7 @@ export class AppStore {
                 this.setActiveImage(image);
             }
         } else {
-            console.log(`Invalid image index ${index}`);
+            console.error(`Invalid image index ${index}`);
         }
     };
 
@@ -3503,6 +3536,10 @@ export class AppStore {
         }
         return val;
     };
+
+    // For carta-python
+    listEnumSnapshots = listEnumSnapshotsFromRegistry;
+    getEnumSnapshots = getEnumSnapshotsFromRegistry;
 
     getFileList = async (directory: string) => {
         return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
