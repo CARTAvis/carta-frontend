@@ -14,7 +14,7 @@ import {
     add2D,
     getApproximateEllipsePoints,
     getApproximatePolygonPoints,
-    getRegionProperties,
+    getRegionPixelProperties,
     isAstBadPoint,
     length2D,
     midpoint2D,
@@ -349,7 +349,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        return getRegionProperties(this.regionType, this.controlPoints, this.rotation);
+        return getRegionPixelProperties(this.regionType, this.controlPoints, this.rotation);
     }
 
     @computed get isPreviewCut(): boolean {

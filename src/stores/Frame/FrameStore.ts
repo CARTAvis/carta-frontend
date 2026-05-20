@@ -48,9 +48,10 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
-    getRegionProperties,
+    getRegionPixelProperties,
     GetRequiredTiles,
     getTransformedChannel,
+    getTransformedRegionProperties,
     getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
@@ -60,7 +61,6 @@ import {
     ProtobufProcessing,
     rotate2D,
     round2D,
-    scale2D,
     setAstStringSystem,
     setAstSystem,
     subtract2D,
@@ -2241,9 +2241,12 @@ export class FrameStore {
         const region = this.getRegion(regionId);
         if (region) {
             const regionFrameProperties = this.getRegionFrameProperties(region);
-            propertyString.push(getRegionProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation));
+            const controlPoints = regionFrameProperties.controlPoints;
+            const rotation = regionFrameProperties.rotation;
+
+            propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
             if (this.validWcs) {
-                propertyString.push(this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId));
+                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
             }
         }
         return propertyString;
@@ -2260,29 +2263,7 @@ export class FrameStore {
             return {controlPoints: region.controlPoints, rotation: region.rotation};
         }
 
-        switch (region.regionType) {
-            case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNTEXT: {
-                const center = transformPoint(spatialTransformAST, region.center, false);
-                if (isAstBadPoint(center)) {
-                    return {controlPoints: [center, region.size], rotation: region.rotation};
-                }
-
-                const transform = new Transform2D(spatialTransformAST, center);
-                return {
-                    controlPoints: [center, scale2D(region.size, 1.0 / transform.scale)],
-                    rotation: region.rotation - (transform.rotation * 180) / Math.PI
-                };
-            }
-            default:
-                return {
-                    controlPoints: region.controlPoints.map(point => transformPoint(spatialTransformAST, point, false)),
-                    rotation: region.rotation
-                };
-        }
+        return getTransformedRegionProperties(region, spatialTransformAST);
     }
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
