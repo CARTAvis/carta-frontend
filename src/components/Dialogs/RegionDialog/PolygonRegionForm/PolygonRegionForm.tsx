@@ -13,7 +13,7 @@ import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatVa
 
 @observer
 export class PolygonRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
-    private static readonly REGION_PIXEL_EPS = 1.0e-3;
+    private static readonly RegionPixelEps = 1.0e-3;
 
     private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
@@ -23,7 +23,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         return (value: number): boolean => {
             const region = this.props.region;
             const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
-            if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
                 if (isXCoordinate) {
                     this.props.region.setControlPoint(index, {x: value, y: this.props.region.controlPoints[index].y});
                 } else {
@@ -47,7 +47,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                 const value = isXCoordinate ? newPoint.x : newPoint.y;
                 const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
 
-                if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
+                if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.RegionPixelEps)) {
                     this.props.region.setControlPoint(index, newPoint);
                     return true;
                 }

@@ -5,7 +5,7 @@ import {DialogId, FileInfoType, WorkspaceDialogMode} from "enums";
 import {type Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
 
-interface showDialogOptions {
+interface ShowDialogOptions {
     mode?: WorkspaceDialogMode;
     url?: string;
     title?: string;
@@ -39,7 +39,7 @@ export class DialogStore {
 
     zIndexManager = AppStore.Instance.zIndexManager;
 
-    @action showDialog = (id: string, options?: showDialogOptions) => {
+    @action showDialog = (id: string, options?: ShowDialogOptions) => {
         if (id === DialogId.Snippet) {
             if (options?.newSnippet) {
                 SnippetStore.Instance.clearActiveSnippet();

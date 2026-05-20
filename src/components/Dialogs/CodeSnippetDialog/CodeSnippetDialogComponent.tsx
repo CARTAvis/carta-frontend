@@ -63,8 +63,8 @@ export class CodeSnippetDialogComponent extends React.Component {
         const snippet: Snippet = {
             code: snippetStore.activeSnippet?.code,
             categories,
-            snippetVersion: Snippet.SnippetVersion,
-            frontendVersion: Snippet.FrontendVersion
+            snippetVersion: Snippet.SNIPPET_VERSION,
+            frontendVersion: Snippet.FRONTEND_VERSION
         };
         const success = await snippetStore.saveSnippet(snippetName, snippet);
         if (success) {

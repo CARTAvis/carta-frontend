@@ -15,10 +15,10 @@ export interface CatalogInfo {
 }
 
 export abstract class AbstractCatalogProfileStore {
-    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
-    private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
-    private static readonly TRUE_REGEX = /^[tTyY].*$/;
-    private static readonly FALSE_REGEX = /^[fFnN].*$/;
+    private static readonly NegativeInfinity = -1.7976931348623157e308;
+    private static readonly PositiveInfinity = 1.7976931348623157e308;
+    private static readonly TrueRegex = /^[tTyY].*$/;
+    private static readonly FalseRegex = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.CatalogHeader>;
@@ -55,7 +55,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
-    public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+    public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
         [CatalogSystemType.Galactic, "GALACTIC"],
@@ -105,7 +105,7 @@ export abstract class AbstractCatalogProfileStore {
 
     public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
         let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
+        const systemMap = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME;
         systemMap.forEach((value, key) => {
             if (system?.toUpperCase().includes(value.toUpperCase())) {
                 catalogSystem = key;
@@ -161,10 +161,10 @@ export abstract class AbstractCatalogProfileStore {
                 } else if (dataType === CARTA.ColumnType.Bool) {
                     if (value.filter) {
                         filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
-                        if (value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)) {
+                        if (value.filter.match(AbstractCatalogProfileStore.TrueRegex)) {
                             filter.value = 1;
                             userFilters.push(filter);
-                        } else if (value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)) {
+                        } else if (value.filter.match(AbstractCatalogProfileStore.FalseRegex)) {
                             filter.value = 0;
                             userFilters.push(filter);
                         }
@@ -406,6 +406,6 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     private isInfinite(value: number) {
-        return !isFinite(value) || value === AbstractCatalogProfileStore.NEGATIVE_INFINITY || value === AbstractCatalogProfileStore.POSITIVE_INFINITY;
+        return !isFinite(value) || value === AbstractCatalogProfileStore.NegativeInfinity || value === AbstractCatalogProfileStore.PositiveInfinity;
     }
 }
