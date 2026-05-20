@@ -25,7 +25,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",

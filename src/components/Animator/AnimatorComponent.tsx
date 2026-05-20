@@ -12,7 +12,7 @@ import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "animator",
             type: "animator",

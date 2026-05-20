@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
+import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
 import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
@@ -174,11 +174,11 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS | undefined {
+    @computed get effectivePolarization(): Polarizations | undefined {
         if (this.selectedStokes === DEFAULT_STOKES) {
             return this.effectiveFrame?.requiredPolarization;
         } else {
-            return POLARIZATIONS[this.fullCoordinate.substring(0, this.fullCoordinate.length - 1)];
+            return Polarizations[this.fullCoordinate.substring(0, this.fullCoordinate.length - 1)];
         }
     }
 

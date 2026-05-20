@@ -22,7 +22,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",

@@ -14,7 +14,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",

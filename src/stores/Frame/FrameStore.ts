@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {POLARIZATIONS, RegionId, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {Polarizations, RegionId, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -456,9 +456,9 @@ export class FrameStore {
 
     @computed get requiredUnit() {
         if (this.headerUnit) {
-            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
+            if (this.requiredPolarization === Polarizations.Pangle) {
                 return "degree";
-            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
+            } else if (this.requiredPolarization === Polarizations.PFtotal || this.requiredPolarization === Polarizations.PFlinear) {
                 return "%";
             } else {
                 return this.headerUnit;
@@ -1137,27 +1137,27 @@ export class FrameStore {
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
-    @computed get polarizations(): POLARIZATIONS[] {
+    @computed get polarizations(): Polarizations[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
-        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
-        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
-        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
-        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
+        const hasI: boolean = polarizations.includes(Polarizations.I);
+        const hasQ: boolean = polarizations.includes(Polarizations.Q);
+        const hasU: boolean = polarizations.includes(Polarizations.U);
+        const hasV: boolean = polarizations.includes(Polarizations.V);
 
         if (hasQ && hasU) {
             if (hasV) {
-                polarizations.push(POLARIZATIONS.Ptotal);
+                polarizations.push(Polarizations.Ptotal);
             }
-            polarizations.push(POLARIZATIONS.Plinear);
+            polarizations.push(Polarizations.Plinear);
             if (hasI && hasV) {
-                polarizations.push(POLARIZATIONS.PFtotal);
+                polarizations.push(Polarizations.PFtotal);
             }
             if (hasI) {
-                polarizations.push(POLARIZATIONS.PFlinear);
+                polarizations.push(Polarizations.PFlinear);
             }
-            polarizations.push(POLARIZATIONS.Pangle);
+            polarizations.push(Polarizations.Pangle);
         }
 
         return polarizations;
@@ -2660,7 +2660,7 @@ export class FrameStore {
      * @param polarization - The polarization value.
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
+    @action setStokes = (polarization: Polarizations, recursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
         if (!isFinite(polarizationIndex) || polarizationIndex === -1) {
             return;

@@ -19,7 +19,7 @@ const FILENAME_END_LEN = 15;
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
             type: "floating-settings",
