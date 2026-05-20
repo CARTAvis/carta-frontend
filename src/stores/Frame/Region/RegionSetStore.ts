@@ -1,6 +1,6 @@
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, runInAction} from "mobx";
 
 import {RegionMode, RegionsOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
@@ -590,14 +590,17 @@ export class RegionSetStore {
             const ack = await this.backendService.setRegion(fileId, -1, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
             if (ack.regionId != null) {
-                const previousRegionId = region.regionId;
-                region.setRegionId(ack.regionId);
-                if (this.selectedRegionIds.has(previousRegionId)) {
-                    const selectedIds = new Set(this.selectedRegionIds);
-                    selectedIds.delete(previousRegionId);
-                    selectedIds.add(ack.regionId);
-                    this.selectedRegionIds = selectedIds;
-                }
+                const regionId = ack.regionId;
+                runInAction(() => {
+                    const previousRegionId = region.regionId;
+                    region.setRegionId(regionId);
+                    if (this.selectedRegionIds.has(previousRegionId)) {
+                        const selectedIds = new Set(this.selectedRegionIds);
+                        selectedIds.delete(previousRegionId);
+                        selectedIds.add(regionId);
+                        this.selectedRegionIds = selectedIds;
+                    }
+                });
             }
         } catch (err) {
             console.error(err);
