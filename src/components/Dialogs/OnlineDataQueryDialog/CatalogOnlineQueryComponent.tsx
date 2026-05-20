@@ -210,7 +210,7 @@ export class CatalogQueryComponent extends React.Component {
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
-                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
+                                rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
                                 tagProps: {minimal: true}
                             }}
                         />

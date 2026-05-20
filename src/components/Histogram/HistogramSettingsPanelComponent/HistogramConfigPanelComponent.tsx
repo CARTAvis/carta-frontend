@@ -171,7 +171,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetConfigPanel = (
             <React.Fragment>
                 <FormGroup label="Reset config" inline={true}>
-                    <Button className="reset-range-content" icon={"zoom-to-fit"} size="small" disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
+                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
                         Reset config
                     </Button>
                 </FormGroup>

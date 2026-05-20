@@ -223,7 +223,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.sizeColumnMinLocked || widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
                             intent={widgetStore.sizeColumnMinLocked ? "success" : "none"}
                             disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMinLocked}
-                            variant="minimal"
+                            minimal={true}
                             onClick={widgetStore.toggleSizeColumnMinLock}
                         />
                     </div>
@@ -243,7 +243,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
                             intent={widgetStore.sizeColumnMaxLocked ? "success" : "none"}
                             disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMaxLocked}
-                            variant="minimal"
+                            minimal={true}
                             onClick={widgetStore.toggleSizeColumnMaxLock}
                         />
                     </div>
@@ -353,7 +353,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.sizeColumnMinLocked || widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
                             intent={widgetStore.sizeMinorColumnMinLocked ? "success" : "none"}
                             disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}
-                            variant="minimal"
+                            minimal={true}
                             onClick={widgetStore.toggleSizeMinorColumnMinLock}
                         />
                     </div>
@@ -373,7 +373,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
                             intent={widgetStore.sizeMinorColumnMaxLocked ? "success" : "none"}
                             disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked}
-                            variant="minimal"
+                            minimal={true}
                             onClick={widgetStore.toggleSizeMinorColumnMaxLock}
                         />
                     </div>

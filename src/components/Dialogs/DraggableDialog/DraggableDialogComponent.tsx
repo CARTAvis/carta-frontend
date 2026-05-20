@@ -44,7 +44,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         // add help button in dialog header
         const header = this.dd.current.getElementsByClassName(Classes.DIALOG_HEADER);
         if (this.props.helpType && header?.length > 0 && this.dd.current.getElementsByClassName("help-button").length === 0) {
-            const helpButton = <Button icon="help" variant="minimal" onClick={this.onClickHelpButton} />;
+            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
 
