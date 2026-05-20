@@ -37,35 +37,23 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         {value: CARTA.TextAnnotationPosition.RIGHT, label: "Right"}
     ];
 
-    public static getControlsForRegion(region: RegionStore): Set<AppearanceControl> {
-        const controls = new Set<AppearanceControl>([AppearanceControl.Color]);
-        const regionType = region.regionType;
-        const isPoint = regionType === CARTA.RegionType.POINT || regionType === CARTA.RegionType.ANNPOINT;
-        const isText = regionType === CARTA.RegionType.ANNTEXT;
+    private static readonly DEFAULT_CONTROLS = [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength];
 
-        if (!isPoint && !isText) {
-            controls.add(AppearanceControl.LineWidth);
-            controls.add(AppearanceControl.DashLength);
-        }
-        if (regionType === CARTA.RegionType.ANNCOMPASS || regionType === CARTA.RegionType.ANNTEXT || regionType === CARTA.RegionType.ANNRULER) {
-            controls.add(AppearanceControl.Font);
-        }
-        if (regionType === CARTA.RegionType.ANNPOINT) {
-            controls.add(AppearanceControl.Point);
-        }
-        if (regionType === CARTA.RegionType.ANNVECTOR) {
-            controls.add(AppearanceControl.VectorPointer);
-        }
-        if (regionType === CARTA.RegionType.ANNCOMPASS) {
-            controls.add(AppearanceControl.Compass);
-        }
-        if (regionType === CARTA.RegionType.ANNRULER) {
-            controls.add(AppearanceControl.Ruler);
-        }
-        if (regionType === CARTA.RegionType.ANNTEXT) {
-            controls.add(AppearanceControl.TextAlignment);
-        }
-        return controls;
+    private static readonly REGION_CONTROLS = new Map<CARTA.RegionType, AppearanceControl[]>([
+        [CARTA.RegionType.POINT, [AppearanceControl.Color]],
+        [CARTA.RegionType.ANNPOINT, [AppearanceControl.Color, AppearanceControl.Point]],
+        [CARTA.RegionType.ANNTEXT, [AppearanceControl.Color, AppearanceControl.Font, AppearanceControl.TextAlignment]],
+        [CARTA.RegionType.ANNCOMPASS, [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength, AppearanceControl.Font, AppearanceControl.Compass]],
+        [CARTA.RegionType.ANNRULER, [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength, AppearanceControl.Font, AppearanceControl.Ruler]],
+        [CARTA.RegionType.ANNVECTOR, [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength, AppearanceControl.VectorPointer]]
+    ]);
+
+    public static getControlsForRegion(region: RegionStore): Set<AppearanceControl> {
+        return new Set(AppearanceForm.REGION_CONTROLS.get(region.regionType) ?? AppearanceForm.DEFAULT_CONTROLS);
+    }
+
+    private static intersectControls(left: Set<AppearanceControl>, right: Set<AppearanceControl>): Set<AppearanceControl> {
+        return new Set(Array.from(left).filter(control => right.has(control)));
     }
 
     public static getCommonControls(regions: RegionStore[]): Set<AppearanceControl> {
@@ -73,17 +61,8 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
             return new Set();
         }
 
-        const [firstRegion, ...remainingRegions] = regions;
-        const commonControls = AppearanceForm.getControlsForRegion(firstRegion);
-        for (const region of remainingRegions) {
-            const controls = AppearanceForm.getControlsForRegion(region);
-            for (const control of Array.from(commonControls)) {
-                if (!controls.has(control)) {
-                    commonControls.delete(control);
-                }
-            }
-        }
-        return commonControls;
+        const [firstControls, ...remainingControls] = regions.map(region => AppearanceForm.getControlsForRegion(region));
+        return remainingControls.reduce((commonControls, controls) => AppearanceForm.intersectControls(commonControls, controls), firstControls);
     }
 
     private apply = (handler: (region: RegionStore) => void) => {
