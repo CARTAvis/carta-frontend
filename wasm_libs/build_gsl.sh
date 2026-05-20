@@ -16,20 +16,12 @@ if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/nu
 
     rm -f "${gsl_tar}"
     for gsl_url in "${gsl_urls[@]}"; do
-        retry_count=0
-        while (( retry_count < max_retries )); do
-            if wget --tries=1 -O "${gsl_tar}" "${gsl_url}" && md5sum -c gsl.md5 &>/dev/null; then
-                downloaded=true
-                break 2
-            fi
+        if wget --tries="${max_retries}" --waitretry=10 -O "${gsl_tar}" "${gsl_url}" && md5sum -c gsl.md5 &>/dev/null; then
+            downloaded=true
+            break
+        fi
 
-            rm -f "${gsl_tar}"
-            ((retry_count++))
-            if (( retry_count < max_retries )); then
-                echo "Download failed from ${gsl_url}. Trying again."
-                sleep 10
-            fi
-        done
+        rm -f "${gsl_tar}"
         echo "Failed to fetch GSL 2.6 from ${gsl_url}"
     done
 
