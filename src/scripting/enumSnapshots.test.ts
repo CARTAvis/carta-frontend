@@ -15,7 +15,7 @@ describe("enumSnapshots", () => {
             "ImagePanelMode",
             "LabelType",
             "NumberFormatType",
-            "POLARIZATIONS",
+            "Polarizations",
             "protobuf:PointAnnotationShape",
             "protobuf:RegionType",
             "protobuf:SmoothingMode",
