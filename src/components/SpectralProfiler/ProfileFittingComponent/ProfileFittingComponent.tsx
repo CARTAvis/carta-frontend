@@ -4,7 +4,7 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {FittingContinuum, FittingFunction} from "enums";
+import {FittingContinuum, FittingFunction, ImageType} from "enums";
 import {AppStore, type ProfileFittingStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
@@ -245,7 +245,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     options={appStore.frames.map(frame => {
                                         return {label: frame.filename, value: frame.frameInfo.fileId};
                                     })}
-                                    onChange={ev => appStore.setActiveImageByFileId(parseInt(ev.target.value))}
+                                    onChange={ev => appStore.setActiveImageById(ImageType.FRAME, parseInt(ev.target.value))}
                                     disabled={disabled}
                                 />
                             </FormGroup>

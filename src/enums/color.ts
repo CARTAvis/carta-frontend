@@ -107,3 +107,9 @@ export enum ColorMap {
     Violet = "Violet",
     Magenta = "Magenta"
 }
+
+export enum ColormapSet {
+    RGB = "RGB",
+    CMY = "CMY",
+    Rainbow = "Rainbow"
+}
