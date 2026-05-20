@@ -313,6 +313,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         active={!!frame.rasterScalingReference}
                         intent={frame.rasterScalingReference ? "success" : "none"}
                         onClick={() => (isRasterScalingReference ? appStore.matchAllRasterScaling() : appStore.toggleRasterScalingMatching(frame))}
+                        data-testid={"image-list-" + rowIndex + "-matching-r"}
                     >
                         R
                     </AnchorButton>
