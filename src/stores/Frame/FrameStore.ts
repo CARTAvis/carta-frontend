@@ -48,6 +48,7 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
+    getRegionProperties,
     GetRequiredTiles,
     getTransformedChannel,
     getUnformattedWCSPoint,
@@ -59,6 +60,7 @@ import {
     ProtobufProcessing,
     rotate2D,
     round2D,
+    scale2D,
     setAstStringSystem,
     setAstSystem,
     subtract2D,
@@ -2238,17 +2240,50 @@ export class FrameStore {
         const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
-            propertyString.push(region.regionProperties);
+            const regionFrameProperties = this.getRegionFrameProperties(region);
+            propertyString.push(getRegionProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation));
             if (this.validWcs) {
-                propertyString.push(this.getRegionWcsProperties(region));
+                propertyString.push(this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId));
             }
         }
         return propertyString;
     }
 
     public getRegionWcsProperties = (region: RegionStore): string => {
-        return this.genRegionWcsProperties(region.regionType, region.controlPoints, region.rotation, region.regionId);
+        const regionFrameProperties = this.getRegionFrameProperties(region);
+        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
     };
+
+    private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
+        const spatialTransformAST = this.spatialTransformAST;
+        if (!this.spatialReference || !spatialTransformAST) {
+            return {controlPoints: region.controlPoints, rotation: region.rotation};
+        }
+
+        switch (region.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT: {
+                const center = transformPoint(spatialTransformAST, region.center, false);
+                if (isAstBadPoint(center)) {
+                    return {controlPoints: [center, region.size], rotation: region.rotation};
+                }
+
+                const transform = new Transform2D(spatialTransformAST, center);
+                return {
+                    controlPoints: [center, scale2D(region.size, 1.0 / transform.scale)],
+                    rotation: region.rotation - (transform.rotation * 180) / Math.PI
+                };
+            }
+            default:
+                return {
+                    controlPoints: region.controlPoints.map(point => transformPoint(spatialTransformAST, point, false)),
+                    rotation: region.rotation
+                };
+        }
+    }
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
