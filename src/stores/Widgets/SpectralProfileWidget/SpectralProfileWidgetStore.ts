@@ -4,7 +4,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
-import {LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, POLARIZATIONS, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, type SpectralSystem, TelemetryAction} from "enums";
+import {LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, Polarizations, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, type SpectralSystem, TelemetryAction} from "enums";
 import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, type Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
@@ -393,7 +393,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             reaction(
                 () => this.effectiveFrame?.requiredPolarization,
                 polarization => {
-                    if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
+                    if (this.effectiveFrame && polarization !== undefined && [Polarizations.PFtotal, Polarizations.PFlinear, Polarizations.Pangle].includes(polarization)) {
                         this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
                     }
                 }

@@ -69,7 +69,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return getFormattedWCSPoint(this.props.wcsInfo, this.endPoint);
     }
 
-    private static readonly REGION_PIXEL_EPS = 1.0e-3;
+    private static readonly RegionPixelEps = 1.0e-3;
 
     private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
@@ -77,7 +77,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleCenterXChange = (value: number): boolean => {
         const existingValue = this.props.region.center.x;
-        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return true;
         }
@@ -86,7 +86,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleCenterYChange = (value: number): boolean => {
         const existingValue = this.props.region.center.y;
-        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return true;
         }
@@ -97,7 +97,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
             const existingValue = this.props.region.center.x;
-            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.RegionPixelEps)) {
                 this.props.region.setCenter(newPoint);
                 return true;
             }
@@ -109,7 +109,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
             const existingValue = this.props.region.center.y;
-            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.RegionPixelEps)) {
                 this.props.region.setCenter(newPoint);
                 return true;
             }
@@ -119,7 +119,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleLengthChange = (value: number): boolean => {
         const existingValue = length2D(this.props.region.size);
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
@@ -136,7 +136,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
             const value = (existingValue * arcsecValue) / length2D(this.props.frame.getWcsSizeInArcsec(this.props.region.size));
-            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
                 const region = this.props.region;
                 const rotation = (region.rotation * Math.PI) / 180.0;
                 // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
@@ -150,7 +150,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleStartXValueChange = (value: number, existingValue: number): boolean => {
-        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const newDims = {x: Math.abs(value - region.controlPoints[1].x), y: region.size.y};
             if (newDims.x > 0 || newDims.y > 0) {
@@ -179,7 +179,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleStartYValueChange = (value: number, existingValue: number): boolean => {
-        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const newDims = {x: region.size.x, y: Math.abs(value - region.controlPoints[1].y)};
             if (newDims.x > 0 || newDims.y > 0) {
@@ -208,7 +208,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleEndXValueChange = (value: number, existingValue: number): boolean => {
-        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const newDims = {x: Math.abs(value - region.controlPoints[0].x), y: region.size.y};
             if (newDims.x > 0 || newDims.y > 0) {
@@ -237,7 +237,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleEndYValueChange = (value: number, existingValue: number): boolean => {
-        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const newDims = {x: region.size.x, y: Math.abs(value - region.controlPoints[0].y)};
             if (newDims.x > 0 || newDims.y > 0) {
@@ -268,7 +268,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     private handleRotationChange = (value: number): boolean => {
         const existingValue = this.props.region.rotation;
 
-        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+        if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.RegionPixelEps)) {
             this.props.region.setRotation(value);
             return true;
         }

@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {MultiProfileCategory, POLARIZATIONS, RegionId} from "enums";
+import {MultiProfileCategory, Polarizations, RegionId} from "enums";
 import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -416,26 +416,26 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @computed private get effectivePolarizations(): POLARIZATIONS[] {
-        const polarizations: POLARIZATIONS[] = [];
+    @computed private get effectivePolarizations(): Polarizations[] {
+        const polarizations: Polarizations[] = [];
         if (this.selectedCoordinates) {
             this.selectedCoordinates.forEach(coordinate => {
-                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame?.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
+                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame?.requiredPolarization : Polarizations[coordinate.substring(0, coordinate.length - 1)]);
             });
         }
         return polarizations;
     }
 
     @computed get isCoordinatesPangleOnly(): boolean {
-        return !this.effectivePolarizations?.some(polarization => POLARIZATIONS.Pangle !== polarization);
+        return !this.effectivePolarizations?.some(polarization => Polarizations.Pangle !== polarization);
     }
 
     @computed get isCoordinatesPFtotalPFlinearOnly(): boolean {
-        return !this.effectivePolarizations?.some(polarization => ![POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(polarization));
+        return !this.effectivePolarizations?.some(polarization => ![Polarizations.PFtotal, Polarizations.PFlinear].includes(polarization));
     }
 
     @computed get isCoordinatesIncludingNonIntensityUnit(): boolean {
-        return this.effectivePolarizations.some(polarization => [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization));
+        return this.effectivePolarizations.some(polarization => [Polarizations.PFtotal, Polarizations.PFlinear, Polarizations.Pangle].includes(polarization));
     }
 
     @computed get isSameCoordinatesUnit(): boolean {

@@ -6,7 +6,7 @@ import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
-import {HelpType, POLARIZATIONS, TickType} from "enums";
+import {HelpType, Polarizations, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -22,7 +22,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -145,7 +145,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === HistogramComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {
@@ -283,9 +283,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         let unit = "";
         if (frame && frame.headerUnit) {
             const effectivePolarization = this.widgetStore.effectivePolarization;
-            if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
+            if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                 unit = "%";
-            } else if (effectivePolarization === POLARIZATIONS.Pangle) {
+            } else if (effectivePolarization === Polarizations.Pangle) {
                 unit = "degree";
             } else {
                 unit = frame.headerUnit;

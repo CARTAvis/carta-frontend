@@ -13,7 +13,7 @@ import "./ChannelMapControlComponent.scss";
 
 @observer
 export class ChannelMapControlComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "channel-map-control",
             type: "channel-map-control",

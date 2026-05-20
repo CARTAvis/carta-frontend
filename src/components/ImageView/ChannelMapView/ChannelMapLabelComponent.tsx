@@ -62,7 +62,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DefaultLabelColor),
+                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
                     position: "absolute",
                     top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
                     left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,
