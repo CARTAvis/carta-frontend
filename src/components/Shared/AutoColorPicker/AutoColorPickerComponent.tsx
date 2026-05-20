@@ -19,13 +19,13 @@ interface AutoColorPickerComponentProps {
     disabled?: boolean;
     setColor: (color: string) => void;
 }
-
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ColorSelect = Select<string>;
 const CUSTOM_COLOR_OPTION = "custom-color";
 
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
-    private static readonly CHANGE_DELAY = 100;
+    private static readonly ChangeDelay = 100;
     @observable displayColorPicker: boolean = false;
 
     get autoColor(): string {
@@ -36,7 +36,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
         if (this.props.setColor) {
             this.props.setColor(newColor.hex);
         }
-    }, AutoColorPickerComponent.CHANGE_DELAY);
+    }, AutoColorPickerComponent.ChangeDelay);
 
     private renderColorBlock = (color: string) => {
         const className = "dropdown-color";

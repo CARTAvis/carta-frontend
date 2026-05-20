@@ -32,7 +32,7 @@ export interface ISelectedFile {
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!FileBrowserStore.staticInstance) {
             FileBrowserStore.staticInstance = new FileBrowserStore();
         }

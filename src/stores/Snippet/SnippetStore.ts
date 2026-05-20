@@ -5,19 +5,19 @@ import {Snippet} from "models";
 import {ApiService} from "services";
 import {AlertStore} from "stores";
 
-import {exampleSnippets} from "./ExampleSnippets";
+import {EXAMPLE_SNIPPETS} from "./ExampleSnippets";
 
 export class SnippetStore {
     private static staticInstance: SnippetStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SnippetStore.staticInstance) {
             SnippetStore.staticInstance = new SnippetStore();
         }
         return SnippetStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
     @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
     @observable activeSnippet: Snippet = {
@@ -44,7 +44,7 @@ export class SnippetStore {
             this.snippets = new Map<string, Snippet>();
         }
         this.snippets.clear();
-        for (const example of exampleSnippets) {
+        for (const example of EXAMPLE_SNIPPETS) {
             let category = "Examples";
             if (example.section) {
                 category += `/${example.section}`;
@@ -54,8 +54,8 @@ export class SnippetStore {
                 tags: ["example"],
                 categories: [category],
                 code: example.code,
-                frontendVersion: Snippet.FrontendVersion,
-                snippetVersion: Snippet.SnippetVersion
+                frontendVersion: Snippet.FRONTEND_VERSION,
+                snippetVersion: Snippet.SNIPPET_VERSION
             };
 
             this.snippets.set(example.name, snippet);
@@ -122,8 +122,8 @@ export class SnippetStore {
     @action clearActiveSnippet = () => {
         this.activeSnippet = {
             code: "",
-            frontendVersion: Snippet.FrontendVersion,
-            snippetVersion: Snippet.FrontendVersion,
+            frontendVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.FRONTEND_VERSION,
             categories: []
         };
         this.activeSnippetName = "";
@@ -144,7 +144,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -165,7 +165,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {

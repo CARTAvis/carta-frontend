@@ -30,35 +30,35 @@ export class HotkeyService extends React.Component<{}> {
         );
     }
 
-    static nextChannel = () => {
+    public static nextChannel = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(1, 0);
         }
     };
 
-    static prevChannel = () => {
+    public static prevChannel = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(-1, 0);
         }
     };
 
-    static nextStokes = () => {
+    public static nextStokes = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, 1);
         }
     };
 
-    static prevStokes = () => {
+    public static prevStokes = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, -1);
         }
     };
 
-    static toggleDarkTheme = () => {
+    public static toggleDarkTheme = () => {
         const appStore = AppStore.Instance;
         if (appStore.darkTheme) {
             appStore.setLightTheme();
@@ -67,7 +67,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static toggleCreateMode = () => {
+    public static toggleCreateMode = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.toggleActiveLayer();
@@ -75,7 +75,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static toggleRegionLock = () => {
+    public static toggleRegionLock = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -85,7 +85,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static unlockAllRegions = () => {
+    public static unlockAllRegions = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -95,7 +95,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static handleRegionEsc = () => {
+    public static handleRegionEsc = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             const regionSet = appStore.activeFrame.regionSet;
@@ -109,7 +109,7 @@ export class HotkeyService extends React.Component<{}> {
     };
 
     // For display in custom hotkeys dialog
-    static navigationDisplayHotkeys() {
+    public static navigationDisplayHotkeys() {
         const base = {group: "Navigation", global: true};
         const items = [
             {combo: "click", label: "Pan image"},
@@ -121,7 +121,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static regionDisplayHotkeys() {
+    public static regionDisplayHotkeys() {
         const base = {group: "Regions", global: true};
         const items = [
             {combo: "mod", label: "Switch region creation mode"},
@@ -131,7 +131,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static regionHotkeys() {
+    public static regionHotkeys() {
         const appStore = AppStore.Instance;
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const items = [
@@ -145,7 +145,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static frameControlHotkeys() {
+    public static frameControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
@@ -161,7 +161,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // Hidden hotkeys for input method compatibility
-    static frameControlHiddenHotkeys() {
+    public static frameControlHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "Frame controls", global: true, allowInInput: false, preventDefault: true};
@@ -172,7 +172,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static fileControlHotkeys() {
+    public static fileControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const base = {group: "File controls", global: true, allowInInput: false, preventDefault: true};
@@ -187,7 +187,7 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static otherHotkeys() {
+    public static otherHotkeys() {
         const appStore = AppStore.Instance;
         const base = {group: "Other", global: true, allowInInput: false, preventDefault: true};
         const items = [
@@ -199,7 +199,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static getHotkeyDefinitionsForDisplay() {
+    public static getHotkeyDefinitionsForDisplay() {
         const toElements = (hotkeys: any[]) =>
             hotkeys.map((hotkey, index) => {
                 return <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
@@ -231,7 +231,7 @@ export class HotkeyService extends React.Component<{}> {
         };
     }
 
-    static renderHotkeyGroups() {
+    public static renderHotkeyGroups() {
         const hotkeys = HotkeyService.getHotkeyDefinitionsForDisplay();
         const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
 

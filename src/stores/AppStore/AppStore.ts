@@ -73,7 +73,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -104,7 +104,7 @@ export const PREVIEW_PV_FILEID = -2;
 export class AppStore {
     private static staticInstance: AppStore;
 
-    static get Instance() {
+    public static get Instance() {
         return AppStore.staticInstance || new AppStore();
     }
 
@@ -894,7 +894,7 @@ export class AppStore {
             }
 
             // Display confirmation if image has secondary images
-            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
+            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(Distinct);
             const numSecondaries = secondaries.length;
             if (numSecondaries) {
                 const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
@@ -1553,8 +1553,8 @@ export class AppStore {
                         const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
                         pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
                         pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
-                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
-                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
+                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WidgetConfig.type);
+                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
                     }
                 }
             } else {
@@ -2433,7 +2433,7 @@ export class AppStore {
         if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
             return;
         }
-        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WidgetConfig.id + "-" + pvPreviewData.previewId)?.previewFrame;
 
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
@@ -2967,7 +2967,7 @@ export class AppStore {
         try {
             const success = await this.apiService.clearWorkspace(name);
             if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 return;
             }
         } catch (err) {

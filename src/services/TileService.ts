@@ -58,7 +58,7 @@ interface TileMessageArgs {
 export class TileService {
     private static staticInstance: TileService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!TileService.staticInstance) {
             TileService.staticInstance = new TileService();
         }

@@ -15,7 +15,7 @@ import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "layer-list",
             type: "layer-list",
@@ -363,9 +363,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
         const widgetsStore = AppStore.Instance.widgetsStore;
         const layerListWidget = widgetsStore.layerListWidgets?.get(this.props.id);
-        const title = LayerListComponent.WIDGET_CONFIG.title;
+        const title = LayerListComponent.WidgetConfig.title;
         if (title) {
-            widgetsStore.createFloatingSettingsWidget(title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
+            widgetsStore.createFloatingSettingsWidget(title, this.props.id, LayerListComponent.WidgetConfig.type);
         }
         if (layerListWidget) {
             layerListWidget.setSettingsTabId(LayerListSettingsTabs.REST_FREQ);

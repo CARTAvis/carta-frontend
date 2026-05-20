@@ -65,6 +65,6 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     return {point: sortedArray[closer]!, index: closer};
 }
 
-export const distinct = (value: any, index: number, self: Array<any>) => {
+export const Distinct = (value: any, index: number, self: Array<any>) => {
     return self.indexOf(value) === index;
 };

@@ -9,7 +9,7 @@ import {PreferenceStore} from "stores";
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
-    public static readonly InitTableRows = 50;
+    public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
     private readonly InitialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
     private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
@@ -51,7 +51,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
-        const initTableRows = CatalogProfileStore.InitTableRows;
+        const initTableRows = CatalogProfileStore.INIT_TABLE_ROWS;
         if (catalogInfo.dataSize < initTableRows) {
             this.numVisibleRows = catalogInfo.dataSize;
             this.subsetEndIndex = catalogInfo.dataSize;
@@ -198,7 +198,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
         const catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
         const imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
-        let previewDatasize = CatalogProfileStore.InitTableRows;
+        let previewDatasize = CatalogProfileStore.INIT_TABLE_ROWS;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
         catalogFilter.columnIndices = this.columnIndices;

@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
+import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
@@ -148,11 +148,11 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS | undefined {
+    @computed get effectivePolarization(): Polarizations | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
-            return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
+            return Polarizations[this.coordinate.substring(0, this.coordinate.length - 1)];
         }
     }
 

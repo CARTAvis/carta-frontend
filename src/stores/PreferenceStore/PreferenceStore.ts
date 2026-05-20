@@ -148,7 +148,7 @@ const DEFAULTS = {
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreferenceStore.staticInstance) {
             PreferenceStore.staticInstance = new PreferenceStore();
         }

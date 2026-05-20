@@ -52,7 +52,7 @@ export class CatalogOnlineQueryConfigStore {
         );
     }
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogOnlineQueryConfigStore.staticInstance) {
             CatalogOnlineQueryConfigStore.staticInstance = new CatalogOnlineQueryConfigStore();
         }

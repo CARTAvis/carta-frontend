@@ -1,6 +1,6 @@
 // Mock for gsl_wrapper WASM module
 
-const mockGslWrapper = {
+const MOCK_GSL_WRAPPER = {
     onReady: Promise.resolve(),
 
     // Mock GSL wrapper functions
@@ -50,4 +50,4 @@ const mockGslWrapper = {
     getValue: jest.fn(() => 0)
 };
 
-module.exports = mockGslWrapper;
+module.exports = MOCK_GSL_WRAPPER;

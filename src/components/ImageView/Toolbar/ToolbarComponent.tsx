@@ -87,7 +87,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handlePanZoomShortCutClicked = () => {
         const widgetsStore = AppStore.Instance.widgetsStore;
-        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const parentType = ImageViewComponent.WidgetConfig.type;
         const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
         if (settingsWidget) {
             widgetsStore.removeFloatingWidget(settingsWidget.id);

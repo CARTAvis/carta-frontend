@@ -166,7 +166,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "image-view",
             type: "image-view",

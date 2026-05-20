@@ -30,13 +30,13 @@ interface TelemetryDb extends DBSchema {
 export class TelemetryService {
     private static staticInstance: TelemetryService;
 
-    public static readonly ServerUrl = "https://telemetry.cartavis.org";
+    public static readonly SERVER_URL = "https://telemetry.cartavis.org";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
     private static readonly StoreName = "entries";
 
-    static get Instance() {
+    public static get Instance() {
         if (!TelemetryService.staticInstance) {
             TelemetryService.staticInstance = new TelemetryService();
         }
@@ -69,7 +69,7 @@ export class TelemetryService {
 
     private constructor() {
         this.axiosInstance = axios.create({
-            baseURL: TelemetryService.ServerUrl
+            baseURL: TelemetryService.SERVER_URL
         });
         this.sessionId = uuidv1();
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend

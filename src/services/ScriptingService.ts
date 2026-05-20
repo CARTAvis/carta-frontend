@@ -11,7 +11,7 @@ export class ExecutionEntry {
     valid: boolean;
     async: boolean | null | undefined;
 
-    static fromString(entryString: string): ExecutionEntry {
+    public static fromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         entryString = entryString.trim();
 
@@ -31,7 +31,7 @@ export class ExecutionEntry {
         return executionEntry;
     }
 
-    static fromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
+    public static fromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         executionEntry.async = requestMessage.async;
         executionEntry.target = requestMessage.target;
@@ -130,14 +130,14 @@ export class ExecutionEntry {
 export class ScriptingService {
     private static staticInstance: ScriptingService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ScriptingService.staticInstance) {
             ScriptingService.staticInstance = new ScriptingService();
         }
         return ScriptingService.staticInstance;
     }
 
-    static delay(timeout: number) {
+    public static delay(timeout: number) {
         return new Promise<void>(resolve => {
             setTimeout(resolve, timeout);
         });

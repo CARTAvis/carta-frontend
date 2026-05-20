@@ -59,7 +59,7 @@ export class SplatalogueService {
 
     private static staticInstance: SplatalogueService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SplatalogueService.staticInstance) {
             SplatalogueService.staticInstance = new SplatalogueService();
         }

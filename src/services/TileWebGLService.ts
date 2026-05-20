@@ -4,7 +4,7 @@ import tinycolor from "tinycolor2";
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
-import {rasterShaders} from "./GLSL";
+import {RASTER_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation | null;
@@ -57,7 +57,7 @@ export class TileWebGLService {
     shaderProgram: WebGLProgram | null;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!TileWebGLService.staticInstance) {
             TileWebGLService.staticInstance = new TileWebGLService();
         }
@@ -78,7 +78,7 @@ export class TileWebGLService {
         if (!this.gl) {
             return;
         }
-        this.shaderProgram = getShaderProgram(this.gl, rasterShaders.vertexShader, rasterShaders.fragmentShader);
+        this.shaderProgram = getShaderProgram(this.gl, RASTER_SHADERS.vertexShader, RASTER_SHADERS.fragmentShader);
         if (this.shaderProgram) {
             this.gl.useProgram(this.shaderProgram);
 
@@ -194,7 +194,7 @@ export class TileWebGLService {
 export class PreviewWebGLService extends TileWebGLService {
     protected static staticInstance: PreviewWebGLService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreviewWebGLService.staticInstance) {
             PreviewWebGLService.staticInstance = new PreviewWebGLService();
         }

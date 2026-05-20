@@ -1,12 +1,12 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {MultiProfileCategory, POLARIZATIONS, RegionId} from "enums";
+import {MultiProfileCategory, Polarizations, RegionId} from "enums";
 import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
-import {genColorFromIndex, type ProcessedSpectralProfile} from "utilities";
+import {AUTO_COLOR_OPTIONS, type ProcessedSpectralProfile} from "utilities";
 
 interface ProfileConfig {
     fileId: number | undefined;
@@ -416,26 +416,26 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @computed private get effectivePolarizations(): POLARIZATIONS[] {
-        const polarizations: POLARIZATIONS[] = [];
+    @computed private get effectivePolarizations(): Polarizations[] {
+        const polarizations: Polarizations[] = [];
         if (this.selectedCoordinates) {
             this.selectedCoordinates.forEach(coordinate => {
-                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame?.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
+                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame?.requiredPolarization : Polarizations[coordinate.substring(0, coordinate.length - 1)]);
             });
         }
         return polarizations;
     }
 
     @computed get isCoordinatesPangleOnly(): boolean {
-        return !this.effectivePolarizations?.some(polarization => POLARIZATIONS.Pangle !== polarization);
+        return !this.effectivePolarizations?.some(polarization => Polarizations.Pangle !== polarization);
     }
 
     @computed get isCoordinatesPFtotalPFlinearOnly(): boolean {
-        return !this.effectivePolarizations?.some(polarization => ![POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(polarization));
+        return !this.effectivePolarizations?.some(polarization => ![Polarizations.PFtotal, Polarizations.PFlinear].includes(polarization));
     }
 
     @computed get isCoordinatesIncludingNonIntensityUnit(): boolean {
-        return this.effectivePolarizations.some(polarization => [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization));
+        return this.effectivePolarizations.some(polarization => [Polarizations.PFtotal, Polarizations.PFlinear, Polarizations.Pangle].includes(polarization));
     }
 
     @computed get isSameCoordinatesUnit(): boolean {
@@ -540,11 +540,11 @@ export class SpectralProfileSelectionStore {
         const profileColor = widgetStore.getProfileColor(selectedId);
 
         if (!profileColor) {
-            let color: string = genColorFromIndex(0);
+            let color: string = AUTO_COLOR_OPTIONS[0];
 
             // find color that is not used by other profiles
             for (let i = 0; i < profileColors.length + 1; i++) {
-                color = genColorFromIndex(i);
+                color = AUTO_COLOR_OPTIONS[i % AUTO_COLOR_OPTIONS.length];
                 if (!profileColors.includes(color)) {
                     break;
                 }

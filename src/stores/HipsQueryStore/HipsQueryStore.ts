@@ -62,7 +62,7 @@ export class HipsQueryStore {
     }
 
     /** HiPS projection types and their descriptions. */
-    static readonly ProjectionOptionMap = new Map([
+    public static readonly PROJECTION_OPTION_MAP = new Map([
         [HipsProjection.AZP, "zenithal/azimuthal perspective"],
         [HipsProjection.SZP, "slant zenithal perspective"],
         [HipsProjection.TAN, "gnomonic"],
@@ -102,7 +102,7 @@ export class HipsQueryStore {
         MaxRotAngle: 360
     };
 
-    static get Instance() {
+    public static get Instance() {
         if (!HipsQueryStore.staticInstance) {
             HipsQueryStore.staticInstance = new HipsQueryStore();
         }

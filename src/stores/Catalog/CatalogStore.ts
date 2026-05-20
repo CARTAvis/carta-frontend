@@ -16,7 +16,7 @@ type CatalogOverlayCoords = {
 export class CatalogStore {
     private static staticInstance: CatalogStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogStore.staticInstance) {
             CatalogStore.staticInstance = new CatalogStore();
         }

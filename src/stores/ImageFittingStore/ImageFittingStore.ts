@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, NumberFormatType} from "enums";
-import {AngularSize, isValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
+import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
@@ -16,7 +16,7 @@ const IMAGE_REGION_ID = -1;
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ImageFittingStore.staticInstance) {
             ImageFittingStore.staticInstance = new ImageFittingStore();
         }
@@ -722,7 +722,7 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        if (!isValidWcsPoint(wcsSize)) {
+        if (!IsValidWcsPoint(wcsSize)) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);

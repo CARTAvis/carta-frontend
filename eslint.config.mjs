@@ -47,17 +47,17 @@ export default [
                 },
                 {
                     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
-                    format: null
+                    format: ["PascalCase"]
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["public", "static", "readonly"],
-                    format: null,
+                    format: ["UPPER_CASE"],
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["private", "static", "readonly"],
-                    format: null,
+                    format: ["PascalCase"],
                 },
                 {
                     selector: "classProperty",
@@ -67,23 +67,23 @@ export default [
                 {
                     selector: "variable",
                     modifiers: ["const", "global"],
-                    format: null,
+                    format: ["UPPER_CASE"],
                 },
                 {
                     selector: "variable",
                     types: ["function"],
                     modifiers: ["const", "global"],
-                    format: null,
+                    format: ["PascalCase"],
                 },
-                {
-                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                    format: ["camelCase"],
-                    leadingUnderscore: "allow",
-                },
+                // {
+                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                //     format: ["camelCase"],
+                //     leadingUnderscore: "allow",
+                // },
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
-                    format: null,
+                    format: ["PascalCase"],
                 },
                 // {
                 //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
@@ -92,10 +92,18 @@ export default [
                 //     prefix: ["is", "should", "has", "can", "did", "will"]
                 // },
                 // exceptions for certain patterns and don't follow the above conventions
+                // list of exception for legacy code (try not to add another exception):
+                // const N = maxIndex - minIndex;
+                // const M = controlPoints.length + (closed ? 1 : 0);
+                // const Jys = Object.values(Jansky);
+                // const SN = 2;
+                // const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
+                // const UIn8 = getBufferElementType(data) === "UIn8";
+                // return this.fixedParams.filter(p => p === true).length;
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: "^([N]|[M]|[p]|[UIn8]|[Iz]|[Jys]|[SN])|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: "^(N|M|p|UIn8|Iz|Jys|SN)$|^(CARTA|HDU|WCS)",
                         match: true
                     },
                     format: null,

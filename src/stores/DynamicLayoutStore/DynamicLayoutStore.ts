@@ -9,9 +9,9 @@ export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 export class DynamicLayoutStore {
     private static staticInstance: DynamicLayoutStore;
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
-    static get Instance() {
+    public static get Instance() {
         if (!DynamicLayoutStore.staticInstance) {
             DynamicLayoutStore.staticInstance = new DynamicLayoutStore();
         }

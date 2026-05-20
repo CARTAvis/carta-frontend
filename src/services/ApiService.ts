@@ -7,8 +7,10 @@ import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
 import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -20,7 +22,7 @@ export interface RuntimeConfig {
 export class ApiService {
     private static staticInstance: ApiService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ApiService.staticInstance) {
             ApiService.staticInstance = new ApiService();
         }
