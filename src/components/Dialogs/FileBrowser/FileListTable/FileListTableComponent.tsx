@@ -77,7 +77,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return FileListTableComponent.FileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
-    private static geCatalogFileTypeDisplay(type: CARTA.CatalogFileType) {
+    private static getCatalogFileTypeDisplay(type: CARTA.CatalogFileType) {
         return FileListTableComponent.CatalogFileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
@@ -205,7 +205,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
                     entries.push({
                         filename: file.name || "",
-                        typeInfo: file.type != null ? FileListTableComponent.geCatalogFileTypeDisplay(file.type) : undefined,
+                        typeInfo: file.type != null ? FileListTableComponent.getCatalogFileTypeDisplay(file.type) : undefined,
                         size: file.fileSize as number,
                         date: file.date as number,
                         fileInfo: file,
