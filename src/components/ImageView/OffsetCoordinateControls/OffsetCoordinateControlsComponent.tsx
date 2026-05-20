@@ -22,10 +22,10 @@ export const OffsetCoordinateControlsComponent = ({className, isWcsCoordinates, 
         <div className={containerClassName}>
             {isWcsCoordinates ? (
                 <ButtonGroup className="sky-ref-buttons">
-                    <Button small={true} active={skyRefIs === SkyRefIs.Origin} onClick={() => onSkyRefIsChanged(SkyRefIs.Origin)}>
+                    <Button size="small" active={skyRefIs === SkyRefIs.Origin} onClick={() => onSkyRefIsChanged(SkyRefIs.Origin)}>
                         Origin
                     </Button>
-                    <Button small={true} active={skyRefIs === SkyRefIs.Pole} onClick={() => onSkyRefIsChanged(SkyRefIs.Pole)}>
+                    <Button size="small" active={skyRefIs === SkyRefIs.Pole} onClick={() => onSkyRefIsChanged(SkyRefIs.Pole)}>
                         Pole
                     </Button>
                 </ButtonGroup>
