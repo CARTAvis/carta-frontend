@@ -4,6 +4,7 @@ jest.mock("components/Shared", () => ({
     AppToaster: {show: jest.fn()}
 }));
 
+import {ColormapSet} from "../../enums";
 import * as colorUtils from "../../utilities/color/color";
 import {AppStore} from "../AppStore/AppStore";
 import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
@@ -215,18 +216,18 @@ describe("ColorBlendingStore", () => {
 
             // one layer
             colorBlendingStore.selectedFrames = [];
-            colorBlendingStore.applyColormapSet("Rainbow");
+            colorBlendingStore.applyColormapSet(ColormapSet.Rainbow);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
 
             // two layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}} as any];
-            colorBlendingStore.applyColormapSet("Rainbow");
+            colorBlendingStore.applyColormapSet(ColormapSet.Rainbow);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Violet");
 
             // three layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}} as any, {renderConfig: {setColorMap: mockSetColorMap2, setCustomHexEnd: mockSetCustomHexEnd2}} as any];
-            colorBlendingStore.applyColormapSet("Rainbow");
+            colorBlendingStore.applyColormapSet(ColormapSet.Rainbow);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetCustomHexEnd1).toHaveBeenCalledWith("#80feb3");
             expect(mockSetColorMap1).toHaveBeenCalledWith(RenderConfigStore.COLOR_MAPS_CUSTOM);
@@ -239,25 +240,25 @@ describe("ColorBlendingStore", () => {
 
             // one layer
             colorBlendingStore.selectedFrames = [];
-            colorBlendingStore.applyColormapSet("RGB");
+            colorBlendingStore.applyColormapSet(ColormapSet.RGB);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
 
             // two layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}} as any];
-            colorBlendingStore.applyColormapSet("RGB");
+            colorBlendingStore.applyColormapSet(ColormapSet.RGB);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Blue");
 
             // three layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}} as any, {renderConfig: {setColorMap: mockSetColorMap2}} as any];
-            colorBlendingStore.applyColormapSet("RGB");
+            colorBlendingStore.applyColormapSet(ColormapSet.RGB);
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Green");
             expect(mockSetColorMap2).toHaveBeenCalledWith("Blue");
         });
 
         it("handles invalid colormap set names", () => {
-            colorBlendingStore.applyColormapSet("InvalidSet");
+            colorBlendingStore.applyColormapSet("InvalidSet" as ColormapSet);
             expect(MOCK_CONSOLE_ERROR).toHaveBeenCalledWith("Invalid colormap set name.");
         });
     });

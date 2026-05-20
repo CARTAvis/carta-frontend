@@ -21,7 +21,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler-floating-settings",
             type: "floating-settings",

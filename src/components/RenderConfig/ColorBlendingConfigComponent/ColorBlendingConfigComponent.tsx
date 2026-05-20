@@ -19,7 +19,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
+    const colormapSetOptions = Array.from(ColorBlendingStore.COLORMAP_SETS, ([set, colormapSetConfig]) => (
         <MenuItem
             text=""
             icon={
