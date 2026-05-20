@@ -649,7 +649,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button variant="minimal" endIcon="caret-down">
+                <Button variant="minimal" rightIcon="caret-down">
                     {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
                 </Button>
             </Popover>
@@ -666,7 +666,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button variant="minimal" endIcon="caret-down" data-testid="export-region-file-type-dropdown">
+                <Button variant="minimal" rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
             </Popover>
@@ -695,7 +695,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button variant="minimal" endIcon="caret-down">
+                <Button variant="minimal" rightIcon="caret-down">
                     {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
                 </Button>
             </Popover>
@@ -739,7 +739,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 placement="bottom-end"
             >
-                <Button variant="minimal" icon="filter" endIcon="caret-down">
+                <Button variant="minimal" icon="filter" rightIcon="caret-down">
                     {filterName}
                 </Button>
             </Popover>
@@ -757,7 +757,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     }
                     placement="bottom-start"
                 >
-                    <Button variant="minimal" icon={this.enableImageArithmetic ? "calculator" : "search"} endIcon="caret-down">
+                    <Button variant="minimal" icon={this.enableImageArithmetic ? "calculator" : "search"} rightIcon="caret-down">
                         {this.enableImageArithmetic ? "Image arithmetic" : "Filter"}
                     </Button>
                 </Popover>

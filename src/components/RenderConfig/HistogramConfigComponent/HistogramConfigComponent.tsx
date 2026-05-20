@@ -66,7 +66,13 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             itemRenderer={this.renderHistogramSelectItem}
                             disabled={this.props.disableHistogramSelect}
                         >
-                            <Button text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"} endIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect} data-testid="histogram-mode-dropdown" />
+                            <Button
+                                text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"}
+                                rightIcon="double-caret-vertical"
+                                alignText={"right"}
+                                disabled={this.props.disableHistogramSelect}
+                                data-testid="histogram-mode-dropdown"
+                            />
                         </HistogramSelect>
                     </FormGroup>
                 )}

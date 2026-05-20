@@ -91,7 +91,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 </span>
                             }
                             className="dropdown-button"
-                            endIcon={"caret-down"}
+                            rightIcon={"caret-down"}
                             disabled={this.props.disabled || this.props.disableOptions}
                             data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown"}
                         />

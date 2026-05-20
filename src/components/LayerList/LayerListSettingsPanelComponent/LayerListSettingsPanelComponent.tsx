@@ -123,7 +123,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             itemRenderer={this.renderFrameOptions}
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={fileText} endIcon="double-caret-vertical" alignText={Alignment.LEFT} />
+                            <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
                         </Select>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}

@@ -150,7 +150,7 @@ export class StokesDialogComponent extends React.Component {
                                 <Button
                                     className={classNames(Classes.MINIMAL, "catalog-represent-as-select-button")}
                                     text={this.getLabelFromValue(stokes.polarizationType ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE)}
-                                    endIcon="double-caret-vertical"
+                                    rightIcon="double-caret-vertical"
                                     data-testid={"stokes-table-dropdown-" + rowIndex}
                                 />
                             </Select>

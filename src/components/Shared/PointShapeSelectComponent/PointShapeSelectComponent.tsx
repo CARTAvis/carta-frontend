@@ -65,7 +65,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             itemRenderer={renderShapePopOver}
             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
         >
-            <Button icon={getPointShape(props.pointShape)} endIcon="double-caret-vertical" />
+            <Button icon={getPointShape(props.pointShape)} rightIcon="double-caret-vertical" />
         </Select>
     );
 });

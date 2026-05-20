@@ -80,7 +80,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     </FormGroup>
                 )}
                 <FormGroup inline={true}>
-                    <Button variant="minimal" className={"bias-contrast-button"} endIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.switchExtendBiasContrast}>
+                    <Button variant="minimal" className={"bias-contrast-button"} rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.switchExtendBiasContrast}>
                         {"Bias / Contrast"}
                     </Button>
                 </FormGroup>

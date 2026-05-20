@@ -373,7 +373,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 position={Position.BOTTOM}
                 minimal={true}
             >
-                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} endIcon="caret-down">
+                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
                     {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
             </Popover>

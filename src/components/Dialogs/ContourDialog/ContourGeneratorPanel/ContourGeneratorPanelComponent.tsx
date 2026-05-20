@@ -396,7 +396,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
                             onItemSelect={val => (this.generator = val)}
                             itemRenderer={this.renderGeneratorSelectItem}
                         >
-                            <Button text={this.generator} endIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={this.generator} rightIcon="double-caret-vertical" alignText={"right"} />
                         </GeneratorSelect>
                     </FormGroup>
                     <Button intent="success" className="generate-button" onClick={this.generateLevels}>
