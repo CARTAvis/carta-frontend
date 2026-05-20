@@ -88,21 +88,23 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         }
     };
 
+    const selectPointFromAnchorNode = (node: Konva.Node) => {
+        if (node.id() === "northTip" || node.id() === "eastTip") {
+            props.region.selectPoint(0);
+        }
+    };
+
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             props.onSelect?.(props.region, konvaEvent.evt);
             props.region.beginEditing();
-            if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
-                props.region.selectPoint(0);
-            }
+            selectPointFromAnchorNode(konvaEvent.target);
         }
     };
 
     const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         props.onSelect?.(props.region, konvaEvent.evt);
-        if (konvaEvent.target.id() === "northTip" || konvaEvent.target.id() === "eastTip") {
-            props.region.selectPoint(0);
-        }
+        selectPointFromAnchorNode(konvaEvent.target);
     };
 
     const handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -363,27 +365,26 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
         }
     };
 
-    const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target) {
-            props.onSelect?.(props.region);
-            region.beginEditing();
-            const anchorName = konvaEvent.target.id();
-            if (anchorName === "start") {
-                region.selectPoint(0);
-            } else if (anchorName === "finish") {
-                region.selectPoint(1);
-            }
-        }
-    };
-
-    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(props.region);
-        const anchorName = konvaEvent.target.id();
+    const selectPointFromAnchorNode = (node: Konva.Node) => {
+        const anchorName = node.id();
         if (anchorName === "start") {
             region.selectPoint(0);
         } else if (anchorName === "finish") {
             region.selectPoint(1);
         }
+    };
+
+    const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target) {
+            props.onSelect?.(props.region);
+            region.beginEditing();
+            selectPointFromAnchorNode(konvaEvent.target);
+        }
+    };
+
+    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        props.onSelect?.(props.region);
+        selectPointFromAnchorNode(konvaEvent.target);
     };
 
     const handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {

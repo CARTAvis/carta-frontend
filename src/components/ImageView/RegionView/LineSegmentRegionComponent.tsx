@@ -55,6 +55,21 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         this.addControlPointTimer = undefined;
     }
 
+    private selectPointFromAnchorNode = (node: Konva.Node) => {
+        if (!this.props.region.supportsPointSelection) {
+            return;
+        }
+
+        const index = node.index;
+        const anchor = node.id();
+
+        if (anchor.includes("rotator")) {
+            this.props.region.selectPoint(this.props.region.rotationPointIndex);
+        } else if (index >= 0 && index < this.props.region.controlPoints.length) {
+            this.props.region.selectPoint(index);
+        }
+    };
+
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
     };
@@ -100,15 +115,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
         // Select the specific point being dragged for keyboard follow-up edits
         if (konvaEvent.currentTarget) {
-            const node = konvaEvent.target;
-            const index = node.index;
-            const anchor = node.id();
-
-            if (anchor.includes("rotator") && this.props.region.supportsPointSelection) {
-                this.props.region.selectPoint(this.props.region.rotationPointIndex);
-            } else if (index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
-                this.props.region.selectPoint(index);
-            }
+            this.selectPointFromAnchorNode(konvaEvent.target);
         }
     };
 
@@ -255,15 +262,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     private handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         // Select the specific point for keyboard follow-up edits
         if (konvaEvent.currentTarget) {
-            const node = konvaEvent.target;
-            const index = node.index;
-            const anchor = node.id();
-
-            if (anchor.includes("rotator") && this.props.region.supportsPointSelection) {
-                this.props.region.selectPoint(this.props.region.rotationPointIndex);
-            } else if (index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
-                this.props.region.selectPoint(index);
-            }
+            this.selectPointFromAnchorNode(konvaEvent.target);
         }
     };
 
