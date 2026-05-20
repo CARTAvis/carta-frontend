@@ -92,10 +92,18 @@ export default [
                 //     prefix: ["is", "should", "has", "can", "did", "will"]
                 // },
                 // exceptions for certain patterns and don't follow the above conventions
+                // list of exception for legacy code (try not to add another exception):
+                // const N = maxIndex - minIndex;
+                // const M = controlPoints.length + (closed ? 1 : 0);
+                // const Jys = Object.values(Jansky);
+                // const SN = 2;
+                // const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
+                // const UIn8 = getBufferElementType(data) === "UIn8";
+                // return this.fixedParams.filter(p => p === true).length;
                 {
                     selector: ["classProperty", "classicAccessor", "variable", "parameter"],
                     filter: {
-                        regex: "^([N]|[M]|[p]|[UIn8]|[Iz]|[Jys])|^CARTA.*|^HDU.*|^WCS.*",
+                        regex: "^(N|M|p|UIn8|Iz|Jys|SN)$|^(CARTA|HDU|WCS)",
                         match: true
                     },
                     format: null,
