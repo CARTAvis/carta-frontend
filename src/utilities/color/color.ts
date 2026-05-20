@@ -15,6 +15,7 @@ function initContextWithSize(width: number, height: number) {
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
+ 
 const imageObj = new Image();
 imageObj.src = allMaps;
 imageObj.onload = () => {

@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {isValidWcsPoint, Point2D} from "models";
+import {IsValidWcsPoint, Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
@@ -25,7 +25,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         }
         const size = this.props.region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (isValidWcsPoint(wcsSize)) {
+        if (IsValidWcsPoint(wcsSize)) {
             const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
             const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
             if (formattedX && formattedY) {

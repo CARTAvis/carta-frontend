@@ -30,7 +30,7 @@ export class DialogStore {
         });
     }
 
-    static get Instance() {
+    public static get Instance() {
         if (!DialogStore.staticInstance) {
             DialogStore.staticInstance = new DialogStore();
         }

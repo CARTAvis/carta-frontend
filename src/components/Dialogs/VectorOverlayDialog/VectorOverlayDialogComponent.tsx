@@ -17,6 +17,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
+ 
 const DataSourceSelect = Select<FrameStore>;
 
 @observer

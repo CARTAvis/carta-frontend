@@ -1,3 +1,4 @@
+ 
 const {version} = require("../../../package.json");
 
 export class Snippet {
@@ -9,6 +10,7 @@ export class Snippet {
     categories: string[];
     requires?: string[];
 
-    static readonly FRONTEND_VERSION = version;
-    static readonly SNIPPET_VERSION = 1;
+    public static readonly FRONTEND_VERSION = version;
+    public static readonly SNIPPET_VERSION = 1;
 }
+ 

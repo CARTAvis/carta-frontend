@@ -9,7 +9,7 @@ import {AppStore, type FrameStore} from "stores";
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ChannelMapStore.staticInstance) {
             ChannelMapStore.staticInstance = new ChannelMapStore();
         }
@@ -17,7 +17,7 @@ export class ChannelMapStore {
     }
 
     /** The default color used for rendering the channel map label. */
-    static readonly DEFAULT_LABEL_COLOR = "auto-light_gray";
+    public static readonly DEFAULT_LABEL_COLOR = "auto-light_gray";
 
     constructor() {
         makeObservable(this);

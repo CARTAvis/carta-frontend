@@ -19,7 +19,7 @@ interface AutoColorPickerComponentProps {
     disabled?: boolean;
     setColor: (color: string) => void;
 }
-
+ 
 const ColorSelect = Select<string>;
 const CUSTOM_COLOR_OPTION = "custom-color";
 

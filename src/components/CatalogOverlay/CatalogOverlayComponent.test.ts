@@ -2,8 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
-import {CatalogWidgetStore} from "stores/Widgets";
+import {CatalogProfileStore, CatalogStore, CatalogWidgetStore, WidgetsStore} from "stores";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -40,7 +39,7 @@ type MockProfileStore = {
     setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
 };
 
-const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
+const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
     [CatalogSystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
     [CatalogSystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
     [CatalogSystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
@@ -50,7 +49,7 @@ const systemOverlayMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: Catal
     [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}]
 ]);
 
-const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
+const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
     const widgetStore = {
         autoSelectImageOverlayAxesAttempted: false,
         plottedImageOverlayMaxRows: undefined,
@@ -75,7 +74,7 @@ const createWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
     return widgetStore;
 };
 
-const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): MockProfileStore => {
+const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): MockProfileStore => {
     const catalogControlHeader = new Map<string, {dataIndex: number; display: boolean; filter: string}>();
     const catalogHeader = columns.map((column, index) => {
         catalogControlHeader.set(column.name, {
@@ -92,7 +91,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
     });
 
     const profileStore = {
-        activedSystem: systemOverlayMap.get(system),
+        activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
         catalogHeader,
@@ -106,7 +105,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 
     profileStore.setCatalogCoordinateSystem.mockImplementation((nextSystem: CatalogSystemType) => {
         profileStore.catalogCoordinateSystem.system = nextSystem;
-        profileStore.activedSystem = systemOverlayMap.get(nextSystem);
+        profileStore.activedSystem = SYSTEM_OVERLAY_MAP.get(nextSystem);
     });
     profileStore.setHeaderDisplay.mockImplementation((display: boolean, columnName: string) => {
         const header = profileStore.catalogControlHeader.get(columnName);
@@ -118,7 +117,7 @@ const createProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
     return profileStore;
 };
 
-const createCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
+const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
     const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name: column.name}));
     const profileStore = new CatalogProfileStore(
         {
@@ -143,15 +142,15 @@ const createCatalogProfileStore = (catalogFileId: number, system: CatalogSystemT
 };
 
 let harnessId = 0;
-const constructedComponents: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogWidgetStore}> = [];
+const CONSTRUCTED_COMPONENTS: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogWidgetStore}> = [];
 
-const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
+const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
     // and manually seed any constructor-initialized fields that the methods may touch.
     harnessId += 1;
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
-    const profileStore = createProfileStore(system, columns);
-    const widgetStore = options.widgetStore ?? createWidgetStore(xAxis, yAxis);
+    const profileStore = CreateProfileStore(system, columns);
+    const widgetStore = options.widgetStore ?? CreateWidgetStore(xAxis, yAxis);
     const autoSelectEnabled = options.autoSelectEnabled ?? true;
     component["catalogFileNames"] = new Map<number, string>();
     component["widgetId"] = `catalog-overlay-test-${harnessId}`;
@@ -176,10 +175,10 @@ const createComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     return {component, profileStore, widgetStore};
 };
 
-const createComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
+const CreateComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE) => {
     harnessId += 1;
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
-    const widgetStore = createWidgetStore(xAxis, yAxis);
+    const widgetStore = CreateWidgetStore(xAxis, yAxis);
     component["catalogFileNames"] = new Map<number, string>();
     component["widgetId"] = `catalog-overlay-test-${harnessId}`;
 
@@ -203,7 +202,7 @@ const createComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE,
     return {component, widgetStore};
 };
 
-const createConstructedComponentHarness = (
+const CreateConstructedComponentHarness = (
     system: CatalogSystemType,
     columns: MockColumn[],
     options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogWidgetStore} = {}
@@ -212,7 +211,7 @@ const createConstructedComponentHarness = (
     const catalogFileId = options.catalogFileId ?? 10_000 + harnessId;
     const componentId = options.componentId ?? `catalog-overlay-reaction-test-${harnessId}`;
     const catalogWidgetId = options.catalogWidgetId ?? `catalog-widget-reaction-test-${harnessId}`;
-    const profileStore = options.profileStore ?? createCatalogProfileStore(catalogFileId, system, columns);
+    const profileStore = options.profileStore ?? CreateCatalogProfileStore(catalogFileId, system, columns);
     const widgetStore = options.widgetStore ?? new CatalogWidgetStore(catalogFileId);
 
     if (options.catalogPlotType !== undefined) {
@@ -227,13 +226,13 @@ const createConstructedComponentHarness = (
     });
 
     const component = new CatalogOverlayComponent({id: componentId, docked: false});
-    constructedComponents.push({catalogFileId, catalogWidgetId, component, componentId, widgetStore});
+    CONSTRUCTED_COMPONENTS.push({catalogFileId, catalogWidgetId, component, componentId, widgetStore});
 
     return {catalogFileId, catalogWidgetId, component, componentId, profileStore, widgetStore};
 };
 
 afterEach(() => {
-    constructedComponents.forEach(({catalogFileId, catalogWidgetId, component, componentId, widgetStore}) => {
+    CONSTRUCTED_COMPONENTS.forEach(({catalogFileId, catalogWidgetId, component, componentId, widgetStore}) => {
         component.componentWillUnmount();
         widgetStore.dispose();
         runInAction(() => {
@@ -243,7 +242,7 @@ afterEach(() => {
             WidgetsStore.Instance.catalogWidgets.delete(catalogWidgetId);
         });
     });
-    constructedComponents.length = 0;
+    CONSTRUCTED_COMPONENTS.length = 0;
     jest.restoreAllMocks();
 });
 
@@ -261,7 +260,7 @@ describe("CatalogOverlayComponent", () => {
             ["Pixel1 image", CatalogSystemType.Pixel1, [{name: "id"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "X_IMAGE", "Y_IMAGE"],
             ["Pixel1 windowed image", CatalogSystemType.Pixel1, [{name: "id"}, {name: "XWIN_IMAGE"}, {name: "YWIN_IMAGE"}], "XWIN_IMAGE", "YWIN_IMAGE"]
         ])("picks %s aliases from catalog columns", (_label, system, columns, expectedX, expectedY) => {
-            const {component, widgetStore} = createComponentHarness(system, columns);
+            const {component, widgetStore} = CreateComponentHarness(system, columns);
 
             component["autoSelectAxes"]();
 
@@ -273,7 +272,7 @@ describe("CatalogOverlayComponent", () => {
             ["X-axis", [{name: "ra"}], "ra", CatalogOverlay.NONE],
             ["Y-axis", [{name: "dec"}], CatalogOverlay.NONE, "dec"]
         ])("selects only the available %s candidate", (_label, columns, expectedX, expectedY) => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, columns);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, columns);
 
             component["autoSelectAxes"]();
 
@@ -282,7 +281,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("skips excluded coordinate-like error columns", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "e_ra"}, {name: "pmdec"}, {name: "ra"}, {name: "dec"}]);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "e_ra"}, {name: "pmdec"}, {name: "ra"}, {name: "dec"}]);
 
             component["autoSelectAxes"]();
 
@@ -291,7 +290,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("skips columns when data type metadata is missing", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
             profileStore.catalogHeader = [];
 
             component["autoSelectAxes"]();
@@ -303,7 +302,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("uses safe defaults when profile store is unavailable", () => {
-            const {component, widgetStore} = createComponentWithoutProfileStore("ra", "dec");
+            const {component, widgetStore} = CreateComponentWithoutProfileStore("ra", "dec");
 
             expect(component.axisOption).toEqual([CatalogOverlay.NONE]);
             expect(component["getAutoSelectableAxisOptions"]()).toEqual([]);
@@ -315,7 +314,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("prefers FK4 columns over explicit J2000 or ICRS columns", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.FK4, [{name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAB1950"}, {name: "DEB1950"}]);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.FK4, [{name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAB1950"}, {name: "DEB1950"}]);
 
             component["autoSelectAxes"]();
 
@@ -324,7 +323,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("prefers FK5 columns over explicit B1950 or ICRS columns", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
 
             component["autoSelectAxes"]();
 
@@ -333,7 +332,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("prefers ICRS columns and excludes explicit B1950 columns", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}]);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "RAB1950"}, {name: "DEB1950"}, {name: "RAJ2000"}, {name: "DEJ2000"}, {name: "RA_ICRS"}, {name: "DE_ICRS"}]);
 
             component["autoSelectAxes"]();
 
@@ -342,7 +341,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("only treats J2000 FK5 columns as ICRS-compatible", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "RAJ2021"}, {name: "DEJ2021"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "RAJ2021"}, {name: "DEJ2021"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
 
             component["autoSelectAxes"]();
 
@@ -355,7 +354,7 @@ describe("CatalogOverlayComponent", () => {
             ["FK5", CatalogSystemType.FK5, "RAB1975", "DEB1975", "RAJ2015", "DEJ2015", "RAJ2015", "DEJ2015"],
             ["ICRS", CatalogSystemType.ICRS, "RAB1975", "DEB1975", "RA_ICRS", "DE_ICRS", "RA_ICRS", "DE_ICRS"]
         ])("filters generic epoch-specific equatorial columns for %s", (_label, system, incompatibleX, incompatibleY, compatibleX, compatibleY, expectedX, expectedY) => {
-            const {component, widgetStore} = createComponentHarness(system, [{name: incompatibleX}, {name: incompatibleY}, {name: compatibleX}, {name: compatibleY}]);
+            const {component, widgetStore} = CreateComponentHarness(system, [{name: incompatibleX}, {name: incompatibleY}, {name: compatibleX}, {name: compatibleY}]);
 
             component["autoSelectAxes"]();
 
@@ -364,7 +363,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("enables hidden matching columns when no visible coordinate columns are available", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}]);
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}]);
 
             profileStore.isFileBasedCatalog = true;
             component["handleFilterRequest"] = jest.fn();
@@ -381,7 +380,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("does nothing when preference is disabled", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(
+            const {component, profileStore, widgetStore} = CreateComponentHarness(
                 CatalogSystemType.Pixel0,
                 [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}],
                 CatalogOverlay.NONE,
@@ -405,7 +404,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("force-reset path reselects columns for the new system", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec");
 
             profileStore.setCatalogCoordinateSystem(CatalogSystemType.Pixel1);
             component["autoSelectAxes"](true);
@@ -420,7 +419,7 @@ describe("CatalogOverlayComponent", () => {
 
     describe("auto-select axes reaction", () => {
         test("only attempts auto-selection once per catalog", () => {
-            const {widgetStore} = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+            const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 
             expect(widgetStore.xAxis).toBe("ra");
             expect(widgetStore.yAxis).toBe("dec");
@@ -436,7 +435,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("defers attempt tracking until ImageOverlay mode is active", () => {
-            const {widgetStore} = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {catalogPlotType: CatalogPlotType.Histogram});
+            const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {catalogPlotType: CatalogPlotType.Histogram});
 
             expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
             expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
@@ -450,7 +449,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("does not retry auto-selection when another component uses the same widget store", () => {
-            const firstHarness = createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+            const firstHarness = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 
             expect(firstHarness.widgetStore.xAxis).toBe("ra");
             expect(firstHarness.widgetStore.yAxis).toBe("dec");
@@ -458,7 +457,7 @@ describe("CatalogOverlayComponent", () => {
             firstHarness.widgetStore.setxAxis(CatalogOverlay.NONE);
             firstHarness.widgetStore.setyAxis(CatalogOverlay.NONE);
 
-            createConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {
+            CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {
                 catalogFileId: firstHarness.catalogFileId,
                 catalogWidgetId: firstHarness.catalogWidgetId,
                 profileStore: firstHarness.profileStore,
@@ -473,7 +472,7 @@ describe("CatalogOverlayComponent", () => {
 
     describe("handleHeaderDisplayChange", () => {
         test("uses table update mode for file-based column display updates", () => {
-            const {component, profileStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], "RAJ2000", "_DEJ2000");
+            const {component, profileStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], "RAJ2000", "_DEJ2000");
             profileStore.isFileBasedCatalog = true;
             component["handleFilterRequest"] = jest.fn();
 
@@ -485,7 +484,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("reselects visible coordinate axes when columns are toggled back on from None", () => {
-            const {component, widgetStore} = createComponentHarness(
+            const {component, widgetStore} = CreateComponentHarness(
                 CatalogSystemType.ICRS,
                 [
                     {name: "ra", display: false},
@@ -505,7 +504,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("does not auto-reselect visible coordinate axes when preference is disabled", () => {
-            const {component, widgetStore} = createComponentHarness(
+            const {component, widgetStore} = CreateComponentHarness(
                 CatalogSystemType.ICRS,
                 [
                     {name: "ra", display: false},
@@ -526,7 +525,7 @@ describe("CatalogOverlayComponent", () => {
 
     describe("handleHeaderDisplayChange reselects removed axes", () => {
         test("reselects xAxis without auto-applying the image overlay", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}, {name: "ycentroid"}], "x", "y");
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}, {name: "ycentroid"}], "x", "y");
 
             component["applyImageOverlayPlot"] = jest.fn();
 
@@ -538,7 +537,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("only reselects the removed xAxis", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y");
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y");
 
             component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
@@ -548,7 +547,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("only reselects the removed yAxis", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "ycentroid"}], "x", "y");
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "ycentroid"}], "x", "y");
 
             component["handleHeaderDisplayChange"]({target: {checked: false}}, "y");
 
@@ -558,7 +557,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("does not auto-select replacement axes when preference is disabled", () => {
-            const {component, widgetStore} = createComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y", {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}], "x", "y", {
                 autoSelectEnabled: false
             });
 
@@ -571,7 +570,7 @@ describe("CatalogOverlayComponent", () => {
 
     describe("handleCatalogSystemChange", () => {
         test("clears image overlay axes when preference is disabled and the axis labels change", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec", {autoSelectEnabled: false});
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "X_IMAGE"}, {name: "Y_IMAGE"}], "ra", "dec", {autoSelectEnabled: false});
 
             component["handleCatalogSystemChange"](CatalogSystemType.Pixel1);
 
@@ -581,7 +580,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("preserves image overlay axes when preference is disabled and the axis labels stay compatible", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000", {autoSelectEnabled: false});
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000", {autoSelectEnabled: false});
 
             component["handleCatalogSystemChange"](CatalogSystemType.ICRS);
 
@@ -593,7 +592,7 @@ describe("CatalogOverlayComponent", () => {
 
     describe("isImageOverlaySelectionDirty", () => {
         test("reports pending plot changes when current axes differ from the applied overlay", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
 
             widgetStore.hasPlottedImageOverlay = true;
             widgetStore.plottedImageOverlayMaxRows = profileStore.maxRows;
@@ -608,7 +607,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("reports pending plot changes when only the coordinate system differs", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000");
 
             widgetStore.hasPlottedImageOverlay = true;
             widgetStore.plottedImageOverlayMaxRows = profileStore.maxRows;
@@ -623,7 +622,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("reports pending plot changes when max rows increases past plotted rows", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
 
             widgetStore.hasPlottedImageOverlay = true;
             widgetStore.plottedImageOverlayMaxRows = 100;
@@ -639,7 +638,7 @@ describe("CatalogOverlayComponent", () => {
         });
 
         test("does not report pending plot changes when max rows is reduced below plotted rows", () => {
-            const {component, profileStore, widgetStore} = createComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], "ra", "dec");
 
             widgetStore.hasPlottedImageOverlay = true;
             widgetStore.plottedImageOverlayMaxRows = 1500;

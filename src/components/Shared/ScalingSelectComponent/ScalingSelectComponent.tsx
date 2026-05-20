@@ -20,7 +20,7 @@ interface ScalingComponentProps {
     disabled?: boolean;
 }
 
-const equationPngMap = new Map([
+const EQUATION_PNG_MAP = new Map([
     [FrameScaling.LINEAR, linearPng],
     [FrameScaling.LOG, logPng],
     [FrameScaling.SQRT, sqrtPng],
@@ -29,6 +29,7 @@ const equationPngMap = new Map([
     [FrameScaling.POWER, powerPng]
 ]);
 
+ 
 const ScalingSelect = Select<FrameScaling>;
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
@@ -45,7 +46,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: "contain"}} />}
+                text={<div className="equation-div" style={{backgroundImage: `url(${EQUATION_PNG_MAP.get(scaling)}`, backgroundSize: "contain"}} />}
                 style={{width: "220px"}}
             />
         );

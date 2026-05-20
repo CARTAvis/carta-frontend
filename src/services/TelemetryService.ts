@@ -36,7 +36,7 @@ export class TelemetryService {
     private static readonly DbName = "telemetry";
     private static readonly StoreName = "entries";
 
-    static get Instance() {
+    public static get Instance() {
         if (!TelemetryService.staticInstance) {
             TelemetryService.staticInstance = new TelemetryService();
         }

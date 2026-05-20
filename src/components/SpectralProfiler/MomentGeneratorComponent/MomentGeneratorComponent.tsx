@@ -14,6 +14,7 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
+ 
 const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer

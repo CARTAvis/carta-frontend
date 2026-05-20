@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
+import {IsValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, scale2D} from "utilities";
@@ -45,7 +45,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
         const size = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (isValidWcsPoint(wcsSize)) {
+        if (IsValidWcsPoint(wcsSize)) {
             const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
             const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
             if (formattedX && formattedY) {

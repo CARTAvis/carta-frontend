@@ -11,6 +11,7 @@ import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
+ 
 const GeneratorSelect = Select<ContourGeneratorType>;
 
 @observer

@@ -9,6 +9,7 @@ import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
 import {type RenderConfigStore} from "stores/Frame";
 
+ 
 const HistogramSelect = Select<boolean>;
 
 interface HistogramConfigProps {

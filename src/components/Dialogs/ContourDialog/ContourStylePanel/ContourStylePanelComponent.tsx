@@ -11,6 +11,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
+ 
 const DashModeSelect = Select<ContourDashMode>;
 
 @observer

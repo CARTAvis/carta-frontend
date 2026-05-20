@@ -22,8 +22,10 @@ import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelC
 
 import "./ContourDialogComponent.scss";
 
+ 
 const DataSourceSelect = Select<FrameStore>;
 const HistogramSelect = Select<boolean>;
+ 
 
 @observer
 export class ContourDialogComponent extends React.Component {
