@@ -63,7 +63,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
         <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
-            <Button disabled={props.disabled} text={colormapBlock} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
+            <Button disabled={props.disabled} text={colormapBlock} endIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
 };

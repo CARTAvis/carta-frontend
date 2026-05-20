@@ -97,7 +97,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.catalogDB} disabled={disable} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 {isVizier ? (
@@ -134,7 +134,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.radiusUnits} disabled={disable} endIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
@@ -153,7 +153,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={disable} endIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput

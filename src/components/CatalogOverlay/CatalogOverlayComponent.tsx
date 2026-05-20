@@ -1014,7 +1014,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 itemRenderer={this.renderFileIdPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
+                                <Button text={this.catalogFileId} endIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                             </Select>
                         </FormGroup>
                         <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
@@ -1027,7 +1027,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 disabled={!isImageOverlay}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
+                                <Button text={activeSystem} disabled={!isImageOverlay} endIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                             </Select>
                         </FormGroup>
                         <FormGroup inline={true} label="Show header">
@@ -1068,7 +1068,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemRenderer={this.renderPlotTypePopOver}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                 >
-                                    <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
+                                    <Button className="bp3" text={catalogWidgetStore.catalogPlotType} endIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
                                 <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={disable}>
@@ -1085,7 +1085,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} endIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                     </Select>
                                 </FormGroup>
 
@@ -1103,7 +1103,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} endIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
                                     </Select>
                                 </FormGroup>
 

@@ -85,7 +85,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 itemRenderer={this.renderColorSelectItem}
                 disabled={this.props.disabled}
             >
-                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical" disabled={this.props.disabled} />
+                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} endIcon="double-caret-vertical" disabled={this.props.disabled} />
             </ColorSelect>
         );
     }

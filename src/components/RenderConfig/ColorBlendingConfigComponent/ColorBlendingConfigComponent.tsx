@@ -123,13 +123,13 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 <ButtonGroup>
                     <Popover minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
                         <Tooltip content={addLayerTooltip}>
-                            <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
+                            <Button icon="add" endIcon="caret-down" disabled={!newFrameOptions.length}>
                                 {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
                         </Tooltip>
                     </Popover>
                     <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
-                        <Button icon="color-fill" rightIcon="caret-down">
+                        <Button icon="color-fill" endIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>
                     </Popover>

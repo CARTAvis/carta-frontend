@@ -44,7 +44,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         items={[ContourDashMode.None, ContourDashMode.Dashed, ContourDashMode.NegativeOnly]}
                         itemRenderer={this.renderDashModeSelectItem}
                     >
-                        <Button text={frame.contourConfig.dashMode} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={frame.contourConfig.dashMode} endIcon="double-caret-vertical" alignText={"right"} />
                     </DashModeSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Color mode">

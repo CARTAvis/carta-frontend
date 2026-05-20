@@ -455,7 +455,7 @@ export class ContourDialogComponent extends React.Component {
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-cube" : "Per-channel"} endIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
@@ -537,7 +537,7 @@ export class ContourDialogComponent extends React.Component {
                                 disabled={appStore.animatorStore.animationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                                <Button text={dataSource.filename} endIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                             </DataSourceSelect>
                             <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                                 <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} variant="minimal" onClick={appStore.toggleFrameContourLock} />

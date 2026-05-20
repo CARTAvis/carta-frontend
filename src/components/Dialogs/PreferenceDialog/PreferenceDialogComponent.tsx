@@ -242,7 +242,7 @@ export class PreferenceDialogComponent extends React.Component {
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
                 {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
