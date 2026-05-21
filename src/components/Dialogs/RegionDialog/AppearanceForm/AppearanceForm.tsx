@@ -89,13 +89,10 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
         this.apply(region => (region as PointAnnotationStore).setPointShape(item));
-        // Cache the shape for new point regions in single-region mode only.
-        if (!this.props.applyToTargets) {
-            const activeFrame = AppStore.Instance.activeFrame;
-            if (activeFrame) {
-                const frame = activeFrame.spatialReference ?? activeFrame;
-                frame.pointShapeCache = item;
-            }
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame) {
+            const frame = activeFrame.spatialReference ?? activeFrame;
+            frame.pointShapeCache = item;
         }
     };
 
