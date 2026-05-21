@@ -430,6 +430,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     isRotator={config.anchor === "rotator"}
                     isSelected={isSelectedSimpleShapeAnchor}
                     interactive={interactive}
+                    opacity={region.visualOpacity}
                     selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}

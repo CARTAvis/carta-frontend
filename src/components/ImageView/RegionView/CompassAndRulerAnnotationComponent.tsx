@@ -249,6 +249,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         rotation: 0,
         isRotator: false,
         interactive: !!props.activeSelected,
+        opacity: region.visualOpacity,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
@@ -623,6 +624,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             rotation={0}
                             isRotator={false}
                             interactive={!!props.activeSelected}
+                            opacity={region.visualOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
@@ -639,6 +641,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             rotation={0}
                             isRotator={false}
                             interactive={!!props.activeSelected}
+                            opacity={region.visualOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}

@@ -302,6 +302,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 isRotator={isRotator}
                 isSelected={isSelected}
                 interactive={interactive}
+                opacity={this.props.region.visualOpacity}
                 selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                 onMouseEnter={this.handleAnchorMouseEnter}
                 onMouseOut={this.handleAnchorMouseOut}
