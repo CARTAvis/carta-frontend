@@ -82,6 +82,17 @@ export class PreferenceDialogComponent extends React.Component {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
     }, 100);
 
+    private updatePointShapeCache = (pointShape: CARTA.PointAnnotationShape) => {
+        AppStore.Instance.frames.forEach(frame => {
+            frame.pointShapeCache = pointShape;
+        });
+    };
+
+    private handlePointAnnotationShapeChange = (item: CARTA.PointAnnotationShape) => {
+        PreferenceStore.Instance.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item);
+        this.updatePointShapeCache(item);
+    };
+
     // variable for showing preview cube size unit in the dialog
     @observable private pvPreviewCubeSizeLimitUnit = "GB";
 
@@ -108,6 +119,7 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.ANNOTATION:
                 preference.resetAnnotationSettings();
+                this.updatePointShapeCache(preference.pointAnnotationShape);
                 break;
             case PreferenceDialogTabs.PERFORMANCE:
                 preference.resetPerformanceSettings();
@@ -654,7 +666,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Point shape">
-                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
+                    <PointShapeSelectComponent handleChange={this.handlePointAnnotationShapeChange} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
