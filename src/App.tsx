@@ -52,10 +52,10 @@ export class App extends React.Component {
                 );
             case AlertType.Retry:
                 const cancelProps =
-                    alertStore.showDashboardLink && ApiService.RuntimeConfig?.dashboardAddress
+                    alertStore.showDashboardLink && ApiService.runtimeConfig?.dashboardAddress
                         ? {
                               cancelButtonText: "Open CARTA Dashboard",
-                              onCancel: () => window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank")
+                              onCancel: () => window.open(ApiService.runtimeConfig.dashboardAddress, "_blank")
                           }
                         : {};
 

@@ -10,7 +10,22 @@ import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {
+    add2D,
+    getApproximateEllipsePoints,
+    getApproximatePolygonPoints,
+    getRegionPixelProperties,
+    isAstBadPoint,
+    length2D,
+    midpoint2D,
+    minMax2D,
+    rotate2D,
+    scale2D,
+    simplePolygonPointTest,
+    simplePolygonTest,
+    subtract2D,
+    transformPoint
+} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -48,7 +63,7 @@ export class RegionStore {
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
-    public static RegionTypeString(regionType: CARTA.RegionType): string {
+    public static regionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
@@ -87,7 +102,7 @@ export class RegionStore {
         }
     }
 
-    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+    public static isRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
@@ -100,7 +115,7 @@ export class RegionStore {
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
+    public static regionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.ANNPOINT:
@@ -155,15 +170,15 @@ export class RegionStore {
         [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
-    public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
+    public static isRegionTypeValid(regionType: CARTA.RegionType): boolean {
         return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
-    public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
+    public static isRegionLineWidthValid(regionLineWidth: number): boolean {
         return regionLineWidth >= RegionStore.MIN_LINE_WIDTH && regionLineWidth <= RegionStore.MAX_LINE_WIDTH;
     }
 
-    public static IsRegionDashLengthValid(regionDashLength: number): boolean {
+    public static isRegionDashLengthValid(regionDashLength: number): boolean {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
@@ -334,7 +349,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        return RegionStore.GetRegionProperties(this.regionType, this.controlPoints, this.rotation);
+        return getRegionPixelProperties(this.regionType, this.controlPoints, this.rotation);
     }
 
     @computed get isPreviewCut(): boolean {
@@ -345,43 +360,6 @@ export class RegionStore {
         }
         return false;
     }
-
-    public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
-        const point = controlPoints[CENTER_POINT_INDEX];
-        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
-
-        switch (regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (pixel) [${center}]`;
-            case CARTA.RegionType.LINE:
-                let lineProperties = "Line (pixel) [";
-                controlPoints.forEach((point, index) => {
-                    lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    lineProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return lineProperties;
-            case CARTA.RegionType.RECTANGLE:
-                return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                return `ellipse[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                let polygonProperties = "poly[";
-                controlPoints.forEach((point, index) => {
-                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    polygonProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polygonProperties;
-            case CARTA.RegionType.POLYLINE:
-                let polylineProperties = "Polyline (pixel) [";
-                controlPoints.forEach((point, index) => {
-                    polylineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    polylineProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polylineProperties;
-            default:
-                return "Not Implemented";
-        }
-    };
 
     public getRegionApproximation(astTransform: AST.Mapping): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);

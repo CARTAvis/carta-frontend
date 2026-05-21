@@ -13,21 +13,21 @@ export class TileCoordinate {
     }
 
     public encode(): number {
-        return TileCoordinate.EncodeCoordinate(this);
+        return TileCoordinate.encodeCoordinate(this);
     }
 
-    public static EncodeCoordinate(coordinate: {x: number; y: number; layer: number}): number {
+    public static encodeCoordinate(coordinate: {x: number; y: number; layer: number}): number {
         if (!coordinate) {
             return -1;
         }
-        return TileCoordinate.Encode(coordinate.x, coordinate.y, coordinate.layer);
+        return TileCoordinate.encode(coordinate.x, coordinate.y, coordinate.layer);
     }
 
-    public static AddFileIdAndChannel(encodedCoordinate: number, fileId: number, channel: number): bigint {
+    public static addFileIdAndChannel(encodedCoordinate: number, fileId: number, channel: number): bigint {
         return BigInt(BigInt(encodedCoordinate) + BigInt(fileId) * TileCoordinate.FileIdOffset + BigInt(channel) * TileCoordinate.ChannelOffset);
     }
 
-    public static RemoveFileIdAndChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
+    public static removeFileIdAndChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
         return Number((BigInt(encodedCoordinateWithFileIdAndChannel) % TileCoordinate.FileIdOffset) % TileCoordinate.ChannelOffset);
     }
 
@@ -35,7 +35,7 @@ export class TileCoordinate {
     // to transfer a list of tiles to the backend, but also simplifies using the coordinate as a map key.
     // 12 bits are used for each of the x and y coordinates (range of 0 - 4096), 7 bits for the layer.
     // The layer is limited to a range of 0 - 12, due to the range of the x and y coordinates
-    public static Encode(x: number, y: number, layer: number): number {
+    public static encode(x: number, y: number, layer: number): number {
         const layerWidth = 1 << layer;
         // check bounds
         if (x < 0 || y < 0 || layer < 0 || layer > 12 || x >= layerWidth || y >= layerWidth) {
@@ -46,8 +46,8 @@ export class TileCoordinate {
         return (layer << 24) | (y << 12) | x;
     }
 
-    // Decode all three coordinates from an encoded coordinate using bitwise operators
-    public static Decode(encodedCoordinate: number): TileCoordinate {
+    // decode all three coordinates from an encoded coordinate using bitwise operators
+    public static decode(encodedCoordinate: number): TileCoordinate {
         const x = encodedCoordinate & 4095;
         const layer = (encodedCoordinate >> 24) & 127;
         const y = (encodedCoordinate >> 12) & 4095;
@@ -55,15 +55,15 @@ export class TileCoordinate {
     }
 
     // Shortcut to quickly decode just the layer from an encoded coordinate
-    public static GetLayer(encodedCoordinate: number): number {
+    public static getLayer(encodedCoordinate: number): number {
         return (encodedCoordinate >> 24) & 127;
     }
 
-    public static GetFileId(encodedCoordinateWithFileIdAndChannel: bigint): number {
+    public static getFileId(encodedCoordinateWithFileIdAndChannel: bigint): number {
         return Number((encodedCoordinateWithFileIdAndChannel >> BigInt(32)) & BigInt("0xFFFF"));
     }
 
-    public static GetChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
+    public static getChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
         return Math.floor(Number(encodedCoordinateWithFileIdAndChannel / TileCoordinate.ChannelOffset));
     }
 }

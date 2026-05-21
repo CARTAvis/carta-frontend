@@ -377,7 +377,7 @@ export class FileBrowserDialogComponent extends React.Component {
         AppStore.Instance.fileBrowserStore.selectFolder(path, true);
     };
 
-    private static ValidateFilename(filename: string) {
+    private static validateFilename(filename: string) {
         const forbiddenRegex = /(\.\.)|(\\)+/gm;
         return filename && filename.length && !filename.match(forbiddenRegex);
     }
@@ -623,7 +623,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={
-                                !fileBrowserStore.exportFilename || !FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1
+                                !fileBrowserStore.exportFilename || !FileBrowserDialogComponent.validateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1
                             }
                             onClick={this.handleExportRegionsClicked}
                             text="Export regions"
@@ -940,7 +940,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
+                                infoTypes={FileBrowserDialogComponent.getFileInfoTypes(fileBrowserStore.browserMode)}
                                 HDUOptions={{HDUList: fileBrowserStore.HDUList || [], handleSelectedHDUChange: fileBrowserStore.selectHDU}}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
@@ -1001,7 +1001,7 @@ export class FileBrowserDialogComponent extends React.Component {
         );
     };
 
-    private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+    private static getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];

@@ -90,11 +90,11 @@ export class SnippetStore {
 
     @computed
     private get functionToExecute() {
-        const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-        if (this.activeSnippet && AsyncFunction) {
+        const asyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+        if (this.activeSnippet && asyncFunction) {
             let f;
             try {
-                f = new AsyncFunction(this.activeSnippet.code);
+                f = new asyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
                 console.error(e);

@@ -731,9 +731,9 @@ export class AppStore {
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
             return this.getFrame(ack.fileId);
@@ -762,9 +762,9 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
@@ -785,9 +785,9 @@ export class AppStore {
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
             AppStore.Instance.dialogStore.hideDialog(DialogId.Stokes);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
@@ -1165,7 +1165,7 @@ export class AppStore {
             this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
                 const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+                const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
                 const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
                 if (catalogWidgetId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
@@ -2242,7 +2242,7 @@ export class AppStore {
             }
 
             for (const profile of spectralProfileData.profiles) {
-                profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
+                profileStore.setProfile(ProtobufProcessing.processSpectralProfile(profile, spectralProfileData.progress));
             }
         }
     };
@@ -2381,7 +2381,7 @@ export class AppStore {
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
-            const catalogData = ProtobufProcessing.ProcessCatalogData(catalogFilter.columns);
+            const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
             catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
             catalogProfileStore.setProgress(progress);
             if (progress === 1) {
@@ -3644,8 +3644,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = StatsWidgetStore.CalculateRequirementsMap(this.widgetsStore.statsWidgets);
-        const diffList = StatsWidgetStore.DiffStatsRequirements(this.statsRequirements, updatedRequirements);
+        const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(this.widgetsStore.statsWidgets);
+        const diffList = StatsWidgetStore.diffStatsRequirements(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3660,8 +3660,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = HistogramWidgetStore.CalculateRequirementsMap(this.widgetsStore.histogramWidgets);
-        const diffList = HistogramWidgetStore.DiffHistoRequirements(this.histogramRequirements, updatedRequirements);
+        const updatedRequirements = HistogramWidgetStore.calculateRequirementsMap(this.widgetsStore.histogramWidgets);
+        const diffList = HistogramWidgetStore.diffHistoRequirements(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3676,11 +3676,11 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
+        const updatedRequirements = SpectralProfileWidgetStore.calculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
         if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
             StokesAnalysisWidgetStore.addToRequirementsMap(updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
-        const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
+        const diffList = SpectralProfileWidgetStore.diffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3693,8 +3693,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
-        const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
+        const updatedRequirements = SpatialProfileWidgetStore.calculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
+        const diffList = SpatialProfileWidgetStore.diffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3707,8 +3707,8 @@ export class AppStore {
     private activateStatsPanel = (statsPanelEnabled: boolean) => {
         if (statsPanelEnabled) {
             import("stats-js")
-                .then(({default: Stats}) => {
-                    const stats = new Stats();
+                .then(({default: statsClass}) => {
+                    const stats = new statsClass();
                     stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
                     document.body.appendChild(stats.dom);
 
