@@ -245,11 +245,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         fontStyle: region.fontStyle
     };
 
+    const anchorsInteractive = !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked;
+    const anchorOpacity = anchorsInteractive ? region.visualOpacity : 0;
     const anchorCommonProps = {
         rotation: 0,
         isRotator: false,
-        interactive: !!props.activeSelected,
-        opacity: region.visualOpacity,
+        interactive: anchorsInteractive && !!props.activeSelected,
+        opacity: anchorOpacity,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
@@ -498,6 +500,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
     const [textOffsetX, setTextOffsetX] = React.useState(0);
     const [xTextOffsetX, setXTextOffsetX] = React.useState(0);
     const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
+    const anchorsInteractive = !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked;
+    const anchorOpacity = anchorsInteractive ? region.visualOpacity : 0;
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
@@ -623,8 +627,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             y={canvasPosStart.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={!!props.activeSelected}
-                            opacity={region.visualOpacity}
+                            interactive={anchorsInteractive && !!props.activeSelected}
+                            opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
@@ -640,8 +644,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             y={canvasPosFinish.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={!!props.activeSelected}
-                            opacity={region.visualOpacity}
+                            interactive={anchorsInteractive && !!props.activeSelected}
+                            opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
