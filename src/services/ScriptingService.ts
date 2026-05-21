@@ -11,7 +11,7 @@ export class ExecutionEntry {
     valid: boolean;
     async: boolean | null | undefined;
 
-    public static FromString(entryString: string): ExecutionEntry {
+    public static fromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         entryString = entryString.trim();
 
@@ -31,7 +31,7 @@ export class ExecutionEntry {
         return executionEntry;
     }
 
-    public static FromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
+    public static fromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         executionEntry.async = requestMessage.async;
         executionEntry.target = requestMessage.target;
@@ -61,7 +61,7 @@ export class ExecutionEntry {
     }
 
     async execute() {
-        const targetObject = ExecutionEntry.GetTargetObject(AppStore.Instance, this.target);
+        const targetObject = ExecutionEntry.getTargetObject(AppStore.Instance, this.target);
         if (targetObject == null) {
             throw new Error(`Missing target object: ${this.target}`);
         }
@@ -80,7 +80,7 @@ export class ExecutionEntry {
         return response;
     }
 
-    private static GetTargetObject(baseObject: any, targetString: string | null | undefined) {
+    private static getTargetObject(baseObject: any, targetString: string | null | undefined) {
         if (!targetString) {
             return baseObject;
         }
@@ -124,7 +124,7 @@ export class ExecutionEntry {
                 return undefined;
             }
             const targetString = parameter?.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
-            return ExecutionEntry.GetTargetObject(AppStore.Instance, targetString);
+            return ExecutionEntry.getTargetObject(AppStore.Instance, targetString);
         }
         return parameter;
     };
@@ -140,14 +140,14 @@ export class ScriptingService {
         return ScriptingService.staticInstance;
     }
 
-    public static Delay(timeout: number) {
+    public static delay(timeout: number) {
         return new Promise<void>(resolve => {
             setTimeout(resolve, timeout);
         });
     }
 
     handleScriptingRequest = async (requestMessage: CARTA.IScriptingRequest): Promise<CARTA.IScriptingResponse> => {
-        const entry = ExecutionEntry.FromScriptingRequest(requestMessage);
+        const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
         if (!entry.valid) {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
@@ -198,7 +198,7 @@ export class ScriptingService {
                 } else {
                     await entry.execute();
                     // TODO: more tests to see if this is really necessary
-                    await ScriptingService.Delay(10);
+                    await ScriptingService.delay(10);
                 }
             } catch (err) {
                 console.error(err);

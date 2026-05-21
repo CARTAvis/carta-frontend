@@ -245,7 +245,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private static GetCursor(anchor: string, rotation: number) {
+    private static getCursor(anchor: string, rotation: number) {
         let anchorAngle: number;
 
         switch (anchor) {
@@ -296,7 +296,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const stage = target?.getStage();
         if (stage) {
             this.previousCursorStyle = stage.container().style.cursor;
-            stage.container().style.cursor = SimpleShapeRegionComponent.GetCursor(target.id(), this.props.region.rotation);
+            stage.container().style.cursor = SimpleShapeRegionComponent.getCursor(target.id(), this.props.region.rotation);
         }
     };
 

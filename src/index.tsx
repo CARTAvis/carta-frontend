@@ -42,11 +42,11 @@ async function fetchConfig() {
     const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
     try {
         const res = await axios.get(configUrl);
-        ApiService.SetRuntimeConfig(res?.data);
+        ApiService.setRuntimeConfig(res?.data);
     } catch (e) {
         console.log("No runtime config provided. Using default configuration");
         console.error(e);
-        ApiService.SetRuntimeConfig({});
+        ApiService.setRuntimeConfig({});
     }
 
     const container = document.getElementById("root") as HTMLElement;

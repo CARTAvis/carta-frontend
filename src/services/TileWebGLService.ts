@@ -173,8 +173,8 @@ export class TileWebGLService {
         if (tinycolor(hex).getFormat() === "hex" && this.gl) {
             const rgb = tinycolor(hex).toRgb();
             this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
-            const CmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
-            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, CmapCustomGradientStart.r / 255, CmapCustomGradientStart.g / 255, CmapCustomGradientStart.b / 255);
+            const cmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, cmapCustomGradientStart.r / 255, cmapCustomGradientStart.g / 255, cmapCustomGradientStart.b / 255);
         }
     }
 

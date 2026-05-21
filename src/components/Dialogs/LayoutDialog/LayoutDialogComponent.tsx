@@ -283,7 +283,7 @@ export class LayoutDialogComponent extends React.Component {
     }
 }
 
-function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: string}) {
+const LayoutMappingRow = ({ctypes, layoutName}: {ctypes: string; layoutName: string}) => {
     const appStore = AppStore.Instance;
     const {dynamicLayoutStore: dyLayoutStore, layoutStore, activeFrame} = appStore;
 
@@ -331,7 +331,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
             </td>
         </tr>
     );
-}
+};
 
 interface LayoutMappingComponentProps {
     orderedLayoutNames: string[];
@@ -355,11 +355,9 @@ export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentP
             props.activeFrame && props.activeFrame.dynamicLayout.ctype !== "" ? (ctypes.includes(props.activeFrame.dynamicLayout.ctype) ? layoutNames : [props.activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
     }
 
-    const LayoutMappingRows = () => {
-        return ctypeList.map((layoutCtypes, index) => {
-            return <LayoutMappingRow key={layoutCtypes} ctypes={layoutCtypes} layoutName={layoutNameList[index]} />;
-        });
-    };
+    const layoutMappingRows = ctypeList.map((layoutCtypes, index) => {
+        return <LayoutMappingRow key={layoutCtypes} ctypes={layoutCtypes} layoutName={layoutNameList[index]} />;
+    });
 
     return (
         <HTMLTable data-testid="dynamic-layout-table">
@@ -369,9 +367,7 @@ export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentP
                     <th>Layout</th>
                 </tr>
             </thead>
-            <tbody>
-                <LayoutMappingRows />
-            </tbody>
+            <tbody>{layoutMappingRows}</tbody>
         </HTMLTable>
     );
 });

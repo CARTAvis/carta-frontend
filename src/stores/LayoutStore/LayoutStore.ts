@@ -58,7 +58,7 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach(presetName => {
-            const presetConfig = LayoutConfig.GetPresetConfig(presetName);
+            const presetConfig = LayoutConfig.getPresetConfig(presetName);
             if (presetConfig) {
                 this.layouts[presetName] = presetConfig;
             }
@@ -102,7 +102,7 @@ export class LayoutStore {
             content: []
         };
         const dockedComponentConfigs = [];
-        LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
+        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
         // generate new layout config & apply
@@ -157,7 +157,7 @@ export class LayoutStore {
             return;
         }
 
-        const configToSave = LayoutConfig.CreateConfigToSave(appStore, currentConfig.content[0]);
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentConfig.content[0]);
         if (!configToSave) {
             appStore.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
             return;

@@ -156,12 +156,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT
     private getColorMapOrder(frame: FrameStore): boolean {
         const defaultType = frame?.spectralAxis?.type.code;
-        let CTYPE = frame?.spectralType ?? defaultType;
-        if (CTYPE === SpectralType.CHANNEL) {
-            CTYPE = defaultType;
+        let ctype = frame?.spectralType ?? defaultType;
+        if (ctype === SpectralType.CHANNEL) {
+            ctype = defaultType;
         }
 
-        switch (CTYPE) {
+        switch (ctype) {
             case SpectralColorMap.FREQ:
             case SpectralColorMap.ENER:
             case SpectralColorMap.WAVE:

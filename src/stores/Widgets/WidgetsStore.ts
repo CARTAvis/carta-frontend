@@ -334,7 +334,7 @@ export class WidgetsStore {
         });
     };
 
-    public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+    public static resetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearXYBounds();
@@ -375,7 +375,7 @@ export class WidgetsStore {
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
-    private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
+    private static getDefaultWidgetConfig(type: string): DefaultWidgetConfig {
         switch (type) {
             case ImageViewComponent.WidgetConfig.type:
                 return ImageViewComponent.WidgetConfig;
@@ -418,7 +418,7 @@ export class WidgetsStore {
         }
     }
 
-    private static GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
+    private static getDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
         switch (type) {
             case ImageViewComponent.WidgetConfig.type:
                 return ImageViewSettingsPanelComponent.WidgetConfig;
@@ -444,7 +444,7 @@ export class WidgetsStore {
     }
 
     // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
+    private static createDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
@@ -633,7 +633,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WidgetsStore.getDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -699,7 +699,7 @@ export class WidgetsStore {
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
             const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
-            WidgetsStore.CreateDragSource(layout, props.widgetConfig, widgetButtonID);
+            WidgetsStore.createDragSource(layout, props.widgetConfig, widgetButtonID);
         });
 
         layout.on("stackCreated", stack => {
@@ -824,7 +824,7 @@ export class WidgetsStore {
             return;
         }
         // Get floating settings config
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const widgetConfig = new WidgetConfig(id, defaultConfig);
@@ -849,7 +849,7 @@ export class WidgetsStore {
         }
 
         // Get widget type from config
-        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, WidgetsStore.getDefaultWidgetConfig(type));
         widgetConfig.title = title;
 
         if (type === CatalogOverlayComponent.WidgetConfig.type) {
@@ -886,7 +886,7 @@ export class WidgetsStore {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
         // Get widget config from type
-        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         const container = item["container"] as GoldenLayout.Container;
         let centerX = 0;
         if (container && container.width) {
@@ -1351,7 +1351,7 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);

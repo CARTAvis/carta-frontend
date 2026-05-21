@@ -1606,7 +1606,7 @@ export class FrameStore {
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
-    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+    private static shiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
         if (entry.name?.match(/CRPIX\d+/)) {
             const numericValue = parseFloat(entry.value ?? "");
             if (isFinite(numericValue)) {
@@ -1732,7 +1732,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1801,7 +1801,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1877,7 +1877,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1946,7 +1946,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -2587,7 +2587,7 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
+        const processedData = ProtobufProcessing.processContourData(contourImageData);
         this.stokes = processedData.stokes ?? 0;
         this.channel = processedData.channel ?? 0;
 

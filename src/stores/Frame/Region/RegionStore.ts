@@ -63,7 +63,7 @@ export class RegionStore {
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
-    public static RegionTypeString(regionType: CARTA.RegionType): string {
+    public static regionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
@@ -102,7 +102,7 @@ export class RegionStore {
         }
     }
 
-    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+    public static isRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
@@ -115,7 +115,7 @@ export class RegionStore {
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
+    public static regionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.ANNPOINT:
@@ -170,15 +170,15 @@ export class RegionStore {
         [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
-    public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
+    public static isRegionTypeValid(regionType: CARTA.RegionType): boolean {
         return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
-    public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
+    public static isRegionLineWidthValid(regionLineWidth: number): boolean {
         return regionLineWidth >= RegionStore.MIN_LINE_WIDTH && regionLineWidth <= RegionStore.MAX_LINE_WIDTH;
     }
 
-    public static IsRegionDashLengthValid(regionDashLength: number): boolean {
+    public static isRegionDashLengthValid(regionDashLength: number): boolean {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 

@@ -29,7 +29,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
         makeObservable(this);
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -73,7 +73,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetStatsRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetStatsRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffStatsRequirements(originalRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>) {
+    public static diffStatsRequirements(originalRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>) {
         const diffList: CARTA.SetStatsRequirements[] = [];
 
         // Fill updated requirements with missing entries

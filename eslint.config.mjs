@@ -29,22 +29,22 @@ export default [
         rules: {
             "@typescript-eslint/naming-convention": [
                 "warn",
-                // {
-                //     selector: "default",
-                //     format: ["camelCase", "PascalCase", "UPPER_CASE"],
-                //     leadingUnderscore: "allow",
-                //     trailingUnderscore: "forbid"
-                // },
-                // {
-                //     selector: [
-                //         "enumMember",
-                //         "objectLiteralProperty",
-                //         "typeProperty",
-                //         "objectLiteralMethod",
-                //         "typeMethod"
-                //     ],
-                //     format: null
-                // },
+                {
+                    selector: "default",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                    trailingUnderscore: "forbid"
+                },
+                {
+                    selector: [
+                        "enumMember",
+                        "objectLiteralProperty",
+                        "typeProperty",
+                        "objectLiteralMethod",
+                        "typeMethod"
+                    ],
+                    format: null
+                },
                 {
                     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
                     format: ["PascalCase"]
