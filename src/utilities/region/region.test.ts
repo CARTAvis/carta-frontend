@@ -1,5 +1,14 @@
 import {CARTA} from "carta-protobuf";
 
+// Mock heavy barrels to avoid the production circular import chain
+// (models -> services/stores/components -> back to models) that breaks
+// module evaluation under Jest. These functions under test do not use
+// anything from these barrels at runtime.
+jest.mock("models", () => ({}));
+jest.mock("services", () => ({}));
+jest.mock("stores", () => ({}));
+jest.mock("stores/Frame", () => ({}));
+
 import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
 
 const MakeRegion = (overrides: Partial<any>) =>
