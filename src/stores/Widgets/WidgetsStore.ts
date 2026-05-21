@@ -429,6 +429,14 @@ export class WidgetsStore {
     private removeCatalogAssociations = (widgetId: string, widgetType: string) => {
         if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogProfiles.delete(widgetId);
+            // Also clear the fileId→widgetId mapping so that re-initializing the widget
+            // (e.g. during layout application) creates a fresh store instead of returning
+            // a stale reference to a store that no longer exists.
+            CatalogStore.Instance.catalogWidgets.forEach((storedWidgetId, fileId) => {
+                if (storedWidgetId === widgetId) {
+                    CatalogStore.Instance.catalogWidgets.delete(fileId);
+                }
+            });
         } else if (widgetType === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
         }
@@ -504,7 +512,14 @@ export class WidgetsStore {
 
     private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
         if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
-            return this.addCatalogWidget(widgetSettings["catalogFileId"], preAssignedId, widgetSettings);
+            const catalogFileId = widgetSettings["catalogFileId"];
+            const itemId = this.addCatalogWidget(catalogFileId, preAssignedId, widgetSettings);
+            // Ensure catalogProfiles is set to the saved fileId so the component can look
+            // up the correct file (the component constructor only defaults to fileId 1).
+            if (itemId) {
+                CatalogStore.Instance.catalogProfiles.set(itemId, catalogFileId);
+            }
+            return itemId;
         }
         const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
         CatalogStore.Instance.catalogProfiles.set(itemId, 1);
