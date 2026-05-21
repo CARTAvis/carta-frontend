@@ -1,4 +1,4 @@
-import {DockLocation, type DropInfo, Model, type Node} from "flexlayout-react";
+import {DockLocation, type DropInfo, type Layout, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -22,7 +22,6 @@ export class LayoutStore {
     public static readonly ToasterTimeout = 1500;
     private layoutNameToBeSaved: string;
 
-    // FlexLayout model replaces GoldenLayout instance
     @observable layoutModel: Model | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
@@ -30,7 +29,7 @@ export class LayoutStore {
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     // Reference to the FlexLayout Layout component (set from App.tsx)
-    public layoutRef: React.RefObject<any> = {current: null};
+    public layoutRef: React.RefObject<Layout> = {current: null};
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);

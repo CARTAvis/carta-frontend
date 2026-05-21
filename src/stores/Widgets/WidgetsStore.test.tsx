@@ -57,4 +57,23 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(buttons).toHaveLength(1);
         expect(buttons[0].props["data-testid"]).toBe("pv-preview-3-header-dock-button");
     });
+
+    test("passes the placeholder label through the docked widget factory", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const node = {
+            getComponent: () => "placeholder",
+            getConfig: () => ({id: "placeholder-2", label: "Missing widget"}),
+            getId: () => "placeholder-2",
+            getName: () => "Placeholder"
+        };
+
+        const element = widgetsStore.renderWidgetFactory(node as any) as React.ReactElement;
+        const children = element.props.children as React.ReactElement[];
+
+        expect(children).toHaveLength(2);
+        expect(children[0].props.nodeId).toBe("placeholder-2");
+        expect(children[1].props.id).toBe("placeholder-2");
+        expect(children[1].props.label).toBe("Missing widget");
+        expect(children[1].props.docked).toBe(true);
+    });
 });

@@ -14,6 +14,7 @@ import {
     ImageViewComponent,
     LayerListComponent,
     LogComponent,
+    PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
@@ -586,13 +587,24 @@ export class WidgetsStore {
         if (!component) {
             return null;
         }
+        const testId = this.getWidgetTestId(node);
+        const config = node.getConfig() || {};
+
+        if (component === PlaceholderComponent.WIDGET_CONFIG.type) {
+            const placeholderProps = {
+                id: this.getWidgetComponentId(node),
+                docked: true,
+                label: typeof config.label === "string" ? config.label : node.getName()
+            };
+            const element = React.createElement(PlaceholderComponent, placeholderProps);
+            return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
+        }
+
         const ComponentClass = COMPONENT_MAP.get(component);
         if (!ComponentClass) {
             return null;
         }
         const componentId = this.getWidgetComponentId(node);
-        const testId = this.getWidgetTestId(node);
-        const config = node.getConfig() || {};
         const props: WidgetProps = {
             id: componentId,
             docked: true,
@@ -736,7 +748,7 @@ export class WidgetsStore {
             return action;
         }
 
-        if (action.type === "FlexLayout_DeleteTab") {
+        if (action.type === Actions.DELETE_TAB) {
             const nodeId = action.data?.node;
             if (nodeId) {
                 const node = layoutModel.getNodeById(nodeId);

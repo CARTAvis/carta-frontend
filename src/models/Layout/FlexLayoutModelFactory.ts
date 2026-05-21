@@ -77,12 +77,17 @@ export function createFlexLayoutModel(dockedConfig: any): IJsonModel {
     // Reset ID tracking for this model creation
     usedIds.clear();
     idCounters.clear();
-    const layoutNode = convertNode(dockedConfig);
-    return {
-        global: FLEXLAYOUT_GLOBAL_CONFIG,
-        borders: [],
-        layout: layoutNode as IJsonRowNode
-    };
+    try {
+        const layoutNode = convertNode(dockedConfig);
+        return {
+            global: FLEXLAYOUT_GLOBAL_CONFIG,
+            borders: [],
+            layout: layoutNode as IJsonRowNode
+        };
+    } finally {
+        usedIds.clear();
+        idCounters.clear();
+    }
 }
 
 /**

@@ -1,3 +1,5 @@
+import {type ComponentType} from "react";
+
 import {
     AnimatorComponent,
     CatalogOverlayComponent,
@@ -28,6 +30,12 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {type HelpType} from "enums";
+
+interface DockedWidgetComponentProps {
+    id: string;
+    docked: boolean;
+    floatingSettingsId?: string;
+}
 
 export interface DefaultWidgetConfig {
     id: string;
@@ -114,8 +122,7 @@ export const GetDefaultWidgetSettingsConfig = (type: string): DefaultWidgetConfi
     }
 };
 
-export const COMPONENT_MAP: Map<string, any> = new Map<string, any>([
-    ["placeholder", PlaceholderComponent],
+export const COMPONENT_MAP: Map<string, ComponentType<DockedWidgetComponentProps>> = new Map<string, ComponentType<DockedWidgetComponentProps>>([
     ["image-view", ImageViewComponent],
     ["spatial-profiler", SpatialProfilerComponent],
     ["spectral-profiler", SpectralProfilerComponent],
