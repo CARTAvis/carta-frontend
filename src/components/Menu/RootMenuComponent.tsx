@@ -40,7 +40,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     private handleDashboardClicked = () => {
-        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+        window.open(ApiService.runtimeConfig.dashboardAddress, "_blank");
     };
 
     private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
@@ -182,13 +182,13 @@ export class RootMenuComponent extends React.Component {
         const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
+        if (apiService.authenticated && ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress) {
+        if (ApiService.runtimeConfig.logoutAddress) {
             serverMenu.push(<MenuItem key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        if (ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
         serverMenu.push(
@@ -494,7 +494,7 @@ export class RootMenuComponent extends React.Component {
                         </Tooltip>
                     </Popover>
                 )}
-                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && (
                     <Tooltip
                         content={
                             <span>

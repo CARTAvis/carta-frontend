@@ -24,16 +24,16 @@ export const AppToaster = {
     }
 };
 
-export function SuccessToast(icon: IconName, message: string, timeout?: number): ToastProps {
+export const SuccessToast = (icon: IconName, message: string, timeout?: number): ToastProps => {
     return {
         icon: icon,
         intent: "success",
         message: message,
         timeout: timeout || timeout === 0 ? timeout : 3000
     };
-}
+};
 
-export function ErrorToast(message: string): ToastProps {
+export const ErrorToast = (message: string): ToastProps => {
     return {
         icon: "error",
         intent: "danger",
@@ -44,9 +44,9 @@ export function ErrorToast(message: string): ToastProps {
             icon: "clipboard"
         }
     };
-}
+};
 
-export function WarningToast(message: string): ToastProps {
+export const WarningToast = (message: string): ToastProps => {
     return {
         icon: "warning-sign",
         intent: "warning",
@@ -57,4 +57,4 @@ export function WarningToast(message: string): ToastProps {
             icon: "clipboard"
         }
     };
-}
+};

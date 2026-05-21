@@ -37,7 +37,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogWidgets.set(1, "widget-1");
         widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "ProcessCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({validWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -83,7 +83,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogWidgets.set(1, "widget-1");
         widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "ProcessCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -132,7 +132,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogWidgets.set(1, "widget-1");
         widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "ProcessCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({validWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());

@@ -385,7 +385,7 @@ export class FileBrowserStore {
                 directory,
                 file,
                 hdu,
-                polarizationType: FileBrowserStore.GetStokesType(response.info?.[k], response.file)
+                polarizationType: FileBrowserStore.getStokesType(response.info?.[k], response.file)
             };
         } catch (err) {
             console.error(err);
@@ -413,15 +413,15 @@ export class FileBrowserStore {
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
      */
-    private static GetStokesType = (fileInfoExtended: CARTA.IFileInfoExtended | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
-        let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
+    private static getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
+        let type = FileBrowserStore.getTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-            type = FileBrowserStore.GetTypeFromName(file);
+            type = FileBrowserStore.getTypeFromName(file);
         }
         return type;
     };
 
-    private static GetTypeFromHeader = (headers: CARTA.IHeaderEntry[] | null | undefined): CARTA.PolarizationType => {
+    private static getTypeFromHeader = (headers: CARTA.IHeaderEntry[] | null | undefined): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
 
         const ctype = headers?.find(obj => obj.value?.toUpperCase() === "STOKES");
@@ -442,7 +442,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    private static GetTypeFromName = (fileName: string | null | undefined): CARTA.PolarizationType => {
+    private static getTypeFromName = (fileName: string | null | undefined): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
         const words = fileName?.split(/[._]/);
         words?.forEach(word => {
@@ -893,8 +893,8 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType),
-                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType),
+                        icon: RegionStore.regionIconString(region.regionType),
+                        isCustomIcon: RegionStore.isRegionCustomIcon(region.regionType),
                         isAnnotation: region.isAnnotation
                     });
                 }

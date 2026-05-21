@@ -5,9 +5,9 @@ import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, NumberFormatType} from "enums";
 import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getRegionPixelProperties, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -544,7 +544,7 @@ export class ImageFittingStore {
             case FOV_REGION_ID:
                 log += "Region: field of view\n";
                 if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
-                    log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                    log += getRegionPixelProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                     log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                 }
                 break;

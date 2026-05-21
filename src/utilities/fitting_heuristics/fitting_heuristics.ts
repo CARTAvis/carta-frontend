@@ -118,27 +118,27 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     const flippedSumMean = fitHistogramResult.center;
     const flippedSumStddev = fitHistogramResult.stddev;
 
-    let INDEX_FROM, INDEX_TO;
-    let SWITCH = false;
+    let indexFrom, indexTo;
+    let switchVal = false;
     const xMeanSegment: number[] = [];
     const yMeanSegment: number[] = [];
     const SN = 2;
-    const FLOOR = flippedSumMean - SN * flippedSumStddev;
-    const CEILING = flippedSumMean + SN * flippedSumStddev;
+    const floor = flippedSumMean - SN * flippedSumStddev;
+    const ceiling = flippedSumMean + SN * flippedSumStddev;
     for (let i = 0; i < yDataFlippedSum.length; i++) {
         const value = yDataFlippedSum[i];
-        if (value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
-            INDEX_FROM = i;
-            SWITCH = true;
-        } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
-            INDEX_TO = i;
-            SWITCH = false;
-            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
-        } else if (value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
-            INDEX_TO = i;
-            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
+        if (value < ceiling && value > floor && switchVal === false && i <= yDataFlippedSum.length - 2) {
+            indexFrom = i;
+            switchVal = true;
+        } else if ((value > ceiling || value < floor) && switchVal === true) {
+            indexTo = i;
+            switchVal = false;
+            xMeanSegment.push(_.mean(xInput.slice(indexFrom, indexTo)));
+            yMeanSegment.push(_.mean(yInput.slice(indexFrom, indexTo)));
+        } else if (value < ceiling && value > floor && switchVal === true && i === yDataFlippedSum.length - 1) {
+            indexTo = i;
+            xMeanSegment.push(_.mean(xInput.slice(indexFrom, indexTo)));
+            yMeanSegment.push(_.mean(yInput.slice(indexFrom, indexTo)));
             break;
         }
     }
