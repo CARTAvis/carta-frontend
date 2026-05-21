@@ -137,7 +137,7 @@ export default [
                             "^@?\\w"
                         ],
                         [
-                            "^(components|enums|icons|models|services|stores|utilities)(/.*|$)"
+                            "^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"
                         ],
                         [
                             "^\\u0000"

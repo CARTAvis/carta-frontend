@@ -48,8 +48,10 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
+    getRegionPixelProperties,
     GetRequiredTiles,
     getTransformedChannel,
+    getTransformedRegionProperties,
     getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
@@ -2238,17 +2240,31 @@ export class FrameStore {
         const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
-            propertyString.push(region.regionProperties);
+            const regionFrameProperties = this.getRegionFrameProperties(region);
+            const controlPoints = regionFrameProperties.controlPoints;
+            const rotation = regionFrameProperties.rotation;
+
+            propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
             if (this.validWcs) {
-                propertyString.push(this.getRegionWcsProperties(region));
+                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
             }
         }
         return propertyString;
     }
 
     public getRegionWcsProperties = (region: RegionStore): string => {
-        return this.genRegionWcsProperties(region.regionType, region.controlPoints, region.rotation, region.regionId);
+        const regionFrameProperties = this.getRegionFrameProperties(region);
+        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
     };
+
+    private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
+        const spatialTransformAST = this.spatialTransformAST;
+        if (!this.spatialReference || !spatialTransformAST) {
+            return {controlPoints: region.controlPoints, rotation: region.rotation};
+        }
+
+        return getTransformedRegionProperties(region, spatialTransformAST);
+    }
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];

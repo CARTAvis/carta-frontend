@@ -116,6 +116,9 @@ export class ExecutionEntry {
     }
 
     private mapMacro = (parameter: any) => {
+        if (Array.isArray(parameter)) {
+            return parameter.map(this.mapMacro);
+        }
         if (typeof parameter === "object" && parameter?.macroVariable) {
             if (parameter.macroVariable === "undefined") {
                 return undefined;

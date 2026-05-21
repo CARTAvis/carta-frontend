@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
-import {BrowserMode, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -82,7 +82,7 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
-            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
+            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? ColormapSet.RGB : ColormapSet.Rainbow);
         } catch (err) {
             console.error(err);
         }
