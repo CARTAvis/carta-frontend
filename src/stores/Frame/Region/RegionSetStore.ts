@@ -799,7 +799,7 @@ export class RegionSetStore {
                         newRegion.setColor(region.color);
                         (newRegion as PointAnnotationStore).initializeStyles(annotationStyles);
                     } else {
-                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], annotationStyles);
+                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], true, annotationStyles);
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.locked);
