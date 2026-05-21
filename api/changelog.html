@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Changelog | API | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/api/changelog"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="5.0.0"><meta data-rh="true" name="docusaurus_tag" content="docs-default-5.0.0"><meta data-rh="true" name="docsearch:version" content="5.0.0"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-5.0.0"><meta data-rh="true" property="og:title" content="Changelog | API | CARTA Frontend Documentation"><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/api/changelog"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/changelog" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/changelog" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Changelog","item":"https://cartavis.org/carta-frontend/api/changelog"}]}</script><link rel="stylesheet" href="/carta-frontend/assets/css/styles.4d1ce761.css">
-<script src="/carta-frontend/assets/js/runtime~main.e41de3c7.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.5aecb19d.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.9d61c62f.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.3c37f32f.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -24,6 +24,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <li class="">Fixed a spectral matching case affected by the default Helio rest frame setting (<a href="https://github.com/CARTAvis/carta-frontend/issues/2736" target="_blank" rel="noopener noreferrer" class="">#2736</a>).</li>
 <li class="">Fix the spatial profile chart that occasionally disappears when the line region is outside the image (<a href="https://github.com/CARTAvis/carta-frontend/issues/2775" target="_blank" rel="noopener noreferrer" class="">#2775</a>).</li>
 <li class="">Fixed spectral profiler colors not updating when switching the GUI theme (<a href="https://github.com/CARTAvis/carta-frontend/issues/2801" target="_blank" rel="noopener noreferrer" class="">#2801</a>).</li>
+<li class="">Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes (<a href="https://github.com/CARTAvis/carta-frontend/issues/2804" target="_blank" rel="noopener noreferrer" class="">#2804</a>).</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="600-beta1">[6.0.0-beta.1]<a href="#600-beta1" class="hash-link" aria-label="Direct link to [6.0.0-beta.1]" title="Direct link to [6.0.0-beta.1]" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fixed-1">Fixed<a href="#fixed-1" class="hash-link" aria-label="Direct link to Fixed" title="Direct link to Fixed" translate="no">​</a></h3>
@@ -299,7 +300,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <li class="">Show a notification when there is a new CARTA release (<a href="https://github.com/CARTAvis/carta-frontend/issues/1852" target="_blank" rel="noopener noreferrer" class="">#1852</a>).</li>
 <li class="">Added links to the CARTA Dashboard to the splashscreen and alert dialog where appropriate (<a href="https://github.com/CARTAvis/carta-frontend/issues/1874" target="_blank" rel="noopener noreferrer" class="">#1874</a>).</li>
 </ul>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="changed-5">Changed<a href="#changed-5" class="hash-link" aria-label="Direct link to Changed" title="Direct link to Changed" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="changed-5">Changed<a href="#changed-5" class="hash-link" aria-label="Direct link to Changed" title="Direct link to Changed" translate="no">  ​</a></h3>
 <ul>
 <li class="">Splatalogue queries are now made directly with the server, rather than proxied through the backend (<a href="https://github.com/CARTAvis/carta-frontend/issues/1755" target="_blank" rel="noopener noreferrer" class="">#1755</a>).</li>
 </ul>
