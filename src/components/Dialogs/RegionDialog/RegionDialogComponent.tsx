@@ -6,7 +6,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ScrollShadow} from "components/Shared";
+import {getRegionVisibilityIconOpacity, ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, RegionDialogTabs, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
@@ -152,7 +152,7 @@ export class RegionDialogComponent extends React.Component {
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
                 <Tooltip content={regionVisible ? "Hide region" : "Show region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: region.opacity === RegionsOpacity.SemiTransparent ? 0.3 : 1}} />
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: getRegionVisibilityIconOpacity(region.opacity)}} />
                 </Tooltip>
                 <Tooltip content="Focus">
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />

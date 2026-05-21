@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ScrollShadow} from "components/Shared";
+import {getRegionVisibilityIconOpacity, ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, RegionsOpacity} from "enums";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -103,7 +103,7 @@ export class GroupRegionDialogComponent extends React.Component {
                                         minimal={true}
                                         icon={selectedRegionsVisible ? "eye-open" : "eye-off"}
                                         onClick={this.handleHideClicked}
-                                        style={{opacity: selectedRegionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
+                                        style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsVisibility)}}
                                     />
                                 </Tooltip>
                                 <Tooltip content="Export selected regions">
