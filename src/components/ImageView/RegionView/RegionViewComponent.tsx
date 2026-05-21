@@ -546,9 +546,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        // Clicking on empty stage (non-region) should clear selection and highlight cursor region
-        // Apply only to primary clicks (left button) and when not using secondary modifiers
-        if (!isSecondaryClick && mouseEvent.button === 0) {
+        // Clicking on empty stage in drag-to-pan mode should clear selection and highlight cursor region.
+        if (this.props.dragPanningEnabled && !isSecondaryClick && mouseEvent.button === 0) {
             frame.regionSet.clearSelection();
         }
 
