@@ -23,7 +23,7 @@ interface AppearanceFormProps {
 
 @observer
 export class AppearanceForm extends React.Component<AppearanceFormProps> {
-    private static readonly APPEARANCE_CHANGE_DELAY = 100;
+    private static readonly AppearanceChangeDelay = 100;
 
     private static readonly TextAlignmentOptions: OptionProps[] = [
         {value: CARTA.TextAnnotationPosition.CENTER, label: "Center"},
@@ -37,7 +37,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         {value: CARTA.TextAnnotationPosition.RIGHT, label: "Right"}
     ];
 
-    private static readonly DEFAULT_CONTROLS = [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength];
+    private static readonly DefaultControls = [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength];
 
     private static readonly REGION_CONTROLS = new Map<CARTA.RegionType, AppearanceControl[]>([
         [CARTA.RegionType.POINT, [AppearanceControl.Color]],
@@ -49,7 +49,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
     ]);
 
     public static getControlsForRegion(region: RegionStore): Set<AppearanceControl> {
-        return new Set(AppearanceForm.REGION_CONTROLS.get(region.regionType) ?? AppearanceForm.DEFAULT_CONTROLS);
+        return new Set(AppearanceForm.REGION_CONTROLS.get(region.regionType) ?? AppearanceForm.DefaultControls);
     }
 
     private static intersectControls(left: Set<AppearanceControl>, right: Set<AppearanceControl>): Set<AppearanceControl> {
@@ -78,14 +78,14 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
             const clampedValue = Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value));
             this.apply(region => region.setLineWidth(clampedValue));
         }
-    }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
+    }, AppearanceForm.AppearanceChangeDelay);
 
     private handleDashLengthChange = _.throttle((value: number) => {
         if (this.props.region) {
             const clampedValue = Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value));
             this.apply(region => region.setDashLength(clampedValue));
         }
-    }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
+    }, AppearanceForm.AppearanceChangeDelay);
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
         this.apply(region => (region as PointAnnotationStore).setPointShape(item));

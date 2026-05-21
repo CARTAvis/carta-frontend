@@ -907,8 +907,8 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType),
-                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType),
+                        icon: RegionStore.regionIconString(region.regionType),
+                        isCustomIcon: RegionStore.isRegionCustomIcon(region.regionType),
                         isAnnotation: region.isAnnotation
                     });
                 }

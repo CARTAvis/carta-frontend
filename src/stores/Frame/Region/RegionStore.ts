@@ -78,7 +78,7 @@ export class RegionStore {
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
-    public static RegionTypeString(regionType: CARTA.RegionType): string {
+    public static regionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
@@ -127,7 +127,7 @@ export class RegionStore {
         return baseOpacity * this.opacity;
     }
 
-    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+    public static isRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
@@ -140,7 +140,7 @@ export class RegionStore {
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
+    public static regionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.ANNPOINT:
@@ -195,15 +195,15 @@ export class RegionStore {
         [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
-    public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
+    public static isRegionTypeValid(regionType: CARTA.RegionType): boolean {
         return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
-    public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
+    public static isRegionLineWidthValid(regionLineWidth: number): boolean {
         return regionLineWidth >= RegionStore.MIN_LINE_WIDTH && regionLineWidth <= RegionStore.MAX_LINE_WIDTH;
     }
 
-    public static IsRegionDashLengthValid(regionDashLength: number): boolean {
+    public static isRegionDashLengthValid(regionDashLength: number): boolean {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
@@ -374,7 +374,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        return RegionStore.GetRegionProperties(this.regionType, this.controlPoints, this.rotation);
+        return RegionStore.getRegionProperties(this.regionType, this.controlPoints, this.rotation);
     }
 
     @computed get isPreviewCut(): boolean {
@@ -446,7 +446,7 @@ export class RegionStore {
         return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.selectablePointCount;
     }
 
-    public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
+    public static getRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
         const point = controlPoints[CENTER_POINT_INDEX];
         const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
 
