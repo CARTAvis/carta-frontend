@@ -802,7 +802,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             layerHeight: this.props.height,
             stage: this.stageRef.current
         };
-        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => !region.locked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext)).map(region => region.regionId);
+        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => region.visible && !region.locked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext)).map(region => region.regionId);
 
         const nextSelection = new Set(this.frame.regionSet.selectedRegionIds);
         selectedIds.forEach(id => {
