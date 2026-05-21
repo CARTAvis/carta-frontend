@@ -167,17 +167,17 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "regionList",
                 onClick: () => WidgetsStore.Instance.createFloatingRegionListWidget(),
-                widgetConfig: RegionListComponent.WIDGET_CONFIG
+                widgetConfig: RegionListComponent.WidgetConfig
             }
         ],
-        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WIDGET_CONFIG}],
+        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WidgetConfig}],
         [
             WidgetType.SpatialProfiler,
             {
                 isCustomIcon: true,
                 icon: "spatialProfiler",
                 onClick: () => WidgetsStore.Instance.createFloatingSpatialProfilerWidget(),
-                widgetConfig: SpatialProfilerComponent.WIDGET_CONFIG
+                widgetConfig: SpatialProfilerComponent.WidgetConfig
             }
         ],
         [
@@ -186,7 +186,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "spectralProfiler",
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralProfilerWidget(),
-                widgetConfig: SpectralProfilerComponent.WIDGET_CONFIG
+                widgetConfig: SpectralProfilerComponent.WidgetConfig
             }
         ],
         [
@@ -195,7 +195,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "calculator",
                 onClick: () => WidgetsStore.Instance.createFloatingStatsWidget(),
-                widgetConfig: StatsComponent.WIDGET_CONFIG
+                widgetConfig: StatsComponent.WidgetConfig
             }
         ],
         [
@@ -204,7 +204,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "timeline-bar-chart",
                 onClick: () => WidgetsStore.Instance.createFloatingHistogramWidget(),
-                widgetConfig: HistogramComponent.WIDGET_CONFIG
+                widgetConfig: HistogramComponent.WidgetConfig
             }
         ],
         [
@@ -213,7 +213,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "video",
                 onClick: () => WidgetsStore.Instance.createFloatingAnimatorWidget(),
-                widgetConfig: AnimatorComponent.WIDGET_CONFIG
+                widgetConfig: AnimatorComponent.WidgetConfig
             }
         ],
         [
@@ -222,7 +222,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "heat-grid",
                 onClick: () => WidgetsStore.Instance.createFloatingChannelMapControlWidget(),
-                widgetConfig: ChannelMapControlComponent.WIDGET_CONFIG
+                widgetConfig: ChannelMapControlComponent.WidgetConfig
             }
         ],
         [
@@ -231,7 +231,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "style",
                 onClick: () => WidgetsStore.Instance.createFloatingRenderWidget(),
-                widgetConfig: RenderConfigComponent.WIDGET_CONFIG
+                widgetConfig: RenderConfigComponent.WidgetConfig
             }
         ],
         [
@@ -240,7 +240,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "stokes",
                 onClick: () => WidgetsStore.Instance.createFloatingStokesWidget(),
-                widgetConfig: StokesAnalysisComponent.WIDGET_CONFIG
+                widgetConfig: StokesAnalysisComponent.WidgetConfig
             }
         ],
         [
@@ -249,7 +249,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "layers",
                 onClick: () => WidgetsStore.Instance.createFloatingLayerListWidget(),
-                widgetConfig: LayerListComponent.WIDGET_CONFIG
+                widgetConfig: LayerListComponent.WidgetConfig
             }
         ],
         [
@@ -258,7 +258,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "heatmap",
                 onClick: () => WidgetsStore.Instance.reloadFloatingCatalogWidget(),
-                widgetConfig: CatalogOverlayComponent.WIDGET_CONFIG
+                widgetConfig: CatalogOverlayComponent.WidgetConfig
             }
         ],
         [
@@ -267,7 +267,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "spectralLineQuery",
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralLineQueryWidget(),
-                widgetConfig: SpectralLineQueryComponent.WIDGET_CONFIG
+                widgetConfig: SpectralLineQueryComponent.WidgetConfig
             }
         ],
         [
@@ -276,7 +276,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "cursor",
                 onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
-                widgetConfig: CursorInfoComponent.WIDGET_CONFIG
+                widgetConfig: CursorInfoComponent.WidgetConfig
             }
         ],
         [
@@ -285,7 +285,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "pv",
                 onClick: () => WidgetsStore.Instance.createFloatingPvGeneratorWidget(),
-                widgetConfig: PvGeneratorComponent.WIDGET_CONFIG
+                widgetConfig: PvGeneratorComponent.WidgetConfig
             }
         ]
     ]);
@@ -334,7 +334,7 @@ export class WidgetsStore {
         });
     };
 
-    public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+    public static resetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearXYBounds();
@@ -352,22 +352,22 @@ export class WidgetsStore {
         makeObservable(this);
 
         this.widgetsMap = new Map<string, Map<string, any>>([
-            [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
-            [SpectralProfilerComponent.WIDGET_CONFIG.type, this.spectralProfileWidgets],
-            [StatsComponent.WIDGET_CONFIG.type, this.statsWidgets],
-            [HistogramComponent.WIDGET_CONFIG.type, this.histogramWidgets],
-            [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
-            [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
-            [ChannelMapControlComponent.WIDGET_CONFIG.type, this.channelMapControlWidgets],
-            [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
-            [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
-            [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
-            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
-            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
-            [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
-            [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
-            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets],
-            [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
+            [SpatialProfilerComponent.WidgetConfig.type, this.spatialProfileWidgets],
+            [SpectralProfilerComponent.WidgetConfig.type, this.spectralProfileWidgets],
+            [StatsComponent.WidgetConfig.type, this.statsWidgets],
+            [HistogramComponent.WidgetConfig.type, this.histogramWidgets],
+            [RenderConfigComponent.WidgetConfig.type, this.renderConfigWidgets],
+            [AnimatorComponent.WidgetConfig.type, this.animatorWidgets],
+            [ChannelMapControlComponent.WidgetConfig.type, this.channelMapControlWidgets],
+            [LayerListComponent.WidgetConfig.type, this.layerListWidgets],
+            [LogComponent.WidgetConfig.type, this.logWidgets],
+            [RegionListComponent.WidgetConfig.type, this.regionListWidgets],
+            [StokesAnalysisComponent.WidgetConfig.type, this.stokesAnalysisWidgets],
+            [CatalogOverlayComponent.WidgetConfig.type, this.catalogWidgets],
+            [CatalogPlotComponent.WidgetConfig.type, this.catalogPlotWidgets],
+            [SpectralLineQueryComponent.WidgetConfig.type, this.spectralLineQueryWidgets],
+            [CursorInfoComponent.WidgetConfig.type, this.cursorInfoWidgets],
+            [PvGeneratorComponent.WidgetConfig.type, this.pvGeneratorWidgets]
         ]);
 
         this.defaultFloatingWidgetOffset = 100;
@@ -375,76 +375,76 @@ export class WidgetsStore {
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
-    private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
+    private static getDefaultWidgetConfig(type: string): DefaultWidgetConfig {
         switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListComponent.WIDGET_CONFIG;
-            case LogComponent.WIDGET_CONFIG.type:
-                return LogComponent.WIDGET_CONFIG;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                return AnimatorComponent.WIDGET_CONFIG;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
-                return ChannelMapControlComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerComponent.WIDGET_CONFIG;
-            case StatsComponent.WIDGET_CONFIG.type:
-                return StatsComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramComponent.WIDGET_CONFIG;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                return RegionListComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
-                return CatalogPlotComponent.WIDGET_CONFIG;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                return SpectralLineQueryComponent.WIDGET_CONFIG;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
-                return CursorInfoComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvGeneratorComponent.WIDGET_CONFIG;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
+            case ImageViewComponent.WidgetConfig.type:
+                return ImageViewComponent.WidgetConfig;
+            case RenderConfigComponent.WidgetConfig.type:
+                return RenderConfigComponent.WidgetConfig;
+            case LayerListComponent.WidgetConfig.type:
+                return LayerListComponent.WidgetConfig;
+            case LogComponent.WidgetConfig.type:
+                return LogComponent.WidgetConfig;
+            case AnimatorComponent.WidgetConfig.type:
+                return AnimatorComponent.WidgetConfig;
+            case ChannelMapControlComponent.WidgetConfig.type:
+                return ChannelMapControlComponent.WidgetConfig;
+            case SpatialProfilerComponent.WidgetConfig.type:
+                return SpatialProfilerComponent.WidgetConfig;
+            case SpectralProfilerComponent.WidgetConfig.type:
+                return SpectralProfilerComponent.WidgetConfig;
+            case StatsComponent.WidgetConfig.type:
+                return StatsComponent.WidgetConfig;
+            case HistogramComponent.WidgetConfig.type:
+                return HistogramComponent.WidgetConfig;
+            case RegionListComponent.WidgetConfig.type:
+                return RegionListComponent.WidgetConfig;
+            case StokesAnalysisComponent.WidgetConfig.type:
+                return StokesAnalysisComponent.WidgetConfig;
+            case CatalogOverlayComponent.WidgetConfig.type:
+                return CatalogOverlayComponent.WidgetConfig;
+            case CatalogPlotComponent.WidgetConfig.type:
+                return CatalogPlotComponent.WidgetConfig;
+            case SpectralLineQueryComponent.WidgetConfig.type:
+                return SpectralLineQueryComponent.WidgetConfig;
+            case CursorInfoComponent.WidgetConfig.type:
+                return CursorInfoComponent.WidgetConfig;
+            case PvGeneratorComponent.WidgetConfig.type:
+                return PvGeneratorComponent.WidgetConfig;
+            case PvPreviewComponent.WidgetConfig.type:
+                return PvPreviewComponent.WidgetConfig;
             default:
-                return PlaceholderComponent.WIDGET_CONFIG;
+                return PlaceholderComponent.WidgetConfig;
         }
     }
 
-    private static GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
+    private static getDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
         switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramSettingsPanelComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListSettingsPanelComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
+            case ImageViewComponent.WidgetConfig.type:
+                return ImageViewSettingsPanelComponent.WidgetConfig;
+            case StokesAnalysisComponent.WidgetConfig.type:
+                return StokesAnalysisSettingsPanelComponent.WidgetConfig;
+            case SpectralProfilerComponent.WidgetConfig.type:
+                return SpectralProfilerSettingsPanelComponent.WidgetConfig;
+            case SpatialProfilerComponent.WidgetConfig.type:
+                return SpatialProfilerSettingsPanelComponent.WidgetConfig;
+            case RenderConfigComponent.WidgetConfig.type:
+                return RenderConfigSettingsPanelComponent.WidgetConfig;
+            case HistogramComponent.WidgetConfig.type:
+                return HistogramSettingsPanelComponent.WidgetConfig;
+            case CatalogOverlayComponent.WidgetConfig.type:
+                return CatalogOverlayPlotSettingsPanelComponent.WidgetConfig;
+            case LayerListComponent.WidgetConfig.type:
+                return LayerListSettingsPanelComponent.WidgetConfig;
+            case PvGeneratorComponent.WidgetConfig.type:
+                return PvPreviewComponent.WidgetConfig;
             default:
-                return PlaceholderComponent.WIDGET_CONFIG;
+                return PlaceholderComponent.WidgetConfig;
         }
     }
 
     // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
+    private static createDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
@@ -537,53 +537,53 @@ export class WidgetsStore {
     private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string => {
         let itemId;
         switch (widgetType) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                itemId = ImageViewComponent.WIDGET_CONFIG.id;
+            case ImageViewComponent.WidgetConfig.type:
+                itemId = ImageViewComponent.WidgetConfig.id;
                 break;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
+            case RenderConfigComponent.WidgetConfig.type:
                 itemId = this.addRenderConfigWidget(null, widgetSettings);
                 break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+            case SpatialProfilerComponent.WidgetConfig.type:
                 itemId = this.addSpatialProfileWidget(null, widgetSettings);
                 break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+            case SpectralProfilerComponent.WidgetConfig.type:
                 itemId = this.addSpectralProfileWidget(null, widgetSettings);
                 break;
-            case StatsComponent.WIDGET_CONFIG.type:
+            case StatsComponent.WidgetConfig.type:
                 itemId = this.addStatsWidget();
                 break;
-            case HistogramComponent.WIDGET_CONFIG.type:
+            case HistogramComponent.WidgetConfig.type:
                 itemId = this.addHistogramWidget(null, widgetSettings);
                 break;
-            case AnimatorComponent.WIDGET_CONFIG.type:
+            case AnimatorComponent.WidgetConfig.type:
                 itemId = this.addAnimatorWidget();
                 break;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+            case ChannelMapControlComponent.WidgetConfig.type:
                 itemId = this.addAnimatorWidget();
                 break;
-            case LayerListComponent.WIDGET_CONFIG.type:
+            case LayerListComponent.WidgetConfig.type:
                 itemId = this.addLayerListWidget();
                 break;
-            case LogComponent.WIDGET_CONFIG.type:
+            case LogComponent.WidgetConfig.type:
                 itemId = this.addLogWidget();
                 break;
-            case RegionListComponent.WIDGET_CONFIG.type:
+            case RegionListComponent.WidgetConfig.type:
                 itemId = this.addRegionListWidget();
                 break;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+            case StokesAnalysisComponent.WidgetConfig.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+            case SpectralLineQueryComponent.WidgetConfig.type:
                 itemId = this.addSpectralLineQueryWidget();
                 break;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
+            case CursorInfoComponent.WidgetConfig.type:
                 itemId = this.addCursorInfoWidget();
                 break;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
+            case PvGeneratorComponent.WidgetConfig.type:
                 itemId = this.addPvGeneratorWidget();
                 break;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+            case CatalogOverlayComponent.WidgetConfig.type:
+                itemId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 if (widgetSettings) {
                     this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);
@@ -596,7 +596,7 @@ export class WidgetsStore {
                     plotType: CatalogPlotType.D2Scatter
                 };
                 itemId = this.addCatalogPlotWidget(scatterProps);
-                const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
+                const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
                 CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
                 break;
             case CatalogPlotType.Histogram:
@@ -606,7 +606,7 @@ export class WidgetsStore {
                     plotType: CatalogPlotType.Histogram
                 };
                 itemId = this.addCatalogPlotWidget(histogramProps);
-                const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
+                const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
                 CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
                 break;
             default:
@@ -633,7 +633,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WidgetsStore.getDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -699,7 +699,7 @@ export class WidgetsStore {
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
             const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
-            WidgetsStore.CreateDragSource(layout, props.widgetConfig, widgetButtonID);
+            WidgetsStore.createDragSource(layout, props.widgetConfig, widgetButtonID);
         });
 
         layout.on("stackCreated", stack => {
@@ -778,22 +778,22 @@ export class WidgetsStore {
 
         let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
-            case RenderConfigComponent.WIDGET_CONFIG.type:
+            case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
                 break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+            case SpatialProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spatialProfileWidgets.get(widgetID);
                 break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+            case SpectralProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spectralProfileWidgets.get(widgetID);
                 break;
-            case HistogramComponent.WIDGET_CONFIG.type:
+            case HistogramComponent.WidgetConfig.type:
                 widgetStore = this.histogramWidgets.get(widgetID);
                 break;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+            case StokesAnalysisComponent.WidgetConfig.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 widgetStore = this.catalogWidgets.get(widgetID);
                 break;
             default:
@@ -811,20 +811,20 @@ export class WidgetsStore {
 
         // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram, Catalog Overlay, Layer List
         const floatingSettingsAppliedWidgets = [
-            ImageViewComponent.WIDGET_CONFIG.type,
-            StokesAnalysisComponent.WIDGET_CONFIG.type,
-            SpectralProfilerComponent.WIDGET_CONFIG.type,
-            SpatialProfilerComponent.WIDGET_CONFIG.type,
-            RenderConfigComponent.WIDGET_CONFIG.type,
-            HistogramComponent.WIDGET_CONFIG.type,
-            CatalogOverlayComponent.WIDGET_CONFIG.type,
-            LayerListComponent.WIDGET_CONFIG.type
+            ImageViewComponent.WidgetConfig.type,
+            StokesAnalysisComponent.WidgetConfig.type,
+            SpectralProfilerComponent.WidgetConfig.type,
+            SpatialProfilerComponent.WidgetConfig.type,
+            RenderConfigComponent.WidgetConfig.type,
+            HistogramComponent.WidgetConfig.type,
+            CatalogOverlayComponent.WidgetConfig.type,
+            LayerListComponent.WidgetConfig.type
         ];
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
         }
         // Get floating settings config
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const widgetConfig = new WidgetConfig(id, defaultConfig);
@@ -844,21 +844,21 @@ export class WidgetsStore {
         const title = itemConfig.title;
 
         // Avoid floating ImageViewComponent
-        if (type === ImageViewComponent.WIDGET_CONFIG.type) {
+        if (type === ImageViewComponent.WidgetConfig.type) {
             return;
         }
 
         // Get widget type from config
-        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, WidgetsStore.getDefaultWidgetConfig(type));
         widgetConfig.title = title;
 
-        if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+        if (type === CatalogOverlayComponent.WidgetConfig.type) {
             widgetConfig.componentId = id;
         }
 
-        if (type === PvPreviewComponent.WIDGET_CONFIG.type) {
+        if (type === PvPreviewComponent.WidgetConfig.type) {
             widgetConfig.parentId = itemConfig.props.id;
-            widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
+            widgetConfig.parentType = PvPreviewComponent.WidgetConfig.parentType;
         }
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
@@ -886,7 +886,7 @@ export class WidgetsStore {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
         // Get widget config from type
-        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         const container = item["container"] as GoldenLayout.Container;
         let centerX = 0;
         if (container && container.width) {
@@ -984,7 +984,7 @@ export class WidgetsStore {
     updateRenderConfigSettingsVisibility = () => {
         const isBlending = AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING;
         const layout = AppStore.Instance.layoutStore?.dockedLayout;
-        const renderConfigWidgets = layout?.root?.getItemsByFilter((item: any) => item.config.component === RenderConfigComponent.WIDGET_CONFIG.type && !item.container.isHidden) ?? [];
+        const renderConfigWidgets = layout?.root?.getItemsByFilter((item: any) => item.config.component === RenderConfigComponent.WidgetConfig.type && !item.container.isHidden) ?? [];
         for (const widget of renderConfigWidgets) {
             $(widget.parent.element)
                 ?.find("li.lm_settings")
@@ -1008,9 +1008,9 @@ export class WidgetsStore {
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
         if (item.config.type === "component") {
             const config = item.config as GoldenLayout.ReactComponentConfig;
-            const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
-            const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
-            const isPvPreview = config.component === PvPreviewComponent.WIDGET_CONFIG.type;
+            const isCatalogTable = config.component === CatalogOverlayComponent.WidgetConfig.type;
+            const isCatalogPlot = config.component === CatalogPlotComponent.WidgetConfig.type;
+            const isPvPreview = config.component === PvPreviewComponent.WidgetConfig.type;
             // Clean up removed widget's store (ignoring items that have been floated)
             const id = config.id as string;
             if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
@@ -1076,7 +1076,7 @@ export class WidgetsStore {
 
         // Update GL title by searching for image-view components
         if (layout?.root) {
-            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WidgetConfig.type);
             if (imageViewComponents.length) {
                 if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
                     imageViewComponents[0].setTitle(newTitle);
@@ -1085,7 +1085,7 @@ export class WidgetsStore {
         }
 
         // Update floating window title
-        const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
+        const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WidgetConfig.type);
         if (imageViewWidget && imageViewWidget.title !== newTitle) {
             this.setWidgetTitle(imageViewWidget.id, newTitle);
         }
@@ -1132,13 +1132,13 @@ export class WidgetsStore {
     createFloatingSpatialProfilerWidget = () => {
         const id = this.addSpatialProfileWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpatialProfilerComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, SpatialProfilerComponent.WidgetConfig));
         }
     };
 
     @action addSpatialProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(SpatialProfilerComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpatialProfilerComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1157,13 +1157,13 @@ export class WidgetsStore {
     createFloatingSpectralProfilerWidget = () => {
         const id = this.addSpectralProfileWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpectralProfilerComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, SpectralProfilerComponent.WidgetConfig));
         }
     };
 
     @action addSpectralProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpectralProfilerComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1203,13 +1203,13 @@ export class WidgetsStore {
     createFloatingStokesWidget = () => {
         const id = this.addStokesWidget();
         if (id) {
-            this.addFloatingWidget(new WidgetConfig(id, StokesAnalysisComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, StokesAnalysisComponent.WidgetConfig));
         }
     };
 
     @action addStokesWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(StokesAnalysisComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1230,11 +1230,11 @@ export class WidgetsStore {
         let nextIndex = 0;
         const componentIds: string[] = [];
 
-        if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
+        if (config.type === CatalogPlotComponent.WidgetConfig.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
                 componentIds.push(componentId);
             });
-        } else if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+        } else if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
             CatalogStore.Instance.catalogProfiles.forEach((value, componentId) => {
                 componentIds.push(componentId);
             });
@@ -1251,8 +1251,8 @@ export class WidgetsStore {
 
     createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
-        const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
@@ -1261,8 +1261,8 @@ export class WidgetsStore {
     reloadFloatingCatalogWidget = () => {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
-        const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const componentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
@@ -1281,7 +1281,7 @@ export class WidgetsStore {
 
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogOverlayComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1299,7 +1299,7 @@ export class WidgetsStore {
 
     // region Catalog Plot Widgets
     createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string | null; widgetComponentId: string} => {
-        const defaultConfig = CatalogPlotComponent.WIDGET_CONFIG;
+        const defaultConfig = CatalogPlotComponent.WidgetConfig;
         const widgetStoreId = this.addCatalogPlotWidget(props);
         const widgetComponentId = this.getNextComponentId(defaultConfig);
         if (widgetStoreId !== null) {
@@ -1315,7 +1315,7 @@ export class WidgetsStore {
     @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogPlotComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1330,7 +1330,7 @@ export class WidgetsStore {
     createFloatingSpectralLineQueryWidget = () => {
         const id = this.addSpectralLineQueryWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpectralLineQueryComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, SpectralLineQueryComponent.WidgetConfig));
         }
     };
 
@@ -1338,7 +1338,7 @@ export class WidgetsStore {
     @action addSpectralLineQueryWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(SpectralLineQueryComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpectralLineQueryComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1351,11 +1351,11 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
-            config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
+            config.title = parentType === PvGeneratorComponent.WidgetConfig.type ? title : title + " Settings";
             config.parentId = parentId;
             config.parentType = parentType;
             if (config.id) {
@@ -1384,14 +1384,14 @@ export class WidgetsStore {
     createFloatingStatsWidget = () => {
         const id = this.addStatsWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, StatsComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, StatsComponent.WidgetConfig));
         }
     };
 
     @action addStatsWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(StatsComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1406,13 +1406,13 @@ export class WidgetsStore {
     createFloatingHistogramWidget = () => {
         const id = this.addHistogramWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, HistogramComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, HistogramComponent.WidgetConfig));
         }
     };
 
     @action addHistogramWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(HistogramComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(HistogramComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1431,13 +1431,13 @@ export class WidgetsStore {
     createFloatingRenderWidget = () => {
         const id = this.addRenderConfigWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, RenderConfigComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, RenderConfigComponent.WidgetConfig));
         }
     };
 
     @action addRenderConfigWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(RenderConfigComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(RenderConfigComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1457,13 +1457,13 @@ export class WidgetsStore {
     createFloatingLogWidget = () => {
         const id = this.addLogWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, LogComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, LogComponent.WidgetConfig));
         }
     };
 
     @action addLogWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(LogComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(LogComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1475,13 +1475,13 @@ export class WidgetsStore {
     createFloatingAnimatorWidget = () => {
         const id = this.addAnimatorWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, AnimatorComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, AnimatorComponent.WidgetConfig));
         }
     };
 
     @action addAnimatorWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(AnimatorComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(AnimatorComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1493,13 +1493,13 @@ export class WidgetsStore {
     createFloatingChannelMapControlWidget = () => {
         const id = this.addChannelMapControlWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, ChannelMapControlComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, ChannelMapControlComponent.WidgetConfig));
         }
     };
 
     @action addChannelMapControlWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(ChannelMapControlComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(ChannelMapControlComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1511,13 +1511,13 @@ export class WidgetsStore {
     createFloatingRegionListWidget = () => {
         const id = this.addRegionListWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, RegionListComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, RegionListComponent.WidgetConfig));
         }
     };
 
     @action addRegionListWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(RegionListComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(RegionListComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1529,13 +1529,13 @@ export class WidgetsStore {
     createFloatingLayerListWidget = () => {
         const id = this.addLayerListWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, LayerListComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, LayerListComponent.WidgetConfig));
         }
     };
 
     @action addLayerListWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(LayerListComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(LayerListComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1547,13 +1547,13 @@ export class WidgetsStore {
     createFloatingCursorInfoWidget = () => {
         const id = this.addCursorInfoWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, CursorInfoComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, CursorInfoComponent.WidgetConfig));
         }
     };
 
     @action addCursorInfoWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(CursorInfoComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CursorInfoComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1565,13 +1565,13 @@ export class WidgetsStore {
     createFloatingPvGeneratorWidget = () => {
         const id = this.addPvGeneratorWidget();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, PvGeneratorComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, PvGeneratorComponent.WidgetConfig));
         }
     };
 
     @action addPvGeneratorWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(PvGeneratorComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(PvGeneratorComponent.WidgetConfig.type);
         }
 
         if (id) {

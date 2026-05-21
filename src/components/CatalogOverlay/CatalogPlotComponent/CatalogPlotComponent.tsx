@@ -36,7 +36,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-plot",
             type: "catalog-plot",

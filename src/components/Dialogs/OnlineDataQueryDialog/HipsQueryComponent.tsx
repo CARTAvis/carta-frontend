@@ -107,7 +107,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setWidth}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
+                                    (hipsQueryStore.size.x >= hipsQueryStore.hipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.hipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
                                     isNaN(hipsQueryStore.size.x)
                                         ? "none"
                                         : "danger"
@@ -131,7 +131,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setHeight}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
+                                    (hipsQueryStore.size.y >= hipsQueryStore.hipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.hipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
                                     isNaN(hipsQueryStore.size.y)
                                         ? "none"
                                         : "danger"
@@ -159,7 +159,7 @@ export const HipsQueryComponent = observer(() => {
                     </FormGroup>
                     <FormGroup inline={true} label="Projection" disabled={hipsQueryStore.isLoading}>
                         <HTMLSelect
-                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.ProjectionOptionMap.get(val)}`, value: val}))}
+                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.PROJECTION_OPTION_MAP.get(val)}`, value: val}))}
                             value={hipsQueryStore.projection}
                             onChange={ev => hipsQueryStore.setProjection(ev.currentTarget.value as HipsProjection)}
                             disabled={hipsQueryStore.isLoading}

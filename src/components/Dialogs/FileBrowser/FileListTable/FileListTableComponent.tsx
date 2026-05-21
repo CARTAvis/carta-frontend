@@ -73,15 +73,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}]
     ]);
 
-    private static GetFileTypeDisplay(type: CARTA.FileType) {
+    private static getFileTypeDisplay(type: CARTA.FileType) {
         return FileListTableComponent.FileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
-    private static GeCatalogFileTypeDisplay(type: CARTA.CatalogFileType) {
+    private static getCatalogFileTypeDisplay(type: CARTA.CatalogFileType) {
         return FileListTableComponent.CatalogFileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
-    private static GetFileSizeDisplay(sizeInBytes: number): string {
+    private static getFileSizeDisplay(sizeInBytes: number): string {
         if (sizeInBytes >= 1e12) {
             return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
         } else if (sizeInBytes >= 1e9) {
@@ -164,7 +164,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All && directory.size && directory.type != null && directory.type in CARTA.FileType) {
                     entries.push({
                         filename: directory.name || "",
-                        typeInfo: FileListTableComponent.GetFileTypeDisplay(directory.type),
+                        typeInfo: FileListTableComponent.getFileTypeDisplay(directory.type),
                         size: directory.size as number,
                         date: directory.date as number,
                         isDirectory: true,
@@ -205,7 +205,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
                     entries.push({
                         filename: file.name || "",
-                        typeInfo: file.type != null ? FileListTableComponent.GeCatalogFileTypeDisplay(file.type) : undefined,
+                        typeInfo: file.type != null ? FileListTableComponent.getCatalogFileTypeDisplay(file.type) : undefined,
                         size: file.fileSize as number,
                         date: file.date as number,
                         fileInfo: file,
@@ -219,7 +219,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                             const filename = file.HDUList.length > 1 ? `${file.name || ""}: HDU ${hdu}` : file.name || "";
                             entries.push({
                                 filename,
-                                typeInfo: file.type != null ? FileListTableComponent.GetFileTypeDisplay(file.type) : undefined,
+                                typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                                 size: file.size as number,
                                 date: file.date as number,
                                 fileInfo: file,
@@ -233,7 +233,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 for (const file of filteredFiles as CARTA.IFileInfo[]) {
                     entries.push({
                         filename: file.name || "",
-                        typeInfo: file.type != null ? FileListTableComponent.GetFileTypeDisplay(file.type) : undefined,
+                        typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                         size: file.size as number,
                         date: file.date as number,
                         fileInfo: file,
@@ -377,7 +377,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
+                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size)}
                         {!entry.isFile && entry.itemCount !== undefined && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>

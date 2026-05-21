@@ -17,7 +17,7 @@ export class ChannelMapStore {
     }
 
     /** The default color used for rendering the channel map label. */
-    public static readonly DefaultLabelColor = "auto-light_gray";
+    public static readonly DEFAULT_LABEL_COLOR = "auto-light_gray";
 
     constructor() {
         makeObservable(this);
@@ -90,7 +90,7 @@ export class ChannelMapStore {
     /** Indicates whether to use a custom color for rendering the channel map label. */
     @observable customColor: boolean = false;
     /** The custom color used for rendering the channel map label. */
-    @observable color: string = ChannelMapStore.DefaultLabelColor;
+    @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
     private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);

@@ -122,7 +122,7 @@ export class RegionWidgetStore {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
-    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
+    public static calculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
 
         widgetsMap.forEach(widgetStore => {

@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
-import {BrowserMode, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -82,7 +82,7 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
-            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
+            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? ColormapSet.RGB : ColormapSet.Rainbow);
         } catch (err) {
             console.error(err);
         }
@@ -189,7 +189,7 @@ export class FileBrowserDialogComponent extends React.Component {
             if (!directory) {
                 throw new Error("No catalog directory selected");
             }
-            yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS, CARTA.CatalogFileType.VOTable);
         } else {
             const directory = fileBrowserStore.fileList?.directory;
             if (!directory) {
@@ -377,7 +377,7 @@ export class FileBrowserDialogComponent extends React.Component {
         AppStore.Instance.fileBrowserStore.selectFolder(path, true);
     };
 
-    private static ValidateFilename(filename: string) {
+    private static validateFilename(filename: string) {
         const forbiddenRegex = /(\.\.)|(\\)+/gm;
         return filename && filename.length && !filename.match(forbiddenRegex);
     }
@@ -623,7 +623,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={
-                                !fileBrowserStore.exportFilename || !FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1
+                                !fileBrowserStore.exportFilename || !FileBrowserDialogComponent.validateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1
                             }
                             onClick={this.handleExportRegionsClicked}
                             text="Export regions"
@@ -940,7 +940,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
+                                infoTypes={FileBrowserDialogComponent.getFileInfoTypes(fileBrowserStore.browserMode)}
                                 HDUOptions={{HDUList: fileBrowserStore.HDUList || [], handleSelectedHDUChange: fileBrowserStore.selectHDU}}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
@@ -1001,7 +1001,7 @@ export class FileBrowserDialogComponent extends React.Component {
         );
     };
 
-    private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+    private static getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];

@@ -39,7 +39,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
 
     private static readonly DefaultControls = [AppearanceControl.Color, AppearanceControl.LineWidth, AppearanceControl.DashLength];
 
-    private static readonly REGION_CONTROLS = new Map<CARTA.RegionType, AppearanceControl[]>([
+    private static readonly RegionControls = new Map<CARTA.RegionType, AppearanceControl[]>([
         [CARTA.RegionType.POINT, [AppearanceControl.Color]],
         [CARTA.RegionType.ANNPOINT, [AppearanceControl.Color, AppearanceControl.Point]],
         [CARTA.RegionType.ANNTEXT, [AppearanceControl.Color, AppearanceControl.Font, AppearanceControl.TextAlignment]],
@@ -49,7 +49,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
     ]);
 
     public static getControlsForRegion(region: RegionStore): Set<AppearanceControl> {
-        return new Set(AppearanceForm.REGION_CONTROLS.get(region.regionType) ?? AppearanceForm.DefaultControls);
+        return new Set(AppearanceForm.RegionControls.get(region.regionType) ?? AppearanceForm.DefaultControls);
     }
 
     private static intersectControls(left: Set<AppearanceControl>, right: Set<AppearanceControl>): Set<AppearanceControl> {

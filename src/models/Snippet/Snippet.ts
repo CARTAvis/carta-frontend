@@ -10,7 +10,7 @@ export class Snippet {
     categories: string[];
     requires?: string[];
 
-    public static readonly FrontendVersion = version;
-    public static readonly SnippetVersion = 1;
+    public static readonly FRONTEND_VERSION = version;
+    public static readonly SNIPPET_VERSION = 1;
 }
 /* eslint-enable @typescript-eslint/naming-convention */

@@ -331,7 +331,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.polygonRegionCreating(mouseEvent);
     };
 
-    private RegionCreating(mouseEvent: MouseEvent) {
+    private regionCreating(mouseEvent: MouseEvent) {
         if (!this.creatingRegion) {
             return;
         }
@@ -750,7 +750,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNTEXT:
                 case CARTA.RegionType.ANNRULER:
-                    this.RegionCreating(mouseEvent);
+                    this.regionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.ANNPOLYGON:

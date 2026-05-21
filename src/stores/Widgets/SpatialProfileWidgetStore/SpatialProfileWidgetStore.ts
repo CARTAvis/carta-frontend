@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
+import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
 import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
@@ -174,15 +174,15 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS | undefined {
+    @computed get effectivePolarization(): Polarizations | undefined {
         if (this.selectedStokes === DEFAULT_STOKES) {
             return this.effectiveFrame?.requiredPolarization;
         } else {
-            return POLARIZATIONS[this.fullCoordinate.substring(0, this.fullCoordinate.length - 1)];
+            return Polarizations[this.fullCoordinate.substring(0, this.fullCoordinate.length - 1)];
         }
     }
 
-    private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
+    private static getSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
         if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && region?.regionId === RegionId.CURSOR) {
             if (coordinate.includes("x")) {
                 return {
@@ -208,7 +208,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         }
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, SpatialProfileWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, SpatialProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
@@ -241,7 +241,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, region, region.lineRegionSampleWidth));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.getSpatialConfig(frame, widgetStore.fullCoordinate, region, region.lineRegionSampleWidth));
                 }
             }
         });
@@ -254,7 +254,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetSpatialRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetSpatialRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffSpatialRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>) {
+    public static diffSpatialRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>) {
         const diffList: CARTA.SetSpatialRequirements[] = [];
 
         // Fill updated requirements with missing entries

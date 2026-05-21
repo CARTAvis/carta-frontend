@@ -30,15 +30,15 @@ export class VectorOverlayConfigStore {
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;
-    @observable lengthMin: number = VectorOverlayConfigStore.DefaultLengthMin;
-    @observable lengthMax: number = VectorOverlayConfigStore.DefaultLengthMax;
+    @observable lengthMin: number = VectorOverlayConfigStore.defaultLengthMin;
+    @observable lengthMax: number = VectorOverlayConfigStore.defaultLengthMax;
     @observable intensityMin: number | undefined = undefined;
     @observable intensityMax: number | undefined = undefined;
     @observable rotationOffset: number = 0;
 
     private readonly preferenceStore: PreferenceStore;
-    public static DefaultLengthMin = 0;
-    public static DefaultLengthMax = 20;
+    public static defaultLengthMin = 0;
+    public static defaultLengthMax = 20;
 
     constructor(preferenceStore: PreferenceStore, frame: FrameStore) {
         this.preferenceStore = preferenceStore;

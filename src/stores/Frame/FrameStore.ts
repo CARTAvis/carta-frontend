@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {Polarizations, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -48,8 +48,10 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
+    getRegionPixelProperties,
     GetRequiredTiles,
     getTransformedChannel,
+    getTransformedRegionProperties,
     getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
@@ -455,9 +457,9 @@ export class FrameStore {
 
     @computed get requiredUnit() {
         if (this.headerUnit) {
-            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
+            if (this.requiredPolarization === Polarizations.Pangle) {
                 return "degree";
-            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
+            } else if (this.requiredPolarization === Polarizations.PFtotal || this.requiredPolarization === Polarizations.PFlinear) {
                 return "%";
             } else {
                 return this.headerUnit;
@@ -1136,27 +1138,27 @@ export class FrameStore {
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
-    @computed get polarizations(): POLARIZATIONS[] {
+    @computed get polarizations(): Polarizations[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
-        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
-        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
-        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
-        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
+        const hasI: boolean = polarizations.includes(Polarizations.I);
+        const hasQ: boolean = polarizations.includes(Polarizations.Q);
+        const hasU: boolean = polarizations.includes(Polarizations.U);
+        const hasV: boolean = polarizations.includes(Polarizations.V);
 
         if (hasQ && hasU) {
             if (hasV) {
-                polarizations.push(POLARIZATIONS.Ptotal);
+                polarizations.push(Polarizations.Ptotal);
             }
-            polarizations.push(POLARIZATIONS.Plinear);
+            polarizations.push(Polarizations.Plinear);
             if (hasI && hasV) {
-                polarizations.push(POLARIZATIONS.PFtotal);
+                polarizations.push(Polarizations.PFtotal);
             }
             if (hasI) {
-                polarizations.push(POLARIZATIONS.PFlinear);
+                polarizations.push(Polarizations.PFlinear);
             }
-            polarizations.push(POLARIZATIONS.Pangle);
+            polarizations.push(Polarizations.Pangle);
         }
 
         return polarizations;
@@ -1604,7 +1606,7 @@ export class FrameStore {
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
-    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+    private static shiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
         if (entry.name?.match(/CRPIX\d+/)) {
             const numericValue = parseFloat(entry.value ?? "");
             if (isFinite(numericValue)) {
@@ -1730,7 +1732,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1799,7 +1801,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1875,7 +1877,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1944,7 +1946,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -2238,17 +2240,31 @@ export class FrameStore {
         const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
-            propertyString.push(region.regionProperties);
+            const regionFrameProperties = this.getRegionFrameProperties(region);
+            const controlPoints = regionFrameProperties.controlPoints;
+            const rotation = regionFrameProperties.rotation;
+
+            propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
             if (this.validWcs) {
-                propertyString.push(this.getRegionWcsProperties(region));
+                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
             }
         }
         return propertyString;
     }
 
     public getRegionWcsProperties = (region: RegionStore): string => {
-        return this.genRegionWcsProperties(region.regionType, region.controlPoints, region.rotation, region.regionId);
+        const regionFrameProperties = this.getRegionFrameProperties(region);
+        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
     };
+
+    private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
+        const spatialTransformAST = this.spatialTransformAST;
+        if (!this.spatialReference || !spatialTransformAST) {
+            return {controlPoints: region.controlPoints, rotation: region.rotation};
+        }
+
+        return getTransformedRegionProperties(region, spatialTransformAST);
+    }
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
@@ -2571,7 +2587,7 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
+        const processedData = ProtobufProcessing.processContourData(contourImageData);
         this.stokes = processedData.stokes ?? 0;
         this.channel = processedData.channel ?? 0;
 
@@ -2632,7 +2648,7 @@ export class FrameStore {
      * @param polarization - The polarization value.
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
+    @action setStokes = (polarization: Polarizations, recursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
         if (!isFinite(polarizationIndex) || polarizationIndex === -1) {
             return;

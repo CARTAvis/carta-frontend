@@ -9,7 +9,7 @@ import {PreferenceStore} from "stores";
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
-    public static readonly InitTableRows = 50;
+    public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
     private readonly InitialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
     private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
@@ -51,7 +51,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
-        const initTableRows = CatalogProfileStore.InitTableRows;
+        const initTableRows = CatalogProfileStore.INIT_TABLE_ROWS;
         if (catalogInfo.dataSize < initTableRows) {
             this.numVisibleRows = catalogInfo.dataSize;
             this.subsetEndIndex = catalogInfo.dataSize;
@@ -70,7 +70,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.catalogHeader = catalogHeader;
     }
 
-    private static FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
+    private static fillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
         const newDataSize = newArray.length;
         let destArr: Array<T>;
         // fill in-place
@@ -111,17 +111,17 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
                     }
                 }
             });
@@ -198,7 +198,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
         const catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
         const imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
-        let previewDatasize = CatalogProfileStore.InitTableRows;
+        let previewDatasize = CatalogProfileStore.INIT_TABLE_ROWS;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
         catalogFilter.columnIndices = this.columnIndices;

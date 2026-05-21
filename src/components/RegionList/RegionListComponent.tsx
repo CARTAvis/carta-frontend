@@ -33,7 +33,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private pendingScrollTarget = -1;
 
-    public static get widgetConfig(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",

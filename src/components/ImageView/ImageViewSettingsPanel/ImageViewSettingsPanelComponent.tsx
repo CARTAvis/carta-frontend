@@ -44,7 +44,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         this.disposers.length = 0;
     }
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "image-view-floating-settings",
             type: "floating-settings",

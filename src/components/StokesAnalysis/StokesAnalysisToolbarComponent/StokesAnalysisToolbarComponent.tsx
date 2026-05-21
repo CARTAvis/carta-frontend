@@ -21,7 +21,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title ?? "", this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WidgetConfig.title ?? "", this.props.id, StokesAnalysisComponent.WidgetConfig.type);
     };
 
     private handleFrameChanged = (newFrame: FrameStore) => {

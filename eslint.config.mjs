@@ -29,36 +29,36 @@ export default [
         rules: {
             "@typescript-eslint/naming-convention": [
                 "warn",
-                // {
-                //     selector: "default",
-                //     format: ["camelCase", "PascalCase", "UPPER_CASE"],
-                //     leadingUnderscore: "allow",
-                //     trailingUnderscore: "forbid"
-                // },
-                // {
-                //     selector: [
-                //         "enumMember",
-                //         "objectLiteralProperty",
-                //         "typeProperty",
-                //         "objectLiteralMethod",
-                //         "typeMethod"
-                //     ],
-                //     format: null
-                // },
-                // {
-                //     selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
-                //     format: ["PascalCase"]
-                // },
-                // {
-                //     selector: "classProperty",
-                //     modifiers: ["public", "static", "readonly"],
-                //     format: ["UPPER_CASE"],
-                // },
-                // {
-                //     selector: "classProperty",
-                //     modifiers: ["private", "static", "readonly"],
-                //     format: ["PascalCase"],
-                // },
+                {
+                    selector: "default",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                    trailingUnderscore: "forbid"
+                },
+                {
+                    selector: [
+                        "enumMember",
+                        "objectLiteralProperty",
+                        "typeProperty",
+                        "objectLiteralMethod",
+                        "typeMethod"
+                    ],
+                    format: null
+                },
+                {
+                    selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: "classProperty",
+                    modifiers: ["public", "static", "readonly"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "classProperty",
+                    modifiers: ["private", "static", "readonly"],
+                    format: ["PascalCase"],
+                },
                 {
                     selector: "classProperty",
                     modifiers: ["protected"],
@@ -80,11 +80,11 @@ export default [
                 //     format: ["camelCase"],
                 //     leadingUnderscore: "allow",
                 // },
-                // {
-                //     selector: ["classicAccessor"],
-                //     modifiers: ["public", "static"],
-                //     format: ["PascalCase"],
-                // },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public", "static"],
+                    format: ["PascalCase"],
+                },
                 // {
                 //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                 //     types: ["boolean"],
@@ -137,7 +137,7 @@ export default [
                             "^@?\\w"
                         ],
                         [
-                            "^(components|enums|icons|models|services|stores|utilities)(/.*|$)"
+                            "^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"
                         ],
                         [
                             "^\\u0000"

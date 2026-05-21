@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
 * Fixed a spectral matching case affected by the default Helio rest frame setting ([#2736](https://github.com/CARTAvis/carta-frontend/issues/2736)).
 * Fix the spatial profile chart that occasionally disappears when the line region is outside the image ([#2775](https://github.com/CARTAvis/carta-frontend/issues/2775)).
+* Fixed spectral profiler colors not updating when switching the GUI theme ([#2801](https://github.com/CARTAvis/carta-frontend/issues/2801)).
+* Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes ([#2804](https://github.com/CARTAvis/carta-frontend/issues/2804)).
 
 ## [6.0.0-beta.1]
 

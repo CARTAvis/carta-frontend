@@ -17,7 +17,7 @@ export class SnippetStore {
         return SnippetStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
     @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
     @observable activeSnippet: Snippet = {
@@ -54,8 +54,8 @@ export class SnippetStore {
                 tags: ["example"],
                 categories: [category],
                 code: example.code,
-                frontendVersion: Snippet.FrontendVersion,
-                snippetVersion: Snippet.SnippetVersion
+                frontendVersion: Snippet.FRONTEND_VERSION,
+                snippetVersion: Snippet.SNIPPET_VERSION
             };
 
             this.snippets.set(example.name, snippet);
@@ -90,11 +90,11 @@ export class SnippetStore {
 
     @computed
     private get functionToExecute() {
-        const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-        if (this.activeSnippet && AsyncFunction) {
+        const asyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+        if (this.activeSnippet && asyncFunction) {
             let f;
             try {
-                f = new AsyncFunction(this.activeSnippet.code);
+                f = new asyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
                 console.error(e);
@@ -122,8 +122,8 @@ export class SnippetStore {
     @action clearActiveSnippet = () => {
         this.activeSnippet = {
             code: "",
-            frontendVersion: Snippet.FrontendVersion,
-            snippetVersion: Snippet.FrontendVersion,
+            frontendVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.FRONTEND_VERSION,
             categories: []
         };
         this.activeSnippetName = "";
@@ -144,7 +144,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -165,7 +165,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {

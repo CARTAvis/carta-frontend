@@ -46,7 +46,7 @@ export class FilterableTableComponentProps {
 
 @observer
 export class FilterableTableComponent extends React.Component<FilterableTableComponentProps> {
-    private readonly SortingTypelinkedList = {
+    private readonly sortingTypelinkedList = {
         head: {
             value: null as CARTA.SortingType | null,
             next: {
@@ -187,7 +187,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         if (this.props.catalogType === CatalogType.SIMBAD) {
             if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimbadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -195,7 +195,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
             if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimbadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -212,7 +212,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private getNextSortingType = (): CARTA.SortingType | null => {
-        let currentNode: any = this.SortingTypelinkedList.head;
+        let currentNode: any = this.sortingTypelinkedList.head;
         while (currentNode?.next) {
             if (currentNode.value === this.props.sortingInfo?.sortingType) {
                 return currentNode.next.value;

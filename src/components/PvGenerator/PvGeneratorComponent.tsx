@@ -20,7 +20,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable isValidSpectralRange: boolean = true;
     private widgetId: string;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "pv-generator",
             type: "pv-generator",
@@ -146,7 +146,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === PvGeneratorComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addPvGeneratorWidget();
             if (id) {
