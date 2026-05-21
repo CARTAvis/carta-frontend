@@ -9,7 +9,7 @@ import {ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput} from 
 import {AppearanceControl, Font, FontStyle} from "enums";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type PointAnnotationStore, RegionStore, type RulerAnnotationStore, type TextAnnotationStore, type VectorAnnotationStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./AppearanceForm.scss";
 
@@ -75,14 +75,14 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
 
     private handleLineWidthChange = _.throttle((value: number) => {
         if (this.props.region) {
-            const clampedValue = Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value));
+            const clampedValue = clamp(value, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH);
             this.apply(region => region.setLineWidth(clampedValue));
         }
     }, AppearanceForm.AppearanceChangeDelay);
 
     private handleDashLengthChange = _.throttle((value: number) => {
         if (this.props.region) {
-            const clampedValue = Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value));
+            const clampedValue = clamp(value, 0, RegionStore.MAX_DASH_LENGTH);
             this.apply(region => region.setDashLength(clampedValue));
         }
     }, AppearanceForm.AppearanceChangeDelay);
