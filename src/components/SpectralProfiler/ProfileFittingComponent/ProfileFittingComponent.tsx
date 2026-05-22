@@ -44,11 +44,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onYInterceptValueLocked = () => {
-        this.fittingStore.setLockedYIntercept(!this.fittingStore.lockedYIntercept);
+        this.fittingStore.setLockedYIntercept(!this.fittingStore.isLockedYIntercept);
     };
 
     private onSlopeValueLocked = () => {
-        this.fittingStore.setLockedSlope(!this.fittingStore.lockedSlope);
+        this.fittingStore.setLockedSlope(!this.fittingStore.isLockedSlope);
     };
 
     private cursorSelectingYIntercept = () => {
@@ -101,17 +101,17 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private onCenterLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        selectComponent?.setLockedCenter(!selectComponent.lockedCenter);
+        selectComponent?.setLockedCenter(!selectComponent.isLockedCenter);
     };
 
     private onAmpLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        selectComponent?.setLockedAmp(!selectComponent.lockedAmp);
+        selectComponent?.setLockedAmp(!selectComponent.isLockedAmp);
     };
 
     private onFwhmLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        selectComponent?.setLockedFwhm(!selectComponent.lockedFwhm);
+        selectComponent?.setLockedFwhm(!selectComponent.isLockedFwhm);
     };
 
     private showLog = () => {
@@ -165,7 +165,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private fitData = () => {
-        if (this.fittingStore.readyToFit) {
+        if (this.fittingStore.isReadyToFit) {
             this.fittingStore.fitData();
         }
     };
@@ -315,7 +315,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <SafeNumericInput
                                             value={fittingStore.selectedComponent.center}
                                             onValueChange={this.onCenterValueChanged}
-                                            disabled={fittingStore.selectedComponent.lockedCenter || disabled}
+                                            disabled={fittingStore.selectedComponent.isLockedCenter || disabled}
                                             allowNumericCharactersOnly={false}
                                             buttonPosition="none"
                                             data-testid="profile-fitting-center-input"
@@ -323,11 +323,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <Tooltip
                                             content={
                                                 <span>
-                                                    <i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i>
+                                                    <i>{fittingStore.selectedComponent.isLockedCenter ? "Unlock center" : "Lock center"}</i>
                                                 </span>
                                             }
                                         >
-                                            <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
+                                            <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.isLockedCenter ? "lock" : "unlock"} disabled={disabled} />
                                         </Tooltip>
                                         {cursorSelectionButton}
                                     </div>
@@ -339,7 +339,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <SafeNumericInput
                                             value={fittingStore.selectedComponent.amp}
                                             onValueChange={this.onAmpValueChanged}
-                                            disabled={fittingStore.selectedComponent.lockedAmp || disabled}
+                                            disabled={fittingStore.selectedComponent.isLockedAmp || disabled}
                                             allowNumericCharactersOnly={false}
                                             buttonPosition="none"
                                             data-testid="profile-fitting-amplitude-input"
@@ -347,11 +347,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <Tooltip
                                             content={
                                                 <span>
-                                                    <i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
+                                                    <i>{fittingStore.selectedComponent.isLockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
                                                 </span>
                                             }
                                         >
-                                            <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
+                                            <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.isLockedAmp ? "lock" : "unlock"} disabled={disabled} />
                                         </Tooltip>
                                         {cursorSelectionButton}
                                     </div>
@@ -363,7 +363,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <SafeNumericInput
                                             value={fittingStore.selectedComponent.fwhm}
                                             onValueChange={this.onFwhmValueChanged}
-                                            disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
+                                            disabled={fittingStore.selectedComponent.isLockedFwhm || disabled}
                                             allowNumericCharactersOnly={false}
                                             buttonPosition="none"
                                             data-testid="profile-fitting-fwhm-input"
@@ -371,11 +371,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <Tooltip
                                             content={
                                                 <span>
-                                                    <i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
+                                                    <i>{fittingStore.selectedComponent.isLockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
                                                 </span>
                                             }
                                         >
-                                            <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
+                                            <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.isLockedFwhm ? "lock" : "unlock"} disabled={disabled} />
                                         </Tooltip>
                                         {cursorSelectionButton}
                                     </div>
@@ -401,11 +401,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <SafeNumericInput
                                             value={fittingStore.yIntercept}
                                             onValueChange={this.onYInterceptValueChanged}
-                                            disabled={fittingStore.lockedYIntercept || disabled}
+                                            disabled={fittingStore.isLockedYIntercept || disabled}
                                             allowNumericCharactersOnly={false}
                                             buttonPosition="none"
                                         />
-                                        <AnchorButton onClick={this.onYInterceptValueLocked} icon={fittingStore.lockedYIntercept ? "lock" : "unlock"} disabled={disabled} />
+                                        <AnchorButton onClick={this.onYInterceptValueLocked} icon={fittingStore.isLockedYIntercept ? "lock" : "unlock"} disabled={disabled} />
                                         {fittingStore.continuum === FittingContinuum.ZEROTH_ORDER && (
                                             <AnchorButton onClick={this.cursorSelectingYIntercept} active={fittingStore.isCursorSelectingYIntercept} icon="select" disabled={disabled} />
                                         )}
@@ -416,8 +416,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             {fittingStore.continuum === FittingContinuum.FIRST_ORDER && (
                                 <FormGroup label="Slope" inline={true}>
                                     <div className="component-input">
-                                        <SafeNumericInput value={fittingStore.slope} onValueChange={this.onSlopeValueChanged} disabled={fittingStore.lockedSlope || disabled} allowNumericCharactersOnly={false} buttonPosition="none" />
-                                        <AnchorButton onClick={this.onSlopeValueLocked} icon={fittingStore.lockedSlope ? "lock" : "unlock"} disabled={disabled} />
+                                        <SafeNumericInput value={fittingStore.slope} onValueChange={this.onSlopeValueChanged} disabled={fittingStore.isLockedSlope || disabled} allowNumericCharactersOnly={false} buttonPosition="none" />
+                                        <AnchorButton onClick={this.onSlopeValueLocked} icon={fittingStore.isLockedSlope ? "lock" : "unlock"} disabled={disabled} />
                                         <AnchorButton onClick={this.cursorSelectingSlope} active={fittingStore.isCursorSelectingSlope} icon="select" disabled={disabled} />
                                     </div>
                                 </FormGroup>
@@ -435,7 +435,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                         </div>
                         <div className="profile-fitting-footer">
                             <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.reset} disabled={disabled} data-testid="profile-fitting-reset-button" />
-                            <AnchorButton text="Fit" intent={Intent.PRIMARY} onClick={this.fitData} disabled={!fittingStore.readyToFit || disabled} data-testid="profile-fitting-fit-button" />
+                            <AnchorButton text="Fit" intent={Intent.PRIMARY} onClick={this.fitData} disabled={!fittingStore.isReadyToFit || disabled} data-testid="profile-fitting-fit-button" />
                             <Popover
                                 isOpen={this.isShowingLog}
                                 onClose={this.handleLogClose}
@@ -455,7 +455,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <AnchorButton text="View log" onClick={this.showLog} intent={Intent.PRIMARY} disabled={!fittingStore.hasResult || disabled} />
                             </Popover>
                             <div className="switch-wrapper">
-                                <Switch label="Residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
+                                <Switch label="Residual" checked={fittingStore.isResidualEnabled} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
                             </div>
                         </div>
                     </FormGroup>

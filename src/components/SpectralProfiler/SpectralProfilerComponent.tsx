@@ -478,7 +478,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.multiPlotPropsMap.set(`fittingModel(${i + 1})`, individualPlotProps);
                         }
 
-                        if (fittingStore.enableResidual) {
+                        if (fittingStore.isResidualEnabled) {
                             const fittingResidualPlotProps: MultiPlotProps = {
                                 imageName: currentPlotData.plotName?.image ?? "",
                                 plotName: currentPlotData.plotName?.plot ?? "",
