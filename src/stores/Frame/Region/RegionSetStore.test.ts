@@ -250,12 +250,12 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(third);
     });
 
-    test("translateMovingRegionSelection moves selected unlocked regions only", () => {
+    test("translateRegionDrag moves selected unlocked regions only", () => {
         const {regionSet, first, second, third} = MakeRegionSet();
         second.setLocked(true);
         regionSet.setSelectionByIds([first.regionId, second.regionId, third.regionId], third.regionId);
 
-        regionSet.translateMovingRegionSelection(first, {x: 5, y: -2});
+        regionSet.translateRegionDrag(first, {x: 5, y: -2});
 
         expect(first.center).toEqual({x: 15, y: 8});
         expect(second.center).toEqual({x: 20, y: 20});

@@ -41,11 +41,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     };
 
     private handleDragStart = () => {
-        this.props.frame.regionSet.beginMovingRegionSelection(this.props.region);
+        this.props.frame.regionSet.beginRegionDrag(this.props.region);
     };
 
     private handleDragEnd = () => {
-        this.props.frame.regionSet.endMovingRegionSelection(this.props.region);
+        this.props.frame.regionSet.endRegionDrag(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -56,7 +56,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            this.props.frame.regionSet.translateMovingRegionSelection(this.props.region, subtract2D(positionImageSpace, this.props.region.center));
+            this.props.frame.regionSet.translateRegionDrag(this.props.region, subtract2D(positionImageSpace, this.props.region.center));
         }
     };
 

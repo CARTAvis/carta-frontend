@@ -267,12 +267,12 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     @action handleDragStart = () => {
-        this.props.frame.regionSet.beginMovingRegionSelection(this.props.region);
+        this.props.frame.regionSet.beginRegionDrag(this.props.region);
         this.hoverIntersection = null;
     };
 
     @action handleDragEnd = () => {
-        this.props.frame.regionSet.endMovingRegionSelection(this.props.region);
+        this.props.frame.regionSet.endRegionDrag(this.props.region);
     };
 
     @action handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -285,7 +285,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (frame.spatialReference && frame.spatialTransformAST) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
-            this.props.frame.regionSet.translateMovingRegionSelection(region, subtract2D(newPosition, centerImageSpace));
+            this.props.frame.regionSet.translateRegionDrag(region, subtract2D(newPosition, centerImageSpace));
         }
     };
 

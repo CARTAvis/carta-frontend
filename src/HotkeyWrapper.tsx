@@ -226,7 +226,7 @@ export class HotkeyService extends React.Component<{}> {
         if (canEditSelectedPoint && region.hasSelectedPoint) {
             region.moveSelectedPoint(actualDeltaX, actualDeltaY);
         } else {
-            frame.regionSet.translateMovingRegionSelection(region, {x: actualDeltaX, y: actualDeltaY});
+            frame.regionSet.translateRegionDrag(region, {x: actualDeltaX, y: actualDeltaY});
         }
     };
 

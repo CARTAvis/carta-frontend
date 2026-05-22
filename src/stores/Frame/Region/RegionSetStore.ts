@@ -31,7 +31,7 @@ export class RegionSetStore {
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
     private readonly preference: PreferenceStore;
-    private movingRegionSelection: RegionStore[] | null = null;
+    private activeRegionDragTargets: RegionStore[] | null = null;
     private selectionPivotRegionId: number | null = null;
     private keyboardRangeAnchorRegionId: number | null = null;
     private keyboardRangeDisplacement: number = 0;
@@ -315,7 +315,7 @@ export class RegionSetStore {
         return Math.max(0, Math.min(length - 1, value));
     };
 
-    private getMovableSelection = (origin: RegionStore): RegionStore[] => {
+    private getRegionDragTargets = (origin: RegionStore): RegionStore[] => {
         if (!origin || origin.regionId === CURSOR_REGION_ID) {
             return [];
         }
@@ -329,30 +329,30 @@ export class RegionSetStore {
         return selectedRegions.filter(region => region.regionId !== CURSOR_REGION_ID && region.visible && !region.locked);
     };
 
-    @action beginMovingRegionSelection = (origin: RegionStore) => {
+    @action beginRegionDrag = (origin: RegionStore) => {
         if (!this.selectedRegionIds.has(origin.regionId)) {
             this.selectSingleRegion(origin);
         } else {
             this.setFocusedRegion(origin);
         }
 
-        this.movingRegionSelection = this.getMovableSelection(origin);
-        for (const region of this.movingRegionSelection) {
+        this.activeRegionDragTargets = this.getRegionDragTargets(origin);
+        for (const region of this.activeRegionDragTargets) {
             region.beginEditing();
         }
     };
 
-    @action endMovingRegionSelection = (origin: RegionStore) => {
-        const movingRegionSelection = this.movingRegionSelection ?? this.getMovableSelection(origin);
-        for (const region of movingRegionSelection) {
+    @action endRegionDrag = (origin: RegionStore) => {
+        const activeRegionDragTargets = this.activeRegionDragTargets ?? this.getRegionDragTargets(origin);
+        for (const region of activeRegionDragTargets) {
             region.endEditing();
         }
-        this.movingRegionSelection = null;
+        this.activeRegionDragTargets = null;
     };
 
-    @action translateMovingRegionSelection = (origin: RegionStore, delta: Point2D) => {
-        const movingRegionSelection = this.movingRegionSelection ?? this.getMovableSelection(origin);
-        for (const region of movingRegionSelection) {
+    @action translateRegionDrag = (origin: RegionStore, delta: Point2D) => {
+        const activeRegionDragTargets = this.activeRegionDragTargets ?? this.getRegionDragTargets(origin);
+        for (const region of activeRegionDragTargets) {
             region.translate(delta);
         }
     };
