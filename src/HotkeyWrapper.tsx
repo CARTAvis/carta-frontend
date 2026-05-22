@@ -149,14 +149,8 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        if (regionSet.selectedRegionCount > 0) {
+        if (regionSet.selectedRegionCount > 0 || (!!selectedRegion && selectedRegion.regionId !== CURSOR_REGION_ID)) {
             regionSet.clearSelection();
-            return;
-        }
-
-        const noRegionFocused = !selectedRegion || selectedRegion.regionId === CURSOR_REGION_ID;
-        if (!noRegionFocused) {
-            regionSet.deselectRegion();
         } else if (regionSet.mode === RegionMode.CREATING) {
             regionSet.setMode(RegionMode.MOVING);
             appStore.updateActiveLayer(ImageViewLayer.RegionMoving);

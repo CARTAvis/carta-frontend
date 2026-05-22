@@ -12,7 +12,8 @@ jest.mock("stores", () => ({
     },
     FileBrowserStore: {
         Instance: {
-            exportRegionIndexes: []
+            exportRegionIndexes: [],
+            updateExportRegionIndexes: jest.fn()
         }
     },
     PreferenceStore: {
@@ -52,6 +53,7 @@ import {RegionSetStore} from "./RegionSetStore";
 import {CURSOR_REGION_ID} from "./RegionStore";
 
 const BACKEND_SERVICE = {
+    removeRegion: jest.fn(),
     setCursor: jest.fn(),
     setRegion: jest.fn(() => Promise.resolve({regionId: 100}))
 };
@@ -139,6 +141,16 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(first);
     });
 
+    test("setFocusedRegion keeps non-cursor focus in the selected id set", () => {
+        const {regionSet, first, second} = MakeRegionSet();
+
+        regionSet.selectSingleRegion(first);
+        regionSet.setFocusedRegion(second);
+
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId]));
+        expect(regionSet.focusedRegion).toBe(second);
+    });
+
     test("selectRegionFromList centralizes toggle, range, and focus selection", () => {
         const {regionSet, first, second, third} = MakeRegionSet();
         const regions = [first, second, third];
@@ -205,6 +217,37 @@ describe("RegionSetStore multi-selection behavior", () => {
 
         expect(regionSet.selectedRegionIds.size).toBe(0);
         expect(regionSet.focusedRegion?.regionId).toBe(CURSOR_REGION_ID);
+    });
+
+    test("deleteRegion focuses the next remaining region when deleting the focused region", () => {
+        const {regionSet, first, second, third} = MakeRegionSet();
+
+        regionSet.setSelectionByIds([first.regionId, second.regionId, third.regionId], second.regionId);
+        regionSet.deleteRegion(second);
+
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([third.regionId]);
+        expect(regionSet.focusedRegion).toBe(third);
+    });
+
+    test("deleteRegion advances focus across consecutive selected deletions", () => {
+        const {regionSet, first, second, third} = MakeRegionSet();
+
+        regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
+        regionSet.deleteRegion(first);
+        regionSet.deleteRegion(second);
+
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([third.regionId]);
+        expect(regionSet.focusedRegion).toBe(third);
+    });
+
+    test("deleteRegion uses editable region indexes when cursor exists", () => {
+        const {regionSet, second, third} = MakeRegionSet();
+
+        regionSet.selectSingleRegion(second);
+        regionSet.deleteRegion(second);
+
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([third.regionId]);
+        expect(regionSet.focusedRegion).toBe(third);
     });
 
     test("translateMovingRegionSelection moves selected unlocked regions only", () => {

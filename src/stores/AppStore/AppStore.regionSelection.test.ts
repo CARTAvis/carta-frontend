@@ -144,15 +144,13 @@ describe("AppStore.deleteSelectedRegions", () => {
         return {frame, result: appStore.deleteSelectedRegions()};
     };
 
-    test("deletes selected unlocked regions and clears selection", () => {
+    test("deletes selected unlocked regions", () => {
         const cursor = MakeRegion(CURSOR_REGION_ID);
         const first = MakeRegion(1);
         const locked = MakeRegion(2, true);
         const second = MakeRegion(3);
-        const clearSelection = jest.fn();
 
         const regionSet = {
-            clearSelection,
             focusedRegion: first,
             locked: false,
             deleteRegion: jest.fn(),
@@ -165,7 +163,6 @@ describe("AppStore.deleteSelectedRegions", () => {
         expect(regionSet.deleteRegion).toHaveBeenCalledTimes(2);
         expect(regionSet.deleteRegion).toHaveBeenCalledWith(first);
         expect(regionSet.deleteRegion).toHaveBeenCalledWith(second);
-        expect(clearSelection).toHaveBeenCalled();
     });
 
     test("does not delete when the region set is locked", () => {

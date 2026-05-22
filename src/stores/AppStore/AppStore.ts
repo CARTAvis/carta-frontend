@@ -3191,7 +3191,6 @@ export class AppStore {
             const toDelete = frame.regionSet.regions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
             if (toDelete.length > 0) {
                 toDelete.forEach(r => this.deleteRegion(r));
-                regionSet.clearSelection();
                 return true;
             }
             return false;

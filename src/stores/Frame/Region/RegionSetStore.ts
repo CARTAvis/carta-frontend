@@ -611,6 +611,9 @@ export class RegionSetStore {
             if (this.focusedRegion && this.focusedRegion !== region && this.focusedRegion.supportsPointSelection) {
                 this.focusedRegion.deselectPoint();
             }
+            if (region.regionId !== CURSOR_REGION_ID && !this.selectedRegionIds.has(region.regionId)) {
+                this.selectedRegionIds = new Set([...this.selectedRegionIds, region.regionId]);
+            }
             this.focusedRegion = region;
         }
     };
@@ -630,10 +633,6 @@ export class RegionSetStore {
 
     @action selectPreviousRegion = () => {
         this.selectAdjacentRegionFromHotkey(-1);
-    };
-
-    @action deselectRegion = () => {
-        this.focusedRegion = null;
     };
 
     @action toggleSelectedRegionsVisibility = () => {
@@ -661,15 +660,23 @@ export class RegionSetStore {
     };
 
     @action deleteRegion = (region: RegionStore) => {
-        // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
-            if (region === this.focusedRegion) {
-                this.focusedRegion = this.regions[0];
-            }
             if (this.selectedRegionIds.has(region.regionId)) {
                 const selectedIds = new Set(this.selectedRegionIds);
                 selectedIds.delete(region.regionId);
                 this.selectedRegionIds = selectedIds;
+            }
+            if (region === this.focusedRegion) {
+                const editableRegions = this.editableRegionsList;
+                const deletedIndex = editableRegions.findIndex(candidate => candidate.regionId === region.regionId);
+                const remainingRegions = editableRegions.filter(candidate => candidate.regionId !== region.regionId);
+                const nextRegionIndex = deletedIndex >= 0 ? Math.min(deletedIndex, remainingRegions.length - 1) : remainingRegions.length - 1;
+                const nextFocusedRegion = remainingRegions[nextRegionIndex];
+                if (nextFocusedRegion) {
+                    this.selectSingleRegion(nextFocusedRegion);
+                } else {
+                    this.clearSelection();
+                }
             }
             const selectedInd = this.regions.findIndex(r => r === region);
             const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
