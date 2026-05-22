@@ -172,10 +172,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             activeFileName = `${catalogFileId}: ${fileName}`;
         }
         const disabledOverlayPanel = catalogFileIds.length <= 0;
-        const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
-        const disableColorMap = disabledOverlayPanel || widgetStore.disableColorMap;
-        const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
-        const disableSizeMinorMap = disableSizeMap || widgetStore.disableSizeMinorMap;
+        const disableSizeMap = disabledOverlayPanel || widgetStore.isSizeMapDisabled;
+        const disableColorMap = disabledOverlayPanel || widgetStore.isColorMapDisabled;
+        const disableOrientationMap = disabledOverlayPanel || widgetStore.isOrientationMapDisabled;
+        const disableSizeMinorMap = disableSizeMap || widgetStore.isSizeMinorMapDisabled;
 
         const noResults = <MenuItem disabled={true} text="No results" />;
 
@@ -203,8 +203,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </FormGroup>
                     <FormGroup inline={true} label={"Size mode"} disabled={disableSizeMap}>
                         <ButtonGroup>
-                            <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={!widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(false)} />
-                            <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)} />
+                            <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={!widgetStore.isSizeAreaMode} onClick={() => widgetStore.setSizeArea(false)} />
+                            <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.isSizeAreaMode} onClick={() => widgetStore.setSizeArea(true)} />
                         </ButtonGroup>
                     </FormGroup>
                     <div className="numeric-input-lock">
@@ -216,13 +216,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
                             displayExponential={true}
-                            disabled={disableSizeMap || widgetStore.sizeMinorColumnMinLocked}
+                            disabled={disableSizeMap || widgetStore.isSizeMinorColumnMinLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.sizeColumnMinLocked || widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
-                            intent={widgetStore.sizeColumnMinLocked ? "success" : "none"}
-                            disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMinLocked}
+                            icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
+                            intent={widgetStore.isSizeColumnMinLocked ? "success" : "none"}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeMinorColumnMinLocked}
                             minimal={true}
                             onClick={widgetStore.toggleSizeColumnMinLock}
                         />
@@ -236,13 +236,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
                             displayExponential={true}
-                            disabled={disableSizeMap || widgetStore.sizeMinorColumnMaxLocked}
+                            disabled={disableSizeMap || widgetStore.isSizeMinorColumnMaxLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
-                            intent={widgetStore.sizeColumnMaxLocked ? "success" : "none"}
-                            disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMaxLocked}
+                            icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                            intent={widgetStore.isSizeColumnMaxLocked ? "success" : "none"}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeMinorColumnMaxLocked}
                             minimal={true}
                             onClick={widgetStore.toggleSizeColumnMaxLock}
                         />
@@ -254,11 +254,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             placeholder="Min"
                             disabled={disableSizeMap}
                             buttonPosition={"none"}
-                            value={widgetStore.sizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
+                            value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
                             onBlur={ev => this.handleChange(ev, "size-min")}
                             onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
+                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
@@ -283,12 +283,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 placeholder="Max"
                                 disabled={disableSizeMap}
                                 buttonPosition={"none"}
-                                value={widgetStore.sizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
+                                value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
                                 onBlur={ev => this.handleChange(ev, "size-max")}
                                 onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
+                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
@@ -333,8 +333,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </FormGroup>
                     <FormGroup inline={true} label={"Size mode"} disabled={disableSizeMinorMap}>
                         <ButtonGroup>
-                            <AnchorButton disabled={disableSizeMinorMap} text={"Diameter"} active={!widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(false)} />
-                            <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)} />
+                            <AnchorButton disabled={disableSizeMinorMap} text={"Diameter"} active={!widgetStore.isSizeMinorAreaMode} onClick={() => widgetStore.setSizeMinorArea(false)} />
+                            <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.isSizeMinorAreaMode} onClick={() => widgetStore.setSizeMinorArea(true)} />
                         </ButtonGroup>
                     </FormGroup>
                     <div className="numeric-input-lock">
@@ -346,13 +346,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
                             displayExponential={true}
-                            disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeColumnMinLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.sizeColumnMinLocked || widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
-                            intent={widgetStore.sizeMinorColumnMinLocked ? "success" : "none"}
-                            disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}
+                            icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
+                            intent={widgetStore.isSizeMinorColumnMinLocked ? "success" : "none"}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeColumnMinLocked}
                             minimal={true}
                             onClick={widgetStore.toggleSizeMinorColumnMinLock}
                         />
@@ -366,13 +366,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
                             displayExponential={true}
-                            disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeColumnMaxLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
-                            intent={widgetStore.sizeMinorColumnMaxLocked ? "success" : "none"}
-                            disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked}
+                            icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                            intent={widgetStore.isSizeMinorColumnMaxLocked ? "success" : "none"}
+                            disabled={disableSizeMinorMap || widgetStore.isSizeColumnMaxLocked}
                             minimal={true}
                             onClick={widgetStore.toggleSizeMinorColumnMaxLock}
                         />
@@ -384,11 +384,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             placeholder="Min"
                             disabled={disableSizeMap}
                             buttonPosition={"none"}
-                            value={widgetStore.sizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
+                            value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
                             onBlur={ev => this.handleChange(ev, "size-min")}
                             onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
+                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
@@ -413,12 +413,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 placeholder="Max"
                                 disabled={disableSizeMap}
                                 buttonPosition={"none"}
-                                value={widgetStore.sizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
+                                value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
                                 onBlur={ev => this.handleChange(ev, "size-max")}
                                 onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
+                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
@@ -442,10 +442,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Size" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${widgetStore.minOverlaySize} ~ ${widgetStore.maxOverlaySize}`}>
+                    <Tooltip disabled={disabledOverlayPanel || !widgetStore.isSizeMapDisabled} content={`${widgetStore.minOverlaySize} ~ ${widgetStore.maxOverlaySize}`}>
                         <SafeNumericInput
                             placeholder="Size"
-                            disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
+                            disabled={disabledOverlayPanel || !widgetStore.isSizeMapDisabled}
                             min={widgetStore.minOverlaySize}
                             max={widgetStore.maxOverlaySize}
                             clampValueOnBlur={true}
@@ -456,7 +456,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             data-testid="catalog-settings-size-input"
                         />
                     </Tooltip>
-                    <Collapse className="select-angular-unit" isOpen={widgetStore.disableSizeMap}>
+                    <Collapse className="select-angular-unit" isOpen={widgetStore.isSizeMapDisabled}>
                         <FormGroup inline={true}>
                             <Select
                                 items={Object.values(CatalogSizeUnits)}
@@ -468,7 +468,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 filterable={false}
                                 resetOnSelect={true}
                             >
-                                <Button text={widgetStore.canvasSizeUnit} disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} rightIcon="double-caret-vertical" />
+                                <Button text={widgetStore.canvasSizeUnit} disabled={disabledOverlayPanel || !widgetStore.isSizeMapDisabled} rightIcon="double-caret-vertical" />
                             </Select>
                         </FormGroup>
                     </Collapse>
@@ -490,7 +490,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
-                    <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.enableSizeMinorTab} />
+                    <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.isSizeMinorTabEnabled} />
                 </Tabs>
             </div>
         );
@@ -513,20 +513,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
-                <FormGroup inline={true} label="Minor" disabled={!widgetStore.enableSizeMinorTab}>
+                <FormGroup inline={true} label="Minor" disabled={!widgetStore.isSizeMinorTabEnabled}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setSizeMinorMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
-                        disabled={!widgetStore.enableSizeMinorTab}
+                        disabled={!widgetStore.isSizeMinorTabEnabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         filterable={true}
                         noResults={noResults}
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.enableSizeMinorTab} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.isSizeMinorTabEnabled} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Unit">
@@ -563,7 +563,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const colorMap = (
             <div className="panel-container" data-testid="catalog-settings-color-tab">
-                <FormGroup label={"Color"} inline={true} disabled={disabledOverlayPanel || !widgetStore.disableColorMap}>
+                <FormGroup label={"Color"} inline={true} disabled={disabledOverlayPanel || !widgetStore.isColorMapDisabled}>
                     <AutoColorPickerComponent
                         color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
@@ -571,7 +571,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
                         }}
                         disableAlpha={true}
-                        disabled={disabledOverlayPanel || !widgetStore.disableColorMap}
+                        disabled={disabledOverlayPanel || !widgetStore.isColorMapDisabled}
                     />
                 </FormGroup>
                 <FormGroup label={"Overlay highlight"} inline={true} disabled={disabledOverlayPanel}>
@@ -609,7 +609,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <ColormapComponent inverted={false} selectedColormap={widgetStore.colorMap} onColormapSelect={selected => widgetStore.setColorMap(selected)} disabled={disableColorMap} />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true} disabled={disableColorMap}>
-                        <Switch checked={widgetStore.invertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />
+                        <Switch checked={widgetStore.isInvertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />
                     </FormGroup>
                     <ClearableNumericInputComponent
                         label="Clip min"
@@ -800,7 +800,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         if (!widgetStore) {
             return;
         }
-        const pointSize = widgetStore.sizeMajor ? widgetStore.pointSizebyType : widgetStore.minorPointSizebyType;
+        const pointSize = widgetStore.isSizeMajor ? widgetStore.pointSizebyType : widgetStore.minorPointSizebyType;
 
         switch (type) {
             case "size-min":
