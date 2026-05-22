@@ -183,7 +183,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
-            {overlaySettings.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
+            {overlaySettings.colorbar.isVisible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{

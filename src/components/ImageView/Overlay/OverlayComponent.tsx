@@ -110,14 +110,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 }
 
                 // disable unit labels when custom labels on
-                if (settings.labels.customText) {
+                if (settings.labels.hasCustomText) {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
                 }
             }
 
-            if (settings.labels.customText) {
+            if (settings.labels.hasCustomText) {
                 // Disable the PV image labels when custom labels are set
                 AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
             }
@@ -152,7 +152,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
-            if (!settings.title.customText) {
+            if (!settings.title.hasCustomText) {
                 currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
                 currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
@@ -214,9 +214,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.isDarkTheme;
-        const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
+        const title = this.props.overlaySettings.title.hasCustomText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
-        const raDecReference = this.props.overlaySettings.labels.raDecReference;
+        const raDecReference = this.props.overlaySettings.labels.hasRaDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;

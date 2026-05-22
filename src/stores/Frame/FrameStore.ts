@@ -1266,19 +1266,19 @@ export class FrameStore {
             overlaySettings.global.setColor(astColor);
         }
         const astGridVisible = preferenceStore.astGridVisible;
-        if (astGridVisible !== overlaySettings.grid.visible) {
+        if (astGridVisible !== overlaySettings.grid.isVisible) {
             overlaySettings.grid.setVisible(astGridVisible);
         }
         const astLabelsVisible = preferenceStore.astLabelsVisible;
-        if (astLabelsVisible !== overlaySettings.labels.visible) {
+        if (astLabelsVisible !== overlaySettings.labels.isVisible) {
             overlaySettings.labels.setVisible(astLabelsVisible);
         }
         const colorbarVisible = preferenceStore.colorbarVisible;
-        if (colorbarVisible !== overlaySettings.colorbar.visible) {
+        if (colorbarVisible !== overlaySettings.colorbar.isVisible) {
             overlaySettings.colorbar.setVisible(colorbarVisible);
         }
         const colorbarInteractive = preferenceStore.colorbarInteractive;
-        if (colorbarInteractive !== overlaySettings.colorbar.interactive) {
+        if (colorbarInteractive !== overlaySettings.colorbar.isInteractive) {
             overlaySettings.colorbar.setInteractive(colorbarInteractive);
         }
         const colorbarPosition = preferenceStore.colorbarPosition;
@@ -1294,7 +1294,7 @@ export class FrameStore {
             overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
         }
         const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
-        if (colorbarLabelVisible !== overlaySettings.colorbar.labelVisible) {
+        if (colorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
             overlaySettings.colorbar.setLabelVisible(colorbarLabelVisible);
         }
 

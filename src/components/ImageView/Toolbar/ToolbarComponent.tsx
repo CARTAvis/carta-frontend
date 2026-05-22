@@ -401,12 +401,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </>
                         )}
                         <Tooltip position={tooltipPosition} content="Toggle grid">
-                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} data-testid="grid-button" />
+                            <AnchorButton icon="grid" active={grid.isVisible} onClick={() => grid.setVisible(!grid.isVisible)} data-testid="grid-button" />
                         </Tooltip>
                         {!frame.isPreview && (
                             <>
                                 <Tooltip position={tooltipPosition} content="Toggle labels">
-                                    <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} />
+                                    <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} />
                                 </Tooltip>
                                 <Popover content={exportImageMenu} position={Position.TOP} minimal={true}>
                                     <Tooltip
