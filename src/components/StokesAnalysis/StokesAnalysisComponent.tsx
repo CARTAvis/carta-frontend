@@ -132,7 +132,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     if (frame) {
                         const regionId = this.widgetStore.effectiveRegionId;
                         const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                         appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                     }
                 } else {

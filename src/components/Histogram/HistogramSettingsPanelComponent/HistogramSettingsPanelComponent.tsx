@@ -71,7 +71,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                             regionString = region.nameString;
                         }
                     }
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     if (this.floatingSettingsId) {
                         appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
                     }

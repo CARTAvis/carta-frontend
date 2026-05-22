@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/Frame/**", "src/stores/Widgets/WidgetsStore.ts", "src/stores/Widgets/EmptyWidgetStore.ts", "src/stores/Widgets/CatalogWidget/**", "src/stores/Widgets/HistogramWidgetStore/**", "src/stores/Widgets/LayerListWidgetStore/**", "src/stores/Widgets/PvGeneratorWidgetStore/**", "src/stores/Widgets/RegionWidgetStore/**", "src/stores/Widgets/RenderConfigWidgetStore/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/Frame/**", "src/stores/Widgets/WidgetsStore.ts", "src/stores/Widgets/EmptyWidgetStore.ts", "src/stores/Widgets/CatalogWidget/**", "src/stores/Widgets/HistogramWidgetStore/**", "src/stores/Widgets/LayerListWidgetStore/**", "src/stores/Widgets/PvGeneratorWidgetStore/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],

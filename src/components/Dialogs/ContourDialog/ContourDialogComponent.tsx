@@ -353,7 +353,7 @@ export class ContourDialogComponent extends React.Component {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             darkMode: appStore.isDarkTheme,
-            logY: this.widgetStore.logScaleY,
+            logY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
             showYAxisTicks: false,
             showYAxisLabel: false,
@@ -395,7 +395,7 @@ export class ContourDialogComponent extends React.Component {
                 linePlotProps.yMax = this.widgetStore.maxY;
             }
             // Fix log plot min bounds for entries with zeros in them
-            if (this.widgetStore.logScaleY && linePlotProps.yMin != null && linePlotProps.yMin <= 0) {
+            if (this.widgetStore.isLogScaleY && linePlotProps.yMin != null && linePlotProps.yMin <= 0) {
                 linePlotProps.yMin = 0.5;
             }
 
@@ -416,7 +416,7 @@ export class ContourDialogComponent extends React.Component {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+        if (this.widgetStore.isMeanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
             const mean = dataSource.renderConfig.contourHistogram.mean ?? 0;
             const stdDev = dataSource.renderConfig.contourHistogram.stdDev;
 

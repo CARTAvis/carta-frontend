@@ -129,7 +129,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     let regionString = "Unknown";
 
                     const regionId = this.widgetStore.effectiveRegionId;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     if (regionId === -1) {
                         regionString = "Image";
                     } else if (this.widgetStore.effectiveFrame.regionSet) {

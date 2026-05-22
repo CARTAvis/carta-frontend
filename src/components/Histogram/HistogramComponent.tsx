@@ -177,7 +177,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                             regionString = region.nameString;
                         }
                     }
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
                 } else {
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);

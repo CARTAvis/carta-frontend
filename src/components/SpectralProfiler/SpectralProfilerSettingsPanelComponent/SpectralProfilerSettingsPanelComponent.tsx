@@ -69,7 +69,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     if (frame) {
                         const regionId = this.widgetStore.effectiveRegionId;
                         const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                         const id = this.floatingSettingsId;
                         if (id) {
                             appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);

@@ -102,7 +102,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             frameClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
-        if (widgetStore.matchesSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
+        if (widgetStore.isMatchingSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
             regionClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 

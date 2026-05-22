@@ -304,7 +304,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
-            logY: this.widgetStore.logScaleY,
+            logY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
             showYAxisTicks: false,
             showYAxisLabel: false,
@@ -356,7 +356,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
                 // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
+                if (this.widgetStore.isLogScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                     linePlotProps.yMin = 0.5;
                 }
             }
@@ -367,7 +367,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 {
                     value: scaleMinVal,
                     id: "marker-min",
-                    label: this.widgetStore.markerTextVisible ? "Min" : undefined,
+                    label: this.widgetStore.isMarkerTextVisible ? "Min" : undefined,
                     draggable: true,
                     dragCustomBoundary: {xMax: scaleMaxVal},
                     dragMove: this.onMinMoved,
@@ -376,7 +376,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 {
                     value: scaleMaxVal,
                     id: "marker-max",
-                    label: this.widgetStore.markerTextVisible ? "Max" : undefined,
+                    label: this.widgetStore.isMarkerTextVisible ? "Max" : undefined,
                     draggable: true,
                     dragCustomBoundary: {xMin: scaleMinVal},
                     dragMove: this.onMaxMoved,
@@ -384,7 +384,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
             ];
 
-            if (this.widgetStore.meanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
+            if (this.widgetStore.isMeanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
                 linePlotProps.markers.push({
                     value: histogram.mean,
                     id: "marker-mean",
