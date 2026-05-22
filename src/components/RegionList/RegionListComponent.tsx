@@ -8,7 +8,7 @@ import {action, computed, type IReactionDisposer, makeObservable, observable, re
 import {observer} from "mobx-react";
 
 import {getRegionVisibilityIconOpacity, ResizeDetector} from "components/Shared";
-import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
+import {BrowserMode, DialogId, HelpType, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
@@ -221,8 +221,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isMultiSelected = selectedRegions.length > 1;
         const allLocked = regionSet.selectedRegionsAllLocked;
         const selectedRegionsVisibility = regionSet.selectedRegionsVisibility;
-        const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionsOpacity.Invisible;
-        const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
+        const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionOpacity.Invisible;
+        const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
         const deleteDisabled = regionSet.locked || selectedRegions.every(selectedRegion => selectedRegion.locked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
@@ -470,7 +470,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = (regionsVisibility: RegionsOpacity) => {
+        const headerRenderer = (regionsVisibility: RegionOpacity) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
                 const lockDisabled = !frame.regionSet.visibleEditableRegionsList.length;
@@ -484,9 +484,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                             </Tooltip>
-                            <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
+                            <Tooltip content={regionsVisibility === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
                                 <Icon
-                                    icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
+                                    icon={regionsVisibility === RegionOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked}
                                     style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsVisibility)}}
                                 />
@@ -632,7 +632,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let hideEntry: React.ReactNode;
             if (region.regionId) {
-                const regionVisible = region.opacity !== RegionsOpacity.Invisible;
+                const regionVisible = region.opacity !== RegionOpacity.Invisible;
                 hideEntry = (
                     <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionHideClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
                         <Tooltip content={regionVisible ? "Hide region" : "Show region"} position={Position.BOTTOM}>

@@ -3,7 +3,7 @@ import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionsOpacity} from "enums";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionOpacity} from "enums";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, RegionSetStore} from "stores/Frame";
 
@@ -89,7 +89,7 @@ export class HotkeyService extends React.Component<{}> {
                 return;
             }
 
-            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && regionSet.focusedRegion.opacity !== RegionsOpacity.Invisible) {
+            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && regionSet.focusedRegion.opacity !== RegionOpacity.Invisible) {
                 regionSet.focusedRegion.toggleLock();
             }
         }
@@ -117,8 +117,8 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        regionSet.setOpacity(RegionsOpacity.Visible);
-        regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
+        regionSet.setOpacity(RegionOpacity.Visible);
+        regionSet.setEditableRegionsOpacity(RegionOpacity.Visible);
     };
 
     public static unlockAllRegions = () => {
@@ -129,7 +129,7 @@ export class HotkeyService extends React.Component<{}> {
                 return;
             }
             for (const region of regionSet.regions) {
-                if (region.opacity !== RegionsOpacity.Invisible) {
+                if (region.opacity !== RegionOpacity.Invisible) {
                     region.setLocked(false);
                 }
             }

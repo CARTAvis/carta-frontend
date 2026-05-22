@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {RegionsOpacity} from "enums";
+import {RegionOpacity} from "enums";
 
 jest.mock("stores", () => ({
     AppStore: {
@@ -236,27 +236,27 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(second.locked).toBe(false);
 
         regionSet.toggleSelectedRegionsVisibility();
-        expect(first.opacity).toBe(RegionsOpacity.SemiTransparent);
-        expect(second.opacity).toBe(RegionsOpacity.SemiTransparent);
-        expect(third.opacity).toBe(RegionsOpacity.Visible);
+        expect(first.opacity).toBe(RegionOpacity.SemiTransparent);
+        expect(second.opacity).toBe(RegionOpacity.SemiTransparent);
+        expect(third.opacity).toBe(RegionOpacity.Visible);
     });
 
     test("visibility changes do not mutate lock state", () => {
         const {regionSet, first, second} = MakeRegionSet();
         second.setLocked(true);
-        regionSet.setEditableRegionsOpacity(RegionsOpacity.Invisible);
+        regionSet.setEditableRegionsOpacity(RegionOpacity.Invisible);
 
         expect(first.locked).toBe(false);
         expect(second.locked).toBe(true);
 
-        regionSet.setEditableRegionsOpacity(RegionsOpacity.Visible);
+        regionSet.setEditableRegionsOpacity(RegionOpacity.Visible);
         expect(first.locked).toBe(false);
         expect(second.locked).toBe(true);
     });
 
     test("bulk locking skips hidden regions", () => {
         const {regionSet, first, second} = MakeRegionSet();
-        second.setOpacity(RegionsOpacity.Invisible);
+        second.setOpacity(RegionOpacity.Invisible);
         regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
 
         regionSet.toggleSelectedRegionsLocked();

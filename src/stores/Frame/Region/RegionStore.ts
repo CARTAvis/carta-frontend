@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CoordinateMode, RegionsOpacity} from "enums";
+import {CoordinateMode, RegionOpacity} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
 import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
@@ -76,7 +76,7 @@ export class RegionStore {
     @observable editing: boolean = false;
     @observable creating: boolean = false;
     @observable locked: boolean = false;
-    @observable opacity: RegionsOpacity = RegionsOpacity.Visible;
+    @observable opacity: RegionOpacity = RegionOpacity.Visible;
     @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
@@ -440,7 +440,7 @@ export class RegionStore {
     }
 
     @computed get visible(): boolean {
-        return this.opacity !== RegionsOpacity.Invisible;
+        return this.opacity !== RegionOpacity.Invisible;
     }
 
     @computed get rotationPointIndex(): number {
@@ -775,14 +775,14 @@ export class RegionStore {
     };
 
     @action setVisible = (visible: boolean) => {
-        this.setOpacity(visible ? RegionsOpacity.Visible : RegionsOpacity.Invisible);
+        this.setOpacity(visible ? RegionOpacity.Visible : RegionOpacity.Invisible);
     };
 
     @action toggleVisible = () => {
         this.setVisible(!this.visible);
     };
 
-    @action setOpacity = (opacity: RegionsOpacity) => {
+    @action setOpacity = (opacity: RegionOpacity) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.opacity = opacity;
         }

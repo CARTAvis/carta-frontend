@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {RegionsOpacity} from "enums";
+import {RegionOpacity} from "enums";
 
 jest.mock("stores", () => ({
     AppStore: {
@@ -94,15 +94,15 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
             {x: 10, y: 10}
         ]);
 
-        region.setOpacity(RegionsOpacity.Invisible);
+        region.setOpacity(RegionOpacity.Invisible);
         expect(region.locked).toBe(false);
 
-        region.setOpacity(RegionsOpacity.Visible);
+        region.setOpacity(RegionOpacity.Visible);
         expect(region.locked).toBe(false);
 
         region.setLocked(true);
-        region.setOpacity(RegionsOpacity.Invisible);
-        region.setOpacity(RegionsOpacity.Visible);
+        region.setOpacity(RegionOpacity.Invisible);
+        region.setOpacity(RegionOpacity.Visible);
         expect(region.locked).toBe(true);
     });
 
@@ -110,10 +110,10 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         const cursor = MakeRegion(CARTA.RegionType.POINT, [{x: 1, y: 1}], {regionId: CURSOR_REGION_ID});
 
         cursor.setLocked(true);
-        cursor.setOpacity(RegionsOpacity.Invisible);
+        cursor.setOpacity(RegionOpacity.Invisible);
 
         expect(cursor.locked).toBe(false);
-        expect(cursor.opacity).toBe(RegionsOpacity.Visible);
+        expect(cursor.opacity).toBe(RegionOpacity.Visible);
     });
 
     test("moves selected polygon point only", () => {

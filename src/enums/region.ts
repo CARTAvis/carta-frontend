@@ -3,7 +3,7 @@ export enum RegionMode {
     CREATING
 }
 
-export enum RegionsOpacity {
+export enum RegionOpacity {
     Visible = 1,
     SemiTransparent = 0.5,
     Invisible = 0

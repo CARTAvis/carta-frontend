@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {getRegionVisibilityIconOpacity, ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, RegionDialogTabs, RegionsOpacity} from "enums";
+import {DialogId, HelpType, RegionDialogTabs, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -142,9 +142,9 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
-        const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionsOpacity.Invisible);
+        const lockDisabled = !!region && (appStore.activeFrame?.regionSet.locked || region.opacity === RegionOpacity.Invisible);
         const showLockedIcon = lockDisabled || !!region?.locked;
-        const regionVisible = !!region && region.opacity !== RegionsOpacity.Invisible;
+        const regionVisible = !!region && region.opacity !== RegionOpacity.Invisible;
         const deleteDisabled = !!region && (!!appStore.activeFrame?.regionSet.locked || region.locked);
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>

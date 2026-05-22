@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {getRegionVisibilityIconOpacity, ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, RegionsOpacity} from "enums";
+import {DialogId, HelpType, RegionOpacity} from "enums";
 import {AppStore} from "stores";
 import {type RegionStore} from "stores/Frame";
 
@@ -53,9 +53,9 @@ export class GroupRegionDialogComponent extends React.Component {
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
         const canEditSelectedRegions = !!primaryRegion && selectedRegions.length > 1;
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
-        const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionsOpacity.Invisible;
-        const selectedRegionsVisible = selectedRegionsVisibility !== RegionsOpacity.Invisible;
-        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionsOpacity.Invisible;
+        const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionOpacity.Invisible;
+        const selectedRegionsVisible = selectedRegionsVisibility !== RegionOpacity.Invisible;
+        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
         const deleteDisabled = !!activeFrame?.regionSet.locked || selectedRegions.every(region => region.locked);
 

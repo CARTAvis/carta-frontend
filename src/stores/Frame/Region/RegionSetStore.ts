@@ -2,7 +2,7 @@ import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
 
-import {RegionMode, RegionsOpacity} from "enums";
+import {RegionMode, RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
@@ -71,26 +71,26 @@ export class RegionSetStore {
         return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
     }
 
-    @computed get selectedRegionsVisibility(): RegionsOpacity {
+    @computed get selectedRegionsVisibility(): RegionOpacity {
         const selectedRegions = this.selectedRegionsList;
-        if (!selectedRegions.length || selectedRegions.every(region => region.opacity === RegionsOpacity.Invisible)) {
-            return RegionsOpacity.Invisible;
+        if (!selectedRegions.length || selectedRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
+            return RegionOpacity.Invisible;
         }
-        if (selectedRegions.every(region => region.opacity === RegionsOpacity.SemiTransparent)) {
-            return RegionsOpacity.SemiTransparent;
+        if (selectedRegions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
+            return RegionOpacity.SemiTransparent;
         }
-        return RegionsOpacity.Visible;
+        return RegionOpacity.Visible;
     }
 
-    @computed get editableRegionsVisibility(): RegionsOpacity {
+    @computed get editableRegionsVisibility(): RegionOpacity {
         const editableRegions = this.editableRegionsList;
-        if (!editableRegions.length || editableRegions.every(region => region.opacity === RegionsOpacity.Invisible)) {
-            return RegionsOpacity.Invisible;
+        if (!editableRegions.length || editableRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
+            return RegionOpacity.Invisible;
         }
-        if (editableRegions.every(region => region.opacity === RegionsOpacity.SemiTransparent)) {
-            return RegionsOpacity.SemiTransparent;
+        if (editableRegions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
+            return RegionOpacity.SemiTransparent;
         }
-        return RegionsOpacity.Visible;
+        return RegionOpacity.Visible;
     }
 
     @computed get editableRegionsAllLocked(): boolean {
@@ -642,14 +642,14 @@ export class RegionSetStore {
         this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
 
-    public static NextOpacity(current: RegionsOpacity): RegionsOpacity {
+    public static NextOpacity(current: RegionOpacity): RegionOpacity {
         switch (current) {
-            case RegionsOpacity.Visible:
-                return RegionsOpacity.SemiTransparent;
-            case RegionsOpacity.SemiTransparent:
-                return RegionsOpacity.Invisible;
+            case RegionOpacity.Visible:
+                return RegionOpacity.SemiTransparent;
+            case RegionOpacity.SemiTransparent:
+                return RegionOpacity.Invisible;
             default:
-                return RegionsOpacity.Visible;
+                return RegionOpacity.Visible;
         }
     }
 
@@ -664,7 +664,7 @@ export class RegionSetStore {
         this.visibleEditableRegionsList.forEach(region => region.setLocked(locked));
     };
 
-    @action setEditableRegionsOpacity = (opacity: RegionsOpacity) => {
+    @action setEditableRegionsOpacity = (opacity: RegionOpacity) => {
         this.editableRegionsList.forEach(region => region.setOpacity(opacity));
     };
 
@@ -812,7 +812,7 @@ export class RegionSetStore {
         }
     };
 
-    @action setOpacity(opacity: RegionsOpacity) {
+    @action setOpacity(opacity: RegionOpacity) {
         this.opacity = opacity;
     }
 
