@@ -17,7 +17,7 @@ import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationCom
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
-import {isRegionInSelectionRect} from "./regionSelectionGeometry";
+import {isRegionInSelectionRect} from "./regionSelectionCanvasGeometry";
 import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
