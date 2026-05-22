@@ -299,7 +299,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam ?? "", file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
+            } else if (this.preferenceStore.shouldAutoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -1872,7 +1872,7 @@ export class AppStore {
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
                 this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
-                if (this.preferenceStore.checkNewRelease) {
+                if (this.preferenceStore.shouldCheckNewRelease) {
                     await this.checkNewRelease();
                 }
             } catch (err) {
@@ -2025,7 +2025,7 @@ export class AppStore {
         // Update frame view for each visible frame
         autorun(() => {
             // Ignore view changes when zooming if preference not set
-            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
+            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.shouldStreamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
@@ -2095,7 +2095,7 @@ export class AppStore {
         autorun(() => {
             const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
             if (this.hoveredFrame && pos) {
-                if (this.preferenceStore.lowBandwidthMode) {
+                if (this.preferenceStore.isLowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
                 } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                     throttledSetCursorRotated(this.hoveredFrame.frameInfo.fileId, pos);
@@ -2166,7 +2166,7 @@ export class AppStore {
         });
 
         autorun(() => {
-            this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
+            this.activateStatsPanel(this.preferenceStore.isStatsPanelEnabled);
         });
 
         // listen devicePixelRatio
@@ -2584,7 +2584,7 @@ export class AppStore {
                 regions: mapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
-                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport,
+                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport,
                 vectorOverlaySettings
             };
         });
@@ -3445,7 +3445,7 @@ export class AppStore {
             this.setIsExportingImage(true);
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
                 if (this.activeFrame) {
                     const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                     if (composedCanvas) {

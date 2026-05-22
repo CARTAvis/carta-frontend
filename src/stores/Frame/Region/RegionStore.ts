@@ -497,7 +497,7 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                if (PreferenceStore.Instance.lowBandwidthMode) {
+                if (PreferenceStore.Instance.isLowBandwidthMode) {
                     this.lowBandWidthThrottledUpdateRegion(true);
                 } else {
                     this.throttledUpdateRegion(true);
@@ -539,7 +539,7 @@ export class RegionStore {
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            if (PreferenceStore.Instance.lowBandwidthMode) {
+            if (PreferenceStore.Instance.isLowBandwidthMode) {
                 this.lowBandWidthThrottledUpdateRegion(true);
             } else {
                 this.throttledUpdateRegion(true);

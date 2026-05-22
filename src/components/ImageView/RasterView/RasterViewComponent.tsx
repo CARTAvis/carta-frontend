@@ -244,7 +244,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
-            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
+            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.shouldUseSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
             this.gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * appStore.pixelRatio);
@@ -476,7 +476,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelGridZoomLow = 6.0;
         const pixelGridZoomHigh = 12.0;
 
-        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.pixelGridVisible) {
+        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.isPixelGridVisible) {
             const cutoff = 0.5 / zoom;
             const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
             this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
@@ -517,7 +517,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     customStartHex: frame.renderConfig.customColormapHexStart,
                     contrast: frame.renderConfig.contrast,
                     bias: frame.renderConfig.bias,
-                    useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                    useSmoothedBiasContrast: appStore.preferenceStore?.shouldUseSmoothedBiasContrast,
                     scaling: frame.renderConfig.scaling,
                     gamma: frame.renderConfig.gamma,
                     alpha: frame.renderConfig.alpha,
@@ -525,7 +525,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     visibility: frame.renderConfig.visible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     nanAlpha: appStore.preferenceStore.nanAlpha,
-                    pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                    pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };
                 const ratio = appStore.imageRatio;

@@ -63,7 +63,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get shouldAutoSelectImageOverlayColumns(): boolean {
-        return PreferenceStore.Instance.autoSelectImageOverlayCoordinateColumns;
+        return PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {

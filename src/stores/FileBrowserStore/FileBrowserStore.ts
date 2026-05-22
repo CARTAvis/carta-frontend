@@ -513,7 +513,7 @@ export class FileBrowserStore {
     @action saveStartingDirectory(directory?: string) {
         this.setStartingDirectory(directory);
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
+        if (preferenceStore.shouldKeepLastUsedFolder) {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
         } else {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
@@ -534,7 +534,7 @@ export class FileBrowserStore {
 
     @action restoreStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
+        if (preferenceStore.shouldKeepLastUsedFolder) {
             if (preferenceStore.lastUsedFolder?.length > 0) {
                 this.startingDirectory = preferenceStore.lastUsedFolder;
             } else {
@@ -646,7 +646,7 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        if (PreferenceStore.Instance.dynamicLayoutEnable && selection.length > 0 && selection.every(item => item.isFile)) {
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled && selection.length > 0 && selection.every(item => item.isFile)) {
             this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
             AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
         }

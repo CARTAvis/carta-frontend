@@ -44,12 +44,12 @@ export class VectorOverlayConfigStore {
         this.preferenceStore = preferenceStore;
         this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
-        this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
+        this.fractionalIntensity = this.preferenceStore.isVectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
         this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
+        this.colormapEnabled = this.preferenceStore.isVectorOverlayColormapEnabled;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
         makeObservable(this);

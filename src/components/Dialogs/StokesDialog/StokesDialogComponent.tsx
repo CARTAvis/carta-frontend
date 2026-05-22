@@ -225,7 +225,7 @@ export class StokesDialogComponent extends React.Component {
             stokesFiles.push(file);
         });
 
-        if (PreferenceStore.Instance.dynamicLayoutEnable) {
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled) {
             const hyperCubeCtype = HyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
             dynamicLayoutStore.matchLayoutMapping(hyperCubeCtype);
             if (dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {

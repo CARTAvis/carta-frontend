@@ -153,7 +153,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
-                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable && !!activeFrame && activeFrame?.dynamicLayout.ctype !== ""}>
+                        <Collapse isOpen={PreferenceStore.Instance.isDynamicLayoutEnabled && !!activeFrame && activeFrame?.dynamicLayout.ctype !== ""}>
                             <Tooltip content={`If on, apply layout when images with type (${activeFrame?.dynamicLayout.ctype.replace(",", ", ")}) are loaded`} disabled={!activeFrame || activeFrame?.dynamicLayout.ctype === ""}>
                                 <FormGroup inline={true} disabled={!activeFrame || this.isEmpty}>
                                     <Switch
@@ -222,7 +222,7 @@ export class LayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const {preferenceStore, layoutStore} = appStore;
 
-        if (preferenceStore.dynamicLayoutEnable && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
+        if (preferenceStore.isDynamicLayoutEnabled && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
                 <ScrollShadow>
                     <Tabs>

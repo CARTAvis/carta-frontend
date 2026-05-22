@@ -30,7 +30,7 @@ export class ContourConfigStore {
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
         this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
+        this.colormapEnabled = this.preferenceStore.isContourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
         this.thickness = this.preferenceStore.contourThickness;
         makeObservable(this);

@@ -184,30 +184,30 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
-                    <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
+                    <Switch checked={preferences.isImageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.imageMultiPanelEnabled}>
-                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.imageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.isImageMultiPanelEnabled}>
+                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.isImageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.isImageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Columns"
                         min={1}
                         value={preferences.imagePanelColumns}
-                        disabled={!preferences.imageMultiPanelEnabled}
+                        disabled={!preferences.isImageMultiPanelEnabled}
                         stepSize={1}
                         minorStepSize={null}
                         onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.isImageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Rows"
                         min={1}
-                        disabled={!preferences.imageMultiPanelEnabled}
+                        disabled={!preferences.isImageMultiPanelEnabled}
                         value={preferences.imagePanelRows}
                         stepSize={1}
                         minorStepSize={null}
@@ -340,7 +340,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Pixel grid">
-                    <Switch checked={preferences.pixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preferences.isPixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel grid color">
                     <AutoColorPickerComponent color={preferences.pixelGridColor} presetColors={SWATCH_COLORS} setColor={color => preferences.setPreference(PreferenceKeys.PIXEL_GRID_COLOR, color)} disableAlpha={true} />

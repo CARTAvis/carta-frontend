@@ -128,7 +128,7 @@ export class RootMenuComponent extends React.Component {
 
     @computed get snippetsMenu() {
         const appStore = AppStore.Instance;
-        if (!appStore.preferenceStore.codeSnippetsEnabled) {
+        if (!appStore.preferenceStore.isCodeSnippetsEnabled) {
             return null;
         }
 
@@ -319,7 +319,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
                 <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
+                {appStore.preferenceStore.isCodeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
@@ -464,7 +464,7 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Widgets" />
                     </Menu>
                 </Popover>
-                {appStore.preferenceStore.codeSnippetsEnabled && this.snippetsMenu && (
+                {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
                     <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
@@ -510,7 +510,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip>
                 )}
                 {showLoadingIndicator && loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode && (
+                {appStore.preferenceStore.isLowBandwidthMode && (
                     <Tooltip
                         content={
                             <span>

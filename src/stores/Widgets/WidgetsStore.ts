@@ -914,7 +914,7 @@ export class WidgetsStore {
         if (channelMapStore.isChannelMapEnabled) {
             channelMapStore.setChannelMapEnabled(false);
         } else {
-            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.isImageMultiPanelEnabled);
         }
     };
 

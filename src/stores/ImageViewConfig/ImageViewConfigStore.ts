@@ -261,7 +261,7 @@ export class ImageViewConfigStore {
     /** The image panel mode. */
     @computed get imagePanelMode() {
         const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+        return preferenceStore.isImageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
     private constructor() {

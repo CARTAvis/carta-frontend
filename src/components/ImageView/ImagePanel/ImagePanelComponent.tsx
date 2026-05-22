@@ -197,7 +197,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         top={frame.overlayStore.padding.top}
                         left={frame.overlayStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
+                        dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
                     {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (

@@ -13,7 +13,7 @@ export class OverlayBeamStore {
 
     constructor() {
         const preference = PreferenceStore.Instance;
-        this.visible = preference.beamVisible;
+        this.visible = preference.isBeamVisible;
         this.color = preference.beamColor;
         this.type = preference.beamType;
         this.width = preference.beamWidth;

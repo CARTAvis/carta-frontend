@@ -274,7 +274,7 @@ export class FrameStore {
         const imageWidth = (appStore.pixelRatio * this.renderWidth) / this.aspectRatio;
         const imageHeight = appStore.pixelRatio * this.renderHeight;
 
-        const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+        const mipAdjustment = PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
         const mipLog2 = Math.log2(mipExact);
         const mipLog2Rounded = Math.round(mipLog2);
@@ -303,7 +303,7 @@ export class FrameStore {
 
             const {minPoint, maxPoint} = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
-            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipAdjustment = (PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -331,7 +331,7 @@ export class FrameStore {
             const imageWidth = (AppStore.Instance.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (AppStore.Instance.pixelRatio * this.renderHeight) / this.zoomLevel;
 
-            const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+            const mipAdjustment = PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -1265,19 +1265,19 @@ export class FrameStore {
         if (astColor !== overlaySettings.global.color) {
             overlaySettings.global.setColor(astColor);
         }
-        const astGridVisible = preferenceStore.astGridVisible;
+        const astGridVisible = preferenceStore.isAstGridVisible;
         if (astGridVisible !== overlaySettings.grid.isVisible) {
             overlaySettings.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preferenceStore.astLabelsVisible;
+        const astLabelsVisible = preferenceStore.isAstLabelsVisible;
         if (astLabelsVisible !== overlaySettings.labels.isVisible) {
             overlaySettings.labels.setVisible(astLabelsVisible);
         }
-        const colorbarVisible = preferenceStore.colorbarVisible;
+        const colorbarVisible = preferenceStore.isColorbarVisible;
         if (colorbarVisible !== overlaySettings.colorbar.isVisible) {
             overlaySettings.colorbar.setVisible(colorbarVisible);
         }
-        const colorbarInteractive = preferenceStore.colorbarInteractive;
+        const colorbarInteractive = preferenceStore.isColorbarInteractive;
         if (colorbarInteractive !== overlaySettings.colorbar.isInteractive) {
             overlaySettings.colorbar.setInteractive(colorbarInteractive);
         }
@@ -1293,7 +1293,7 @@ export class FrameStore {
         if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
             overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
         }
-        const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
+        const colorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
         if (colorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
             overlaySettings.colorbar.setLabelVisible(colorbarLabelVisible);
         }

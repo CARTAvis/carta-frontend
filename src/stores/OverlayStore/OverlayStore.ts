@@ -185,7 +185,7 @@ export class OverlayTitleSettings {
 }
 
 export class OverlayGridSettings {
-    @observable isVisible: boolean = PreferenceStore.Instance.astGridVisible;
+    @observable isVisible: boolean = PreferenceStore.Instance.isAstGridVisible;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
     @observable width: number = 1;
@@ -529,7 +529,7 @@ export class OverlayNumberSettings {
 }
 
 export class OverlayLabelSettings {
-    @observable isVisible: boolean = PreferenceStore.Instance.astLabelsVisible;
+    @observable isVisible: boolean = PreferenceStore.Instance.isAstLabelsVisible;
     @observable isHidden: boolean = false;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
@@ -607,8 +607,8 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayColorbarSettings {
-    @observable isVisible: boolean = PreferenceStore.Instance.colorbarVisible;
-    @observable isInteractive: boolean = PreferenceStore.Instance.colorbarInteractive;
+    @observable isVisible: boolean = PreferenceStore.Instance.isColorbarVisible;
+    @observable isInteractive: boolean = PreferenceStore.Instance.isColorbarInteractive;
     @observable width: number = PreferenceStore.Instance.colorbarWidth;
     @observable offset: number = 5;
     @observable position: "right" | "top" | "bottom" = PreferenceStore.Instance.colorbarPosition;
@@ -632,7 +632,7 @@ export class OverlayColorbarSettings {
     @observable numberPrecision: number = 3;
     @observable hasNumberCustomColor: boolean = false;
     @observable numberColor: string = AST_DEFAULT_COLOR;
-    @observable isLabelVisible: boolean = PreferenceStore.Instance.colorbarLabelVisible;
+    @observable isLabelVisible: boolean = PreferenceStore.Instance.isColorbarLabelVisible;
     @observable labelRotation: number = -90;
     @observable labelFont: number = 0;
     @observable labelFontSize: number = 15;

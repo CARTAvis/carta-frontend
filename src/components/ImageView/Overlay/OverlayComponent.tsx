@@ -36,7 +36,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        if (PreferenceStore.Instance.limitOverlayRedraw) {
+        if (PreferenceStore.Instance.shouldLimitOverlayRedraw) {
             this.throttledRenderCanvas();
         } else {
             requestAnimationFrame(this.renderCanvas);
