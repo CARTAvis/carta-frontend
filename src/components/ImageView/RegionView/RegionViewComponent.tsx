@@ -51,9 +51,7 @@ interface MiddleClickPanState {
     started: boolean;
 }
 
-interface SuppressedClick {
-    button?: number;
-}
+type SuppressedClickButton = number | "all";
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
@@ -73,7 +71,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
-    private suppressedClick: SuppressedClick | null = null;
+    private suppressedClickButton: SuppressedClickButton | null = null;
     private suppressNextRegionClickSelection = false;
     private regionSelectionStartedOnRegion = false;
     private regionSelectionDragNode: Konva.Node | null = null;
@@ -634,15 +632,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return node;
     };
 
-    private restoreDraggableNode = (node: Konva.Node | null): null => {
+    private restoreDraggableNode = (node: Konva.Node | null): void => {
         if (node) {
             node.draggable(true);
         }
-        return null;
     };
 
     private restoreRegionSelectionDragNode = (): void => {
-        this.regionSelectionDragNode = this.restoreDraggableNode(this.regionSelectionDragNode);
+        this.restoreDraggableNode(this.regionSelectionDragNode);
+        this.regionSelectionDragNode = null;
     };
 
     private restoreMiddleClickPan = (): void => {
@@ -652,24 +650,23 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.middleClickPan = null;
     };
 
-    private suppressNextClick = (button?: number): void => {
-        this.suppressedClick = {button};
+    private suppressNextClick = (button: SuppressedClickButton = "all"): void => {
+        this.suppressedClickButton = button;
     };
 
     private clearSuppressedClick = (button?: number): void => {
-        if (this.suppressedClick && (button === undefined || this.suppressedClick.button === undefined || this.suppressedClick.button === button)) {
-            this.suppressedClick = null;
+        if (this.suppressedClickButton && (button === undefined || this.suppressedClickButton === "all" || this.suppressedClickButton === button)) {
+            this.suppressedClickButton = null;
         }
     };
 
     private shouldSuppressClick = (mouseEvent: MouseEvent): boolean => {
-        if (!this.suppressedClick) {
+        if (!this.suppressedClickButton) {
             return false;
         }
 
-        const {button} = this.suppressedClick;
-        if (button === undefined || button === mouseEvent.button) {
-            this.suppressedClick = null;
+        if (this.suppressedClickButton === "all" || this.suppressedClickButton === mouseEvent.button) {
+            this.suppressedClickButton = null;
             return true;
         }
 
