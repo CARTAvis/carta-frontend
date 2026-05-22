@@ -1,5 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
+import {RegionOpacity} from "enums";
+
 // Mock heavy barrels to avoid the production circular import chain
 // (models -> services/stores/components -> back to models) that breaks
 // module evaluation under Jest. These functions under test do not use
@@ -9,7 +11,7 @@ jest.mock("services", () => ({}));
 jest.mock("stores", () => ({}));
 jest.mock("stores/Frame", () => ({}));
 
-import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
+import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getNextRegionOpacity, getRegionSelectionPoints, getRegionSelectionSegments} from "./region";
 
 const MakeRegion = (overrides: Partial<any>) =>
     ({
@@ -26,6 +28,12 @@ const MakeRegion = (overrides: Partial<any>) =>
     }) as any;
 
 describe("region selection utilities", () => {
+    test("cycles region opacity states", () => {
+        expect(getNextRegionOpacity(RegionOpacity.Visible)).toBe(RegionOpacity.SemiTransparent);
+        expect(getNextRegionOpacity(RegionOpacity.SemiTransparent)).toBe(RegionOpacity.Invisible);
+        expect(getNextRegionOpacity(RegionOpacity.Invisible)).toBe(RegionOpacity.Visible);
+    });
+
     test("returns selection points for simple, polygonal, and line-like regions", () => {
         const rectangle = MakeRegion({center: {x: 5, y: 5}, size: {x: 4, y: 2}, isSimpleShapeRegion: true});
         expect(getRegionSelectionPoints(rectangle)).toEqual([

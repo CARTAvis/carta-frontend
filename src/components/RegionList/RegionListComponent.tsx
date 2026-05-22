@@ -11,8 +11,8 @@ import {getRegionVisibilityIconOpacity, ResizeDetector} from "components/Shared"
 import {BrowserMode, DialogId, HelpType, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
-import {CURSOR_REGION_ID, type FrameStore, RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
+import {CURSOR_REGION_ID, type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {clamp, formattedArcsec, getFormattedWCSPoint, getNextRegionOpacity, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
 
@@ -141,7 +141,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (regionSet?.isRegionInMultiSelection(region)) {
             regionSet.toggleSelectedRegionsVisibility();
         } else {
-            region.setOpacity(RegionSetStore.NextOpacity(region.opacity));
+            region.setOpacity(getNextRegionOpacity(region.opacity));
         }
         ev.stopPropagation();
     };
@@ -456,7 +456,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const floatRenderer = () => {
             const exportTooltip = frame.regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
             return (
-                <ButtonGroup className="float" style={{width: RegionListComponent.ActionColumnDefaultWidth}}>
+                <ButtonGroup className="float" style={{width: RegionListComponent.ActionsColumnDefaultWidth}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
                         <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={!hasDeletableRegions} />
                     </Tooltip>

@@ -1,6 +1,7 @@
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
+import {RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type RegionStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
@@ -9,6 +10,17 @@ import {doesLineSegmentIntersectRect, doRectsIntersect, getPathSegments, getRect
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
+
+export function getNextRegionOpacity(current: RegionOpacity): RegionOpacity {
+    switch (current) {
+        case RegionOpacity.Visible:
+            return RegionOpacity.SemiTransparent;
+        case RegionOpacity.SemiTransparent:
+            return RegionOpacity.Invisible;
+        default:
+            return RegionOpacity.Visible;
+    }
+}
 
 export interface RegionTransformSource {
     regionType: CARTA.RegionType;

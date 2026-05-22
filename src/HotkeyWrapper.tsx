@@ -5,7 +5,8 @@ import {observer} from "mobx-react";
 
 import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionOpacity} from "enums";
 import {AppStore} from "stores";
-import {CURSOR_REGION_ID, RegionSetStore} from "stores/Frame";
+import {CURSOR_REGION_ID} from "stores/Frame";
+import {getNextRegionOpacity} from "utilities";
 
 import "./HotkeyWrapper.scss";
 
@@ -106,7 +107,7 @@ export class HotkeyService extends React.Component<{}> {
             }
 
             if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
-                regionSet.focusedRegion.setOpacity(RegionSetStore.NextOpacity(regionSet.focusedRegion.opacity));
+                regionSet.focusedRegion.setOpacity(getNextRegionOpacity(regionSet.focusedRegion.opacity));
             }
         }
     };

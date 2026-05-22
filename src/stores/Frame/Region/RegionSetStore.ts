@@ -7,7 +7,7 @@ import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {getNextRegionOpacity, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
@@ -637,20 +637,9 @@ export class RegionSetStore {
     };
 
     @action toggleSelectedRegionsVisibility = () => {
-        const opacity = RegionSetStore.NextOpacity(this.selectedRegionsOpacity);
+        const opacity = getNextRegionOpacity(this.selectedRegionsOpacity);
         this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
-
-    public static NextOpacity(current: RegionOpacity): RegionOpacity {
-        switch (current) {
-            case RegionOpacity.Visible:
-                return RegionOpacity.SemiTransparent;
-            case RegionOpacity.SemiTransparent:
-                return RegionOpacity.Invisible;
-            default:
-                return RegionOpacity.Visible;
-        }
-    }
 
     @action toggleSelectedRegionsLocked = () => {
         const visibleSelectedRegions = this.selectedRegionsList.filter(region => region.visible);
@@ -668,7 +657,7 @@ export class RegionSetStore {
     };
 
     @action toggleEditableRegionsVisibility = () => {
-        this.setEditableRegionsOpacity(RegionSetStore.NextOpacity(this.editableRegionsOpacity));
+        this.setEditableRegionsOpacity(getNextRegionOpacity(this.editableRegionsOpacity));
     };
 
     @action deleteRegion = (region: RegionStore) => {
