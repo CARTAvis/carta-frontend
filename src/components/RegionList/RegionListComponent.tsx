@@ -11,7 +11,7 @@ import {getRegionVisibilityIconOpacity, ResizeDetector} from "components/Shared"
 import {BrowserMode, DialogId, HelpType, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
-import {CURSOR_REGION_ID, type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {CURSOR_REGION_ID, type FrameStore, type RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, getNextRegionOpacity, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
@@ -60,17 +60,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
 
-    private scrollToSelected = (selected: number) => {
+    private scrollToIndex = (index: number) => {
         const listRefCurrent = this.listRef.current;
         const rowCount = this.validRegions.length;
-        if (!listRefCurrent || !isFinite(selected) || selected < 0 || selected >= rowCount) {
+        if (!listRefCurrent || !isFinite(index) || index < 0 || index >= rowCount) {
             return;
         }
-        listRefCurrent.scrollToRow({index: selected, align: "smart"});
+        listRefCurrent.scrollToRow({index, align: "smart"});
     };
 
-    @action private handleBackgroundClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        const target = event.target as HTMLElement;
+    @action private handleBackgroundClick = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        const target = ev.target as HTMLElement;
         const clickedRow = target.closest(".row");
         const clickedHeader = target.closest(".row-header");
         if (!clickedRow && !clickedHeader) {
@@ -104,7 +104,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (this.pendingScrollTarget >= 0) {
             const target = this.pendingScrollTarget;
             this.pendingScrollTarget = -1;
-            setTimeout(() => this.scrollToSelected(target), 0);
+            setTimeout(() => this.scrollToIndex(target), 0);
         }
     }
 
@@ -112,7 +112,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (this.pendingScrollTarget >= 0) {
             const target = this.pendingScrollTarget;
             this.pendingScrollTarget = -1;
-            this.scrollToSelected(target);
+            this.scrollToIndex(target);
         }
     }
 
@@ -194,7 +194,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const isMultiSelected = region ? regionSet.isRegionInMultiSelection(region) : regionSet.selectedRegionsList.length > 1;
+        const isMultiSelected = regionSet.isRegionInMultiSelection(region);
         if (!isMultiSelected && region && region.regionId !== CURSOR_REGION_ID) {
             regionSet.selectSingleRegion(region);
         }
@@ -219,11 +219,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const selectedRegions = regionSet.selectedRegionsList;
         const isMultiSelected = selectedRegions.length > 1;
-        const allLocked = regionSet.selectedRegionsAllLocked;
         const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
         const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
         const lockDisabled = regionSet.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
-        const showLockedIcon = lockDisabled || allLocked;
+        const showLockedIcon = lockDisabled || regionSet.selectedRegionsAllLocked;
         const deleteDisabled = regionSet.locked || selectedRegions.every(selectedRegion => selectedRegion.locked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
@@ -276,16 +275,15 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private scrollToRegionId = (regionId: number) => {
         const validIndex = this.validRegions.findIndex(region => region.regionId === regionId);
         if (validIndex >= 0) {
-            this.scrollToSelected(validIndex);
+            this.scrollToIndex(validIndex);
         }
     };
 
-    private handleSelectAllKeyboard = (regionSet: FrameStore["regionSet"]) => {
-        regionSet.selectAllRegions(this.validRegions);
+    private handleSelectAllKeyboard = (regionSet: RegionSetStore) => {
+        regionSet.selectAllRegions();
         this.scrollToRegionId(regionSet.focusedRegion?.regionId ?? CURSOR_REGION_ID);
     };
 
-    // When the Region List has focus, arrow keys navigate selection instead of moving regions
     @action private handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
@@ -322,9 +320,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const isArrowUp = key === "ArrowUp";
         const noModifier = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey;
-        const direction = isArrowUp ? -1 : 1;
+        const direction = key === "ArrowUp" ? -1 : 1;
         regionSet.selectAdjacentRegionFromList(this.validRegions, direction, {wrap: noModifier, range: ev.shiftKey, includeCursor: noModifier});
         this.scrollToRegionId(regionSet.focusedRegion?.regionId ?? CURSOR_REGION_ID);
     };
@@ -346,17 +343,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action private handleRowClicked = (event: React.MouseEvent, region: RegionStore) => {
+    @action private handleRowClicked = (ev: React.MouseEvent, region: RegionStore) => {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return;
         }
 
-        const isCtrlPressed = event.ctrlKey || event.metaKey;
-        const isShiftPressed = event.shiftKey;
+        const isCtrlPressed = ev.ctrlKey || ev.metaKey;
+        const isShiftPressed = ev.shiftKey;
         const regionSet = frame.regionSet;
 
-        if (event.detail > 1 && !isCtrlPressed && !isShiftPressed) {
+        if (ev.detail > 1 && !isCtrlPressed && !isShiftPressed) {
             this.handleRegionListDoubleClick(region);
             return;
         }
@@ -436,10 +433,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
-        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, frame.regionSet.regions.length - 1);
-        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, frame.regionSet.regions.length - 1);
+        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, regionSet.regions.length - 1);
+        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, regionSet.regions.length - 1);
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
-            const region = frame.regionSet.regions[i];
+            const region = regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const _isLocked = region.locked;
             const _name = region.name;
@@ -449,12 +446,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
-        const selectedRegion = frame.regionSet.focusedRegion;
-        const hasDeletableRegions = !frame.regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+        const hasDeletableRegions = !regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
-            const exportTooltip = frame.regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
+            const exportTooltip = regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ActionsColumnDefaultWidth}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
@@ -470,46 +466,45 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = (regionsOpacity: RegionOpacity) => {
-            return (props: {index: number; style: CSSProperties}) => {
-                const className = classNames("row-header", {[Classes.DARK]: darkTheme});
-                const lockDisabled = !frame.regionSet.visibleEditableRegionsList.length;
-                const allRegionsLocked = frame.regionSet.editableRegionsAllLocked;
-                const lockIcon = allRegionsLocked ? "lock" : "unlock";
-                const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
+        const headerRenderer = (props: {index: number; style: CSSProperties}) => {
+            const className = classNames("row-header", {[Classes.DARK]: darkTheme});
+            const lockDisabled = !regionSet.visibleEditableRegionsList.length;
+            const allRegionsLocked = regionSet.editableRegionsAllLocked;
+            const lockIcon = allRegionsLocked ? "lock" : "unlock";
+            const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
+            const regionsOpacity = regionSet.editableRegionsOpacity;
 
-                return (
-                    <div className={className} style={props.style}>
-                        <div className="cell" style={{width: RegionListComponent.ActionsColumnDefaultWidth, justifyContent: "center", gap: 8}}>
-                            <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
-                                <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
-                            </Tooltip>
-                            <Tooltip content={regionsOpacity === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
-                                <Icon icon={regionsOpacity === RegionOpacity.Invisible ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked} style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsOpacity)}} />
-                            </Tooltip>
-                        </div>
-                        <div className="cell" style={{width: nameWidth}}>
-                            Name
-                        </div>
-                        <div className="cell" style={{width: RegionListComponent.TypeColumnDefaultWidth}}>
-                            Type
-                        </div>
-                        <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                            {frame.validWcs ? "Center" : "Pixel Center"}
-                        </div>
-                        {showSizeColumn && (
-                            <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
-                                {frame.validWcs ? "Size" : "Size (px)"}
-                            </div>
-                        )}
-                        {showRotationColumn && (
-                            <div className="cell" style={{width: RegionListComponent.RotationColumnDefaultWidth}}>
-                                P.A. (deg)
-                            </div>
-                        )}
+            return (
+                <div className={className} style={props.style}>
+                    <div className="cell" style={{width: RegionListComponent.ActionsColumnDefaultWidth, justifyContent: "center", gap: 8}}>
+                        <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
+                            <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
+                        </Tooltip>
+                        <Tooltip content={regionsOpacity === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
+                            <Icon icon={regionsOpacity === RegionOpacity.Invisible ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked} style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsOpacity)}} />
+                        </Tooltip>
                     </div>
-                );
-            };
+                    <div className="cell" style={{width: nameWidth}}>
+                        Name
+                    </div>
+                    <div className="cell" style={{width: RegionListComponent.TypeColumnDefaultWidth}}>
+                        Type
+                    </div>
+                    <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
+                        {frame.validWcs ? "Center" : "Pixel Center"}
+                    </div>
+                    {showSizeColumn && (
+                        <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
+                            {frame.validWcs ? "Size" : "Size (px)"}
+                        </div>
+                    )}
+                    {showRotationColumn && (
+                        <div className="cell" style={{width: RegionListComponent.RotationColumnDefaultWidth}}>
+                            P.A. (deg)
+                        </div>
+                    )}
+                </div>
+            );
         };
 
         const rowRenderer = (props: {index: number; style: CSSProperties}) => {
@@ -517,13 +512,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const isActive = selectedRegion?.regionId === region.regionId;
-            const isSecondarySelected = !isActive && frame.regionSet.selectedRegionIds.has(region.regionId);
-            const className = classNames("row", {
-                [Classes.DARK]: darkTheme,
-                active: isActive,
-                selected: isSecondarySelected
-            });
+            const isActive = regionSet.focusedRegion?.regionId === region.regionId;
+            const isSecondarySelected = !isActive && regionSet.selectedRegionIds.has(region.regionId);
+            const className = classNames("row", {[Classes.DARK]: darkTheme, active: isActive, selected: isSecondarySelected});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -552,7 +543,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     if (frame.validWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                                formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : Number.NaN, WCS_PRECISION)
+                                formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
                                     {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
@@ -561,11 +552,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 </React.Fragment>
                             );
                     } else {
-                        if (region.regionType === CARTA.RegionType.LINE) {
-                            sizeContent = toFixed(region.size ? length2D(region.size) : Number.NaN, 1);
-                        } else {
-                            sizeContent = `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
-                        }
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size && length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
@@ -718,7 +705,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             rowCount={1}
                             style={{height: RegionListComponent.HeaderRowHeight, width: "100%"}}
                             className="list-header"
-                            rowComponent={headerRenderer(frame.regionSet.editableRegionsOpacity)}
+                            rowComponent={headerRenderer}
                             rowProps={{} as any}
                         />
                         <List

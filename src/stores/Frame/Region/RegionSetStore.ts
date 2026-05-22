@@ -162,8 +162,8 @@ export class RegionSetStore {
         this.resetKeyboardRangeState();
     };
 
-    @action selectAllRegions = (regions: RegionStore[]) => {
-        const selectableRegions = this.getSelectableRegions(regions);
+    @action selectAllRegions = () => {
+        const selectableRegions = this.editableRegionsList;
         if (!selectableRegions.length) {
             return;
         }
