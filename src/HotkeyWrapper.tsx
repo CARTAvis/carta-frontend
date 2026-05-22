@@ -322,8 +322,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "h", label: "Toggle selected region(s) visibility", onKeyDown: HotkeyService.toggleRegionVisibility},
             {combo: "shift + h", label: "Show all regions", onKeyDown: HotkeyService.showAllRegions},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.unlockAllRegions},
-            {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.confirmDeleteRegions},
-            {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.confirmDeleteRegions},
+            {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
+            {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.handleRegionEsc},
             {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.enterPointSelection},
             {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.handleTab(e, HotkeyService.selectNextRegionOrPoint)},
@@ -351,13 +351,16 @@ export class HotkeyService extends React.Component<{}> {
         action();
     }
 
-    public static confirmDeleteRegions = async () => {
+    public static handleRegionDeleteHotkey = async () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const regionSet = frame?.regionSet;
-        if (!frame || !regionSet) return;
+        if (!frame || !regionSet) {
+            return;
+        }
 
-        // Only show confirmation when Region List has focus; otherwise delete immediately
+        // Delete selected/focused regions immediately. If Region List has focus and no
+        // explicit region was handled, confirm before deleting all regions.
         const activeEl = (document?.activeElement as Element) || null;
         const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
         const isRegionDeleteHotkeyHandled = HotkeyService.tryHandleRegionDeleteHotkey();
@@ -366,7 +369,9 @@ export class HotkeyService extends React.Component<{}> {
         }
 
         const hasDeletableRegions = !regionSet.locked && regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID && !r.locked);
-        if (!hasDeletableRegions) return;
+        if (!hasDeletableRegions) {
+            return;
+        }
 
         // No explicit selection; confirm deleting all regions
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
