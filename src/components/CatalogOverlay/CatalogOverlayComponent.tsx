@@ -628,7 +628,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         // Skip if normal conditions prevent filtering AND we're not in column update mode
-        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.isLoadingOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
 
         if (shouldSkipRequest) {
             return;
@@ -927,7 +927,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnName: profileStore.sortingInfo.columnName ?? "",
                 sortingType: profileStore.sortingInfo.sortingType
             },
-            disableSort: profileStore.loadOntoImage,
+            disableSort: profileStore.isLoadingOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
             catalogType: profileStore.catalogType,
@@ -991,7 +991,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
         const plotButtonText = isImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
         const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
-        const disable = profileStore.loadOntoImage;
+        const disable = profileStore.isLoadingOntoImage;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600) {

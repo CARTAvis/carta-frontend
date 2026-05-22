@@ -22,7 +22,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable coordsFormat: NumberFormatType = NumberFormatType.Degrees;
     @observable centerPixelCoord: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
     @observable maxObject: number = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
-    @observable enablePointSelection: boolean = false;
+    @observable isPointSelectionEnabled: boolean = false;
     @observable radiusUnits: RadiusUnits = RadiusUnits.DEGREES;
     @observable objectName: string = "";
     @observable isObjectQuerying: boolean = false;
@@ -42,9 +42,9 @@ export class CatalogOnlineQueryConfigStore {
         );
         reaction(
             () => AppStore.Instance.isCursorFrozen,
-            cursorFrozen => {
+            isCursorFrozen => {
                 const frame = this.activeFrame;
-                if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
+                if (isCursorFrozen && frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterPixelCoord(frame.cursorInfo.posImageSpace);
                     this.resetObjectName();
                 }
@@ -124,7 +124,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action setPointSelection() {
-        this.enablePointSelection = !this.enablePointSelection;
+        this.isPointSelectionEnabled = !this.isPointSelectionEnabled;
     }
 
     @action setRadiusUnits(units: RadiusUnits) {
@@ -231,7 +231,7 @@ export class CatalogOnlineQueryConfigStore {
         }
     }
 
-    @computed get disableObjectSearch(): boolean {
+    @computed get isObjectSearchDisabled(): boolean {
         return this.objectName === "";
     }
 
@@ -262,7 +262,7 @@ export class CatalogOnlineQueryConfigStore {
         return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
     }
 
-    @computed get showVizierResult(): boolean {
+    @computed get shouldShowVizierResult(): boolean {
         return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
@@ -272,8 +272,8 @@ export class CatalogOnlineQueryConfigStore {
         return resources;
     }
 
-    @computed get enableLoadVizier(): boolean {
-        return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
+    @computed get canLoadVizier(): boolean {
+        return this.vizierSelectedTableName.length > 0 && this.shouldShowVizierResult;
     }
 
     @computed get vizierTable(): VizierItem[] {
@@ -340,12 +340,12 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
+    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, isDiagonal: boolean): number {
         const max = this.convertToDeg(x);
         const min = this.convertToDeg(y);
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
-        if (diagonal) {
+        if (isDiagonal) {
             return Math.sqrt(xd * xd + yd * yd);
         } else {
             return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) : Math.abs(yd);

@@ -168,7 +168,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.sortingInfo = {columnName, sortingType};
     }
 
-    @computed get loadOntoImage() {
+    @computed get isLoadingOntoImage() {
         return this.loadingData || this.updatingDataStream;
     }
 
@@ -179,11 +179,11 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let shouldDisplay = false;
                 if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
-                    display = true;
+                    shouldDisplay = true;
                 }
-                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: shouldDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
