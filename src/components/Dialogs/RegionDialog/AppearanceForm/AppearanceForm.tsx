@@ -195,7 +195,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                         <FormGroup inline={true} label="Show arrowhead">
                             <HTMLSelect
-                                value={(region as CompassAnnotationStore).eastArrowhead ? ((region as CompassAnnotationStore).northArrowhead ? "both" : "east") : "north"}
+                                value={(region as CompassAnnotationStore).hasEastArrowhead ? ((region as CompassAnnotationStore).hasNorthArrowhead ? "both" : "east") : "north"}
                                 onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
                             >
                                 <option value={"north"}>North</option>
@@ -231,11 +231,11 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <SafeNumericInput placeholder="Number of decimals" min={0} max={6} value={(region as RulerAnnotationStore).decimals} stepSize={1} onValueChange={value => (region as RulerAnnotationStore).setDecimals(value)} />
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary lines">
-                            <Switch checked={(region as RulerAnnotationStore).auxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)} />
+                            <Switch checked={(region as RulerAnnotationStore).isAuxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)} />
                         </FormGroup>
                         <FormGroup inline={true} label="Auxiliary lines dash length" labelInfo="(px)">
                             <SafeNumericInput
-                                disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryLineVisible}
                                 placeholder="Dash length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
@@ -266,14 +266,14 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary labels">
                             <Switch
-                                disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
-                                checked={(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryLineVisible}
+                                checked={(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryTextVisible(ev.target.checked)}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="X label X offset" labelInfo="(px)">
                             <SafeNumericInput
-                                disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="X label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -284,7 +284,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                         <FormGroup inline={true} label="X label Y offset" labelInfo="(px)">
                             <SafeNumericInput
-                                disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="X label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -295,7 +295,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                         <FormGroup inline={true} label="Y label X offset" labelInfo="(px)">
                             <SafeNumericInput
-                                disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="Y label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -306,7 +306,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                         <FormGroup inline={true} label="Y label Y offset" labelInfo="(px)">
                             <SafeNumericInput
-                                disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="Y label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}

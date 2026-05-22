@@ -121,11 +121,11 @@ export class ContourDialogComponent extends React.Component {
             levels: this.levels,
             smoothingMode: this.smoothingMode,
             smoothingFactor: this.smoothingFactor,
-            colormapEnabled: dataSource.contourConfig.colormapEnabled,
+            colormapEnabled: dataSource.contourConfig.isColormapEnabled,
             colormap: dataSource.contourConfig.colormap,
             color: dataSource.contourConfig.color,
             thickness: dataSource.contourConfig.thickness,
-            visible: dataSource.contourConfig.visible,
+            visible: dataSource.contourConfig.isVisible,
             dashMode: dataSource.contourConfig.dashMode
         };
     }
@@ -141,11 +141,11 @@ export class ContourDialogComponent extends React.Component {
             !_.isEqual(config.levels, currentConfig.levels) ||
             config.smoothingMode !== currentConfig.smoothingMode ||
             config.smoothingFactor !== currentConfig.smoothingFactor ||
-            config.colormapEnabled !== currentConfig.colormapEnabled ||
+            config.isColormapEnabled !== currentConfig.colormapEnabled ||
             config.colormap !== currentConfig.colormap ||
             config.color !== currentConfig.color ||
             config.thickness !== currentConfig.thickness ||
-            config.visible !== currentConfig.visible ||
+            config.isVisible !== currentConfig.visible ||
             config.dashMode !== currentConfig.dashMode
         );
     }
@@ -554,11 +554,11 @@ export class ContourDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear" />
+                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.isEnabled} text="Clear" />
                         <AnchorButton
                             intent={Intent.SUCCESS}
                             onClick={this.handleApplyContours}
-                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)}
+                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.isEnabled)}
                             text="Apply"
                             data-testid="contour-config-apply-button"
                         />

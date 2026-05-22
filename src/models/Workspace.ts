@@ -28,13 +28,13 @@ export interface WorkspaceContourConfig {
     smoothingMode: CARTA.SmoothingMode;
     smoothingFactor: number;
     color?: RGBColor;
-    colormapEnabled: boolean;
+    isColormapEnabled: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
     dashMode: ContourDashMode;
     thickness: number;
-    visible: boolean;
+    isVisible: boolean;
 }
 
 export interface WorkspaceVectorOverlayConfig {

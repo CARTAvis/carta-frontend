@@ -527,7 +527,7 @@ export class AppStore {
     @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
         for (const frame of this.imageViewConfigStore.visibleFrames) {
-            const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+            const group = this.spatialGroup(frame).filter(f => f.contourConfig.isEnabled && f.contourConfig.isVisible);
             frameMap.set(frame, group);
         }
         return frameMap;
@@ -2536,7 +2536,7 @@ export class AppStore {
             }
 
             let contourSettings: CARTA.ISetContourParameters = {};
-            if (frame.contourConfig.enabled) {
+            if (frame.contourConfig.isEnabled) {
                 contourSettings = {
                     fileId: frame.frameInfo.fileId,
                     levels: frame.contourConfig.levels,
@@ -2951,7 +2951,7 @@ export class AppStore {
             };
 
             // Contours and vector overlays
-            const {enabled: isContoursEnabled, ...contourConfig} = frame.contourConfig;
+            const {isEnabled: isContoursEnabled, ...contourConfig} = frame.contourConfig;
             if (isContoursEnabled) {
                 workspaceFile.contourConfig = contourConfig;
                 delete workspaceFile.contourConfig["preferenceStore"];

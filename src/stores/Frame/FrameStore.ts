@@ -1078,7 +1078,7 @@ export class FrameStore {
 
     @computed get contourProgress(): number {
         // Use -1 when there are no contours required
-        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
+        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.isEnabled) {
             return -1;
         }
 

@@ -131,8 +131,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const rasterVisible = isColorBlending ? image.store.isRasterVisible : frame.renderConfig.isVisible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
 
-        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
-        const contourVisible = isColorBlending ? image.store.isContourVisible : frame.contourConfig.visible;
+        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.isEnabled).includes(true) : frame.contourConfig.isEnabled;
+        const contourVisible = isColorBlending ? image.store.isContourVisible : frame.contourConfig.isVisible;
         const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
 
         const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.isEnabled).includes(true) : frame.vectorOverlayConfig.isEnabled;
@@ -431,7 +431,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frameStokes = appStore.frameStokes;
         const activeImageIndex = appStore.activeImageIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.isVisible);
-        const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const visibilityContour = appStore.frames.map(f => f.contourConfig.isVisible && f.contourConfig.isEnabled);
         const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.isVisible && f.vectorOverlayConfig.isEnabled);
         const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isRasterVisible);
         const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isContourVisible);

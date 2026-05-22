@@ -252,8 +252,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     return (
         <>
             <Group ref={shapeRef} listening={!region.isLocked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
-                {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
-                {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
+                {region.hasEastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
+                {region.hasNorthArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
                     ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}
@@ -435,7 +435,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     }
 
     let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
-    if (region.auxiliaryTextVisible) {
+    if (region.isAuxiliaryTextVisible) {
         const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
         xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
         xDistanceText = getDistanceText(wcsInfo, secondaryImagePointStart, cornerPoint);
@@ -463,11 +463,11 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
-        if (region.auxiliaryTextVisible) {
+        if (region.isAuxiliaryTextVisible) {
             setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + (xTextRef?.current?.textWidth ?? 0) / 2);
             setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + (yTextRef?.current?.textWidth ?? 0) / 2);
         }
-    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.isAuxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -500,7 +500,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -513,7 +513,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -537,7 +537,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
-                {region.auxiliaryTextVisible && (
+                {region.isAuxiliaryTextVisible && (
                     <>
                         <Text
                             ref={xTextRef}
@@ -550,7 +550,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -566,7 +566,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -574,7 +574,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     </>
                 )}
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
+                {region.isAuxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>
             <Group>
                 {props.selected && (
