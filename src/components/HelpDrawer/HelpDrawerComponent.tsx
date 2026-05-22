@@ -132,7 +132,7 @@ export class HelpDrawerComponent extends React.Component {
         const drawerProps: DrawerProps = {
             className: className,
             lazy: true,
-            isOpen: helpStore.helpVisible,
+            isOpen: helpStore.isHelpVisible,
             onClose: helpStore.hideHelpDrawer,
             position: helpStore.position,
             size: "40%",
