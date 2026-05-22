@@ -117,7 +117,6 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        regionSet.setOpacity(RegionOpacity.Visible);
         regionSet.setEditableRegionsOpacity(RegionOpacity.Visible);
     };
 

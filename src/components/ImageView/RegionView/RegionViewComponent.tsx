@@ -900,7 +900,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
+                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 : 1} listening={!regionSet.locked}>
                         <RegionComponents
                             frame={frame}
                             regions={frame?.regionSet?.regionsAndAnnotationsForRender}

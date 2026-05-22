@@ -25,7 +25,6 @@ export class RegionSetStore {
     @observable selectedRegionIds: Set<number> = new Set();
     @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
-    @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
 
@@ -811,10 +810,6 @@ export class RegionSetStore {
             }
         }
     };
-
-    @action setOpacity(opacity: RegionOpacity) {
-        this.opacity = opacity;
-    }
 
     @action setLocked(locked?: boolean) {
         this.locked = locked === undefined ? !this.locked : locked;
