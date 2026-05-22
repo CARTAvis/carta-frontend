@@ -20,6 +20,7 @@ interface CompassRulerAnnotationProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    isFocused: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
@@ -27,7 +28,7 @@ interface CompassRulerAnnotationProps {
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 
-export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & {isFocused: boolean}) => {
+export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) => {
     const shapeRef = React.useRef<Konva.Group>(null);
     const northLabelRef = React.useRef<Konva.Text>(null);
     const eastLabelRef = React.useRef<Konva.Text>(null);
@@ -37,7 +38,9 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const anchorDragImagePoint = React.useRef<Point2D | null>(null);
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region, event.evt);
+        if (event.evt.button === 0) {
+            props.onSelect?.(region, event.evt);
+        }
     };
 
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -333,7 +336,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     );
 });
 
-export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {isFocused: boolean}) => {
+export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => {
     const shapeRef = React.useRef<Konva.Group>(null);
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>(null);
@@ -344,7 +347,9 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {i
     const region = props.region as RulerAnnotationStore;
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region, event.evt);
+        if (event.evt.button === 0) {
+            props.onSelect?.(region, event.evt);
+        }
     };
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onDoubleClick?.(region);
