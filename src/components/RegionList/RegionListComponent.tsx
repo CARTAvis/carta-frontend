@@ -7,7 +7,7 @@ import classNames from "classnames";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
-import {getRegionVisibilityIconOpacity, ResizeDetector} from "components/Shared";
+import {getRegionIconOpacity, ResizeDetector} from "components/Shared";
 import {BrowserMode, DialogId, HelpType, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
@@ -239,7 +239,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuItem
-                        icon={<Icon icon={hasVisibleSelectedRegions ? "eye-open" : "eye-off"} style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsOpacity)}} />}
+                        icon={<Icon icon={hasVisibleSelectedRegions ? "eye-open" : "eye-off"} style={{opacity: getRegionIconOpacity(selectedRegionsOpacity)}} />}
                         text={hasVisibleSelectedRegions ? "Hide" : "Show"}
                         onClick={() => {
                             regionSet.toggleSelectedRegionsVisibility();
@@ -481,7 +481,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                         </Tooltip>
                         <Tooltip content={regionsOpacity === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
-                            <Icon icon={regionsOpacity === RegionOpacity.Invisible ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked} style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsOpacity)}} />
+                            <Icon icon={regionsOpacity === RegionOpacity.Invisible ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked} style={{cursor: "pointer", opacity: getRegionIconOpacity(regionsOpacity)}} />
                         </Tooltip>
                     </div>
                     <div className="cell" style={{width: nameWidth}}>
@@ -619,7 +619,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 hideEntry = (
                     <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionHideClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
                         <Tooltip content={regionVisible ? "Hide region" : "Show region"} position={Position.BOTTOM}>
-                            <Icon icon={regionVisible ? "eye-open" : "eye-off"} style={{opacity: getRegionVisibilityIconOpacity(region.opacity)}} />
+                            <Icon icon={regionVisible ? "eye-open" : "eye-off"} style={{opacity: getRegionIconOpacity(region.opacity)}} />
                         </Tooltip>
                     </div>
                 );
