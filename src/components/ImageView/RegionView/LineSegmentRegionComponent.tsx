@@ -22,7 +22,7 @@ interface LineSegmentRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
-    activeSelected?: boolean;
+    isFocused?: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
@@ -205,7 +205,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const region = this.props.region;
         const frame = this.props.frame;
 
-        if (this.props.activeSelected && region.controlPoints.length >= 2) {
+        if (this.props.isFocused && region.controlPoints.length >= 2) {
             let positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
@@ -303,7 +303,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 isSelected={isSelected}
                 interactive={interactive}
                 opacity={this.props.region.visualOpacity}
-                selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                 onMouseEnter={this.handleAnchorMouseEnter}
                 onMouseOut={this.handleAnchorMouseOut}
                 onDragStart={this.handleAnchorDragStart}
@@ -354,7 +354,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, false, !!this.props.activeSelected);
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, false, !!this.props.isFocused);
                 });
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
@@ -364,11 +364,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.activeSelected));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.isFocused));
                 }
             }
 
-            if (this.props.activeSelected && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.isFocused && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
@@ -382,7 +382,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
-                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, !!this.props.activeSelected);
+                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, !!this.props.isFocused);
                 }
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
@@ -392,11 +392,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.activeSelected));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.isFocused));
                 }
             }
 
-            if (this.props.activeSelected && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.isFocused && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }

@@ -17,7 +17,7 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
-    activeSelected?: boolean;
+    isFocused?: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
@@ -98,7 +98,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 onDblClick={this.handleDoubleClick}
                 pointShape={region.pointShape}
                 pointWidth={region.pointWidth}
-                selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
             />
         );
     }

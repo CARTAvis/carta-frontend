@@ -959,15 +959,15 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
-                const isActive = r === regionSet.focusedRegion;
+                const isFocused = r === regionSet.focusedRegion;
                 const commonProps = {
                     region: r,
                     frame: this.props.frame,
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageRef: this.props.stageRef,
-                    selected: regionSet.selectedRegionIds.has(r.regionId) || isActive,
-                    activeSelected: isActive,
+                    selected: regionSet.selectedRegionIds.has(r.regionId),
+                    isFocused,
                     onSelect: this.handleSelect,
                     onDoubleClick: this.handleRegionDoubleClicked
                 };

@@ -27,7 +27,7 @@ interface CompassRulerAnnotationProps {
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 
-export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & {activeSelected?: boolean}) => {
+export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & {isFocused?: boolean}) => {
     const shapeRef = React.useRef<Konva.Group>(null);
     const northLabelRef = React.useRef<Konva.Text>(null);
     const eastLabelRef = React.useRef<Konva.Text>(null);
@@ -250,7 +250,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const anchorCommonProps = {
         rotation: 0,
         isRotator: false,
-        interactive: anchorsInteractive && !!props.activeSelected,
+        interactive: anchorsInteractive && !!props.isFocused,
         opacity: anchorOpacity,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
@@ -288,13 +288,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
             <Group>
                 {props.selected && (
                     <>
-                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary} {...anchorCommonProps} />
+                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary} {...anchorCommonProps} />
                         <Anchor
                             anchor={"northTip"}
                             x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
                             y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
                             isSelected={isLengthSelected}
-                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                             {...anchorCommonProps}
                         />
                         <Anchor
@@ -302,7 +302,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
                             x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
                             y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
                             isSelected={isLengthSelected}
-                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                             {...anchorCommonProps}
                         />
                     </>
@@ -312,7 +312,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     );
 });
 
-export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {activeSelected?: boolean}) => {
+export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {isFocused?: boolean}) => {
     const shapeRef = React.useRef<Konva.Group>(null);
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>(null);
@@ -627,7 +627,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             y={canvasPosStart.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={anchorsInteractive && !!props.activeSelected}
+                            interactive={anchorsInteractive && !!props.isFocused}
                             opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
@@ -636,7 +636,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             onDragMove={handleAnchorDrag}
                             onClick={handleAnchorClick}
                             isSelected={region.selectedPointIndex === 0}
-                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                         />
                         <Anchor
                             anchor={"finish"}
@@ -644,7 +644,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             y={canvasPosFinish.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={anchorsInteractive && !!props.activeSelected}
+                            interactive={anchorsInteractive && !!props.isFocused}
                             opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
@@ -653,7 +653,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {a
                             onDragMove={handleAnchorDrag}
                             onClick={handleAnchorClick}
                             isSelected={region.selectedPointIndex === 1}
-                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                         />
                     </>
                 )}
