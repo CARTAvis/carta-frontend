@@ -5,6 +5,7 @@ import type Konva from "konva";
 import {action} from "mobx";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {
@@ -24,7 +25,6 @@ import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "uti
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {SelectionType} from "./types";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;

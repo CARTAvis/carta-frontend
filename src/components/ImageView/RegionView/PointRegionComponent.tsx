@@ -2,6 +2,7 @@ import * as React from "react";
 import type Konva from "konva";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
@@ -9,7 +10,6 @@ import {subtract2D, transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {SelectionType} from "./types";
 
 interface PointRegionComponentProps {
     region: RegionStore;

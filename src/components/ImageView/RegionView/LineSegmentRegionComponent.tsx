@@ -6,6 +6,7 @@ import type Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "stores/Frame";
@@ -13,7 +14,6 @@ import {angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformP
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {SelectionType} from "./types";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;

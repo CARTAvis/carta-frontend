@@ -9,6 +9,11 @@ export enum RegionOpacity {
     Invisible = 0
 }
 
+export enum SelectionType {
+    Active = "active",
+    Secondary = "secondary"
+}
+
 export enum RegionId {
     NONE = -4,
     ACTIVE = -3,

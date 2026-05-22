@@ -4,6 +4,7 @@ import * as AST from "ast_wrapper";
 import type Konva from "konva";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
@@ -11,7 +12,6 @@ import {getInterpolatedPathAtDistance, pointDistance, subtract2D, transformPoint
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {SelectionType} from "./types";
 
 interface CompassRulerAnnotationProps {
     key: number;

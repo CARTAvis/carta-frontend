@@ -2,9 +2,8 @@ import {Group, Shape} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import type Konva from "konva";
 
+import {SelectionType} from "enums";
 import {AppStore} from "stores";
-
-import {SelectionType} from "./types";
 
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
