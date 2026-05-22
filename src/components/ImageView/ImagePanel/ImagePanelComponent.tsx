@@ -159,9 +159,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
-            const showRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).rasterVisible);
-            const showContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).contourVisible);
-            const showVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).vectorOverlayVisible);
+            const showRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isRasterVisible);
+            const showContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isContourVisible);
+            const showVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isVectorOverlayVisible);
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>

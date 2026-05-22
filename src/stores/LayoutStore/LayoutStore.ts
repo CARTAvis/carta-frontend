@@ -26,7 +26,7 @@ export class LayoutStore {
     @observable dockedLayout: GoldenLayout | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
-    @observable supportsServer: boolean = false;
+    @observable hasServerSupport: boolean = false;
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     private constructor() {
@@ -178,8 +178,8 @@ export class LayoutStore {
         }
     }
 
-    private handleSaveResult = (success: boolean) => {
-        if (success) {
+    private handleSaveResult = (isSuccessful: boolean) => {
+        if (isSuccessful) {
             AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
@@ -234,8 +234,8 @@ export class LayoutStore {
         }
     }
 
-    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
-        if (success) {
+    private handleRenameResult = (oldName: string, newName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
             AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
@@ -270,8 +270,8 @@ export class LayoutStore {
         }
     }
 
-    private handleDeleteResult = (layoutName: string, success: boolean) => {
-        if (success) {
+    private handleDeleteResult = (layoutName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
             AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
