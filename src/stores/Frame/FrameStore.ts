@@ -521,7 +521,7 @@ export class FrameStore {
     };
 
     @computed get hasVisibleBeam(): boolean {
-        return this.beamProperties ? this.beamProperties.overlayBeamSettings.visible : false;
+        return this.beamProperties ? this.beamProperties.overlayBeamSettings.isVisible : false;
     }
 
     @computed get channelInfo(): ChannelInfo | undefined {

@@ -517,7 +517,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         </ScrollShadow>
                     </div>
                     <TaskProgressDialogComponent
-                        isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
+                        isOpen={frame.renderConfig.isUsingCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                         progress={frame.renderConfig.cubeHistogramProgress}
                         timeRemaining={appStore.estimatedTaskRemainingTime || 0}
                         cancellable={true}

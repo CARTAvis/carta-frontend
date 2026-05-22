@@ -128,7 +128,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell className={classNames("row-cell", {active: rowIndex === appStore.activeImageIndex})} />;
         }
 
-        const rasterVisible = isColorBlending ? image.store.isRasterVisible : frame.renderConfig.visible;
+        const rasterVisible = isColorBlending ? image.store.isRasterVisible : frame.renderConfig.isVisible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
 
         const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
@@ -430,7 +430,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeImageIndex = appStore.activeImageIndex;
-        const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
+        const visibilityRaster = appStore.frames.map(f => f.renderConfig.isVisible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.isVisible && f.vectorOverlayConfig.isEnabled);
         const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isRasterVisible);

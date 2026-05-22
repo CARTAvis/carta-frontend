@@ -2277,7 +2277,7 @@ export class AppStore {
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             if (updatedFrame) {
                 const cubeHist = regionHistogramData.histograms;
-                if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
+                if (cubeHist && (updatedFrame.renderConfig.isUsingCubeHistogram || updatedFrame.renderConfig.isUsingCubeHistogramContours)) {
                     updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
@@ -2648,14 +2648,14 @@ export class AppStore {
         }
 
         // Reset cube histogram states
-        if (frame?.renderConfig?.useCubeHistogram) {
+        if (frame?.renderConfig?.isUsingCubeHistogram) {
             frame.renderConfig.setUseCubeHistogram(false);
             this.cancelCubeHistogramRequest();
         }
 
         // Reset cube histogram states for contour
         const dataSource = this.contourDataSource;
-        if (dataSource?.renderConfig?.useCubeHistogramContours) {
+        if (dataSource?.renderConfig?.isUsingCubeHistogramContours) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
             this.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
         }
@@ -2926,13 +2926,13 @@ export class AppStore {
                 contrast,
                 gamma,
                 alpha,
-                inverted: isInverted,
-                useCubeHistogram: shouldUseCubeHistogram,
-                useCubeHistogramContours: shouldUseCubeHistogramContours,
+                isInverted: isInverted,
+                isUsingCubeHistogram: shouldUseCubeHistogram,
+                isUsingCubeHistogramContours: shouldUseCubeHistogramContours,
                 selectedPercentile,
                 scaleMin,
                 scaleMax,
-                visible: isVisible
+                isVisible: isVisible
             } = frame.renderConfig;
             workspaceFile.renderConfig = {
                 scaling,

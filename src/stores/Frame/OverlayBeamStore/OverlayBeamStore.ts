@@ -4,7 +4,7 @@ import {type BeamType} from "enums";
 import {PreferenceStore} from "stores";
 
 export class OverlayBeamStore {
-    @observable visible: boolean;
+    @observable isVisible: boolean;
     @observable color: string;
     @observable type: BeamType;
     @observable width: number;
@@ -13,15 +13,15 @@ export class OverlayBeamStore {
 
     constructor() {
         const preference = PreferenceStore.Instance;
-        this.visible = preference.isBeamVisible;
+        this.isVisible = preference.isBeamVisible;
         this.color = preference.beamColor;
         this.type = preference.beamType;
         this.width = preference.beamWidth;
         makeObservable(this);
     }
 
-    @action setVisible = (visible: boolean) => {
-        this.visible = visible;
+    @action setVisible = (isVisible: boolean) => {
+        this.isVisible = isVisible;
     };
 
     @action setColor = (color: string) => {

@@ -450,14 +450,14 @@ export class ContourDialogComponent extends React.Component {
                 {dataSource.frameInfo.fileInfoExtended.depth > 1 && (
                     <FormGroup label={"Histogram"} inline={true}>
                         <HistogramSelect
-                            activeItem={dataSource.renderConfig.useCubeHistogramContours}
+                            activeItem={dataSource.renderConfig.isUsingCubeHistogramContours}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
                             items={[true, false]}
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={dataSource.renderConfig.isUsingCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
@@ -568,7 +568,7 @@ export class ContourDialogComponent extends React.Component {
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}

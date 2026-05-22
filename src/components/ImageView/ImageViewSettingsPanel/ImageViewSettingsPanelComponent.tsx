@@ -695,7 +695,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         <HTMLSelect options={appStore.frameNames} value={beam.selectedFileId} onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))} />
                     </FormGroup>
                     <FormGroup inline={true} label="Visible">
-                        <Switch checked={beamSettings.visible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
+                        <Switch checked={beamSettings.isVisible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
                     </FormGroup>
                     <FormGroup inline={true} label="Color">
                         <AutoColorPickerComponent color={beamSettings.color} presetColors={SWATCH_COLORS} setColor={beamSettings.setColor} disableAlpha={true} />

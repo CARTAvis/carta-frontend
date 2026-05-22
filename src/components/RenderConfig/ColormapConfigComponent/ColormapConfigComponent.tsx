@@ -48,7 +48,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 <FormGroup label={"Colormap"} inline={true}>
                     <ColormapComponent
-                        inverted={renderConfig.inverted}
+                        inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
@@ -58,7 +58,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 <FormGroup label={"Invert colormap"} inline={true}>
-                    <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
+                    <Switch checked={renderConfig.isInverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>

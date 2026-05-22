@@ -176,7 +176,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (
-                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
+                    (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
@@ -241,7 +241,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
             this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
-            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
+            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.isInverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.shouldUseSmoothedBiasContrast ? 1 : 0);
@@ -287,7 +287,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.disable(GL2.SCISSOR_TEST);
 
             // Skip rendering if frame is hidden
-            if (frame.renderConfig.visible) {
+            if (frame.renderConfig.isVisible) {
                 if (this.props.image?.type === ImageType.PV_PREVIEW) {
                     this.renderSingleTileCanvas(frame);
                 } else {
@@ -521,8 +521,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     scaling: frame.renderConfig.scaling,
                     gamma: frame.renderConfig.gamma,
                     alpha: frame.renderConfig.alpha,
-                    inverted: frame.renderConfig.inverted,
-                    visibility: frame.renderConfig.visible,
+                    inverted: frame.renderConfig.isInverted,
+                    visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     nanAlpha: appStore.preferenceStore.nanAlpha,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,

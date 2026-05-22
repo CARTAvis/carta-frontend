@@ -59,7 +59,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 <Tooltip content="Raster scaling matching enabled" disabled={!frame.rasterScalingReference}>
                     <ColormapComponent
                         disabled={!!frame.rasterScalingReference}
-                        inverted={renderConfig.inverted}
+                        inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
