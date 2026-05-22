@@ -49,15 +49,14 @@ export class GroupRegionDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const className = classNames("group-region-dialog", {[Classes.DARK]: appStore.darkTheme});
         const activeFrame = appStore.activeFrame;
-        const primaryRegion = activeFrame?.regionSet.focusedRegion;
-        const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
-        const canEditSelectedRegions = !!primaryRegion && selectedRegions.length > 1;
-        const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
-        const selectedRegionsOpacity = activeFrame?.regionSet.selectedRegionsOpacity ?? RegionOpacity.Invisible;
+        const regionSet = activeFrame?.regionSet;
+        const focusedRegion = regionSet?.focusedRegion;
+        const selectedRegions = regionSet?.selectedRegionsList ?? [];
+        const selectedRegionsOpacity = regionSet?.selectedRegionsOpacity ?? RegionOpacity.Invisible;
         const selectedRegionsVisible = selectedRegionsOpacity !== RegionOpacity.Invisible;
-        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
-        const showLockedIcon = lockDisabled || allLocked;
-        const deleteDisabled = !!activeFrame?.regionSet.locked || selectedRegions.every(region => region.locked);
+        const lockDisabled = !!regionSet?.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
+        const showLockedIcon = lockDisabled || (regionSet?.selectedRegionsAllLocked ?? false);
+        const deleteDisabled = !!regionSet?.locked || selectedRegions.every(region => region.locked);
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -71,9 +70,9 @@ export class GroupRegionDialogComponent extends React.Component {
         };
 
         let bodyContent = GroupRegionDialogComponent.MissingRegionNode;
-        if (canEditSelectedRegions && activeFrame) {
+        if (activeFrame && focusedRegion && selectedRegions.length > 1) {
             dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
-            bodyContent = <AppearanceForm region={primaryRegion} darkTheme={appStore.darkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
+            bodyContent = <AppearanceForm region={focusedRegion} darkTheme={appStore.darkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         }
 
         return (
@@ -92,7 +91,7 @@ export class GroupRegionDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        {canEditSelectedRegions && (
+                        {activeFrame && focusedRegion && selectedRegions.length > 1 && (
                             <>
                                 <Tooltip content={showLockedIcon ? "Unlock selected regions" : "Lock selected regions"}>
                                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={this.handleLockClicked} disabled={lockDisabled} />
