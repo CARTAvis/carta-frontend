@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/ChannelMapStore/**", "src/stores/ColorBlendingStore/**", "src/stores/DialogStore/**", "src/stores/DynamicLayoutStore/**", "src/stores/FileBrowserStore/**", "src/stores/Frame/**", "src/stores/HipsQueryStore/**", "src/stores/ImageFittingStore/**", "src/stores/ImageViewConfig/**", "src/stores/LayoutStore/**", "src/stores/OverlayStore/**", "src/stores/ProfileFittingStore/**", "src/stores/ProfileSmoothingStore/**", "src/stores/SpatialProfileStore/**", "src/stores/SpectralProfileStore/**", "src/stores/Widgets/**", "src/stores/PreferenceStore/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/ChannelMapStore/**", "src/stores/ColorBlendingStore/**", "src/stores/DialogStore/**", "src/stores/DynamicLayoutStore/**", "src/stores/FileBrowserStore/**", "src/stores/Frame/**", "src/stores/ImageViewConfig/**", "src/stores/LayoutStore/**", "src/stores/OverlayStore/**", "src/stores/ProfileFittingStore/**", "src/stores/ProfileSmoothingStore/**", "src/stores/SpatialProfileStore/**", "src/stores/SpectralProfileStore/**", "src/stores/Widgets/**", "src/stores/PreferenceStore/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
