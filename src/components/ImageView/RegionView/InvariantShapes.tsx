@@ -67,7 +67,7 @@ interface PointProps {
     color: string;
     opacity: number;
     selectionOpacity: number;
-    selectionType?: SelectionType;
+    selectionType: SelectionType;
     listening: boolean;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
@@ -123,15 +123,15 @@ interface AnchorProps {
     rotation: number;
     isRotator: boolean;
     isSelected?: boolean;
-    interactive?: boolean;
-    opacity?: number;
-    selectionType?: SelectionType;
+    interactive: boolean;
+    opacity: number;
+    selectionType: SelectionType;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
-    onClick?: (ev) => void;
+    onClick: (ev) => void;
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
 }
@@ -175,8 +175,8 @@ export const Anchor = (props: AnchorProps) => {
             stroke={strokeColor}
             strokeScaleEnabled={false}
             opacity={props.opacity}
-            draggable={props.interactive ?? true}
-            listening={props.interactive ?? true}
+            draggable={props.interactive}
+            listening={props.interactive}
             key={props.anchor}
             id={props.anchor}
             onMouseEnter={props.onMouseEnter}
