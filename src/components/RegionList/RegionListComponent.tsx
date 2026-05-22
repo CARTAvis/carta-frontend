@@ -220,9 +220,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegions = regionSet.selectedRegionsList;
         const isMultiSelected = selectedRegions.length > 1;
         const allLocked = regionSet.selectedRegionsAllLocked;
-        const selectedRegionsVisibility = regionSet.selectedRegionsVisibility;
-        const hasVisibleSelectedRegions = selectedRegionsVisibility !== RegionOpacity.Invisible;
-        const lockDisabled = regionSet.locked || selectedRegionsVisibility === RegionOpacity.Invisible;
+        const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
+        const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
+        const lockDisabled = regionSet.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
         const deleteDisabled = regionSet.locked || selectedRegions.every(selectedRegion => selectedRegion.locked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
@@ -240,7 +240,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuItem
-                        icon={<Icon icon={hasVisibleSelectedRegions ? "eye-open" : "eye-off"} style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsVisibility)}} />}
+                        icon={<Icon icon={hasVisibleSelectedRegions ? "eye-open" : "eye-off"} style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsOpacity)}} />}
                         text={hasVisibleSelectedRegions ? "Hide" : "Show"}
                         onClick={() => {
                             regionSet.toggleSelectedRegionsVisibility();
@@ -470,7 +470,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = (regionsVisibility: RegionOpacity) => {
+        const headerRenderer = (regionsOpacity: RegionOpacity) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {[Classes.DARK]: darkTheme});
                 const lockDisabled = !frame.regionSet.visibleEditableRegionsList.length;
@@ -484,12 +484,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             <Tooltip disabled={lockDisabled} content={lockTooltip} position={Position.BOTTOM}>
                                 <Icon icon={lockIcon} onClick={lockDisabled ? undefined : ev => this.handleAllRegionsLockClicked(ev)} style={{cursor: "pointer", opacity: lockDisabled ? 0.3 : 1}} />
                             </Tooltip>
-                            <Tooltip content={regionsVisibility === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
-                                <Icon
-                                    icon={regionsVisibility === RegionOpacity.Invisible ? "eye-off" : "eye-open"}
-                                    onClick={this.handleToggleHideClicked}
-                                    style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsVisibility)}}
-                                />
+                            <Tooltip content={regionsOpacity === RegionOpacity.Invisible ? "Show all regions" : "Hide all regions"} position={Position.BOTTOM}>
+                                <Icon icon={regionsOpacity === RegionOpacity.Invisible ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked} style={{cursor: "pointer", opacity: getRegionVisibilityIconOpacity(regionsOpacity)}} />
                             </Tooltip>
                         </div>
                         <div className="cell" style={{width: nameWidth}}>
@@ -722,7 +718,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             rowCount={1}
                             style={{height: RegionListComponent.HeaderRowHeight, width: "100%"}}
                             className="list-header"
-                            rowComponent={headerRenderer(frame.regionSet.editableRegionsVisibility)}
+                            rowComponent={headerRenderer(frame.regionSet.editableRegionsOpacity)}
                             rowProps={{} as any}
                         />
                         <List

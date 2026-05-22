@@ -53,9 +53,9 @@ export class GroupRegionDialogComponent extends React.Component {
         const selectedRegions = activeFrame?.regionSet.selectedRegionsList ?? [];
         const canEditSelectedRegions = !!primaryRegion && selectedRegions.length > 1;
         const allLocked = activeFrame?.regionSet.selectedRegionsAllLocked ?? false;
-        const selectedRegionsVisibility = activeFrame?.regionSet.selectedRegionsVisibility ?? RegionOpacity.Invisible;
-        const selectedRegionsVisible = selectedRegionsVisibility !== RegionOpacity.Invisible;
-        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsVisibility === RegionOpacity.Invisible;
+        const selectedRegionsOpacity = activeFrame?.regionSet.selectedRegionsOpacity ?? RegionOpacity.Invisible;
+        const selectedRegionsVisible = selectedRegionsOpacity !== RegionOpacity.Invisible;
+        const lockDisabled = !!activeFrame?.regionSet.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || allLocked;
         const deleteDisabled = !!activeFrame?.regionSet.locked || selectedRegions.every(region => region.locked);
 
@@ -103,7 +103,7 @@ export class GroupRegionDialogComponent extends React.Component {
                                         minimal={true}
                                         icon={selectedRegionsVisible ? "eye-open" : "eye-off"}
                                         onClick={this.handleHideClicked}
-                                        style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsVisibility)}}
+                                        style={{opacity: getRegionVisibilityIconOpacity(selectedRegionsOpacity)}}
                                     />
                                 </Tooltip>
                                 <Tooltip content="Export selected regions">

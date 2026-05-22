@@ -71,7 +71,7 @@ export class RegionSetStore {
         return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
     }
 
-    @computed get selectedRegionsVisibility(): RegionOpacity {
+    @computed get selectedRegionsOpacity(): RegionOpacity {
         const selectedRegions = this.selectedRegionsList;
         if (!selectedRegions.length || selectedRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
             return RegionOpacity.Invisible;
@@ -82,7 +82,7 @@ export class RegionSetStore {
         return RegionOpacity.Visible;
     }
 
-    @computed get editableRegionsVisibility(): RegionOpacity {
+    @computed get editableRegionsOpacity(): RegionOpacity {
         const editableRegions = this.editableRegionsList;
         if (!editableRegions.length || editableRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
             return RegionOpacity.Invisible;
@@ -638,7 +638,7 @@ export class RegionSetStore {
     };
 
     @action toggleSelectedRegionsVisibility = () => {
-        const opacity = RegionSetStore.NextOpacity(this.selectedRegionsVisibility);
+        const opacity = RegionSetStore.NextOpacity(this.selectedRegionsOpacity);
         this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
     };
 
@@ -669,7 +669,7 @@ export class RegionSetStore {
     };
 
     @action toggleEditableRegionsVisibility = () => {
-        this.setEditableRegionsOpacity(RegionSetStore.NextOpacity(this.editableRegionsVisibility));
+        this.setEditableRegionsOpacity(RegionSetStore.NextOpacity(this.editableRegionsOpacity));
     };
 
     @action deleteRegion = (region: RegionStore) => {
