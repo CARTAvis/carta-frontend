@@ -84,7 +84,6 @@ export class RegionDialogComponent extends React.Component {
 
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
-        let canEditRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.focusedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
         } else if (appStore.activeFrame.regionSet.focusedRegion.regionId === 0) {
@@ -97,41 +96,35 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
                     configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
                     configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
                     configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                     configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
                     configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
-                    canEditRegion = true;
                     break;
                 default:
                     bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
-            if (canEditRegion) {
+            if (configurationPanel) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
@@ -180,7 +173,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {canEditRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
+                        {configurationPanel && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>
