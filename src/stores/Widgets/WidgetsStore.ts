@@ -116,11 +116,13 @@ export class WidgetConfig implements DefaultWidgetConfig {
     }
 }
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export class WidgetProps {
     id: string;
     docked: boolean;
     floatingSettingsId?: string;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface Disposable {
     dispose(): void;
@@ -483,13 +485,13 @@ export class WidgetsStore {
         if (!floatingSettingsWidgets) {
             return null;
         }
-        let settingShowed = false;
+        let isSettingShowed = false;
         floatingSettingsWidgets.forEach(value => {
             if (value === parentId) {
-                settingShowed = true;
+                isSettingShowed = true;
             }
         });
-        if (settingShowed) {
+        if (isSettingShowed) {
             return null;
         }
         let nextIndex = 0;
@@ -528,8 +530,8 @@ export class WidgetsStore {
             widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id
-        const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
-        if (floatingSettings) {
+        const isFloatingSettings = this.floatingSettingsWidgets.has(widgetId);
+        if (isFloatingSettings) {
             this.floatingSettingsWidgets.delete(widgetId);
         }
     };
@@ -923,9 +925,9 @@ export class WidgetsStore {
         channelMapStore.setChannelMapEnabled(!channelMapStore.isChannelMapEnabled);
     };
 
-    setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
+    setImageMultiPanelEnabled = (isMultiPanelEnabled: boolean) => {
         const preferenceStore = PreferenceStore.Instance;
-        preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, isMultiPanelEnabled);
         this.updateImagePanelButton();
     };
 
@@ -1186,11 +1188,11 @@ export class WidgetsStore {
 
     // check whether any spectral widget is streaming data
     @computed get isSpectralWidgetStreamingData(): boolean {
-        let result = false;
+        let isStreamingData = false;
         this.spectralProfileWidgets.forEach(widgetStore => {
-            result = result || widgetStore.isStreamingData;
+            isStreamingData = isStreamingData || widgetStore.isStreamingData;
         });
-        return result;
+        return isStreamingData;
     }
 
     public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore | undefined => {
@@ -1610,14 +1612,14 @@ export class WidgetsStore {
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
-    @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
+    @action removeFloatingWidget = (id: string, shouldPreserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
             zIndexManager.updateIndexOnRemove(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
-            if (preserveStore) {
+            if (shouldPreserveStore) {
                 return;
             }
 
