@@ -59,7 +59,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get isMeanRmsVisible(): boolean {
         // Show Mean/RMS when only 1 profile
-        return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
+        return this.widgetStore.isMeanRmsVisible && this.plotData?.numProfiles === 1;
     }
 
     constructor(props: WidgetProps) {
@@ -193,7 +193,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
-            if (this.widgetStore.secondaryAxisCursorInfoVisible) {
+            if (this.widgetStore.isSecondaryAxisCursorInfoVisible) {
                 diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryXData[currentIndex] - secondaryXData[neighborIndex]);
                 const spectralTypeSecondary = frame.spectralTypeSecondary ?? SpectralType.CHANNEL;
                 const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, spectralTypeSecondary);
