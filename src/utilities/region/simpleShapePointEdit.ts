@@ -1,7 +1,8 @@
 import {CARTA} from "carta-protobuf";
 
 import {type Point2D} from "models";
-import {add2D, rotate2D, scale2D, subtract2D} from "utilities";
+
+import {add2D, rotate2D, scale2D, subtract2D} from "../math2d/math2d";
 
 export const SIMPLE_SHAPE_TOP_POINT_INDEX = 0;
 export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;

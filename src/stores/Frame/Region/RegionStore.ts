@@ -14,6 +14,7 @@ import {
     add2D,
     getApproximateEllipsePoints,
     getApproximatePolygonPoints,
+    getMovedSimpleShapeSide,
     getRegionPixelProperties,
     isAstBadPoint,
     length2D,
@@ -21,13 +22,12 @@ import {
     minMax2D,
     rotate2D,
     scale2D,
+    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
     simplePolygonPointTest,
     simplePolygonTest,
     subtract2D,
     transformPoint
 } from "utilities";
-
-import {getMovedSimpleShapeSide, SIMPLE_SHAPE_ROTATION_POINT_INDEX} from "./RegionPointEdit";
 
 export {
     getResizedSimpleShapeFromCenter,
@@ -44,7 +44,7 @@ export {
     SIMPLE_SHAPE_ROTATION_POINT_INDEX,
     SIMPLE_SHAPE_TOP_POINT_INDEX,
     usesSimpleShapeBoxSize
-} from "./RegionPointEdit";
+} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
