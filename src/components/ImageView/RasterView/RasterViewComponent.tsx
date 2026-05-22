@@ -60,7 +60,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
+            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
                 requestAnimationFrame(() => this.updateCanvas());
             }
         });
@@ -176,7 +176,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (
-                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.channelMapEnabled) &&
+                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);

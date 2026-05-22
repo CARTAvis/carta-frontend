@@ -1790,7 +1790,7 @@ export class AppStore {
             frame.channel = update.channel;
             frame.stokes = update.stokes;
 
-            if (this.channelMapStore.channelMapEnabled) {
+            if (this.channelMapStore.isChannelMapEnabled) {
                 this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
@@ -1838,13 +1838,13 @@ export class AppStore {
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.isServerAnimationActive;
-        if (isAnimating && !this.channelMapStore.channelMapEnabled) {
+        if (isAnimating && !this.channelMapStore.isChannelMapEnabled) {
             this.backendService.addRequiredTiles(
                 fileId,
                 tiles.map(t => t.encode()),
                 this.preferenceStore.animationCompressionQuality
             );
-        } else if (!this.channelMapStore.channelMapEnabled) {
+        } else if (!this.channelMapStore.isChannelMapEnabled) {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
@@ -2285,7 +2285,7 @@ export class AppStore {
         }
 
         // update the render config widget histogram for channel map view mode
-        if (this.channelMapStore.channelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };

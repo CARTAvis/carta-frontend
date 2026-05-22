@@ -430,11 +430,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
+        return AppStore.Instance.channelMapStore.isChannelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
+        return AppStore.Instance.channelMapStore.isChannelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1544,7 +1544,7 @@ export class FrameStore {
                 () => this.stokes,
                 () => {
                     const channelMapStore = AppStore.Instance.channelMapStore;
-                    if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
+                    if (this.requiredFrameView && channelMapStore.isChannelMapEnabled) {
                         channelMapStore.handlePolarizationChanged(this);
                     }
                 }

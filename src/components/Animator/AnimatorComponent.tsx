@@ -345,10 +345,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     </Menu>
                 }
                 position={Position.TOP}
-                disabled={appStore.channelMapStore.channelMapEnabled}
+                disabled={appStore.channelMapStore.isChannelMapEnabled}
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.channelMapEnabled} data-testid="animator-playback-mode-button">
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-playback-mode-button">
                         {!iconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
@@ -364,12 +364,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!iconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.isAnimationActive && (
-                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.channelMapStore.channelMapEnabled} data-testid="animator-play-stop-button">
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.isAnimationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.animatorStore.shouldStartAnimationDisable || appStore.channelMapStore.channelMapEnabled} data-testid="animator-play-stop-button">
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.animatorStore.shouldStartAnimationDisable || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Play"}
                     </Button>
                 )}
@@ -385,7 +385,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
-                    disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.channelMapEnabled}
+                    disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
                     onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
@@ -398,7 +398,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
-                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.channelMapEnabled}
+                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 ) : (
@@ -410,7 +410,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
-                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.channelMapEnabled}
+                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 )}

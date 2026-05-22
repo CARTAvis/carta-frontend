@@ -911,7 +911,7 @@ export class WidgetsStore {
 
     onImagePanelButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
-        if (channelMapStore.channelMapEnabled) {
+        if (channelMapStore.isChannelMapEnabled) {
             channelMapStore.setChannelMapEnabled(false);
         } else {
             this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
@@ -920,7 +920,7 @@ export class WidgetsStore {
 
     onChannelMapButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
-        channelMapStore.setChannelMapEnabled(!channelMapStore.channelMapEnabled);
+        channelMapStore.setChannelMapEnabled(!channelMapStore.isChannelMapEnabled);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
