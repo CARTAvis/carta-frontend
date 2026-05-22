@@ -2898,7 +2898,7 @@ export class AppStore {
                         name: region.name,
                         color: region.color,
                         lineWidth: region.lineWidth,
-                        locked: region.locked,
+                        locked: region.isLocked,
                         dashes: region.dashLength ? [region.dashLength] : [],
                         // Check if styles are available. If so, add them to the region
                         annotationStyles: (region as any).getAnnotationStyles?.()
@@ -3190,7 +3190,7 @@ export class AppStore {
     }
 
     @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.isLocked) {
             this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
         }
     };

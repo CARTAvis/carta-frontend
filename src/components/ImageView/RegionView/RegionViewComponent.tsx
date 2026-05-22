@@ -730,7 +730,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
-        } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
+        } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
             cursor = "move";
         } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
             cursor = "default";
@@ -757,7 +757,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
+                    <Layer ref={this.layerRef} opacity={regionSet.isLocked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.isLocked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}

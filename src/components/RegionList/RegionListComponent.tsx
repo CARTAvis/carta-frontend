@@ -149,7 +149,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
-            if (this.regionsLock !== activeFrame?.regionSet.locked) {
+            if (this.regionsLock !== activeFrame?.regionSet.isLocked) {
                 this.syncRegionsLocked();
             }
             this.toggleRegionVisibility();
@@ -266,7 +266,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = frame.regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
-            const _isLocked = region.locked;
+            const _isLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
@@ -421,10 +421,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div
                         className="cell"
                         style={{width: RegionListComponent.ActionColumnDefaultWidth}}
-                        onClick={regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        onClick={regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
-                        <Icon icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"} style={{opacity: regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}} />
+                        <Icon
+                            icon={region.isLocked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                            style={{opacity: regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                        />
                     </div>
                 );
             } else {

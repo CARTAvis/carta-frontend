@@ -217,7 +217,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             fill: region.color,
             strokeWidth: region.lineWidth,
             strokeScaleEnabled: false,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
@@ -233,7 +233,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         fill: region.color,
         strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
         strokeScaleEnabled: false,
-        opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+        opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
         fontSize: (region.fontSize * imageRatio) / zoomLevel,
         fontFamily: region.font,
         fontStyle: region.fontStyle
@@ -251,7 +251,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group ref={shapeRef} listening={!region.isLocked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
                 {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
@@ -473,7 +473,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         <>
             <Group
                 ref={shapeRef}
-                listening={!region.locked}
+                listening={!region.isLocked}
                 draggable
                 onClick={handleClick}
                 onDblClick={handleDoubleClick}
@@ -487,7 +487,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -500,7 +500,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -513,7 +513,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -532,7 +532,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
@@ -550,7 +550,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -566,7 +566,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
