@@ -17,7 +17,7 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
-    isFocused?: boolean;
+    isFocused: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;

@@ -22,7 +22,7 @@ interface LineSegmentRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
-    isFocused?: boolean;
+    isFocused: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
@@ -354,7 +354,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, false, !!this.props.isFocused);
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, false, this.props.isFocused);
                 });
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
@@ -364,7 +364,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.isFocused));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, this.props.isFocused));
                 }
             }
 
@@ -382,7 +382,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
-                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, !!this.props.isFocused);
+                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, this.props.isFocused);
                 }
 
                 if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
@@ -392,7 +392,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     const inverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, !!this.props.isFocused));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, this.props.isFocused));
                 }
             }
 

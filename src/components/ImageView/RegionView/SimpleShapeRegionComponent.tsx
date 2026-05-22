@@ -33,7 +33,7 @@ interface SimpleShapeRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
-    isFocused?: boolean;
+    isFocused: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
@@ -619,7 +619,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors(!!this.props.isFocused) : null}
+                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors(this.props.isFocused) : null}
             </Group>
         );
     }
