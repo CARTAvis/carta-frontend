@@ -488,7 +488,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                                     renderConfig={frame.renderConfig}
                                     onCubeHistogramSelected={this.handleCubeHistogramSelected}
                                     showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                                    disableHistogramSelect={appStore.animatorStore.animationActive}
+                                    disableHistogramSelect={appStore.animatorStore.isAnimationActive}
                                     warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                                 />
                                 <FormGroup label={"Clip min"} inline={true}>

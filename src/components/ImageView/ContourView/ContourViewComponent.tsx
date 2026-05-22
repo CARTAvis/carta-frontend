@@ -46,9 +46,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
         const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
+        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
-        } else if (!animatorStore.serverAnimationActive) {
+        } else if (!animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
     };

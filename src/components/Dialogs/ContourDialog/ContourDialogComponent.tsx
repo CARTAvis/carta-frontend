@@ -536,10 +536,10 @@ export class ContourDialogComponent extends React.Component {
                                 filterable={false}
                                 items={appStore.frames}
                                 itemRenderer={this.renderDataSourceSelectItem}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.isAnimationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
                             <Tooltip content={appStore.isFrameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                                 <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />

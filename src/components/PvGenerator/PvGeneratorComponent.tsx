@@ -285,7 +285,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = regionId ?? RegionId.NONE;
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.isAnimationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
         const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit && this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE;
         const hint = (
             <span>

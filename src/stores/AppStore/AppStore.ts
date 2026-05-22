@@ -1812,7 +1812,7 @@ export class AppStore {
             // Calculate if new data is required for the active channel
             const isChannelUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
             // Don't auto-update when animation is playing
-            if (!this.animatorStore.animationActive && isChannelUpdateRequired) {
+            if (!this.animatorStore.isAnimationActive && isChannelUpdateRequired) {
                 updates.push({frame: frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
             }
 
@@ -1837,7 +1837,7 @@ export class AppStore {
     };
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
-        const isAnimating = this.animatorStore.serverAnimationActive;
+        const isAnimating = this.animatorStore.isServerAnimationActive;
         if (isAnimating && !this.channelMapStore.channelMapEnabled) {
             this.backendService.addRequiredTiles(
                 fileId,
@@ -2049,7 +2049,7 @@ export class AppStore {
                 }
 
                 // Clear tiles of invisible matched images during animation
-                if (this.animatorStore?.serverAnimationActive) {
+                if (this.animatorStore?.isServerAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
                         if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
                             viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: {x: 0, y: 0}, headerUnit: frame.headerUnit ?? ""});
@@ -2071,7 +2071,7 @@ export class AppStore {
                     // Calculate if new data is required for the active channel
                     const isChannelUpdateRequired = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
                     // Don't auto-update when animation is playing
-                    if (!this.animatorStore.animationActive && isChannelUpdateRequired) {
+                    if (!this.animatorStore.isAnimationActive && isChannelUpdateRequired) {
                         updates.push({frame: visibleFrame, channel: visibleFrame.requiredChannel, stokes: visibleFrame.requiredStokes});
                     }
 
@@ -2234,7 +2234,7 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.isAnimationActive) {
                 const region = frame.getRegion(spectralProfileData.regionId);
                 if (region) {
                     TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
@@ -2291,7 +2291,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
+        if (this.animatorStore.isServerAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId ?? -1);
 
             // Get stokes from the backend tile stream message
@@ -3013,7 +3013,7 @@ export class AppStore {
         }
 
         // Ignore changes when animating
-        if (this.animatorStore.serverAnimationActive) {
+        if (this.animatorStore.isServerAnimationActive) {
             return;
         }
 
@@ -3030,7 +3030,7 @@ export class AppStore {
         }
 
         // Ignore changes when animating
-        if (this.animatorStore.serverAnimationActive) {
+        if (this.animatorStore.isServerAnimationActive) {
             return;
         }
 

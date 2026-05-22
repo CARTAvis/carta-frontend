@@ -2592,7 +2592,7 @@ export class FrameStore {
         this.channel = processedData.channel ?? 0;
 
         const animatorStore = AnimatorStore.Instance;
-        if (animatorStore.serverAnimationActive) {
+        if (animatorStore.isServerAnimationActive) {
             this.requiredChannel = processedData.channel ?? 0;
             this.requiredStokes = processedData.stokes ?? 0;
         }

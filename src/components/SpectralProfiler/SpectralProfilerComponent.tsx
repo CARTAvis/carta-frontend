@@ -110,7 +110,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
         const appStore = AppStore.Instance;
-        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.isAnimationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
         const nearestIndex = frame?.findChannelIndexByValue(x);
@@ -540,7 +540,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers.push({
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: !AnimatorStore.Instance.animationActive,
+                    draggable: !AnimatorStore.Instance.isAnimationActive,
                     dragMove: this.onChannelChanged,
                     horizontal: false
                 });

@@ -197,7 +197,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationActive) {
+        if (AnimatorStore.Instance.isAnimationActive) {
             return;
         }
 
@@ -225,7 +225,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationActive) {
+        if (AnimatorStore.Instance.isAnimationActive) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -1277,7 +1277,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const channelRequired = {
                         value: this.requiredChannelValue,
                         id: "marker-channel-required",
-                        draggable: !AnimatorStore.Instance.animationActive,
+                        draggable: !AnimatorStore.Instance.isAnimationActive,
                         dragMove: this.onChannelChanged,
                         horizontal: false
                     };

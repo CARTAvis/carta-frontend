@@ -232,7 +232,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
         const hint = (
             <span>
                 <br />

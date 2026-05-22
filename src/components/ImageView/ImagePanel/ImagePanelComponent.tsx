@@ -200,7 +200,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
                         <ToolbarComponent
                             docked={this.props.docked}
                             visible={this.imageToolbarVisible}
