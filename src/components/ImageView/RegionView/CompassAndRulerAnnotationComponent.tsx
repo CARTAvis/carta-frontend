@@ -34,6 +34,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
     const mousePoint = React.useRef({x: 0, y: 0});
+    const anchorDragImagePoint = React.useRef<Point2D | null>(null);
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onSelect?.(region, event.evt);
@@ -96,9 +97,20 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
 
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
+            const anchor = konvaEvent.target;
             props.onSelect?.(props.region, konvaEvent.evt);
-            props.region.beginEditing();
-            selectPointFromAnchorNode(konvaEvent.target);
+            if (anchor.id() === "origin") {
+                props.frame.regionSet.beginRegionDrag(props.region);
+                const anchorPos = adjustPosToUnityStage(anchor.position(), props.stageRef.current);
+                let positionImageSpace = canvasToTransformedImagePos(anchorPos.x, anchorPos.y, frame, props.layerWidth, props.layerHeight);
+                if (frame.spatialReference && frame.spatialTransformAST) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
+                anchorDragImagePoint.current = positionImageSpace;
+            } else {
+                props.region.beginEditing();
+                selectPointFromAnchorNode(anchor);
+            }
         }
     };
 
@@ -122,7 +134,11 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
             }
 
             if (anchor.id() === "origin") {
-                region.setControlPoint(0, positionImageSpace);
+                const previousPosition = anchorDragImagePoint.current;
+                if (previousPosition) {
+                    props.frame.regionSet.translateRegionDrag(region, subtract2D(positionImageSpace, previousPosition));
+                }
+                anchorDragImagePoint.current = positionImageSpace;
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
                 if (!frame.validWcs) {
                     region.setLength((distance * frame.zoomLevel) / imageRatio);
@@ -133,8 +149,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
         }
     };
 
-    const handleAnchorDragEnd = () => {
-        region.endEditing();
+    const handleAnchorDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target?.id() === "origin") {
+            props.frame.regionSet.endRegionDrag(props.region);
+            anchorDragImagePoint.current = null;
+        } else {
+            region.endEditing();
+        }
     };
 
     const imageRatio = AppStore.Instance.imageRatio;
@@ -263,7 +284,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & 
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
                 {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
