@@ -96,7 +96,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     selectAllOnFocus={true}
                     onValueChanged={restFreqStore?.setCustomVal}
                     onValueCleared={restFreqStore?.restoreDefaults}
-                    resetDisabled={restFreqStore?.resetDisable}
+                    resetDisabled={restFreqStore?.isResetDisabled}
                     tooltipContent={restFreqStore?.defaultInfo}
                     tooltipPlacement={"bottom"}
                 />

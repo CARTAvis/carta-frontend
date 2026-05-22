@@ -1444,7 +1444,7 @@ export class FrameStore {
             reaction(
                 () => this.restFreqStore.restFreqInHz,
                 restFreq => {
-                    if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
+                    if (this.restFreqStore.isInvalidInput || !restFreq || !isFinite(restFreq)) {
                         return;
                     }
 
@@ -2998,10 +2998,10 @@ export class FrameStore {
                 yMax: this.frameInfo.fileInfoExtended.height
             },
             smoothingFactor: config.pixelAveraging,
-            fractional: config.fractionalIntensity,
-            threshold: config.thresholdEnabled ? config.threshold : NaN,
-            thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
-            debiasing: config.debiasing,
+            fractional: config.isFractionalIntensity,
+            threshold: config.isThresholdEnabled ? config.threshold : NaN,
+            thresholdOption: config.isThresholdEnabled ? config.thresholdOption : NaN,
+            debiasing: config.isDebiasing,
             qError: config.qError,
             uError: config.uError,
             stokesIntensity: config.intensitySource,

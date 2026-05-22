@@ -10,22 +10,22 @@ import {type FrameStore} from "stores/Frame";
 
 export class VectorOverlayConfigStore {
     // Generator config
-    @observable enabled: boolean = false;
+    @observable isEnabled: boolean = false;
     @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
     @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
-    @observable fractionalIntensity: boolean = false;
+    @observable isFractionalIntensity: boolean = false;
     @observable pixelAveraging: number = 0;
-    @observable thresholdEnabled: boolean = false;
+    @observable isThresholdEnabled: boolean = false;
     @observable threshold: number = 0;
-    @observable debiasing: boolean = false;
+    @observable isDebiasing: boolean = false;
     @observable qError: number = 0;
     @observable uError: number = 0;
     @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear = CARTA.PolarizationType.I;
 
     // Appearance
-    @observable visible: boolean = true;
+    @observable isVisible: boolean = true;
     @observable thickness: number = 1;
-    @observable colormapEnabled: boolean = false;
+    @observable isColormapEnabled: boolean = false;
     @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
@@ -44,23 +44,23 @@ export class VectorOverlayConfigStore {
         this.preferenceStore = preferenceStore;
         this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
-        this.fractionalIntensity = this.preferenceStore.isVectorOverlayFractionalIntensity;
+        this.isFractionalIntensity = this.preferenceStore.isVectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
         this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.isVectorOverlayColormapEnabled;
+        this.isColormapEnabled = this.preferenceStore.isVectorOverlayColormapEnabled;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
         makeObservable(this);
     }
 
-    @action setEnabled(val: boolean) {
-        this.enabled = val;
+    @action setEnabled(isEnabled: boolean) {
+        this.isEnabled = isEnabled;
     }
 
-    @action setThresholdEnabled(val: boolean) {
-        this.thresholdEnabled = val;
+    @action setThresholdEnabled(isThresholdEnabled: boolean) {
+        this.isThresholdEnabled = isThresholdEnabled;
     }
 
     @action setThresholdOption(val: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear) {
@@ -71,10 +71,10 @@ export class VectorOverlayConfigStore {
         angularSource: VectorOverlaySource,
         intensitySource: VectorOverlaySource,
         pixelAveraging: number,
-        fractionalIntensity: boolean,
-        thresholdEnabled: boolean,
+        isFractionalIntensity: boolean,
+        isThresholdEnabled: boolean,
         threshold: number,
-        debiasing: boolean,
+        isDebiasing: boolean,
         qError: number,
         uError: number,
         thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear
@@ -82,10 +82,10 @@ export class VectorOverlayConfigStore {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
         this.pixelAveraging = pixelAveraging;
-        this.fractionalIntensity = fractionalIntensity;
-        this.thresholdEnabled = thresholdEnabled;
+        this.isFractionalIntensity = isFractionalIntensity;
+        this.isThresholdEnabled = isThresholdEnabled;
         this.threshold = threshold;
-        this.debiasing = debiasing;
+        this.isDebiasing = isDebiasing;
         this.qError = qError;
         this.uError = uError;
         this.thresholdOption = thresholdOption;
@@ -107,8 +107,8 @@ export class VectorOverlayConfigStore {
         this.colormap = colormap;
     };
 
-    @action setColormapEnabled = (val: boolean) => {
-        this.colormapEnabled = val;
+    @action setColormapEnabled = (isColormapEnabled: boolean) => {
+        this.isColormapEnabled = isColormapEnabled;
     };
 
     @action setColormapBias = (val: number) => {
@@ -133,27 +133,27 @@ export class VectorOverlayConfigStore {
         this.rotationOffset = val;
     };
 
-    @action setVisible = (visible: boolean) => {
-        this.visible = visible;
+    @action setVisible = (isVisible: boolean) => {
+        this.isVisible = isVisible;
     };
 
     @action toggleVisibility = () => {
-        this.visible = !this.visible;
+        this.isVisible = !this.isVisible;
     };
 
     @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
         this.pixelAveraging = config.pixelAveraging;
-        this.fractionalIntensity = config.fractionalIntensity;
-        this.thresholdEnabled = config.thresholdEnabled;
+        this.isFractionalIntensity = config.isFractionalIntensity;
+        this.isThresholdEnabled = config.isThresholdEnabled;
         this.threshold = config.threshold;
-        this.debiasing = config.debiasing;
+        this.isDebiasing = config.isDebiasing;
         this.qError = config.qError;
         this.uError = config.uError;
         this.thresholdOption = config.thresholdOption;
 
-        this.visible = config.visible;
+        this.isVisible = config.isVisible;
         this.thickness = config.thickness;
         this.colormapBias = config.colormapBias;
         this.colormapContrast = config.colormapContrast;
@@ -163,7 +163,7 @@ export class VectorOverlayConfigStore {
         this.intensityMax = config.intensityMax;
         this.rotationOffset = config.rotationOffset;
 
-        this.colormapEnabled = config.colormapEnabled;
+        this.isColormapEnabled = config.isColormapEnabled;
         if (config.color) {
             this.color = config.color;
         }

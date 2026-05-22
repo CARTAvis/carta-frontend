@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/Frame/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/Frame/AnnotationStore.ts", "src/stores/Frame/FrameStore.ts", "src/stores/Frame/FrameStore.ts", "src/stores/Frame/FrameStore.ts", "src/stores/Frame/ColorbarStore/**", "src/stores/Frame/ContourStore/**", "src/stores/Frame/OverlayBeamStore/**", "src/stores/Frame/Region/**", "src/stores/Frame/RenderConfigStore/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],

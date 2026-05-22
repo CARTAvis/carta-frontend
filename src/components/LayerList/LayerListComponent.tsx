@@ -135,8 +135,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const contourVisible = isColorBlending ? image.store.isContourVisible : frame.contourConfig.visible;
         const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
 
-        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.enabled).includes(true) : frame.vectorOverlayConfig.enabled;
-        const vectorOverlayVisible = isColorBlending ? image.store.isVectorOverlayVisible : frame.vectorOverlayConfig.visible;
+        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.isEnabled).includes(true) : frame.vectorOverlayConfig.isEnabled;
+        const vectorOverlayVisible = isColorBlending ? image.store.isVectorOverlayVisible : frame.vectorOverlayConfig.isVisible;
         const toggleVectorOverlayVisible = isColorBlending ? image.store.toggleVectorOverlayVisible : frame.vectorOverlayConfig.toggleVisibility;
 
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
@@ -432,7 +432,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeImageIndex = appStore.activeImageIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
+        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.isVisible && f.vectorOverlayConfig.isEnabled);
         const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isRasterVisible);
         const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isContourVisible);
         const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isVectorOverlayVisible);

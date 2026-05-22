@@ -40,18 +40,18 @@ export interface WorkspaceContourConfig {
 export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
-    fractionalIntensity: boolean;
+    isFractionalIntensity: boolean;
     pixelAveraging: number;
-    thresholdEnabled: boolean;
+    isThresholdEnabled: boolean;
     threshold: number;
-    debiasing: boolean;
+    isDebiasing: boolean;
     qError: number;
     uError: number;
     thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
-    visible: boolean;
+    isVisible: boolean;
     thickness: number;
-    colormapEnabled: boolean;
+    isColormapEnabled: boolean;
     color?: RGBColor;
     colormap?: string;
     colormapContrast: number;

@@ -537,7 +537,7 @@ export class AppStore {
     @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
         for (const frame of this.imageViewConfigStore.visibleFrames) {
-            const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
+            const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.isEnabled && f.vectorOverlayConfig.isVisible);
             frameMap.set(frame, group);
         }
         return frameMap;
@@ -2549,7 +2549,7 @@ export class AppStore {
             }
 
             let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters = {};
-            if (frame.vectorOverlayConfig.enabled) {
+            if (frame.vectorOverlayConfig.isEnabled) {
                 vectorOverlaySettings = {
                     fileId: frame.frameInfo.fileId,
                     imageBounds: {
@@ -2559,10 +2559,10 @@ export class AppStore {
                         yMax: frame.frameInfo.fileInfoExtended.height
                     },
                     smoothingFactor: frame.vectorOverlayConfig.pixelAveraging,
-                    fractional: frame.vectorOverlayConfig.fractionalIntensity,
-                    threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
-                    thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,
-                    debiasing: frame.vectorOverlayConfig.debiasing,
+                    fractional: frame.vectorOverlayConfig.isFractionalIntensity,
+                    threshold: frame.vectorOverlayConfig.isThresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
+                    thresholdOption: frame.vectorOverlayConfig.isThresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,
+                    debiasing: frame.vectorOverlayConfig.isDebiasing,
                     qError: frame.vectorOverlayConfig.qError,
                     uError: frame.vectorOverlayConfig.uError,
                     stokesIntensity: frame.vectorOverlayConfig.intensitySource,
@@ -2956,7 +2956,7 @@ export class AppStore {
                 workspaceFile.contourConfig = contourConfig;
                 delete workspaceFile.contourConfig["preferenceStore"];
             }
-            const {enabled: isVectorOverlayEnabled, ...vectorOverlayConfig} = frame.vectorOverlayConfig;
+            const {isEnabled: isVectorOverlayEnabled, ...vectorOverlayConfig} = frame.vectorOverlayConfig;
             if (isVectorOverlayEnabled) {
                 workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
                 delete workspaceFile.vectorOverlayConfig["preferenceStore"];

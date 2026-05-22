@@ -75,7 +75,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}
-                    resetDisabled={restFreqStore.resetDisable}
+                    resetDisabled={restFreqStore.isResetDisabled}
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
                     focused={frameOption.frameIndex === this.widgetStore?.selectedFrameIndex}
