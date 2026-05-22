@@ -32,7 +32,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: isDarkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: isDarkTheme})} isOpen={alertStore.isAlertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -41,7 +41,7 @@ export class App extends React.Component {
                     <Alert
                         icon={alertStore.alertIcon}
                         className={classNames({[Classes.DARK]: isDarkTheme})}
-                        isOpen={alertStore.alertVisible}
+                        isOpen={alertStore.isAlertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
                         intent={Intent.DANGER}
@@ -52,7 +52,7 @@ export class App extends React.Component {
                 );
             case AlertType.Retry:
                 const cancelProps =
-                    alertStore.showDashboardLink && ApiService.runtimeConfig?.dashboardAddress
+                    alertStore.shouldShowDashboardLink && ApiService.runtimeConfig?.dashboardAddress
                         ? {
                               cancelButtonText: "Open CARTA Dashboard",
                               onCancel: () => window.open(ApiService.runtimeConfig.dashboardAddress, "_blank")
@@ -63,7 +63,7 @@ export class App extends React.Component {
                     <Alert
                         icon={alertStore.alertIcon}
                         className={classNames({[Classes.DARK]: isDarkTheme})}
-                        isOpen={alertStore.alertVisible}
+                        isOpen={alertStore.isAlertVisible}
                         confirmButtonText="Retry"
                         {...cancelProps}
                         intent={Intent.DANGER}
