@@ -99,7 +99,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         // recalculate when receiving new file info of a file in all file mode
         if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const fileInfoResp = FileBrowserStore.Instance.fileInfoResp;
+            const fileInfoResp = FileBrowserStore.Instance.isFileInfoResp;
         }
 
         const fileList = this.props.fileList;

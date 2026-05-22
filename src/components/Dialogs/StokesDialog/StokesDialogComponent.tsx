@@ -206,7 +206,7 @@ export class StokesDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !this.noneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
                             data-testid="load-hypercube-button"
@@ -254,7 +254,7 @@ export class StokesDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (fileBrowserStore.fileList?.directory) {
-                if (!fileBrowserStore.appendingFrame || !frames.length) {
+                if (!fileBrowserStore.isAppendingFrame || !frames.length) {
                     await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
                 } else {
                     await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
