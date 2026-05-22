@@ -246,9 +246,10 @@ export class HotkeyService extends React.Component<{}> {
     public static navigationDisplayHotkeys() {
         const base = {group: "Navigation", global: true};
         const items = [
-            {combo: "click", label: "Pan image"},
-            {combo: "middle-click", label: "Pan image (inside region)"},
-            {combo: "mod + click", label: "Pan image (inside region)"},
+            {combo: "click + drag", label: "Pan image"},
+            {combo: "middle-click + drag", label: "Pan image (ignores regions)"},
+            {combo: "middle-click", label: "Center image"},
+            {combo: "mod + click", label: "Center image"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
         return items.map(item => ({...base, ...item}));

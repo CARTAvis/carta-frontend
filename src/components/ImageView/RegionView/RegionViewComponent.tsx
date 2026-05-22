@@ -38,11 +38,21 @@ const LINE_HEIGHT = 15;
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
 const KEYCODE_ESC = 27;
-const REGION_SELECTION_DRAG_THRESHOLD = 4;
+const POINTER_DRAG_THRESHOLD = 4;
 
 interface RegionSelectionBox {
     start: Point2D;
     end: Point2D;
+}
+
+interface MiddleClickPanState {
+    dragNode: Konva.Node;
+    start: Point2D;
+    started: boolean;
+}
+
+interface SuppressedClick {
+    button?: number;
 }
 
 @observer
@@ -63,10 +73,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
-    private suppressNextClick = false;
+    private suppressedClick: SuppressedClick | null = null;
     private suppressNextRegionClickSelection = false;
     private regionSelectionStartedOnRegion = false;
     private regionSelectionDragNode: Konva.Node | null = null;
+    private middleClickPan: MiddleClickPanState | null = null;
     private layerRef = React.createRef<any>();
 
     constructor(props: any) {
@@ -123,6 +134,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     componentWillUnmount() {
         this.restoreRegionSelectionDragNode();
+        this.restoreMiddleClickPan();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
     }
@@ -466,6 +478,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
+        this.finishMiddleClickPan();
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             this.dragPanning = false;
@@ -523,8 +537,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt;
         const frame = this.frame;
 
-        if (this.suppressNextClick) {
-            this.suppressNextClick = false;
+        if (this.shouldSuppressClick(mouseEvent)) {
             return;
         }
 
@@ -616,11 +629,59 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return adjustPosToMutatedStage({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, this.stageRef.current);
     };
 
-    private restoreRegionSelectionDragNode = (): void => {
-        if (this.regionSelectionDragNode) {
-            this.regionSelectionDragNode.draggable(true);
+    private disableDraggableNode = (node: Konva.Node): Konva.Node => {
+        node.draggable(false);
+        return node;
+    };
+
+    private restoreDraggableNode = (node: Konva.Node | null): null => {
+        if (node) {
+            node.draggable(true);
         }
-        this.regionSelectionDragNode = null;
+        return null;
+    };
+
+    private restoreRegionSelectionDragNode = (): void => {
+        this.regionSelectionDragNode = this.restoreDraggableNode(this.regionSelectionDragNode);
+    };
+
+    private restoreMiddleClickPan = (): void => {
+        if (this.middleClickPan) {
+            this.restoreDraggableNode(this.middleClickPan.dragNode);
+        }
+        this.middleClickPan = null;
+    };
+
+    private suppressNextClick = (button?: number): void => {
+        this.suppressedClick = {button};
+    };
+
+    private clearSuppressedClick = (button?: number): void => {
+        if (this.suppressedClick && (button === undefined || this.suppressedClick.button === undefined || this.suppressedClick.button === button)) {
+            this.suppressedClick = null;
+        }
+    };
+
+    private shouldSuppressClick = (mouseEvent: MouseEvent): boolean => {
+        if (!this.suppressedClick) {
+            return false;
+        }
+
+        const {button} = this.suppressedClick;
+        if (button === undefined || button === mouseEvent.button) {
+            this.suppressedClick = null;
+            return true;
+        }
+
+        return false;
+    };
+
+    private finishMiddleClickPan = (): void => {
+        const shouldSuppressClick = this.middleClickPan?.started;
+        this.restoreMiddleClickPan();
+        if (shouldSuppressClick) {
+            this.suppressNextClick(1);
+        }
     };
 
     private getRegionSelectionDragNode = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): Konva.Node | null => {
@@ -649,16 +710,30 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         const mouseEvent = konvaEvent.evt;
+        if (mouseEvent.button === 1) {
+            this.clearSuppressedClick(1);
+        }
+        if (this.props.dragPanningEnabled && mouseEvent.button === 1 && konvaEvent.target !== konvaEvent.currentTarget) {
+            const dragNode = this.getRegionSelectionDragNode(konvaEvent);
+            if (dragNode) {
+                this.middleClickPan = {
+                    dragNode: this.disableDraggableNode(dragNode),
+                    start: {x: mouseEvent.x, y: mouseEvent.y},
+                    started: false
+                };
+            }
+            return;
+        }
+
         if (this.shouldStartRegionSelection(konvaEvent)) {
             const start = this.getRegionSelectionCanvasPoint(mouseEvent);
             this.regionSelectionBox = {start, end: start};
             this.regionSelectionStartedOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
             const dragNode = this.regionSelectionStartedOnRegion ? this.getRegionSelectionDragNode(konvaEvent) : null;
             if (dragNode) {
-                this.regionSelectionDragNode = dragNode;
-                dragNode.draggable(false);
+                this.regionSelectionDragNode = this.disableDraggableNode(dragNode);
             }
-            this.suppressNextClick = true;
+            this.suppressNextClick();
         }
     };
 
@@ -687,6 +762,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @action private handleStageMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        this.finishMiddleClickPan();
+
         if (this.regionSelectionBox) {
             this.finishRegionSelection();
             return;
@@ -730,6 +807,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt;
         if (this.regionSelectionBox) {
             this.regionSelectionBox.end = this.getRegionSelectionCanvasPoint(mouseEvent);
+            return;
+        }
+
+        if (this.middleClickPan && !this.middleClickPan.started) {
+            if (mouseEvent.buttons & 4) {
+                const dragDistance = pointDistanceSquared(mouseEvent, this.middleClickPan.start);
+                if (dragDistance < POINTER_DRAG_THRESHOLD * POINTER_DRAG_THRESHOLD) {
+                    return;
+                }
+                this.middleClickPan.started = true;
+                this.stageRef.current?.startDrag();
+            } else {
+                this.restoreMiddleClickPan();
+            }
             return;
         }
 
@@ -779,7 +870,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private isSelectionRectLargeEnough = (rect: Rect2D): boolean => {
-        return rect.width >= REGION_SELECTION_DRAG_THRESHOLD && rect.height >= REGION_SELECTION_DRAG_THRESHOLD;
+        return rect.width >= POINTER_DRAG_THRESHOLD && rect.height >= POINTER_DRAG_THRESHOLD;
     };
 
     @action private finishRegionSelection = () => {
@@ -789,7 +880,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.regionSelectionStartedOnRegion = false;
         this.regionSelectionBox = null;
         this.restoreRegionSelectionDragNode();
-        this.suppressNextClick = false;
+        this.clearSuppressedClick();
 
         if (!selectionRect || !isLargeEnough) {
             return;
