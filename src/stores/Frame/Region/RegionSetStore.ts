@@ -71,25 +71,11 @@ export class RegionSetStore {
     }
 
     @computed get selectedRegionsOpacity(): RegionOpacity {
-        const selectedRegions = this.selectedRegionsList;
-        if (!selectedRegions.length || selectedRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
-            return RegionOpacity.Invisible;
-        }
-        if (selectedRegions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
-            return RegionOpacity.SemiTransparent;
-        }
-        return RegionOpacity.Visible;
+        return this.getRegionsOpacity(this.selectedRegionsList);
     }
 
     @computed get editableRegionsOpacity(): RegionOpacity {
-        const editableRegions = this.editableRegionsList;
-        if (!editableRegions.length || editableRegions.every(region => region.opacity === RegionOpacity.Invisible)) {
-            return RegionOpacity.Invisible;
-        }
-        if (editableRegions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
-            return RegionOpacity.SemiTransparent;
-        }
-        return RegionOpacity.Visible;
+        return this.getRegionsOpacity(this.editableRegionsList);
     }
 
     @computed get editableRegionsAllLocked(): boolean {
@@ -97,8 +83,18 @@ export class RegionSetStore {
         return editableRegions.length > 0 && editableRegions.every(region => region.locked);
     }
 
+    private getRegionsOpacity = (regions: RegionStore[]): RegionOpacity => {
+        if (!regions.length || regions.every(region => region.opacity === RegionOpacity.Invisible)) {
+            return RegionOpacity.Invisible;
+        }
+        if (regions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
+            return RegionOpacity.SemiTransparent;
+        }
+        return RegionOpacity.Visible;
+    };
+
     isRegionInMultiSelection = (region: RegionStore | null | undefined): boolean => {
-        return !!region && this.selectedRegionsList.length > 1 && this.selectedRegionIds.has(region.regionId);
+        return !!region && this.selectedRegionIds.size > 1 && this.selectedRegionIds.has(region.regionId);
     };
 
     @action clearSelection = () => {
@@ -320,13 +316,9 @@ export class RegionSetStore {
             return [];
         }
 
-        const selectedRegions = this.selectedRegionIds.has(origin.regionId)
-            ? Array.from(this.selectedRegionIds)
-                  .map(id => this.regionMap.get(id))
-                  .filter((region): region is RegionStore => !!region)
-            : [origin];
+        const selectedRegions = this.selectedRegionIds.has(origin.regionId) ? this.selectedRegionsList : [origin];
 
-        return selectedRegions.filter(region => region.regionId !== CURSOR_REGION_ID && region.visible && !region.locked);
+        return selectedRegions.filter(region => region.visible && !region.locked);
     };
 
     @action beginRegionDrag = (origin: RegionStore) => {
@@ -619,7 +611,7 @@ export class RegionSetStore {
     };
 
     private selectAdjacentRegionFromHotkey = (direction: 1 | -1) => {
-        if (!this.regions || this.regions.length <= 1) {
+        if (this.regions.length <= 1) {
             return;
         }
 
