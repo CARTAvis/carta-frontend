@@ -863,7 +863,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             );
         }
 
-        if (AppStore.Instance.darkTheme) {
+        if (AppStore.Instance.isDarkTheme) {
             gridColor = Colors.DARK_GRAY5;
             labelColor = Colors.LIGHT_GRAY5;
             themeColor = Colors.DARK_GRAY1;
@@ -976,7 +976,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         font: {
                             size: 9 * devicePixelRatio,
                             family: "monospace",
-                            color: AppStore.Instance.darkTheme ? "#f5f8fa" : "#182026"
+                            color: AppStore.Instance.isDarkTheme ? "#f5f8fa" : "#182026"
                         }
                     }
                 ];

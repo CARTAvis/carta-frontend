@@ -881,7 +881,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quLine",
             tickTypeY: TickType.Scientific,
@@ -910,7 +910,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const piLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "piLine",
             tickTypeY: TickType.Scientific,
@@ -938,7 +938,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const paLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "paLine",
             tickTypeY: TickType.Integer,
@@ -965,7 +965,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quScatterPlotProps: ScatterPlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Channel",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quScatter",
             tickTypeX: TickType.Scientific,
@@ -1013,7 +1013,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
-                if (appStore.darkTheme) {
+                if (appStore.isDarkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
                         primaryLineColor = Colors.BLUE4;
                     }
@@ -1232,7 +1232,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor-stokes2",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
                     interactionMarker: true
@@ -1248,7 +1248,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor-stokes",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots
                 };

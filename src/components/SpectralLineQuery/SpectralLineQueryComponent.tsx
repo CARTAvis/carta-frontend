@@ -261,7 +261,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render of SpectralLineQueryComponent while reset filter string
         const filters = widgetStore.filters;
-        const darkTheme = appStore.darkTheme;
+        const darkTheme = appStore.isDarkTheme;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const inputByRange = (

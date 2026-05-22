@@ -41,7 +41,7 @@ export class CatalogOnlineQueryConfigStore {
             }
         );
         reaction(
-            () => AppStore.Instance.cursorFrozen,
+            () => AppStore.Instance.isCursorFrozen,
             cursorFrozen => {
                 const frame = this.activeFrame;
                 if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {

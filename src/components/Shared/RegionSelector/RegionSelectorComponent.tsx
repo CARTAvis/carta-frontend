@@ -99,11 +99,11 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const linkedClass = "linked-to-selected";
 
         if (widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
-            frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+            frameClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
         if (widgetStore.matchesSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
-            regionClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+            regionClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
         return (

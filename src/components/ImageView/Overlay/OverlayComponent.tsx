@@ -213,7 +213,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesColor = this.props.overlaySettings.axes.color;
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
-        const darktheme = AppStore.Instance.darkTheme;
+        const darktheme = AppStore.Instance.isDarkTheme;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
         const raDecReference = this.props.overlaySettings.labels.raDecReference;

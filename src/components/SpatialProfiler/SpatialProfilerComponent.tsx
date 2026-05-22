@@ -579,7 +579,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
             plotType: widgetStore.plotType,
@@ -690,7 +690,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: true
                 });
@@ -702,7 +702,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             id: "marker-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -713,7 +713,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.yRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
                         linePlotProps.markers.push({
@@ -721,7 +721,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             id: "marker-smoothed-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -732,7 +732,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.ySmoothedRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     }
                 }

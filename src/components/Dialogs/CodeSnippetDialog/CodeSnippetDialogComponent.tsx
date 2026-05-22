@@ -116,7 +116,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "console",
@@ -158,7 +158,7 @@ export class CodeSnippetDialogComponent extends React.Component {
                 dialogId={DialogId.Snippet}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
+                    <ThemeProvider darkTheme={appStore.isDarkTheme} children={editor} />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

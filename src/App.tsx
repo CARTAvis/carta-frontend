@@ -85,10 +85,10 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
-        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
+        const className = classNames("App", {[Classes.DARK]: appStore.isDarkTheme});
+        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.isDarkTheme});
 
-        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
+        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.isDarkTheme);
 
         return (
             <div className={className}>
@@ -97,9 +97,9 @@ export class App extends React.Component {
                 <TaskProgressDialogComponent
                     progress={0}
                     timeRemaining={0}
-                    isOpen={appStore.resumingSession || appStore.loadingWorkspace}
+                    isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
                     cancellable={false}
-                    text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
+                    text={appStore.isResumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
                 <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
                     <div className={glClassName} ref={this.setAppContainerRef} />

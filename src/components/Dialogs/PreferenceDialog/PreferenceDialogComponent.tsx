@@ -279,7 +279,7 @@ export class PreferenceDialogComponent extends React.Component {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
                         }}
                         disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed bias/contrast">
@@ -362,7 +362,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -416,7 +416,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -566,7 +566,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.REGION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -630,7 +630,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -911,7 +911,7 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "wrench",

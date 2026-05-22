@@ -273,7 +273,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("vector-overlay-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("vector-overlay-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -445,7 +445,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             presetColors={SWATCH_COLORS}
                             setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgb)}
                             disableAlpha={true}
-                            darkTheme={appStore.darkTheme}
+                            darkTheme={appStore.isDarkTheme}
                         />
                     </FormGroup>
                 )}

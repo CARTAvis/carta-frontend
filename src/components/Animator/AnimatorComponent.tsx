@@ -325,7 +325,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         const playbackClass = classNames("animator-playback", {wrap: hideSliders});
-        const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.darkTheme});
+        const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.isDarkTheme});
 
         const playbackModeButton = (
             <Popover

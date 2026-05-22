@@ -201,7 +201,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const darkTheme = appStore.darkTheme;
+        const darkTheme = appStore.isDarkTheme;
         const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {

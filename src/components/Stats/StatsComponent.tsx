@@ -262,7 +262,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
-                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
+                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.isDarkTheme});
             }
         }
 
@@ -292,26 +292,26 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             formContent = (
                 <HTMLTable data-testid="statistics-table">
-                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
+                    <thead className={appStore.isDarkTheme ? "dark-theme" : ""}>
                         <tr>
                             <th style={{width: StatsComponent.NameColumnWidth}}>Statistic</th>
                             <th style={{width: valueWidth}}>Value</th>
                         </tr>
                     </thead>
-                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>{rows}</tbody>
+                    <tbody className={appStore.isDarkTheme ? "dark-theme" : ""}>{rows}</tbody>
                 </HTMLTable>
             );
 
             exportDataComponent = (
                 <div className="stats-export-data">
-                    <ToolbarComponent darkMode={appStore.darkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
+                    <ToolbarComponent darkMode={appStore.isDarkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
                 </div>
             );
         } else {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
-        const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
+        const className = classNames("stats-widget", {"dark-theme": appStore.isDarkTheme});
 
         return (
             <ResizeDetector onResize={this.onResize}>

@@ -109,7 +109,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
                         }}
                         disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>

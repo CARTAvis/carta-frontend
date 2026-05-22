@@ -299,7 +299,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
-                darkMode: appStore.darkTheme,
+                darkMode: appStore.isDarkTheme,
                 imageName: imageName,
                 plotName: plotName,
                 logY: this.widgetStore.logScaleY,

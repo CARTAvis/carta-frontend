@@ -60,7 +60,7 @@ export class RegionDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("region-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("region-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -123,7 +123,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
             if (editableRegion) {
-                const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
+                const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} data-testid="region-dialog-config-tab-title" />

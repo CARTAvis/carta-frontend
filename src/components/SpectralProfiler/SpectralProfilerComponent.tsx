@@ -310,7 +310,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         label: `${line.species} ${line.qn}`,
                         draggable: false,
                         horizontal: false,
-                        color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        color: AppStore.Instance.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
                 }
             }
@@ -348,7 +348,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -522,7 +522,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: true
                 });
@@ -552,7 +552,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-mean",
                     draggable: false,
                     horizontal: true,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                     dash: [5]
                 });
 
@@ -563,7 +563,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: true,
                     width: currentPlotData.yRms,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
             }
 
@@ -576,7 +576,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: selectedRange.isHorizontal,
                     width: selectedRange.width / 2,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
         }

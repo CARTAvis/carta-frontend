@@ -118,20 +118,20 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
-                if (AppStore.Instance.appendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
+                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
                     return;
                 }
                 break;
             case BrowserMode.File:
-                if (!append && AppStore.Instance.openFileDisabled) {
+                if (!append && AppStore.Instance.isOpenFileDisabled) {
                     return;
-                } else if (append && AppStore.Instance.appendFileDisabled) {
+                } else if (append && AppStore.Instance.isAppendFileDisabled) {
                     return;
                 }
                 break;
             case BrowserMode.Catalog:
             default:
-                if (AppStore.Instance.appendFileDisabled) {
+                if (AppStore.Instance.isAppendFileDisabled) {
                     return;
                 }
         }

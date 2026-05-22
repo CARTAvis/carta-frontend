@@ -127,7 +127,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -245,7 +245,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
-                {appStore.toolbarExpanded && (
+                {appStore.isToolbarExpanded && (
                     <React.Fragment>
                         {!frame.isPreview && (
                             <>
@@ -425,8 +425,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         )}
                     </React.Fragment>
                 )}
-                <Tooltip position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
-                    <AnchorButton active={appStore.toolbarExpanded} icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
+                <Tooltip position={tooltipPosition} content={appStore.isToolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
+                    <AnchorButton active={appStore.isToolbarExpanded} icon={appStore.isToolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
                 </Tooltip>
             </ButtonGroup>
         );

@@ -130,7 +130,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.frame;
         const overlaySettings = appStore.overlaySettings;
-        if (frame?.isRenderable && appStore.astReady) {
+        if (frame?.isRenderable && appStore.isAstReady) {
             const isActive = appStore.isActiveImage(this.props.image) && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
             const className = classNames("image-panel-div", {active: isActive});

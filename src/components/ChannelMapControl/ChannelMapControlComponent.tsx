@@ -201,7 +201,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                <div className={classNames("channel-map-control-containers", {[Classes.DARK]: appStore.darkTheme})}>
+                <div className={classNames("channel-map-control-containers", {[Classes.DARK]: appStore.isDarkTheme})}>
                     {displayedFrame ? (
                         <ScrollShadow>
                             <div className="channel-map-control-panel">

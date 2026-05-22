@@ -150,7 +150,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     public render() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const darkTheme = AppStore.Instance.darkTheme;
+        const darkTheme = AppStore.Instance.isDarkTheme;
 
         const widgetStore = this.widgetStore;
         if (!widgetStore) {

@@ -77,7 +77,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                     </FormGroup>
                 )}
                 <Alert
-                    className={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}
+                    className={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}
                     icon={"time"}
                     isOpen={this.showCubeHistogramAlert}
                     onCancel={this.handleAlertCancel}

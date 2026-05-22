@@ -117,7 +117,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const buttonTextCutoff = 550;
 
     return (
-        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.darkTheme})}>
+        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.isDarkTheme})}>
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>

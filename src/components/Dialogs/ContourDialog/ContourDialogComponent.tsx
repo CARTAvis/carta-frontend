@@ -313,7 +313,7 @@ export class ContourDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("contour-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("contour-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
@@ -352,7 +352,7 @@ export class ContourDialogComponent extends React.Component {
 
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             logY: this.widgetStore.logScaleY,
             plotType: this.widgetStore.plotType,
             showYAxisTicks: false,
@@ -425,7 +425,7 @@ export class ContourDialogComponent extends React.Component {
                 id: "marker-mean",
                 draggable: false,
                 horizontal: false,
-                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                 dash: [5]
             });
 
@@ -436,7 +436,7 @@ export class ContourDialogComponent extends React.Component {
                 horizontal: false,
                 width: stdDev,
                 opacity: 0.2,
-                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
             });
         }
 
@@ -541,14 +541,14 @@ export class ContourDialogComponent extends React.Component {
                             >
                                 <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                             </DataSourceSelect>
-                            <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                                <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
+                            <Tooltip content={appStore.isFrameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                                <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
                             </Tooltip>
                         </FormGroup>
                         <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                             <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
                             <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
-                            <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} data-testid="contour-dailog-styling-tab-title" />
+                            <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.isDarkTheme} />} data-testid="contour-dailog-styling-tab-title" />
                         </Tabs>
                     </ScrollShadow>
                 </div>
@@ -564,7 +564,7 @@ export class ContourDialogComponent extends React.Component {
                         />
                     </div>
                 </div>
-                <Alert className={classNames({[Classes.DARK]: appStore.darkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={classNames({[Classes.DARK]: appStore.isDarkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent

@@ -277,7 +277,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         let divContents: React.ReactNode | React.ReactNode[];
         if (!this.panels.length) {
             divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
-        } else if (!appStore.astReady) {
+        } else if (!appStore.isAstReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
             const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];

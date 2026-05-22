@@ -373,7 +373,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     @computed get referenceAxesColor() {
-        return AppStore.Instance.darkTheme ? Colors.GRAY2 : Colors.GRAY3;
+        return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
     public init = (widgetSettings): void => {

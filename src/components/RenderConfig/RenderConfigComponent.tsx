@@ -301,7 +301,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
             logY: this.widgetStore.logScaleY,
@@ -390,7 +390,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     id: "marker-mean",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                     dash: [5]
                 });
 
@@ -401,7 +401,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     width: histogram.stdDev,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
             }
 
@@ -427,7 +427,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     plotName: plotName,
                     data: colormapScalingData,
                     type: PlotType.LINES,
-                    borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
+                    borderColor: appStore.isDarkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5,
                     opacity: 0.5,
                     noExport: true
@@ -484,7 +484,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         <ScrollShadow>
                             <div className="options-form">
                                 <HistogramConfigComponent
-                                    darkTheme={appStore.darkTheme}
+                                    darkTheme={appStore.isDarkTheme}
                                     renderConfig={frame.renderConfig}
                                     onCubeHistogramSelected={this.handleCubeHistogramSelected}
                                     showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
