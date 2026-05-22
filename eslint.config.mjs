@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**", "src/stores/AlertStore/**", "src/stores/AnimatorStore/**", "src/stores/AppStore/**", "src/stores/Catalog/**", "src/stores/CatalogOnlineQuery/**", "src/stores/ChannelMapStore/**", "src/stores/ColorBlendingStore/**", "src/stores/DialogStore/**", "src/stores/DynamicLayoutStore/**", "src/stores/FileBrowserStore/**", "src/stores/Frame/**", "src/stores/HelpStore/**", "src/stores/HipsQueryStore/**", "src/stores/ImageFittingStore/**", "src/stores/ImageViewConfig/**", "src/stores/LayoutStore/**", "src/stores/LogStore/**", "src/stores/OverlayStore/**", "src/stores/ProfileFittingStore/**", "src/stores/ProfileSmoothingStore/**", "src/stores/Snippet/**", "src/stores/SpatialProfileStore/**", "src/stores/SpectralProfileStore/**", "src/stores/Widgets/**", "src/stores/PreferenceStore/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
@@ -85,12 +85,12 @@ export default [
                     modifiers: ["public", "static"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                //     types: ["boolean"],
-                //     format: ["PascalCase"],
-                //     prefix: ["is", "should", "has", "can", "did", "will"]
-                // },
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "should", "has", "can", "did", "will"]
+                },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):
                 // const N = maxIndex - minIndex;
