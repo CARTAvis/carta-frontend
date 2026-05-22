@@ -378,7 +378,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paProfileSmoothed = StokesAnalysisComponent.calculatePA(qProfileSmoothedValues.y, uProfileSmoothedValues.y);
                     }
                 }
-                if (this.widgetStore.fractionalPolVisible) {
+                if (this.widgetStore.isFractionalPolVisible) {
                     const iProfileOriginal = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
                     if (iProfileOriginal && iProfileOriginal.values) {
                         piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
@@ -438,7 +438,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): Border {
-        if (!this.widgetStore.equalAxes) {
+        if (!this.widgetStore.hasEqualAxes) {
             return {xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax};
         }
         let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
@@ -614,7 +614,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     outRange = false;
                 }
                 let percentage = point.z !== undefined ? (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal) : 0;
-                if (widgetStore.invertedColorMap) {
+                if (widgetStore.isInvertedColorMap) {
                     percentage = 1 - percentage;
                 }
                 pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, reversed);
@@ -860,7 +860,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ? "Channel " + toFixed(this.cursorInfo.channel) : formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
-            const fractionalPol = this.widgetStore.fractionalPolVisible;
+            const fractionalPol = this.widgetStore.isFractionalPolVisible;
             const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
             const uLabel = fractionalPol ? ", U/I: " : ", U: ";
             const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
@@ -975,7 +975,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             plotType: PlotType.POINTS,
             zeroLineWidth: this.widgetStore.referenceAxesThickness,
             xZeroLineColor: this.widgetStore.referenceAxesColor,
-            showZeroLine: this.widgetStore.showReferenceAxes,
+            showZeroLine: this.widgetStore.shouldShowReferenceAxes,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             zIndex: true,
@@ -984,7 +984,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
             scrollZoom: true,
-            graphZoomedXY: this.widgetStore.equalAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
+            graphZoomedXY: this.widgetStore.hasEqualAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
             // settings
             pointRadius: this.widgetStore.scatterPlotPointSize
@@ -1169,7 +1169,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.widgetStore.equalAxes) {
+                if (this.widgetStore.hasEqualAxes) {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterEqualXmin !== undefined ? this.widgetStore.quScatterEqualXmin : quBorder.xMin;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterEqualXmax !== undefined ? this.widgetStore.quScatterEqualXmax : quBorder.xMax;
                     quScatterPlotProps.yMin = this.widgetStore.quScatterEqualYmin !== undefined ? this.widgetStore.quScatterEqualYmin : quBorder.yMin;
@@ -1206,7 +1206,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
-            if (this.widgetStore.fractionalPolVisible) {
+            if (this.widgetStore.isFractionalPolVisible) {
                 quLinePlotProps.yLabel = "Value (%)";
                 piLinePlotProps.yLabel = "PI/I (%)";
                 quScatterPlotProps.xLabel = "Q/I (%)";
