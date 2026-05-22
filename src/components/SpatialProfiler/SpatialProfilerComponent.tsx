@@ -531,7 +531,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
             }
-            if (this.widgetStore.meanRmsVisible) {
+            if (this.widgetStore.isMeanRmsVisible) {
                 if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                     profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
                 } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
@@ -614,7 +614,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (!this.widgetStore.isLineOrPolyline) {
                     linePlotProps.showTopAxis = true;
-                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
+                    if (this.frame.validWcs && widgetStore.isWcsAxisVisible) {
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                     }
                 }
@@ -695,7 +695,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     isMouseMove: true
                 });
 
-                if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                if (widgetStore.isMeanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                         linePlotProps.markers.push({
                             value: currentPlotData.yMean,
