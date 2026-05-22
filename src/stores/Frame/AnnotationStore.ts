@@ -322,7 +322,7 @@ export class CompassAnnotationStore extends RegionStore {
         const originPoint = isSpatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
         // Early return for invalid WCS - rendering component handles this case separately
-        if (!wcsInfo || !this.activeFrame.validWcs) {
+        if (!wcsInfo || !this.activeFrame.isValidWcs) {
             return {northApproximatePoints: [], eastApproximatePoints: []};
         }
 

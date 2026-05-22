@@ -34,7 +34,7 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
-        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.isValidWcs;
         if (isWcsFrameAndSystem) {
             setAstStringSystem(astString, this.explicitSystem, this);
         }
@@ -880,7 +880,7 @@ export class OverlaySettings {
             const _ = this.global.system;
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
+                if (frame?.isValidWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
                     setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
@@ -888,7 +888,7 @@ export class OverlaySettings {
 
         autorun(() => {
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
+                if (frame?.isValidWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
                     AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirX})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
                 }
             });
@@ -896,7 +896,7 @@ export class OverlaySettings {
 
         autorun(() => {
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
+                if (frame?.isValidWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
                     AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirY})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
                 }
             });
@@ -952,8 +952,8 @@ export class OverlaySettings {
     }
 
     @action setDefaultsFromFrame(frame: FrameStore) {
-        this.global.setValidWcs(frame.validWcs);
-        this.numbers.setValidWcs(frame.validWcs);
+        this.global.setValidWcs(frame.isValidWcs);
+        this.numbers.setValidWcs(frame.isValidWcs);
 
         this.global.setDefaultSystem(frame.defaultWcsSystem);
         this.global.setDefaultEquinox(frame.defaultWcsEquinox);

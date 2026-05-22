@@ -142,12 +142,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             let currentStyleString = this.props.overlayStore.styleString(frame);
 
             // Override the AST tolerance during motion
-            if (frame.moving) {
+            if (frame.isMoving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!frame.validWcs) {
+            if (!frame.isValidWcs) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
@@ -203,7 +203,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlayStore.padding;
-        const moving = frame.moving;
+        const moving = frame.isMoving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
@@ -251,7 +251,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.isValidWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
                 setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
             }

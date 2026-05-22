@@ -80,7 +80,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
         const formatX = appStore.overlaySettings.numbers.formatTypeX;
         const formatY = appStore.overlaySettings.numbers.formatTypeY;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
@@ -389,7 +389,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
@@ -419,7 +419,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;

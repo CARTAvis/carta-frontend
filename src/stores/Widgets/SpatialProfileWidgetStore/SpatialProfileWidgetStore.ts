@@ -183,7 +183,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     }
 
     private static getSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (frame.cursorMoving && !AppStore.Instance.isCursorFrozen && region?.regionId === RegionId.CURSOR) {
+        if (frame.isCursorMoving && !AppStore.Instance.isCursorFrozen && region?.regionId === RegionId.CURSOR) {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,

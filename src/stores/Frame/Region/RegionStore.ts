@@ -247,7 +247,7 @@ export class RegionStore {
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
-        if (!this.size || !frame?.validWcs) {
+        if (!this.size || !frame?.isValidWcs) {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
@@ -424,7 +424,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
-        if (activeFrame.validWcs) {
+        if (activeFrame.isValidWcs) {
             this.coordinate = CoordinateMode.World;
         } else {
             this.coordinate = CoordinateMode.Image;

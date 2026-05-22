@@ -113,7 +113,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             if (anchor.id() === "origin") {
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                if (!frame.validWcs) {
+                if (!frame.isValidWcs) {
                     region.setLength((distance * frame.zoomLevel) / imageRatio);
                 } else {
                     region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
@@ -128,7 +128,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const imageRatio = AppStore.Instance.imageRatio;
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const wcsInfo = frame?.isValidWcs ? frame.wcsInfoForTransformation : 0;
     const approxPoints = region.getCompassApproximation(wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST || undefined);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -137,7 +137,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    if (!frame.validWcs) {
+    if (!frame.isValidWcs) {
         const originX = originPoints.x - mousePoint.current.x;
         const originY = originPoints.y - mousePoint.current.y;
         const compassStageLength = (region.length * imageRatio) / zoomLevel;
@@ -405,7 +405,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
 
     const xApproxPoints = approxPoints.xApproximatePoints;

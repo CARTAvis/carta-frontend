@@ -87,36 +87,36 @@ export class RegionDialogComponent extends React.Component {
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
-                    configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <PointRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
-                    configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
-                    configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
-                    configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
-                    configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
-                    configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 default:

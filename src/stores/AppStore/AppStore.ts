@@ -2025,7 +2025,7 @@ export class AppStore {
         // Update frame view for each visible frame
         autorun(() => {
             // Ignore view changes when zooming if preference not set
-            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.shouldStreamContoursWhileZooming)) {
+            if (this.activeFrame && (!this.activeFrame.isZooming || this.preferenceStore.shouldStreamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
@@ -2396,7 +2396,7 @@ export class AppStore {
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
-                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
+                    const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
                     if (coords.wcsX && coords.wcsY && coords.xHeaderInfo.units && coords.yHeaderInfo.units) {
                         this.catalogStore.convertToImageCoordinate(
                             catalogFileId,

@@ -323,11 +323,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             Type
                         </div>
                         <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                            {frame.validWcs ? "Center" : "Pixel Center"}
+                            {frame.isValidWcs ? "Center" : "Pixel Center"}
                         </div>
                         {showSizeColumn && (
                             <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
-                                {frame.validWcs ? "Size" : "Size (px)"}
+                                {frame.isValidWcs ? "Size" : "Size (px)"}
                             </div>
                         )}
                         {showRotationColumn && (
@@ -349,7 +349,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.validWcs) {
+                if (frame.isValidWcs) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -371,7 +371,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.validWcs) {
+                    if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
@@ -527,7 +527,7 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
 
         const frame = this.props.frame;
         const region = this.props.region;
-        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.isValidWcs)) {
             return null;
         }
 

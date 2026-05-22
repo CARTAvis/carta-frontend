@@ -138,7 +138,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             // region info
             if (region) {
                 headerString += `# ${region.regionProperties}\n`;
-                if (frame.validWcs) {
+                if (frame.isValidWcs) {
                     headerString += `# ${frame.getRegionWcsProperties(region)}\n`;
                 }
             }
