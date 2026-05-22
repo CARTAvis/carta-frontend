@@ -294,7 +294,7 @@ const LayoutMappingRow = ({ctypes, layoutName}: {ctypes: string; layoutName: str
     const [selectedLayout, setSelectedLayout] = React.useState(layoutName);
 
     const ctypeName = CtypeAbbrToName(ctypes);
-    const NormCtype = ctypes
+    const normCtype = ctypes
         .split(",")
         .map(ctype => {
             return ctype.length > 2 ? `${ctype[0]}..` : ctype;
@@ -305,7 +305,7 @@ const LayoutMappingRow = ({ctypes, layoutName}: {ctypes: string; layoutName: str
         <tr>
             <td className={className}>
                 <Tooltip position="bottom" content={`(${ctypeName.replaceAll(",", ", ")})`}>
-                    <FormGroup>({NormCtype})</FormGroup>
+                    <FormGroup>({normCtype})</FormGroup>
                 </Tooltip>
             </td>
             <td className={className}>

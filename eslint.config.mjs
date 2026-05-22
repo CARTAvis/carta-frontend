@@ -75,11 +75,11 @@ export default [
                     modifiers: ["const", "global"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                //     format: ["camelCase"],
-                //     leadingUnderscore: "allow",
-                // },
+                {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
