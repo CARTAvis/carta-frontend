@@ -94,9 +94,9 @@ export class ContourConfigStore {
         this.colormapBias = config.colormapBias;
         this.dashMode = config.dashMode;
         this.thickness = config.thickness;
-        this.isVisible = config.isVisible;
+        this.isVisible = config.visible;
 
-        this.isColormapEnabled = config.isColormapEnabled;
+        this.isColormapEnabled = config.colormapEnabled;
         if (config.color) {
             this.color = config.color;
         }

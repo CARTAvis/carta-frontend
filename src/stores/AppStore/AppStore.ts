@@ -45,6 +45,7 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
+    WorkspaceConfig,
     type WorkspaceFile
 } from "models";
 import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
@@ -2919,47 +2920,16 @@ export class AppStore {
             }
 
             // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            const {
-                scaling,
-                colorMap,
-                bias,
-                contrast,
-                gamma,
-                alpha,
-                isInverted: isInverted,
-                isUsingCubeHistogram: shouldUseCubeHistogram,
-                isUsingCubeHistogramContours: shouldUseCubeHistogramContours,
-                selectedPercentile,
-                scaleMin,
-                scaleMax,
-                isVisible: isVisible
-            } = frame.renderConfig;
-            workspaceFile.renderConfig = {
-                scaling,
-                colorMap,
-                bias,
-                contrast,
-                gamma,
-                alpha,
-                inverted: isInverted,
-                useCubeHistogram: shouldUseCubeHistogram,
-                useCubeHistogramContours: shouldUseCubeHistogramContours,
-                selectedPercentile,
-                scaleMin,
-                scaleMax,
-                visible: isVisible
-            };
+            workspaceFile.renderConfig = WorkspaceConfig.createRenderConfig(frame.renderConfig);
 
-            // Contours and vector overlays
-            const {isEnabled: isContoursEnabled, ...contourConfig} = frame.contourConfig;
-            if (isContoursEnabled) {
+            const contourConfig = WorkspaceConfig.createContourConfig(frame.contourConfig);
+            if (contourConfig) {
                 workspaceFile.contourConfig = contourConfig;
-                delete workspaceFile.contourConfig["preferenceStore"];
             }
-            const {isEnabled: isVectorOverlayEnabled, ...vectorOverlayConfig} = frame.vectorOverlayConfig;
-            if (isVectorOverlayEnabled) {
+
+            const vectorOverlayConfig = WorkspaceConfig.createVectorOverlayConfig(frame.vectorOverlayConfig);
+            if (vectorOverlayConfig) {
                 workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
-                delete workspaceFile.vectorOverlayConfig["preferenceStore"];
             }
 
             workspace.files.push(workspaceFile);
