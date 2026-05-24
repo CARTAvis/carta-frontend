@@ -95,11 +95,11 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static CopyRegion = () => {
+    public static CopyRegion = () => {
         AppStore.Instance.copySelectedRegion();
     };
 
-    static PasteRegion = () => {
+    public static PasteRegion = () => {
         AppStore.Instance.pasteRegion();
     };
 

@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 
 import {type Point2D, Transform2D} from "models";
 import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
-import { isAstBadPoint, scale2D, toFixed, transformPoint } from "utilities";
+import {isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
@@ -162,7 +162,8 @@ export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionTy
     switch (regionType) {
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE:
-        case CARTA.RegionType.ANNVECTOR: {
+        case CARTA.RegionType.ANNVECTOR:
+        case CARTA.RegionType.ANNRULER: {
             const positionAngle = getLinePositionAngle(points);
             const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
             return shouldShiftYOnly ? {x: 0, y: PASTE_OFFSET} : {x: PASTE_OFFSET, y: 0};
