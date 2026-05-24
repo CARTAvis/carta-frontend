@@ -76,6 +76,10 @@ export function buildSwappedZWcsSettings({dirAxis, dirAxisFormat, spectralAxis, 
             settings.push(`Label(${spectralAxis})=[${spectralSystem}] ${spectralLabel}`);
         }
     }
+    // In a swapped-Z frame, exactly one of dirX/dirY equals dirAxis (≤ 2, the visible direction
+    // axis in the 2D frameset) while the other is ≥ 3 (the depth axis, not in the 2D display).
+    // The ≤ 2 check identifies the visible axis so we only emit a label for the axis that exists
+    // in the 2D frameset.
     if (dirX <= 2 && dirXLabel !== "") {
         settings.push(`Label(${dirX})=${dirXLabel}`);
     }

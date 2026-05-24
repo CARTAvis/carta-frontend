@@ -170,6 +170,8 @@ describe("FrameStore", () => {
         });
 
         test("reapplies spectral unit and system when the swapped WCS is rebuilt", () => {
+            // Construct with EMPTYFRAME_INFO to avoid triggering the isSwappedZ constructor path
+            // (which calls unmocked AST internals), then swap in the real frameInfo before testing.
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
             frame["wcsInfo3D"] = 11;

@@ -65,6 +65,24 @@ describe("buildSwappedZWcsSettings", () => {
         expect(settings).toBe('Format(1)=dms.*,Unit(1)="",System(2)=FREQ,Unit(2)=GHz,StdOfRest=LSRK,Label(2)=[LSRK] Frequency,Label(1)=Declination');
     });
 
+    test("emits only direction format when all spectral properties are null", () => {
+        const settings = buildSwappedZWcsSettings({
+            dirAxis: 1,
+            dirAxisFormat: "dms.*",
+            spectralAxis: 2,
+            spectralType: null,
+            spectralUnit: null,
+            spectralSystem: null,
+            restFreqInHz: undefined,
+            dirX: 3,
+            dirXLabel: "",
+            dirY: 1,
+            dirYLabel: ""
+        });
+
+        expect(settings).toBe('Format(1)=dms.*,Unit(1)=""');
+    });
+
     test("omits optional spectral labels and direction labels when values are absent", () => {
         const settings = buildSwappedZWcsSettings({
             dirAxis: 2,
