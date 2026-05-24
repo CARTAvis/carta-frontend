@@ -58,7 +58,7 @@ interface TileMessageArgs {
 export class TileService {
     private static staticInstance: TileService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!TileService.staticInstance) {
             TileService.staticInstance = new TileService();
         }
@@ -215,7 +215,7 @@ export class TileService {
     }
 
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, peek: boolean = false) {
-        const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(tileCoordinateEncoded, fileId, channel);
+        const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(tileCoordinateEncoded, fileId, channel);
         if (peek) {
             return this.cachedTiles.peek(gpuCacheCoordinate);
         }
@@ -230,7 +230,7 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, fileId, channel);
+            const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(encodedCoordinate, fileId, channel);
             const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
             const pendingCompressionMap = this.pendingDecompressions.get(key);
             const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
@@ -402,7 +402,7 @@ export class TileService {
 
         for (const [key, tile] of this.cachedTiles) {
             // Clear tile if it matches the fileId, otherwise add it to the collection of tiles to add to the new cache
-            if (TileCoordinate.GetFileId(key) === fileId) {
+            if (TileCoordinate.getFileId(key) === fileId) {
                 this.clearTile(tile, key);
             } else {
                 keys.push(key);
@@ -608,8 +608,8 @@ export class TileService {
         }
 
         for (const tile of tileMessage.tiles ?? []) {
-            const encodedCoordinate = TileCoordinate.Encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
-            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
+            const encodedCoordinate = TileCoordinate.encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
+            const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
             const pendingRequestsMap = this.pendingRequests.get(key);
 
@@ -730,7 +730,7 @@ export class TileService {
                     this.clearCompressedCache(fileId ?? NaN);
                 }
                 receivedTiles?.forEach((tile, coordinate) => {
-                    const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(coordinate, fileId ?? NaN, channel ?? NaN);
+                    const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(coordinate, fileId ?? NaN, channel ?? NaN);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tile);
                     if (oldValue) {
                         this.clearTile(oldValue.value, oldValue.key);
@@ -750,7 +750,7 @@ export class TileService {
                 textureCoordinate: 0,
                 data: decompressedData
             };
-            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, fileId ?? NaN, channel ?? NaN);
+            const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(encodedCoordinate, fileId ?? NaN, channel ?? NaN);
             const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, rasterTile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);

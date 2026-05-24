@@ -38,7 +38,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stokes",
             type: "stokes",
@@ -103,7 +103,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
-        if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === StokesAnalysisComponent.WidgetConfig.type) {
             const id = appStore.widgetsStore.addStokesWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
@@ -156,12 +156,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT
     private getColorMapOrder(frame: FrameStore): boolean {
         const defaultType = frame?.spectralAxis?.type.code;
-        let CTYPE = frame?.spectralType ?? defaultType;
-        if (CTYPE === SpectralType.CHANNEL) {
-            CTYPE = defaultType;
+        let ctype = frame?.spectralType ?? defaultType;
+        if (ctype === SpectralType.CHANNEL) {
+            ctype = defaultType;
         }
 
-        switch (CTYPE) {
+        switch (ctype) {
             case SpectralColorMap.FREQ:
             case SpectralColorMap.ENER:
             case SpectralColorMap.WAVE:

@@ -3,7 +3,8 @@ import {type IconName, OverlayToaster, Position, type ToastProps} from "@bluepri
 
 import {copyToClipboard} from "utilities";
 
-const toaster = OverlayToaster.create(
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const Toaster = OverlayToaster.create(
     {
         className: "app-toaster",
         position: Position.BOTTOM
@@ -13,25 +14,26 @@ const toaster = OverlayToaster.create(
     }
 );
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const AppToaster = {
     show: async (toast: ToastProps) => {
-        (await toaster).show(toast);
+        (await Toaster).show(toast);
     },
     clear: async () => {
-        (await toaster).clear();
+        (await Toaster).clear();
     }
 };
 
-export function SuccessToast(icon: IconName, message: string, timeout?: number): ToastProps {
+export const SuccessToast = (icon: IconName, message: string, timeout?: number): ToastProps => {
     return {
         icon: icon,
         intent: "success",
         message: message,
         timeout: timeout || timeout === 0 ? timeout : 3000
     };
-}
+};
 
-export function ErrorToast(message: string): ToastProps {
+export const ErrorToast = (message: string): ToastProps => {
     return {
         icon: "error",
         intent: "danger",
@@ -42,9 +44,9 @@ export function ErrorToast(message: string): ToastProps {
             icon: "clipboard"
         }
     };
-}
+};
 
-export function WarningToast(message: string): ToastProps {
+export const WarningToast = (message: string): ToastProps => {
     return {
         icon: "warning-sign",
         intent: "warning",
@@ -55,4 +57,4 @@ export function WarningToast(message: string): ToastProps {
             icon: "clipboard"
         }
     };
-}
+};

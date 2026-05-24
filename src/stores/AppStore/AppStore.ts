@@ -28,6 +28,7 @@ import {
     TelemetryAction,
     WCSMatchingType
 } from "enums";
+import * as Enums from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -46,6 +47,7 @@ import {
     type Workspace,
     type WorkspaceFile
 } from "models";
+import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -73,7 +75,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -104,7 +106,7 @@ export const PREVIEW_PV_FILEID = -2;
 export class AppStore {
     private static staticInstance: AppStore;
 
-    static get Instance() {
+    public static get Instance() {
         return AppStore.staticInstance || new AppStore();
     }
 
@@ -339,6 +341,10 @@ export class AppStore {
         const dt = this.taskCurrentTime - this.taskStartTime;
         const estimatedFinishTime = dt / this.taskProgress;
         return estimatedFinishTime - dt;
+    }
+
+    @computed get frontendVersion(): string {
+        return CARTA_INFO.version;
     }
 
     @action startFileLoading = () => {
@@ -726,9 +732,9 @@ export class AppStore {
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
             return this.getFrame(ack.fileId);
@@ -757,9 +763,9 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
@@ -780,9 +786,9 @@ export class AppStore {
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
             AppStore.Instance.dialogStore.hideDialog(DialogId.Stokes);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
@@ -895,7 +901,7 @@ export class AppStore {
             }
 
             // Display confirmation if image has secondary images
-            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
+            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(Distinct);
             const numSecondaries = secondaries.length;
             if (numSecondaries) {
                 const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
@@ -1160,7 +1166,7 @@ export class AppStore {
             this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
                 const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+                const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
                 const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
                 if (catalogWidgetId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
@@ -1554,8 +1560,8 @@ export class AppStore {
                         const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
                         pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
                         pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
-                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
-                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
+                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WidgetConfig.type);
+                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
                     }
                 }
             } else {
@@ -1656,7 +1662,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveImageByFileId(message.fileId ?? -1);
+        this.setActiveImageById(ImageType.FRAME, message.fileId ?? -1);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -1896,6 +1902,7 @@ export class AppStore {
         window["app"] = this;
         window["carta"] = this;
         window["utils"] = Utils;
+        window["enums"] = Enums;
 
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -2236,7 +2243,7 @@ export class AppStore {
             }
 
             for (const profile of spectralProfileData.profiles) {
-                profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
+                profileStore.setProfile(ProtobufProcessing.processSpectralProfile(profile, spectralProfileData.progress));
             }
         }
     };
@@ -2375,7 +2382,7 @@ export class AppStore {
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
-            const catalogData = ProtobufProcessing.ProcessCatalogData(catalogFilter.columns);
+            const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
             catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
             catalogProfileStore.setProgress(progress);
             if (progress === 1) {
@@ -2434,7 +2441,7 @@ export class AppStore {
         if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
             return;
         }
-        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WidgetConfig.id + "-" + pvPreviewData.previewId)?.previewFrame;
 
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
@@ -2968,7 +2975,7 @@ export class AppStore {
         try {
             const success = await this.apiService.clearWorkspace(name);
             if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 return;
             }
         } catch (err) {
@@ -3017,22 +3024,48 @@ export class AppStore {
         if (frame.isPreview) {
             this.setActiveImage({type: ImageType.PV_PREVIEW, store: frame});
         } else {
-            this.setActiveImageByFileId(frame.id);
+            this.setActiveImageById(ImageType.FRAME, frame.id);
         }
     };
 
     /**
-     * Sets the active image with a loaded image.
-     * @param fileId - The file id of the loaded image.
+     * Sets the active image by its type and stable store id.
+     *
+     * For `ImageType.FRAME`, `id` is `frameInfo.fileId` (i.e. `FrameStore.id`).
+     * For `ImageType.COLOR_BLENDING`, `id` is `ColorBlendingStore.id`.
+     * For `ImageType.PV_PREVIEW`, `id` is `FrameStore.id`, which is always
+     * `PREVIEW_PV_FILEID` (-2). Only one PV preview can exist at a time
+     * (creating a new one replaces the old), so this id is unique in practice.
+     *
+     * Preferred over `setActiveImageByIndex` for programmatic activation,
+     * because `imageList` indices are volatile (images can be added,
+     * removed, or reordered), whereas `(type, id)` is stable.
+     *
+     * @param type - The image-view item type.
+     * @param id - The stable store id for that type.
      */
-    @action setActiveImageByFileId = (fileId: number) => {
-        const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, fileId);
+    @action setActiveImageById = (type: ImageType, id: number) => {
+        if (type === ImageType.PV_PREVIEW) {
+            const previewFrame = [...this.previewFrames.values()].find(f => f.id === id);
+            if (previewFrame) {
+                this.setActiveImage({type: ImageType.PV_PREVIEW, store: previewFrame});
+            } else {
+                console.error(`Can't find image of type ${type} with id ${id}`);
+            }
+            return;
+        }
+
+        if (type !== ImageType.FRAME && type !== ImageType.COLOR_BLENDING) {
+            console.error(`setActiveImageById: unsupported image type ${type}`);
+            return;
+        }
+        const index = this.imageViewConfigStore.getImageListIndex(type, id);
         const image = this.imageViewConfigStore.getImage(index);
 
         if (image) {
             this.setActiveImage(image);
         } else {
-            console.log(`Can't find required frame ${fileId}`);
+            console.error(`Can't find image of type ${type} with id ${id}`);
         }
     };
 
@@ -3047,7 +3080,7 @@ export class AppStore {
                 this.setActiveImage(image);
             }
         } else {
-            console.log(`Invalid image index ${index}`);
+            console.error(`Invalid image index ${index}`);
         }
     };
 
@@ -3553,6 +3586,10 @@ export class AppStore {
         return val;
     };
 
+    // For carta-python
+    listEnumSnapshots = listEnumSnapshotsFromRegistry;
+    getEnumSnapshots = getEnumSnapshotsFromRegistry;
+
     getFileList = async (directory: string) => {
         return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
     };
@@ -3578,8 +3615,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = StatsWidgetStore.CalculateRequirementsMap(this.widgetsStore.statsWidgets);
-        const diffList = StatsWidgetStore.DiffStatsRequirements(this.statsRequirements, updatedRequirements);
+        const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(this.widgetsStore.statsWidgets);
+        const diffList = StatsWidgetStore.diffStatsRequirements(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3594,8 +3631,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = HistogramWidgetStore.CalculateRequirementsMap(this.widgetsStore.histogramWidgets);
-        const diffList = HistogramWidgetStore.DiffHistoRequirements(this.histogramRequirements, updatedRequirements);
+        const updatedRequirements = HistogramWidgetStore.calculateRequirementsMap(this.widgetsStore.histogramWidgets);
+        const diffList = HistogramWidgetStore.diffHistoRequirements(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3610,11 +3647,11 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
+        const updatedRequirements = SpectralProfileWidgetStore.calculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
         if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
             StokesAnalysisWidgetStore.addToRequirementsMap(updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
-        const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
+        const diffList = SpectralProfileWidgetStore.diffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3627,8 +3664,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
-        const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
+        const updatedRequirements = SpatialProfileWidgetStore.calculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
+        const diffList = SpatialProfileWidgetStore.diffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -3641,8 +3678,8 @@ export class AppStore {
     private activateStatsPanel = (statsPanelEnabled: boolean) => {
         if (statsPanelEnabled) {
             import("stats-js")
-                .then(({default: Stats}) => {
-                    const stats = new Stats();
+                .then(({default: statsClass}) => {
+                    const stats = new statsClass();
                     stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
                     document.body.appendChild(stats.dom);
 

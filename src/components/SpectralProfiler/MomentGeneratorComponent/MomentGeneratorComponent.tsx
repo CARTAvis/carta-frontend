@@ -14,6 +14,7 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer

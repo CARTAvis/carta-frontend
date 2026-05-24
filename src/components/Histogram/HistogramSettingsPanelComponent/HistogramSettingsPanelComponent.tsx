@@ -22,7 +22,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
             type: "floating-settings",

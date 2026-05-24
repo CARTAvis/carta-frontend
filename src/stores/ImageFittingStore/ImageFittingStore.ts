@@ -3,11 +3,11 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, NumberFormatType} from "enums";
-import {AngularSize, isValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
+import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getRegionPixelProperties, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -16,7 +16,7 @@ const IMAGE_REGION_ID = -1;
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ImageFittingStore.staticInstance) {
             ImageFittingStore.staticInstance = new ImageFittingStore();
         }
@@ -544,7 +544,7 @@ export class ImageFittingStore {
             case FOV_REGION_ID:
                 log += "Region: field of view\n";
                 if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
-                    log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                    log += getRegionPixelProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                     log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                 }
                 break;
@@ -722,7 +722,7 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        if (!isValidWcsPoint(wcsSize)) {
+        if (!IsValidWcsPoint(wcsSize)) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);

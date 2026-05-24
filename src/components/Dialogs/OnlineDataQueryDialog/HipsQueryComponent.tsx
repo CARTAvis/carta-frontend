@@ -11,7 +11,7 @@ import {HipsQueryStore, type HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
-const filterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, exactMatch) => {
+const FilterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, exactMatch) => {
     const normalizedTitle = `${survey.name} ${survey.type}`.toLowerCase();
     const normalizedQuery = query.toLowerCase();
 
@@ -22,14 +22,14 @@ const filterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, exactMat
     }
 };
 
-const renderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, handleFocus, modifiers, query}) => {
+const RenderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, handleFocus, modifiers, query}) => {
     if (!modifiers.matchesPredicate) {
         return null;
     }
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={survey.name} onClick={handleClick} onFocus={handleFocus} roleStructure="listoption" text={survey.name} label={survey.type} />;
 };
 
-const renderPixelSize = () => {
+const RenderPixelSize = () => {
     const hipsQueryStore = HipsQueryStore.Instance;
     const pixelSize = AngularSize.convertFromArcsec(hipsQueryStore.pixelSize * 3600, true);
     if (pixelSize.unit === AngularSizeUnit.MILLIARCSEC && pixelSize.value < 0.001) {
@@ -51,8 +51,8 @@ export const HipsQueryComponent = observer(() => {
                             className="survey-input"
                             inputValueRenderer={() => hipsQueryStore.hipsSurvey}
                             items={hipsQueryStore.surveyList}
-                            itemPredicate={filterSurvey}
-                            itemRenderer={renderSurveyOption}
+                            itemPredicate={FilterSurvey}
+                            itemRenderer={RenderSurveyOption}
                             onItemSelect={item => hipsQueryStore.setHipsSurvey(item.name)}
                             onQueryChange={hipsQueryStore.setHipsSurvey}
                             popoverProps={{popoverClassName: "survey-list-select", minimal: true}}
@@ -107,7 +107,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setWidth}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
+                                    (hipsQueryStore.size.x >= hipsQueryStore.hipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.hipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
                                     isNaN(hipsQueryStore.size.x)
                                         ? "none"
                                         : "danger"
@@ -131,7 +131,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setHeight}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
+                                    (hipsQueryStore.size.y >= hipsQueryStore.hipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.hipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
                                     isNaN(hipsQueryStore.size.y)
                                         ? "none"
                                         : "danger"
@@ -149,7 +149,7 @@ export const HipsQueryComponent = observer(() => {
                                 intent={hipsQueryStore.isFovValid || isNaN(hipsQueryStore.fov) ? "none" : "danger"}
                             />
                         </Tooltip>
-                        {isNaN(hipsQueryStore.pixelSize) ? "" : renderPixelSize()}
+                        {isNaN(hipsQueryStore.pixelSize) ? "" : RenderPixelSize()}
                     </FormGroup>
                     <FormGroup inline={true} label="Output system" disabled={hipsQueryStore.isLoading}>
                         <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
@@ -159,7 +159,7 @@ export const HipsQueryComponent = observer(() => {
                     </FormGroup>
                     <FormGroup inline={true} label="Projection" disabled={hipsQueryStore.isLoading}>
                         <HTMLSelect
-                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.ProjectionOptionMap.get(val)}`, value: val}))}
+                            options={Object.values(HipsProjection).map(val => ({label: `${val} - ${HipsQueryStore.PROJECTION_OPTION_MAP.get(val)}`, value: val}))}
                             value={hipsQueryStore.projection}
                             onChange={ev => hipsQueryStore.setProjection(ev.currentTarget.value as HipsProjection)}
                             disabled={hipsQueryStore.isLoading}

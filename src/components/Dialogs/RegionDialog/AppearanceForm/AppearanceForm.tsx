@@ -15,7 +15,7 @@ import "./AppearanceForm.scss";
 
 @observer
 export class AppearanceForm extends React.Component<{region: RegionStore; darkTheme: boolean}> {
-    private static readonly APPEARANCE_CHANGE_DELAY = 100;
+    private static readonly AppearanceChangeDelay = 100;
 
     private static readonly TextAlignmentOptions: OptionProps[] = [
         {value: CARTA.TextAnnotationPosition.CENTER, label: "Center"},
@@ -33,13 +33,13 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
         if (this.props.region) {
             this.props.region.setLineWidth(Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)));
         }
-    }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
+    }, AppearanceForm.AppearanceChangeDelay);
 
     private handleDashLengthChange = _.throttle((value: number) => {
         if (this.props.region) {
             this.props.region.setDashLength(Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)));
         }
-    }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
+    }, AppearanceForm.AppearanceChangeDelay);
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
         const activeFrame = AppStore.Instance.activeFrame;

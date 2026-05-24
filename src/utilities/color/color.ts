@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
 
-import {COLOR_MAPS_ALL, SELECTABLE_COLORS, SUPPORTED_AUTO_COLORS_REGEX} from "./constants";
+import {COLOR_MAPS_ALL, SUPPORTED_AUTO_COLORS_REGEX} from "./constants";
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -15,6 +15,7 @@ function initContextWithSize(width: number, height: number) {
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const imageObj = new Image();
 imageObj.src = allMaps;
 imageObj.onload = () => {
@@ -40,11 +41,6 @@ export function getColorsFromHex(colorHex: string, startColorHex: string = "#000
 
 export function isAutoColor(color: string): boolean {
     return SUPPORTED_AUTO_COLORS_REGEX.test(color);
-}
-
-export function genColorFromIndex(index: number) {
-    const selectedColor = Number.isInteger(index) && index >= 0 ? SELECTABLE_COLORS[index % SELECTABLE_COLORS.length] : SELECTABLE_COLORS[0];
-    return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
 
 export function getColorForTheme(color: string): string {

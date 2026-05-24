@@ -8,7 +8,7 @@ import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
 export class RenderConfigStore {
-    static readonly SCALING_TYPES = new Map<FrameScaling, string>([
+    public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
         [FrameScaling.LINEAR, "Linear"],
         [FrameScaling.LOG, "Log"],
         [FrameScaling.SQRT, "Square root"],
@@ -17,20 +17,20 @@ export class RenderConfigStore {
         [FrameScaling.POWER, "Power"]
     ]);
 
-    static readonly CUSTOM_COLOR_MAP_INDEX = -1;
-    static readonly COLOR_MAPS_CUSTOM = "custom";
-    static readonly COLOR_MAPS_PANEL = "color_panel";
+    public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
+    public static readonly COLOR_MAPS_CUSTOM = "custom";
+    public static readonly COLOR_MAPS_PANEL = "color_panel";
 
-    static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+    public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    static readonly GAMMA_MIN = 0.1;
-    static readonly GAMMA_MAX = 2;
-    static readonly ALPHA_MIN = 0.1;
-    static readonly ALPHA_MAX = 1000000;
-    static readonly BIAS_MIN = -1;
-    static readonly BIAS_MAX = 1;
-    static readonly CONTRAST_MIN = 0;
-    static readonly CONTRAST_MAX = 2;
+    public static readonly GAMMA_MIN = 0.1;
+    public static readonly GAMMA_MAX = 2;
+    public static readonly ALPHA_MIN = 0.1;
+    public static readonly ALPHA_MAX = 1000000;
+    public static readonly BIAS_MIN = -1;
+    public static readonly BIAS_MAX = 1;
+    public static readonly CONTRAST_MIN = 0;
+    public static readonly CONTRAST_MAX = 2;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number = 0;
@@ -76,19 +76,19 @@ export class RenderConfigStore {
         makeObservable(this);
     }
 
-    public static IsScalingValid(scaling: FrameScaling): boolean {
+    public static isScalingValid(scaling: FrameScaling): boolean {
         return RenderConfigStore.SCALING_TYPES.has(scaling);
     }
 
-    public static IsGammaValid(gamma: number): boolean {
+    public static isGammaValid(gamma: number): boolean {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
     }
 
-    public static IsColormapValid(colormap: string): boolean {
+    public static isColormapValid(colormap: string): boolean {
         return COLOR_MAPS_SELECTED.includes(colormap);
     }
 
-    public static IsPercentileValid(percentile: number): boolean {
+    public static isPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
     }
 

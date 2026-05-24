@@ -70,7 +70,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable settingsTabId: StokesAnalysisSettingsTabs = StokesAnalysisSettingsTabs.CONVERSION;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
-    private static ValidStatsTypes = [CARTA.StatsType.Mean];
+    private static validStatsTypes = [CARTA.StatsType.Mean];
 
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
@@ -148,7 +148,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
-        if (StokesAnalysisWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
+        if (StokesAnalysisWidgetStore.validStatsTypes.indexOf(statsType) !== -1) {
             this.statsType = statsType;
         }
     };

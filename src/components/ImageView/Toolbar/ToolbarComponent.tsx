@@ -87,7 +87,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handlePanZoomShortCutClicked = () => {
         const widgetsStore = AppStore.Instance.widgetsStore;
-        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const parentType = ImageViewComponent.WidgetConfig.type;
         const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
         if (settingsWidget) {
             widgetsStore.removeFloatingWidget(settingsWidget.id);
@@ -154,8 +154,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const regionMenu = (
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
-                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                    const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(type);
+                    const regionIcon = RegionStore.isRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                     return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
                 <MenuDivider></MenuDivider>
@@ -187,8 +187,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
-        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+        const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(frame.regionSet.newRegionType);
+        const regionIcon = RegionStore.isRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;

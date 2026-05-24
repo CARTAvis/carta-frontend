@@ -420,14 +420,14 @@ export class SpectralLineQueryWidgetStore {
         const selectedLines: SpectralLine[] = [];
         const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
         const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
+        const qnColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
         const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
         lineSelectionData?.forEach((isSelected, index) => {
             if (isSelected) {
                 selectedLines.push({
                     species: speciesColumn?.data?.[index] as string,
                     value: (frequencyColumn?.data?.[index] as number) * this.redshiftFactor, // update shifted value
-                    qn: QNColumn?.data?.[index] as string
+                    qn: qnColumn?.data?.[index] as string
                 });
             }
         });
@@ -467,7 +467,7 @@ export class SpectralLineQueryWidgetStore {
     };
 
     private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
-        const ackColumns = ProtobufProcessing.ProcessCatalogData(ackData);
+        const ackColumns = ProtobufProcessing.processCatalogData(ackData);
 
         // Starting from i = 1 is to preserve the first column for line selection boolean
         // Since ```ackColumns``` has no line selection boolean column (but ```headers``` does), ackColumns.get(i - 1) extracts correct column data.

@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, POLARIZATIONS, VectorOverlayDialogTabs, VectorOverlaySource} from "enums";
+import {DialogId, HelpType, Polarizations, VectorOverlayDialogTabs, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -17,6 +17,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const DataSourceSelect = Select<FrameStore>;
 
 @observer
@@ -307,7 +308,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const angleOnly = dataSource.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
 
         const computedPIOptionAvailable = dataSource.hasLinearStokes;
-        const stokesIOptionAvailable = dataSource.polarizations.includes(POLARIZATIONS.I);
+        const stokesIOptionAvailable = dataSource.polarizations.includes(Polarizations.I);
         const thresholdOptionDisabled = !(computedPIOptionAvailable && stokesIOptionAvailable);
         const numberOfAvailableOptions = (computedPIOptionAvailable ? 1 : 0) + (stokesIOptionAvailable ? 1 : 0);
 

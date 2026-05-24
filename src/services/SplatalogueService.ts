@@ -10,10 +10,10 @@ export interface SpectralLineResponse {
 }
 
 export class SplatalogueService {
-    private static BaseUrl = "https://splatalogue.online/splata-slap/advanceded/false/";
+    private static baseUrl = "https://splatalogue.online/splata-slap/advanceded/false/";
     private readonly axiosInstance: AxiosInstance;
 
-    private static SplatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
+    private static splatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
         [SpectralLineHeaders.Species, CARTA.ColumnType.String],
         [SpectralLineHeaders.ChemicalName, CARTA.ColumnType.String],
         [SpectralLineHeaders.ShiftedFrequency, CARTA.ColumnType.Double],
@@ -35,7 +35,7 @@ export class SplatalogueService {
         [SpectralLineHeaders.LineList, CARTA.ColumnType.String]
     ]);
 
-    private static SplatalogueHeaderStringMap = new Map<SpectralLineHeaders, string>([
+    private static splatalogueHeaderStringMap = new Map<SpectralLineHeaders, string>([
         [SpectralLineHeaders.Species, "name"],
         [SpectralLineHeaders.ChemicalName, "chemical_name"],
         [SpectralLineHeaders.ShiftedFrequency, "orderedFreq"],
@@ -59,7 +59,7 @@ export class SplatalogueService {
 
     private static staticInstance: SplatalogueService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SplatalogueService.staticInstance) {
             SplatalogueService.staticInstance = new SplatalogueService();
         }
@@ -67,16 +67,16 @@ export class SplatalogueService {
     }
 
     private constructor() {
-        this.axiosInstance = axios.create({baseURL: SplatalogueService.BaseUrl});
+        this.axiosInstance = axios.create({baseURL: SplatalogueService.baseUrl});
     }
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
-        const params = SplatalogueService.GetParams(freqMin, freqMax, intensityLimit);
+        const params = SplatalogueService.getParams(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.post("", {body: JSON.stringify(params)});
-        return SplatalogueService.ConvertTable(response?.data);
+        return SplatalogueService.convertTable(response?.data);
     };
 
-    private static ConvertTable = (data: object[]) => {
+    private static convertTable = (data: object[]) => {
         if (!data) {
             throw new Error("invalid data received from Splatalogue");
         }
@@ -93,7 +93,7 @@ export class SplatalogueService {
         };
 
         let columnIndex = 0;
-        SplatalogueService.SplatalogueHeaderTypeMap.forEach((value, key) => {
+        SplatalogueService.splatalogueHeaderTypeMap.forEach((value, key) => {
             const header: CARTA.ICatalogHeader = {
                 dataType: value,
                 name: key,
@@ -111,7 +111,7 @@ export class SplatalogueService {
             const line = data[i];
 
             let j = 0;
-            SplatalogueService.SplatalogueHeaderStringMap.forEach((value, key) => {
+            SplatalogueService.splatalogueHeaderStringMap.forEach((value, key) => {
                 let entry = line[value]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
 
@@ -135,7 +135,7 @@ export class SplatalogueService {
         return responseData;
     };
 
-    private static GetParams = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
+    private static getParams = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
         if (freqMin > freqMax) {
             [freqMin, freqMax] = [freqMax, freqMin];
         }

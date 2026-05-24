@@ -10,7 +10,7 @@ export class HelpStore {
         makeObservable(this);
     }
 
-    static get Instance() {
+    public static get Instance() {
         if (!HelpStore.staticInstance) {
             HelpStore.staticInstance = new HelpStore();
         }

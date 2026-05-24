@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
+import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
@@ -148,11 +148,11 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS | undefined {
+    @computed get effectivePolarization(): Polarizations | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
-            return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
+            return Polarizations[this.coordinate.substring(0, this.coordinate.length - 1)];
         }
     }
 
@@ -192,7 +192,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return !(!this.currentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetHistogramRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -260,7 +260,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetHistogramRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetHistogramRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffHistoRequirements(originalRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>) {
+    public static diffHistoRequirements(originalRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>) {
         const diffList: CARTA.SetHistogramRequirements[] = [];
 
         // Fill updated requirements with missing entries

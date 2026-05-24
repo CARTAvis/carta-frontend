@@ -27,12 +27,12 @@ const IconWrapper = (path: React.ReactNode, color: string, fill: boolean, stroke
     );
 };
 
-const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z" />;
-const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z" />;
-const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-const hexagon2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z" />;
-const hexagon = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
-const ellipse = <ellipse cx="8" cy="8" rx="4" ry="7" />;
+const TRIANGLE_UP = <path d="M 2 14 L 14 14 L 8 3 Z" />;
+const TRIANGLE_DOWN = <path d="M 2 2 L 14 2 L 8 13 Z" />;
+const RHOMB = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
+const HEXAGON2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z" />;
+const HEXAGON = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
+const ELLIPSE = <ellipse cx="8" cy="8" rx="4" ry="7" />;
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -56,7 +56,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogOverlayShape.LineSegment_FILLED
     ];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
@@ -474,12 +474,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Collapse>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={disabledOverlayPanel}
-                            min={CatalogWidgetStore.MinThickness}
-                            max={CatalogWidgetStore.MaxThickness}
+                            min={CatalogWidgetStore.MIN_THICKNESS}
+                            max={CatalogWidgetStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
                             value={widgetStore.thickness}
                             stepSize={0.5}
@@ -544,12 +544,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={disabledOverlayPanel}
-                            min={CatalogWidgetStore.MinThickness}
-                            max={CatalogWidgetStore.MaxThickness}
+                            min={CatalogWidgetStore.MIN_THICKNESS}
+                            max={CatalogWidgetStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
                             value={widgetStore.thickness}
                             stepSize={0.5}
@@ -804,7 +804,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         switch (type) {
             case "size-min":
-                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
+                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SIZE_MAP_MIN) {
                     const inputVal = val;
                     if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
                         widgetStore.setMinorSizeMin(inputVal);
@@ -880,17 +880,17 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             case CatalogOverlayShape.X_FILLED:
                 return <Icon icon="cross" color={color} />;
             case CatalogOverlayShape.TRIANGLE_LINED_UP:
-                return IconWrapper(triangleUp, color, false);
+                return IconWrapper(TRIANGLE_UP, color, false);
             case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
-                return IconWrapper(triangleDown, color, false);
+                return IconWrapper(TRIANGLE_DOWN, color, false);
             case CatalogOverlayShape.RHOMB_LINED:
-                return IconWrapper(rhomb, color, false);
+                return IconWrapper(RHOMB, color, false);
             case CatalogOverlayShape.HEXAGON_LINED_2:
-                return IconWrapper(hexagon2, color, false);
+                return IconWrapper(HEXAGON2, color, false);
             case CatalogOverlayShape.HEXAGON_LINED:
-                return IconWrapper(hexagon, color, false);
+                return IconWrapper(HEXAGON, color, false);
             case CatalogOverlayShape.ELLIPSE_LINED:
-                return IconWrapper(ellipse, color, false);
+                return IconWrapper(ELLIPSE, color, false);
             case CatalogOverlayShape.LineSegment_FILLED:
                 return <Icon icon="minus" style={{transform: "rotate(90deg)"}} color={color} />;
             default:
