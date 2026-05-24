@@ -485,13 +485,13 @@ export class WidgetsStore {
         if (!floatingSettingsWidgets) {
             return null;
         }
-        let isSettingShowed = false;
+        let isSettingShown = false;
         floatingSettingsWidgets.forEach(value => {
             if (value === parentId) {
-                isSettingShowed = true;
+                isSettingShown = true;
             }
         });
-        if (isSettingShowed) {
+        if (isSettingShown) {
             return null;
         }
         let nextIndex = 0;

@@ -166,7 +166,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer = ImageViewLayer.RegionMoving;
     @observable isCursorFrozen: boolean = false;
-    @observable isCursorMirror: boolean = false;
+    @observable isCursorMirrored: boolean = false;
     @observable isToolbarExpanded: boolean = true;
     @observable imageRatio: number = 1;
     @observable isExportingImage: boolean = false;
@@ -1717,7 +1717,7 @@ export class AppStore {
     };
 
     @action toggleCursorMirror = () => {
-        this.isCursorMirror = !this.isCursorMirror;
+        this.isCursorMirrored = !this.isCursorMirrored;
     };
 
     @action toggleToolbarExpanded = () => {
