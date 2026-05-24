@@ -73,7 +73,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -97,25 +97,12 @@ interface ChannelUpdate {
     stokes: number;
 }
 
-interface RegionClipboardData {
-    sourceFileId: number;
-    regionType: CARTA.RegionType;
-    controlPoints: Point2D[];
-    rotation: number;
-    name: string;
-    color: string;
-    lineWidth: number;
-    dashLength: number;
-    annotationStyles?: any;
-}
-
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
 
 export class AppStore {
     private static staticInstance: AppStore;
-    private static readonly PasteOffset = 20;
 
     static get Instance() {
         return AppStore.staticInstance || new AppStore();
@@ -3183,7 +3170,7 @@ export class AppStore {
         }
 
         const shouldApplyInitialOffset = clipboard.sourceFileId === frame.frameInfo.fileId;
-        const targetPoints = this.offsetPointsToAvoidCollision(clipboard.controlPoints, clipboard.regionType, frame.regionSet.regions, shouldApplyInitialOffset);
+        const targetPoints = offsetPointsToAvoidCollision(clipboard.controlPoints, clipboard.regionType, frame.regionSet.regions, shouldApplyInitialOffset);
 
         const region = frame.regionSet.addExistingRegion(
             targetPoints,
@@ -3228,122 +3215,6 @@ export class AppStore {
     private setCursor = (fileId: number, pos: Point2D) => {
         const frame = this.getFrame(fileId);
         frame?.updateCursorRegion(pos);
-    };
-
-    private getRegionCenter = (points: Point2D[], regionType: CARTA.RegionType): Point2D => {
-        switch (regionType) {
-            case CARTA.RegionType.LINE:
-            case CARTA.RegionType.ANNLINE:
-            case CARTA.RegionType.ANNVECTOR:
-            case CARTA.RegionType.ANNRULER:
-                if (points.length >= 2) {
-                    return {
-                        x: (points[0].x + points[1].x) / 2,
-                        y: (points[0].y + points[1].y) / 2
-                    };
-                }
-                return points[0] ?? {x: 0, y: 0};
-            case CARTA.RegionType.POLYGON:
-            case CARTA.RegionType.ANNPOLYGON:
-            case CARTA.RegionType.POLYLINE:
-            case CARTA.RegionType.ANNPOLYLINE:
-                if (!points.length) {
-                    return {x: 0, y: 0};
-                }
-
-                let minX = points[0].x;
-                let maxX = points[0].x;
-                let minY = points[0].y;
-                let maxY = points[0].y;
-                for (const point of points) {
-                    minX = Math.min(minX, point.x);
-                    maxX = Math.max(maxX, point.x);
-                    minY = Math.min(minY, point.y);
-                    maxY = Math.max(maxY, point.y);
-                }
-
-                return {
-                    x: (minX + maxX) / 2,
-                    y: (minY + maxY) / 2
-                };
-            default:
-                return points[0] ?? {x: 0, y: 0};
-        }
-    };
-
-    private getLinePositionAngle = (points: Point2D[]): number => {
-        if (points.length < 2) {
-            return 0;
-        }
-
-        let angle = (Math.atan((points[1].x - points[0].x) / (points[0].y - points[1].y)) * 180.0) / Math.PI;
-        if (points[1].y > points[0].y) {
-            angle += 180;
-        }
-
-        return (angle + 360) % 360;
-    };
-
-    private getPasteShiftDelta = (points: Point2D[], regionType: CARTA.RegionType): Point2D => {
-        switch (regionType) {
-            case CARTA.RegionType.LINE:
-            case CARTA.RegionType.ANNLINE:
-            case CARTA.RegionType.ANNVECTOR: {
-                const positionAngle = this.getLinePositionAngle(points);
-                const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
-                return shouldShiftYOnly ? {x: 0, y: AppStore.PasteOffset} : {x: AppStore.PasteOffset, y: 0};
-            }
-            default:
-                return {x: AppStore.PasteOffset, y: AppStore.PasteOffset};
-        }
-    };
-
-    private shiftRegionPoints = (points: Point2D[], regionType: CARTA.RegionType, offsetX: number, offsetY: number): Point2D[] => {
-        switch (regionType) {
-            case CARTA.RegionType.POINT:
-            case CARTA.RegionType.ANNPOINT:
-            case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
-                return points.map((point, index) => {
-                    if (index === 0) {
-                        return {x: point.x + offsetX, y: point.y + offsetY};
-                    }
-                    return {x: point.x, y: point.y};
-                });
-            default:
-                return points.map(point => ({x: point.x + offsetX, y: point.y + offsetY}));
-        }
-    };
-
-    private offsetPointsToAvoidCollision = (points: Point2D[], regionType: CARTA.RegionType, regions: RegionStore[], shouldApplyInitialOffset: boolean): Point2D[] => {
-        let shiftedPoints = points.map(point => ({x: point.x, y: point.y}));
-        let attempts = 0;
-        const shiftDelta = this.getPasteShiftDelta(points, regionType);
-
-        const hasCollision = (center: Point2D) => {
-            return regions.some(region => {
-                if (region.regionId === CURSOR_REGION_ID || !region.isValid) {
-                    return false;
-                }
-
-                return Math.max(Math.abs(region.center.x - center.x), Math.abs(region.center.y - center.y)) < AppStore.PasteOffset / 2;
-            });
-        };
-
-        if (shouldApplyInitialOffset) {
-            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
-        }
-
-        while (attempts < 20 && hasCollision(this.getRegionCenter(shiftedPoints, regionType))) {
-            shiftedPoints = this.shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
-            attempts++;
-        }
-
-        return shiftedPoints;
     };
 
     /**
