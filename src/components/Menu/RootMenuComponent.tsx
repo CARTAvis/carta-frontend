@@ -376,32 +376,32 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const isTilesLoading = appStore.tileService.remainingTiles > 0;
-        const isContoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const isVectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const isLoadingTiles = appStore.tileService.remainingTiles > 0;
+        const isLoadingContours = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const isLoadingVectorOverlay = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
         let shouldShowLoadingIndicator = false;
 
-        if (isTilesLoading || isContoursLoading || isVectorOverlayLoading) {
+        if (isLoadingTiles || isLoadingContours || isLoadingVectorOverlay) {
             let tilesTooltipContent;
-            if (isTilesLoading) {
+            if (isLoadingTiles) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
-            if (isContoursLoading && appStore.activeFrame) {
+            if (isLoadingContours && appStore.activeFrame) {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
-            if (isVectorOverlayLoading && appStore.activeFrame) {
+            if (isLoadingVectorOverlay && appStore.activeFrame) {
                 vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
-                    {isContoursLoading && isTilesLoading && <br />}
+                    {isLoadingContours && isLoadingTiles && <br />}
                     {contourTooltipContent}
                     {vectorOverlayTooltipContent}
                 </React.Fragment>

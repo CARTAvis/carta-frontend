@@ -68,7 +68,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.width = width;
         this.height = height;
 
-        // fixed bug from blueprintjs, only shouldDisplay 4 rows.
+        // fixed bug from blueprintjs, only display 4 rows.
         if (this.headerTableRef) {
             this.updateTableSize(this.headerTableRef, this.props.docked);
         }

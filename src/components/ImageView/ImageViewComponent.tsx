@@ -226,9 +226,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
                 const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
                 // Compare to cached image size to prevent duplicate events when changing frames
-                const didImageSizeChange = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
-                const didGridSizeChange = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
-                if (didImageSizeChange || didGridSizeChange) {
+                const isImageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+                const isGridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+                if (isImageSizeChanged || isGridSizeChanged) {
                     this.cachedImageSize = imageSize;
                     this.cachedGridSize = imageGridSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);

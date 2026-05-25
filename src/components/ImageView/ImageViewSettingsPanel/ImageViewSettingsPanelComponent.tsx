@@ -79,7 +79,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const isInterior: boolean = global.labelType === LabelType.Interior;
 
-        const disabledIfInterior = isInterior && "Does not apply to isInterior labelling.";
+        const disabledIfInterior = isInterior && "Does not apply to interior labelling.";
         const disabledIfExterior = !isInterior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.isValidWcs && "This image has no valid WCS data.";
 

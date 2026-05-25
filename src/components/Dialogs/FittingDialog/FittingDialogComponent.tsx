@@ -300,7 +300,7 @@ export class FittingDialogComponent extends React.Component {
                                                     <span>
                                                         <br />
                                                         <i>
-                                                            <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are isFixed.</small>
+                                                            <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are fixed.</small>
                                                         </i>
                                                     </span>
                                                 )}

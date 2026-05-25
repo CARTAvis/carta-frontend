@@ -266,7 +266,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = frame.regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
-            const isRegionLocked = region.isLocked;
+            const _isRegionLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;

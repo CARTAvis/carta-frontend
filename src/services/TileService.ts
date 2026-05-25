@@ -266,10 +266,10 @@ export class TileService {
         return newRequests;
     }
 
-    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, didChannelsChange: boolean = false) {
+    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, isChannelsChanged: boolean = false) {
         const key = `${fileId}_${stokes}_${channel}`;
 
-        if (didChannelsChange || !this.channelMap.has(fileId)) {
+        if (isChannelsChanged || !this.channelMap.has(fileId)) {
             this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
@@ -290,7 +290,7 @@ export class TileService {
                     return aX * aX + aY * aY - (bX * bX + bY * bY);
                 })
                 .map(tile => tile.encode());
-            if (didChannelsChange) {
+            if (isChannelsChanged) {
                 this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
@@ -322,7 +322,7 @@ export class TileService {
         return result;
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, didPolarizationChange: boolean = false) {
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, isPolarizationChanged: boolean = false) {
         if (!frame) {
             return;
         }
@@ -331,7 +331,7 @@ export class TileService {
         const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
-        if (didPolarizationChange) {
+        if (isPolarizationChanged) {
             for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
                 const key = `${fileId}_${stokes}_${i}`;
                 this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
@@ -373,16 +373,8 @@ export class TileService {
 
         for (const {range, tiles} of channelsToTilesArray) {
             if (tiles.length) {
-                const didRequestSendSuccessfully = this.backendService.setChannels(
-                    fileId,
-                    requiredChannel,
-                    stokes,
-                    {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles},
-                    true,
-                    range,
-                    fullChannelRange
-                );
-                if (didRequestSendSuccessfully) {
+                const isRequestSendSuccessful = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
+                if (isRequestSendSuccessful) {
                     this.currentlyStreamingChannelRange = fullChannelRange;
                     this.currentlyStreamingTileRange = currentTiles;
                 }
