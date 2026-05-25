@@ -40,8 +40,8 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefine
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, forward: boolean = true) {
-    return AST.transformPoint(astTransform, point.x, point.y, forward);
+export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
+    return AST.transformPoint(astTransform, point.x, point.y, isForward);
 }
 
 export function getReferencePixel(frame: FrameStore): Point2D {
@@ -235,11 +235,11 @@ export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerRe
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
-    const totalLength = polygonPerimeter(controlPoints, closed);
+export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, isClosed: boolean = true): Point2D[] {
+    const totalLength = polygonPerimeter(controlPoints, isClosed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 
-    const M = controlPoints.length + (closed ? 1 : 0);
+    const M = controlPoints.length + (isClosed ? 1 : 0);
     const approxPointsOriginalSpace = new Array<Point2D>();
     for (let i = 1; i < M; i++) {
         const p1 = controlPoints[i % controlPoints.length];

@@ -203,7 +203,7 @@ function isBetterAxisMatch(candidate: AxisMatchCandidate, bestMatch: AxisMatchCa
 
 function findPreferredAxisColumn(axisLabel: CatalogOverlay, axisOptions: string[], patterns: RegExp[], system: CatalogSystemType | undefined): string | undefined {
     let bestMatch: AxisMatchCandidate | undefined;
-    const usesEquatorialPriority = axisLabel === CatalogOverlay.RA || axisLabel === CatalogOverlay.DEC;
+    const hasEquatorialPriority = axisLabel === CatalogOverlay.RA || axisLabel === CatalogOverlay.DEC;
 
     axisOptions.forEach((option, optionIndex) => {
         const patternIndex = patterns.findIndex(pattern => pattern.test(option));
@@ -211,7 +211,7 @@ function findPreferredAxisColumn(axisLabel: CatalogOverlay, axisOptions: string[
             return;
         }
 
-        const matchPriority = usesEquatorialPriority ? getEquatorialColumnPriority(option, system) : 0;
+        const matchPriority = hasEquatorialPriority ? getEquatorialColumnPriority(option, system) : 0;
         if (matchPriority >= INCOMPATIBLE_AXIS_PRIORITY) {
             return;
         }
