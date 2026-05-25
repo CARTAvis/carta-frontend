@@ -24,7 +24,7 @@ interface HistogramConfigProps {
 
 @observer
 export class HistogramConfigComponent extends React.Component<HistogramConfigProps> {
-    @observable showCubeHistogramAlert: boolean = false;
+    @observable shouldShowCubeHistogramAlert: boolean = false;
 
     constructor(props: any) {
         super(props);
@@ -35,15 +35,15 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    handleHistogramChange = (value: boolean) => {
-        if (value && !this.props.renderConfig.cubeHistogram) {
+    handleHistogramChange = (shouldUseCubeHistogram: boolean) => {
+        if (shouldUseCubeHistogram && !this.props.renderConfig.cubeHistogram) {
             if (this.props.warnOnCubeHistogram) {
-                this.showCubeHistogramAlert = true;
+                this.shouldShowCubeHistogramAlert = true;
             } else {
                 this.handleAlertConfirm();
             }
         } else {
-            this.props.renderConfig.setUseCubeHistogram(value);
+            this.props.renderConfig.setUseCubeHistogram(shouldUseCubeHistogram);
         }
     };
 
@@ -79,7 +79,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                 <Alert
                     className={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}
                     icon={"time"}
-                    isOpen={this.showCubeHistogramAlert}
+                    isOpen={this.shouldShowCubeHistogramAlert}
                     onCancel={this.handleAlertCancel}
                     onConfirm={this.handleAlertConfirm}
                     cancelButtonText={"Cancel"}
@@ -92,10 +92,10 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
 
     private handleAlertConfirm = () => {
         this.props.onCubeHistogramSelected();
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 }

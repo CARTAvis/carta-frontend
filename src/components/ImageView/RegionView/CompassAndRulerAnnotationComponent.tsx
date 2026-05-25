@@ -167,7 +167,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.isDarkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -211,7 +211,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         updateOffset();
     }, []);
 
-    const generateProps = (north: boolean) => {
+    const generateProps = (isNorth: boolean) => {
         return {
             stroke: region.color,
             fill: region.color,
@@ -221,7 +221,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
-            points: north ? northPointArray : eastPointArray,
+            points: isNorth ? northPointArray : eastPointArray,
             pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
             pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
             hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
@@ -452,7 +452,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.isDarkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */

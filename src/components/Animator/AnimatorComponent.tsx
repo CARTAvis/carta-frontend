@@ -205,8 +205,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
 
-        const iconOnly = this.width < 625;
-        const hideSliders = this.width < 450;
+        const isIconOnly = this.width < 625;
+        const shouldHideSliders = this.width < 450;
 
         let channelSlider, channelRangeSlider, stokesSlider, imageSlider;
         // Image Control
@@ -219,8 +219,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             imageSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.isAnimationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />}
-                    {!hideSliders && appStore.activeImage?.store.filename && (
+                    {shouldHideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />}
+                    {!shouldHideSliders && appStore.activeImage?.store.filename && (
                         <React.Fragment>
                             <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.isAnimationActive} />
                             <div className="slider-info">{appStore.activeImage.store.filename}</div>
@@ -246,8 +246,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label={activeFrame.channelType}
                     />
-                    {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />}
-                    {!hideSliders && (
+                    {shouldHideSliders && (
+                        <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />
+                    )}
+                    {!shouldHideSliders && (
                         <React.Fragment>
                             <Slider
                                 className="channel-slider"
@@ -270,7 +272,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             channelRangeSlider = (
                 <div className="animator-slider range-slider" data-testid="animator-range-slider">
                     <div className="range-label" />
-                    {!hideSliders && (
+                    {!shouldHideSliders && (
                         <React.Fragment>
                             <RangeSlider
                                 value={activeFrame.animationChannelRange}
@@ -299,7 +301,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label="Polarization"
                     />
-                    {hideSliders && (
+                    {shouldHideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredStokes}
                             min={-1}
@@ -310,7 +312,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             fill={true}
                         />
                     )}
-                    {!hideSliders && (
+                    {!shouldHideSliders && (
                         <React.Fragment>
                             <Slider
                                 value={activeFrame.requiredPolarizationIndex}
@@ -330,7 +332,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const playbackClass = classNames("animator-playback", {wrap: hideSliders});
+        const playbackClass = classNames("animator-playback", {wrap: shouldHideSliders});
         const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.isDarkTheme});
 
         const playbackModeButton = (
@@ -349,7 +351,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-playback-mode-button">
-                        {!iconOnly && "Mode"}
+                        {!isIconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
             </Popover>
@@ -358,26 +360,26 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
                 <Button icon={"chevron-backward"} onClick={this.onFirstClicked} data-testid="animator-first-button">
-                    {!iconOnly && "First"}
+                    {!isIconOnly && "First"}
                 </Button>
                 <Button icon={"step-backward"} onClick={this.onPrevClicked} data-testid="animator-previous-button">
-                    {!iconOnly && "Prev"}
+                    {!isIconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.isAnimationActive && (
                     <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-play-stop-button">
-                        {!iconOnly && "Stop"}
+                        {!isIconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.isAnimationActive && (
                     <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.animatorStore.shouldStartAnimationDisable || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-play-stop-button">
-                        {!iconOnly && "Play"}
+                        {!isIconOnly && "Play"}
                     </Button>
                 )}
                 <Button icon={"step-forward"} onClick={this.onNextClicked} data-testid="animator-next-button">
-                    {!iconOnly && "Next"}
+                    {!isIconOnly && "Next"}
                 </Button>
                 <Button icon={"chevron-forward"} onClick={this.onLastClicked} data-testid="animator-last-button">
-                    {!iconOnly && "Last"}
+                    {!isIconOnly && "Last"}
                 </Button>
             </ButtonGroup>
         );

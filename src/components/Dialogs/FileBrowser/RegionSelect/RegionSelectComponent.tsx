@@ -152,8 +152,8 @@ export class RegionSelectComponent extends React.Component {
 
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
-        const includesAnnotation = FileBrowserStore.Instance.hasAnnotation;
-        const includesRegion = FileBrowserStore.Instance.hasRegion;
+        const hasAnnotations = FileBrowserStore.Instance.hasAnnotation;
+        const hasRegion = FileBrowserStore.Instance.hasRegion;
         const annotationNum = FileBrowserStore.Instance.annotationOptionNum;
         const regionNum = optionNum - annotationNum;
 
@@ -163,8 +163,8 @@ export class RegionSelectComponent extends React.Component {
                     <React.Fragment>
                         {this.renderSelectStatus()}
                         {optionNum > 1 && this.renderSelectAll(SelectionMode.All)}
-                        {includesRegion && includesAnnotation && regionNum > 1 && this.renderSelectAll(SelectionMode.Region)}
-                        {includesAnnotation && includesRegion && annotationNum > 1 && this.renderSelectAll(SelectionMode.Annotation)}
+                        {hasRegion && hasAnnotations && regionNum > 1 && this.renderSelectAll(SelectionMode.Region)}
+                        {hasAnnotations && hasRegion && annotationNum > 1 && this.renderSelectAll(SelectionMode.Annotation)}
                         {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (

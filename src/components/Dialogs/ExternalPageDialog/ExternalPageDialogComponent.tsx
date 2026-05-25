@@ -38,7 +38,7 @@ export class ExternalPageDialogComponent extends React.Component {
                 defaultHeight={ExternalPageDialogComponent.DefaultHeight}
                 minWidth={ExternalPageDialogComponent.MinWidth}
                 minHeight={ExternalPageDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.ExternalPage}
             >
                 <div className={Classes.DIALOG_BODY}>

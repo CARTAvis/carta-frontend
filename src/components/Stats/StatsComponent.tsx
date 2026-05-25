@@ -253,15 +253,15 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         const widgetStore = this.widgetStore;
 
-        let enableStokesSelect = false;
+        let isStokesSelectEnabled = false;
         let stokesClassName = "unlinked-to-selected";
         const coordinateOptions = [{value: "z", label: "Current"}];
 
         if (widgetStore.effectiveFrame?.regionSet) {
-            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
+            isStokesSelectEnabled = widgetStore.effectiveFrame.hasStokes;
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
+            if (isStokesSelectEnabled && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
                 stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.isDarkTheme});
             }
         }
@@ -304,7 +304,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             exportDataComponent = (
                 <div className="stats-export-data">
-                    <ToolbarComponent darkMode={appStore.isDarkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
+                    <ToolbarComponent isDarkMode={appStore.isDarkTheme} isVisible={this.isMouseEntered} exportData={this.exportData} />
                 </div>
             );
         } else {
@@ -318,8 +318,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 <div className={className}>
                     <div className="stats-toolbar">
                         <RegionSelectorComponent widgetStore={this.widgetStore} />
-                        <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
-                            <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} data-testid="polarization-dropdown" />
+                        <FormGroup label={"Polarization"} inline={true} disabled={!isStokesSelectEnabled}>
+                            <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!isStokesSelectEnabled} data-testid="polarization-dropdown" />
                         </FormGroup>
                     </div>
                     <div className="stats-display" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>

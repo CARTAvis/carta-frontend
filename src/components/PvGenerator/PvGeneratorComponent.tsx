@@ -162,8 +162,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         makeObservable(this);
     }
 
-    @action setisValidSpectralRange = (bool: boolean) => {
-        this.isValidSpectralRange = bool;
+    @action setisValidSpectralRange = (isValid: boolean) => {
+        this.isValidSpectralRange = isValid;
     };
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -233,8 +233,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private handleSpectralRangeChanged = (value: number, max: boolean) => {
-        if (max) {
+    private handleSpectralRangeChanged = (value: number, isMax: boolean) => {
+        if (isMax) {
             this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
         } else {
             this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});

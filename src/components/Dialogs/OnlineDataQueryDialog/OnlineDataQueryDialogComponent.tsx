@@ -37,7 +37,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             defaultHeight={DEFAULT_HEIGHT}
             minWidth={MIN_WIDTH}
             minHeight={MIN_HEIGHT}
-            enableResizing={true}
+            isResizingEnabled={true}
             dialogId={DialogId.OnlineDataQuery}
         >
             <div className={Classes.DIALOG_BODY}>

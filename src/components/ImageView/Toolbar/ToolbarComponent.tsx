@@ -16,8 +16,8 @@ import {toFixed} from "utilities";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
-    docked: boolean;
-    visible: boolean;
+    isDocked: boolean;
+    isVisible: boolean;
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
@@ -123,11 +123,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             bottom: frame.overlayStore.padding.bottom,
             right: frame.overlayStore.padding.right,
             left: frame.overlayStore.padding.left,
-            opacity: this.props.visible ? 1 : 0,
+            opacity: this.props.isVisible ? 1 : 0,
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.isDarkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.isDocked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -190,16 +190,16 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(frame.regionSet.newRegionType);
         const regionIcon = RegionStore.isRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
-        const spatialMatchingEnabled = !!frame.spatialReference;
-        const spectralMatchingEnabled = !!frame.spectralReference;
+        const isSpatialMatchingEnabled = !!frame.spatialReference;
+        const isSpectralMatchingEnabled = !!frame.spectralReference;
         const canEnableSpatialMatching = appStore.spatialReference !== frame;
         const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
-        const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
+        const wcsButtonSuperscript = (isSpatialMatchingEnabled ? "x" : "") + (isSpectralMatchingEnabled ? "z" : "");
         const wcsButtonTooltipEntries: string[] = [];
-        if (spectralMatchingEnabled) {
+        if (isSpectralMatchingEnabled) {
             wcsButtonTooltipEntries.push(`Spectral (${appStore.spectralMatchingType})`);
         }
-        if (spatialMatchingEnabled) {
+        if (isSpatialMatchingEnabled) {
             wcsButtonTooltipEntries.push("Spatial");
         }
         const wcsButtonTooltip = wcsButtonTooltipEntries.join(" and ") || "None";
@@ -209,17 +209,17 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem
                     text={`Spectral (${appStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
-                    active={spectralMatchingEnabled && spatialMatchingEnabled}
+                    active={isSpectralMatchingEnabled && isSpatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
                 <MenuItem
                     text={`Spectral (${appStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
-                    active={spectralMatchingEnabled && !spatialMatchingEnabled}
+                    active={isSpectralMatchingEnabled && !isSpatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}
                 />
-                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
-                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
+                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!isSpectralMatchingEnabled && isSpatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
+                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!isSpectralMatchingEnabled && !isSpatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
             </Menu>
         );
 
@@ -231,10 +231,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const baseFrame = this.props.frame;
         const numSourcesArray = appStore.catalogStore.visibleCatalogFiles.get(baseFrame)?.map(fileId => appStore.catalogStore.catalogCounts.get(fileId));
-        const numSourcesIsZero = numSourcesArray?.every(element => element === 0);
+        const isNumSourcesZero = numSourcesArray?.every(element => element === 0);
 
-        const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
+        const isCatalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
+        const isCatalogSelectionDisabled = appStore.catalogNum === 0 || isNumSourcesZero === true;
 
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
@@ -275,7 +275,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
+                                    <AnchorButton icon={"locate"} active={isCatalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={isCatalogSelectionDisabled} />
                                 </Tooltip>
                                 {frame.regionSet.mode === RegionMode.CREATING && (
                                     <Popover popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>

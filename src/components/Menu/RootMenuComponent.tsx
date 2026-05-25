@@ -20,11 +20,11 @@ import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
-    @observable documentationAlertVisible: boolean = false;
-    @observable disableCheckRelease: boolean = false;
+    @observable isDocumentationAlertVisible: boolean = false;
+    @observable isCheckReleaseDisabled: boolean = false;
 
     @action toggleDisableCheckRelease = () => {
-        this.disableCheckRelease = !this.disableCheckRelease;
+        this.isCheckReleaseDisabled = !this.isCheckReleaseDisabled;
     };
 
     private documentationAlertTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -119,7 +119,7 @@ export class RootMenuComponent extends React.Component {
 
     private newReleaseButtonOnClick = () => {
         const appStore = AppStore.Instance;
-        if (this.disableCheckRelease) {
+        if (this.isCheckReleaseDisabled) {
             appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
         }
         appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
@@ -238,10 +238,10 @@ export class RootMenuComponent extends React.Component {
         }
 
         let saveImageTooltip: string | React.JSX.Element = "";
-        let hideImageTooltip = true;
+        let shouldHideImageTooltip = true;
         if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
             saveImageTooltip = "Not allowed in read-only mode";
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         } else if (appStore.activeImage?.type !== ImageType.FRAME) {
             saveImageTooltip = (
                 <span>
@@ -250,14 +250,14 @@ export class RootMenuComponent extends React.Component {
                     <small>To save color-blending images, please save as a workspace via the File menu.</small>
                 </span>
             );
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         }
 
         const fileMenu = (
             <Menu>
                 <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.isOpenFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
                 <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
+                <Tooltip content={saveImageTooltip} disabled={shouldHideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
@@ -341,7 +341,7 @@ export class RootMenuComponent extends React.Component {
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                if (appStore.backendService.connectionDropped) {
+                if (appStore.backendService.hasConnectionDropped) {
                     connectivityTooltip = (
                         <span>
                             Reconnected to server {userString} after disconnect. Some errors may occur
@@ -376,38 +376,38 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const vectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const isTilesLoading = appStore.tileService.remainingTiles > 0;
+        const isContoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const isVectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
-        let showLoadingIndicator = false;
+        let shouldShowLoadingIndicator = false;
 
-        if (tilesLoading || contoursLoading || vectorOverlayLoading) {
+        if (isTilesLoading || isContoursLoading || isVectorOverlayLoading) {
             let tilesTooltipContent;
-            if (tilesLoading) {
+            if (isTilesLoading) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
-            if (contoursLoading && appStore.activeFrame) {
+            if (isContoursLoading && appStore.activeFrame) {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
-            if (vectorOverlayLoading && appStore.activeFrame) {
+            if (isVectorOverlayLoading && appStore.activeFrame) {
                 vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
-                    {contoursLoading && tilesLoading && <br />}
+                    {isContoursLoading && isTilesLoading && <br />}
                     {contourTooltipContent}
                     {vectorOverlayTooltipContent}
                 </React.Fragment>
             );
 
-            showLoadingIndicator = true;
+            shouldShowLoadingIndicator = true;
         }
 
         let loadingIndicator;
@@ -442,7 +442,7 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
+                    <Switch checked={this.isCheckReleaseDisabled} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );
@@ -479,7 +479,7 @@ export class RootMenuComponent extends React.Component {
                 <ToolbarMenuComponent />
                 <Alert
                     className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
-                    isOpen={this.documentationAlertVisible}
+                    isOpen={this.isDocumentationAlertVisible}
                     onClose={this.handleAlertDismissed}
                     canEscapeKeyCancel={true}
                     canOutsideClickCancel={true}
@@ -509,7 +509,7 @@ export class RootMenuComponent extends React.Component {
                         <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
-                {showLoadingIndicator && loadingIndicator}
+                {shouldShowLoadingIndicator && loadingIndicator}
                 {appStore.preferenceStore.isLowBandwidthMode && (
                     <Tooltip
                         content={
@@ -543,15 +543,15 @@ export class RootMenuComponent extends React.Component {
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
         if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
-            this.documentationAlertVisible = true;
+            this.isDocumentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
             this.documentationAlertTimeoutHandle = undefined;
-            this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
+            this.documentationAlertTimeoutHandle = setTimeout(() => (this.isDocumentationAlertVisible = false), 10000);
         }
     };
 
     handleAlertDismissed = () => {
-        this.documentationAlertVisible = false;
+        this.isDocumentationAlertVisible = false;
     };
 
     handleImageSelect = (image: ImageViewItem) => {

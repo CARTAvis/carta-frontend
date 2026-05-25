@@ -66,8 +66,8 @@ export class FittingDialogComponent extends React.Component {
         return <ImageCoordNumericInput value={value} customPlaceholder={placeholder} onChange={onValueChange} />;
     };
 
-    private renderLockButton = (fixed: boolean, toggleFixed, testid: string) => {
-        return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} data-testid={"image-fitting-" + testid + "-lock-button"} />;
+    private renderLockButton = (isFixed: boolean, toggleFixed, testid: string) => {
+        return <AnchorButton className="lock-button" onClick={toggleFixed} icon={isFixed ? "lock" : "unlock"} data-testid={"image-fitting-" + testid + "-lock-button"} />;
     };
 
     private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D | null) => {
@@ -122,7 +122,7 @@ export class FittingDialogComponent extends React.Component {
                     minHeight={FittingDialogComponent.MinHeight}
                     defaultWidth={FittingDialogComponent.DefaultWidth}
                     defaultHeight={FittingDialogComponent.DefaultHeight}
-                    enableResizing={true}
+                    isResizingEnabled={true}
                     dialogId={DialogId.Fitting}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -175,7 +175,7 @@ export class FittingDialogComponent extends React.Component {
                 defaultHeight={FittingDialogComponent.DefaultHeight}
                 minWidth={FittingDialogComponent.MinWidth}
                 minHeight={FittingDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Fitting}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
@@ -300,7 +300,7 @@ export class FittingDialogComponent extends React.Component {
                                                     <span>
                                                         <br />
                                                         <i>
-                                                            <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are fixed.</small>
+                                                            <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are isFixed.</small>
                                                         </i>
                                                     </span>
                                                 )}

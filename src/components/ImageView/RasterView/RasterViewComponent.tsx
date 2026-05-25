@@ -15,7 +15,7 @@ import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequir
 import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
-    docked: boolean;
+    isDocked: boolean;
     image: ImageItem;
     pixelHighlightValue: number;
     row: number;
@@ -328,7 +328,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
-    private renderTiles(frame: FrameStore, tiles: TileCoordinate[], channel: number, mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean) {
+    private renderTiles(frame: FrameStore, tiles: TileCoordinate[], channel: number, mip: number, shouldPeek: boolean = false, numPlaceholderLayersHighRes: number, shouldRenderLowRes: boolean) {
         const tileService = TileService.Instance;
         if (!tileService) {
             return;
@@ -339,7 +339,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
-            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, peek);
+            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, shouldPeek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
             } else {
@@ -368,7 +368,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 }
 
                 // Add low-res placeholders
-                if (tile.layer > 0 && renderLowRes) {
+                if (tile.layer > 0 && shouldRenderLowRes) {
                     const lowResTile = {
                         layer: tile.layer - 1,
                         x: Math.floor(tile.x / 2.0),
@@ -383,9 +383,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (numPlaceholderLayersHighRes > 0 && highResPlaceholders.length) {
             this.renderTiles(frame, highResPlaceholders, channel, mip / 2, true, numPlaceholderLayersHighRes - 1, false);
         }
-        if (renderLowRes) {
+        if (shouldRenderLowRes) {
             const placeholderTileList: TileCoordinate[] = [];
-            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.decode(encodedTile)));
+            placeholderTileMap.forEach((isPlaceholder, encodedTile) => placeholderTileList.push(TileCoordinate.decode(encodedTile)));
             if (placeholderTileList.length) {
                 this.renderTiles(frame, placeholderTileList, channel, mip * 2, true, 0, true);
             }
@@ -396,19 +396,19 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const appStore = AppStore.Instance;
         const webGLService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         const tileService = TileService.Instance;
-        const tileBasedRender = this.props.image?.type !== ImageType.PV_PREVIEW;
+        const isTileBasedRender = this.props.image?.type !== ImageType.PV_PREVIEW;
         const shaderUniforms = webGLService.shaderUniforms;
 
         if (!rasterTile) {
             return;
         }
 
-        if (rasterTile.data && tileBasedRender) {
+        if (rasterTile.data && isTileBasedRender) {
             tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
         }
 
-        if (!tileBasedRender && rasterTile.width != null && rasterTile.height != null && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
+        if (!isTileBasedRender && rasterTile.width != null && rasterTile.height != null && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
             const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             if (texture && rasterTile.data) {
                 copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
@@ -541,7 +541,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const padding = baseFrame.overlayStore.padding;
-        const className = classNames(`raster-div`, {docked: this.props.docked});
+        const className = classNames(`raster-div`, {docked: this.props.isDocked});
 
         return (
             <div className={className} style={{top: 0, left: 0}}>

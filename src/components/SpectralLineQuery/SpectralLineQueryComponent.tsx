@@ -68,7 +68,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.width = width;
         this.height = height;
 
-        // fixed bug from blueprintjs, only display 4 rows.
+        // fixed bug from blueprintjs, only shouldDisplay 4 rows.
         if (this.headerTableRef) {
             this.updateTableSize(this.headerTableRef, this.props.docked);
         }
@@ -77,12 +77,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateTableSize(ref: any, docked: boolean) {
+    private updateTableSize(ref: any, isDocked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
         // triger table update
-        if (docked) {
+        if (isDocked) {
             ref.scrollToRegion(Regions.column(0));
         }
     }
@@ -134,14 +134,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
         const widgetStore = this.widgetStore;
-        const display = widgetStore.controlHeader?.get(columnName)?.display;
+        const shouldDisplay = widgetStore.controlHeader?.get(columnName)?.display;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
                     <Switch
                         className="cell-switch-button"
                         key={`cell_switch_button_${rowIndex}`}
-                        checked={display ?? false}
+                        checked={shouldDisplay ?? false}
                         onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}
                         data-testid={"catalog-header-table-switch-" + rowIndex}
                     />
@@ -261,7 +261,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render of SpectralLineQueryComponent while reset filter string
         const filters = widgetStore.filters;
-        const darkTheme = appStore.isDarkTheme;
+        const isDarkTheme = appStore.isDarkTheme;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const inputByRange = (
@@ -395,7 +395,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 columnName: widgetStore.sortingInfo.columnName ?? "",
                 sortingType: widgetStore.sortingInfo.sortingType
             },
-            disableSort: false,
+            shouldDisableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,

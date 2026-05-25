@@ -39,15 +39,15 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
     public render() {
         const widgetStore = this.props.widgetStore;
 
-        let enableStokesSelect = false;
+        let isStokesSelectEnabled = false;
         let stokesClassName = "unlinked-to-selected";
         const coordinateOptions = [{value: "z", label: "Current"}];
 
         if (widgetStore.effectiveFrame?.regionSet) {
-            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
+            isStokesSelectEnabled = widgetStore.effectiveFrame.hasStokes;
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
+            if (isStokesSelectEnabled && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
                 const linkedClass = "linked-to-selected-stokes";
                 stokesClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }
@@ -55,8 +55,8 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         return (
             <div className="spectral-profiler-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} />
-                <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
+                <FormGroup label={"Polarization"} inline={true} disabled={!isStokesSelectEnabled}>
+                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!isStokesSelectEnabled} />
                 </FormGroup>
             </div>
         );

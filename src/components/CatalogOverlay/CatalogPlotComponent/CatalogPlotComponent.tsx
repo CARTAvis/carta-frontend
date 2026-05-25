@@ -162,11 +162,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
-            const xColumn = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
-            const yColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
+            const hasXColumn = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
+            const hasYColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore?.plotType) {
                 case CatalogPlotType.D2Scatter:
-                    if (!xColumn && !yColumn && plotWidgetStore.scatterborder === undefined) {
+                    if (!hasXColumn && !hasYColumn && plotWidgetStore.scatterborder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
@@ -179,7 +179,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     }
                     break;
                 case CatalogPlotType.Histogram:
-                    if (!xColumn && plotWidgetStore.histogramBorder === undefined) {
+                    if (!hasXColumn && plotWidgetStore.histogramBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         if (xColumnName) {
                             const histogramCoords = profileStore?.get1DPlotData(xColumnName);
@@ -339,7 +339,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return {data: histogramDatasets, border: xRange};
     }
 
-    @computed get enablePlotButton(): boolean {
+    @computed get isPlotButtonEnabled(): boolean {
         const emptyColumn = CatalogPlotComponent.emptyColumn;
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
@@ -348,9 +348,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
-            return widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
-            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
         } else {
             return false;
         }
@@ -458,16 +458,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const widgetsStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        const val = changeEvent.target.checked;
+        const isChecked = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
-            catalogWidgetStore.setShowSelectedData(val);
+            catalogWidgetStore.setShowSelectedData(isChecked);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
 
     private handleLogScaleYChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        const val = changeEvent.target.checked;
-        this.widgetStore?.setLogScaleY(val);
+        const isLogScaleY = changeEvent.target.checked;
+        this.widgetStore?.setLogScaleY(isLogScaleY);
     };
 
     private onHover = (event: Plotly.PlotMouseEvent) => {
@@ -630,10 +630,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        const inDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
+        const isInDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        if (event?.points?.length > 0 && inDragmode && profileStore && catalogWidgetStore) {
+        if (event?.points?.length > 0 && isInDragmode && profileStore && catalogWidgetStore) {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
             catalogStore.updateCatalogProfiles(catalogFileId);
@@ -744,7 +744,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const columnsName = profileStore.displayedColumnHeaders;
         const xyOptions = [CatalogPlotComponent.emptyColumn];
-        const disabled = !this.enablePlotButton;
+        const isDisabled = !this.isPlotButtonEnabled;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
         const ratio = isScatterPlot ? devicePixelRatio : 1;
@@ -807,8 +807,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderHistogramLog = (
-            <FormGroup label={"Log scale"} inline={true} disabled={disabled}>
-                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
+            <FormGroup label={"Log scale"} inline={true} disabled={isDisabled}>
+                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} />
             </FormGroup>
         );
 
@@ -1070,13 +1070,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
-                disabled={disabled}
+                disabled={isDisabled}
                 data-testid="catalog-plot-widget-bin-input"
             />
         );
 
         const renderLinearRegressionButton = (
-            <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
+            <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={isDisabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
         );
         const infoStrings = [this.genProfilerInfo];
         if (widgetStore.isStatisticResultVisible && widgetStore.isStatisticEnabled) {
@@ -1116,12 +1116,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         </div>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
-                                <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                    <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
+                                <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
+                                    <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
                                 </FormGroup>
                             </Tooltip>
                             {isScatterPlot && renderLinearRegressionButton}
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
                         </div>
                     </div>
                 </div>
