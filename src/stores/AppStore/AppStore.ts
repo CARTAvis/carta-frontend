@@ -1991,7 +1991,7 @@ export class AppStore {
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
                     AppToaster.clear();
-                    if (this.backendService.connectionDropped) {
+                    if (this.backendService.hasConnectionDropped) {
                         AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
                         AppToaster.show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
@@ -2155,7 +2155,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            this.initCarta(this.isAstReady, this.tileService?.zfpReady ?? false, this.isCartaComputeReady, !!this.apiService?.authenticated);
+            this.initCarta(this.isAstReady, this.tileService?.isZfpReady ?? false, this.isCartaComputeReady, !!this.apiService?.authenticated);
         });
 
         autorun(() => {
@@ -2622,7 +2622,7 @@ export class AppStore {
         // Clear requirements once session has resumed
         this.initRequirements();
         this.isResumingSession = false;
-        this.backendService.connectionDropped = false;
+        this.backendService.hasConnectionDropped = false;
 
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {
