@@ -50,7 +50,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
-                    <Popover position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={props.selectedCustomColor} onChange={handleColorChange} shouldDisableAlpha={shouldDisableAlpha} />}>
+                    <Popover position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}>
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </Popover>
                 </div>
