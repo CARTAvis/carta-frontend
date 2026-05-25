@@ -446,6 +446,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const _focusedRegionId = regionSet.focusedRegion?.regionId;
+        const _selectedRegionIds = Array.from(regionSet.selectedRegionIds).join(",");
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const hasDeletableRegions = !regionSet.isLocked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.isLocked);
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
