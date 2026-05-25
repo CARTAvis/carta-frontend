@@ -238,7 +238,7 @@ export class ImageSaveComponent extends React.Component {
                                         selectAllOnFocus={true}
                                         onValueChanged={fileBrowser.setSaveRestFreqVal}
                                         onValueCleared={fileBrowser.resetSaveRestFreq}
-                                        resetDisabled={activeFrame.restFreqStore.resetDisable}
+                                        resetDisabled={activeFrame.restFreqStore.isResetDisabled}
                                         tooltipContent={activeFrame.restFreqStore.defaultInfo}
                                         tooltipPlacement={"bottom"}
                                     />

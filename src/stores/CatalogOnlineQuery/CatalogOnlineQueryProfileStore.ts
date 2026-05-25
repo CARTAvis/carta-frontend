@@ -44,7 +44,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return false;
     }
 
-    get loadOntoImage() {
+    get isLoadingOntoImage() {
         return this.loadingData;
     }
 
@@ -59,13 +59,13 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let isDisplayed = false;
                 if (this.catalogType === CatalogType.SIMBAD && CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
-                    display = true;
+                    isDisplayed = true;
                 } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizierInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
-                    display = true;
+                    isDisplayed = true;
                 }
-                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: isDisplayed, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }

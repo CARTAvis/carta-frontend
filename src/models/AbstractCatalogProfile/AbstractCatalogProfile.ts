@@ -30,7 +30,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract get updateRequestDataSize(): any;
     abstract get shouldUpdateData(): boolean;
     abstract resetCatalogFilterRequest(): void;
-    abstract get loadOntoImage(): boolean;
+    abstract get isLoadingOntoImage(): boolean;
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 

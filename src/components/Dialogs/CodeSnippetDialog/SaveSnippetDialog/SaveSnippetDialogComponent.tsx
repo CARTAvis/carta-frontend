@@ -77,7 +77,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
         const snippet = snippetStore.activeSnippet;
-        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog

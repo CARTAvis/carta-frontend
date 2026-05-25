@@ -67,7 +67,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                     if (frame) {
                         const regionId = this.widgetStore.effectiveRegionId;
                         const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                         appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                     }
                 }
@@ -126,14 +126,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
-            equalAxes: widgetStore.equalAxes,
+            equalAxes: widgetStore.hasEqualAxes,
             setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
-            invertedColorMap: widgetStore.invertedColorMap,
+            invertedColorMap: widgetStore.isInvertedColorMap,
             handleInvertedColorMapChanged: this.handleInvertedColorMapChanged,
-            showReferenceAxes: widgetStore.showReferenceAxes,
+            showReferenceAxes: widgetStore.shouldShowReferenceAxes,
             referenceAxesThickness: widgetStore.referenceAxesThickness,
             referenceAxesColor: widgetStore.referenceAxesColor,
             setShowReferenceAxes: widgetStore.setShowReferenceAxes

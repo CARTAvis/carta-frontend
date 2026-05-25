@@ -76,7 +76,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     handleExecuteClicked = async () => {
         const snippetStore = SnippetStore.Instance;
 
-        if (snippetStore.validInput && !snippetStore.isExecuting) {
+        if (snippetStore.isInputValid && !snippetStore.isExecuting) {
             const success = await snippetStore.executeCurrentSnippet();
             if (!success) {
                 AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
@@ -116,7 +116,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "console",
@@ -158,11 +158,11 @@ export class CodeSnippetDialogComponent extends React.Component {
                 dialogId={DialogId.Snippet}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
+                    <ThemeProvider darkTheme={appStore.isDarkTheme} children={editor} />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
+                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.isInputValid || snippetStore.isExecuting} text="Execute" />
                     </div>
                     <div className="spacer" />
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

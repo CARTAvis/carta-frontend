@@ -28,26 +28,26 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.displayedFrame;
 
-        const channelText = channelMapStore.showChannelString ? this.props.channel : "";
+        const channelText = channelMapStore.shouldShowChannelString ? this.props.channel : "";
 
         let spectralString = "";
         let velocityString = "";
-        if ((channelMapStore.showFrequencyString || channelMapStore.showVelocityString) && frame) {
+        if ((channelMapStore.shouldShowFrequencyString || channelMapStore.shouldShowVelocityString) && frame) {
             ({spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel));
         }
 
-        if (channelMapStore.showFrequencyString) {
+        if (channelMapStore.shouldShowFrequencyString) {
             spectralString = spectralString.replace(/^[^:]+:\s*/, "");
-            if (!channelMapStore.showFrequencyStringUnit) {
+            if (!channelMapStore.shouldShowFrequencyStringUnit) {
                 spectralString = spectralString.replace(/\s+[^ ]*$/, "");
             }
         } else {
             spectralString = "";
         }
 
-        if (channelMapStore.showVelocityString) {
+        if (channelMapStore.shouldShowVelocityString) {
             velocityString = velocityString.replace(/^[^:]+:\s*/, "");
-            if (!channelMapStore.showVelocityStringUnit) {
+            if (!channelMapStore.shouldShowVelocityStringUnit) {
                 velocityString = velocityString.replace(/\s+[^ ]*$/, "");
             }
         } else {
@@ -62,7 +62,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
+                    color: channelMapStore.hasCustomColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
                     position: "absolute",
                     top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
                     left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,

@@ -26,7 +26,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     }, [appStore.activeWorkspace, shareWorkspaceDialogVisible]);
 
     const {activeWorkspace} = appStore;
-    const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
+    const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
     const dialogProps: DialogProps = {
         icon: "share",

@@ -92,7 +92,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
 
-        if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
             await layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
         }
 
@@ -122,7 +122,7 @@ export class FileBrowserDialogComponent extends React.Component {
             throw new Error("No directory selected");
         }
 
-        if (!fileBrowserStore.appendingFrame || !frames.length) {
+        if (!fileBrowserStore.isAppendingFrame || !frames.length) {
             frame = yield appStore.openFile(directory, this.imageArithmeticString, "", true);
         } else {
             frame = yield appStore.appendFile(directory, this.imageArithmeticString, "", true);
@@ -145,7 +145,7 @@ export class FileBrowserDialogComponent extends React.Component {
             throw new Error("No directory selected");
         }
 
-        if (!fileBrowserStore.appendingFrame || !frames.length) {
+        if (!fileBrowserStore.isAppendingFrame || !frames.length) {
             frame = yield appStore.openFile(directory, imageArithmeticString, "", true);
         } else {
             frame = yield appStore.appendFile(directory, imageArithmeticString, "", true);
@@ -179,7 +179,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 throw new Error("No directory selected");
             }
 
-            if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
+            if (!(forceAppend || fileBrowserStore.isAppendingFrame) || !frames.length) {
                 frame = yield appStore.openFile(directory, file.fileInfo.name, file.hdu);
             } else {
                 frame = yield appStore.appendFile(directory, file.fileInfo.name, file.hdu);
@@ -391,11 +391,11 @@ export class FileBrowserDialogComponent extends React.Component {
                 let actionDisabled: boolean;
                 let actionFunction: () => void;
                 if (this.enableImageArithmetic) {
-                    actionDisabled = appStore.fileLoading || !this.imageArithmeticString;
+                    actionDisabled = appStore.isFileLoading || !this.imageArithmeticString;
                     actionFunction = this.loadExpression;
                 } else {
                     const folderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
-                    actionDisabled = appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || folderSelected;
+                    actionDisabled = appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || folderSelected;
                     actionFunction = this.loadSelectedFiles;
                 }
                 if (appending) {
@@ -587,7 +587,12 @@ export class FileBrowserDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={
-                                appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || appStore.activeImage?.type !== ImageType.FRAME || !fileBrowserStore.saveFilename || fileBrowserStore.saveFilename.length === 0
+                                appStore.isFileLoading ||
+                                fileBrowserStore.isLoadingInfo ||
+                                appStore.isFileSaving ||
+                                appStore.activeImage?.type !== ImageType.FRAME ||
+                                !fileBrowserStore.saveFilename ||
+                                fileBrowserStore.saveFilename.length === 0
                             }
                             onClick={this.handleSaveFileClicked}
                             text="Save"
@@ -599,7 +604,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Tooltip content={"Load a region file for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo}
                             onClick={this.loadSelectedFiles}
                             text="Load region"
                         />
@@ -610,7 +615,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Tooltip content={"Load a catalog file for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !appStore.activeFrame}
                             onClick={this.loadSelectedFiles}
                             text="Load catalog"
                         />
@@ -822,7 +827,7 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("file-browser-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("file-browser-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "folder-open",
@@ -836,7 +841,7 @@ export class FileBrowserDialogComponent extends React.Component {
             title: "File Browser"
         };
 
-        const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
+        const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.isAppendingFrame);
 
         let fileInput: React.ReactNode;
         const paneClassName = "file-panes";
@@ -919,9 +924,9 @@ export class FileBrowserDialogComponent extends React.Component {
                     <div className={paneClassName}>
                         <div className="file-list" data-testid="file-list">
                             <FileListTableComponent
-                                darkTheme={appStore.darkTheme}
-                                loading={fileBrowserStore.loadingList}
-                                extendedLoading={fileBrowserStore.extendedLoading}
+                                darkTheme={appStore.isDarkTheme}
+                                loading={fileBrowserStore.isLoadingList}
+                                extendedLoading={fileBrowserStore.isExtendedLoading}
                                 fileProgress={fileProgress}
                                 fileList={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
@@ -947,7 +952,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
-                                isLoading={fileBrowserStore.loadingInfo}
+                                isLoading={fileBrowserStore.isLoadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}
                                 catalogHeaderTable={tableProps}
                                 selectedFile={fileBrowserStore.selectedFile || undefined}
@@ -960,7 +965,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>{actionButton}</div>
                 </div>
                 <Alert
-                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"

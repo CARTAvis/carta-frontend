@@ -75,9 +75,9 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
         const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
@@ -209,7 +209,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Online data query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)} active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)} data-testid={DialogId.OnlineDataQuery + "-button"} />
                     </Tooltip>
-                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                    {appStore.preferenceStore.isCodeSnippetsEnabled && (
                         <Tooltip
                             content={
                                 <span>
