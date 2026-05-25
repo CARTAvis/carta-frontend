@@ -152,8 +152,8 @@ export class RegionSelectComponent extends React.Component {
 
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
-        const includesAnnotation = FileBrowserStore.Instance.includesAnnotation;
-        const includesRegion = FileBrowserStore.Instance.includesRegion;
+        const includesAnnotation = FileBrowserStore.Instance.hasAnnotation;
+        const includesRegion = FileBrowserStore.Instance.hasRegion;
         const annotationNum = FileBrowserStore.Instance.annotationOptionNum;
         const regionNum = optionNum - annotationNum;
 

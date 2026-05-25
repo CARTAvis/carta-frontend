@@ -36,7 +36,7 @@ export class AboutDialogComponent extends React.Component {
 
     public render() {
         const dialogStore = DialogStore.Instance;
-        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",

@@ -127,12 +127,12 @@ const HELP_CONTENT_MAP = new Map<HelpType, string | undefined>([
 export class HelpDrawerComponent extends React.Component {
     render() {
         const helpStore = HelpStore.Instance;
-        const className = classNames("help-drawer", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("help-drawer", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         const drawerProps: DrawerProps = {
             className: className,
             lazy: true,
-            isOpen: helpStore.helpVisible,
+            isOpen: helpStore.isHelpVisible,
             onClose: helpStore.hideHelpDrawer,
             position: helpStore.position,
             size: "40%",

@@ -41,7 +41,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
 
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
-            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
             const handleColorChange = _.throttle((color: any) => {
                 props.onCustomColorSelect?.(color.hex);

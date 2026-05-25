@@ -35,8 +35,8 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
-        const viewHeight = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
+        const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
         const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
@@ -260,7 +260,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             return [];
         }
 
-        return appStore.channelMapStore.channelMapEnabled
+        return appStore.channelMapStore.isChannelMapEnabled
             ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
@@ -277,7 +277,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         let divContents: React.ReactNode | React.ReactNode[];
         if (!this.panels.length) {
             divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
-        } else if (!appStore.astReady) {
+        } else if (!appStore.isAstReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
             const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];

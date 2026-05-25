@@ -149,7 +149,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
-            if (this.regionsLock !== activeFrame?.regionSet.locked) {
+            if (this.regionsLock !== activeFrame?.regionSet.isLocked) {
                 this.syncRegionsLocked();
             }
             this.toggleRegionVisibility();
@@ -201,7 +201,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const darkTheme = appStore.darkTheme;
+        const darkTheme = appStore.isDarkTheme;
         const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {
@@ -266,7 +266,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = frame.regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
-            const _isLocked = region.locked;
+            const _isLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
@@ -323,11 +323,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             Type
                         </div>
                         <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                            {frame.validWcs ? "Center" : "Pixel Center"}
+                            {frame.isValidWcs ? "Center" : "Pixel Center"}
                         </div>
                         {showSizeColumn && (
                             <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
-                                {frame.validWcs ? "Size" : "Size (px)"}
+                                {frame.isValidWcs ? "Size" : "Size (px)"}
                             </div>
                         )}
                         {showRotationColumn && (
@@ -349,7 +349,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.validWcs) {
+                if (frame.isValidWcs) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -371,7 +371,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.validWcs) {
+                    if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
@@ -421,10 +421,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div
                         className="cell"
                         style={{width: RegionListComponent.ActionColumnDefaultWidth}}
-                        onClick={regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        onClick={regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
-                        <Icon icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"} style={{opacity: regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}} />
+                        <Icon
+                            icon={region.isLocked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                            style={{opacity: regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                        />
                     </div>
                 );
             } else {
@@ -524,7 +527,7 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
 
         const frame = this.props.frame;
         const region = this.props.region;
-        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.isValidWcs)) {
             return null;
         }
 

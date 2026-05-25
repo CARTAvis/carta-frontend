@@ -285,7 +285,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = regionId ?? RegionId.NONE;
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.isAnimationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
         const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit && this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE;
         const hint = (
             <span>
@@ -385,7 +385,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes order">
-                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                    <HTMLSelect value={this.axesOrder[this.widgetStore.isReverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch

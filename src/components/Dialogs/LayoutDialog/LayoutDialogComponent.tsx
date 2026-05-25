@@ -153,7 +153,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
-                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable && !!activeFrame && activeFrame?.dynamicLayout.ctype !== ""}>
+                        <Collapse isOpen={PreferenceStore.Instance.isDynamicLayoutEnabled && !!activeFrame && activeFrame?.dynamicLayout.ctype !== ""}>
                             <Tooltip content={`If on, apply layout when images with type (${activeFrame?.dynamicLayout.ctype.replace(",", ", ")}) are loaded`} disabled={!activeFrame || activeFrame?.dynamicLayout.ctype === ""}>
                                 <FormGroup inline={true} disabled={!activeFrame || this.isEmpty}>
                                     <Switch
@@ -222,7 +222,7 @@ export class LayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const {preferenceStore, layoutStore} = appStore;
 
-        if (preferenceStore.dynamicLayoutEnable && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
+        if (preferenceStore.isDynamicLayoutEnabled && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
                 <ScrollShadow>
                     <Tabs>
@@ -246,7 +246,7 @@ export class LayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "page-layout",
@@ -294,7 +294,7 @@ const LayoutMappingRow = ({ctypes, layoutName}: {ctypes: string; layoutName: str
     const [selectedLayout, setSelectedLayout] = React.useState(layoutName);
 
     const ctypeName = CtypeAbbrToName(ctypes);
-    const NormCtype = ctypes
+    const normCtype = ctypes
         .split(",")
         .map(ctype => {
             return ctype.length > 2 ? `${ctype[0]}..` : ctype;
@@ -305,7 +305,7 @@ const LayoutMappingRow = ({ctypes, layoutName}: {ctypes: string; layoutName: str
         <tr>
             <td className={className}>
                 <Tooltip position="bottom" content={`(${ctypeName.replaceAll(",", ", ")})`}>
-                    <FormGroup>({NormCtype})</FormGroup>
+                    <FormGroup>({normCtype})</FormGroup>
                 </Tooltip>
             </td>
             <td className={className}>

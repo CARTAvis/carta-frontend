@@ -132,7 +132,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     if (frame) {
                         const regionId = this.widgetStore.effectiveRegionId;
                         const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                         appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                     }
                 } else {
@@ -197,7 +197,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationActive) {
+        if (AnimatorStore.Instance.isAnimationActive) {
             return;
         }
 
@@ -225,7 +225,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationActive) {
+        if (AnimatorStore.Instance.isAnimationActive) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -378,7 +378,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paProfileSmoothed = StokesAnalysisComponent.calculatePA(qProfileSmoothedValues.y, uProfileSmoothedValues.y);
                     }
                 }
-                if (this.widgetStore.fractionalPolVisible) {
+                if (this.widgetStore.isFractionalPolVisible) {
                     const iProfileOriginal = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
                     if (iProfileOriginal && iProfileOriginal.values) {
                         piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
@@ -438,7 +438,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): Border {
-        if (!this.widgetStore.equalAxes) {
+        if (!this.widgetStore.hasEqualAxes) {
             return {xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax};
         }
         let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
@@ -614,7 +614,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     outRange = false;
                 }
                 let percentage = point.z !== undefined ? (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal) : 0;
-                if (widgetStore.invertedColorMap) {
+                if (widgetStore.isInvertedColorMap) {
                     percentage = 1 - percentage;
                 }
                 pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, reversed);
@@ -860,7 +860,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ? "Channel " + toFixed(this.cursorInfo.channel) : formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
-            const fractionalPol = this.widgetStore.fractionalPolVisible;
+            const fractionalPol = this.widgetStore.isFractionalPolVisible;
             const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
             const uLabel = fractionalPol ? ", U/I: " : ", U: ";
             const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
@@ -881,7 +881,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quLine",
             tickTypeY: TickType.Scientific,
@@ -910,7 +910,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const piLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "piLine",
             tickTypeY: TickType.Scientific,
@@ -938,7 +938,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const paLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "paLine",
             tickTypeY: TickType.Integer,
@@ -965,7 +965,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quScatterPlotProps: ScatterPlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Channel",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quScatter",
             tickTypeX: TickType.Scientific,
@@ -975,7 +975,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             plotType: PlotType.POINTS,
             zeroLineWidth: this.widgetStore.referenceAxesThickness,
             xZeroLineColor: this.widgetStore.referenceAxesColor,
-            showZeroLine: this.widgetStore.showReferenceAxes,
+            showZeroLine: this.widgetStore.shouldShowReferenceAxes,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             zIndex: true,
@@ -984,7 +984,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
             scrollZoom: true,
-            graphZoomedXY: this.widgetStore.equalAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
+            graphZoomedXY: this.widgetStore.hasEqualAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
             // settings
             pointRadius: this.widgetStore.scatterPlotPointSize
@@ -1013,7 +1013,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
-                if (appStore.darkTheme) {
+                if (appStore.isDarkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
                         primaryLineColor = Colors.BLUE4;
                     }
@@ -1169,7 +1169,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.widgetStore.equalAxes) {
+                if (this.widgetStore.hasEqualAxes) {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterEqualXmin !== undefined ? this.widgetStore.quScatterEqualXmin : quBorder.xMin;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterEqualXmax !== undefined ? this.widgetStore.quScatterEqualXmax : quBorder.xMax;
                     quScatterPlotProps.yMin = this.widgetStore.quScatterEqualYmin !== undefined ? this.widgetStore.quScatterEqualYmin : quBorder.yMin;
@@ -1206,7 +1206,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
-            if (this.widgetStore.fractionalPolVisible) {
+            if (this.widgetStore.isFractionalPolVisible) {
                 quLinePlotProps.yLabel = "Value (%)";
                 piLinePlotProps.yLabel = "PI/I (%)";
                 quScatterPlotProps.xLabel = "Q/I (%)";
@@ -1232,7 +1232,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor-stokes2",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
                     interactionMarker: true
@@ -1248,7 +1248,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor-stokes",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots
                 };
@@ -1277,7 +1277,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const channelRequired = {
                         value: this.requiredChannelValue,
                         id: "marker-channel-required",
-                        draggable: !AnimatorStore.Instance.animationActive,
+                        draggable: !AnimatorStore.Instance.isAnimationActive,
                         dragMove: this.onChannelChanged,
                         horizontal: false
                     };

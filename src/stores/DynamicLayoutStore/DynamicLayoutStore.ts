@@ -69,7 +69,7 @@ export class DynamicLayoutStore {
                     this.deleteLayoutMapping(layoutMappingCtype);
                     this.dynamicLayoutName = preference.layout;
 
-                    if (preference.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
+                    if (preference.isDynamicLayoutEnabled && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
                 } catch (err) {
@@ -81,7 +81,7 @@ export class DynamicLayoutStore {
         }
 
         // show alert if no other alert is shown
-        if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.alertVisible === false) {
+        if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.isAlertVisible === false) {
             appStore.alertStore.showAlert(`Fail to save (${layoutMappingCtype}): ${layoutName}! No ${layoutName} layout existed.`);
             return;
         }
@@ -90,7 +90,7 @@ export class DynamicLayoutStore {
             preference.existLayoutMapping[layoutMappingCtype] = layoutName;
 
             preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
-            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
+            if (PreferenceStore.Instance.isDynamicLayoutEnabled && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                 layoutStore.applyLayout(layoutName);
             }
         } catch (err) {
