@@ -16,7 +16,7 @@ type MockWidgetStore = {
     plottedImageOverlaySystem?: CatalogSystemType;
     plottedImageOverlayXAxis: string;
     plottedImageOverlayYAxis: string;
-    autoSelectImageOverlayAxesAttempted: boolean;
+    hasAttemptedAutoSelectImageOverlayAxes: boolean;
     catalogPlotType: CatalogPlotType;
     hasPlottedImageOverlay: boolean;
     setAutoSelectImageOverlayAxesAttempted: jest.Mock<void, [boolean]>;
@@ -51,7 +51,7 @@ const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: Cat
 
 const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE): MockWidgetStore => {
     const widgetStore = {
-        autoSelectImageOverlayAxesAttempted: false,
+        hasAttemptedAutoSelectImageOverlayAxes: false,
         plottedImageOverlayMaxRows: undefined,
         plottedImageOverlayXAxis: CatalogOverlay.NONE,
         plottedImageOverlayYAxis: CatalogOverlay.NONE,
@@ -68,7 +68,7 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
         widgetStore.yAxis = nextYAxis;
     });
     widgetStore.setAutoSelectImageOverlayAxesAttempted = jest.fn((attempted: boolean) => {
-        widgetStore.autoSelectImageOverlayAxesAttempted = attempted;
+        widgetStore.hasAttemptedAutoSelectImageOverlayAxes = attempted;
     });
 
     return widgetStore;
@@ -423,7 +423,7 @@ describe("CatalogOverlayComponent", () => {
 
             expect(widgetStore.xAxis).toBe("ra");
             expect(widgetStore.yAxis).toBe("dec");
-            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
 
             widgetStore.setxAxis(CatalogOverlay.NONE);
             widgetStore.setyAxis(CatalogOverlay.NONE);
@@ -439,13 +439,13 @@ describe("CatalogOverlayComponent", () => {
 
             expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
             expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
-            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(false);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
 
             widgetStore.setCatalogPlotType(CatalogPlotType.ImageOverlay);
 
             expect(widgetStore.xAxis).toBe("ra");
             expect(widgetStore.yAxis).toBe("dec");
-            expect(widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
         });
 
         test("does not retry auto-selection when another component uses the same widget store", () => {
@@ -466,7 +466,7 @@ describe("CatalogOverlayComponent", () => {
 
             expect(firstHarness.widgetStore.xAxis).toBe(CatalogOverlay.NONE);
             expect(firstHarness.widgetStore.yAxis).toBe(CatalogOverlay.NONE);
-            expect(firstHarness.widgetStore.autoSelectImageOverlayAxesAttempted).toBe(true);
+            expect(firstHarness.widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
         });
     });
 

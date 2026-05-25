@@ -620,7 +620,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private shouldStartRegionSelection = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): boolean => {
         const mouseEvent = konvaEvent.evt;
         const targetId = konvaEvent.target?.id?.();
-        return mouseEvent.button === 0 && mouseEvent.shiftKey && !targetId && !this.frame.regionSet.locked;
+        return mouseEvent.button === 0 && mouseEvent.shiftKey && !targetId && !this.frame.regionSet.isLocked;
     };
 
     private getRegionSelectionCanvasPoint = (mouseEvent: MouseEvent): Point2D => {
@@ -849,7 +849,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
             }
         } else {
-            if (!AppStore.Instance.cursorFrozen) {
+            if (!AppStore.Instance.isCursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
                 if (this.frame !== AppStore.Instance.hoveredFrame) {
                     AppStore.Instance.setHoveredFrame(this.frame);
@@ -889,7 +889,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             layerHeight: this.props.height,
             stage: this.stageRef.current
         };
-        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender.filter(region => region.visible && !region.locked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext)).map(region => region.regionId);
+        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender
+            .filter(region => region.isVisible && !region.isLocked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext))
+            .map(region => region.regionId);
 
         const nextSelection = new Set(this.frame.regionSet.selectedRegionIds);
         selectedIds.forEach(id => {
@@ -961,7 +963,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
-        } else if (regionSet.focusedRegion && regionSet.focusedRegion.editing) {
+        } else if (regionSet.focusedRegion && regionSet.focusedRegion.isEditing) {
             cursor = "move";
         } else if (regionSet.focusedRegion === regionSet.regions[0] || !regionSet.focusedRegion) {
             cursor = "default";
@@ -988,7 +990,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 : 1} listening={!regionSet.locked}>
+                    <Layer ref={this.layerRef} opacity={regionSet.isLocked ? 0.7 : 1} listening={!regionSet.isLocked}>
                         <RegionComponents
                             frame={frame}
                             regions={frame?.regionSet?.regionsAndAnnotationsForRender}

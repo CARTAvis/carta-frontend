@@ -39,7 +39,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number | undefined = undefined;
     @observable cursorX: number = 0;
     @observable channel: number = 0;
-    @observable markerTextVisible: boolean = false;
+    @observable isMarkerTextVisible: boolean = false;
     @observable isMouseMoveIntoLinePlots: boolean = false;
     @observable isStreamingData: boolean = false;
     @observable isHighlighted: boolean = false;
@@ -48,7 +48,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // style settings
     @observable plotType: PlotType = PlotType.STEPS;
-    @observable meanRmsVisible: boolean = false;
+    @observable isMeanRmsVisible: boolean = false;
     @observable primaryLineColor: string = "auto-blue";
     @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, "auto-blue"]]);
     @observable lineWidth: number = 1;
@@ -56,9 +56,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
     @observable settingsTabId: SpectralProfilerSettingsTabs = SpectralProfilerSettingsTabs.CONVERSION;
 
-    @observable secondaryAxisCursorInfoVisible: boolean = false;
+    @observable isSecondaryAxisCursorInfoVisible: boolean = false;
 
-    @observable keep: boolean = false;
+    @observable shouldKeep: boolean = false;
 
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
@@ -238,7 +238,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]}),
-                    keep: this.keep,
+                    keep: this.shouldKeep,
                     restFreq: frame.restFreqStore?.restFreqInHz
                 };
                 frame.resetMomentRequestState();
@@ -312,12 +312,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (val: boolean) => {
-        this.markerTextVisible = val;
+    @action setMarkerTextVisible = (isMarkerTextVisible: boolean) => {
+        this.isMarkerTextVisible = isMarkerTextVisible;
     };
 
-    @action setMeanRmsVisible = (val: boolean) => {
-        this.meanRmsVisible = val;
+    @action setMeanRmsVisible = (isMeanRmsVisible: boolean) => {
+        this.isMeanRmsVisible = isMeanRmsVisible;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -332,20 +332,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setMouseMoveIntoLinePlots = (val: boolean) => {
-        this.isMouseMoveIntoLinePlots = val;
+    @action setMouseMoveIntoLinePlots = (isMouseMoveIntoLinePlots: boolean) => {
+        this.isMouseMoveIntoLinePlots = isMouseMoveIntoLinePlots;
     };
 
-    @action updateStreamingDataStatus = (val: boolean) => {
-        this.isStreamingData = val;
+    @action updateStreamingDataStatus = (isStreamingData: boolean) => {
+        this.isStreamingData = isStreamingData;
     };
 
     @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
         this.settingsTabId = tabId;
     };
 
-    @action setSecondaryAxisCursorInfoVisible = (val: boolean) => {
-        this.secondaryAxisCursorInfoVisible = val;
+    @action setSecondaryAxisCursorInfoVisible = (isSecondaryAxisCursorInfoVisible: boolean) => {
+        this.isSecondaryAxisCursorInfoVisible = isSecondaryAxisCursorInfoVisible;
     };
 
     /**
@@ -353,8 +353,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
      *
      * @param bool - A boolean. Set true to keep previous moment maps.
      */
-    @action setKeep = (bool: boolean) => {
-        this.keep = bool;
+    @action setKeep = (shouldKeep: boolean) => {
+        this.shouldKeep = shouldKeep;
     };
 
     constructor(coordinate: string = "z") {
@@ -493,7 +493,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yRms: number | undefined;
         let progressSum: number = 0;
         const dataIndexes: {startIndex: number; endIndex: number}[] = [];
-        const wantMeanRms = profiles.length === 1;
+        const shouldComputeMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
 
@@ -506,14 +506,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, shouldComputeMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
                 secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, (pointsAndProperties?.endIndex ?? NaN) + 1) ?? []);
 
                 if (pointsAndProperties) {
-                    if (wantMeanRms) {
+                    if (shouldComputeMeanRms) {
                         if (this.smoothingStore.type === SmoothingType.NONE) {
                             yMean = pointsAndProperties.yMean;
                             yRms = pointsAndProperties.yRms;
@@ -683,10 +683,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Ignoring plotting lines when:
         // 1. x coordinate is channel
         // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
-        const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
+        const isPlotDisabled = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
 
         const transformedSpectralLines: SpectralLine[] = [];
-        if (frame && !disablePlot) {
+        if (frame && !isPlotDisabled) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
                 if (transformedValue && isFinite(transformedValue)) {
@@ -919,7 +919,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
-            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+            this.isMeanRmsVisible = widgetSettings.meanRmsVisible;
         }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
@@ -947,7 +947,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            meanRmsVisible: this.meanRmsVisible,
+            meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,
@@ -974,7 +974,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     private getDataPointsAndProperties = (
         frameChannelValues: number[],
         intensityValues: Float32Array | Float64Array | null,
-        wantMeanRms: boolean
+        shouldComputeMeanRms: boolean
     ):
         | {
               points: Point2D[];
@@ -1028,7 +1028,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     yBound.yMin = Math.min(yBound.yMin, y);
                     yBound.yMax = Math.max(yBound.yMax, y);
 
-                    if (wantMeanRms) {
+                    if (shouldComputeMeanRms) {
                         yCount++;
                         ySum += y;
                         ySum2 += y * y;
@@ -1037,12 +1037,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
             smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues, startIndex, endIndex));
 
-            if (wantMeanRms && yCount > 0) {
+            if (shouldComputeMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
             }
 
-            if (wantMeanRms && smoothedPoints && this.smoothingStore.type !== SmoothingType.NONE) {
+            if (shouldComputeMeanRms && smoothedPoints && this.smoothingStore.type !== SmoothingType.NONE) {
                 let ySmoothedSum = 0;
                 let ySmoothedSum2 = 0;
                 let ySmoothedCount = 0;

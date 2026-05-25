@@ -31,8 +31,8 @@ export class TelemetryDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const appReady = appStore.apiService?.authenticated;
         const consentRequired = appStore.telemetryService.consentRequired;
-        const preferenceReady = appStore.preferenceStore?.preferenceReady;
-        const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const preferenceReady = appStore.preferenceStore?.isPreferenceReady;
+        const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog

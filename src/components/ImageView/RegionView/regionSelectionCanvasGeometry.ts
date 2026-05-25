@@ -38,7 +38,7 @@ function getCompassSelectionCanvasPoints(region: CompassAnnotationStore, context
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
     const targetStageLength = (region.length * AppStore.Instance.imageRatio) / zoomLevel;
 
-    if (!frame.validWcs) {
+    if (!frame.isValidWcs) {
         return [originPoint, {x: originPoint.x, y: originPoint.y - targetStageLength}, {x: originPoint.x - targetStageLength, y: originPoint.y}];
     }
 
@@ -60,7 +60,7 @@ function getCompassSelectionCanvasPoints(region: CompassAnnotationStore, context
 function getRulerSelectionCanvasPaths(region: RulerAnnotationStore, context: RegionSelectionGeometryContext): Point2D[][] {
     const {frame, layerWidth, layerHeight, stage} = context;
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo;
+    const wcsInfo = frame.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo;
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
     const toCanvasPath = (points: number[]): Point2D[] => {
         const canvasPoints: Point2D[] = [];
@@ -71,7 +71,7 @@ function getRulerSelectionCanvasPaths(region: RulerAnnotationStore, context: Reg
     };
 
     const paths = [toCanvasPath(approxPoints.hypotenuseApproximatePoints)];
-    if (region.auxiliaryLineVisible) {
+    if (region.isAuxiliaryLineVisible) {
         paths.push(toCanvasPath(approxPoints.xApproximatePoints), toCanvasPath(approxPoints.yApproximatePoints));
     }
     return paths;
@@ -93,7 +93,7 @@ export function isRegionInSelectionRect(region: RegionStore, selectionRect: Rect
     if (region.regionType === CARTA.RegionType.ANNRULER) {
         const ruler = region as RulerAnnotationStore;
         const paths = getRulerSelectionCanvasPaths(ruler, context);
-        return doSelectionRectAndRulerPathsIntersect(selectionRect, paths, ruler.auxiliaryLineVisible);
+        return doSelectionRectAndRulerPathsIntersect(selectionRect, paths, ruler.isAuxiliaryLineVisible);
     }
 
     const points = getSelectionCanvasPoints(region, context);

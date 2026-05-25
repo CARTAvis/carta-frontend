@@ -221,9 +221,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const isMultiSelected = selectedRegions.length > 1;
         const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
         const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
-        const lockDisabled = regionSet.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
-        const showLockedIcon = lockDisabled || regionSet.selectedRegionsAllLocked;
-        const deleteDisabled = regionSet.locked || selectedRegions.every(selectedRegion => selectedRegion.locked);
+        const lockDisabled = regionSet.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible;
+        const showLockedIcon = lockDisabled || regionSet.isAllSelectedRegionsLocked;
+        const deleteDisabled = regionSet.isLocked || selectedRegions.every(selectedRegion => selectedRegion.isLocked);
         const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
 
         showContextMenu({
@@ -268,7 +268,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 </Menu>
             ),
             targetOffset: {left: ev.clientX, top: ev.clientY},
-            isDarkTheme: appStore.darkTheme
+            isDarkTheme: appStore.isDarkTheme
         });
     };
 
@@ -332,7 +332,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (!frame) {
             return;
         }
-        const hasDeletableRegions = !frame.regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+        const hasDeletableRegions = !frame.regionSet.isLocked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.isLocked);
         if (!hasDeletableRegions) {
             return;
         }
@@ -372,7 +372,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const darkTheme = appStore.darkTheme;
+        const darkTheme = appStore.isDarkTheme;
 
         if (!frame) {
             return (
@@ -438,7 +438,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
-            const _isLocked = region.locked;
+            const _isLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
@@ -446,7 +446,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
-        const hasDeletableRegions = !regionSet.locked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.locked);
+        const hasDeletableRegions = !regionSet.isLocked && this.validRegions.some(region => region.regionId !== CURSOR_REGION_ID && !region.isLocked);
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
@@ -469,7 +469,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
             const className = classNames("row-header", {[Classes.DARK]: darkTheme});
             const lockDisabled = !regionSet.visibleEditableRegionsList.length;
-            const allRegionsLocked = regionSet.editableRegionsAllLocked;
+            const allRegionsLocked = regionSet.isAllEditableRegionsLocked;
             const lockIcon = allRegionsLocked ? "lock" : "unlock";
             const lockTooltip = allRegionsLocked ? "Unlock all regions" : "Lock all regions";
             const regionsOpacity = regionSet.editableRegionsOpacity;
@@ -491,11 +491,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         Type
                     </div>
                     <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                        {frame.validWcs ? "Center" : "Pixel Center"}
+                        {frame.isValidWcs ? "Center" : "Pixel Center"}
                     </div>
                     {showSizeColumn && (
                         <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
-                            {frame.validWcs ? "Size" : "Size (px)"}
+                            {frame.isValidWcs ? "Size" : "Size (px)"}
                         </div>
                     )}
                     {showRotationColumn && (
@@ -518,7 +518,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.validWcs) {
+                if (frame.isValidWcs) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -540,7 +540,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.validWcs) {
+                    if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
@@ -586,8 +586,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId) {
-                const lockDisabled = regionSet.locked || !region.visible;
-                const lockIcon = region.locked || !region.visible ? "lock" : "unlock";
+                const lockDisabled = regionSet.isLocked || !region.isVisible;
+                const lockIcon = region.isLocked || !region.isVisible ? "lock" : "unlock";
                 const lockTooltip = lockIcon === "lock" ? "Unlock region" : "Lock region";
                 lockEntry = (
                     <div
@@ -738,7 +738,7 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
 
         const frame = this.props.frame;
         const region = this.props.region;
-        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.isValidWcs)) {
             return null;
         }
 

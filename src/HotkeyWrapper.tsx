@@ -14,7 +14,7 @@ import "./HotkeyWrapper.scss";
 export class HotkeyService extends React.Component<{}> {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog
@@ -62,7 +62,7 @@ export class HotkeyService extends React.Component<{}> {
 
     public static toggleDarkTheme = () => {
         const appStore = AppStore.Instance;
-        if (appStore.darkTheme) {
+        if (appStore.isDarkTheme) {
             appStore.setLightTheme();
         } else {
             appStore.setDarkTheme();
@@ -81,7 +81,7 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.locked) {
+            if (regionSet.isLocked) {
                 return;
             }
 
@@ -125,7 +125,7 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.locked) {
+            if (regionSet.isLocked) {
                 return;
             }
             for (const region of regionSet.regions) {
@@ -165,7 +165,7 @@ export class HotkeyService extends React.Component<{}> {
         }
 
         const region = regionSet.focusedRegion;
-        if (region.supportsPointSelection && !region.hasSelectedPoint) {
+        if (region.isPointSelectionSupported && !region.hasSelectedPoint) {
             region.selectPoint(0);
         }
     };
@@ -200,7 +200,7 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    public static moveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, scaleWithZoom: boolean = true) => {
+    public static moveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, shouldScaleWithZoom: boolean = true) => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const region = frame?.regionSet.focusedRegion;
@@ -208,10 +208,10 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const zoomMultiplier = scaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
+        const zoomMultiplier = shouldScaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
         const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
         const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
-        const canEditSelectedPoint = region.visible && !region.locked && frame.regionSet.selectedRegionCount <= 1 && region.supportsPointSelection;
+        const canEditSelectedPoint = region.isVisible && !region.isLocked && frame.regionSet.selectedRegionCount <= 1 && region.isPointSelectionSupported;
 
         if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
             region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
@@ -368,14 +368,14 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const hasDeletableRegions = !regionSet.locked && regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID && !r.locked);
+        const hasDeletableRegions = !regionSet.isLocked && regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID && !r.isLocked);
         if (!hasDeletableRegions) {
             return;
         }
 
         // No explicit selection; confirm deleting all regions
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+        if (isConfirmed) {
             appStore.deleteAllRegions();
         }
     };
@@ -388,7 +388,7 @@ export class HotkeyService extends React.Component<{}> {
             return false;
         }
 
-        if (regionSet.locked) {
+        if (regionSet.isLocked) {
             return true;
         }
 

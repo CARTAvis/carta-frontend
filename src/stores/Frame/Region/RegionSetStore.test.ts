@@ -270,13 +270,13 @@ describe("RegionSetStore multi-selection behavior", () => {
         regionSet.setSelectionByIds([first.regionId, second.regionId], first.regionId);
 
         regionSet.toggleSelectedRegionsLocked();
-        expect(first.locked).toBe(true);
-        expect(second.locked).toBe(true);
-        expect(third.locked).toBe(false);
+        expect(first.isLocked).toBe(true);
+        expect(second.isLocked).toBe(true);
+        expect(third.isLocked).toBe(false);
 
         regionSet.toggleSelectedRegionsLocked();
-        expect(first.locked).toBe(false);
-        expect(second.locked).toBe(false);
+        expect(first.isLocked).toBe(false);
+        expect(second.isLocked).toBe(false);
 
         regionSet.toggleSelectedRegionsVisibility();
         expect(first.opacity).toBe(RegionOpacity.SemiTransparent);
@@ -289,12 +289,12 @@ describe("RegionSetStore multi-selection behavior", () => {
         second.setLocked(true);
         regionSet.setEditableRegionsOpacity(RegionOpacity.Invisible);
 
-        expect(first.locked).toBe(false);
-        expect(second.locked).toBe(true);
+        expect(first.isLocked).toBe(false);
+        expect(second.isLocked).toBe(true);
 
         regionSet.setEditableRegionsOpacity(RegionOpacity.Visible);
-        expect(first.locked).toBe(false);
-        expect(second.locked).toBe(true);
+        expect(first.isLocked).toBe(false);
+        expect(second.isLocked).toBe(true);
     });
 
     test("bulk locking skips hidden regions", () => {
@@ -304,7 +304,7 @@ describe("RegionSetStore multi-selection behavior", () => {
 
         regionSet.toggleSelectedRegionsLocked();
 
-        expect(first.locked).toBe(true);
-        expect(second.locked).toBe(false);
+        expect(first.isLocked).toBe(true);
+        expect(second.isLocked).toBe(false);
     });
 });

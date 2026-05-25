@@ -67,7 +67,7 @@ export class CatalogQueryComponent extends React.Component {
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
         let sourceIndicater;
         let objectSize: number | undefined = this.objectSize;
-        if (configStore.disableObjectSearch) {
+        if (configStore.isObjectSearchDisabled) {
             objectSize = undefined;
         }
 
@@ -80,7 +80,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
         const formatX = appStore.overlaySettings.numbers.formatTypeX;
         const formatY = appStore.overlaySettings.numbers.formatTypeY;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
@@ -107,8 +107,8 @@ export class CatalogQueryComponent extends React.Component {
                 ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
+                    <Tooltip content="Reset center coordinates by object" disabled={disable || configStore.isObjectSearchDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Button disabled={disable || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={false} label="Search radius" disabled={disable}>
@@ -195,7 +195,7 @@ export class CatalogQueryComponent extends React.Component {
                     disabled={disable}
                     inline={false}
                 />
-                {configStore.showVizierResult ? (
+                {configStore.shouldShowVizierResult ? (
                     <FormGroup inline={false} label="VizieR catalog" disabled={disable}>
                         <MultiSelect
                             placeholder={"Please select catalog tables"}
@@ -235,7 +235,7 @@ export class CatalogQueryComponent extends React.Component {
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
+                        {configStore.canLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                         <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlaySettings.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
                             <AnchorButton intent={Intent.SUCCESS} disabled={disable || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
                         </Tooltip>
@@ -389,7 +389,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
@@ -419,7 +419,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;

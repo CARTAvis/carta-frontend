@@ -46,9 +46,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
         const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
+        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
-        } else if (!animatorStore.serverAnimationActive) {
+        } else if (!animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
     };
@@ -188,8 +188,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.LineThickness, lineThickness);
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
-        if (frame.contourConfig.colormapEnabled) {
+        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.isColormapEnabled ? 1 : 0);
+        if (frame.contourConfig.isColormapEnabled) {
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
@@ -209,7 +209,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             frame.contourStores.forEach((contourStore, level) => {
-                if (frame.contourConfig.colormapEnabled) {
+                if (frame.contourConfig.isColormapEnabled) {
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -254,7 +254,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             for (const frame of contourFrames) {
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
-                const color = config.colormapEnabled ? config.colormap : config.color;
+                const color = config.isColormapEnabled ? config.colormap : config.color;
                 const dashMode = config.dashMode;
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;

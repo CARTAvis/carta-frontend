@@ -56,7 +56,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     }
 
     private selectPointFromAnchorNode = (node: Konva.Node) => {
-        if (!this.props.region.supportsPointSelection) {
+        if (!this.props.region.isPointSelectionSupported) {
             return;
         }
 
@@ -291,7 +291,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false, interactive: boolean = true): React.ReactNode {
         const selectedPointIndex = isRotator ? this.props.region.rotationPointIndex : key;
-        const isSelected = this.props.region.supportsPointSelection && this.props.region.selectedPointIndex === selectedPointIndex;
+        const isSelected = this.props.region.isPointSelectionSupported && this.props.region.selectedPointIndex === selectedPointIndex;
         return (
             <Anchor
                 key={key}
@@ -350,7 +350,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -368,7 +368,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.props.isFocused && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.isFocused && this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
@@ -379,7 +379,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, this.props.isFocused);
@@ -396,7 +396,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.props.isFocused && this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+            if (this.props.isFocused && this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
                 const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
@@ -415,7 +415,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             strokeWidth: region.lineWidth,
             opacity: region.visualOpacity,
             dash: [region.dashLength],
-            listening: this.props.listening && !region.locked,
+            listening: this.props.listening && !region.isLocked,
             onClick: this.handleClick,
             onDblClick: this.handleDoubleClick,
             onContextMenu: this.handleContextMenu,
@@ -441,7 +441,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 ) : (
                     <Line
                         {...commonProps}
-                        closed={!region.creating && (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON)}
+                        closed={!region.isCreating && (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON)}
                         onMouseEnter={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleStrokeMouseEnter}
                         onMouseLeave={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleStrokeMouseLeave}
                         onMouseMove={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? undefined : this.handleMouseMove}

@@ -47,16 +47,16 @@ export class GroupRegionDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("group-region-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("group-region-dialog", {[Classes.DARK]: appStore.isDarkTheme});
         const activeFrame = appStore.activeFrame;
         const regionSet = activeFrame?.regionSet;
         const focusedRegion = regionSet?.focusedRegion;
         const selectedRegions = regionSet?.selectedRegionsList ?? [];
         const selectedRegionsOpacity = regionSet?.selectedRegionsOpacity ?? RegionOpacity.Invisible;
         const selectedRegionsVisible = selectedRegionsOpacity !== RegionOpacity.Invisible;
-        const lockDisabled = !!regionSet?.locked || selectedRegionsOpacity === RegionOpacity.Invisible;
-        const showLockedIcon = lockDisabled || (regionSet?.selectedRegionsAllLocked ?? false);
-        const deleteDisabled = !!regionSet?.locked || selectedRegions.every(region => region.locked);
+        const lockDisabled = !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible;
+        const showLockedIcon = lockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false);
+        const deleteDisabled = !!regionSet?.isLocked || selectedRegions.every(region => region.isLocked);
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -72,7 +72,7 @@ export class GroupRegionDialogComponent extends React.Component {
         let bodyContent = GroupRegionDialogComponent.MissingRegionNode;
         if (activeFrame && focusedRegion && selectedRegions.length > 1) {
             dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
-            bodyContent = <AppearanceForm region={focusedRegion} darkTheme={appStore.darkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
+            bodyContent = <AppearanceForm region={focusedRegion} darkTheme={appStore.isDarkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         }
 
         return (

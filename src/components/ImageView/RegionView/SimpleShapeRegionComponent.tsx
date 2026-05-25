@@ -496,7 +496,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             opacity: region.visualOpacity,
             dash: [region.dashLength],
             draggable: true,
-            listening: this.props.listening && !region.locked,
+            listening: this.props.listening && !region.isLocked,
             onDragStart: this.handleDragStart,
             onDragEnd: this.handleDragEnd,
             onDragMove: this.handleDrag,
@@ -563,7 +563,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         opacity={region.visualOpacity}
                         dash={[region.dashLength]}
                         closed={true}
-                        listening={this.props.listening && !region.locked}
+                        listening={this.props.listening && !region.isLocked}
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}
                         onContextMenu={this.handleContextMenu}
@@ -596,7 +596,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 opacity: region.visualOpacity,
                 dash: [region.dashLength],
                 draggable: true,
-                listening: this.props.listening && !region.locked,
+                listening: this.props.listening && !region.isLocked,
                 onDragStart: this.handleDragStart,
                 onDragEnd: this.handleDragEnd,
                 onDragMove: this.handleDrag,
@@ -619,7 +619,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors(this.props.isFocused) : null}
+                {this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked ? this.genAnchors(this.props.isFocused) : null}
             </Group>
         );
     }

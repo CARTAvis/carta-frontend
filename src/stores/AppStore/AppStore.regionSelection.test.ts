@@ -110,7 +110,7 @@ import {CURSOR_REGION_ID} from "stores/Frame";
 
 import {AppStore} from "./AppStore";
 
-const MakeRegion = (regionId: number, locked = false) => ({fileId: 1, regionId, locked}) as any;
+const MakeRegion = (regionId: number, isLocked = false) => ({fileId: 1, regionId, isLocked}) as any;
 
 describe("AppStore.deleteSelectedRegions", () => {
     const appStore = AppStore.Instance;
@@ -152,14 +152,14 @@ describe("AppStore.deleteSelectedRegions", () => {
 
         const regionSet = {
             focusedRegion: first,
-            locked: false,
+            isLocked: false,
             deleteRegion: jest.fn(),
             regions: [cursor, first, locked, second],
             selectedRegionIds: new Set([first.regionId, locked.regionId, second.regionId])
         };
-        const {result} = callDeleteSelectedRegions(regionSet);
+        const {result: isResult} = callDeleteSelectedRegions(regionSet);
 
-        expect(result).toBe(true);
+        expect(isResult).toBe(true);
         expect(regionSet.deleteRegion).toHaveBeenCalledTimes(2);
         expect(regionSet.deleteRegion).toHaveBeenCalledWith(first);
         expect(regionSet.deleteRegion).toHaveBeenCalledWith(second);
@@ -169,13 +169,13 @@ describe("AppStore.deleteSelectedRegions", () => {
         const regionSet = {
             deleteRegion: jest.fn(),
             focusedRegion: MakeRegion(1),
-            locked: true,
+            isLocked: true,
             regions: [MakeRegion(1)],
             selectedRegionIds: new Set([1])
         };
-        const {result} = callDeleteSelectedRegions(regionSet);
+        const {result: isResult} = callDeleteSelectedRegions(regionSet);
 
-        expect(result).toBe(false);
+        expect(isResult).toBe(false);
         expect(regionSet.deleteRegion).not.toHaveBeenCalled();
     });
 
@@ -184,13 +184,13 @@ describe("AppStore.deleteSelectedRegions", () => {
         const regionSet = {
             deleteRegion: jest.fn(),
             focusedRegion,
-            locked: false,
+            isLocked: false,
             regions: [focusedRegion],
             selectedRegionIds: new Set()
         };
-        const {result} = callDeleteSelectedRegions(regionSet);
+        const {result: isResult} = callDeleteSelectedRegions(regionSet);
 
-        expect(result).toBe(true);
+        expect(isResult).toBe(true);
         expect(regionSet.deleteRegion).toHaveBeenCalledWith(focusedRegion);
     });
 
@@ -199,13 +199,13 @@ describe("AppStore.deleteSelectedRegions", () => {
         const regionSet = {
             deleteRegion: jest.fn(),
             focusedRegion,
-            locked: false,
+            isLocked: false,
             regions: [focusedRegion],
             selectedRegionIds: new Set()
         };
-        const {result} = callDeleteSelectedRegions(regionSet);
+        const {result: isResult} = callDeleteSelectedRegions(regionSet);
 
-        expect(result).toBe(false);
+        expect(isResult).toBe(false);
         expect(regionSet.deleteRegion).not.toHaveBeenCalled();
     });
 });

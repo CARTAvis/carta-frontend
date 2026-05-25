@@ -25,7 +25,7 @@ export class RegionSetStore {
     @observable selectedRegionIds: Set<number> = new Set();
     @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
-    @observable locked: boolean = false;
+    @observable isLocked: boolean = false;
     @observable isHoverImage: Boolean = false;
 
     private readonly frame: FrameStore;
@@ -62,12 +62,12 @@ export class RegionSetStore {
     }
 
     @computed get visibleEditableRegionsList(): RegionStore[] {
-        return this.editableRegionsList.filter(region => region.visible);
+        return this.editableRegionsList.filter(region => region.isVisible);
     }
 
-    @computed get selectedRegionsAllLocked(): boolean {
-        const selectedRegions = this.selectedRegionsList.filter(region => region.visible);
-        return selectedRegions.length > 0 && selectedRegions.every(region => region.locked);
+    @computed get isAllSelectedRegionsLocked(): boolean {
+        const selectedRegions = this.selectedRegionsList.filter(region => region.isVisible);
+        return selectedRegions.length > 0 && selectedRegions.every(region => region.isLocked);
     }
 
     @computed get selectedRegionsOpacity(): RegionOpacity {
@@ -78,9 +78,9 @@ export class RegionSetStore {
         return this.getRegionsOpacity(this.editableRegionsList);
     }
 
-    @computed get editableRegionsAllLocked(): boolean {
+    @computed get isAllEditableRegionsLocked(): boolean {
         const editableRegions = this.visibleEditableRegionsList;
-        return editableRegions.length > 0 && editableRegions.every(region => region.locked);
+        return editableRegions.length > 0 && editableRegions.every(region => region.isLocked);
     }
 
     private getRegionsOpacity = (regions: RegionStore[]): RegionOpacity => {
@@ -132,7 +132,7 @@ export class RegionSetStore {
             return;
         }
         this.selectedRegionIds = new Set([region.regionId]);
-        if (region.supportsPointSelection) {
+        if (region.isPointSelectionSupported) {
             region.deselectPoint();
         }
         this.setFocusedRegion(region);
@@ -318,7 +318,7 @@ export class RegionSetStore {
 
         const selectedRegions = this.selectedRegionIds.has(origin.regionId) ? this.selectedRegionsList : [origin];
 
-        return selectedRegions.filter(region => region.visible && !region.locked);
+        return selectedRegions.filter(region => region.isVisible && !region.isLocked);
     };
 
     @action beginRegionDrag = (origin: RegionStore) => {
@@ -361,8 +361,8 @@ export class RegionSetStore {
         }
     };
 
-    @action setIsHover = (bool: boolean) => {
-        this.isHoverImage = bool;
+    @action setIsHover = (isHover: boolean) => {
+        this.isHoverImage = isHover;
     };
 
     // temporary region IDs are < 0 and used
@@ -409,71 +409,71 @@ export class RegionSetStore {
         return RegionStore.AVAILABLE_ANNOTATION_TYPES.has(this.newRegionType);
     }
 
-    @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
+    @action addPointRegion = (center: Point2D, isCursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, isCursorRegion, isCursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
-    @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.RECTANGLE, temporary);
+    @action addRectangularRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.RECTANGLE, isTemporary);
     };
 
-    @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ELLIPSE, temporary);
+    @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ELLIPSE, isTemporary);
     };
 
-    @action addPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.POLYGON, temporary);
+    @action addPolygonalRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.POLYGON, isTemporary);
     };
 
-    @action addLineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.LINE, temporary);
+    @action addLineRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.LINE, isTemporary);
     };
 
-    @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
+    @action addPolylineRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, isTemporary);
     };
-    @action addAnnPointRegion = (center: Point2D, shape?: CARTA.PointAnnotationShape, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, this.getTempRegionId(), "", shape);
-    };
-
-    @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, temporary);
+    @action addAnnPointRegion = (center: Point2D, shape?: CARTA.PointAnnotationShape, isCursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, isCursorRegion, this.getTempRegionId(), "", shape);
     };
 
-    @action addAnnEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, temporary);
+    @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, isTemporary);
     };
 
-    @action addAnnPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, temporary);
+    @action addAnnEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, isTemporary);
     };
 
-    @action addAnnLineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, temporary);
+    @action addAnnPolygonalRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, isTemporary);
     };
 
-    @action addAnnPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary);
+    @action addAnnLineRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, isTemporary);
     };
 
-    @action addAnnVectorRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary);
+    @action addAnnPolylineRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, isTemporary);
     };
 
-    @action addAnnTextRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary);
+    @action addAnnVectorRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, isTemporary);
     };
 
-    @action addAnnCompassRegion = (point: Point2D, length: number, temporary: boolean = false) => {
-        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, temporary);
+    @action addAnnTextRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, isTemporary);
     };
 
-    @action addAnnRulerRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, temporary);
+    @action addAnnCompassRegion = (point: Point2D, length: number, isTemporary: boolean = false) => {
+        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, isTemporary);
     };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true, annotationStyles?: any) => {
-        const region = this.addRegion(points, rotation, regionType, temporary, regionId, name);
+    @action addAnnRulerRegion = (points: Point2D[], isTemporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, isTemporary);
+    };
+
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], isTemporary = true, annotationStyles?: any) => {
+        const region = this.addRegion(points, rotation, regionType, isTemporary, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;
@@ -533,11 +533,11 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "", pointShape?: CARTA.PointAnnotationShape) => {
+    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, isTemporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "", pointShape?: CARTA.PointAnnotationShape) => {
         const region = this.initRegion(points, rotation, regionType, regionId, regionName, pointShape);
         this.regions.push(region);
 
-        if (!temporary) {
+        if (!isTemporary) {
             this.requestSetRegion(this.frame.frameInfo.fileId, region);
         }
 
@@ -600,7 +600,7 @@ export class RegionSetStore {
 
     @action setFocusedRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
-            if (this.focusedRegion && this.focusedRegion !== region && this.focusedRegion.supportsPointSelection) {
+            if (this.focusedRegion && this.focusedRegion !== region && this.focusedRegion.isPointSelectionSupported) {
                 this.focusedRegion.deselectPoint();
             }
             if (region.regionId !== CURSOR_REGION_ID && !this.selectedRegionIds.has(region.regionId)) {
@@ -615,8 +615,8 @@ export class RegionSetStore {
             return;
         }
 
-        const useMultiSelection = this.selectedRegionIds.size > 1;
-        this.selectAdjacentRegion(this.regions, direction, {wrap: true, selectedOnly: useMultiSelection, preserveSelection: useMultiSelection});
+        const isMultiSelection = this.selectedRegionIds.size > 1;
+        this.selectAdjacentRegion(this.regions, direction, {wrap: true, selectedOnly: isMultiSelection, preserveSelection: isMultiSelection});
     };
 
     @action selectNextRegion = () => {
@@ -633,14 +633,14 @@ export class RegionSetStore {
     };
 
     @action toggleSelectedRegionsLocked = () => {
-        const visibleSelectedRegions = this.selectedRegionsList.filter(region => region.visible);
-        const locked = visibleSelectedRegions.length > 0 && !visibleSelectedRegions.every(region => region.locked);
-        visibleSelectedRegions.forEach(region => region.setLocked(locked));
+        const visibleSelectedRegions = this.selectedRegionsList.filter(region => region.isVisible);
+        const shouldLock = visibleSelectedRegions.length > 0 && !visibleSelectedRegions.every(region => region.isLocked);
+        visibleSelectedRegions.forEach(region => region.setLocked(shouldLock));
     };
 
     @action toggleEditableRegionsLocked = () => {
-        const locked = !this.editableRegionsAllLocked;
-        this.visibleEditableRegionsList.forEach(region => region.setLocked(locked));
+        const shouldLock = !this.isAllEditableRegionsLocked;
+        this.visibleEditableRegionsList.forEach(region => region.setLocked(shouldLock));
     };
 
     @action setEditableRegionsOpacity = (opacity: RegionOpacity) => {
@@ -692,7 +692,7 @@ export class RegionSetStore {
         this.mode = this.mode === RegionMode.MOVING ? RegionMode.CREATING : RegionMode.MOVING;
     };
 
-    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.Mapping, forward: boolean = false) => {
+    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.Mapping, isForward: boolean = false) => {
         if (sourceRegionSet?.regions?.length <= 1) {
             return;
         }
@@ -707,7 +707,7 @@ export class RegionSetStore {
             }
 
             if (region.regionId === CURSOR_REGION_ID) {
-                const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                const centerNewFrame = transformPoint(spatialTransformAST, region.center, isForward);
                 if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
                     this.regions[0].setCenter(centerNewFrame);
                 }
@@ -733,11 +733,11 @@ export class RegionSetStore {
                                 break;
                         }
 
-                        const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                        const centerNewFrame = transformPoint(spatialTransformAST, region.center, isForward);
                         if (!isAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                            const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
-                            rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
+                            const size = scale2D(region.size, isForward ? transform.scale : 1.0 / transform.scale);
+                            rotation = region.rotation + ((isForward ? 1 : -1) * transform.rotation * 180) / Math.PI;
                             newControlPoints = [centerNewFrame, size];
                         }
                         break;
@@ -764,7 +764,7 @@ export class RegionSetStore {
                         }
 
                         for (const point of region.controlPoints) {
-                            const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
+                            const pointNewFrame = transformPoint(spatialTransformAST, point, isForward);
                             if (!isAstBadPoint(pointNewFrame)) {
                                 newControlPoints.push(pointNewFrame);
                             }
@@ -789,7 +789,7 @@ export class RegionSetStore {
                         newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], true, annotationStyles);
                         newRegion.endCreating();
                     }
-                    newRegion.setLocked(region.locked);
+                    newRegion.setLocked(region.isLocked);
                     newRegion.setOpacity(region.opacity);
                     // Link the two regions together
                     newRegion.modifiedTimestamp = region.modifiedTimestamp;
@@ -799,7 +799,7 @@ export class RegionSetStore {
         }
     };
 
-    @action setLocked(locked?: boolean) {
-        this.locked = locked === undefined ? !this.locked : locked;
+    @action setLocked(shouldLock?: boolean) {
+        this.isLocked = shouldLock === undefined ? !this.isLocked : shouldLock;
     }
 }

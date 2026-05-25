@@ -11,10 +11,10 @@ export type ControlHeader = {columnIndex: number | undefined; dataIndex: number 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
-    private readonly InitialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
-    private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
-    private InitialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
-    private InitialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
+    private readonly initialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
+    private readonly initialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
+    private initialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
+    private initialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
@@ -168,7 +168,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.sortingInfo = {columnName, sortingType};
     }
 
-    @computed get loadOntoImage() {
+    @computed get isLoadingOntoImage() {
         return this.loadingData || this.updatingDataStream;
     }
 
@@ -179,11 +179,11 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let shouldDisplay = false;
                 if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
-                    display = true;
+                    shouldDisplay = true;
                 }
-                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: shouldDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -260,10 +260,10 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     private findKeywords(val: string): boolean {
-        const keyWords = this.InitialedColumnsKeyWords;
-        const raKeywords = this.InitialedRAColumnsKeyWords;
-        const decKeywords = this.InitialedDECColumnsKeyWords;
-        const excludeKeywords = this.InitialedExcludeColumnsKeyWords;
+        const keyWords = this.initialedColumnsKeyWords;
+        const raKeywords = this.initialedRAColumnsKeyWords;
+        const decKeywords = this.initialedDECColumnsKeyWords;
+        const excludeKeywords = this.initialedExcludeColumnsKeyWords;
         const description = val.toUpperCase();
         for (let index = 0; index < keyWords.length; index++) {
             const subString = keyWords[index];

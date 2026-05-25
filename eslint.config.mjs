@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
@@ -75,22 +75,22 @@ export default [
                     modifiers: ["const", "global"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                //     format: ["camelCase"],
-                //     leadingUnderscore: "allow",
-                // },
+                {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                //     types: ["boolean"],
-                //     format: ["PascalCase"],
-                //     prefix: ["is", "should", "has", "can", "did", "will"]
-                // },
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "should", "has", "can", "did", "will"]
+                },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):
                 // const N = maxIndex - minIndex;

@@ -93,7 +93,7 @@ export const Point = (props: PointProps) => {
     return (
         <Group>
             <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={fill} stroke={props.color} strokeScaleEnabled={false} sceneFunc={handlePointDraw} />
-            {!AppStore.Instance.activeFrame?.regionSet.locked && (
+            {!AppStore.Instance.activeFrame?.regionSet.isLocked && (
                 <Shape
                     x={props.x}
                     y={props.y}

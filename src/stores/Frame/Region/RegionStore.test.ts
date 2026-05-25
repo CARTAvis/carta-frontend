@@ -95,15 +95,15 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         ]);
 
         region.setOpacity(RegionOpacity.Invisible);
-        expect(region.locked).toBe(false);
+        expect(region.isLocked).toBe(false);
 
         region.setOpacity(RegionOpacity.Visible);
-        expect(region.locked).toBe(false);
+        expect(region.isLocked).toBe(false);
 
         region.setLocked(true);
         region.setOpacity(RegionOpacity.Invisible);
         region.setOpacity(RegionOpacity.Visible);
-        expect(region.locked).toBe(true);
+        expect(region.isLocked).toBe(true);
     });
 
     test("does not apply visibility or lock changes to cursor region", () => {
@@ -112,7 +112,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         cursor.setLocked(true);
         cursor.setOpacity(RegionOpacity.Invisible);
 
-        expect(cursor.locked).toBe(false);
+        expect(cursor.isLocked).toBe(false);
         expect(cursor.opacity).toBe(RegionOpacity.Visible);
     });
 
