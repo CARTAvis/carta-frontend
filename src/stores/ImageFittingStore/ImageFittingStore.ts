@@ -36,13 +36,13 @@ export class ImageFittingStore {
     /** Constant background offset. */
     @observable backgroundOffset: number = 0;
     /** Indicates whether to fix the background offset when fitting. */
-    @observable backgroundOffsetFixed: boolean = true;
+    @observable isBackgroundOffsetFixed: boolean = true;
     /** Solver used for fitting. */
     @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
     /** Indicates whether to generate a model image when requesting for fitting. */
-    @observable createModelImage: boolean = true;
+    @observable shouldCreateModelImage: boolean = true;
     /** Indicates whether to generate a residual image when requesting for fitting. */
-    @observable createResidualImage: boolean = true;
+    @observable shouldCreateResidualImage: boolean = true;
     /** Whether a fitting request is currently being processed. */
     @observable isFitting: boolean = false;
     /** Progress of the current fitting request, from 0 to 1 (multiply by 100 for %). */
@@ -133,7 +133,7 @@ export class ImageFittingStore {
 
     /** Toggles whether the background offset is fixed during fitting. */
     @action toggleBackgroundOffsetFixed = () => {
-        this.backgroundOffsetFixed = !this.backgroundOffsetFixed;
+        this.isBackgroundOffsetFixed = !this.isBackgroundOffsetFixed;
     };
 
     /**
@@ -146,12 +146,12 @@ export class ImageFittingStore {
 
     /** Toggles whether to generate a model image when requesting for fitting.  */
     @action toggleCreateModelImage = () => {
-        this.createModelImage = !this.createModelImage;
+        this.shouldCreateModelImage = !this.shouldCreateModelImage;
     };
 
     /** Toggles whether to generate a residual image when requesting for fitting. */
     @action toggleCreateResidualImage = () => {
-        this.createResidualImage = !this.createResidualImage;
+        this.shouldCreateResidualImage = !this.shouldCreateResidualImage;
     };
 
     /**
@@ -218,8 +218,8 @@ export class ImageFittingStore {
     }
 
     /** Whether all input initial values are valid. Returns true if automatic initial-value generation is enabled. */
-    @computed get validParams() {
-        return this.isAutoInitVal ? true : this.components.every(c => c.validParams === true);
+    @computed get hasValidParams() {
+        return this.isAutoInitVal ? true : this.components.every(c => c.hasValidParams === true);
     }
 
     /** The total number of fixed parameters across all Gaussian parameters. Returns 0 if automatic initial-value generation is enabled. */
@@ -228,11 +228,11 @@ export class ImageFittingStore {
     }
 
     /** Whether fitting is disabled due to an invalid file ID, all parameters being fixed, invalid initial values, or fitting in progress. */
-    @computed get fitDisabled() {
+    @computed get isFitDisabled() {
         const fileId = this.effectiveFrame?.frameInfo?.fileId;
-        const validFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
-        const allFixed = this.components.every(c => c.allFixed === true);
-        return !validFileId || allFixed || !this.validParams || this.isFitting;
+        const isValidFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
+        const isAllFixed = this.components.every(c => c.isAllFixed === true);
+        return !isValidFileId || isAllFixed || !this.hasValidParams || this.isFitting;
     }
 
     constructor() {
@@ -255,7 +255,7 @@ export class ImageFittingStore {
      * Skips the request if fitting is currently disabled.
      */
     fitImage = () => {
-        if (this.fitDisabled) {
+        if (this.isFitDisabled) {
             return;
         }
         this.setIsFitting(true);
@@ -271,7 +271,7 @@ export class ImageFittingStore {
             });
             fixedParams.push(...(this.isAutoInitVal ? [false, false, false, false, false, false] : c.fixedParams));
         }
-        fixedParams.push(this.backgroundOffsetFixed);
+        fixedParams.push(this.isBackgroundOffsetFixed);
 
         let fovInfo: CARTA.IRegionInfo | null = null;
         let regionId = this.selectedRegionId;
@@ -286,8 +286,8 @@ export class ImageFittingStore {
             fixedParams,
             regionId,
             fovInfo,
-            createModelImage: this.createModelImage,
-            createResidualImage: this.createResidualImage,
+            createModelImage: this.shouldCreateModelImage,
+            createResidualImage: this.shouldCreateResidualImage,
             offset: this.backgroundOffset,
             solver: this.solverType
         };
@@ -341,19 +341,19 @@ export class ImageFittingStore {
         log += this.getRegionInfoLog(regionId, fovInfo) + "\n";
         log += fittingLog + "\n";
 
-        const toFixFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, fixed: boolean): string => {
+        const toFixFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, isFixed: boolean): string => {
             const valueString = typeof value === "string" ? value : value?.toFixed(6);
-            const errorString = fixed ? "" : " \u00b1 " + error?.toFixed(6);
-            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
+            const errorString = isFixed ? "" : " \u00b1 " + error?.toFixed(6);
+            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${isFixed ? " (fixed)" : ""}\n`;
         };
-        const toExpFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, fixed: boolean): string => {
+        const toExpFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, isFixed: boolean): string => {
             const valueString = typeof value === "string" ? value : toExponential(value ?? NaN, 12);
-            const errorString = fixed ? "" : " \u00b1 " + toExponential(error ?? NaN, 12);
-            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
+            const errorString = isFixed ? "" : " \u00b1 " + toExponential(error ?? NaN, 12);
+            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${isFixed ? " (fixed)" : ""}\n`;
         };
         const formatTypeX = AppStore.Instance.overlaySettings.numbers?.formatTypeX;
         const formatTypeY = AppStore.Instance.overlaySettings.numbers?.formatTypeY;
-        const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
+        const shouldShowIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
         for (let i = 0; i < values.length; i++) {
             const value = values[i];
@@ -363,26 +363,26 @@ export class ImageFittingStore {
             }
             results += `Component #${i + 1}:\n`;
             log += `Component #${i + 1}:\n`;
-            const [centerFixedX, centerFixedY, amplitudeFixed, fwhmFixedX, fwhmFixedY, paFixed] = fixedParams.slice(i * 6, i * 6 + 6);
+            const [isCenterFixedX, isCenterFixedY, isAmplitudeFixed, isFwhmFixedX, isFwhmFixedY, isPaFixed] = fixedParams.slice(i * 6, i * 6 + 6);
             if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
-                results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
-                results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px", isCenterFixedX);
+                results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px", isCenterFixedY);
+                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, isAmplitudeFixed);
+                results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", isFwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", isFwhmFixedY);
+                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", isPaFixed);
+                if (shouldShowIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", isAmplitudeFixed && isFwhmFixedX && isFwhmFixedY);
                 }
 
-                log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", isCenterFixedX);
+                log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", isCenterFixedY);
+                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, isAmplitudeFixed);
+                log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", isFwhmFixedX);
+                log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", isFwhmFixedY);
+                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", isPaFixed);
+                if (shouldShowIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", isAmplitudeFixed && isFwhmFixedX && isFwhmFixedY);
                 }
             } else {
                 const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
@@ -399,8 +399,8 @@ export class ImageFittingStore {
                 if (formatTypeY === NumberFormatType.HMS) {
                     centerErrorWCS.y /= 15; // convert from arcsec to sec
                 }
-                const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
-                const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
+                const centerXUnit = isCenterFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
+                const centerYUnit = isCenterFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
 
                 const fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 const fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
@@ -419,28 +419,28 @@ export class ImageFittingStore {
                     fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
                 }
 
-                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
-                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, isCenterFixedX);
+                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, isCenterFixedY);
+                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, isAmplitudeFixed);
+                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, isFwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, isFwhmFixedY);
+                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", isPaFixed);
+                if (shouldShowIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", isAmplitudeFixed && isFwhmFixedX && isFwhmFixedY);
                 }
 
-                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
-                log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
-                log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
-                log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
-                log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, isCenterFixedX);
+                log += toExpFormat("               ", value.center?.x, error.center?.x, "px", isCenterFixedX);
+                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, isCenterFixedY);
+                log += toExpFormat("               ", value.center?.y, error.center?.y, "px", isCenterFixedY);
+                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, isAmplitudeFixed);
+                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, isFwhmFixedX);
+                log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", isFwhmFixedX);
+                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, isFwhmFixedY);
+                log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", isFwhmFixedY);
+                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", isPaFixed);
+                if (shouldShowIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", isAmplitudeFixed && isFwhmFixedX && isFwhmFixedY);
                 }
             }
             results += "\n";
@@ -620,9 +620,9 @@ class ImageFittingIndividualStore {
     @observable fwhm: Point2D = {x: NaN, y: NaN};
     @observable pa: number = NaN;
     @observable centerFixed: {x: boolean; y: boolean} = {x: false, y: false};
-    @observable amplitudeFixed: boolean = false;
+    @observable isAmplitudeFixed: boolean = false;
     @observable fwhmFixed: {x: boolean; y: boolean} = {x: false, y: false};
-    @observable paFixed: boolean = false;
+    @observable isPaFixed: boolean = false;
 
     @action setCenterX = (val: number): boolean => {
         if (isFinite(val)) {
@@ -689,7 +689,7 @@ class ImageFittingIndividualStore {
     };
 
     @action toggleAmplitudeFixed = () => {
-        this.amplitudeFixed = !this.amplitudeFixed;
+        this.isAmplitudeFixed = !this.isAmplitudeFixed;
     };
 
     @action toggleFwhmXFixed = () => {
@@ -701,7 +701,7 @@ class ImageFittingIndividualStore {
     };
 
     @action togglePaFixed = () => {
-        this.paFixed = !this.paFixed;
+        this.isPaFixed = !this.isPaFixed;
     };
 
     constructor() {
@@ -733,19 +733,19 @@ class ImageFittingIndividualStore {
         return {x, y};
     }
 
-    @computed get validParams(): boolean {
+    @computed get hasValidParams(): boolean {
         return isFinite(this.center.x) && isFinite(this.center.y) && isFinite(this.amplitude) && isFinite(this.fwhm.x) && isFinite(this.fwhm.y) && isFinite(this.pa);
     }
 
     @computed get fixedParams(): boolean[] {
-        return [this.centerFixed.x, this.centerFixed.y, this.amplitudeFixed, this.fwhmFixed.x, this.fwhmFixed.y, this.paFixed];
+        return [this.centerFixed.x, this.centerFixed.y, this.isAmplitudeFixed, this.fwhmFixed.x, this.fwhmFixed.y, this.isPaFixed];
     }
 
     @computed get fixedParamNum(): number {
         return this.fixedParams.filter(p => p === true).length;
     }
 
-    @computed get allFixed(): boolean {
+    @computed get isAllFixed(): boolean {
         return this.fixedParams.every(p => p === true);
     }
 

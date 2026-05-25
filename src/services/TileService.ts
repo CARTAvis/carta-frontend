@@ -579,12 +579,12 @@ export class TileService {
         const appStore = AppStore.Instance;
         const currentChannels = this.channelMap.get(tileMessage.fileId ?? NaN);
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
-        if (!appStore.channelMapStore.channelMapEnabled && !this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
+        if (!appStore.channelMapStore.isChannelMapEnabled && !this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
             console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
             return;
         }
 
-        if (appStore.channelMapStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+        if (appStore.channelMapStore.isChannelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
             console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }

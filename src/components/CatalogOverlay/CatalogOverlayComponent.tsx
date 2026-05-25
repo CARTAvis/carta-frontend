@@ -63,7 +63,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get shouldAutoSelectImageOverlayColumns(): boolean {
-        return PreferenceStore.Instance.autoSelectImageOverlayCoordinateColumns;
+        return PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -112,7 +112,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && catalogWidgetStore) {
             dataset = profileStore.catalogData;
             numVisibleRows = profileStore.numVisibleRows;
-            if (profileStore.regionSelected && catalogWidgetStore.showSelectedData) {
+            if (profileStore.regionSelected && catalogWidgetStore.isShowingSelectedData) {
                 if (profileStore.isFileBasedCatalog) {
                     dataset = profileStore.selectedData;
                 }
@@ -178,7 +178,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     return [catalogWidgetStore, canAutoSelectAxes] as const;
                 },
                 ([catalogWidgetStore, canAutoSelectAxes]) => {
-                    if (!catalogWidgetStore || !canAutoSelectAxes || catalogWidgetStore.autoSelectImageOverlayAxesAttempted) {
+                    if (!catalogWidgetStore || !canAutoSelectAxes || catalogWidgetStore.hasAttemptedAutoSelectImageOverlayAxes) {
                         return;
                     }
 
@@ -215,7 +215,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
-            if (profileStore.regionSelected && catalogWidgetStore.catalogTableAutoScroll && !catalogWidgetStore.showSelectedData) {
+            if (profileStore.regionSelected && catalogWidgetStore.isCatalogTableAutoScrollEnabled && !catalogWidgetStore.isShowingSelectedData) {
                 this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             }
         }
@@ -435,7 +435,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (frame) {
             catalogWidgetStore.setPlottedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
             const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
-            const wcs = frame.validWcs ? frame.wcsInfo : 0;
+            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
                 catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem.system, 0, 0);
@@ -628,7 +628,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         // Skip if normal conditions prevent filtering AND we're not in column update mode
-        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.isLoadingOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
 
         if (shouldSkipRequest) {
             return;
@@ -680,7 +680,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateByInfiniteScroll = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const selectedOnly = catalogWidgetStore?.showSelectedData;
+        const selectedOnly = catalogWidgetStore?.isShowingSelectedData;
         if (profileStore?.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = profileStore.updateRequestDataSize;
@@ -767,7 +767,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        if (!catalogWidgetStore?.showSelectedData) {
+        if (!catalogWidgetStore?.isShowingSelectedData) {
             if (selectedDataIndices.length === 1) {
                 const selectedPointIndexs = profileStore?.selectedPointIndices;
                 let highlighted = false;
@@ -871,11 +871,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
         if (profileStore?.regionSelected) {
-            if (widgetStore?.showSelectedData) {
+            if (widgetStore?.isShowingSelectedData) {
                 // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
             } else {
-                if (widgetStore?.catalogTableAutoScroll) {
+                if (widgetStore?.isCatalogTableAutoScrollEnabled) {
                     this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
                     widgetStore.setCatalogTableAutoScroll(false);
                 }
@@ -916,7 +916,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnWidths: validColumnWidths.length === expectedColumnCount ? validColumnWidths : undefined,
             loadingCell: profileStore.loadingData,
             selectedDataIndex: profileStore.selectedPointIndices,
-            showSelectedData: catalogWidgetStore.showSelectedData,
+            showSelectedData: catalogWidgetStore.isShowingSelectedData,
             updateTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: profileStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
@@ -927,7 +927,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnName: profileStore.sortingInfo.columnName ?? "",
                 sortingType: profileStore.sortingInfo.sortingType
             },
-            disableSort: profileStore.loadOntoImage,
+            disableSort: profileStore.isLoadingOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
             catalogType: profileStore.catalogType,
@@ -991,7 +991,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
         const plotButtonText = isImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
         const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
-        const disable = profileStore.loadOntoImage;
+        const disable = profileStore.isLoadingOntoImage;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600) {

@@ -49,7 +49,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
                 const linkedClass = "linked-to-selected-stokes";
-                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+                stokesClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }
         }
         return (

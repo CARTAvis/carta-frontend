@@ -49,7 +49,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     </DashModeSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Color mode">
-                    <HTMLSelect value={frame.contourConfig.colormapEnabled ? 1 : 0} onChange={ev => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={frame.contourConfig.isColormapEnabled ? 1 : 0} onChange={ev => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -58,12 +58,12 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.colormapEnabled}>
-                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedColormap={frame.contourConfig.colormap} onColormapSelect={frame.contourConfig.setColormap} />
+                <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.isColormapEnabled}>
+                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.isColormapEnabled} selectedColormap={frame.contourConfig.colormap} onColormapSelect={frame.contourConfig.setColormap} />
                 </FormGroup>
-                <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
+                        disabled={!frame.contourConfig.isColormapEnabled}
                         placeholder="Bias"
                         min={-1.0}
                         max={1.0}
@@ -73,9 +73,9 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         onValueChange={frame.contourConfig.setColormapBias}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
+                        disabled={!frame.contourConfig.isColormapEnabled}
                         placeholder="Contrast"
                         min={0.0}
                         max={3.0}
@@ -85,13 +85,13 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         onValueChange={frame.contourConfig.setColormapContrast}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Color" disabled={frame.contourConfig.isColormapEnabled}>
                     <ColorPickerComponent
                         color={frame.contourConfig.color}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgb)}
                         disableAlpha={true}
-                        disabled={frame.contourConfig.colormapEnabled}
+                        disabled={frame.contourConfig.isColormapEnabled}
                         darkTheme={this.props.darkTheme}
                     />
                 </FormGroup>

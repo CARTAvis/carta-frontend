@@ -16,9 +16,9 @@ export class RenderConfigWidgetStore {
     @observable primaryLineColor: string = "auto-blue";
     @observable lineWidth: number = 1;
     @observable linePlotPointSize: number = 1.5;
-    @observable logScaleY: boolean = true;
-    @observable markerTextVisible: boolean = true;
-    @observable meanRmsVisible: boolean = true;
+    @observable isLogScaleY: boolean = true;
+    @observable isMarkerTextVisible: boolean = true;
+    @observable isMeanRmsVisible: boolean = true;
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -55,16 +55,16 @@ export class RenderConfigWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (val: boolean) => {
-        this.markerTextVisible = val;
+    @action setMarkerTextVisible = (isMarkerTextVisible: boolean) => {
+        this.isMarkerTextVisible = isMarkerTextVisible;
     };
 
-    @action setMeanRmsVisible = (val: boolean) => {
-        this.meanRmsVisible = val;
+    @action setMeanRmsVisible = (isMeanRmsVisible: boolean) => {
+        this.isMeanRmsVisible = isMeanRmsVisible;
     };
 
-    @action setLogScale = (logScale: boolean) => {
-        this.logScaleY = logScale;
+    @action setLogScale = (isLogScale: boolean) => {
+        this.isLogScaleY = isLogScale;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -123,13 +123,13 @@ export class RenderConfigWidgetStore {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
         if (typeof widgetSettings.logScaleY === "boolean") {
-            this.logScaleY = widgetSettings.logScaleY;
+            this.isLogScaleY = widgetSettings.logScaleY;
         }
         if (typeof widgetSettings.markerTextVisible === "boolean") {
-            this.markerTextVisible = widgetSettings.markerTextVisible;
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
         }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
-            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+            this.isMeanRmsVisible = widgetSettings.meanRmsVisible;
         }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
@@ -153,9 +153,9 @@ export class RenderConfigWidgetStore {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            logScaleY: this.logScaleY,
-            markerTextVisible: this.markerTextVisible,
-            meanRmsVisible: this.meanRmsVisible,
+            logScaleY: this.isLogScaleY,
+            markerTextVisible: this.isMarkerTextVisible,
+            meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,

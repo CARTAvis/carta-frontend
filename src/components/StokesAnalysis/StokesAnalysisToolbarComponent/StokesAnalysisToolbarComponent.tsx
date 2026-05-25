@@ -51,7 +51,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
             <div className="stokes-analysis-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} onFrameChanged={this.handleFrameChanged} />
                 <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
-                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
+                    <Switch checked={widgetStore.isFractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">

@@ -55,7 +55,7 @@ export function getColorForTheme(color: string): string {
     }
 
     const requiredColor = color.substr(5).toUpperCase();
-    return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+    return Colors[`${requiredColor}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 
 function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {

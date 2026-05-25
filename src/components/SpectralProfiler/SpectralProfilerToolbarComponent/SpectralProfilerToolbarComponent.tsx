@@ -55,7 +55,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             }
         }
 
-        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
             <div className={className}>

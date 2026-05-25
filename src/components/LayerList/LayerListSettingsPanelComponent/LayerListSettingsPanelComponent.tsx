@@ -75,7 +75,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}
-                    resetDisabled={restFreqStore.resetDisable}
+                    resetDisabled={restFreqStore.isResetDisabled}
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
                     focused={frameOption.frameIndex === this.widgetStore?.selectedFrameIndex}
@@ -133,7 +133,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             restFreqPanel = (
                 <div className="panel-container">
                     {frameOptions.slice(1).map((option, index) => {
-                        const style = classNames({disabled: option.disable}, {dark: appStore.darkTheme}, {active: option.active});
+                        const style = classNames({disabled: option.disable}, {dark: appStore.isDarkTheme}, {active: option.active});
                         return (
                             <React.Fragment key={index}>
                                 <FormGroup inline={true} label="Source" className="name-text" disabled={option.disable}>

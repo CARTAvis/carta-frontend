@@ -58,7 +58,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                 {this.props.showHistogramSelect && (
                     <FormGroup label={"Histogram"} inline={true} disabled={this.props.disableHistogramSelect}>
                         <HistogramSelect
-                            activeItem={renderConfig.useCubeHistogram}
+                            activeItem={renderConfig.isUsingCubeHistogram}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
                             items={[true, false]}
@@ -67,7 +67,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             disabled={this.props.disableHistogramSelect}
                         >
                             <Button
-                                text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"}
+                                text={renderConfig.isUsingCubeHistogram ? "Per-cube" : "Per-channel"}
                                 rightIcon="double-caret-vertical"
                                 alignText={"right"}
                                 disabled={this.props.disableHistogramSelect}
@@ -77,7 +77,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                     </FormGroup>
                 )}
                 <Alert
-                    className={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}
+                    className={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}
                     icon={"time"}
                     isOpen={this.showCubeHistogramAlert}
                     onCancel={this.handleAlertCancel}

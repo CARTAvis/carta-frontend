@@ -70,16 +70,16 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.angularSource = config.angularSource;
             this.intensitySource = config.intensitySource;
             this.pixelAveraging = config.pixelAveraging;
-            this.fractionalIntensity = config.fractionalIntensity;
+            this.fractionalIntensity = config.isFractionalIntensity;
             this.threshold = config.threshold;
-            this.thresholdEnabled = config.thresholdEnabled;
-            this.debiasing = config.debiasing;
+            this.thresholdEnabled = config.isThresholdEnabled;
+            this.debiasing = config.isDebiasing;
             this.thresholdOption = config.thresholdOption;
         } else {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
-            this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
+            this.fractionalIntensity = preferences.isVectorOverlayFractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
             this.debiasing = false;
@@ -94,17 +94,17 @@ export class VectorOverlayDialogComponent extends React.Component {
                 config.angularSource !== this.angularSource ||
                 config.intensitySource !== this.intensitySource ||
                 config.pixelAveraging !== this.pixelAveraging ||
-                config.thresholdEnabled !== this.thresholdEnabled ||
-                config.debiasing !== this.debiasing ||
-                config.fractionalIntensity !== this.fractionalIntensity
+                config.isThresholdEnabled !== this.thresholdEnabled ||
+                config.isDebiasing !== this.debiasing ||
+                config.isFractionalIntensity !== this.fractionalIntensity
             ) {
                 return true;
             }
-            if (config.debiasing && (config.qError !== this.qError || config.uError !== this.uError)) {
+            if (config.isDebiasing && (config.qError !== this.qError || config.uError !== this.uError)) {
                 return true;
             }
 
-            if (config.thresholdEnabled && (config.threshold !== this.threshold || config.thresholdOption !== this.thresholdOption)) {
+            if (config.isThresholdEnabled && (config.threshold !== this.threshold || config.thresholdOption !== this.thresholdOption)) {
                 return true;
             }
         }
@@ -197,7 +197,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityMax = config.intensityMax !== undefined && isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
-            <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.headerUnit ? `(${frame.headerUnit})` : ""} inline={true}>
+            <FormGroup label="Intensity" labelInfo={config.isFractionalIntensity ? "(%)" : frame.headerUnit ? `(${frame.headerUnit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
                         {intensityMin !== undefined ? (
@@ -273,7 +273,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("vector-overlay-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("vector-overlay-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -406,7 +406,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 />
                 <FormGroup inline={true} label="Color mode">
                     <HTMLSelect
-                        value={dataSource.vectorOverlayConfig.colormapEnabled ? 1 : 0}
+                        value={dataSource.vectorOverlayConfig.isColormapEnabled ? 1 : 0}
                         onChange={ev => dataSource.vectorOverlayConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}
                         data-testid="vector-field-color-mode-dropdown"
                     >
@@ -418,7 +418,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                {dataSource.vectorOverlayConfig.colormapEnabled ? (
+                {dataSource.vectorOverlayConfig.isColormapEnabled ? (
                     <React.Fragment>
                         <FormGroup inline={true} label="Colormap">
                             <ColormapComponent inverted={false} selectedColormap={dataSource.vectorOverlayConfig.colormap} onColormapSelect={dataSource.vectorOverlayConfig.setColormap} />
@@ -445,7 +445,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             presetColors={SWATCH_COLORS}
                             setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgb)}
                             disableAlpha={true}
-                            darkTheme={appStore.darkTheme}
+                            darkTheme={appStore.isDarkTheme}
                         />
                     </FormGroup>
                 )}
@@ -473,10 +473,10 @@ export class VectorOverlayDialogComponent extends React.Component {
                                 filterable={false}
                                 items={appStore.frames}
                                 itemRenderer={this.renderDataSourceSelectItem}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.isAnimationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
                         </FormGroup>
                         <Tabs defaultSelectedTabId={VectorOverlayDialogTabs.Configuration} renderActiveTabPanelOnly={false}>
@@ -487,11 +487,11 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearOverlay} disabled={!dataSource.vectorOverlayConfig.enabled} text="Clear" data-testid="vector-field-clear-button" />
+                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearOverlay} disabled={!dataSource.vectorOverlayConfig.isEnabled} text="Clear" data-testid="vector-field-clear-button" />
                         <AnchorButton
                             intent={Intent.SUCCESS}
                             onClick={this.handleApplyOverlay}
-                            disabled={(this.angularSource === VectorOverlaySource.None && this.intensitySource === VectorOverlaySource.None) || (!this.configChanged && dataSource.vectorOverlayConfig.enabled)}
+                            disabled={(this.angularSource === VectorOverlaySource.None && this.intensitySource === VectorOverlaySource.None) || (!this.configChanged && dataSource.vectorOverlayConfig.isEnabled)}
                             text="Apply"
                             data-testid="vector-field-apply-button"
                         />

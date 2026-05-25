@@ -128,15 +128,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell className={classNames("row-cell", {active: rowIndex === appStore.activeImageIndex})} />;
         }
 
-        const rasterVisible = isColorBlending ? image.store.rasterVisible : frame.renderConfig.visible;
+        const rasterVisible = isColorBlending ? image.store.isRasterVisible : frame.renderConfig.isVisible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
 
-        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
-        const contourVisible = isColorBlending ? image.store.contourVisible : frame.contourConfig.visible;
+        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.isEnabled).includes(true) : frame.contourConfig.isEnabled;
+        const contourVisible = isColorBlending ? image.store.isContourVisible : frame.contourConfig.isVisible;
         const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
 
-        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.enabled).includes(true) : frame.vectorOverlayConfig.enabled;
-        const vectorOverlayVisible = isColorBlending ? image.store.vectorOverlayVisible : frame.vectorOverlayConfig.visible;
+        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.isEnabled).includes(true) : frame.vectorOverlayConfig.isEnabled;
+        const vectorOverlayVisible = isColorBlending ? image.store.isVectorOverlayVisible : frame.vectorOverlayConfig.isVisible;
         const toggleVectorOverlayVisible = isColorBlending ? image.store.toggleVectorOverlayVisible : frame.vectorOverlayConfig.toggleVisibility;
 
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
@@ -430,12 +430,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeImageIndex = appStore.activeImageIndex;
-        const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
-        const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
-        const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.rasterVisible);
-        const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.contourVisible);
-        const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.vectorOverlayVisible);
+        const visibilityRaster = appStore.frames.map(f => f.renderConfig.isVisible);
+        const visibilityContour = appStore.frames.map(f => f.contourConfig.isVisible && f.contourConfig.isEnabled);
+        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.isVisible && f.vectorOverlayConfig.isEnabled);
+        const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isRasterVisible);
+        const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isContourVisible);
+        const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isVectorOverlayVisible);
         const f1 = appStore.frames.map(f => f.spatialReference);
         const f2 = appStore.frames.map(f => f.spectralReference);
         const f3 = appStore.frames.map(f => f.rasterScalingReference);

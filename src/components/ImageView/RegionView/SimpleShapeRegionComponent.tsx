@@ -529,10 +529,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
             dash: [region.dashLength],
             draggable: true,
-            listening: this.props.listening && !region.locked,
+            listening: this.props.listening && !region.isLocked,
             onDragStart: this.handleDragStart,
             onDragEnd: this.handleDragEnd,
             onDragMove: this.handleDrag,
@@ -596,10 +596,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         strokeScaleEnabled={false}
-                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                         dash={[region.dashLength]}
                         closed={true}
-                        listening={this.props.listening && !region.locked}
+                        listening={this.props.listening && !region.isLocked}
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}
                         onContextMenu={this.handleContextMenu}
@@ -629,10 +629,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 y: centerPixelSpace.y,
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
-                opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+                opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
                 dash: [region.dashLength],
                 draggable: true,
-                listening: this.props.listening && !region.locked,
+                listening: this.props.listening && !region.isLocked,
                 onDragStart: this.handleDragStart,
                 onDragEnd: this.handleDragEnd,
                 onDragMove: this.handleDrag,
@@ -655,7 +655,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors() : null}
+                {this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked ? this.genAnchors() : null}
             </Group>
         );
     }
