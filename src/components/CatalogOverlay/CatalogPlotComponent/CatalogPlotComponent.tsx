@@ -36,7 +36,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-plot",
             type: "catalog-plot",
@@ -100,7 +100,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             reaction(
                 () => this.widgetStore?.statisticColumnName,
                 () => {
-                    if (this.widgetStore?.enableStatistic) {
+                    if (this.widgetStore?.isStatisticEnabled) {
                         this.updateStatistic();
                     }
                 }
@@ -384,7 +384,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private updateStatistic = () => {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
-        if (!widgetStore?.enableStatistic || !profileStore || !widgetStore.statisticColumnName) {
+        if (!widgetStore?.isStatisticEnabled || !profileStore || !widgetStore.statisticColumnName) {
             return;
         }
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
@@ -808,7 +808,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderHistogramLog = (
             <FormGroup label={"Log scale"} inline={true} disabled={disabled}>
-                <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
+                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
             </FormGroup>
         );
 
@@ -863,7 +863,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             );
         }
 
-        if (AppStore.Instance.darkTheme) {
+        if (AppStore.Instance.isDarkTheme) {
             gridColor = Colors.DARK_GRAY5;
             labelColor = Colors.LIGHT_GRAY5;
             themeColor = Colors.DARK_GRAY1;
@@ -943,7 +943,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             dragmode: widgetStore.dragmode
         };
 
-        if (widgetStore.showFittingResult) {
+        if (widgetStore.isFittingResultVisible) {
             const fitting = widgetStore.fitting;
             const minMaxX = widgetStore.minMaxX;
             if (fitting && minMaxX) {
@@ -976,7 +976,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         font: {
                             size: 9 * devicePixelRatio,
                             family: "monospace",
-                            color: AppStore.Instance.darkTheme ? "#f5f8fa" : "#182026"
+                            color: AppStore.Instance.isDarkTheme ? "#f5f8fa" : "#182026"
                         }
                     }
                 ];
@@ -1033,7 +1033,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         color: labelColor
                     }
                 };
-                if (widgetStore.logScaleY) {
+                if (widgetStore.isLogScaleY) {
                     layout.yaxis.type = "log";
                 }
             }
@@ -1079,7 +1079,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
         );
         const infoStrings = [this.genProfilerInfo];
-        if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
+        if (widgetStore.isStatisticResultVisible && widgetStore.isStatisticEnabled) {
             infoStrings.push(widgetStore.statisticString);
         }
 
@@ -1117,7 +1117,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
                                 <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                    <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
+                                    <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
                                 </FormGroup>
                             </Tooltip>
                             {isScatterPlot && renderLinearRegressionButton}

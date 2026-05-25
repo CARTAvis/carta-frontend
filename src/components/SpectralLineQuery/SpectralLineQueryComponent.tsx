@@ -27,7 +27,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-line-query",
             type: "spectral-line-query",
@@ -261,7 +261,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render of SpectralLineQueryComponent while reset filter string
         const filters = widgetStore.filters;
-        const darkTheme = appStore.darkTheme;
+        const darkTheme = appStore.isDarkTheme;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const inputByRange = (
@@ -318,9 +318,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
                         <FormGroup label={"Intensity limit"} inline={true}>
-                            <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
+                            <Switch checked={widgetStore.isIntensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
                         </FormGroup>
-                        {widgetStore.intensityLimitEnabled && (
+                        {widgetStore.isIntensityLimitEnabled && (
                             <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
                                 <SafeNumericInput value={widgetStore.intensityLimitValue} buttonPosition="none" onValueChange={val => widgetStore.setIntensityLimitValue(val)} />
                             </Tooltip>

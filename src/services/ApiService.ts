@@ -3,12 +3,14 @@ import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {ConvertToGB, PreferenceKeys} from "enums";
+import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
 import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -20,16 +22,16 @@ export interface RuntimeConfig {
 export class ApiService {
     private static staticInstance: ApiService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ApiService.staticInstance) {
             ApiService.staticInstance = new ApiService();
         }
         return ApiService.staticInstance;
     }
 
-    public static RuntimeConfig: RuntimeConfig = {};
+    public static runtimeConfig: RuntimeConfig = {};
 
-    public static SetRuntimeConfig(data: any) {
+    public static setRuntimeConfig(data: any) {
         console.log("Setting runtime config");
         if (typeof data === "object") {
             if (typeof data.apiAddress === "string") {
@@ -40,14 +42,14 @@ export class ApiService {
                 const socketPort = socketUrl?.match(socketRegex)?.[1] ?? "";
                 data.apiAddress = data.apiAddress.replace("{port}", socketPort);
             }
-            ApiService.RuntimeConfig = data as RuntimeConfig;
+            ApiService.runtimeConfig = data as RuntimeConfig;
         } else {
-            ApiService.RuntimeConfig = {};
+            ApiService.runtimeConfig = {};
         }
     }
 
-    private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
-    private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
+    private static preferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
+    private static snippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
     @observable private _accessToken: string | undefined = "";
     @observable private _tokenLifetime: number = 0;
@@ -92,7 +94,7 @@ export class ApiService {
     constructor() {
         makeObservable(this);
         this.axiosInstance = axios.create();
-        if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (localStorage.getItem("authenticationType") || ApiService.runtimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
         } else {
             this._accessToken = "no_auth_configured";
@@ -121,10 +123,10 @@ export class ApiService {
 
     private handleAuthLost = () => {
         this.dispose();
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        if (ApiService.runtimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
-            window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
+            window.open(`${ApiService.runtimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
             AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
@@ -132,9 +134,9 @@ export class ApiService {
     };
 
     private refreshAccessToken = async () => {
-        if (ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (ApiService.runtimeConfig.tokenRefreshAddress) {
             try {
-                const response = await this.axiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress);
+                const response = await this.axiosInstance.post(ApiService.runtimeConfig.tokenRefreshAddress);
                 if (response?.data?.access_token) {
                     // If access token does not expire, set lifetime to maximum
                     this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
@@ -157,13 +159,13 @@ export class ApiService {
         this.dispose();
         // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
-        window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
+        window.open(ApiService.runtimeConfig.logoutAddress, "_self");
     };
 
     public stopServer = async () => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
                 AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
@@ -174,9 +176,9 @@ export class ApiService {
 
     public getPreferences = async () => {
         let preferences;
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     preferences = response.data.preferences;
@@ -195,10 +197,10 @@ export class ApiService {
         if (preferences) {
             this.upgradePreferences(preferences);
             console.log(preferences);
-            const valid = ApiService.PreferenceValidator(preferences);
+            const valid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
             if (!valid) {
-                for (const error of ApiService.PreferenceValidator.errors ?? []) {
+                for (const error of ApiService.preferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
@@ -224,19 +226,8 @@ export class ApiService {
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
-            enum ASTColors {
-                black = 0,
-                white = 1,
-                red = 2,
-                forest = 3,
-                blue = 4,
-                turquoise = 5,
-                violet = 6,
-                gold = 7,
-                gray = 8
-            }
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
+            const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
 
@@ -277,9 +268,9 @@ export class ApiService {
     };
 
     public setPreferences = async (preferences: any) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
@@ -293,9 +284,9 @@ export class ApiService {
                     obj[key] = preferences[key];
                 }
 
-                const valid = ApiService.PreferenceValidator(obj);
+                const valid = ApiService.preferenceValidator(obj);
                 if (!valid) {
-                    console.log(ApiService.PreferenceValidator.errors);
+                    console.log(ApiService.preferenceValidator.errors);
                 }
 
                 localStorage.setItem("preferences", JSON.stringify(obj));
@@ -308,9 +299,9 @@ export class ApiService {
     };
 
     public clearPreferences = async (keys: string[]) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.delete(url, {data: {keys}});
                 return response?.data?.success;
             } catch (err) {
@@ -334,9 +325,9 @@ export class ApiService {
 
     public getLayouts = async () => {
         let savedLayouts: {[name: string]: any};
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layouts`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     savedLayouts = response.data.layouts;
@@ -359,10 +350,10 @@ export class ApiService {
             const validLayouts = {};
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
-                LayoutConfig.UpgradeLayout(layout);
-                const valid = LayoutConfig.LayoutValidator(layout);
+                LayoutConfig.upgradeLayout(layout);
+                const valid = LayoutConfig.layoutValidator(layout);
                 if (!valid) {
-                    console.log(LayoutConfig.LayoutValidator.errors);
+                    console.log(LayoutConfig.layoutValidator.errors);
                 } else {
                     validLayouts[layoutName] = layout;
                 }
@@ -374,9 +365,9 @@ export class ApiService {
     };
 
     public setLayout = async (layoutName: string, layout: any): Promise<boolean> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.put(url, {layoutName, layout});
                 return response?.data?.success;
             } catch (err) {
@@ -397,9 +388,9 @@ export class ApiService {
     };
 
     public clearLayout = async (layoutName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.delete(url, {data: {layoutName}});
                 return response?.data?.success;
             } catch (err) {
@@ -421,9 +412,9 @@ export class ApiService {
 
     public getSnippets = async () => {
         let savedSnippets: {[name: string]: Snippet};
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippets`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippets`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     savedSnippets = response.data.snippets;
@@ -446,9 +437,9 @@ export class ApiService {
             const validSnippets = new Map<string, Snippet>();
             for (const snippetName of Object.keys(savedSnippets)) {
                 const snippet = savedSnippets[snippetName];
-                const valid = ApiService.SnippetValidator(snippet);
+                const valid = ApiService.snippetValidator(snippet);
                 if (!valid) {
-                    console.log(ApiService.SnippetValidator.errors);
+                    console.log(ApiService.snippetValidator.errors);
                 } else {
                     validSnippets.set(snippetName, snippet);
                 }
@@ -460,9 +451,9 @@ export class ApiService {
     };
 
     public setSnippet = async (snippetName: string, snippet: Snippet) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippet`;
                 const response = await this.axiosInstance.put(url, {snippetName, snippet});
                 return response?.data?.success;
             } catch (err) {
@@ -483,9 +474,9 @@ export class ApiService {
     };
 
     public clearSnippet = async (snippetName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippet`;
                 const response = await this.axiosInstance.delete(url, {data: {snippetName}});
                 return response?.data?.success;
             } catch (err) {
@@ -506,9 +497,9 @@ export class ApiService {
     };
 
     public getWorkspaceList = async () => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/list/workspaces`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/list/workspaces`;
                 const response = await this.axiosInstance.get<{workspaces: WorkspaceListItem[]; success: boolean}>(url);
                 if (response?.data?.success) {
                     return response.data.workspaces;
@@ -544,9 +535,9 @@ export class ApiService {
     };
 
     public getWorkspace = async (name: string, isKey = false): Promise<Workspace | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
                     return response.data.workspace;
@@ -574,9 +565,9 @@ export class ApiService {
     };
 
     public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;
                 const res = await this.axiosInstance.put(url, {workspaceName, workspace});
                 if (res.data?.workspace?.id) {
                     workspace.id = res.data?.workspace?.id;
@@ -600,9 +591,9 @@ export class ApiService {
     };
 
     public getSharedWorkspaceKey = async (workspaceId: string): Promise<string | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/share/workspace/${workspaceId}`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/share/workspace/${workspaceId}`;
                 const response = await this.axiosInstance.post(url);
                 return response?.data?.success ? response.data.shareKey : undefined;
             } catch (err) {
@@ -615,9 +606,9 @@ export class ApiService {
     };
 
     public clearWorkspace = async (workspaceName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;
                 const response = await this.axiosInstance.delete(url, {data: {workspaceName}});
                 return response?.data?.success;
             } catch (err) {

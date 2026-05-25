@@ -55,7 +55,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             }
         }
 
-        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
             <div className={className}>
@@ -275,17 +275,17 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     public render() {

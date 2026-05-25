@@ -19,7 +19,7 @@ export class FileInfoDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "app-header",

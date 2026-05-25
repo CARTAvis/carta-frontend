@@ -1,16 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 
-enum ComparisonOperator {
-    Equal = "==",
-    NotEqual = "!=",
-    LessorOrEqual = "<=",
-    Lesser = "<",
-    GreaterOrEqual = ">=",
-    Greater = ">",
-    RangeClosed = "...",
-    RangeOpen = ".."
-}
+import {ComparisonOperator} from "enums";
 
 export function parseBoolean(value: string, defaultValue: boolean): boolean {
     if (value === "true") {

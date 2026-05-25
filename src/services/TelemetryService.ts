@@ -30,13 +30,13 @@ interface TelemetryDb extends DBSchema {
 export class TelemetryService {
     private static staticInstance: TelemetryService;
 
-    public static readonly ServerUrl = "https://telemetry.cartavis.org";
+    public static readonly SERVER_URL = "https://telemetry.cartavis.org";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
     private static readonly StoreName = "entries";
 
-    static get Instance() {
+    public static get Instance() {
         if (!TelemetryService.staticInstance) {
             TelemetryService.staticInstance = new TelemetryService();
         }
@@ -45,7 +45,7 @@ export class TelemetryService {
 
     @computed get effectiveTelemetryMode() {
         const preferences = PreferenceStore.Instance;
-        if (!this.skipTelemetry && preferences.telemetryConsentShown && preferences.telemetryUuid) {
+        if (!this.skipTelemetry && preferences.hasTelemetryConsentShown && preferences.telemetryUuid) {
             return preferences.telemetryMode;
         }
         return TelemetryMode.None;
@@ -53,7 +53,7 @@ export class TelemetryService {
 
     @computed get consentRequired() {
         const preferences = PreferenceStore.Instance;
-        return !this.skipTelemetry && !preferences.telemetryConsentShown;
+        return !this.skipTelemetry && !preferences.hasTelemetryConsentShown;
     }
 
     @computed get decodedUserId() {
@@ -69,7 +69,7 @@ export class TelemetryService {
 
     private constructor() {
         this.axiosInstance = axios.create({
-            baseURL: TelemetryService.ServerUrl
+            baseURL: TelemetryService.SERVER_URL
         });
         this.sessionId = uuidv1();
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
@@ -282,7 +282,7 @@ export class TelemetryService {
         // All other actions are considered usage stats
         const isUsageEntry = !(action === TelemetryAction.Connection || action === TelemetryAction.EndSession);
         const preferences = PreferenceStore.Instance;
-        const loggingEnabled = preferences.telemetryLogging;
+        const loggingEnabled = preferences.isTelemetryLogging;
         const loggingPrefix = `[Telemetry] [uuid=${this.uuid}, sessionId=${this.sessionId}]`;
         const timestamp = getUnixTimestamp();
 
@@ -326,7 +326,7 @@ export class TelemetryService {
                 console.warn(err);
             }
         } else if (loggingEnabled) {
-            console.debug(`${loggingPrefix} NO-OP (disabled due to ${preferences.telemetryConsentShown ? "user preference" : "lack of explicit consent"})`);
+            console.debug(`${loggingPrefix} NO-OP (disabled due to ${preferences.hasTelemetryConsentShown ? "user preference" : "lack of explicit consent"})`);
         }
     }
 }

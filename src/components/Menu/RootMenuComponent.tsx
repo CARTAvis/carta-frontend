@@ -40,7 +40,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     private handleDashboardClicked = () => {
-        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+        window.open(ApiService.runtimeConfig.dashboardAddress, "_blank");
     };
 
     private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
@@ -128,7 +128,7 @@ export class RootMenuComponent extends React.Component {
 
     @computed get snippetsMenu() {
         const appStore = AppStore.Instance;
-        if (!appStore.preferenceStore.codeSnippetsEnabled) {
+        if (!appStore.preferenceStore.isCodeSnippetsEnabled) {
             return null;
         }
 
@@ -182,13 +182,13 @@ export class RootMenuComponent extends React.Component {
         const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
+        if (apiService.authenticated && ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress) {
+        if (ApiService.runtimeConfig.logoutAddress) {
             serverMenu.push(<MenuItem key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        if (ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
         serverMenu.push(
@@ -255,17 +255,17 @@ export class RootMenuComponent extends React.Component {
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
-                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
+                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.isOpenFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
+                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
                 <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
+                        disabled={appStore.isAppendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
@@ -280,13 +280,13 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip>
-                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
-                <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                <MenuItem text="Open Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
+                <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
                 <MenuDivider />
                 <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />
                 {serverSubMenu}
@@ -319,7 +319,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
                 <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
+                {appStore.preferenceStore.isCodeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
@@ -422,7 +422,7 @@ export class RootMenuComponent extends React.Component {
         }
 
         const newReleaseMessage = (
-            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.darkTheme})}>
+            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.isDarkTheme})}>
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png" />
                     <div className={Classes.ALERT_CONTENTS}>
@@ -464,7 +464,7 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Widgets" />
                     </Menu>
                 </Popover>
-                {appStore.preferenceStore.codeSnippetsEnabled && this.snippetsMenu && (
+                {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
                     <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
@@ -478,7 +478,7 @@ export class RootMenuComponent extends React.Component {
                 </Popover>
                 <ToolbarMenuComponent />
                 <Alert
-                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
                     isOpen={this.documentationAlertVisible}
                     onClose={this.handleAlertDismissed}
                     canEscapeKeyCancel={true}
@@ -487,14 +487,14 @@ export class RootMenuComponent extends React.Component {
                 >
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {appStore.showNewRelease && (
+                {appStore.shouldShowNewRelease && (
                     <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
                             <Button icon={"envelope"} intent={"warning"} minimal={true} />
                         </Tooltip>
                     </Popover>
                 )}
-                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && (
                     <Tooltip
                         content={
                             <span>
@@ -510,7 +510,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip>
                 )}
                 {showLoadingIndicator && loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode && (
+                {appStore.preferenceStore.isLowBandwidthMode && (
                     <Tooltip
                         content={
                             <span>

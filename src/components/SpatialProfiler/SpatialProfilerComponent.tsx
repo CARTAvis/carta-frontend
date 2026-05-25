@@ -8,7 +8,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {HelpType, PlotType, POLARIZATIONS, RegionId, SmoothingType, TickType} from "enums";
+import {HelpType, PlotType, Polarizations, RegionId, SmoothingType, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -24,7 +24,7 @@ const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler",
             type: "spatial-profiler",
@@ -338,7 +338,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === SpatialProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {
@@ -531,7 +531,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
             }
-            if (this.widgetStore.meanRmsVisible) {
+            if (this.widgetStore.isMeanRmsVisible) {
                 if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                     profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
                 } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
@@ -579,7 +579,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            darkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
             plotType: widgetStore.plotType,
@@ -602,9 +602,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.profileStore && this.frame) {
                 if (this.frame.headerUnit) {
                     let unit: string;
-                    if (this.widgetStore.effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                    if (this.widgetStore.effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                         unit = "%";
-                    } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+                    } else if (this.widgetStore.effectivePolarization === Polarizations.Pangle) {
                         unit = "degree";
                     } else {
                         unit = this.frame.headerUnit;
@@ -614,7 +614,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (!this.widgetStore.isLineOrPolyline) {
                     linePlotProps.showTopAxis = true;
-                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
+                    if (this.frame.isValidWcs && widgetStore.isWcsAxisVisible) {
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                     }
                 }
@@ -690,19 +690,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: true
                 });
 
-                if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                if (widgetStore.isMeanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                         linePlotProps.markers.push({
                             value: currentPlotData.yMean,
                             id: "marker-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -713,7 +713,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.yRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
                         linePlotProps.markers.push({
@@ -721,7 +721,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             id: "marker-smoothed-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -732,7 +732,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.ySmoothedRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     }
                 }

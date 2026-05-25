@@ -87,7 +87,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handlePanZoomShortCutClicked = () => {
         const widgetsStore = AppStore.Instance.widgetsStore;
-        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const parentType = ImageViewComponent.WidgetConfig.type;
         const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
         if (settingsWidget) {
             widgetsStore.removeFloatingWidget(settingsWidget.id);
@@ -104,8 +104,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>
-                        Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br />
-                        {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        Background color is {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "transparent" : "filled"}.<br />
+                        {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
                         <br />
                     </small>
                 </i>
@@ -127,7 +127,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -154,8 +154,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const regionMenu = (
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
-                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                    const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(type);
+                    const regionIcon = RegionStore.isRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                     return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
                 <MenuDivider></MenuDivider>
@@ -187,8 +187,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
-        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+        const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(frame.regionSet.newRegionType);
+        const regionIcon = RegionStore.isRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;
@@ -245,7 +245,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
-                {appStore.toolbarExpanded && (
+                {appStore.isToolbarExpanded && (
                     <React.Fragment>
                         {!frame.isPreview && (
                             <>
@@ -395,18 +395,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
+                                        <AnchorButton disabled={!frame.isValidWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
                                     </Tooltip>
                                 </Popover>
                             </>
                         )}
                         <Tooltip position={tooltipPosition} content="Toggle grid">
-                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} data-testid="grid-button" />
+                            <AnchorButton icon="grid" active={grid.isVisible} onClick={() => grid.setVisible(!grid.isVisible)} data-testid="grid-button" />
                         </Tooltip>
                         {!frame.isPreview && (
                             <>
                                 <Tooltip position={tooltipPosition} content="Toggle labels">
-                                    <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} />
+                                    <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} />
                                 </Tooltip>
                                 <Popover content={exportImageMenu} position={Position.TOP} minimal={true}>
                                     <Tooltip
@@ -425,8 +425,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         )}
                     </React.Fragment>
                 )}
-                <Tooltip position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
-                    <AnchorButton active={appStore.toolbarExpanded} icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
+                <Tooltip position={tooltipPosition} content={appStore.isToolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
+                    <AnchorButton active={appStore.isToolbarExpanded} icon={appStore.isToolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
                 </Tooltip>
             </ButtonGroup>
         );

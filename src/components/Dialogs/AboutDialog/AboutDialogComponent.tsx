@@ -36,7 +36,7 @@ export class AboutDialogComponent extends React.Component {
 
     public render() {
         const dialogStore = DialogStore.Instance;
-        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -88,6 +88,11 @@ export class AboutDialogComponent extends React.Component {
                         <li>
                             <a href="https://www.ualberta.ca/physics" rel="noopener noreferrer" target="_blank">
                                 Department of Physics, University of Alberta
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://aussrc.org" rel="noopener noreferrer" target="_blank">
+                                Australian SKA Regional Centre (AusSRC)
                             </a>
                         </li>
                     </ul>
@@ -168,7 +173,7 @@ export class AboutDialogComponent extends React.Component {
                     </Collapse>
                     <H4>License</H4>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, Department of Physics, University of Alberta, and AusSRC. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>

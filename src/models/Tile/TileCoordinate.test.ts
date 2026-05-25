@@ -1,16 +1,16 @@
 import {TileCoordinate} from "./TileCoordinate";
 
 test("returns -1 for invalid coordinates", () => {
-    expect(TileCoordinate.Encode(-1, 0, 3)).toBe(-1);
-    expect(TileCoordinate.Encode(0, -1, 3)).toBe(-1);
-    expect(TileCoordinate.Encode(0, 0, -1)).toBe(-1);
+    expect(TileCoordinate.encode(-1, 0, 3)).toBe(-1);
+    expect(TileCoordinate.encode(0, -1, 3)).toBe(-1);
+    expect(TileCoordinate.encode(0, 0, -1)).toBe(-1);
 });
 
 test("returns -1 for out of range coordinates", () => {
-    expect(TileCoordinate.Encode(1, 0, 0)).toBe(-1);
-    expect(TileCoordinate.Encode(0, 1, 0)).toBe(-1);
-    expect(TileCoordinate.Encode(4, 0, 2)).toBe(-1);
-    expect(TileCoordinate.Encode(0, 4, 2)).toBe(-1);
+    expect(TileCoordinate.encode(1, 0, 0)).toBe(-1);
+    expect(TileCoordinate.encode(0, 1, 0)).toBe(-1);
+    expect(TileCoordinate.encode(4, 0, 2)).toBe(-1);
+    expect(TileCoordinate.encode(0, 4, 2)).toBe(-1);
 });
 
 test("returns identical round trip coordinates", () => {
@@ -23,12 +23,12 @@ test("returns identical round trip coordinates", () => {
         const channel = Math.floor(Math.random() * 2 ** 16);
         const coordinate = new TileCoordinate(x, y, layer);
         const encodedVal = coordinate.encode();
-        const roundTripCoordinate = TileCoordinate.Decode(encodedVal);
+        const roundTripCoordinate = TileCoordinate.decode(encodedVal);
         expect(roundTripCoordinate).toEqual(coordinate);
-        const encodedValWithId = TileCoordinate.AddFileIdAndChannel(coordinate.encode(), id, channel);
-        const roundTripCoordinateWithId = TileCoordinate.Decode(TileCoordinate.RemoveFileIdAndChannel(encodedValWithId));
-        const roundTripId = TileCoordinate.GetFileId(encodedValWithId);
-        const roundTripChannel = TileCoordinate.GetChannel(encodedValWithId);
+        const encodedValWithId = TileCoordinate.addFileIdAndChannel(coordinate.encode(), id, channel);
+        const roundTripCoordinateWithId = TileCoordinate.decode(TileCoordinate.removeFileIdAndChannel(encodedValWithId));
+        const roundTripId = TileCoordinate.getFileId(encodedValWithId);
+        const roundTripChannel = TileCoordinate.getChannel(encodedValWithId);
         expect(roundTripCoordinateWithId).toEqual(coordinate);
         expect(roundTripChannel).toEqual(channel);
         expect(roundTripId).toEqual(id);
@@ -41,7 +41,7 @@ test("encodes 10000 coordinates in less than 5 ms", () => {
     const tStart = performance.now();
     for (let i = 0; i < 1000; i++) {
         for (let j = 0; j < 1000; j++) {
-            encodedVal += TileCoordinate.Encode(i, j, layer);
+            encodedVal += TileCoordinate.encode(i, j, layer);
         }
     }
     const tEnd = performance.now();
@@ -56,10 +56,10 @@ test("decodes 1M coordinates in less than 20 ms", () => {
     let counter = 0;
     const tStart = performance.now();
 
-    let encVal = TileCoordinate.Encode(0, 0, layer);
+    let encVal = TileCoordinate.encode(0, 0, layer);
     for (let i = 0; i < 1000; i++) {
         for (let j = 0; j < 1000; j++) {
-            counter += TileCoordinate.Decode(encVal).x;
+            counter += TileCoordinate.decode(encVal).x;
             encVal++;
         }
         encVal += layerWidth;

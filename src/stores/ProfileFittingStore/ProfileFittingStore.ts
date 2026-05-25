@@ -13,8 +13,8 @@ export class ProfileFittingStore {
     @observable continuum: FittingContinuum = FittingContinuum.NONE;
     @observable yIntercept: number = 0;
     @observable slope: number = 0;
-    @observable lockedYIntercept: boolean = false;
-    @observable lockedSlope: boolean = false;
+    @observable isLockedYIntercept: boolean = false;
+    @observable isLockedSlope: boolean = false;
     @observable resultYIntercept: number = 0;
     @observable resultSlope: number = 0;
     @observable resultYInterceptError: number = 0;
@@ -30,16 +30,16 @@ export class ProfileFittingStore {
     @observable isAutoDetectWithFitting: boolean = false;
     @observable hasAutoDetectResult: boolean = false;
     @observable detectedComponentN: number = 0;
-    @observable enableResidual: boolean = true;
+    @observable isResidualEnabled: boolean = true;
     @observable originData: {x: number[]; y: Float32Array | Float64Array} = {x: [], y: new Float32Array()};
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
-    @action setComponents(length: number, reset?: boolean) {
+    @action setComponents(length: number, shouldReset?: boolean) {
         this.setSelectedIndex(length - 1);
         const newComponents: ProfileFittingIndividualStore[] = [];
         for (let i = 0; i < length; i++) {
-            if (reset) {
+            if (shouldReset) {
                 newComponents.push(new ProfileFittingIndividualStore());
             } else {
                 newComponents.push(i < this.components.length ? this.components[i] : new ProfileFittingIndividualStore());
@@ -171,7 +171,7 @@ export class ProfileFittingStore {
         return resultString;
     }
 
-    @computed get readyToFit(): boolean {
+    @computed get isReadyToFit(): boolean {
         if (!this.components) {
             return false;
         }
@@ -181,13 +181,13 @@ export class ProfileFittingStore {
             if (!component.isReadyToFit) {
                 return false;
             }
-            if (component.lockedCenter) {
+            if (component.isLockedCenter) {
                 lockedInputCount++;
             }
-            if (component.lockedAmp) {
+            if (component.isLockedAmp) {
                 lockedInputCount++;
             }
-            if (component.lockedFwhm) {
+            if (component.isLockedFwhm) {
                 lockedInputCount++;
             }
         }
@@ -308,9 +308,9 @@ export class ProfileFittingStore {
             inputData.push(component.amp);
             inputData.push(component.center);
             inputData.push(component.fwhm);
-            lockedInputData.push(component.lockedAmp ? 1 : 0);
-            lockedInputData.push(component.lockedCenter ? 1 : 0);
-            lockedInputData.push(component.lockedFwhm ? 1 : 0);
+            lockedInputData.push(component.isLockedAmp ? 1 : 0);
+            lockedInputData.push(component.isLockedCenter ? 1 : 0);
+            lockedInputData.push(component.isLockedFwhm ? 1 : 0);
         });
 
         const orderInputData: number[] = [];
@@ -323,13 +323,13 @@ export class ProfileFittingStore {
         } else if (this.continuum === FittingContinuum.ZEROTH_ORDER) {
             orderInputData.push(this.yIntercept);
             orderInputData.push(0);
-            lockedOrderInputData.push(this.lockedYIntercept ? 1 : 0);
+            lockedOrderInputData.push(this.isLockedYIntercept ? 1 : 0);
             lockedOrderInputData.push(1);
         } else if (this.continuum === FittingContinuum.FIRST_ORDER) {
             orderInputData.push(this.yIntercept);
             orderInputData.push(this.slope);
-            lockedOrderInputData.push(this.lockedYIntercept ? 1 : 0);
-            lockedOrderInputData.push(this.lockedSlope ? 1 : 0);
+            lockedOrderInputData.push(this.isLockedYIntercept ? 1 : 0);
+            lockedOrderInputData.push(this.isLockedSlope ? 1 : 0);
         }
 
         const fittingResult = GSL.fitting(this.function, x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData);
@@ -381,12 +381,12 @@ export class ProfileFittingStore {
         this.slope = val;
     };
 
-    @action setLockedYIntercept = (val: boolean) => {
-        this.lockedYIntercept = val;
+    @action setLockedYIntercept = (isLockedYIntercept: boolean) => {
+        this.isLockedYIntercept = isLockedYIntercept;
     };
 
-    @action setLockedSlope = (val: boolean) => {
-        this.lockedSlope = val;
+    @action setLockedSlope = (isLockedSlope: boolean) => {
+        this.isLockedSlope = isLockedSlope;
     };
 
     @action setResultYIntercept = (val: number) => {
@@ -409,8 +409,8 @@ export class ProfileFittingStore {
         this.selectedIndex = val;
     };
 
-    @action setHasResult = (val: boolean) => {
-        this.hasResult = val;
+    @action setHasResult = (hasResult: boolean) => {
+        this.hasResult = hasResult;
     };
 
     @action setResultLog = (val: string) => {
@@ -421,36 +421,36 @@ export class ProfileFittingStore {
         this.resultResidual = val;
     };
 
-    @action setIsCursorSelectingYIntercept = (val: boolean) => {
-        this.isCursorSelectingYIntercept = val;
+    @action setIsCursorSelectingYIntercept = (isCursorSelectingYIntercept: boolean) => {
+        this.isCursorSelectingYIntercept = isCursorSelectingYIntercept;
     };
 
-    @action setIsCursorSelectingSlope = (val: boolean) => {
-        this.isCursorSelectingSlope = val;
+    @action setIsCursorSelectingSlope = (isCursorSelectingSlope: boolean) => {
+        this.isCursorSelectingSlope = isCursorSelectingSlope;
     };
 
-    @action setIsCursorSelectingComponentOn = (val: boolean) => {
-        this.isCursorSelectingComponent = val;
+    @action setIsCursorSelectingComponentOn = (isCursorSelectingComponent: boolean) => {
+        this.isCursorSelectingComponent = isCursorSelectingComponent;
     };
 
-    @action setIsAutoDetectWithCont = (val: boolean) => {
-        this.isAutoDetectWithCont = val;
+    @action setIsAutoDetectWithCont = (isAutoDetectWithCont: boolean) => {
+        this.isAutoDetectWithCont = isAutoDetectWithCont;
     };
 
-    @action setIsAutoDetectWithFitting = (val: boolean) => {
-        this.isAutoDetectWithFitting = val;
+    @action setIsAutoDetectWithFitting = (isAutoDetectWithFitting: boolean) => {
+        this.isAutoDetectWithFitting = isAutoDetectWithFitting;
     };
 
-    @action setHasAutoDetectResult = (val: boolean) => {
-        this.hasAutoDetectResult = val;
+    @action setHasAutoDetectResult = (hasAutoDetectResult: boolean) => {
+        this.hasAutoDetectResult = hasAutoDetectResult;
     };
 
     @action setDetectedComponentN = (val: number) => {
         this.detectedComponentN = val;
     };
 
-    @action setEnableResidual = (val: boolean) => {
-        this.enableResidual = val;
+    @action setEnableResidual = (isResidualEnabled: boolean) => {
+        this.isResidualEnabled = isResidualEnabled;
     };
 
     @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
@@ -462,9 +462,9 @@ export class ProfileFittingIndividualStore {
     @observable center: number = 0;
     @observable amp: number = 0;
     @observable fwhm: number = 0;
-    @observable lockedCenter: boolean = false;
-    @observable lockedAmp: boolean = false;
-    @observable lockedFwhm: boolean = false;
+    @observable isLockedCenter: boolean = false;
+    @observable isLockedAmp: boolean = false;
+    @observable isLockedFwhm: boolean = false;
     @observable resultCenter: number;
     @observable resultAmp: number;
     @observable resultFwhm: number;
@@ -494,16 +494,16 @@ export class ProfileFittingIndividualStore {
         this.fwhm = val;
     };
 
-    @action setLockedCenter = (val: boolean) => {
-        this.lockedCenter = val;
+    @action setLockedCenter = (isLockedCenter: boolean) => {
+        this.isLockedCenter = isLockedCenter;
     };
 
-    @action setLockedAmp = (val: boolean) => {
-        this.lockedAmp = val;
+    @action setLockedAmp = (isLockedAmp: boolean) => {
+        this.isLockedAmp = isLockedAmp;
     };
 
-    @action setLockedFwhm = (val: boolean) => {
-        this.lockedFwhm = val;
+    @action setLockedFwhm = (isLockedFwhm: boolean) => {
+        this.isLockedFwhm = isLockedFwhm;
     };
 
     @action setResultCenter = (val: number) => {

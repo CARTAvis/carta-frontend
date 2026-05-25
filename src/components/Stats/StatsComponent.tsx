@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {HelpType, POLARIZATIONS} from "enums";
+import {HelpType, Polarizations} from "enums";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
@@ -20,7 +20,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
@@ -87,7 +87,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
+    private static readonly StatsNameMap = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.FluxDensity, "FluxDensity"],
@@ -100,7 +100,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
-    private static readonly NAME_COLUMN_WIDTH = 90;
+    private static readonly NameColumnWidth = 90;
 
     constructor(props: WidgetProps) {
         super(props);
@@ -109,7 +109,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === StatsComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addStatsWidget();
             if (id) {
@@ -129,7 +129,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     let regionString = "Unknown";
 
                     const regionId = this.widgetStore.effectiveRegionId;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     if (regionId === -1) {
                         regionString = "Image";
                     } else if (this.widgetStore.effectiveFrame.regionSet) {
@@ -182,9 +182,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (frame && frame.headerUnit) {
                 let unit: string;
                 const effectivePolarization = this.widgetStore.effectivePolarization;
-                if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
+                if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                     unit = "%";
-                } else if (effectivePolarization === POLARIZATIONS.Pangle) {
+                } else if (effectivePolarization === Polarizations.Pangle) {
                     unit = "degree";
                 } else {
                     unit = frame.headerUnit;
@@ -233,7 +233,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+            StatsComponent.StatsNameMap.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                     if (index >= 0 && index < this.statsData.statistics.length) {
@@ -262,7 +262,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
-                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
+                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.isDarkTheme});
             }
         }
 
@@ -270,17 +270,17 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let exportDataComponent: JSX.Element | null = null;
         if (this.statsData) {
             // stretch value column to cover width
-            const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
+            const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
             const rows: JSX.Element[] = [];
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+            StatsComponent.StatsNameMap.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                     if (index >= 0 && index < this.statsData.statistics.length) {
                         const value = this.getTableValue(index, type);
                         rows.push(
                             <tr key={type}>
-                                <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
+                                <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
                                 <td style={{width: valueWidth}}>
                                     {value.num} {value.unit}
                                 </td>
@@ -292,26 +292,26 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             formContent = (
                 <HTMLTable data-testid="statistics-table">
-                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
+                    <thead className={appStore.isDarkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
+                            <th style={{width: StatsComponent.NameColumnWidth}}>Statistic</th>
                             <th style={{width: valueWidth}}>Value</th>
                         </tr>
                     </thead>
-                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>{rows}</tbody>
+                    <tbody className={appStore.isDarkTheme ? "dark-theme" : ""}>{rows}</tbody>
                 </HTMLTable>
             );
 
             exportDataComponent = (
                 <div className="stats-export-data">
-                    <ToolbarComponent darkMode={appStore.darkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
+                    <ToolbarComponent darkMode={appStore.isDarkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
                 </div>
             );
         } else {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
-        const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
+        const className = classNames("stats-widget", {"dark-theme": appStore.isDarkTheme});
 
         return (
             <ResizeDetector onResize={this.onResize}>

@@ -43,7 +43,7 @@ export class Deferred<T> {
 export class BackendService {
     private static staticInstance: BackendService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!BackendService.staticInstance) {
             BackendService.staticInstance = new BackendService();
         }
@@ -300,7 +300,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const supportAipsBeam = AppStore.Instance.preferenceStore.aipsBeamSupport;
+            const supportAipsBeam = AppStore.Instance.preferenceStore.hasAipsBeamSupport;
             const message = CARTA.FileInfoRequest.create({directory, file, hdu, supportAipsBeam});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
@@ -393,7 +393,7 @@ export class BackendService {
                 fileId,
                 lelExpr: imageArithmetic,
                 renderMode: CARTA.RenderMode.RASTER,
-                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
+                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);

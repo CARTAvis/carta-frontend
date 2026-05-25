@@ -14,7 +14,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",
@@ -145,11 +145,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            logScaleY: widgetStore.logScaleY,
+            logScaleY: widgetStore.isLogScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
-            markerTextVisible: widgetStore.markerTextVisible,
+            markerTextVisible: widgetStore.isMarkerTextVisible,
             handleMarkerTextChanged: this.handleMarkerTextChanged,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            meanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,

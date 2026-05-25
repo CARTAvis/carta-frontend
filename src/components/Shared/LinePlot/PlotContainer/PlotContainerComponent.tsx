@@ -221,32 +221,32 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
     };
 
-    private static FormatTicksScientific = (value: number, index: number, ticks: Tick[]) => {
+    private static formatTicksScientific = (value: number, index: number, ticks: Tick[]) => {
         return toExponential(value, 2);
     };
 
-    private static FormatTicksInteger = (value: number, index: number, ticks: Tick[]) => {
+    private static formatTicksInteger = (value: number, index: number, ticks: Tick[]) => {
         return toFixed(value);
     };
 
-    private static FormatTicksAutomatic = (value: number, index: number, ticks: Tick[]) => {
+    private static formatTicksAutomatic = (value: number, index: number, ticks: Tick[]) => {
         // TODO: Work out how to revert to the automatic ChartJS formatting function
         return value;
     };
 
-    private static GetCallbackForTickType(tickType: TickType) {
+    private static getCallbackForTickType(tickType: TickType) {
         switch (tickType) {
             case TickType.Scientific:
-                return PlotContainerComponent.FormatTicksScientific;
+                return PlotContainerComponent.formatTicksScientific;
             case TickType.Integer:
-                return PlotContainerComponent.FormatTicksInteger;
+                return PlotContainerComponent.formatTicksInteger;
             default:
-                return PlotContainerComponent.FormatTicksAutomatic;
+                return PlotContainerComponent.formatTicksAutomatic;
         }
     }
 
     // replace log(0) with log(0.5)
-    private static ConvertLogData(data: {x: number; y: number; z?: number}[]) {
+    private static convertLogData(data: {x: number; y: number; z?: number}[]) {
         // Skip undefined or empty arrays
         if (!data?.length) {
             return data;
@@ -328,7 +328,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         for (let i = 0; i < props.data.length; i++) {
-            if (props.data[i].x !== nextProps.data[i].x || props.data[i].y !== nextProps.data[i].y) {
+            const currentPoint = props.data[i];
+            const nextPoint = nextProps.data[i];
+            if (!currentPoint || !nextPoint || currentPoint.x !== nextPoint.x || currentPoint.y !== nextPoint.y) {
                 return true;
             }
         }
@@ -384,7 +386,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
                         maxRotation: 0,
                         color: labelColor,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
+                        callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -407,7 +409,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         maxRotation: 0,
-                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
+                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     }
                 },
                 y: {
@@ -422,7 +424,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
+                        callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -452,7 +454,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             const datasetConfig: ChartDataset<"scatter"> = {
                 label: "LineGraph",
                 type: "scatter",
-                data: this.props.logY ? PlotContainerComponent.ConvertLogData(this.props.data) : this.props.data,
+                data: this.props.logY ? PlotContainerComponent.convertLogData(this.props.data) : this.props.data,
                 fill: false,
                 tension: 0,
                 order: this.props.order ? this.props.order : 0
@@ -509,7 +511,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 const multiPlotDatasetConfig: ChartDataset<"scatter"> = {
                     type: "scatter",
                     label: key,
-                    data: this.props.logY ? PlotContainerComponent.ConvertLogData(props.data) : props.data,
+                    data: this.props.logY ? PlotContainerComponent.convertLogData(props.data) : props.data,
                     fill: false,
                     tension: 0,
                     backgroundColor: currentLineColor,

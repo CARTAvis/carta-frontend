@@ -8,19 +8,13 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {ProcessedColumnData} from "utilities";
 
-import {CatalogType, SpectralLineHeaders} from "enums";
+import {CatalogType, RowSelectionType, SpectralLineHeaders} from "enums";
 import {CatalogApiService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
-
-enum RowSelectionType {
-    None,
-    Indeterminate,
-    All
-}
 
 const KEYCODE_ENTER = 13;
 
@@ -52,7 +46,7 @@ export class FilterableTableComponentProps {
 
 @observer
 export class FilterableTableComponent extends React.Component<FilterableTableComponentProps> {
-    private readonly SortingTypelinkedList = {
+    private readonly sortingTypelinkedList = {
         head: {
             value: null as CARTA.SortingType | null,
             next: {
@@ -161,7 +155,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name ?? "checkbox"}
                 name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader, columnData, selectionType)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData) : undefined}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData ?? [])}
             />
         );
     };
@@ -172,7 +166,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name ?? "data"}
                 name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData, columnHeader) : undefined}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData ?? [], columnHeader)}
             />
         );
     };
@@ -186,12 +180,14 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         let cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         if (typeof cellContext === "boolean" && this.props.catalogType === CatalogType.FILE) {
             cellContext = cellContext.toString();
+        } else if (typeof cellContext === "number" && isNaN(cellContext)) {
+            cellContext = "NaN";
         }
         let cell = cellContext;
         if (this.props.catalogType === CatalogType.SIMBAD) {
             if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimbadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -199,7 +195,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
             if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimbadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -216,7 +212,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private getNextSortingType = (): CARTA.SortingType | null => {
-        let currentNode: any = this.SortingTypelinkedList.head;
+        let currentNode: any = this.sortingTypelinkedList.head;
         while (currentNode?.next) {
             if (currentNode.value === this.props.sortingInfo?.sortingType) {
                 return currentNode.next.value;
@@ -254,7 +250,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <div className="sort-label" onClick={() => (disableSort || !column.name ? null : this.props.updateSortRequest?.(column.name, nextSortType))}>
                     <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
+                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}>
                             {column.name}
                         </Tooltip>
                     </Label>
@@ -350,7 +346,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
         const tableCheckData = lineSelectionIndex != null ? this.props.dataset.get(lineSelectionIndex)?.data?.slice() : undefined;
 
-        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
             <Table2

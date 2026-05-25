@@ -10,7 +10,7 @@ export class HelpStore {
         makeObservable(this);
     }
 
-    static get Instance() {
+    public static get Instance() {
         if (!HelpStore.staticInstance) {
             HelpStore.staticInstance = new HelpStore();
         }
@@ -18,16 +18,16 @@ export class HelpStore {
     }
 
     @observable type: HelpType = undefined as any;
-    @observable helpVisible: boolean = false;
+    @observable isHelpVisible: boolean = false;
     @observable position: Position = Position.RIGHT;
 
     @action showHelpDrawer = (helpType: HelpType, centerX: number) => {
         this.type = helpType;
         this.position = centerX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
-        this.helpVisible = true;
+        this.isHelpVisible = true;
     };
 
     @action hideHelpDrawer = () => {
-        this.helpVisible = false;
+        this.isHelpVisible = false;
     };
 }

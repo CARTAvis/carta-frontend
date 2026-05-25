@@ -14,6 +14,7 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer
@@ -95,7 +96,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     selectAllOnFocus={true}
                     onValueChanged={restFreqStore?.setCustomVal}
                     onValueCleared={restFreqStore?.restoreDefaults}
-                    resetDisabled={restFreqStore?.resetDisable}
+                    resetDisabled={restFreqStore?.isResetDisabled}
                     tooltipContent={restFreqStore?.defaultInfo}
                     tooltipPlacement={"bottom"}
                 />
@@ -231,7 +232,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
         const hint = (
             <span>
                 <br />
@@ -281,7 +282,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             widgetStore.setKeep(e.checked);
                         }}
                     />
-                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
+                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.shouldMatchMoment} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
                     <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>

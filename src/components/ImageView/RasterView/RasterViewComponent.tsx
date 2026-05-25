@@ -60,7 +60,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
+            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
                 requestAnimationFrame(() => this.updateCanvas());
             }
         });
@@ -176,7 +176,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (
-                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.channelMapEnabled) &&
+                    (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
@@ -241,10 +241,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
             this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
-            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
+            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.isInverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
-            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
+            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.shouldUseSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
             this.gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * appStore.pixelRatio);
@@ -287,7 +287,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.disable(GL2.SCISSOR_TEST);
 
             // Skip rendering if frame is hidden
-            if (frame.renderConfig.visible) {
+            if (frame.renderConfig.isVisible) {
                 if (this.props.image?.type === ImageType.PV_PREVIEW) {
                     this.renderSingleTileCanvas(frame);
                 } else {
@@ -338,7 +338,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const highResPlaceholders: TileCoordinate[] = [];
 
         for (const tile of tiles) {
-            const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
+            const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, peek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
@@ -374,7 +374,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                         x: Math.floor(tile.x / 2.0),
                         y: Math.floor(tile.y / 2.0)
                     };
-                    placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
+                    placeholderTileMap.set(TileCoordinate.encodeCoordinate(lowResTile), true);
                 }
             }
         }
@@ -385,7 +385,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         if (renderLowRes) {
             const placeholderTileList: TileCoordinate[] = [];
-            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
+            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.decode(encodedTile)));
             if (placeholderTileList.length) {
                 this.renderTiles(frame, placeholderTileList, channel, mip * 2, true, 0, true);
             }
@@ -476,7 +476,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelGridZoomLow = 6.0;
         const pixelGridZoomHigh = 12.0;
 
-        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.pixelGridVisible) {
+        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.isPixelGridVisible) {
             const cutoff = 0.5 / zoom;
             const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
             this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
@@ -517,15 +517,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     customStartHex: frame.renderConfig.customColormapHexStart,
                     contrast: frame.renderConfig.contrast,
                     bias: frame.renderConfig.bias,
-                    useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                    useSmoothedBiasContrast: appStore.preferenceStore?.shouldUseSmoothedBiasContrast,
                     scaling: frame.renderConfig.scaling,
                     gamma: frame.renderConfig.gamma,
                     alpha: frame.renderConfig.alpha,
-                    inverted: frame.renderConfig.inverted,
-                    visibility: frame.renderConfig.visible,
+                    inverted: frame.renderConfig.isInverted,
+                    visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     nanAlpha: appStore.preferenceStore.nanAlpha,
-                    pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                    pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };
                 const ratio = appStore.imageRatio;

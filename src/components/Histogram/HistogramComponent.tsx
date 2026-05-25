@@ -6,7 +6,7 @@ import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
-import {HelpType, POLARIZATIONS, TickType} from "enums";
+import {HelpType, Polarizations, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -22,7 +22,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -58,7 +58,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         // Check whether the histogram data matches the widget's configuration
-        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
+        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.isFixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.isFixedBounds) {
             return false;
         }
         if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
@@ -95,13 +95,13 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let yMax = yMin;
 
             // Cache automatic settings for histogram min and max values
-            if (this.widgetStore.currentAutoBounds) {
+            if (this.widgetStore.isCurrentAutoBounds) {
                 this.widgetStore.cacheBounds(xMin, xMax);
                 this.widgetStore.resetBounds();
             }
 
             // Cache automatic setting for the number of histogram bins
-            if (this.widgetStore.currentAutoBins) {
+            if (this.widgetStore.isCurrentAutoBins) {
                 this.widgetStore.cacheNumBins(histogram.bins.length);
                 this.widgetStore.resetNumBins();
             }
@@ -145,7 +145,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === HistogramComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {
@@ -177,7 +177,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                             regionString = region.nameString;
                         }
                     }
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
                 } else {
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
@@ -283,9 +283,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         let unit = "";
         if (frame && frame.headerUnit) {
             const effectivePolarization = this.widgetStore.effectivePolarization;
-            if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
+            if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                 unit = "%";
-            } else if (effectivePolarization === POLARIZATIONS.Pangle) {
+            } else if (effectivePolarization === Polarizations.Pangle) {
                 unit = "degree";
             } else {
                 unit = frame.headerUnit;
@@ -299,10 +299,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
-                darkMode: appStore.darkTheme,
+                darkMode: appStore.isDarkTheme,
                 imageName: imageName,
                 plotName: plotName,
-                logY: this.widgetStore.logScaleY,
+                logY: this.widgetStore.isLogScaleY,
                 plotType: this.widgetStore.plotType,
                 tickTypeY: TickType.Scientific,
                 graphZoomedX: this.widgetStore.setXBounds,
@@ -342,7 +342,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
                     // Fix log plot min bounds for entries with zeros in them
-                    if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
+                    if (this.widgetStore.isLogScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                         linePlotProps.yMin = 0.5;
                     }
                 }

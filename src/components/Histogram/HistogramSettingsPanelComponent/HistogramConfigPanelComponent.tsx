@@ -7,7 +7,7 @@ import {type HistogramWidgetStore} from "stores/Widgets";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
-    private static readonly BINS_LOWER_BOUND = 2;
+    private static readonly BinsLowerBound = 2;
     private resetMaxNumBins: boolean;
     private minPixIntent: Intent;
     private maxPixIntent: Intent;
@@ -17,7 +17,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get sliderLabelStepSize(): number {
-        return this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 1;
+        return this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BinsLowerBound ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BinsLowerBound : 1;
     }
 
     get sliderValue(): number {
@@ -73,7 +73,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     };
 
     private onMaxNumBinsChanged = (currentMaxNumBins: number) => {
-        if (currentMaxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND) {
+        if (currentMaxNumBins > HistogramConfigPanelComponent.BinsLowerBound) {
             this.widgetStore.setMaxNumBins(currentMaxNumBins);
         }
     };
@@ -112,14 +112,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
                     <Switch
-                        checked={this.widgetStore.currentAutoBounds}
+                        checked={this.widgetStore.isCurrentAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBounds(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.currentAutoBounds && (
+                {!this.widgetStore.isCurrentAutoBounds && (
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
                             <Tooltip content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
@@ -140,18 +140,18 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto bins"}>
                     <Switch
-                        checked={this.widgetStore.currentAutoBins}
+                        checked={this.widgetStore.isCurrentAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBins(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.currentAutoBins && (
+                {!this.widgetStore.isCurrentAutoBins && (
                     <div className="line-boundary">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
-                                min={HistogramConfigPanelComponent.BINS_LOWER_BOUND}
+                                min={HistogramConfigPanelComponent.BinsLowerBound}
                                 max={this.sliderMaxValue}
                                 stepSize={1}
                                 labelStepSize={this.sliderLabelStepSize}
@@ -171,7 +171,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetConfigPanel = (
             <React.Fragment>
                 <FormGroup label="Reset config" inline={true}>
-                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
+                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.isCurrentAutoBounds && this.widgetStore.isCurrentAutoBins} onClick={this.onResetConfig}>
                         Reset config
                     </Button>
                 </FormGroup>

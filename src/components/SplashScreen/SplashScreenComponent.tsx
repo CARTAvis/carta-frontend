@@ -13,10 +13,10 @@ import "./SplashScreenComponent.scss";
 export class SplashScreenComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("splash-screen", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("splash-screen", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
-            <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible && !appStore.alertStore.alertVisible} usePortal={true}>
+            <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.isSplashScreenVisible && !appStore.alertStore.isAlertVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={150} />
@@ -31,9 +31,9 @@ export class SplashScreenComponent extends React.Component {
                     <div className={"loading-info-div"}>
                         <p>{appStore.logStore.newestMsg}</p>
                     </div>
-                    {ApiService.RuntimeConfig?.dashboardAddress ? (
+                    {ApiService.runtimeConfig?.dashboardAddress ? (
                         <div className="dashboard-info-div">
-                            <a href={ApiService.RuntimeConfig.dashboardAddress}>Connection problems? Open the CARTA dashboard</a>
+                            <a href={ApiService.runtimeConfig.dashboardAddress}>Connection problems? Open the CARTA dashboard</a>
                         </div>
                     ) : null}
                 </div>

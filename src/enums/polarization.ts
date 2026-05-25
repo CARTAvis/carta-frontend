@@ -1,4 +1,4 @@
-export enum POLARIZATIONS {
+export enum Polarizations {
     YX = -8,
     XY = -7,
     YY = -6,

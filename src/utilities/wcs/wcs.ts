@@ -7,6 +7,12 @@ import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
+export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
+    [NumberFormatType.HMS, "H:M:S"],
+    [NumberFormatType.DMS, "D:M:S"],
+    [NumberFormatType.Degrees, "Degrees"]
+]);
+
 export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
         return false;
@@ -133,8 +139,8 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     // Set common spectral
     const copySrc = AST.copy(srcTransform);
     const copyDest = AST.copy(destTransform);
-    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copySrc, `System=${matchingType}, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, Unit=${defaultUnit}`);
 
     // Get spectral value from forward transform
     const sourceSpectralValue = AST.transform3DPoint(copySrc, 0, 0, srcChannel, true);
@@ -170,8 +176,8 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     // Set common spectral
     const copySrc = AST.copy(srcTransform);
     const copyDest = AST.copy(destTransform);
-    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copySrc, `System=${matchingType}, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, Unit=${defaultUnit}`);
 
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
     const dummySpectralValue = AST.transform3DPoint(copyDest, 1, 1, 1, true);

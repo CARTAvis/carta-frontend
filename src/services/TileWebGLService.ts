@@ -4,7 +4,7 @@ import tinycolor from "tinycolor2";
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
-import {rasterShaders} from "./GLSL";
+import {RASTER_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation | null;
@@ -57,7 +57,7 @@ export class TileWebGLService {
     shaderProgram: WebGLProgram | null;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!TileWebGLService.staticInstance) {
             TileWebGLService.staticInstance = new TileWebGLService();
         }
@@ -78,7 +78,7 @@ export class TileWebGLService {
         if (!this.gl) {
             return;
         }
-        this.shaderProgram = getShaderProgram(this.gl, rasterShaders.vertexShader, rasterShaders.fragmentShader);
+        this.shaderProgram = getShaderProgram(this.gl, RASTER_SHADERS.vertexShader, RASTER_SHADERS.fragmentShader);
         if (this.shaderProgram) {
             this.gl.useProgram(this.shaderProgram);
 
@@ -173,8 +173,8 @@ export class TileWebGLService {
         if (tinycolor(hex).getFormat() === "hex" && this.gl) {
             const rgb = tinycolor(hex).toRgb();
             this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
-            const CmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
-            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, CmapCustomGradientStart.r / 255, CmapCustomGradientStart.g / 255, CmapCustomGradientStart.b / 255);
+            const cmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, cmapCustomGradientStart.r / 255, cmapCustomGradientStart.g / 255, cmapCustomGradientStart.b / 255);
         }
     }
 
@@ -194,7 +194,7 @@ export class TileWebGLService {
 export class PreviewWebGLService extends TileWebGLService {
     protected static staticInstance: PreviewWebGLService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreviewWebGLService.staticInstance) {
             PreviewWebGLService.staticInstance = new PreviewWebGLService();
         }

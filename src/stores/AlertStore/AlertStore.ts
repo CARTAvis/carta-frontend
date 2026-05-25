@@ -9,57 +9,57 @@ import {Deferred} from "services";
 export class AlertStore {
     private static staticInstance: AlertStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!AlertStore.staticInstance) {
             AlertStore.staticInstance = new AlertStore();
         }
         return AlertStore.staticInstance;
     }
 
-    @observable alertVisible: boolean = false;
+    @observable isAlertVisible: boolean = false;
     @observable alertText: string | React.ReactNode = "";
     @observable alertIcon: IconName | MaybeElement = undefined;
     @observable alertType: AlertType = AlertType.Info;
     @observable interactiveAlertText: string | React.ReactNode = "";
-    @observable showDashboardLink: boolean = false;
+    @observable shouldShowDashboardLink: boolean = false;
     private interactionPromise: Deferred<boolean> | null;
 
-    @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
+    @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
         this.alertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Info;
-        this.showDashboardLink = showDashboard;
-        this.alertVisible = true;
+        this.shouldShowDashboardLink = shouldShowDashboard;
+        this.isAlertVisible = true;
     };
 
     @action dismissAlert = () => {
-        this.alertVisible = false;
+        this.isAlertVisible = false;
     };
 
-    @action showInteractiveAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
+    @action showInteractiveAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
         this.interactiveAlertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Interactive;
-        this.alertVisible = true;
-        this.showDashboardLink = showDashboard;
+        this.isAlertVisible = true;
+        this.shouldShowDashboardLink = shouldShowDashboard;
         this.interactionPromise = new Deferred<boolean>();
         return this.interactionPromise.promise;
     };
 
-    @action showRetryAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
+    @action showRetryAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
         this.interactiveAlertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Retry;
-        this.alertVisible = true;
-        this.showDashboardLink = showDashboard;
+        this.isAlertVisible = true;
+        this.shouldShowDashboardLink = shouldShowDashboard;
         this.interactionPromise = new Deferred<boolean>();
         return this.interactionPromise.promise;
     };
 
-    @action handleInteractiveAlertClosed = (confirmed: boolean) => {
-        this.alertVisible = false;
+    @action handleInteractiveAlertClosed = (isConfirmed: boolean) => {
+        this.isAlertVisible = false;
         if (this.interactionPromise) {
-            this.interactionPromise.resolve(confirmed);
+            this.interactionPromise.resolve(isConfirmed);
             this.interactionPromise = null;
         }
     };

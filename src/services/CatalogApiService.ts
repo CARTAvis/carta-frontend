@@ -1,6 +1,6 @@
 import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
-import {action} from "mobx";
+import {action, makeObservable} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
@@ -11,7 +11,7 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
-    public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+    public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
     private static staticInstance: CatalogApiService;
     private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
@@ -23,7 +23,7 @@ export class CatalogApiService {
     private cancelTokenSourceSimbad: CancelTokenSource;
     private cancelTokenSourceVizier: CancelTokenSource;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogApiService.staticInstance) {
             CatalogApiService.staticInstance = new CatalogApiService();
         }
@@ -31,6 +31,7 @@ export class CatalogApiService {
     }
 
     constructor() {
+        makeObservable(this);
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
@@ -70,7 +71,7 @@ export class CatalogApiService {
         try {
             const response = await this.axiosInstanceVizier.get(query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizierData(response.data);
+                resources = CatalogApiProcessing.processVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -101,7 +102,7 @@ export class CatalogApiService {
         try {
             const response = await this.axiosInstanceVizier.get(query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizierData(response.data);
+                resources = CatalogApiProcessing.processVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -122,7 +123,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         resources.forEach(element => {
             const fileId = appStore.catalogNextFileId;
-            const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizierTableData(element.table.tableElement);
+            const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
             const coosy: CARTA.ICoosys = {system: element.coosys.system};
             const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
@@ -184,8 +185,8 @@ export class CatalogApiService {
             const response = await this.getSimbadCatalog(query);
             if (frame && response?.status === 200 && response?.data?.data?.length) {
                 const configStore = CatalogOnlineQueryConfigStore.Instance;
-                const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
+                const headers = CatalogApiProcessing.processSimbadMetaData(response.data?.metadata);
+                const columnData = CatalogApiProcessing.processSimbadData(response.data?.data, headers);
                 const coosys: CARTA.ICoosys = {system: configStore.coordsType};
                 const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;

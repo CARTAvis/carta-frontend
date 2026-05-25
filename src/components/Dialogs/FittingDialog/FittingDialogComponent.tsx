@@ -7,18 +7,13 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {CoordinateMode, DialogId, HelpType, InputType} from "enums";
+import {CoordinateMode, DialogId, FittingResultTabs, HelpType, InputType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./FittingDialogComponent.scss";
-
-enum FittingResultTabs {
-    RESULT,
-    LOG
-}
 
 @observer
 export class FittingDialogComponent extends React.Component {
@@ -80,8 +75,8 @@ export class FittingDialogComponent extends React.Component {
         return (
             <span className="info-string">
                 {this.coord === CoordinateMode.Image
-                    ? `WCS: ${!isImgCoordinates && (pointWcs?.x || pointWcs?.y) ? WCSPoint2D.ToString(pointWcs) : "-"}`
-                    : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
+                    ? `WCS: ${!isImgCoordinates && (pointWcs?.x || pointWcs?.y) ? WCSPoint2D.toString(pointWcs) : "-"}`
+                    : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.toString(point, "px", 3) : "-"}`}
             </span>
         );
     };
@@ -106,7 +101,7 @@ export class FittingDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
         const component = fittingStore.components[fittingStore.selectedComponentIndex];
-        const className = classNames("fitting-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("fitting-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
@@ -251,7 +246,7 @@ export class FittingDialogComponent extends React.Component {
                                         </FormGroup>
                                         <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
                                             {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
-                                            {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
+                                            {this.renderLockButton(component?.isAmplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
                                         </FormGroup>
                                         <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
                                             {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x || "", component?.setFwhmXWcs)}
@@ -262,7 +257,7 @@ export class FittingDialogComponent extends React.Component {
                                         </FormGroup>
                                         <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                             {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
-                                            {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
+                                            {this.renderLockButton(component?.isPaFixed, component?.togglePaFixed, "pa")}
                                         </FormGroup>
                                         <Divider />
                                     </Collapse>
@@ -275,7 +270,7 @@ export class FittingDialogComponent extends React.Component {
                                         onValueChanged={fittingStore.setBackgroundOffset}
                                         onValueCleared={fittingStore.resetBackgroundOffset}
                                         showTooltip={false}
-                                        additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
+                                        additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.isBackgroundOffsetFixed ? "lock" : "unlock"} />}
                                     />
                                     <FormGroup label="Solver" inline={true}>
                                         <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
@@ -284,8 +279,8 @@ export class FittingDialogComponent extends React.Component {
                             </div>
                             <div className={Classes.DIALOG_FOOTER}>
                                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                                    <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
-                                    <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
+                                    <Switch checked={fittingStore.shouldCreateModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                                    <Switch checked={fittingStore.shouldCreateResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
                                     <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
                                         <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                                     </Tooltip>
@@ -321,7 +316,7 @@ export class FittingDialogComponent extends React.Component {
                                         }
                                         position={Position.BOTTOM}
                                     >
-                                        <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
+                                        <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.isFitDisabled} data-testid="image-fitting-fit-button" />
                                     </Tooltip>
                                 </div>
                             </div>
