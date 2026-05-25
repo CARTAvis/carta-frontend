@@ -55,6 +55,12 @@ export default defineConfig({
     },
     tools: {
         rspack: {
+            ignoreWarnings: [
+                {
+                    module: /@protobufjs\/inquire/,
+                    message: /Critical dependency: the request of a dependency is an expression/,
+                },
+            ],
             node: {
                 __filename: false,
                 __dirname: false,
