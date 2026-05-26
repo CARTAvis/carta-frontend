@@ -10,7 +10,7 @@ import {getRegionIconOpacity, ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, RegionDialogTabs, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {type RegionStore} from "stores/Frame";
+import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -97,10 +97,8 @@ export class RegionDialogComponent extends React.Component {
 
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
-        if (!activeFrame || !regionSet?.focusedRegion) {
+        if (!activeFrame || !regionSet?.focusedRegion || regionSet.focusedRegion.regionId === CURSOR_REGION_ID) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
-        } else if (regionSet.focusedRegion.regionId === 0) {
-            bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else if (isMultiRegion) {
             region = regionSet.focusedRegion;
             dialogProps.title = `Editing ${selectedRegionCount} Regions (${activeFrame.filename})`;
@@ -156,7 +154,7 @@ export class RegionDialogComponent extends React.Component {
         const showLockedIcon = isMultiRegion ? lockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false) : lockDisabled || !!region?.isLocked;
         const regionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
         const deleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
-        const tooltips = region && region.regionId !== 0 && (
+        const tooltips = region && region.regionId !== CURSOR_REGION_ID && (
             <React.Fragment>
                 <Tooltip content={isMultiRegion ? (showLockedIcon ? "Unlock selected regions" : "Lock selected regions") : showLockedIcon ? "Unlock region" : "Lock region"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock} disabled={lockDisabled} />
