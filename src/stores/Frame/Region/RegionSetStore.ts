@@ -116,6 +116,9 @@ export class RegionSetStore {
             this.focusedRegion = this.cursorRegion;
             return;
         }
+        if (selectedIds.length > 1) {
+            this.deselectPointsInSelection(newSet);
+        }
 
         const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
         if (focusRegion) {
@@ -624,8 +627,19 @@ export class RegionSetStore {
             }
             if (region.regionId !== CURSOR_REGION_ID && !this.selectedRegionIds.has(region.regionId)) {
                 this.selectedRegionIds = new Set([...this.selectedRegionIds, region.regionId]);
+                if (this.selectedRegionIds.size > 1) {
+                    this.deselectPointsInSelection(this.selectedRegionIds);
+                }
             }
             this.focusedRegion = region;
+        }
+    };
+
+    private deselectPointsInSelection = (selectedIds: Set<number>) => {
+        for (const region of this.regions) {
+            if (selectedIds.has(region.regionId) && region.isPointSelectionSupported) {
+                region.deselectPoint();
+            }
         }
     };
 

@@ -411,6 +411,10 @@ export class RegionStore {
         return !POINT_SELECTION_UNSUPPORTED_REGION_TYPES.has(this.regionType);
     }
 
+    @computed get canSelectPoint(): boolean {
+        return this.isPointSelectionSupported && (this.activeFrame?.regionSet?.selectedRegionCount ?? 0) <= 1;
+    }
+
     @computed get selectablePointCount(): number {
         const hasSquarePixels = !!this.activeFrame?.hasSquarePixels;
         if (this.isSimpleShapeRegion) {
@@ -797,7 +801,7 @@ export class RegionStore {
     };
 
     @action selectPoint = (index: number) => {
-        if (this.isPointSelectionSupported && index >= 0 && index < this.selectablePointCount) {
+        if (this.canSelectPoint && index >= 0 && index < this.selectablePointCount) {
             this.selectedPointIndex = index;
         }
     };
@@ -816,7 +820,7 @@ export class RegionStore {
 
     private cyclePointSelection = (direction: 1 | -1) => {
         const count = this.selectablePointCount;
-        if (!this.isPointSelectionSupported || count <= 0) {
+        if (!this.canSelectPoint || count <= 0) {
             return;
         }
 
