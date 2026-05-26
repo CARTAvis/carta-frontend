@@ -28,7 +28,16 @@ jest.mock("models", () => ({
 
 import {CompassAnnotationStore} from "../AnnotationStore";
 
-import {CURSOR_REGION_ID, MIN_EDITED_REGION_DIMENSION, RegionStore, SIMPLE_SHAPE_RIGHT_POINT_INDEX} from "./RegionStore";
+import {
+    CURSOR_REGION_ID,
+    MIN_EDITED_REGION_DIMENSION,
+    RegionStore,
+    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX
+} from "./RegionStore";
 
 const BACKEND_SERVICE = {
     setCursor: jest.fn(),
@@ -88,6 +97,27 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(line.selectedPointIndex).toBe(0);
     });
 
+    test("cycles simple shape point selection around the bounding box", () => {
+        const rectangle = MakeRegion(CARTA.RegionType.RECTANGLE, [
+            {x: 0, y: 0},
+            {x: 10, y: 10}
+        ]);
+
+        rectangle.selectNextPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
+        rectangle.selectNextPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_TOP_POINT_INDEX);
+        rectangle.selectPreviousPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
+        rectangle.selectPreviousPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_ROTATION_POINT_INDEX);
+        rectangle.selectNextPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
+        rectangle.selectPoint(SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX);
+        rectangle.selectNextPoint();
+        expect(rectangle.selectedPointIndex).toBe(SIMPLE_SHAPE_RIGHT_POINT_INDEX);
+    });
+
     test("visibility changes do not mutate explicit lock state", () => {
         const region = MakeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},
@@ -144,6 +174,32 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
 
         expect(rectangle.size.x).toBeGreaterThan(0);
         expect(rectangle.size.y).toBe(10);
+    });
+
+    test("simple shape corner movement resizes rectangle with keyboard control", () => {
+        const rectangle = MakeRegion(CARTA.RegionType.RECTANGLE, [
+            {x: 0, y: 0},
+            {x: 10, y: 10}
+        ]);
+
+        rectangle.selectPoint(SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX);
+        rectangle.moveSelectedPoint(2, 3);
+
+        expect(rectangle.center).toEqual({x: 1, y: 1.5});
+        expect(rectangle.size).toEqual({x: 12, y: 13});
+    });
+
+    test("simple shape corner movement resizes ellipse with keyboard control", () => {
+        const ellipse = MakeRegion(CARTA.RegionType.ELLIPSE, [
+            {x: 0, y: 0},
+            {x: 5, y: 10}
+        ]);
+
+        ellipse.selectPoint(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
+        ellipse.moveSelectedPoint(-4, 2);
+
+        expect(ellipse.center).toEqual({x: -2, y: 1});
+        expect(ellipse.size).toEqual({x: 6, y: 12});
     });
 
     test("moves selected compass point by updating compass length", () => {

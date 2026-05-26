@@ -166,7 +166,7 @@ export class HotkeyService extends React.Component<{}> {
 
         const region = regionSet.focusedRegion;
         if (region.isPointSelectionSupported && !region.hasSelectedPoint) {
-            region.selectPoint(0);
+            region.selectNextPoint();
         }
     };
 

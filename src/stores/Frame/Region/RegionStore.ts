@@ -16,6 +16,7 @@ import {
     getApproximatePolygonPoints,
     getMovedSimpleShapeSide,
     getRegionPixelProperties,
+    getSimpleShapePointSelectionOrder,
     isAstBadPoint,
     length2D,
     midpoint2D,
@@ -35,14 +36,19 @@ export {
     getSimpleShapeAnchorName,
     getSimpleShapeAnchorPointIndex,
     getSimpleShapeAnchorSizeScale,
+    getSimpleShapePointSelectionOrder,
     isRectangleRegionType,
     isTextRegionType,
     MIN_EDITED_REGION_DIMENSION,
+    SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX,
     SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
+    SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX,
     SIMPLE_SHAPE_LEFT_POINT_INDEX,
     SIMPLE_SHAPE_RIGHT_POINT_INDEX,
     SIMPLE_SHAPE_ROTATION_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX,
     SIMPLE_SHAPE_TOP_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX,
     usesSimpleShapeBoxSize
 } from "utilities";
 
@@ -408,7 +414,7 @@ export class RegionStore {
     @computed get selectablePointCount(): number {
         const hasSquarePixels = !!this.activeFrame?.hasSquarePixels;
         if (this.isSimpleShapeRegion) {
-            return hasSquarePixels ? 5 : 4;
+            return hasSquarePixels ? 9 : 8;
         }
         if (this.isRotationSelectableLineLikeRegion) {
             return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
@@ -814,12 +820,32 @@ export class RegionStore {
             return;
         }
 
+        if (this.isSimpleShapeRegion) {
+            this.cycleSimpleShapePointSelection(direction);
+            return;
+        }
+
         if (this.selectedPointIndex < 0) {
             this.selectedPointIndex = direction > 0 ? 0 : count - 1;
             return;
         }
 
         this.selectedPointIndex = (this.selectedPointIndex + direction + count) % count;
+    };
+
+    private cycleSimpleShapePointSelection = (direction: 1 | -1) => {
+        const selectionOrder = getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels);
+        if (!selectionOrder.length) {
+            return;
+        }
+
+        const selectedOrderIndex = selectionOrder.indexOf(this.selectedPointIndex);
+        if (selectedOrderIndex < 0) {
+            this.selectedPointIndex = direction > 0 ? selectionOrder[0] : selectionOrder[selectionOrder.length - 1];
+            return;
+        }
+
+        this.selectedPointIndex = selectionOrder[(selectedOrderIndex + direction + selectionOrder.length) % selectionOrder.length];
     };
 
     @action moveSelectedPoint = (deltaX: number, deltaY: number) => {

@@ -8,10 +8,40 @@ export const SIMPLE_SHAPE_TOP_POINT_INDEX = 0;
 export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;
 export const SIMPLE_SHAPE_BOTTOM_POINT_INDEX = 2;
 export const SIMPLE_SHAPE_LEFT_POINT_INDEX = 3;
-export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 4;
+export const SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX = 4;
+export const SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX = 5;
+export const SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX = 6;
+export const SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX = 7;
+export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 8;
 export const MIN_EDITED_REGION_DIMENSION = 1e-3;
 
 export type SimpleShapeAnchor = "top" | "right" | "bottom" | "left" | "rotator" | "top-left" | "bottom-left" | "top-right" | "bottom-right";
+
+const SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES: Array<[SimpleShapeAnchor, number]> = [
+    ["top", SIMPLE_SHAPE_TOP_POINT_INDEX],
+    ["right", SIMPLE_SHAPE_RIGHT_POINT_INDEX],
+    ["bottom", SIMPLE_SHAPE_BOTTOM_POINT_INDEX],
+    ["left", SIMPLE_SHAPE_LEFT_POINT_INDEX],
+    ["top-left", SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX],
+    ["bottom-left", SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX],
+    ["top-right", SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX],
+    ["bottom-right", SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX],
+    ["rotator", SIMPLE_SHAPE_ROTATION_POINT_INDEX]
+];
+
+const SIMPLE_SHAPE_POINT_ANCHOR_NAMES = new Map<number, SimpleShapeAnchor>(SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES.map(([anchor, pointIndex]): [number, SimpleShapeAnchor] => [pointIndex, anchor]));
+const SIMPLE_SHAPE_ANCHOR_POINT_INDEXES = new Map<SimpleShapeAnchor, number>(SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES);
+
+const SIMPLE_SHAPE_POINT_SELECTION_ORDER = [
+    SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_POINT_INDEX,
+    SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX,
+    SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
+    SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX,
+    SIMPLE_SHAPE_LEFT_POINT_INDEX
+];
 
 type SimpleShapeBounds = {left: number; right: number; bottom: number; top: number};
 
@@ -68,37 +98,15 @@ export function getMovedSimpleShapeSide(input: SimpleShapePointEditInput): Simpl
 }
 
 export function getSimpleShapeAnchorName(selectedPointIndex: number): string {
-    switch (selectedPointIndex) {
-        case SIMPLE_SHAPE_TOP_POINT_INDEX:
-            return "top";
-        case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
-            return "right";
-        case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
-            return "bottom";
-        case SIMPLE_SHAPE_LEFT_POINT_INDEX:
-            return "left";
-        case SIMPLE_SHAPE_ROTATION_POINT_INDEX:
-            return "rotator";
-        default:
-            return "";
-    }
+    return SIMPLE_SHAPE_POINT_ANCHOR_NAMES.get(selectedPointIndex) ?? "";
 }
 
 export function getSimpleShapeAnchorPointIndex(anchor: string): number {
-    switch (anchor) {
-        case "top":
-            return SIMPLE_SHAPE_TOP_POINT_INDEX;
-        case "right":
-            return SIMPLE_SHAPE_RIGHT_POINT_INDEX;
-        case "bottom":
-            return SIMPLE_SHAPE_BOTTOM_POINT_INDEX;
-        case "left":
-            return SIMPLE_SHAPE_LEFT_POINT_INDEX;
-        case "rotator":
-            return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
-        default:
-            return -1;
-    }
+    return SIMPLE_SHAPE_ANCHOR_POINT_INDEXES.get(anchor as SimpleShapeAnchor) ?? -1;
+}
+
+export function getSimpleShapePointSelectionOrder(includeRotator: boolean): number[] {
+    return includeRotator ? [...SIMPLE_SHAPE_POINT_SELECTION_ORDER, SIMPLE_SHAPE_ROTATION_POINT_INDEX] : [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
 }
 
 export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType, textScale: number): number {
@@ -212,23 +220,27 @@ function getSimpleShapeBounds(regionType: CARTA.RegionType, size: Point2D, textS
 }
 
 function moveSimpleShapeBounds(bounds: SimpleShapeBounds, delta: Point2D, selectedPointIndex: number): SimpleShapeBounds | null {
-    const nextBounds = {...bounds};
-    switch (selectedPointIndex) {
-        case SIMPLE_SHAPE_TOP_POINT_INDEX:
-            nextBounds.top = Math.max(nextBounds.top + delta.y, nextBounds.bottom + MIN_EDITED_REGION_DIMENSION);
-            return nextBounds;
-        case SIMPLE_SHAPE_RIGHT_POINT_INDEX:
-            nextBounds.right = Math.max(nextBounds.right + delta.x, nextBounds.left + MIN_EDITED_REGION_DIMENSION);
-            return nextBounds;
-        case SIMPLE_SHAPE_BOTTOM_POINT_INDEX:
-            nextBounds.bottom = Math.min(nextBounds.bottom + delta.y, nextBounds.top - MIN_EDITED_REGION_DIMENSION);
-            return nextBounds;
-        case SIMPLE_SHAPE_LEFT_POINT_INDEX:
-            nextBounds.left = Math.min(nextBounds.left + delta.x, nextBounds.right - MIN_EDITED_REGION_DIMENSION);
-            return nextBounds;
-        default:
-            return null;
+    const anchor = getSimpleShapeAnchorName(selectedPointIndex);
+    if (!anchor || anchor === "rotator") {
+        return null;
     }
+
+    const nextBounds = {...bounds};
+
+    if (anchor.includes("top")) {
+        nextBounds.top = Math.max(nextBounds.top + delta.y, nextBounds.bottom + MIN_EDITED_REGION_DIMENSION);
+    }
+    if (anchor.includes("bottom")) {
+        nextBounds.bottom = Math.min(nextBounds.bottom + delta.y, nextBounds.top - MIN_EDITED_REGION_DIMENSION);
+    }
+    if (anchor.includes("left")) {
+        nextBounds.left = Math.min(nextBounds.left + delta.x, nextBounds.right - MIN_EDITED_REGION_DIMENSION);
+    }
+    if (anchor.includes("right")) {
+        nextBounds.right = Math.max(nextBounds.right + delta.x, nextBounds.left + MIN_EDITED_REGION_DIMENSION);
+    }
+
+    return nextBounds;
 }
 
 function getSimpleShapeSize(regionType: CARTA.RegionType, bounds: SimpleShapeBounds, textScale: number): Point2D {
