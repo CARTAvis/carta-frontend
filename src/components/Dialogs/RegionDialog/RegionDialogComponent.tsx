@@ -43,6 +43,11 @@ export class RegionDialogComponent extends React.Component {
     private static readonly MinWidth = 450;
     private static readonly MinHeight = 300;
 
+    private applyToSelected = (handler: (region: RegionStore) => void) => {
+        const selectedRegions = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList ?? [];
+        selectedRegions.forEach(handler);
+    };
+
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideDialog(DialogId.Region);
@@ -56,12 +61,14 @@ export class RegionDialogComponent extends React.Component {
         }
     };
 
-    private handleHideClicked = () => {
-        AppStore.Instance.activeFrame?.regionSet.toggleSelectedRegionsVisibility();
-    };
-
     private handleExportClicked = () => {
-        const region = AppStore.Instance.activeFrame?.regionSet.focusedRegion;
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if ((regionSet?.selectedRegionsList.length ?? 0) > 1) {
+            AppStore.Instance.fileBrowserStore.showExportSelectedRegions();
+            return;
+        }
+
+        const region = regionSet?.focusedRegion;
         if (region) {
             AppStore.Instance.fileBrowserStore.showExportRegions(region.regionId);
         }
@@ -70,6 +77,11 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("region-dialog", {[Classes.DARK]: appStore.isDarkTheme});
+        const activeFrame = appStore.activeFrame;
+        const regionSet = activeFrame?.regionSet;
+        const selectedRegions = regionSet?.selectedRegionsList ?? [];
+        const selectedRegionsOpacity = regionSet?.selectedRegionsOpacity ?? RegionOpacity.Invisible;
+        const isMultiRegion = selectedRegions.length > 1;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -84,13 +96,17 @@ export class RegionDialogComponent extends React.Component {
 
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
-        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.focusedRegion) {
+        if (!activeFrame || !regionSet?.focusedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
-        } else if (appStore.activeFrame.regionSet.focusedRegion.regionId === 0) {
+        } else if (regionSet.focusedRegion.regionId === 0) {
             bodyContent = RegionDialogComponent.InvalidRegionNode;
+        } else if (isMultiRegion) {
+            region = regionSet.focusedRegion;
+            dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
+            bodyContent = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         } else {
-            region = appStore.activeFrame.regionSet.focusedRegion;
-            const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+            region = regionSet.focusedRegion;
+            const frame = activeFrame.spatialReference ?? activeFrame;
             dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
@@ -135,22 +151,30 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
-        const lockDisabled = !!region && (appStore.activeFrame?.regionSet.isLocked || region.opacity === RegionOpacity.Invisible);
-        const showLockedIcon = lockDisabled || !!region?.isLocked;
-        const regionVisible = !!region && region.opacity !== RegionOpacity.Invisible;
-        const deleteDisabled = !!region && (!!appStore.activeFrame?.regionSet.isLocked || region.isLocked);
+        const lockDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible : !!region && (regionSet?.isLocked || region.opacity === RegionOpacity.Invisible);
+        const showLockedIcon = isMultiRegion ? lockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false) : lockDisabled || !!region?.isLocked;
+        const regionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
+        const deleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
         const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
-                <Tooltip content={showLockedIcon ? "Unlock region" : "Lock region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={region.toggleLock} disabled={lockDisabled} />
+                <Tooltip content={isMultiRegion ? (showLockedIcon ? "Unlock selected regions" : "Lock selected regions") : showLockedIcon ? "Unlock region" : "Lock region"}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock} disabled={lockDisabled} />
                 </Tooltip>
-                <Tooltip content={regionVisible ? "Hide region" : "Show region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={regionVisible ? "eye-open" : "eye-off"} onClick={this.handleHideClicked} style={{opacity: getRegionIconOpacity(region.opacity)}} />
+                <Tooltip content={isMultiRegion ? (regionVisible ? "Hide selected regions" : "Show selected regions") : regionVisible ? "Hide region" : "Show region"}>
+                    <AnchorButton
+                        intent={Intent.WARNING}
+                        minimal={true}
+                        icon={regionVisible ? "eye-open" : "eye-off"}
+                        onClick={() => regionSet?.toggleSelectedRegionsVisibility()}
+                        style={{opacity: getRegionIconOpacity(isMultiRegion ? selectedRegionsOpacity : region.opacity)}}
+                    />
                 </Tooltip>
-                <Tooltip content="Focus">
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
-                </Tooltip>
-                <Tooltip content="Export region">
+                {!isMultiRegion && (
+                    <Tooltip content="Focus">
+                        <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
+                    </Tooltip>
+                )}
+                <Tooltip content={isMultiRegion ? "Export selected regions" : "Export region"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
                 </Tooltip>
             </React.Fragment>
@@ -173,7 +197,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {configurationPanel && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
+                        {(configurationPanel || isMultiRegion) && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>

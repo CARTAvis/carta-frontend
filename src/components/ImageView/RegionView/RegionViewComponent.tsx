@@ -1038,7 +1038,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
                 } else {
                     frame.regionSet.setFocusedRegion(region);
                 }
-                appStore.dialogStore.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
+                appStore.dialogStore.showDialog(DialogId.Region);
             }
         }
     };

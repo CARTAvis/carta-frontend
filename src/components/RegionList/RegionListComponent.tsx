@@ -194,11 +194,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const isMultiSelected = regionSet.isRegionInMultiSelection(region);
-        if (!isMultiSelected && region && region.regionId !== CURSOR_REGION_ID) {
+        if (!regionSet.isRegionInMultiSelection(region) && region && region.regionId !== CURSOR_REGION_ID) {
             regionSet.selectSingleRegion(region);
         }
-        DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region);
+        DialogStore.Instance.showDialog(DialogId.Region);
     };
 
     private handleRegionContextMenu = (ev: React.MouseEvent<HTMLDivElement>, region: RegionStore) => {
@@ -254,7 +253,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         }}
                     />
                     <MenuDivider />
-                    <MenuItem icon="settings" text="Region properties" onClick={() => DialogStore.Instance.showDialog(isMultiSelected ? DialogId.GroupRegion : DialogId.Region)} />
+                    <MenuItem icon="settings" text="Region properties" onClick={() => DialogStore.Instance.showDialog(DialogId.Region)} />
                     <MenuDivider />
                     <MenuItem
                         icon="trash"

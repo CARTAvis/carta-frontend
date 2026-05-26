@@ -1,9 +1,0 @@
-@import "~@blueprintjs/core/lib/scss/variables.scss";
-
-.group-region-dialog {
-    .#{$ns}-dialog-header,
-    .#{$ns}-dialog-body,
-    .#{$ns}-dialog-footer {
-        user-select: none;
-    }
-}
