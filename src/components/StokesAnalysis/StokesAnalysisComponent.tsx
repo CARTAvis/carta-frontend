@@ -438,7 +438,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): Border {
-        if (!this.widgetStore.hasEqualAxes) {
+        if (!this.widgetStore.areAxesEqual) {
             return {xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax};
         }
         let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
@@ -984,7 +984,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
             shouldScrollZoom: true,
-            graphZoomedXY: this.widgetStore.hasEqualAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
+            graphZoomedXY: this.widgetStore.areAxesEqual ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
             // settings
             pointRadius: this.widgetStore.scatterPlotPointSize
@@ -1169,7 +1169,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.widgetStore.hasEqualAxes) {
+                if (this.widgetStore.areAxesEqual) {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterEqualXmin !== undefined ? this.widgetStore.quScatterEqualXmin : quBorder.xMin;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterEqualXmax !== undefined ? this.widgetStore.quScatterEqualXmax : quBorder.xMax;
                     quScatterPlotProps.yMin = this.widgetStore.quScatterEqualYmin !== undefined ? this.widgetStore.quScatterEqualYmin : quBorder.yMin;

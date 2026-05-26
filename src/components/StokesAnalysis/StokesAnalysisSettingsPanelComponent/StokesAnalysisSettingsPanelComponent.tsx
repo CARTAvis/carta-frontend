@@ -126,7 +126,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
-            hasEqualAxes: widgetStore.hasEqualAxes,
+            areAxesEqual: widgetStore.areAxesEqual,
             setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,

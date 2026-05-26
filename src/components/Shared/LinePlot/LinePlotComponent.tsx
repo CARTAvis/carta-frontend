@@ -586,7 +586,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         scatterChart.update();
     }
 
-    private shouldShowPlotxAxes() {
+    private shouldShowPlotXAxis() {
         const scatterChart = this.plotRef;
         if (this.props.isGroupSubPlot === true) {
             if (scatterChart && scatterChart.config["_config"].options.scales["x"].ticks.display === false) {
@@ -598,7 +598,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     exportImage = () => {
         const scatter = this.plotRef;
-        const shouldShowPlotxAxes = this.shouldShowPlotxAxes();
+        const shouldShowPlotxAxes = this.shouldShowPlotXAxis();
         if (shouldShowPlotxAxes) {
             this.exportSubPlotImage(true);
         }

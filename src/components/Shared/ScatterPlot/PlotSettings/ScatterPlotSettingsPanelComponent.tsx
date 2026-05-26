@@ -11,7 +11,7 @@ export class ScatterPlotSettingsPanelComponentProps {
     colorMap: string;
     scatterPlotPointSize: number;
     pointTransparency: number;
-    hasEqualAxes: boolean;
+    areAxesEqual: boolean;
     isColorMapInverted: boolean;
     setPointTransparency: (val: number) => void;
     setScatterPlotPointSize: (val: number) => void;
@@ -64,7 +64,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         />
                     </FormGroup>
                     <FormGroup inline={true} label={"Equal axes"}>
-                        <Switch checked={props.hasEqualAxes} onChange={props.handleEqualAxesValuesChanged} />
+                        <Switch checked={props.areAxesEqual} onChange={props.handleEqualAxesValuesChanged} />
                     </FormGroup>
                 </React.Fragment>
                 <FormGroup inline={true} label="Reference axes">

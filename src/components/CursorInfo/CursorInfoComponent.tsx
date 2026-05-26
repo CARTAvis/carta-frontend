@@ -186,7 +186,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                             numVisibleRows={imageNum}
                             columnWidths={this.columnWidths}
                             onColumnWidthChanged={this.onColumnWidthChanged}
-                            isGhostCellsEnabled={false}
+                            areGhostCellsEnabled={false}
                             defaultRowHeight={40}
                             isIndexZero={true}
                             boldIndex={[appStore.activeImageIndex]}

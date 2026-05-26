@@ -3481,15 +3481,15 @@ export class AppStore {
         return new Promise<void>(resolve => {
             when(
                 () => {
-                    const isTilesLoading = this.tileService.remainingTiles > 0;
-                    let isContoursLoading = false;
+                    const isLoadingTiles = this.tileService.remainingTiles > 0;
+                    let isLoadingContours = false;
                     for (const frame of this.imageViewConfigStore.visibleFrames) {
                         if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
-                            isContoursLoading = true;
+                            isLoadingContours = true;
                             break;
                         }
                     }
-                    return !isTilesLoading && !isContoursLoading;
+                    return !isLoadingTiles && !isLoadingContours;
                 },
                 () => {
                     this.setIsCanvasUpdated(false);

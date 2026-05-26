@@ -372,9 +372,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const xColumnName = shouldSelectXAxis ? findAutoSelectedCatalogAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, system) : undefined;
         const yColumnName = shouldSelectYAxis ? findAutoSelectedCatalogAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, system) : undefined;
 
-        let hasEnabledHiddenColumns = false;
+        let areHiddenColumnsEnabled = false;
         if (shouldEnableHiddenColumns) {
-            hasEnabledHiddenColumns = this.enableAxisColumns([xColumnName, yColumnName]);
+            areHiddenColumnsEnabled = this.enableAxisColumns([xColumnName, yColumnName]);
         }
 
         if (xColumnName) {
@@ -384,7 +384,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogWidgetStore.setyAxis(yColumnName);
         }
 
-        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: hasEnabledHiddenColumns};
+        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
     }
 
     private autoSelectAxes(shouldForceReset = false) {
