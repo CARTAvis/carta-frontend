@@ -140,6 +140,34 @@ export class RegionSetStore {
         this.resetKeyboardRangeState();
     };
 
+    @action replaceRegionId = (previousRegionId: number, regionId: number) => {
+        if (previousRegionId === regionId) {
+            return;
+        }
+
+        if (this.selectedRegionIds.has(previousRegionId)) {
+            const selectedIds = new Set(this.selectedRegionIds);
+            selectedIds.delete(previousRegionId);
+            selectedIds.add(regionId);
+            this.selectedRegionIds = selectedIds;
+        }
+
+        if (this.selectionPivotRegionId === previousRegionId) {
+            this.selectionPivotRegionId = regionId;
+        }
+
+        if (this.keyboardRangeAnchorRegionId === previousRegionId) {
+            this.keyboardRangeAnchorRegionId = regionId;
+        }
+
+        if (this.keyboardRangeBaseSelection.has(previousRegionId)) {
+            const selectedIds = new Set(this.keyboardRangeBaseSelection);
+            selectedIds.delete(previousRegionId);
+            selectedIds.add(regionId);
+            this.keyboardRangeBaseSelection = selectedIds;
+        }
+    };
+
     @action toggleRegionSelection = (region: RegionStore) => {
         if (!region || region.regionId === CURSOR_REGION_ID) {
             this.clearSelection();
@@ -583,14 +611,7 @@ export class RegionSetStore {
             if (ack.regionId != null) {
                 const regionId = ack.regionId;
                 runInAction(() => {
-                    const previousRegionId = region.regionId;
                     region.setRegionId(regionId);
-                    if (this.selectedRegionIds.has(previousRegionId)) {
-                        const selectedIds = new Set(this.selectedRegionIds);
-                        selectedIds.delete(previousRegionId);
-                        selectedIds.add(regionId);
-                        this.selectedRegionIds = selectedIds;
-                    }
                 });
             }
         } catch (err) {

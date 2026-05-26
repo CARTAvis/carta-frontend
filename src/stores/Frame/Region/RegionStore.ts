@@ -547,7 +547,9 @@ export class RegionStore {
     }
 
     @action setRegionId = (id: number) => {
+        const previousRegionId = this.regionId;
         this.regionId = id;
+        this.activeFrame?.regionSet?.replaceRegionId(previousRegionId, id);
     };
 
     @action setCenter = (p: Point2D, shouldSkipUpdate = false) => {

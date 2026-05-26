@@ -81,7 +81,9 @@ const MakeFrame = () =>
     }) as any;
 
 const MakeRegionSet = () => {
-    const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+    const frame = MakeFrame();
+    const regionSet = new RegionSetStore(frame, PREFERENCE as any, BACKEND_SERVICE as any);
+    frame.regionSet = regionSet;
     const first = regionSet.addRectangularRegion({x: 10, y: 10}, 4, 4, true);
     first.setRegionId(1);
     const second = regionSet.addRectangularRegion({x: 20, y: 20}, 4, 4, true);
@@ -117,6 +119,31 @@ describe("RegionSetStore multi-selection behavior", () => {
 
         expect(Array.from(regionSet.selectedRegionIds)).toEqual([second.regionId]);
         expect(regionSet.focusedRegion).toBe(second);
+    });
+
+    test("setRegionId preserves selection when a temporary region receives its backend id", () => {
+        const {regionSet} = MakeRegionSet();
+        const region = regionSet.addRectangularRegion({x: 50, y: 50}, 4, 4, true);
+
+        regionSet.selectSingleRegion(region);
+        region.setRegionId(100);
+
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([100]);
+        expect(regionSet.focusedRegion).toBe(region);
+    });
+
+    test("endCreating preserves selection after backend assigns the created region id", async () => {
+        BACKEND_SERVICE.setRegion.mockResolvedValueOnce({regionId: 101});
+        const {regionSet} = MakeRegionSet();
+        const region = regionSet.addRectangularRegion({x: 50, y: 50}, 4, 4, true);
+
+        region.beginCreating();
+        regionSet.selectSingleRegion(region);
+        await region.endCreating();
+
+        expect(region.regionId).toBe(101);
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([101]);
+        expect(regionSet.focusedRegion).toBe(region);
     });
 
     test("setSelectionByIds filters cursor and missing ids", () => {
