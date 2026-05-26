@@ -1025,7 +1025,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
             return;
         }
 
-        this.props.frame.regionSet.selectRegionFromList(region, this.props.regions, {toggle: !!(evt?.ctrlKey || evt?.metaKey), range: !!evt?.shiftKey});
+        this.props.frame.regionSet.selectRegionFromList(region, this.props.regions, {toggle: !!(evt?.ctrlKey || evt?.metaKey)});
     };
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;

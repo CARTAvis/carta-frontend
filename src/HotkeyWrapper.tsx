@@ -261,7 +261,6 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: "click", label: "Select region/point"},
             {combo: "mod + click", label: "Toggle region selection"},
-            {combo: "shift + click", label: "Select region range"},
             {combo: "l", label: "Toggle selected region(s) lock"},
             {combo: "shift + l", label: "Unlock all regions"},
             {combo: "h", label: "Toggle selected region(s) visibility"},
@@ -300,6 +299,7 @@ export class HotkeyService extends React.Component<{}> {
         const modString = appStore.modifierString;
         const base = {group: "Regions (Region List)", global: true};
         const items = [
+            {combo: "shift + click", label: "Select region range"},
             {combo: `${modString}a`, label: "Select all regions"},
             {combo: "up", label: "Select previous region"},
             {combo: "down", label: "Select next region"},
