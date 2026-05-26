@@ -63,7 +63,7 @@ export class RegionDialogComponent extends React.Component {
 
     private handleExportClicked = () => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if ((regionSet?.selectedRegionsList.length ?? 0) > 1) {
+        if ((regionSet?.selectedRegionCount ?? 0) > 1) {
             AppStore.Instance.fileBrowserStore.showExportSelectedRegions();
             return;
         }
@@ -81,7 +81,8 @@ export class RegionDialogComponent extends React.Component {
         const regionSet = activeFrame?.regionSet;
         const selectedRegions = regionSet?.selectedRegionsList ?? [];
         const selectedRegionsOpacity = regionSet?.selectedRegionsOpacity ?? RegionOpacity.Invisible;
-        const isMultiRegion = selectedRegions.length > 1;
+        const selectedRegionCount = regionSet?.selectedRegionCount ?? 0;
+        const isMultiRegion = selectedRegionCount > 1;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -102,7 +103,7 @@ export class RegionDialogComponent extends React.Component {
             bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else if (isMultiRegion) {
             region = regionSet.focusedRegion;
-            dialogProps.title = `Editing ${selectedRegions.length} Regions (${activeFrame.filename})`;
+            dialogProps.title = `Editing ${selectedRegionCount} Regions (${activeFrame.filename})`;
             bodyContent = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         } else {
             region = regionSet.focusedRegion;

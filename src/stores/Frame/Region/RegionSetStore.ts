@@ -52,9 +52,7 @@ export class RegionSetStore {
     }
 
     @computed get selectedRegionsList(): RegionStore[] {
-        return Array.from(this.selectedRegionIds)
-            .map(id => this.regionMap.get(id))
-            .filter((region): region is RegionStore => !!region && region.regionId !== CURSOR_REGION_ID);
+        return Array.from(this.selectedRegionIds).map(id => this.regionMap.get(id)!);
     }
 
     @computed get editableRegionsList(): RegionStore[] {
@@ -94,7 +92,7 @@ export class RegionSetStore {
     };
 
     isRegionInMultiSelection = (region: RegionStore | null | undefined): boolean => {
-        return !!region && this.selectedRegionIds.size > 1 && this.selectedRegionIds.has(region.regionId);
+        return !!region && this.selectedRegionCount > 1 && this.selectedRegionIds.has(region.regionId);
     };
 
     @action clearSelection = () => {
@@ -208,7 +206,7 @@ export class RegionSetStore {
             return;
         }
 
-        const hasSelection = this.selectedRegionIds.size > 0;
+        const hasSelection = this.selectedRegionCount > 0;
         const regionIndex = regions.findIndex(candidate => candidate.regionId === region.regionId);
         const pivotIndex = this.selectionPivotRegionId !== null ? regions.findIndex(candidate => candidate.regionId === this.selectionPivotRegionId) : -1;
 
@@ -636,7 +634,7 @@ export class RegionSetStore {
             return;
         }
 
-        const isMultiSelection = this.selectedRegionIds.size > 1;
+        const isMultiSelection = this.selectedRegionCount > 1;
         this.selectAdjacentRegion(this.regions, direction, {wrap: true, selectedOnly: isMultiSelection, preserveSelection: isMultiSelection});
     };
 

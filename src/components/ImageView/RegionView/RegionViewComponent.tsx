@@ -1032,7 +1032,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
-                const isMultiSelected = frame.regionSet.selectedRegionsList.length > 1 && frame.regionSet.selectedRegionIds.has(region.regionId);
+                const isMultiSelected = frame.regionSet.selectedRegionCount > 1 && frame.regionSet.selectedRegionIds.has(region.regionId);
                 if (!isMultiSelected) {
                     frame.regionSet.selectSingleRegion(region);
                 } else {

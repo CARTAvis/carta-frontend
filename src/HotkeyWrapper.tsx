@@ -85,7 +85,7 @@ export class HotkeyService extends React.Component<{}> {
                 return;
             }
 
-            if (regionSet.selectedRegionsList.length > 0) {
+            if (regionSet.selectedRegionCount > 0) {
                 regionSet.toggleSelectedRegionsLocked();
                 return;
             }
@@ -101,7 +101,7 @@ export class HotkeyService extends React.Component<{}> {
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
 
-            if (regionSet.selectedRegionsList.length > 0) {
+            if (regionSet.selectedRegionCount > 0) {
                 regionSet.toggleSelectedRegionsVisibility();
                 return;
             }

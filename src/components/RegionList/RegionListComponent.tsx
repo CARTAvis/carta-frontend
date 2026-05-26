@@ -180,7 +180,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportAllClicked = () => {
-        const selectedCount = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList.length ?? 0;
+        const selectedCount = AppStore.Instance.activeFrame?.regionSet.selectedRegionCount ?? 0;
         if (selectedCount > 1) {
             FileBrowserStore.Instance.showExportSelectedRegions();
         } else {
@@ -217,13 +217,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         regionSet.selectRegionFromList(region, this.validRegions);
 
         const selectedRegions = regionSet.selectedRegionsList;
-        const isMultiSelected = selectedRegions.length > 1;
+        const isMultiSelected = regionSet.selectedRegionCount > 1;
         const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
         const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
         const lockDisabled = regionSet.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || regionSet.isAllSelectedRegionsLocked;
         const deleteDisabled = regionSet.isLocked || selectedRegions.every(selectedRegion => selectedRegion.isLocked);
-        const title = isMultiSelected ? `${selectedRegions.length} regions selected` : region.nameString;
+        const title = isMultiSelected ? `${regionSet.selectedRegionCount} regions selected` : region.nameString;
 
         showContextMenu({
             content: (
@@ -454,7 +454,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
-            const exportTooltip = regionSet.selectedRegionsList.length > 1 ? "Export selected regions" : "Export all regions";
+            const exportTooltip = regionSet.selectedRegionCount > 1 ? "Export selected regions" : "Export all regions";
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ActionsColumnDefaultWidth}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
