@@ -609,15 +609,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
                 let pointColor = this.pointDefaultColor;
-                let isOutRange = true;
+                let isOutOfRange = true;
                 if (point.z !== undefined && point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
-                    isOutRange = false;
+                    isOutOfRange = false;
                 }
                 let percentage = point.z !== undefined ? (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal) : 0;
                 if (widgetStore.isInvertedColorMap) {
                     percentage = 1 - percentage;
                 }
-                pointColor = isOutRange ? outOfRangeColor : this.getScatterColor(percentage, isColorMapReversed);
+                pointColor = isOutOfRange ? outOfRangeColor : this.getScatterColor(percentage, isColorMapReversed);
                 scatterColors.push(pointColor);
             }
         }

@@ -373,8 +373,16 @@ export class TileService {
 
         for (const {range, tiles} of channelsToTilesArray) {
             if (tiles.length) {
-                const isRequestSendSuccessful = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
-                if (isRequestSendSuccessful) {
+                const isRequestSentSuccessfully = this.backendService.setChannels(
+                    fileId,
+                    requiredChannel,
+                    stokes,
+                    {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles},
+                    true,
+                    range,
+                    fullChannelRange
+                );
+                if (isRequestSentSuccessfully) {
                     this.currentlyStreamingChannelRange = fullChannelRange;
                     this.currentlyStreamingTileRange = currentTiles;
                 }

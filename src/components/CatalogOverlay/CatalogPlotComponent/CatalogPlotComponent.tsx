@@ -162,11 +162,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
-            const hasXColumn = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
-            const hasYColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
+            const isXColumnEmpty = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
+            const isYColumnEmpty = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore?.plotType) {
                 case CatalogPlotType.D2Scatter:
-                    if (!hasXColumn && !hasYColumn && plotWidgetStore.scatterborder === undefined) {
+                    if (!isXColumnEmpty && !isYColumnEmpty && plotWidgetStore.scatterBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
@@ -179,7 +179,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     }
                     break;
                 case CatalogPlotType.Histogram:
-                    if (!hasXColumn && plotWidgetStore.histogramBorder === undefined) {
+                    if (!isXColumnEmpty && plotWidgetStore.histogramBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         if (xColumnName) {
                             const histogramCoords = profileStore?.get1DPlotData(xColumnName);
@@ -321,7 +321,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // increase x range to include border data
         const fraction = 1.001;
         const start = xRange.xMin;
-        const nBinx = widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX;
+        const nBinx = widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX;
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
         const size = (end - start) / nBinx;
         data.type = "histogram";
@@ -505,7 +505,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         if (event.dragmode) {
-            widgetStore.setDragmode(event.dragmode);
+            widgetStore.setDragMode(event.dragmode);
         }
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             const xMin = event["xaxis.range[0]"];
@@ -513,7 +513,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const yMin = event["yaxis.range[0]"];
             const yMax = event["yaxis.range[1]"];
             if (isFinite(xMin) || isFinite(yMin)) {
-                const currentBorder = widgetStore.scatterborder;
+                const currentBorder = widgetStore.scatterBorder;
                 if (currentBorder) {
                     const scatterBorder: Border = {
                         xMin: isFinite(xMin) ? xMin : currentBorder.xMin,
@@ -630,10 +630,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        const isInDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
+        const isInDragMode = widgetStore && selectionMode.includes(widgetStore.dragMode);
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        if (event?.points?.length > 0 && isInDragmode && profileStore && catalogWidgetStore) {
+        if (event?.points?.length > 0 && isInDragMode && profileStore && catalogWidgetStore) {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
             catalogStore.updateCatalogProfiles(catalogFileId);
@@ -940,7 +940,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 pad: 0
             },
             showlegend: false,
-            dragmode: widgetStore.dragmode
+            dragmode: widgetStore.dragMode
         };
 
         if (widgetStore.isFittingResultVisible) {
@@ -993,7 +993,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (widgetStore.isScatterAutoScaled) {
                 border = scatter.border;
             } else {
-                border = widgetStore.scatterborder;
+                border = widgetStore.scatterBorder;
             }
             if (border && layout.xaxis && layout.yaxis) {
                 layout.xaxis.range = [border.xMin, border.xMax];
@@ -1066,7 +1066,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 label="Bins"
                 min={1}
                 integerOnly={true}
-                value={widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX}
+                value={widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX}
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}

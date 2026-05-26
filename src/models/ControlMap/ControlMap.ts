@@ -34,16 +34,16 @@ export class ControlMap {
     };
 
     setGrid = (astTransform?: AST.Mapping) => {
-        let isCleanUpTransform: boolean = false;
+        let shouldCleanUpTransform: boolean = false;
 
         if (!astTransform || (astTransform as number) < 0) {
             astTransform = AST.getSpatialMapping(this.source.wcsInfo, this.destination.wcsInfo);
-            isCleanUpTransform = true;
+            shouldCleanUpTransform = true;
         }
 
         this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, this.width, this.minPoint.y, this.maxPoint.y, this.height, true);
 
-        if (isCleanUpTransform) {
+        if (shouldCleanUpTransform) {
             AST.deleteObject(astTransform);
         }
     };

@@ -991,7 +991,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
         const plotButtonText = isImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
         const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
-        const isDisabledOverlay = profileStore.isLoadingOntoImage;
+        const isOverlayDisabled = profileStore.isLoadingOntoImage;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600) {
@@ -1071,32 +1071,32 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isDisabledOverlay}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
-                                        disabled={isDisabledOverlay}
+                                        disabled={isOverlayDisabled}
                                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                         filterable={true}
                                         noResults={noResults}
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={isDisabledOverlay} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={isOverlayDisabled} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                     </Select>
                                 </FormGroup>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isDisabledOverlay}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
-                                        disabled={isHistogram || isDisabledOverlay}
+                                        disabled={isHistogram || isOverlayDisabled}
                                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                         filterable={true}
                                         noResults={noResults}
@@ -1106,7 +1106,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                         <Button
                                             className="catalog-axis-button"
                                             text={catalogWidgetStore.yAxis}
-                                            disabled={isHistogram || isDisabledOverlay}
+                                            disabled={isHistogram || isOverlayDisabled}
                                             rightIcon="double-caret-vertical"
                                             data-testid="catalog-rendering-column-y-dropdown"
                                         />
@@ -1120,7 +1120,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     onValueChanged={val => profileStore.setMaxRows(val)}
                                     onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                     displayExponential={false}
-                                    disabled={isDisabledOverlay || !profileStore.isFileBasedCatalog}
+                                    disabled={isOverlayDisabled || !profileStore.isFileBasedCatalog}
                                 />
                             </div>
                         </div>
@@ -1130,11 +1130,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     intent={Intent.SUCCESS}
                                     text="Apply filter"
                                     onClick={this.handleFilterRequest}
-                                    disabled={isDisabledOverlay || !profileStore.shouldUpdateTableView || !profileStore.hasFilter}
+                                    disabled={isOverlayDisabled || !profileStore.shouldUpdateTableView || !profileStore.hasFilter}
                                     data-testid="catalog-filter-button"
                                 />
-                                <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={isDisabledOverlay} data-testid="catalog-reset-button" />
-                                <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={isDisabledOverlay} data-testid="catalog-close-button" />
+                                <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={isOverlayDisabled} data-testid="catalog-reset-button" />
+                                <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={isOverlayDisabled} data-testid="catalog-close-button" />
                                 <AnchorButton intent={plotButtonIntent} text={plotButtonText} onClick={this.handlePlotClick} disabled={!this.isPlotButtonEnabled} data-testid="catalog-plot-button" />
                             </div>
                         </div>

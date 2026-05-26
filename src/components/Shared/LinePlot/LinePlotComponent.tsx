@@ -598,8 +598,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     exportImage = () => {
         const scatter = this.plotRef;
-        const shouldShowPlotxAxes = this.shouldShowPlotXAxis();
-        if (shouldShowPlotxAxes) {
+        const shouldShowPlotXAxis = this.shouldShowPlotXAxis();
+        if (shouldShowPlotXAxis) {
             this.exportSubPlotImage(true);
         }
         const canvas = scatter.canvas;
@@ -679,7 +679,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }, "image/png");
 
-        if (shouldShowPlotxAxes) {
+        if (shouldShowPlotXAxis) {
             this.exportSubPlotImage(false);
         }
     };
