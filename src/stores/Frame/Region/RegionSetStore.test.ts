@@ -168,6 +168,29 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(first);
     });
 
+    test("applyRegionBoxSelection adds box-selected regions when box includes selected and unselected regions", () => {
+        const {regionSet, first, second, third} = MakeRegionSet();
+
+        regionSet.setSelectionByIds([first.regionId, third.regionId], first.regionId);
+        regionSet.applyRegionBoxSelection([first.regionId, second.regionId]);
+
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(second);
+    });
+
+    test("applyRegionBoxSelection toggles box-selected regions unless the box has mixed selection state", () => {
+        const {regionSet, first, second, third} = MakeRegionSet();
+
+        regionSet.selectSingleRegion(first);
+        regionSet.applyRegionBoxSelection([second.regionId, third.regionId]);
+        expect(new Set(regionSet.selectedRegionIds)).toEqual(new Set([first.regionId, second.regionId, third.regionId]));
+        expect(regionSet.focusedRegion).toBe(third);
+
+        regionSet.applyRegionBoxSelection([second.regionId, third.regionId]);
+        expect(Array.from(regionSet.selectedRegionIds)).toEqual([first.regionId]);
+        expect(regionSet.focusedRegion).toBe(first);
+    });
+
     test("setFocusedRegion keeps non-cursor focus in the selected id set", () => {
         const {regionSet, first, second} = MakeRegionSet();
 

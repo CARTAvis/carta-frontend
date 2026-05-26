@@ -893,16 +893,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             .filter(region => region.isVisible && !region.isLocked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext))
             .map(region => region.regionId);
 
-        const nextSelection = new Set(this.frame.regionSet.selectedRegionIds);
-        selectedIds.forEach(id => {
-            if (nextSelection.has(id)) {
-                nextSelection.delete(id);
-            } else {
-                nextSelection.add(id);
-            }
-        });
-        const nextIds = Array.from(nextSelection);
-        this.frame.regionSet.setSelectionByIds(nextIds, selectedIds[selectedIds.length - 1] ?? nextIds[nextIds.length - 1]);
+        this.frame.regionSet.applyRegionBoxSelection(selectedIds);
     };
 
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {

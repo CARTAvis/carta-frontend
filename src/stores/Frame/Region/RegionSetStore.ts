@@ -187,6 +187,34 @@ export class RegionSetStore {
         this.resetKeyboardRangeState();
     };
 
+    @action applyRegionBoxSelection = (regionIds: number[]) => {
+        const regionMap = this.regionMap;
+        const boxSelectionIds = Array.from(new Set(regionIds.filter(id => id !== CURSOR_REGION_ID && regionMap.has(id))));
+        if (!boxSelectionIds.length) {
+            return;
+        }
+
+        const selectedIds = new Set(this.selectedRegionIds);
+        const hasSelectedRegion = boxSelectionIds.some(id => selectedIds.has(id));
+        const hasUnselectedRegion = boxSelectionIds.some(id => !selectedIds.has(id));
+
+        if (hasSelectedRegion && hasUnselectedRegion) {
+            boxSelectionIds.forEach(id => selectedIds.add(id));
+        } else {
+            boxSelectionIds.forEach(id => {
+                if (selectedIds.has(id)) {
+                    selectedIds.delete(id);
+                } else {
+                    selectedIds.add(id);
+                }
+            });
+        }
+
+        const ids = Array.from(selectedIds);
+        this.setSelectionByIds(ids, boxSelectionIds[boxSelectionIds.length - 1] ?? ids[ids.length - 1]);
+        this.resetKeyboardRangeState();
+    };
+
     @action selectAllRegions = () => {
         const selectableRegions = this.editableRegionsList;
         if (!selectableRegions.length) {
