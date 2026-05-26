@@ -214,7 +214,7 @@ export class HotkeyService extends React.Component<{}> {
         const canEditSelectedPoint = region.isVisible && !region.isLocked && frame.regionSet.selectedRegionCount <= 1 && region.isPointSelectionSupported;
 
         if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
-            region.rotateSelectedPoint((deltaX * acceleratedMultiplier) / 10);
+            region.rotateSelectedPoint((-deltaX * acceleratedMultiplier) / 10);
             return;
         }
 
