@@ -31,7 +31,6 @@ interface LineSegmentRegionComponentProps {
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 const INVALID_POLYGON_COLOR = Colors.ROSE4;
-const DOUBLE_CLICK_THRESHOLD = 300;
 
 @observer
 export class LineSegmentRegionComponent extends React.Component<LineSegmentRegionComponentProps> {
@@ -39,7 +38,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     @observable hoverIntersection: Point2D | null = null;
 
     private previousCursorStyle: string;
-    private addControlPointTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(props: any) {
         super(props);
@@ -48,11 +46,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-    }
-
-    componentWillUnmount() {
-        clearTimeout(this.addControlPointTimer);
-        this.addControlPointTimer = undefined;
     }
 
     private selectPointFromAnchorNode = (node: Konva.Node) => {
@@ -74,38 +67,34 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         konvaEvent.evt.preventDefault();
     };
 
-    private handleDoubleClick = () => {
-        clearTimeout(this.addControlPointTimer);
-        this.addControlPointTimer = undefined;
+    @action private handleDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        const region = this.props.region;
+
+        if (
+            region.regionType !== CARTA.RegionType.LINE &&
+            region.regionType !== CARTA.RegionType.ANNLINE &&
+            region.regionType !== CARTA.RegionType.ANNVECTOR &&
+            this.hoverIntersection &&
+            this.hoverIndex >= 0 &&
+            this.hoverIndex < region.controlPoints.length
+        ) {
+            konvaEvent.cancelBubble = true;
+            const currentControlPoints = region.controlPoints.slice(0);
+            currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
+            // Skip SET_REGION update, since the new control point lies on the line between two existing points.
+            region.setControlPoints(currentControlPoints, true, false);
+            this.hoverIntersection = null;
+            return;
+        }
+
         this.props.onDoubleClick?.(this.props.region);
     };
 
-    @action private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
 
         if (mouseEvent.button === 0) {
-            const region = this.props.region;
-            this.props.onSelect?.(region, mouseEvent);
-
-            // Add a new control point to the region between two existing control points
-            if (
-                region.regionType !== CARTA.RegionType.LINE &&
-                region.regionType !== CARTA.RegionType.ANNLINE &&
-                region.regionType !== CARTA.RegionType.ANNVECTOR &&
-                this.hoverIntersection &&
-                this.hoverIndex >= 0 &&
-                this.hoverIndex < region.controlPoints.length
-            ) {
-                const currentControlPoints = region.controlPoints.slice(0);
-                currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
-                // Skip SET_REGION update, since the new control point lies on the line between two existing points
-                clearTimeout(this.addControlPointTimer);
-                this.addControlPointTimer = undefined;
-                this.addControlPointTimer = setTimeout(() => {
-                    region.setControlPoints(currentControlPoints, true, false);
-                    this.hoverIntersection = null;
-                }, DOUBLE_CLICK_THRESHOLD);
-            }
+            this.props.onSelect?.(this.props.region, mouseEvent);
         }
     };
 
@@ -174,6 +163,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const region = this.props.region;
             // Can only remove points if the polygon currently has 4 or more control points
             if (index >= 0 && index < region.controlPoints.length && region.controlPoints.length >= 4) {
+                konvaEvent.cancelBubble = true;
                 // grab a copy of the array and remove the clicked control point
                 const existingPoints = region.controlPoints.slice(0);
                 existingPoints.splice(index, 1);
