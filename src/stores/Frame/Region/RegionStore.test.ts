@@ -26,18 +26,11 @@ jest.mock("models", () => ({
     isValidWcsPoint: jest.fn(() => true)
 }));
 
+import {MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_RIGHT_POINT_INDEX, SIMPLE_SHAPE_ROTATION_POINT_INDEX, SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX, SIMPLE_SHAPE_TOP_POINT_INDEX, SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX} from "utilities";
+
 import {CompassAnnotationStore} from "../AnnotationStore";
 
-import {
-    CURSOR_REGION_ID,
-    MIN_EDITED_REGION_DIMENSION,
-    RegionStore,
-    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
-    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX
-} from "./RegionStore";
+import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
 const BACKEND_SERVICE = {
     setCursor: jest.fn(),

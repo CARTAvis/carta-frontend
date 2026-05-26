@@ -8,8 +8,10 @@ import {observer} from "mobx-react";
 import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
+import {type FrameStore, type RegionStore, type TextAnnotationStore} from "stores/Frame";
 import {
-    type FrameStore,
+    add2D,
+    angle2D,
     getResizedSimpleShapeFromCenter,
     getResizedSimpleShapeFromCorner,
     getSimpleShapeAnchorName,
@@ -17,11 +19,12 @@ import {
     getSimpleShapeAnchorSizeScale,
     isRectangleRegionType,
     isTextRegionType,
-    type RegionStore,
-    type TextAnnotationStore,
+    rotate2D,
+    scale2D,
+    subtract2D,
+    transformPoint,
     usesSimpleShapeBoxSize
-} from "stores/Frame";
-import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
+} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";

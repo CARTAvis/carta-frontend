@@ -7,9 +7,9 @@ import {Font, FontStyle} from "enums";
 import {type Point2D} from "models";
 import {type BackendService} from "services";
 import {type FrameStore} from "stores/Frame";
-import {getPixelSizes, transformPoint} from "utilities";
+import {getPixelSizes, MIN_EDITED_REGION_DIMENSION, transformPoint} from "utilities";
 
-import {MIN_EDITED_REGION_DIMENSION, RegionStore} from "./Region/RegionStore";
+import {RegionStore} from "./Region/RegionStore";
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
 

@@ -30,28 +30,6 @@ import {
     transformPoint
 } from "utilities";
 
-export {
-    getResizedSimpleShapeFromCenter,
-    getResizedSimpleShapeFromCorner,
-    getSimpleShapeAnchorName,
-    getSimpleShapeAnchorPointIndex,
-    getSimpleShapeAnchorSizeScale,
-    getSimpleShapePointSelectionOrder,
-    isRectangleRegionType,
-    isTextRegionType,
-    MIN_EDITED_REGION_DIMENSION,
-    SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX,
-    SIMPLE_SHAPE_BOTTOM_POINT_INDEX,
-    SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX,
-    SIMPLE_SHAPE_LEFT_POINT_INDEX,
-    SIMPLE_SHAPE_RIGHT_POINT_INDEX,
-    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_POINT_INDEX,
-    SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX,
-    usesSimpleShapeBoxSize
-} from "utilities";
-
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
