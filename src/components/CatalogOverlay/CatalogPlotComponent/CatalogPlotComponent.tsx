@@ -321,9 +321,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // increase x range to include border data
         const fraction = 1.001;
         const start = xRange.xMin;
-        const nBinx = widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX;
+        const nBinX = widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX;
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
-        const size = (end - start) / nBinx;
+        const size = (end - start) / nBinX;
         data.type = "histogram";
         data.hoverinfo = "none";
         data.x = coords.wcsData?.slice(0, numVisibleRows);
@@ -377,8 +377,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return DEFAULT_NUM_BINS;
         }
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        const nBinx = coords.wcsData?.length ? Math.ceil(Math.sqrt(coords.wcsData.length)) : DEFAULT_NUM_BINS;
-        return nBinx;
+        const nBinX = coords.wcsData?.length ? Math.ceil(Math.sqrt(coords.wcsData.length)) : DEFAULT_NUM_BINS;
+        return nBinX;
     }
 
     private updateStatistic = () => {
