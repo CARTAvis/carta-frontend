@@ -266,10 +266,10 @@ export class TileService {
         return newRequests;
     }
 
-    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, isChannelsChanged: boolean = false) {
+    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, areChannelsChanged: boolean = false) {
         const key = `${fileId}_${stokes}_${channel}`;
 
-        if (isChannelsChanged || !this.channelMap.has(fileId)) {
+        if (areChannelsChanged || !this.channelMap.has(fileId)) {
             this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
@@ -290,7 +290,7 @@ export class TileService {
                     return aX * aX + aY * aY - (bX * bX + bY * bY);
                 })
                 .map(tile => tile.encode());
-            if (isChannelsChanged) {
+            if (areChannelsChanged) {
                 this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
