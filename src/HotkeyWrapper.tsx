@@ -282,6 +282,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "mod", label: "Switch region creation mode"},
             {combo: "shift", label: "Symmetric region creation"},
             {combo: "shift + drag", label: "Region box selection"},
+            {combo: "double-click", label: "Add/remove polygon/polyline point"},
             {combo: "esc", label: "Deselect region/point or cancel creation"},
             {combo: "enter", label: "Enter point selection mode"},
             {combo: "tab", label: "Select next region/point"},
