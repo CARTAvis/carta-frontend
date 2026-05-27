@@ -28,7 +28,7 @@ export default [
         },
         rules: {
             "@typescript-eslint/naming-convention": [
-                "warn",
+                "error",
                 {
                     selector: "default",
                     format: ["camelCase", "PascalCase", "UPPER_CASE"],
@@ -75,22 +75,23 @@ export default [
                     modifiers: ["const", "global"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
-                //     format: ["camelCase"],
-                //     leadingUnderscore: "allow",
-                // },
+                {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
                     format: ["PascalCase"],
                 },
-                // {
-                //     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
-                //     types: ["boolean"],
-                //     format: ["PascalCase"],
-                //     prefix: ["is", "should", "has", "can", "did", "will"]
-                // },
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "are", "should", "has", "have", "can", "did", "will"],
+                    leadingUnderscore: "allow",
+                },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):
                 // const N = maxIndex - minIndex;

@@ -10,8 +10,8 @@ export class ASTSettingsString {
         this.stringList = [];
     }
 
-    add(name: string, value: any, storeIf: boolean = true) {
-        if (value !== undefined && storeIf) {
+    add(name: string, value: any, shouldStoreIf: boolean = true) {
+        if (value !== undefined && shouldStoreIf) {
             const storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
             this.stringList.push(`${name}=${storedValue}`);
         }

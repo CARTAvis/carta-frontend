@@ -105,7 +105,7 @@ export class RegionWidgetStore {
         return undefined;
     }
 
-    @computed get matchesSelectedRegion(): boolean {
+    @computed get isMatchingSelectedRegion(): boolean {
         if (this.isEffectiveFrameEqualToActiveFrame) {
             if (this.appStore.selectedRegion) {
                 return this.effectiveRegionId === this.appStore.selectedRegion.regionId;

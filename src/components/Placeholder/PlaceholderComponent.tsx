@@ -10,7 +10,7 @@ import "./PlaceholderComponent.scss";
 class PlaceholderComponentProps {
     id: string;
     label: string;
-    docked: boolean;
+    isDocked: boolean;
 }
 
 @observer

@@ -174,7 +174,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         region.setControlPoints([newCenter, newSize]);
     };
 
-    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
+    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, shouldKeepAspect: boolean) => {
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
@@ -201,13 +201,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
-            if (keepAspect) {
+            if (shouldKeepAspect) {
                 h = w;
             }
         }
         if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
-            if (keepAspect) {
+            if (shouldKeepAspect) {
                 w = h;
             }
         }
@@ -219,7 +219,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}
                 : region.regionType === CARTA.RegionType.ANNTEXT
-                  ? {x: Math.max(1e-3, !keepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !keepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
+                  ? {x: Math.max(1e-3, !shouldKeepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !shouldKeepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
                   : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setSize(newSize);
     };
@@ -529,10 +529,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
             dash: [region.dashLength],
             draggable: true,
-            listening: this.props.listening && !region.locked,
+            listening: this.props.listening && !region.isLocked,
             onDragStart: this.handleDragStart,
             onDragEnd: this.handleDragEnd,
             onDragMove: this.handleDrag,
@@ -596,10 +596,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         strokeScaleEnabled={false}
-                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                         dash={[region.dashLength]}
                         closed={true}
-                        listening={this.props.listening && !region.locked}
+                        listening={this.props.listening && !region.isLocked}
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}
                         onContextMenu={this.handleContextMenu}
@@ -629,10 +629,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 y: centerPixelSpace.y,
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
-                opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+                opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
                 dash: [region.dashLength],
                 draggable: true,
-                listening: this.props.listening && !region.locked,
+                listening: this.props.listening && !region.isLocked,
                 onDragStart: this.handleDragStart,
                 onDragEnd: this.handleDragEnd,
                 onDragMove: this.handleDrag,
@@ -655,7 +655,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked ? this.genAnchors() : null}
+                {this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked ? this.genAnchors() : null}
             </Group>
         );
     }

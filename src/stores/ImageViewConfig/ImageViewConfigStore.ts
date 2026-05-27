@@ -223,7 +223,7 @@ export class ImageViewConfigStore {
 
     /** The number of columns in the image view widget. */
     @computed get numImageColumns() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+        if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
             return 1;
         }
 
@@ -239,7 +239,7 @@ export class ImageViewConfigStore {
 
     /** The number of rows in the image view widget. */
     @computed get numImageRows() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+        if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
             return 1;
         }
 
@@ -261,7 +261,7 @@ export class ImageViewConfigStore {
     /** The image panel mode. */
     @computed get imagePanelMode() {
         const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+        return preferenceStore.isImageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
     private constructor() {

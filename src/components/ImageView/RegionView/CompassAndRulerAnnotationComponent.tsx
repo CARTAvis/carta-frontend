@@ -113,7 +113,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             if (anchor.id() === "origin") {
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                if (!frame.validWcs) {
+                if (!frame.isValidWcs) {
                     region.setLength((distance * frame.zoomLevel) / imageRatio);
                 } else {
                     region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
@@ -128,7 +128,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const imageRatio = AppStore.Instance.imageRatio;
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const wcsInfo = frame?.isValidWcs ? frame.wcsInfoForTransformation : 0;
     const approxPoints = region.getCompassApproximation(wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST || undefined);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -137,7 +137,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    if (!frame.validWcs) {
+    if (!frame.isValidWcs) {
         const originX = originPoints.x - mousePoint.current.x;
         const originY = originPoints.y - mousePoint.current.y;
         const compassStageLength = (region.length * imageRatio) / zoomLevel;
@@ -167,7 +167,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.darkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -211,17 +211,17 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         updateOffset();
     }, []);
 
-    const generateProps = (north: boolean) => {
+    const generateProps = (isNorth: boolean) => {
         return {
             stroke: region.color,
             fill: region.color,
             strokeWidth: region.lineWidth,
             strokeScaleEnabled: false,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
-            points: north ? northPointArray : eastPointArray,
+            points: isNorth ? northPointArray : eastPointArray,
             pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
             pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
             hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
@@ -233,7 +233,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         fill: region.color,
         strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
         strokeScaleEnabled: false,
-        opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+        opacity: region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1,
         fontSize: (region.fontSize * imageRatio) / zoomLevel,
         fontFamily: region.font,
         fontStyle: region.fontStyle
@@ -251,9 +251,9 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
-                {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
-                {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
+            <Group ref={shapeRef} listening={!region.isLocked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+                {region.hasEastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
+                {region.hasNorthArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
                     ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}
@@ -405,7 +405,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
@@ -435,7 +435,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     }
 
     let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
-    if (region.auxiliaryTextVisible) {
+    if (region.isAuxiliaryTextVisible) {
         const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
         xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
         xDistanceText = getDistanceText(wcsInfo, secondaryImagePointStart, cornerPoint);
@@ -452,7 +452,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.darkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -463,17 +463,17 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
-        if (region.auxiliaryTextVisible) {
+        if (region.isAuxiliaryTextVisible) {
             setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + (xTextRef?.current?.textWidth ?? 0) / 2);
             setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + (yTextRef?.current?.textWidth ?? 0) / 2);
         }
-    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.isAuxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
             <Group
                 ref={shapeRef}
-                listening={!region.locked}
+                listening={!region.isLocked}
                 draggable
                 onClick={handleClick}
                 onDblClick={handleDoubleClick}
@@ -487,7 +487,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -500,7 +500,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -513,7 +513,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -532,12 +532,12 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
-                {region.auxiliaryTextVisible && (
+                {region.isAuxiliaryTextVisible && (
                     <>
                         <Text
                             ref={xTextRef}
@@ -550,7 +550,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -566,7 +566,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.isLocked ? 0.7 : 1) : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -574,7 +574,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     </>
                 )}
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
+                {region.isAuxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>
             <Group>
                 {props.selected && (

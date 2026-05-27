@@ -62,9 +62,9 @@ export class ColorbarStore {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         const colorbar = this.overlaySettings.colorbar;
-        const precision = colorbar.numberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
+        const precision = colorbar.hasNumberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
         if (maxOrder > 5.0 || minOrder < -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.getPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.hasNumberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.getPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, ColorbarStore.PRECISION_MAX)));
         }

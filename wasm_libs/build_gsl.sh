@@ -3,29 +3,31 @@ command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not ins
 cd "${0%/*}"
 if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/null) ]]; then
     echo "Fetching GSL 2.6"
-    retry_count=0
+    gsl_tar="gsl-2.6.tar.gz"
+    gsl_urls=(
+        "https://ftpmirror.gnu.org/gsl/${gsl_tar}"
+        "https://mirror.ossplanet.net/gnu/gsl/${gsl_tar}"
+        "https://ftp.jaist.ac.jp/pub/GNU/gsl/${gsl_tar}"
+        "https://mirrors.ocf.berkeley.edu/gnu/gsl/${gsl_tar}"
+        "https://mirror.dogado.de/gnu/gsl/${gsl_tar}"
+    )
     max_retries=2
-    while (( retry_count < max_retries )); do
-        wget http://ftpmirror.gnu.org/gsl/gsl-2.6.tar.gz && break
-        ((retry_count++))
-        echo "Download failed. Trying again."
-        sleep 10
-    done
-    if (( retry_count == max_retries )); then
-        echo "Failed to fetch GSL 2.6 from http://ftpmirror.gnu.org"
-        if ! wget https://mirror.ossplanet.net/gnu/gsl/gsl-2.6.tar.gz; then
-            echo "Failed to fetch GSL 2.6 from https://mirror.ossplanet.net"
-            if ! wget https://ftp.jaist.ac.jp/pub/GNU/gsl/gsl-2.6.tar.gz; then
-                echo "Failed to fetch GSL 2.6 from https://ftp.jaist.ac.jp" 
-                if ! wget https://mirrors.ocf.berkeley.edu/gnu/gsl/gsl-2.6.tar.gz; then
-                    echo "Failed to fetch GSL 2.6 from https://mirrors.ocf.berkeley.edu"
-                     if ! wget https://mirror.dogado.de/gnu/gsl/gsl-2.6.tar.gz; then
-                         echo "Failed to fetch GSL 2.6 from https://mirror.dogado.de"
-                         exit 1
-                     fi
-                fi
-            fi
+    downloaded=false
+
+    rm -f "${gsl_tar}"
+    for gsl_url in "${gsl_urls[@]}"; do
+        if wget --tries="${max_retries}" --waitretry=10 -O "${gsl_tar}" "${gsl_url}" && md5sum -c gsl.md5 &>/dev/null; then
+            downloaded=true
+            break
         fi
+
+        rm -f "${gsl_tar}"
+        echo "Failed to fetch GSL 2.6 from ${gsl_url}"
+    done
+
+    if [[ "${downloaded}" != true ]]; then
+        echo "Failed to fetch GSL 2.6."
+        exit 1
     fi
 fi
 

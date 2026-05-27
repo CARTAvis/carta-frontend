@@ -222,8 +222,8 @@ export class LayoutConfig {
             return false;
         }
 
-        const validLayout = LayoutConfig.layoutValidator(layoutConfig);
-        if (validLayout) {
+        const isValidLayout = LayoutConfig.layoutValidator(layoutConfig);
+        if (isValidLayout) {
             return true;
         } else {
             console.log(LayoutConfig.layoutValidator.errors);

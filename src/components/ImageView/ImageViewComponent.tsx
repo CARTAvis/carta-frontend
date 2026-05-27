@@ -35,8 +35,8 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
-        const viewHeight = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
+        const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
         const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
@@ -186,21 +186,21 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedGridSize: Point2D;
     private readonly disposers: IReactionDisposer[] = [];
 
-    @observable showRatioIndicator: boolean = false;
+    @observable shouldShowRatioIndicator: boolean = false;
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
+            const isAutoFitRequired = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
-            if (requiresAutoFit) {
+            if (isAutoFitRequired) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());
             }
         }
     };
 
-    @action setRatioIndicatorVisible = (val: boolean) => {
-        this.showRatioIndicator = val;
+    @action setRatioIndicatorVisible = (isVisible: boolean) => {
+        this.shouldShowRatioIndicator = isVisible;
     };
 
     constructor(props: WidgetProps) {
@@ -226,9 +226,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
                 const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
                 // Compare to cached image size to prevent duplicate events when changing frames
-                const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
-                const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
-                if (imageSizeChanged || gridSizeChanged) {
+                const isImageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+                const isGridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+                if (isImageSizeChanged || isGridSizeChanged) {
                     this.cachedImageSize = imageSize;
                     this.cachedGridSize = imageGridSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
@@ -260,8 +260,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             return [];
         }
 
-        return appStore.channelMapStore.channelMapEnabled
-            ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
+        return appStore.channelMapStore.isChannelMapEnabled
+            ? [<ChannelMapViewComponent isDocked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);
@@ -277,7 +277,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         let divContents: React.ReactNode | React.ReactNode[];
         if (!this.panels.length) {
             divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
-        } else if (!appStore.astReady) {
+        } else if (!appStore.isAstReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
             const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];
@@ -296,7 +296,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             divContents = (
                 <React.Fragment>
                     {this.panels}
-                    <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
+                    <div style={{opacity: this.shouldShowRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
                         <p>
                             {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
                         </p>
