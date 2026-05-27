@@ -99,7 +99,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         // recalculate when receiving new file info of a file in all file mode
         if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const fileInfoResp = FileBrowserStore.Instance.fileInfoResp;
+            const isFileInfoResp = FileBrowserStore.Instance.isFileInfoResp;
         }
 
         const fileList = this.props.fileList;
@@ -307,15 +307,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private renderColumnHeader = (name: string, _index?: number) => {
         const sortingString = this.props.sortingString || "+filename";
         const sortingConfig = {direction: sortingString.startsWith("+") ? 1 : -1, columnName: sortingString.substring(1).toLowerCase()};
-        const sortColumn = name.toLowerCase() === sortingConfig?.columnName;
-        const sortDesc = sortingConfig?.direction < 0;
+        const isSortColumn = name.toLowerCase() === sortingConfig?.columnName;
+        const isSortDesc = sortingConfig?.direction < 0;
 
         const nameRenderer = () => {
-            if (sortColumn) {
+            if (isSortColumn) {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
                         <Label className={classNames(Classes.INLINE, "label")}>
-                            <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"} />
+                            <Icon className="sort-icon" icon={isSortDesc ? "sort-desc" : "sort-asc"} />
                             {name}
                         </Label>
                     </div>

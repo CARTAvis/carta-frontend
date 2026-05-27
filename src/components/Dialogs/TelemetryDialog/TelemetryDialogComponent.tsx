@@ -12,7 +12,7 @@ import "./TelemetryDialogComponent.scss";
 
 @observer
 export class TelemetryDialogComponent extends React.Component {
-    @observable allowUsageStats: boolean = true;
+    @observable isUsageStatsAllowed: boolean = true;
 
     constructor(props: any) {
         super(props);
@@ -20,7 +20,7 @@ export class TelemetryDialogComponent extends React.Component {
     }
 
     optInClicked = async () => {
-        await TelemetryService.Instance.optIn(this.allowUsageStats ? TelemetryMode.Usage : TelemetryMode.Minimal);
+        await TelemetryService.Instance.optIn(this.isUsageStatsAllowed ? TelemetryMode.Usage : TelemetryMode.Minimal);
     };
 
     optOutClicked = async () => {
@@ -30,9 +30,9 @@ export class TelemetryDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const appReady = appStore.apiService?.authenticated;
-        const consentRequired = appStore.telemetryService.consentRequired;
-        const preferenceReady = appStore.preferenceStore?.preferenceReady;
-        const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const isConsentRequired = appStore.telemetryService.isConsentRequired;
+        const isPreferenceReady = appStore.preferenceStore?.isPreferenceReady;
+        const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog
@@ -40,7 +40,7 @@ export class TelemetryDialogComponent extends React.Component {
                 canOutsideClickClose={false}
                 isCloseButtonShown={false}
                 lazy={true}
-                isOpen={!!(appReady && consentRequired && preferenceReady)}
+                isOpen={!!(appReady && isConsentRequired && isPreferenceReady)}
                 className={classes}
                 canEscapeKeyClose={false}
                 title="CARTA Usage Data"

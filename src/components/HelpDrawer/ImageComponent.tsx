@@ -9,6 +9,6 @@ export class ImageComponent extends React.Component<{
 }> {
     public render() {
         const appStore = AppStore.Instance;
-        return <img src={appStore.darkTheme ? this.props.dark : this.props.light} style={{width: this.props.width, height: "auto"}} />;
+        return <img src={appStore.isDarkTheme ? this.props.dark : this.props.light} style={{width: this.props.width, height: "auto"}} />;
     }
 }

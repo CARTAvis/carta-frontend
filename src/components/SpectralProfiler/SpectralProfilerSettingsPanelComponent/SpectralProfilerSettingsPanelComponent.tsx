@@ -69,7 +69,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     if (frame) {
                         const regionId = this.widgetStore.effectiveRegionId;
                         const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                         const id = this.floatingSettingsId;
                         if (id) {
                             appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
@@ -186,7 +186,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
@@ -218,7 +218,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
                                             onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                             onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                            secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
+                                            secondaryAxisCursorInfoVisible={widgetStore.isSecondaryAxisCursorInfoVisible}
                                             disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
                                         />
                                     )}
@@ -231,7 +231,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                         />
                                     </FormGroup>
                                     <FormGroup inline={true} label={"Secondary info"}>
-                                        <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
+                                        <Switch checked={widgetStore.isSecondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                     </FormGroup>
                                 </React.Fragment>
                             }

@@ -16,7 +16,7 @@ type WcsCoordNumericInputProps = {
     customPlaceholder?: string;
 };
 
-const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
+const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled: isDisabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -68,7 +68,7 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
 
     return (
         <Tooltip content={tooltipContent} position={Position.BOTTOM} hoverOpenDelay={300}>
-            <SafeNumericInput allowNumericCharactersOnly={false} buttonPosition="none" placeholder={placeholder} disabled={disabled} value={valueWcs ?? ""} onBlur={handleChange} onKeyDown={handleChange} />
+            <SafeNumericInput allowNumericCharactersOnly={false} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={valueWcs ?? ""} onBlur={handleChange} onKeyDown={handleChange} />
         </Tooltip>
     );
 };
@@ -81,7 +81,7 @@ interface ImageCoordNumericInputProps {
     customPlaceholder?: string;
 }
 
-export const ImageCoordNumericInput = ({inputType, value, onChange, disabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
+export const ImageCoordNumericInput = ({inputType, value, onChange, disabled: isDisabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -109,7 +109,7 @@ export const ImageCoordNumericInput = ({inputType, value, onChange, disabled = f
         placeholder = customPlaceholder;
     }
 
-    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={disabled} value={isFinite(value) ? value : ""} onBlur={handleChange} onKeyDown={handleChange} />;
+    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={isFinite(value) ? value : ""} onBlur={handleChange} onKeyDown={handleChange} />;
 };
 
 interface CoordNumericInputProps {
@@ -124,11 +124,11 @@ interface CoordNumericInputProps {
     customPlaceholder?: string;
 }
 
-export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled = false, wcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
+export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled: isDisabled = false, wcsDisabled: isWcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
     const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
     if (coord === CoordinateMode.Image) {
-        return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
+        return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={isDisabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={isImgCoordinates ? "" : valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || isImgCoordinates} customPlaceholder={customPlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={isImgCoordinates ? "" : valueWcs} onChangeWcs={onChangeWcs} disabled={isDisabled || isWcsDisabled || isImgCoordinates} customPlaceholder={customPlaceholder} />;
     }
 };

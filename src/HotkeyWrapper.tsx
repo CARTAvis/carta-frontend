@@ -12,7 +12,7 @@ import "./HotkeyWrapper.scss";
 export class HotkeyService extends React.Component<{}> {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog
@@ -60,7 +60,7 @@ export class HotkeyService extends React.Component<{}> {
 
     public static toggleDarkTheme = () => {
         const appStore = AppStore.Instance;
-        if (appStore.darkTheme) {
+        if (appStore.isDarkTheme) {
             appStore.setLightTheme();
         } else {
             appStore.setDarkTheme();

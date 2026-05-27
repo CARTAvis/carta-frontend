@@ -43,15 +43,15 @@ const RenderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) =
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
 };
 
-export function fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
+export function fontSelect(isVisible: boolean, currentFontId: number, fontSetter: Function) {
     let currentFont: Font = AstFonts[currentFontId];
     if (typeof currentFont === "undefined") {
         currentFont = AstFonts[0];
     }
 
     return (
-        <FontSelect activeItem={currentFont} itemRenderer={RenderFont} items={AstFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
-            <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!visible} rightIcon="double-caret-vertical" />
+        <FontSelect activeItem={currentFont} itemRenderer={RenderFont} items={AstFonts} disabled={!isVisible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
+            <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!isVisible} rightIcon="double-caret-vertical" />
         </FontSelect>
     );
 }

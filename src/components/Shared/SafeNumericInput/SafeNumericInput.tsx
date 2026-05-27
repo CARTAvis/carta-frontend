@@ -48,8 +48,8 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
         }
     }
 
-    @action setFocused(value: boolean) {
-        this.isFocused = value;
+    @action setFocused(isFocused: boolean) {
+        this.isFocused = isFocused;
     }
 
     handleOnFocus = () => {
@@ -80,13 +80,13 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     render() {
-        const {onBlur, intOnly, ...otherProps} = this.props;
+        const {onBlur, intOnly: isIntOnly, ...otherProps} = this.props;
 
         return (
             <NumericInput
                 {...otherProps}
                 asyncControl={true}
-                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
+                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : isIntOnly ? 1 : SafeNumericInput.minorStepSize}
                 onValueChange={this.safeHandleValueChanged}
                 value={onBlur || this.props.onKeyDown ? this.props.value : this.valueString}
                 onBlur={onBlur ?? this.handleOnBlur}

@@ -21,7 +21,7 @@ interface ColorPickerComponentProps {
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
     private static readonly ChangeDelay = 100;
 
-    @observable displayColorPicker: boolean = false;
+    @observable shouldDisplayColorPicker: boolean = false;
 
     constructor(props: ColorPickerComponentProps) {
         super(props);
@@ -29,11 +29,11 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }
 
     @action private handleColorClick = () => {
-        this.displayColorPicker = true;
+        this.shouldDisplayColorPicker = true;
     };
 
     @action private handleColorClose = () => {
-        this.displayColorPicker = false;
+        this.shouldDisplayColorPicker = false;
     };
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
@@ -48,7 +48,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
 
         return (
             <Popover
-                isOpen={this.displayColorPicker}
+                isOpen={this.shouldDisplayColorPicker}
                 onClose={this.handleColorClose}
                 position={PopoverPosition.RIGHT}
                 popoverClassName={popoverClassName}
