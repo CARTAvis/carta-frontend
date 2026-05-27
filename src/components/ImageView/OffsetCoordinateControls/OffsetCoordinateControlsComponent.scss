@@ -29,4 +29,8 @@
     .#{$ns}-popover-target {
         flex: none;
     }
+
+    > .#{$ns}-popover-target:first-child .offset-recenter-button {
+        margin-left: 5px;
+    }
 }
