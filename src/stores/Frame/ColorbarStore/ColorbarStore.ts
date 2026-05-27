@@ -7,7 +7,7 @@ import {clamp} from "utilities";
 const COLORBAR_TICK_NUM_MIN = 3;
 
 export class ColorbarStore {
-    static readonly PRECISION_MAX = 15;
+    public static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
     private readonly overlaySettings: OverlaySettings;
 
@@ -37,10 +37,10 @@ export class ColorbarStore {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / this.tickNum; // estimate the step
-            let precision = -ColorbarStore.GetPrecision(dy); // estimate precision
+            let precision = -ColorbarStore.getPrecision(dy); // estimate precision
             let roundBase = Math.pow(10, precision);
             dy = Math.round(dy * roundBase) / roundBase; // the exact step
-            precision = -ColorbarStore.GetPrecision(dy); // the exact precision of the step
+            precision = -ColorbarStore.getPrecision(dy); // the exact precision of the step
             roundBase = Math.pow(10, precision);
             const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
@@ -58,13 +58,13 @@ export class ColorbarStore {
         if (!this.roundedNumbers) {
             return [];
         }
-        const orders = this.roundedNumbers.numbers.map(x => ColorbarStore.GetOrder(x));
+        const orders = this.roundedNumbers.numbers.map(x => ColorbarStore.getOrder(x));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         const colorbar = this.overlaySettings.colorbar;
-        const precision = colorbar.numberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
+        const precision = colorbar.hasNumberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
         if (maxOrder > 5.0 || minOrder < -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.GetPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.hasNumberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.getPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, ColorbarStore.PRECISION_MAX)));
         }
@@ -87,11 +87,11 @@ export class ColorbarStore {
         }
     }
 
-    private static GetOrder = (x: number): number => {
+    private static getOrder = (x: number): number => {
         return x === 0 ? 0 : Math.log10(Math.abs(x));
     };
 
-    private static GetPrecision = (x: number): number => {
-        return Math.floor(ColorbarStore.GetOrder(x));
+    private static getPrecision = (x: number): number => {
+        return Math.floor(ColorbarStore.getOrder(x));
     };
 }

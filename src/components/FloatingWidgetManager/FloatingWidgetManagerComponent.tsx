@@ -48,32 +48,32 @@ export class FloatingWidgetManagerComponent extends React.Component {
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
         const widgetsStore = WidgetsStore.Instance;
         switch (widget.type) {
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 // remove widget component only
                 if (widget.componentId !== undefined) {
                     widgetsStore.removeFloatingWidgetComponent(widget.componentId);
                     CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
                 }
                 break;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
+            case CatalogPlotComponent.WidgetConfig.type:
                 if (widget.componentId !== undefined) {
                     widgetsStore.removeFloatingWidgetComponent(widget.componentId);
                     CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
                 }
                 break;
-            case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
+            case LayerListSettingsPanelComponent.WidgetConfig.type:
                 if (widget.parentId !== undefined) {
                     widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
                 }
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
+            case PvPreviewComponent.WidgetConfig.type:
                 if (widget.parentId !== undefined) {
                     widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
                 }
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
+            case PvGeneratorComponent.WidgetConfig.type:
                 widgetsStore.pvGeneratorWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
@@ -85,65 +85,65 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
         switch (widgetConfig.type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
+            case ImageViewComponent.WidgetConfig.type:
                 return <ImageViewComponent id={widgetConfig.id} docked={false} />;
-            case LayerListComponent.WIDGET_CONFIG.type:
+            case LayerListComponent.WidgetConfig.type:
                 return <LayerListComponent id={widgetConfig.id} docked={false} />;
-            case LogComponent.WIDGET_CONFIG.type:
+            case LogComponent.WidgetConfig.type:
                 return <LogComponent id={widgetConfig.id} docked={false} />;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
+            case RenderConfigComponent.WidgetConfig.type:
                 return <RenderConfigComponent id={widgetConfig.id} docked={false} />;
-            case AnimatorComponent.WIDGET_CONFIG.type:
+            case AnimatorComponent.WidgetConfig.type:
                 return <AnimatorComponent id={widgetConfig.id} docked={false} />;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+            case ChannelMapControlComponent.WidgetConfig.type:
                 return <ChannelMapControlComponent id={widgetConfig.id} docked={false} />;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+            case SpatialProfilerComponent.WidgetConfig.type:
                 return <SpatialProfilerComponent id={widgetConfig.id} docked={false} />;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+            case SpectralProfilerComponent.WidgetConfig.type:
                 return <SpectralProfilerComponent id={widgetConfig.id} docked={false} />;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+            case SpectralLineQueryComponent.WidgetConfig.type:
                 return <SpectralLineQueryComponent id={widgetConfig.id} docked={false} />;
-            case StatsComponent.WIDGET_CONFIG.type:
+            case StatsComponent.WidgetConfig.type:
                 return <StatsComponent id={widgetConfig.id} docked={false} />;
-            case HistogramComponent.WIDGET_CONFIG.type:
+            case HistogramComponent.WidgetConfig.type:
                 return <HistogramComponent id={widgetConfig.id} docked={false} />;
-            case RegionListComponent.WIDGET_CONFIG.type:
+            case RegionListComponent.WidgetConfig.type:
                 return <RegionListComponent id={widgetConfig.id} docked={false} />;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+            case StokesAnalysisComponent.WidgetConfig.type:
                 return <StokesAnalysisComponent id={widgetConfig.id} docked={false} />;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
+            case CursorInfoComponent.WidgetConfig.type:
                 return <CursorInfoComponent id={widgetConfig.id} docked={false} />;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 return <CatalogOverlayComponent id={widgetConfig.componentId ?? ""} docked={false} />;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
+            case CatalogPlotComponent.WidgetConfig.type:
                 return <CatalogPlotComponent id={widgetConfig.id} docked={false} />;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
+            case PvGeneratorComponent.WidgetConfig.type:
                 return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
+            case PvPreviewComponent.WidgetConfig.type:
                 return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
             default:
-                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title ?? ""} />;
+                return <PlaceholderComponent id={widgetConfig.id} isDocked={false} label={widgetConfig.title ?? ""} />;
         }
     }
 
     private getWidgetSettings(widgetConfig: WidgetConfig) {
         if (widgetConfig.parentId) {
             switch (widgetConfig.parentType) {
-                case ImageViewComponent.WIDGET_CONFIG.type:
+                case ImageViewComponent.WidgetConfig.type:
                     return <ImageViewSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                case StokesAnalysisComponent.WidgetConfig.type:
                     return <StokesAnalysisSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                case SpectralProfilerComponent.WidgetConfig.type:
                     return <SpectralProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                case SpatialProfilerComponent.WidgetConfig.type:
                     return <SpatialProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case RenderConfigComponent.WIDGET_CONFIG.type:
+                case RenderConfigComponent.WidgetConfig.type:
                     return <RenderConfigSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case HistogramComponent.WIDGET_CONFIG.type:
+                case HistogramComponent.WidgetConfig.type:
                     return <HistogramSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                case CatalogOverlayComponent.WidgetConfig.type:
                     return <CatalogOverlayPlotSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case LayerListComponent.WIDGET_CONFIG.type:
+                case LayerListComponent.WidgetConfig.type:
                     return <LayerListSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
                 default:
                     return null;
@@ -161,19 +161,19 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     private showFloatingSettingsButton(widgetConfig: WidgetConfig) {
         switch (widgetConfig.type) {
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+            case StokesAnalysisComponent.WidgetConfig.type:
                 return true;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+            case SpectralProfilerComponent.WidgetConfig.type:
                 return true;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+            case SpatialProfilerComponent.WidgetConfig.type:
                 return true;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
+            case RenderConfigComponent.WidgetConfig.type:
                 return true;
-            case HistogramComponent.WIDGET_CONFIG.type:
+            case HistogramComponent.WidgetConfig.type:
                 return true;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 return true;
-            case LayerListComponent.WIDGET_CONFIG.type:
+            case LayerListComponent.WidgetConfig.type:
                 return true;
             default:
                 return false;
@@ -187,12 +187,12 @@ export class FloatingWidgetManagerComponent extends React.Component {
         return (
             <div>
                 {widgetConfigs.map(w => {
-                    let showSettingsButton = this.showFloatingSettingsButton(w);
-                    if (w.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-                        showSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
+                    let shouldShowSettingsButton = this.showFloatingSettingsButton(w);
+                    if (w.type === RenderConfigComponent.WidgetConfig.type) {
+                        shouldShowSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
                     }
 
-                    const showPinButton = this.showPin(w);
+                    const shouldShowPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
                     const zIndex = zIndexManager.findIndex(id);
@@ -205,13 +205,13 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={zIndex}
-                                showPinButton={showPinButton}
+                                shouldShowPinButton={shouldShowPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                showFloatingSettingsButton={showSettingsButton}
+                                shouldShowFloatingSettingsButton={shouldShowSettingsButton}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
+                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );

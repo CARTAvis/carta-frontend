@@ -125,7 +125,8 @@ const DEFAULTS = {
     },
     CATALOG: {
         catalogDisplayedColumnSize: 10,
-        catalogTableSeparatorPosition: "60%"
+        catalogTableSeparatorPosition: "60%",
+        catalogAutoSelectImageOverlayColumns: true
     },
     STATS_PANEL: {
         statsPanelEnabled: false,
@@ -147,7 +148,7 @@ const DEFAULTS = {
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreferenceStore.staticInstance) {
             PreferenceStore.staticInstance = new PreferenceStore();
         }
@@ -159,14 +160,14 @@ export class PreferenceStore {
     /**
      * Whether the preference data is initialized from the preference file or localStorage.
      */
-    @observable preferenceReady: boolean = false;
+    @observable isPreferenceReady: boolean = false;
 
     // getters for global settings
     @computed get theme(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
     }
 
-    @computed get autoLaunch(): boolean {
+    @computed get shouldAutoLaunch(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
     }
 
@@ -194,7 +195,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
     }
 
-    @computed get dragPanning(): boolean {
+    @computed get isDragPanning(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
     }
 
@@ -213,15 +214,15 @@ export class PreferenceStore {
         return false;
     };
 
-    @computed get transparentImageBackground(): boolean {
+    @computed get hasTransparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
     }
 
-    @computed get codeSnippetsEnabled(): boolean {
+    @computed get isCodeSnippetsEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
     }
 
-    @computed get keepLastUsedFolder(): boolean {
+    @computed get shouldKeepLastUsedFolder(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
     }
 
@@ -266,7 +267,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
     }
 
-    @computed get useSmoothedBiasContrast(): boolean {
+    @computed get shouldUseSmoothedBiasContrast(): boolean {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
     }
 
@@ -275,7 +276,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
     }
 
-    @computed get contourColormapEnabled(): boolean {
+    @computed get isContourColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
@@ -320,7 +321,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
     }
 
-    @computed get vectorOverlayFractionalIntensity(): boolean {
+    @computed get isVectorOverlayFractionalIntensity(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
     }
 
@@ -328,7 +329,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
     }
 
-    @computed get vectorOverlayColormapEnabled(): boolean {
+    @computed get isVectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
     }
 
@@ -345,11 +346,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
-    @computed get astGridVisible(): boolean {
+    @computed get isAstGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
     }
 
-    @computed get astLabelsVisible(): boolean {
+    @computed get isAstLabelsVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
     }
 
@@ -357,11 +358,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
     }
 
-    @computed get colorbarVisible(): boolean {
+    @computed get isColorbarVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
     }
 
-    @computed get colorbarInteractive(): boolean {
+    @computed get isColorbarInteractive(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
     }
 
@@ -377,11 +378,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
     }
 
-    @computed get colorbarLabelVisible(): boolean {
+    @computed get isColorbarLabelVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
     }
 
-    @computed get beamVisible(): boolean {
+    @computed get isBeamVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
     }
 
@@ -472,11 +473,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
     }
 
-    @computed get streamContoursWhileZooming(): boolean {
+    @computed get shouldStreamContoursWhileZooming(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
     }
 
-    @computed get lowBandwidthMode(): boolean {
+    @computed get isLowBandwidthMode(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
     }
 
@@ -535,7 +536,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
-    @computed get pixelGridVisible(): boolean {
+    @computed get shouldAutoSelectImageOverlayCoordinateColumns(): boolean {
+        return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
+    }
+
+    @computed get isPixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
 
@@ -543,11 +548,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
     }
 
-    @computed get limitOverlayRedraw(): boolean {
+    @computed get shouldLimitOverlayRedraw(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
-    @computed get imageMultiPanelEnabled(): boolean {
+    @computed get isImageMultiPanelEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
     }
 
@@ -563,7 +568,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
     }
 
-    @computed get statsPanelEnabled(): boolean {
+    @computed get isStatsPanelEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
     }
 
@@ -572,7 +577,7 @@ export class PreferenceStore {
     }
 
     // getters for telemetry
-    @computed get telemetryConsentShown(): boolean {
+    @computed get hasTelemetryConsentShown(): boolean {
         return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
     }
 
@@ -580,7 +585,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
     }
 
-    @computed get telemetryLogging(): boolean {
+    @computed get isTelemetryLogging(): boolean {
         return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
     }
 
@@ -589,12 +594,12 @@ export class PreferenceStore {
     }
 
     // getters for compatibility
-    @computed get aipsBeamSupport(): boolean {
+    @computed get hasAipsBeamSupport(): boolean {
         return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
     }
 
     // getters for showing new release
-    @computed get checkNewRelease(): boolean {
+    @computed get shouldCheckNewRelease(): boolean {
         return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
     }
 
@@ -607,7 +612,7 @@ export class PreferenceStore {
     }
 
     // getter for dynamic layout setting
-    @computed get dynamicLayoutEnable(): boolean {
+    @computed get isDynamicLayoutEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
     }
 
@@ -856,7 +861,7 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS]);
     };
 
     /**
@@ -878,7 +883,7 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
-        this.preferenceReady = true;
+        this.isPreferenceReady = true;
     }
 
     private constructor() {

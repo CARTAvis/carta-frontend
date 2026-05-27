@@ -1,5 +1,6 @@
 export * from "./array/array";
 export * from "./ast/ast";
+export * from "./catalog/catalog";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
 export * from "./color/color";
 export * from "./color/constants";
@@ -9,6 +10,7 @@ export * from "./math/math";
 export * from "./math2d/math2d";
 export * from "./parsing/parsing";
 export * from "./Processed/Processed";
+export * from "./region/region";
 export * from "./sorting/sorting";
 export * from "./table/table";
 export * from "./templates/templates";

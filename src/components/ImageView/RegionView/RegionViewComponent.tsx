@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
 import * as _ from "lodash";
-import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
@@ -50,7 +50,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
-    private dragPanning: boolean;
+    private isDragPanning: boolean;
     private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
@@ -285,7 +285,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
-                this.creatingRegion = null;
+                runInAction(() => {
+                    this.creatingRegion = null;
+                });
             }, 1);
         } else {
             this.creatingRegion = null;
@@ -315,7 +317,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.polygonRegionCreating(mouseEvent);
     };
 
-    private RegionCreating(mouseEvent: MouseEvent) {
+    private regionCreating(mouseEvent: MouseEvent) {
         if (!this.creatingRegion) {
             return;
         }
@@ -393,7 +395,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
-                this.dragPanning = true;
+                this.isDragPanning = true;
                 if (this.frame) {
                     const frame = this.frame.spatialReference || this.frame;
                     const stage = konvaEvent.target.getStage();
@@ -440,7 +442,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleDragEnd = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            this.dragPanning = false;
+            this.isDragPanning = false;
             const frame = this.frame;
 
             if (frame) {
@@ -596,7 +598,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        this.dragPanning = false;
+        this.isDragPanning = false;
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
@@ -626,7 +628,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (this.props.dragPanningEnabled && this.dragPanning) {
+        if (this.props.dragPanningEnabled && this.isDragPanning) {
             return;
         }
 
@@ -642,7 +644,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNTEXT:
                 case CARTA.RegionType.ANNRULER:
-                    this.RegionCreating(mouseEvent);
+                    this.regionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.ANNPOLYGON:
@@ -654,7 +656,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
             }
         } else {
-            if (!AppStore.Instance.cursorFrozen) {
+            if (!AppStore.Instance.isCursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
                 if (this.frame !== AppStore.Instance.hoveredFrame) {
                     AppStore.Instance.setHoveredFrame(this.frame);
@@ -728,7 +730,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
-        } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
+        } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
             cursor = "move";
         } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
             cursor = "default";
@@ -755,7 +757,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
+                    <Layer ref={this.layerRef} opacity={regionSet.isLocked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.isLocked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}

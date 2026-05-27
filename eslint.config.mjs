@@ -89,7 +89,8 @@ export default [
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
+                    prefix: ["is", "are", "should", "has", "have", "can", "did", "will"],
+                    leadingUnderscore: "allow",
                 },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):
@@ -137,7 +138,7 @@ export default [
                             "^@?\\w"
                         ],
                         [
-                            "^(components|enums|icons|models|services|stores|utilities)(/.*|$)"
+                            "^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"
                         ],
                         [
                             "^\\u0000"

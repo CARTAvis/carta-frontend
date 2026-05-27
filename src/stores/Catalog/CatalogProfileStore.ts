@@ -9,12 +9,12 @@ import {PreferenceStore} from "stores";
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
-    public static readonly InitTableRows = 50;
+    public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
-    private readonly InitialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
-    private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
-    private InitialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
-    private InitialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
+    private readonly initialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
+    private readonly initialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
+    private initialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
+    private initialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
@@ -29,7 +29,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
-        this.updatingDataStream = false;
+        this.isUpdatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
@@ -51,7 +51,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
-        const initTableRows = CatalogProfileStore.InitTableRows;
+        const initTableRows = CatalogProfileStore.INIT_TABLE_ROWS;
         if (catalogInfo.dataSize < initTableRows) {
             this.numVisibleRows = catalogInfo.dataSize;
             this.subsetEndIndex = catalogInfo.dataSize;
@@ -70,7 +70,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.catalogHeader = catalogHeader;
     }
 
-    private static FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
+    private static fillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
         const newDataSize = newArray.length;
         let destArr: Array<T>;
         // fill in-place
@@ -111,17 +111,17 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.fillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
                     }
                 }
             });
@@ -146,9 +146,9 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @action resetCatalogFilterRequest = () => {
         this.resetFilterRequest();
         this.resetUserFilters();
-        this.loadingData = false;
+        this.isLoadingData = false;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
-        this.updatingDataStream = false;
+        this.isUpdatingDataStream = false;
         this.sortingInfo.columnName = null;
         this.sortingInfo.sortingType = null;
         this.maxRows = this.catalogInfo.dataSize;
@@ -168,8 +168,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.sortingInfo = {columnName, sortingType};
     }
 
-    @computed get loadOntoImage() {
-        return this.loadingData || this.updatingDataStream;
+    @computed get isLoadingOntoImage() {
+        return this.isLoadingData || this.isUpdatingDataStream;
     }
 
     @computed get initCatalogControlHeader() {
@@ -179,11 +179,11 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let shouldDisplay = false;
                 if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
-                    display = true;
+                    shouldDisplay = true;
                 }
-                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: shouldDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -198,7 +198,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
         const catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
         const imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
-        let previewDatasize = CatalogProfileStore.InitTableRows;
+        let previewDatasize = CatalogProfileStore.INIT_TABLE_ROWS;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
         catalogFilter.columnIndices = this.columnIndices;
@@ -260,10 +260,10 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     private findKeywords(val: string): boolean {
-        const keyWords = this.InitialedColumnsKeyWords;
-        const raKeywords = this.InitialedRAColumnsKeyWords;
-        const decKeywords = this.InitialedDECColumnsKeyWords;
-        const excludeKeywords = this.InitialedExcludeColumnsKeyWords;
+        const keyWords = this.initialedColumnsKeyWords;
+        const raKeywords = this.initialedRAColumnsKeyWords;
+        const decKeywords = this.initialedDECColumnsKeyWords;
+        const excludeKeywords = this.initialedExcludeColumnsKeyWords;
         const description = val.toUpperCase();
         for (let index = 0; index < keyWords.length; index++) {
             const subString = keyWords[index];

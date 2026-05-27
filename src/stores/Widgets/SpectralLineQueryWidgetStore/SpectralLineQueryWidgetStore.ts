@@ -73,7 +73,7 @@ export class SpectralLineQueryWidgetStore {
     @observable queryRange: NumberRange = [0, 0];
     @observable queryRangeByCenter: NumberRange = [0, 0];
     @observable queryUnit: SpectralLineQueryUnit = SpectralLineQueryUnit.MHz;
-    @observable intensityLimitEnabled: boolean = true;
+    @observable isIntensityLimitEnabled: boolean = true;
     @observable intensityLimitValue: number = -5;
     @observable isQuerying: boolean = false;
     @observable columnHeaders: Array<CARTA.ICatalogHeader> = [];
@@ -112,17 +112,17 @@ export class SpectralLineQueryWidgetStore {
     };
 
     @action toggleIntensityLimit = () => {
-        this.intensityLimitEnabled = !this.intensityLimitEnabled;
+        this.isIntensityLimitEnabled = !this.isIntensityLimitEnabled;
     };
 
     @action setIntensityLimitValue = (intensityLimitValue: number) => {
         this.intensityLimitValue = intensityLimitValue;
     };
 
-    @action setHeaderDisplay = (val: boolean, columnName: string) => {
+    @action setHeaderDisplay = (isDisplayed: boolean, columnName: string) => {
         const header = this.controlHeader.get(columnName);
         if (header) {
-            header.display = val;
+            header.display = isDisplayed;
         }
     };
 
@@ -254,7 +254,7 @@ export class SpectralLineQueryWidgetStore {
 
         this.isQuerying = true;
         try {
-            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.isIntensityLimitEnabled ? this.intensityLimitValue : NaN);
             if (ack?.dataSize >= 0) {
                 this.numDataRows = ack.dataSize;
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
@@ -420,14 +420,14 @@ export class SpectralLineQueryWidgetStore {
         const selectedLines: SpectralLine[] = [];
         const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
         const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
+        const qnColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
         const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
         lineSelectionData?.forEach((isSelected, index) => {
             if (isSelected) {
                 selectedLines.push({
                     species: speciesColumn?.data?.[index] as string,
                     value: (frequencyColumn?.data?.[index] as number) * this.redshiftFactor, // update shifted value
-                    qn: QNColumn?.data?.[index] as string
+                    qn: qnColumn?.data?.[index] as string
                 });
             }
         });
@@ -467,7 +467,7 @@ export class SpectralLineQueryWidgetStore {
     };
 
     private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
-        const ackColumns = ProtobufProcessing.ProcessCatalogData(ackData);
+        const ackColumns = ProtobufProcessing.processCatalogData(ackData);
 
         // Starting from i = 1 is to preserve the first column for line selection boolean
         // Since ```ackColumns``` has no line selection boolean column (but ```headers``` does), ackColumns.get(i - 1) extracts correct column data.

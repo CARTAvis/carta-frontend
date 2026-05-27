@@ -46,14 +46,14 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
-        let enableFrameselect = false;
+        let isFrameSelectEnabled = false;
         let selectedFrameValue: number = ACTIVE_FILE_ID;
         if (appStore.activeFrame) {
             selectedFrameValue = widgetStore.fileId;
-            enableFrameselect = true;
+            isFrameSelectEnabled = true;
         }
 
-        let enableRegionSelect = false;
+        let isRegionSelectEnabled = false;
         let selectedValue: number = RegionId.ACTIVE;
         let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
 
@@ -91,7 +91,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
 
             const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
             selectedValue = fileId !== undefined ? (widgetStore.regionIdMap.get(fileId) ?? RegionId.ACTIVE) : RegionId.ACTIVE;
-            enableRegionSelect = true;
+            isRegionSelectEnabled = true;
         }
 
         let frameClassName = "unlinked-to-selected";
@@ -99,28 +99,28 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const linkedClass = "linked-to-selected";
 
         if (widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
-            frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+            frameClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
-        if (widgetStore.matchesSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
-            regionClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+        if (widgetStore.isMatchingSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
+            regionClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
         return (
             <React.Fragment>
-                <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
+                <FormGroup label={"Image"} inline={true} disabled={!isFrameSelectEnabled}>
                     <HTMLSelect
                         className={frameClassName}
                         value={selectedFrameValue}
                         options={widgetStore.frameOptions}
                         onChange={this.handleFrameChanged}
-                        disabled={!enableFrameselect}
+                        disabled={!isFrameSelectEnabled}
                         style={{width: "100px"}}
                         data-testid="image-dropdown"
                     />
                 </FormGroup>
-                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} data-testid="region-dropdown" />
+                <FormGroup label={"Region"} inline={true} disabled={!isRegionSelectEnabled}>
+                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!isRegionSelectEnabled} data-testid="region-dropdown" />
                 </FormGroup>
             </React.Fragment>
         );

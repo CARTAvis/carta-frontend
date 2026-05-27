@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {Polarizations, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -39,6 +39,7 @@ import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, typ
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     ASTSettingsString,
+    buildSwappedZWcsSettings,
     clamp,
     formattedArcsec,
     formattedFrequency,
@@ -48,8 +49,11 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
+    getRegionPixelProperties,
     GetRequiredTiles,
+    getSwappedDirAxisInfo,
     getTransformedChannel,
+    getTransformedRegionProperties,
     getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
@@ -116,7 +120,7 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: AST.FrameSet;
     @observable public wcsInfoOffset: AST.FrameSet = undefined as any;
     public readonly wcsInfo3D: AST.FrameSet;
-    public readonly validWcs: boolean = false;
+    public readonly isValidWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
     public readonly defaultWcsEquinox: string;
     public readonly defaultWcsEpoch: string;
@@ -162,7 +166,7 @@ export class FrameStore {
     @observable offsetCenter: Point2D = undefined as any;
     @observable cursorInfo: CursorInfo = undefined as any;
     @observable cursorValue: {position: Point2D; channel: number; value: number} = undefined as any;
-    @observable cursorMoving: boolean = false;
+    @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
     @observable channel: number = 0;
@@ -172,8 +176,8 @@ export class FrameStore {
     @observable currentFrameView: FrameView | null = null;
     @observable currentCompressionQuality: number = 100;
     @observable contourStores: Map<number, ContourStore> = new Map();
-    @observable moving: boolean = false;
-    @observable zooming: boolean = false;
+    @observable isMoving: boolean = false;
+    @observable isZooming: boolean = false;
 
     @observable colorbarLabelCustomText: string = "arbitrary units";
     @observable titleCustomText: string = "";
@@ -230,7 +234,7 @@ export class FrameStore {
         }
     }
 
-    @computed get sharedRegions(): boolean {
+    @computed get hasSharedRegions(): boolean {
         return !!this.spatialReference;
     }
 
@@ -247,7 +251,7 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
-        if (this.isNormalImage && !this.validWcs) {
+        if (this.isNormalImage && !this.isValidWcs) {
             return 1.0;
         }
 
@@ -272,7 +276,7 @@ export class FrameStore {
         const imageWidth = (appStore.pixelRatio * this.renderWidth) / this.aspectRatio;
         const imageHeight = appStore.pixelRatio * this.renderHeight;
 
-        const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+        const mipAdjustment = PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
         const mipLog2 = Math.log2(mipExact);
         const mipLog2Rounded = Math.round(mipLog2);
@@ -301,7 +305,7 @@ export class FrameStore {
 
             const {minPoint, maxPoint} = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
-            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipAdjustment = (PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -329,7 +333,7 @@ export class FrameStore {
             const imageWidth = (AppStore.Instance.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (AppStore.Instance.pixelRatio * this.renderHeight) / this.zoomLevel;
 
-            const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+            const mipAdjustment = PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -428,11 +432,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
+        return AppStore.Instance.channelMapStore.isChannelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
+        return AppStore.Instance.channelMapStore.isChannelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -455,9 +459,9 @@ export class FrameStore {
 
     @computed get requiredUnit() {
         if (this.headerUnit) {
-            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
+            if (this.requiredPolarization === Polarizations.Pangle) {
                 return "degree";
-            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
+            } else if (this.requiredPolarization === Polarizations.PFtotal || this.requiredPolarization === Polarizations.PFlinear) {
                 return "%";
             } else {
                 return this.headerUnit;
@@ -519,7 +523,7 @@ export class FrameStore {
     };
 
     @computed get hasVisibleBeam(): boolean {
-        return this.beamProperties ? this.beamProperties.overlayBeamSettings.visible : false;
+        return this.beamProperties ? this.beamProperties.overlayBeamSettings.isVisible : false;
     }
 
     @computed get channelInfo(): ChannelInfo | undefined {
@@ -922,25 +926,25 @@ export class FrameStore {
     }
 
     @computed get isSpectralPropsEqual(): boolean {
-        let result = false;
+        let isEqual = false;
         if (this.spectralAxis?.type && this.spectralAxis?.specsys) {
             const isTypeEqual = this.spectralAxis.type.code === (this.spectralType as string);
             const isUnitEqual = this.spectralAxis.type.unit === (this.spectralUnit as string);
             const isSpecsysEqual = this.spectralAxis.specsys === (this.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+            isEqual = isTypeEqual && isUnitEqual && isSpecsysEqual;
         }
-        return result;
+        return isEqual;
     }
 
     @computed get isSecondarySpectralPropsEqual(): boolean {
-        let result = false;
+        let isEqual = false;
         if (this.spectralAxis?.type && this.spectralAxis?.specsys) {
             const isTypeEqual = this.spectralAxis.type.code === (this.spectralTypeSecondary as string);
             const isUnitEqual = this.spectralAxis.type.unit === (this.spectralUnitSecondary as string);
             const isSpecsysEqual = this.spectralAxis.specsys === (this.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+            isEqual = isTypeEqual && isUnitEqual && isSpecsysEqual;
         }
-        return result;
+        return isEqual;
     }
 
     @computed get isRestFreqEditable(): boolean {
@@ -1076,7 +1080,7 @@ export class FrameStore {
 
     @computed get contourProgress(): number {
         // Use -1 when there are no contours required
-        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
+        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.isEnabled) {
             return -1;
         }
 
@@ -1136,27 +1140,27 @@ export class FrameStore {
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
-    @computed get polarizations(): POLARIZATIONS[] {
+    @computed get polarizations(): Polarizations[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
-        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
-        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
-        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
-        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
+        const hasI: boolean = polarizations.includes(Polarizations.I);
+        const hasQ: boolean = polarizations.includes(Polarizations.Q);
+        const hasU: boolean = polarizations.includes(Polarizations.U);
+        const hasV: boolean = polarizations.includes(Polarizations.V);
 
         if (hasQ && hasU) {
             if (hasV) {
-                polarizations.push(POLARIZATIONS.Ptotal);
+                polarizations.push(Polarizations.Ptotal);
             }
-            polarizations.push(POLARIZATIONS.Plinear);
+            polarizations.push(Polarizations.Plinear);
             if (hasI && hasV) {
-                polarizations.push(POLARIZATIONS.PFtotal);
+                polarizations.push(Polarizations.PFtotal);
             }
             if (hasI) {
-                polarizations.push(POLARIZATIONS.PFlinear);
+                polarizations.push(Polarizations.PFlinear);
             }
-            polarizations.push(POLARIZATIONS.Pangle);
+            polarizations.push(Polarizations.Pangle);
         }
 
         return polarizations;
@@ -1263,21 +1267,21 @@ export class FrameStore {
         if (astColor !== overlaySettings.global.color) {
             overlaySettings.global.setColor(astColor);
         }
-        const astGridVisible = preferenceStore.astGridVisible;
-        if (astGridVisible !== overlaySettings.grid.visible) {
-            overlaySettings.grid.setVisible(astGridVisible);
+        const isAstGridVisible = preferenceStore.isAstGridVisible;
+        if (isAstGridVisible !== overlaySettings.grid.isVisible) {
+            overlaySettings.grid.setVisible(isAstGridVisible);
         }
-        const astLabelsVisible = preferenceStore.astLabelsVisible;
-        if (astLabelsVisible !== overlaySettings.labels.visible) {
-            overlaySettings.labels.setVisible(astLabelsVisible);
+        const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
+        if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
+            overlaySettings.labels.setVisible(isAstLabelsVisible);
         }
-        const colorbarVisible = preferenceStore.colorbarVisible;
-        if (colorbarVisible !== overlaySettings.colorbar.visible) {
-            overlaySettings.colorbar.setVisible(colorbarVisible);
+        const isColorbarVisible = preferenceStore.isColorbarVisible;
+        if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
+            overlaySettings.colorbar.setVisible(isColorbarVisible);
         }
-        const colorbarInteractive = preferenceStore.colorbarInteractive;
-        if (colorbarInteractive !== overlaySettings.colorbar.interactive) {
-            overlaySettings.colorbar.setInteractive(colorbarInteractive);
+        const isColorbarInteractive = preferenceStore.isColorbarInteractive;
+        if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
+            overlaySettings.colorbar.setInteractive(isColorbarInteractive);
         }
         const colorbarPosition = preferenceStore.colorbarPosition;
         if (colorbarPosition !== overlaySettings.colorbar.position) {
@@ -1291,9 +1295,9 @@ export class FrameStore {
         if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
             overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
         }
-        const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
-        if (colorbarLabelVisible !== overlaySettings.colorbar.labelVisible) {
-            overlaySettings.colorbar.setLabelVisible(colorbarLabelVisible);
+        const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
+        if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
+            overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
@@ -1376,7 +1380,7 @@ export class FrameStore {
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${overlaySettings.numbers.formatTypeX}.${WCS_PRECISION}`);
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${overlaySettings.numbers.formatTypeY}.${WCS_PRECISION}`);
-                    this.validWcs = true;
+                    this.isValidWcs = true;
                     this.defaultWcsSystem = AST.getString(this.wcsInfo, "System") as SystemType;
                     this.defaultWcsEquinox = AST.getString(this.wcsInfo, "Equinox");
                     this.defaultWcsEpoch = AST.getString(this.wcsInfo, "Epoch");
@@ -1395,10 +1399,10 @@ export class FrameStore {
         const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[0]}`);
         const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[1]}`);
         const hasUnits = cUnit1 && cUnit2;
-        const sameUnits = hasUnits && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
+        const hasSameUnits = hasUnits && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
 
         // If the two units are different, there's no fixed aspect ratio
-        if (hasUnits && !sameUnits) {
+        if (hasUnits && !hasSameUnits) {
             this.framePixelRatio = NaN;
         } else {
             const pixelSize = getPixelSizes(this);
@@ -1432,17 +1436,18 @@ export class FrameStore {
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }
+        this.applySwappedZWcsSettings();
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
-        this.cursorMoving = false;
+        this.isCursorMoving = false;
 
         this.disposers.push(
             reaction(
                 () => this.restFreqStore.restFreqInHz,
                 restFreq => {
-                    if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
+                    if (this.restFreqStore.isInvalidInput || !restFreq || !isFinite(restFreq)) {
                         return;
                     }
 
@@ -1452,6 +1457,7 @@ export class FrameStore {
                     if (this.spectralFrame) {
                         AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
                     }
+                    this.applySwappedZWcsSettings();
 
                     if (this.spectralReference) {
                         const spectralReference = this.spectralReference;
@@ -1542,7 +1548,7 @@ export class FrameStore {
                 () => this.stokes,
                 () => {
                     const channelMapStore = AppStore.Instance.channelMapStore;
-                    if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
+                    if (this.requiredFrameView && channelMapStore.isChannelMapEnabled) {
                         channelMapStore.handlePolarizationChanged(this);
                     }
                 }
@@ -1578,7 +1584,7 @@ export class FrameStore {
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
         if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-            if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid) && this.validWcs && this.wcsInfo) {
+            if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid) && this.isValidWcs && this.wcsInfo) {
                 if (explicitSystem === SystemType.Image) {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
@@ -1604,7 +1610,7 @@ export class FrameStore {
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
-    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+    private static shiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
         if (entry.name?.match(/CRPIX\d+/)) {
             const numericValue = parseFloat(entry.value ?? "");
             if (isFinite(numericValue)) {
@@ -1730,7 +1736,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1799,7 +1805,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1829,7 +1835,7 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    private initFrame = (checkSkyDomain: boolean = true): AST.FrameSet => {
+    private initFrame = (shouldCheckSkyDomain: boolean = true): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
 
         // Define regular expressions
@@ -1875,7 +1881,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1902,7 +1908,7 @@ export class FrameStore {
             // Otherwise, coordinate conversion will be incorrect.
             AST.putFits(fitsChan, epoch);
         }
-        return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
+        return AST.getFrameFromFitsChan(fitsChan, shouldCheckSkyDomain);
     };
 
     private initSpectralVsDirectionFrame = (): AST.FrameSet => {
@@ -1944,7 +1950,7 @@ export class FrameStore {
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
+                value = FrameStore.shiftASTCoords(entry, value);
             }
 
             while (name && name.length < 8) {
@@ -1974,32 +1980,52 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    public updateSpectralVsDirectionWcs = () => {
+    private updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
             if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
                 AST.deleteObject(this.wcsInfo);
             }
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
-            AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
+            this.applySwappedZWcsSettings();
         }
     };
 
-    private updateDirAxisInfo = () => {
-        // For direction vs. spectral image, get rendered direction axis index and size
-        this.dirAxis = this.dirX < this.dirY ? this.dirX : this.dirY;
-        this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
-
-        // Get rendered and hidden direction axes formats
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
-        const axisValue = axisName?.value ?? "Unknown";
-        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
-            this.dirAxisFormat = "d.*";
-            this.depthAxisFormat = `d.${WCS_PRECISION}`;
-        } else {
-            this.dirAxisFormat = this.dirX < this.dirY ? "hms.*" : "dms.*";
-            this.depthAxisFormat = this.dirX < this.dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+    private applySwappedZWcsSettings = () => {
+        if (!this.isSwappedZ || !this.spectralAxis?.valid || !this.wcsInfo) {
+            return;
         }
+
+        const settings = buildSwappedZWcsSettings({
+            dirAxis: this.dirAxis,
+            dirAxisFormat: this.dirAxisFormat,
+            spectralAxis: this.spectral,
+            spectralType: this.spectralType,
+            spectralUnit: this.spectralUnit,
+            spectralSystem: this.spectralSystem,
+            restFreqInHz: this.restFreqStore?.restFreqInHz,
+            dirX: this.dirX,
+            dirXLabel: this.dirXLabel,
+            dirY: this.dirY,
+            dirYLabel: this.dirYLabel
+        });
+
+        AST.set(this.wcsInfo, settings);
+    };
+
+    private updateDirAxisInfo = () => {
+        const {dirAxis, dirAxisSize, dirAxisFormat, depthAxisFormat} = getSwappedDirAxisInfo(
+            this.dirX,
+            this.dirY,
+            this.frameInfo.fileInfoExtended.width,
+            this.frameInfo.fileInfoExtended.height,
+            this.frameInfo.fileInfoExtended.headerEntries,
+            WCS_PRECISION
+        );
+
+        this.dirAxis = dirAxis;
+        this.dirAxisSize = dirAxisSize;
+        this.dirAxisFormat = dirAxisFormat;
+        this.depthAxisFormat = depthAxisFormat;
     };
 
     private sanitizeChannelNumber(channel: number) {
@@ -2017,7 +2043,7 @@ export class FrameStore {
     };
 
     @action private endZoom = () => {
-        this.zooming = false;
+        this.isZooming = false;
     };
 
     /**
@@ -2075,7 +2101,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || !this.isNormalImage) {
+        if (((this.isValidWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || !this.isNormalImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -2238,21 +2264,35 @@ export class FrameStore {
         const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
-            propertyString.push(region.regionProperties);
-            if (this.validWcs) {
-                propertyString.push(this.getRegionWcsProperties(region));
+            const regionFrameProperties = this.getRegionFrameProperties(region);
+            const controlPoints = regionFrameProperties.controlPoints;
+            const rotation = regionFrameProperties.rotation;
+
+            propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
+            if (this.isValidWcs) {
+                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
             }
         }
         return propertyString;
     }
 
     public getRegionWcsProperties = (region: RegionStore): string => {
-        return this.genRegionWcsProperties(region.regionType, region.controlPoints, region.rotation, region.regionId);
+        const regionFrameProperties = this.getRegionFrameProperties(region);
+        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
     };
+
+    private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
+        const spatialTransformAST = this.spatialTransformAST;
+        if (!this.spatialReference || !spatialTransformAST) {
+            return {controlPoints: region.controlPoints, rotation: region.rotation};
+        }
+
+        return getTransformedRegionProperties(region, spatialTransformAST);
+    }
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
-        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || AppStore.Instance.overlaySettings.isImgCoordinates) {
+        if (!this.isValidWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || AppStore.Instance.overlaySettings.isImgCoordinates) {
             return "Invalid";
         }
 
@@ -2310,13 +2350,13 @@ export class FrameStore {
         this.channelSecondaryValues = values;
     }
 
-    @action private setIsOffsetCoord(isoffset: boolean) {
+    @action private setIsOffsetCoord(isOffset: boolean) {
         if (this.spatialReference) {
-            this.spatialReference.setIsOffsetCoord(isoffset);
+            this.spatialReference.setIsOffsetCoord(isOffset);
         } else {
-            this.isOffsetCoord = isoffset;
+            this.isOffsetCoord = isOffset;
             for (const frame of this.secondarySpatialImages) {
-                frame.isOffsetCoord = isoffset;
+                frame.isOffsetCoord = isOffset;
             }
         }
     }
@@ -2388,14 +2428,14 @@ export class FrameStore {
      * @param enableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
-    @action setOffsetCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
+    @action setOffsetCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {
         if (!isFinite(x) || !isFinite(y)) {
             return false;
         }
 
         if (this.spatialReference && this.spatialTransform) {
             let centerPointRefImage = {x, y};
-            if (enableSpatialTransform) {
+            if (shouldEnableSpatialTransform) {
                 centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             }
             this.spatialReference.setOffsetCenter(centerPointRefImage.x, centerPointRefImage.y);
@@ -2530,7 +2570,7 @@ export class FrameStore {
         }
     };
 
-    @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
+    @action setSpectralCoordinate = (coordStr: string, shouldAlignSpectralSiblings: boolean = true): boolean => {
         const coord = this.spectralCoordsSupported?.get(coordStr);
         if (!coord) {
             return false;
@@ -2538,13 +2578,14 @@ export class FrameStore {
 
         this.spectralType = coord.type;
         this.spectralUnit = coord.unit;
-        if (alignSpectralSiblings) {
+        this.applySwappedZWcsSettings();
+        if (shouldAlignSpectralSiblings) {
             (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
         }
         return true;
     };
 
-    @action setSpectralCoordinateSecondary = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
+    @action setSpectralCoordinateSecondary = (coordStr: string, shouldAlignSpectralSiblings: boolean = true): boolean => {
         const coord = this.spectralCoordsSupported?.get(coordStr);
         if (!coord) {
             return false;
@@ -2552,17 +2593,18 @@ export class FrameStore {
 
         this.spectralTypeSecondary = coord.type;
         this.spectralUnitSecondary = coord.unit;
-        if (alignSpectralSiblings) {
+        if (shouldAlignSpectralSiblings) {
             (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinateSecondary(coordStr, false));
         }
         return true;
     };
 
-    @action setSpectralSystem = (spectralSystem: SpectralSystem, alignSpectralSiblings: boolean = true): boolean => {
+    @action setSpectralSystem = (spectralSystem: SpectralSystem, shouldAlignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
+            this.applySwappedZWcsSettings();
 
-            if (alignSpectralSiblings) {
+            if (shouldAlignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
             }
             return true;
@@ -2571,12 +2613,12 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
+        const processedData = ProtobufProcessing.processContourData(contourImageData);
         this.stokes = processedData.stokes ?? 0;
         this.channel = processedData.channel ?? 0;
 
         const animatorStore = AnimatorStore.Instance;
-        if (animatorStore.serverAnimationActive) {
+        if (animatorStore.isServerAnimationActive) {
             this.requiredChannel = processedData.channel ?? 0;
             this.requiredStokes = processedData.stokes ?? 0;
         }
@@ -2622,8 +2664,8 @@ export class FrameStore {
      * @param channel - The channel index to set.
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setChannel = (channel: number, recursive: boolean = true) => {
-        this.setChannels(channel, this.requiredStokes, recursive);
+    @action setChannel = (channel: number, isRecursive: boolean = true) => {
+        this.setChannels(channel, this.requiredStokes, isRecursive);
     };
 
     /**
@@ -2632,12 +2674,12 @@ export class FrameStore {
      * @param polarization - The polarization value.
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
+    @action setStokes = (polarization: Polarizations, isRecursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
         if (!isFinite(polarizationIndex) || polarizationIndex === -1) {
             return;
         }
-        this.setStokesByIndex(polarizationIndex, recursive);
+        this.setStokesByIndex(polarizationIndex, isRecursive);
     };
 
     /**
@@ -2646,7 +2688,7 @@ export class FrameStore {
      * @param polarizationIndex - The index of the polarization value.
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setStokesByIndex = (polarizationIndex: number, recursive: boolean = false) => {
+    @action setStokesByIndex = (polarizationIndex: number, isRecursive: boolean = false) => {
         if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
             return;
         }
@@ -2654,7 +2696,7 @@ export class FrameStore {
         const isComputedPolarization = polarizationIndex >= this.frameInfo.fileInfoExtended.stokes;
         // request standard polarization by the stokes index of image. (eg. "I": 0)
         // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
-        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[polarizationIndex] : polarizationIndex, recursive);
+        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[polarizationIndex] : polarizationIndex, isRecursive);
     };
 
     /**
@@ -2663,7 +2705,7 @@ export class FrameStore {
      * @param stokes - The Stokes parameter to set. Standard polarization requires the polarization index (eg. "I": 0). Computed polarization requires the polarization value (eg. "Pangle": 17).
      * @param recursive - Whether to update channels of spectrally matched frames.
      */
-    @action setChannels = (channel: number, stokes: number, recursive: boolean) => {
+    @action setChannels = (channel: number, stokes: number, isRecursive: boolean) => {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
@@ -2682,7 +2724,7 @@ export class FrameStore {
         this.requiredChannel = sanitizedChannel;
         this.requiredStokes = stokes;
 
-        if (recursive) {
+        if (isRecursive) {
             this.spectralSiblings.forEach(frame => {
                 const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, AppStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
@@ -2695,13 +2737,13 @@ export class FrameStore {
         }
     };
 
-    @action incrementChannels = (deltaChannel: number, deltaStokes: number, wrap: boolean = true) => {
+    @action incrementChannels = (deltaChannel: number, deltaStokes: number, shouldWrap: boolean = true) => {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
         const numStokes = Math.max(1, this.polarizations?.length);
 
         let newChannel = this.requiredChannel + deltaChannel;
         let newStokes = this.requiredPolarizationIndex + deltaStokes;
-        if (wrap) {
+        if (shouldWrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;
         } else {
@@ -2714,15 +2756,15 @@ export class FrameStore {
         this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     };
 
-    @action setZoom = (zoom: number, absolute: boolean = false) => {
+    @action setZoom = (zoom: number, isAbsolute: boolean = false) => {
         if (this.spatialReference && this.spatialTransform) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
+            const adjustedZoom = isAbsolute ? zoom : zoom / this.spatialTransform.scale;
             this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
             this.replaceZoomTimeoutHandler();
-            this.zooming = true;
+            this.isZooming = true;
         }
     };
 
@@ -2768,14 +2810,14 @@ export class FrameStore {
      * @param enableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
-    @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
+    @action setCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {
         if (!isFinite(x) || !isFinite(y)) {
             return false;
         }
 
         if (this.spatialReference && this.spatialTransform) {
             let centerPointRefImage = {x, y};
-            if (enableSpatialTransform) {
+            if (shouldEnableSpatialTransform) {
                 centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             }
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
@@ -2824,14 +2866,14 @@ export class FrameStore {
                 frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
             }
         }
-        this.cursorMoving = true;
+        this.isCursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
         this.cursorMovementHandle = undefined;
         this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
     };
 
     @action private endCursorMove = () => {
-        this.cursorMoving = false;
+        this.isCursorMoving = false;
     };
 
     @action setCursorValue = (position: Point2D, channel: number, value: number) => {
@@ -2861,10 +2903,10 @@ export class FrameStore {
     };
 
     // Sets a new zoom level and pans to keep the given point fixed
-    @action zoomToPoint = (x: number, y: number, zoom: number, absolute: boolean = false) => {
+    @action zoomToPoint = (x: number, y: number, zoom: number, isAbsolute: boolean = false) => {
         if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
+            const adjustedZoom = isAbsolute ? zoom : zoom / this.spatialTransform.scale;
             const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
@@ -2914,11 +2956,11 @@ export class FrameStore {
     };
 
     @action startMoving = () => {
-        this.moving = true;
+        this.isMoving = true;
     };
 
     @action endMoving = () => {
-        this.moving = false;
+        this.isMoving = false;
     };
 
     @action applyContours = () => {
@@ -2949,11 +2991,11 @@ export class FrameStore {
         this.backendService.setContourParameters(contourParameters);
     };
 
-    @action clearContours = (updateBackend: boolean = true) => {
+    @action clearContours = (shouldUpdateBackend: boolean = true) => {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
-        if (updateBackend) {
+        if (shouldUpdateBackend) {
             // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
             const contourParameters: CARTA.ISetContourParameters = {
                 fileId: this.frameInfo.fileId,
@@ -2982,10 +3024,10 @@ export class FrameStore {
                 yMax: this.frameInfo.fileInfoExtended.height
             },
             smoothingFactor: config.pixelAveraging,
-            fractional: config.fractionalIntensity,
-            threshold: config.thresholdEnabled ? config.threshold : NaN,
-            thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
-            debiasing: config.debiasing,
+            fractional: config.isFractionalIntensity,
+            threshold: config.isThresholdEnabled ? config.threshold : NaN,
+            thresholdOption: config.isThresholdEnabled ? config.thresholdOption : NaN,
+            debiasing: config.isDebiasing,
             qError: config.qError,
             uError: config.uError,
             stokesIntensity: config.intensitySource,
@@ -2996,11 +3038,11 @@ export class FrameStore {
         this.backendService.setVectorOverlayParameters(parameters);
     };
 
-    @action clearVectorOverlay = (updateBackend: boolean = true) => {
+    @action clearVectorOverlay = (shouldUpdateBackend: boolean = true) => {
         // Clear up GPU resources
         this.vectorOverlayStore.clearData();
 
-        if (updateBackend) {
+        if (shouldUpdateBackend) {
             // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
             const parameters: CARTA.ISetVectorOverlayParameters = {
                 fileId: this.frameInfo.fileId,
@@ -3026,7 +3068,7 @@ export class FrameStore {
             return false;
         }
 
-        if (this.validWcs !== frame.validWcs) {
+        if (this.isValidWcs !== frame.isValidWcs) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
             return false;
@@ -3268,8 +3310,8 @@ export class FrameStore {
         this.momentImages = [];
     };
 
-    @action setIsRequestingMoments = (val: boolean) => {
-        this.isRequestingMoments = val;
+    @action setIsRequestingMoments = (isRequestingMoments: boolean) => {
+        this.isRequestingMoments = isRequestingMoments;
     };
 
     @action updateRequestingMomentsProgress = (progress: number) => {
@@ -3295,8 +3337,8 @@ export class FrameStore {
         this.pvImages = [];
     };
 
-    @action setIsRequestingPV = (val: boolean) => {
-        this.isRequestingPV = val;
+    @action setIsRequestingPV = (isRequestingPV: boolean) => {
+        this.isRequestingPV = isRequestingPV;
     };
 
     @action updateRequestingPvProgress = (progress: number) => {
@@ -3312,8 +3354,8 @@ export class FrameStore {
         this.generatedPVRegionId = regionId;
     };
 
-    @action setIsRequestPVCancelling = (val: boolean) => {
-        this.isRequestPVCancelling = val;
+    @action setIsRequestPVCancelling = (isRequestPVCancelling: boolean) => {
+        this.isRequestPVCancelling = isRequestPVCancelling;
     };
 
     @action setFittingResult = (results: string) => {
@@ -3348,10 +3390,10 @@ export class FrameStore {
         this.fittingLog = "";
     };
 
-    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
+    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, shouldSkipUpdatePreviewData: boolean = false) => {
         this.previewPVRasterData = previewPVRasterData;
         // if skipUpdatePreviewData is false, the code after the yield keyword in the updatePreviewData function will be executed by calling the next() function.
-        if (!skipUpdatePreviewData) {
+        if (!shouldSkipUpdatePreviewData) {
             this.updatePreviewDataGenerator.next();
         }
     };

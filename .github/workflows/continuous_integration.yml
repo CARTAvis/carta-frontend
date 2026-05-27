@@ -6,9 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - run: npm install
       - run: npm run checkformat
@@ -20,9 +20,9 @@ jobs:
         working-directory: ./docs_website
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run checkformat
@@ -36,15 +36,54 @@ jobs:
     needs: doc-format-check
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
       - name: Test build website
         run: npm run build
+
+  node-v24:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container:
+      image: carta/frontend-builder
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Fix ownership
+        run: |
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build libs
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+
+      - name: npm install with node 24
+        shell: bash
+        run: |
+          n 24
+          n exec 24 node -v
+          n exec 24 npm install
+
+      - name: Production build with node 24
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 24 npm run build
+
+      - name: Run unit tests
+        shell: bash
+        run: n exec 24 npm test
 
   node-v22:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -85,49 +124,10 @@ jobs:
         shell: bash
         run: n exec 22 npm test
 
-  node-v20:
-    runs-on: [self-hosted, Linux, X64, Docker]
-    needs: format-check
-    container:
-      image: carta/frontend-builder
-      options: --security-opt seccomp=unconfined
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-
-      - name: Fix ownership
-        run: |
-          chown -R $(id -u):$(id -g) $PWD
-
-      - name: Build libs
-        shell: bash
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
-
-      - name: npm install with node 20
-        shell: bash
-        run: |
-          n 20
-          n exec 20 node -v
-          n exec 20 npm install
-
-      - name: Production build with node 20
-        shell: bash
-        run: |
-          source /emsdk/emsdk_env.sh
-          n exec 20 npm run build
-
-      - name: Run unit tests
-        shell: bash
-        run: n exec 20 npm test
-
   Notify:
     name: Send notifications
     runs-on: ubuntu-latest
-    needs: [format-check, node-v20, node-v22]
+    needs: [format-check, node-v22, node-v24]
     if: always()
     steps:
       - name: Notify Slack

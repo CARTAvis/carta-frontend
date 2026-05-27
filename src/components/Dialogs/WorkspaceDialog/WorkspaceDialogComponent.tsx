@@ -118,8 +118,8 @@ export const WorkspaceDialogComponent = observer(() => {
         if (!selectedWorkspace) {
             return;
         }
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
+        if (isConfirmed) {
             await appStore.deleteWorkspace(selectedWorkspace.name);
             await fetchWorkspaces();
         }
@@ -141,7 +141,7 @@ export const WorkspaceDialogComponent = observer(() => {
         }
     }, [mode, fetchWorkspaces]);
 
-    const className = classNames("workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
+    const className = classNames("workspace-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
     const dialogProps: DialogProps = {
         icon: "control",
@@ -236,7 +236,7 @@ export const WorkspaceDialogComponent = observer(() => {
     } else {
         tableContent = (
             <Table2
-                className={classNames("workspace-table", {[Classes.DARK]: appStore.darkTheme})}
+                className={classNames("workspace-table", {[Classes.DARK]: appStore.isDarkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.ROWS_ONLY}
@@ -258,7 +258,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} isResizingEnabled={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>
