@@ -1,8 +1,8 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {NumberFormatType, SpectralType} from "enums";
-import {type Point2D, SPECTRAL_DEFAULT_UNIT, type WCSPoint2D} from "models";
+import {NumberFormatType, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
+import {type Point2D, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, type WCSPoint2D} from "models";
 import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
@@ -12,6 +12,82 @@ export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
     [NumberFormatType.DMS, "D:M:S"],
     [NumberFormatType.Degrees, "Degrees"]
 ]);
+
+export interface SwappedDirAxisInfo {
+    dirAxis: number;
+    dirAxisSize: number;
+    dirAxisFormat: string;
+    depthAxisFormat: string;
+}
+
+export interface SwappedZWcsSettings {
+    dirAxis: number;
+    dirAxisFormat: string;
+    spectralAxis: number;
+    spectralType: SpectralType | null | undefined;
+    spectralUnit: SpectralUnit | null | undefined;
+    spectralSystem: SpectralSystem | null | undefined;
+    restFreqInHz: number | undefined;
+    dirX: number;
+    dirXLabel: string;
+    dirY: number;
+    dirYLabel: string;
+}
+
+export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.IHeaderEntry[], wcsPrecision: number): SwappedDirAxisInfo {
+    const dirAxis = dirX < dirY ? dirX : dirY;
+    const dirAxisSize = dirAxis === 1 ? width : height;
+    const axisName = headerEntries.find(entry => entry.name?.includes(`CTYPE${dirAxis}`));
+    const axisValue = axisName?.value ?? "Unknown";
+    if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+        return {
+            dirAxis,
+            dirAxisSize,
+            dirAxisFormat: "d.*",
+            depthAxisFormat: `d.${wcsPrecision}`
+        };
+    }
+
+    return {
+        dirAxis,
+        dirAxisSize,
+        dirAxisFormat: dirX < dirY ? "hms.*" : "dms.*",
+        depthAxisFormat: dirX < dirY ? `dms.${wcsPrecision}` : `hms.${wcsPrecision}`
+    };
+}
+
+export function buildSwappedZWcsSettings({dirAxis, dirAxisFormat, spectralAxis, spectralType, spectralUnit, spectralSystem, restFreqInHz, dirX, dirXLabel, dirY, dirYLabel}: SwappedZWcsSettings): string {
+    const settings = [`Format(${dirAxis})=${dirAxisFormat}`, `Unit(${dirAxis})=""`];
+    if (spectralType) {
+        settings.push(`System(${spectralAxis})=${spectralType}`);
+    }
+    if (spectralUnit) {
+        settings.push(`Unit(${spectralAxis})=${spectralUnit}`);
+    }
+    if (spectralSystem) {
+        settings.push(`StdOfRest=${spectralSystem}`);
+    }
+    if (restFreqInHz) {
+        settings.push(`RestFreq=${restFreqInHz} Hz`);
+    }
+    if (spectralType && spectralSystem) {
+        const spectralLabel = SPECTRAL_TYPE_STRING.get(spectralType);
+        if (spectralLabel) {
+            settings.push(`Label(${spectralAxis})=[${spectralSystem}] ${spectralLabel}`);
+        }
+    }
+    // In a swapped-Z frame, exactly one of dirX/dirY equals dirAxis (≤ 2, the visible direction
+    // axis in the 2D frameset) while the other is ≥ 3 (the depth axis, not in the 2D display).
+    // The ≤ 2 check identifies the visible axis so we only emit a label for the axis that exists
+    // in the 2D frameset.
+    if (dirX <= 2 && dirXLabel !== "") {
+        settings.push(`Label(${dirX})=${dirXLabel}`);
+    }
+    if (dirY <= 2 && dirYLabel !== "") {
+        settings.push(`Label(${dirY})=${dirYLabel}`);
+    }
+    return settings.join(",");
+}
 
 export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
