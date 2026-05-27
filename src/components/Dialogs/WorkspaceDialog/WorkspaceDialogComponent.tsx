@@ -118,8 +118,8 @@ export const WorkspaceDialogComponent = observer(() => {
         if (!selectedWorkspace) {
             return;
         }
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
+        if (isConfirmed) {
             await appStore.deleteWorkspace(selectedWorkspace.name);
             await fetchWorkspaces();
         }
@@ -258,7 +258,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} isResizingEnabled={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>

@@ -8,8 +8,8 @@ export class ExecutionEntry {
     target: string | null | undefined;
     action: string | null | undefined;
     parameters: any[];
-    valid: boolean;
-    async: boolean | null | undefined;
+    isValid: boolean;
+    isAsync: boolean | null | undefined;
 
     public static fromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
@@ -19,28 +19,28 @@ export class ExecutionEntry {
         const matches = entryRegex.exec(entryString);
         // Four matching groups, first entry is the full match
         if (matches && matches.length === 5 && matches[3].length) {
-            executionEntry.async = matches[1].length > 0;
+            executionEntry.isAsync = matches[1].length > 0;
             if (matches[2].length) {
                 executionEntry.target = matches[2].substring(0, matches[2].length - 1);
             }
             executionEntry.action = matches[3];
-            executionEntry.valid = executionEntry.parseParameters(matches[4], true);
+            executionEntry.isValid = executionEntry.parseParameters(matches[4], true);
         } else {
-            executionEntry.valid = false;
+            executionEntry.isValid = false;
         }
         return executionEntry;
     }
 
     public static fromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
-        executionEntry.async = requestMessage.async;
+        executionEntry.isAsync = requestMessage.async;
         executionEntry.target = requestMessage.target;
         executionEntry.action = requestMessage.action;
-        executionEntry.valid = executionEntry.parseParameters(requestMessage.parameters, false);
+        executionEntry.isValid = executionEntry.parseParameters(requestMessage.parameters, false);
         return executionEntry;
     }
 
-    private parseParameters(parameterString: string | null | undefined, pad: boolean) {
+    private parseParameters(parameterString: string | null | undefined, shouldPad: boolean) {
         if (!parameterString) {
             this.parameters = [];
             return true;
@@ -49,7 +49,7 @@ export class ExecutionEntry {
             let substitutedParameterString = parameterString.replace(/\$((?:[\w[\]]+\.)*)([\w[\]]+)/gm, (_match, target, variable) => {
                 return `{"macroTarget": "${target.slice(0, -1)}", "macroVariable": "${variable}"}`;
             });
-            if (pad) {
+            if (shouldPad) {
                 substitutedParameterString = `[${substitutedParameterString}]`;
             }
             this.parameters = JSON.parse(substitutedParameterString);
@@ -72,7 +72,7 @@ export class ExecutionEntry {
         }
         actionFunction = actionFunction.bind(targetObject);
         let response;
-        if (this.async) {
+        if (this.isAsync) {
             response = actionFunction(...currentParameters);
         } else {
             response = await actionFunction(...currentParameters);
@@ -148,7 +148,7 @@ export class ScriptingService {
 
     handleScriptingRequest = async (requestMessage: CARTA.IScriptingRequest): Promise<CARTA.IScriptingResponse> => {
         const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
-        if (!entry.valid) {
+        if (!entry.isValid) {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: false,
@@ -158,7 +158,7 @@ export class ScriptingService {
 
         try {
             let response: any;
-            if (entry.async) {
+            if (entry.isAsync) {
                 // If entry is asynchronous, don't wait for it to complete before moving to the next entry
                 response = entry.execute();
             } else {
@@ -192,7 +192,7 @@ export class ScriptingService {
 
         for (const entry of executionEntries) {
             try {
-                if (entry.async) {
+                if (entry.isAsync) {
                     // If entry is asynchronous, don't wait for it to complete before moving to the next entry
                     entry.execute();
                 } else {

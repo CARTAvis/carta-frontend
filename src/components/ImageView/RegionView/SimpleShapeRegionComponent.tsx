@@ -174,7 +174,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         region.setControlPoints([newCenter, newSize]);
     };
 
-    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
+    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, shouldKeepAspect: boolean) => {
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
@@ -201,13 +201,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
-            if (keepAspect) {
+            if (shouldKeepAspect) {
                 h = w;
             }
         }
         if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
-            if (keepAspect) {
+            if (shouldKeepAspect) {
                 w = h;
             }
         }
@@ -219,7 +219,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}
                 : region.regionType === CARTA.RegionType.ANNTEXT
-                  ? {x: Math.max(1e-3, !keepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !keepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
+                  ? {x: Math.max(1e-3, !shouldKeepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !shouldKeepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
                   : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setSize(newSize);
     };

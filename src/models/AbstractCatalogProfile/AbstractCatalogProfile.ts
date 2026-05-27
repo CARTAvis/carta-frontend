@@ -34,7 +34,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
-    @observable loadingData: boolean = false;
+    @observable isLoadingData: boolean = false;
     @observable catalogType: CatalogType = CatalogType.SIMBAD;
     @observable catalogFilterRequest: CARTA.ICatalogFilterRequest = {};
     @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined} = {
@@ -45,8 +45,8 @@ export abstract class AbstractCatalogProfileStore {
     };
     @observable filterDataSize: number | undefined = undefined;
     @observable progress: number;
-    @observable updatingDataStream: boolean = false;
-    @observable updateTableView: boolean = false;
+    @observable isUpdatingDataStream: boolean = false;
+    @observable shouldUpdateTableView: boolean = false;
     @observable updateMode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
     @observable selectedPointIndices: number[] = [];
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
@@ -255,8 +255,8 @@ export abstract class AbstractCatalogProfileStore {
         return getHasFilter(this.catalogControlHeader, this.catalogData);
     }
 
-    @action updateTableStatus(val: boolean) {
-        this.updateTableView = val;
+    @action updateTableStatus(isEnabled: boolean) {
+        this.shouldUpdateTableView = isEnabled;
     }
 
     @action setColumnFilter = (filter: string, columnName: string) => {
@@ -279,10 +279,10 @@ export abstract class AbstractCatalogProfileStore {
         }
     }
 
-    @action setHeaderDisplay(val: boolean, columnName: string) {
+    @action setHeaderDisplay(isVisible: boolean, columnName: string) {
         const header = this.catalogControlHeader.get(columnName);
         if (header) {
-            header.display = val;
+            header.display = isVisible;
         }
     }
 
@@ -290,12 +290,12 @@ export abstract class AbstractCatalogProfileStore {
         this.updateMode = mode;
     }
 
-    @action setLoadingDataStatus(val: boolean) {
-        this.loadingData = val;
+    @action setLoadingDataStatus(isLoading: boolean) {
+        this.isLoadingData = isLoading;
     }
 
-    @action setUpdatingDataStream(val: boolean) {
-        this.updatingDataStream = val;
+    @action setUpdatingDataStream(isUpdating: boolean) {
+        this.isUpdatingDataStream = isUpdating;
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
@@ -312,8 +312,8 @@ export abstract class AbstractCatalogProfileStore {
         this.progress = val;
     }
 
-    @action setIsUpdateColumn(val: boolean) {
-        this.isUpdateColumnMode = val;
+    @action setIsUpdateColumn(isUpdateColumn: boolean) {
+        this.isUpdateColumnMode = isUpdateColumn;
     }
 
     getSortedIndices(selectedPointIndices: number[]): number[] {
@@ -345,7 +345,7 @@ export abstract class AbstractCatalogProfileStore {
         return indices;
     }
 
-    @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
+    @action setSelectedPointIndices = (pointIndices: Array<number>, shouldAutoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
         const catalogStore = CatalogStore.Instance;
         const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
@@ -366,7 +366,7 @@ export abstract class AbstractCatalogProfileStore {
                 selectedData[i] = 1.0;
             }
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
-            if (autoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
+            if (shouldAutoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const activeFrame = appStore.activeFrame;

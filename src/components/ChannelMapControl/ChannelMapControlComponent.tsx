@@ -53,7 +53,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelMapSettings = appStore.channelMapStore;
         const displayedFrame = channelMapSettings.displayedFrame;
         const numChannels = displayedFrame ? channelMapSettings.totalChannelNum : 10;
-        const iconOnly = this.width < 300;
+        const isIconOnly = this.width < 300;
 
         const channelMapControl = (
             <div className="channel-map-control-container">
@@ -64,22 +64,22 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     <ButtonGroup fill={true} className="channel-map-channel-control-buttons">
                         <Tooltip content="Previous page" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
                             <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()} disabled={!channelMapSettings.isChannelMapEnabled}>
-                                {!iconOnly && "Page"}
+                                {!isIconOnly && "Page"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Previous channel" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
                             <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()} disabled={!channelMapSettings.isChannelMapEnabled}>
-                                {!iconOnly && "Channel"}
+                                {!isIconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next channel" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
                             <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()} disabled={!channelMapSettings.isChannelMapEnabled}>
-                                {!iconOnly && "Channel"}
+                                {!isIconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next page" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
                             <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()} disabled={!channelMapSettings.isChannelMapEnabled}>
-                                {!iconOnly && "Page"}
+                                {!isIconOnly && "Page"}
                             </Button>
                         </Tooltip>
                     </ButtonGroup>
@@ -92,7 +92,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelTickPre = numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
         const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
 
-        const channelMapLabelVisible = channelMapSettings.shouldShowChannelString || channelMapSettings.shouldShowFrequencyString || channelMapSettings.shouldShowVelocityString;
+        const isChannelMapLabelVisible = channelMapSettings.shouldShowChannelString || channelMapSettings.shouldShowFrequencyString || channelMapSettings.shouldShowVelocityString;
 
         const channelMapPanel = (
             <div className="channel-map-control-container">
@@ -175,7 +175,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         )}
                     </div>
                 </FormGroup>
-                <Collapse isOpen={channelMapLabelVisible}>
+                <Collapse isOpen={isChannelMapLabelVisible}>
                     <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font" disabled={!channelMapSettings.isChannelMapEnabled}>
                         {fontSelect(channelMapSettings.isChannelMapEnabled, channelMapSettings.font, channelMapSettings.setFont)}
                         <SafeNumericInput

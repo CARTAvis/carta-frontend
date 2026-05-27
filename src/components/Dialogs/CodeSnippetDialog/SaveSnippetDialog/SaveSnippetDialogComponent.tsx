@@ -65,8 +65,8 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
 
         if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
-            const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
-            if (!confirmed) {
+            const isConfirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
+            if (!isConfirmed) {
                 return;
             }
         }

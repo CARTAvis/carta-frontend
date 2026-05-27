@@ -77,10 +77,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
 
-        const interior: boolean = global.labelType === LabelType.Interior;
+        const isInterior: boolean = global.labelType === LabelType.Interior;
 
-        const disabledIfInterior = interior && "Does not apply to interior labelling.";
-        const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
+        const disabledIfInterior = isInterior && "Does not apply to interior labelling.";
+        const disabledIfExterior = !isInterior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.isValidWcs && "This image has no valid WCS data.";
 
         const isPVImage = frame?.isPVImage;
@@ -268,8 +268,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const ticksPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Draw on all edges" disabled={interior} helperText={disabledIfInterior}>
-                    <Switch checked={ticks.shouldDrawAll} disabled={interior} onChange={ev => ticks.setDrawAll(ev.currentTarget.checked)} />
+                <FormGroup inline={true} label="Draw on all edges" disabled={isInterior} helperText={disabledIfInterior}>
+                    <Switch checked={ticks.shouldDrawAll} disabled={isInterior} onChange={ev => ticks.setDrawAll(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom density">
                     <Switch checked={ticks.hasCustomDensity} onChange={ev => ticks.setCustomDensity(ev.currentTarget.checked)} />
@@ -369,19 +369,28 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const axesPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Visible" disabled={!interior} helperText={disabledIfExterior}>
-                    <Switch checked={axes.isVisible} disabled={!interior} onChange={ev => axes.setVisible(ev.currentTarget.checked)} />
+                <FormGroup inline={true} label="Visible" disabled={!isInterior} helperText={disabledIfExterior}>
+                    <Switch checked={axes.isVisible} disabled={!isInterior} onChange={ev => axes.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Custom color" disabled={!interior || !axes.isVisible}>
-                    <Switch checked={axes.hasCustomColor} disabled={!interior || !axes.isVisible} onChange={ev => axes.setCustomColor(ev.currentTarget.checked)} />
+                <FormGroup inline={true} label="Custom color" disabled={!isInterior || !axes.isVisible}>
+                    <Switch checked={axes.hasCustomColor} disabled={!isInterior || !axes.isVisible} onChange={ev => axes.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={axes.hasCustomColor}>
-                    <FormGroup inline={true} label="Color" disabled={!interior || !axes.isVisible} helperText={disabledIfExterior}>
-                        {interior && axes.isVisible && <AutoColorPickerComponent color={axes.color} presetColors={SWATCH_COLORS} setColor={axes.setColor} disableAlpha={true} />}
+                    <FormGroup inline={true} label="Color" disabled={!isInterior || !axes.isVisible} helperText={disabledIfExterior}>
+                        {isInterior && axes.isVisible && <AutoColorPickerComponent color={axes.color} presetColors={SWATCH_COLORS} setColor={axes.setColor} disableAlpha={true} />}
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!interior || !axes.isVisible} helperText={disabledIfExterior}>
-                    <SafeNumericInput placeholder="Width" min={0.001} value={axes.width} stepSize={0.5} minorStepSize={0.1} majorStepSize={1} disabled={!interior || !axes.isVisible} onValueChange={(value: number) => axes.setWidth(value)} />
+                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!isInterior || !axes.isVisible} helperText={disabledIfExterior}>
+                    <SafeNumericInput
+                        placeholder="Width"
+                        min={0.001}
+                        value={axes.width}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!isInterior || !axes.isVisible}
+                        onValueChange={(value: number) => axes.setWidth(value)}
+                    />
                 </FormGroup>
             </div>
         );
