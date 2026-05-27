@@ -438,7 +438,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): Border {
-        if (!this.widgetStore.hasEqualAxes) {
+        if (!this.widgetStore.areAxesEqual) {
             return {xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax};
         }
         let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
@@ -576,10 +576,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    private getScatterColor(percentage: number, reversed: boolean): string {
+    private getScatterColor(percentage: number, isReversed: boolean): string {
         const colorMap = this.widgetStore.colorPixel.color;
         const mapSize = this.widgetStore.colorPixel.size;
-        if (reversed) {
+        if (isReversed) {
             percentage = 1 - percentage;
         }
         const index = Math.round(percentage * (mapSize - 1)) * 4;
@@ -587,17 +587,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
-    private fillScatterColor(data: Array<Point3D>, interactionBorder: {xMin: number; xMax: number}, zIndex: boolean): Array<string> {
+    private fillScatterColor(data: Array<Point3D>, interactionBorder: {xMin: number; xMax: number}, isZIndexEnabled: boolean): Array<string> {
         const scatterColors: string[] = [];
         const widgetStore = this.widgetStore;
-        if (data && data.length && zIndex && interactionBorder && widgetStore) {
+        if (data && data.length && isZIndexEnabled && interactionBorder && widgetStore) {
             const xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
             const frame = widgetStore.effectiveFrame;
             if (!frame) {
                 return scatterColors;
             }
-            const reversed = this.getColorMapOrder(frame);
+            const isColorMapReversed = this.getColorMapOrder(frame);
             const localPoints: Array<Point3D> = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
@@ -609,15 +609,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
                 let pointColor = this.pointDefaultColor;
-                let outRange = true;
+                let isOutOfRange = true;
                 if (point.z !== undefined && point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
-                    outRange = false;
+                    isOutOfRange = false;
                 }
                 let percentage = point.z !== undefined ? (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal) : 0;
                 if (widgetStore.isInvertedColorMap) {
                     percentage = 1 - percentage;
                 }
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, reversed);
+                pointColor = isOutOfRange ? outOfRangeColor : this.getScatterColor(percentage, isColorMapReversed);
                 scatterColors.push(pointColor);
             }
         }
@@ -659,9 +659,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z!;
     }
 
-    private getScatterChannel(data: Array<Point3D>, channel: {channelCurrent: number; channelHovered: number}, zIndex: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
+    private getScatterChannel(data: Array<Point3D>, channel: {channelCurrent: number; channelHovered: number}, isZIndexEnabled: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
         const indicator = {currentChannel: data[0], hoveredChannel: data[0]};
-        if (data && data.length && zIndex && channel) {
+        if (data && data.length && isZIndexEnabled && channel) {
             const channelCurrent = channel.channelCurrent;
             const channelHovered = channel.channelHovered;
             if (channelCurrent) {
@@ -860,10 +860,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ? "Channel " + toFixed(this.cursorInfo.channel) : formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
-            const fractionalPol = this.widgetStore.isFractionalPolVisible;
-            const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
-            const uLabel = fractionalPol ? ", U/I: " : ", U: ";
-            const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
+            const isFractionalPol = this.widgetStore.isFractionalPolVisible;
+            const qLabel = isFractionalPol ? ", Q/I: " : ", Q: ";
+            const uLabel = isFractionalPol ? ", U/I: " : ", U: ";
+            const piLabel = isFractionalPol ? ", PI/I: " : ", PI: ";
             const cursorString =
                 "(" + xLabel + qLabel + toExponential(this.cursorInfo.quValue.x, 2) + uLabel + toExponential(this.cursorInfo.quValue.y, 2) + piLabel + toExponential(this.cursorInfo.pi, 2) + ", PA: " + toFixed(this.cursorInfo.pa, 2) + ")";
             profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
@@ -881,17 +881,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quLine",
             tickTypeY: TickType.Scientific,
-            showXAxisTicks: false,
-            showXAxisLabel: false,
-            showLegend: true,
+            shouldShowXAxisTicks: false,
+            shouldShowXAxisLabel: false,
+            shouldShowLegend: true,
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomedY: this.widgetStore.setQULinePlotYBounds,
             graphZoomedXY: this.widgetStore.setQULinePlotsXYBounds,
@@ -910,16 +910,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const piLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "piLine",
             tickTypeY: TickType.Scientific,
-            showXAxisTicks: false,
-            showXAxisLabel: false,
+            shouldShowXAxisTicks: false,
+            shouldShowXAxisLabel: false,
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomedY: this.widgetStore.setPolIntensityYBounds,
             graphZoomedXY: this.widgetStore.setPolIntensityXYBounds,
@@ -938,15 +938,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const paLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "paLine",
             tickTypeY: TickType.Integer,
-            showXAxisTicks: true,
-            showXAxisLabel: true,
+            shouldShowXAxisTicks: true,
+            shouldShowXAxisLabel: true,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomedY: this.widgetStore.setPolAngleYBounds,
             graphZoomedXY: this.widgetStore.setPolAngleXYBounds,
@@ -965,26 +965,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const quScatterPlotProps: ScatterPlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Channel",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: "quScatter",
             tickTypeX: TickType.Scientific,
             tickTypeY: TickType.Scientific,
-            showXAxisTicks: true,
-            showXAxisLabel: true,
+            shouldShowXAxisTicks: true,
+            shouldShowXAxisLabel: true,
             plotType: PlotType.POINTS,
             zeroLineWidth: this.widgetStore.referenceAxesThickness,
             xZeroLineColor: this.widgetStore.referenceAxesColor,
-            showZeroLine: this.widgetStore.shouldShowReferenceAxes,
+            shouldShowZeroLine: this.widgetStore.shouldShowReferenceAxes,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
-            zIndex: true,
+            isZIndex: true,
             graphCursorMoved: this.onScatterGraphCursorMoved,
             graphClicked: this.onScatterChannelChanged,
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
-            scrollZoom: true,
-            graphZoomedXY: this.widgetStore.hasEqualAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
+            shouldScrollZoom: true,
+            graphZoomedXY: this.widgetStore.areAxesEqual ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
             // settings
             pointRadius: this.widgetStore.scatterPlotPointSize
@@ -1097,19 +1097,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                const loadData = currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1;
+                const isDataLoaded = currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1;
                 let qlinePlotWithInteractionColor;
                 let ulinePlotWithInteractionColor;
                 if (smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn) {
-                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, "#00000000") : [];
-                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, "#00000000") : [];
-                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, "#00000000") : [];
-                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, "#00000000") : [];
+                    qlinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.qValues.dataset, "#00000000") : [];
+                    ulinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.uValues.dataset, "#00000000") : [];
+                    piLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.piValues.dataset, "#00000000") : [];
+                    paLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.paValues.dataset, "#00000000") : [];
                 } else {
-                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
-                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
-                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
-                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
+                    qlinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
+                    ulinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                    piLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
+                    paLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
                 }
                 if (quLinePlotProps.multiColorMultiLinesColors) {
                     quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationQ, qlinePlotWithInteractionColor);
@@ -1169,7 +1169,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.widgetStore.hasEqualAxes) {
+                if (this.widgetStore.areAxesEqual) {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterEqualXmin !== undefined ? this.widgetStore.quScatterEqualXmin : quBorder.xMin;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterEqualXmax !== undefined ? this.widgetStore.quScatterEqualXmax : quBorder.xMax;
                     quScatterPlotProps.yMin = this.widgetStore.quScatterEqualYmin !== undefined ? this.widgetStore.quScatterEqualYmin : quBorder.yMin;

@@ -145,9 +145,9 @@ export class SplatalogueService {
         freqTo[0] = freqMax.toString();
         const unit = "MHz";
 
-        const intensityLimitEnabled = Number.isFinite(intensityLimit);
+        const isIntensityLimitEnabled = Number.isFinite(intensityLimit);
         // use 0.000001 instead of 0 to avoid issues from the catalog itself
-        const limit = intensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
+        const limit = isIntensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
 
         return {
             searchSpecies: "",
@@ -160,7 +160,7 @@ export class SplatalogueService {
             energyFrom: 0,
             energyTo: 0,
             energyRangeType: "el_cm-1",
-            lineIntensity: intensityLimitEnabled ? "CDMS/JPL (log)" : "None",
+            lineIntensity: isIntensityLimitEnabled ? "CDMS/JPL (log)" : "None",
             lineIntensityLowerLimit: limit,
             excludeAtmosSpecies: false,
             excludePotentialInterstellarSpecies: false,
@@ -170,13 +170,13 @@ export class SplatalogueService {
             showOnlyNRAORecommendedFrequencies: false,
             lineListDisplayJPL: true,
             lineListDisplayCDMS: true,
-            lineListDisplayLovasNIST: !intensityLimitEnabled,
-            lineListDisplaySLAIM: !intensityLimitEnabled,
-            lineListDisplayToyaMA: !intensityLimitEnabled,
-            lineListDisplayOSU: !intensityLimitEnabled,
-            lineListDisplayRecombination: !intensityLimitEnabled,
-            lineListDisplayTopModel: !intensityLimitEnabled,
-            lineListDisplayRFI: !intensityLimitEnabled,
+            lineListDisplayLovasNIST: !isIntensityLimitEnabled,
+            lineListDisplaySLAIM: !isIntensityLimitEnabled,
+            lineListDisplayToyaMA: !isIntensityLimitEnabled,
+            lineListDisplayOSU: !isIntensityLimitEnabled,
+            lineListDisplayRecombination: !isIntensityLimitEnabled,
+            lineListDisplayTopModel: !isIntensityLimitEnabled,
+            lineListDisplayRFI: !isIntensityLimitEnabled,
             lineStrengthDisplayCDMSJPL: true,
             lineStrengthDisplaySijMu2: true,
             lineStrengthDisplaySij: true,

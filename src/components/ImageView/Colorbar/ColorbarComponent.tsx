@@ -34,8 +34,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.hoverInfoText = text;
     };
 
-    @action setMouseHovering = (val: boolean) => {
-        this.isHovering = val;
+    @action setMouseHovering = (isHovering: boolean) => {
+        this.isHovering = isHovering;
     };
 
     @action onMouseEnter = () => {
@@ -112,8 +112,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
-        const getColor = (customColor: boolean, color: string): string => {
-            return customColor ? getColorForTheme(color) : colorbarSettings.hasCustomColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
+        const getColor = (hasCustomColor: boolean, color: string): string => {
+            return hasCustomColor ? getColorForTheme(color) : colorbarSettings.hasCustomColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary

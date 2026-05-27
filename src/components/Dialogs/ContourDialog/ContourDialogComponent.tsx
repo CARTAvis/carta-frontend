@@ -29,7 +29,7 @@ const HistogramSelect = Select<boolean>;
 
 @observer
 export class ContourDialogComponent extends React.Component {
-    @observable showCubeHistogramAlert: boolean = false;
+    @observable shouldShowCubeHistogramAlert: boolean = false;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
     @observable levels: number[] = [];
     @observable smoothingMode: CARTA.SmoothingMode = CARTA.SmoothingMode.NoSmoothing;
@@ -130,7 +130,7 @@ export class ContourDialogComponent extends React.Component {
         };
     }
 
-    @computed get contourConfigChanged(): boolean {
+    @computed get hasContourConfigChanged(): boolean {
         const dataSource = AppStore.Instance.contourDataSource;
         if (!dataSource) {
             return false;
@@ -199,20 +199,20 @@ export class ContourDialogComponent extends React.Component {
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    private handleHistogramChange = (value: boolean) => {
+    private handleHistogramChange = (shouldUseCubeHistogram: boolean) => {
         const appStore = AppStore.Instance;
         if (!appStore || !appStore.contourDataSource) {
             return;
         }
-        if (value && !appStore.contourDataSource.renderConfig.cubeHistogram) {
+        if (shouldUseCubeHistogram && !appStore.contourDataSource.renderConfig.cubeHistogram) {
             // skip alert and warning for HDF5 files
             if (appStore.contourDataSource.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
                 this.handleAlertConfirm();
             } else {
-                this.showCubeHistogramAlert = true;
+                this.shouldShowCubeHistogramAlert = true;
             }
         } else {
-            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(value);
+            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(shouldUseCubeHistogram);
         }
     };
 
@@ -225,11 +225,11 @@ export class ContourDialogComponent extends React.Component {
                 appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
             }
         }
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleCubeHistogramCancelled = () => {
@@ -335,7 +335,7 @@ export class ContourDialogComponent extends React.Component {
                     defaultHeight={ContourDialogComponent.DefaultHeight}
                     minWidth={ContourDialogComponent.MinWidth}
                     minHeight={ContourDialogComponent.MinHeight}
-                    enableResizing={true}
+                    isResizingEnabled={true}
                     dialogId={DialogId.Contour}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -352,18 +352,18 @@ export class ContourDialogComponent extends React.Component {
 
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.isDarkTheme,
-            logY: this.widgetStore.isLogScaleY,
+            isDarkMode: appStore.isDarkTheme,
+            isLogY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
-            showYAxisTicks: false,
-            showYAxisLabel: false,
+            shouldShowYAxisTicks: false,
+            shouldShowYAxisLabel: false,
             graphClicked: this.handleGraphClicked,
             graphRightClicked: this.handleGraphRightClicked,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2
@@ -523,7 +523,7 @@ export class ContourDialogComponent extends React.Component {
                 defaultHeight={ContourDialogComponent.DefaultHeight}
                 minWidth={ContourDialogComponent.MinWidth}
                 minHeight={ContourDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Contour}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -558,13 +558,20 @@ export class ContourDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.SUCCESS}
                             onClick={this.handleApplyContours}
-                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.isEnabled)}
+                            disabled={!hasLevels || (!this.hasContourConfigChanged && dataSource.contourConfig.isEnabled)}
                             text="Apply"
                             data-testid="contour-config-apply-button"
                         />
                     </div>
                 </div>
-                <Alert className={classNames({[Classes.DARK]: appStore.isDarkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
+                    icon={"time"}
+                    isOpen={this.shouldShowCubeHistogramAlert}
+                    onCancel={this.handleAlertCancel}
+                    onConfirm={this.handleAlertConfirm}
+                    cancelButtonText={"Cancel"}
+                >
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent

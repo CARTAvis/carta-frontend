@@ -11,13 +11,13 @@ import {getColorForTheme} from "utilities";
 export class ChannelMapLabelComponentProps {
     overlaySettings: OverlaySettings;
     image: ImageItem;
-    docked: boolean;
+    isDocked: boolean;
     top: number;
     left: number;
     width: number;
     height: number;
     channel: number;
-    highlighted: boolean;
+    isHighlighted: boolean;
 }
 
 @observer
@@ -54,7 +54,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             velocityString = "";
         }
 
-        const className = classNames("channel-map-label-span", {docked: this.props.docked});
+        const className = classNames("channel-map-label-span", {docked: this.props.isDocked});
         const font = this.fonts[channelMapStore.font];
         const hightlightBorderWidth = 2;
 
@@ -72,7 +72,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     padding: "5px",
-                    border: `${hightlightBorderWidth}px solid ${this.props.highlighted ? "red" : "transparent"}`,
+                    border: `${hightlightBorderWidth}px solid ${this.props.isHighlighted ? "red" : "transparent"}`,
                     fontFamily: font.family,
                     fontWeight: font.weight,
                     fontStyle: font.style,

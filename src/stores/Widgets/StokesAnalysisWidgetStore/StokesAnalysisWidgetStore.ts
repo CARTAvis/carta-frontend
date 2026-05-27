@@ -59,7 +59,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number = DEFAULTS.lineWidth;
     @observable linePlotPointSize: number = DEFAULTS.linePlotPointSize;
     @observable scatterPlotPointSize: number = DEFAULTS.scatterPlotPointSize;
-    @observable hasEqualAxes: boolean = DEFAULTS.equalAxes;
+    @observable areAxesEqual: boolean = DEFAULTS.equalAxes;
     @observable colorMap: string = DEFAULTS.colorMap;
     @observable colorPixel: {color: Uint8ClampedArray; size: number} = getColorsForValues(DEFAULTS.colorMap);
     @observable pointTransparency: number = DEFAULTS.pointTransparency;
@@ -334,7 +334,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setEqualAxesValue = (hasEqualAxes: boolean) => {
-        this.hasEqualAxes = hasEqualAxes;
+        this.areAxesEqual = hasEqualAxes;
     };
 
     @action setColormap = (colormap: string) => {
@@ -407,7 +407,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             this.pointTransparency = widgetSettings.pointTransparency;
         }
         if (typeof widgetSettings.equalAxes === "boolean") {
-            this.hasEqualAxes = widgetSettings.equalAxes;
+            this.areAxesEqual = widgetSettings.equalAxes;
         }
     };
 
@@ -421,7 +421,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             colorMap: this.colorMap,
             scatterPlotPointSize: this.scatterPlotPointSize,
             pointTransparency: this.pointTransparency,
-            equalAxes: this.hasEqualAxes
+            equalAxes: this.areAxesEqual
         };
     };
 }

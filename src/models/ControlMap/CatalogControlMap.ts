@@ -6,13 +6,13 @@ import {type FrameStore} from "stores/Frame";
 import {ControlMap} from "./ControlMap";
 
 export class CatalogControlMap extends ControlMap {
-    private boundaryUpdated: boolean;
+    private isBoundaryUpdated: boolean;
 
     constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number) {
         super(src, dst, astTransform, width, height, false);
         this.minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
         this.maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
-        this.boundaryUpdated = false;
+        this.isBoundaryUpdated = false;
     }
 
     updateCatalogBoundary = () => {
@@ -25,14 +25,14 @@ export class CatalogControlMap extends ControlMap {
         const maxY = srcMinMax.maxY > dstMinMax.maxY ? srcMinMax.maxY : dstMinMax.maxY;
         if (this.minPoint.x > minX || this.minPoint.y > minY || this.maxPoint.x < maxX || this.maxPoint.y < maxY) {
             this.setMinMaxPoint(minX, minY, maxX, maxY);
-            this.boundaryUpdated = true;
+            this.isBoundaryUpdated = true;
             this.setGrid();
         }
     };
 
     getTextureX = (gl: WebGL2RenderingContext) => {
-        if (gl !== this.gl || !this.texture || this.boundaryUpdated) {
-            this.boundaryUpdated = false;
+        if (gl !== this.gl || !this.texture || this.isBoundaryUpdated) {
+            this.isBoundaryUpdated = false;
             // Context has changed, texture needs to be regenerated
             this.createTexture(gl);
         }

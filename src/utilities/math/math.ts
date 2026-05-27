@@ -108,7 +108,7 @@ function getSmoothedValue(bias: number, contrast: number) {
     return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
@@ -130,7 +130,7 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             scaleValue = x;
     }
 
-    if (useSmoothedBiasContrast) {
+    if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             scaleValue = clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
@@ -145,9 +145,9 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
-    if (useSmoothedBiasContrast) {
+    if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             if (x === 0 && smoothedBias === 0 && contrast === 0) {

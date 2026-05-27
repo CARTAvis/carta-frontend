@@ -39,6 +39,7 @@ import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, typ
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     ASTSettingsString,
+    buildSwappedZWcsSettings,
     clamp,
     formattedArcsec,
     formattedFrequency,
@@ -50,6 +51,7 @@ import {
     getPixelValueFromWCS,
     getRegionPixelProperties,
     GetRequiredTiles,
+    getSwappedDirAxisInfo,
     getTransformedChannel,
     getTransformedRegionProperties,
     getUnformattedWCSPoint,
@@ -1434,6 +1436,7 @@ export class FrameStore {
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }
+        this.applySwappedZWcsSettings();
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
@@ -1454,6 +1457,7 @@ export class FrameStore {
                     if (this.spectralFrame) {
                         AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
                     }
+                    this.applySwappedZWcsSettings();
 
                     if (this.spectralReference) {
                         const spectralReference = this.spectralReference;
@@ -1976,32 +1980,52 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    public updateSpectralVsDirectionWcs = () => {
+    private updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
             if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
                 AST.deleteObject(this.wcsInfo);
             }
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
-            AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
+            this.applySwappedZWcsSettings();
         }
     };
 
-    private updateDirAxisInfo = () => {
-        // For direction vs. spectral image, get rendered direction axis index and size
-        this.dirAxis = this.dirX < this.dirY ? this.dirX : this.dirY;
-        this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
-
-        // Get rendered and hidden direction axes formats
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
-        const axisValue = axisName?.value ?? "Unknown";
-        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
-            this.dirAxisFormat = "d.*";
-            this.depthAxisFormat = `d.${WCS_PRECISION}`;
-        } else {
-            this.dirAxisFormat = this.dirX < this.dirY ? "hms.*" : "dms.*";
-            this.depthAxisFormat = this.dirX < this.dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+    private applySwappedZWcsSettings = () => {
+        if (!this.isSwappedZ || !this.spectralAxis?.valid || !this.wcsInfo) {
+            return;
         }
+
+        const settings = buildSwappedZWcsSettings({
+            dirAxis: this.dirAxis,
+            dirAxisFormat: this.dirAxisFormat,
+            spectralAxis: this.spectral,
+            spectralType: this.spectralType,
+            spectralUnit: this.spectralUnit,
+            spectralSystem: this.spectralSystem,
+            restFreqInHz: this.restFreqStore?.restFreqInHz,
+            dirX: this.dirX,
+            dirXLabel: this.dirXLabel,
+            dirY: this.dirY,
+            dirYLabel: this.dirYLabel
+        });
+
+        AST.set(this.wcsInfo, settings);
+    };
+
+    private updateDirAxisInfo = () => {
+        const {dirAxis, dirAxisSize, dirAxisFormat, depthAxisFormat} = getSwappedDirAxisInfo(
+            this.dirX,
+            this.dirY,
+            this.frameInfo.fileInfoExtended.width,
+            this.frameInfo.fileInfoExtended.height,
+            this.frameInfo.fileInfoExtended.headerEntries,
+            WCS_PRECISION
+        );
+
+        this.dirAxis = dirAxis;
+        this.dirAxisSize = dirAxisSize;
+        this.dirAxisFormat = dirAxisFormat;
+        this.depthAxisFormat = depthAxisFormat;
     };
 
     private sanitizeChannelNumber(channel: number) {
@@ -2554,6 +2578,7 @@ export class FrameStore {
 
         this.spectralType = coord.type;
         this.spectralUnit = coord.unit;
+        this.applySwappedZWcsSettings();
         if (shouldAlignSpectralSiblings) {
             (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
         }
@@ -2577,6 +2602,7 @@ export class FrameStore {
     @action setSpectralSystem = (spectralSystem: SpectralSystem, shouldAlignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
+            this.applySwappedZWcsSettings();
 
             if (shouldAlignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));

@@ -230,26 +230,26 @@ export const GetCommonIntensityOptions = (intensityConfigs: IntensityConfig[]): 
     }
 };
 
-const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, isForward: boolean = true): number => {
     const coefficient = (1.222 * 1e6) / (freqGHz * freqGHz * bmaj * bmin);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
-const JyBeamToJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToJySr = (bmaj: number, bmin: number, isForward: boolean = true): number => {
     const bmajRad = (bmaj * Math.PI) / 648000;
     const bminRad = (bmin * Math.PI) / 648000;
     const omega = (Math.PI * bmajRad * bminRad) / (4 * Math.LN2);
-    return forward ? 1 / omega : omega;
+    return isForward ? 1 / omega : omega;
 };
 
-const JySrToJyArcsec2 = (forward: boolean = true): number => {
+const JySrToJyArcsec2 = (isForward: boolean = true): number => {
     const constant = 2.350443 * 1e-11;
-    return forward ? constant : 1 / constant;
+    return isForward ? constant : 1 / constant;
 };
 
-const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, forward: boolean = true): number => {
+const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
     const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
 export type IntensityConversion = (values: Float32Array | Float64Array) => Float32Array | Float64Array;

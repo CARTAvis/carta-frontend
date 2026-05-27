@@ -45,7 +45,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     get isLoadingOntoImage() {
-        return this.loadingData;
+        return this.isLoadingData;
     }
 
     get maxRows() {

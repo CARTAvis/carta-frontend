@@ -14,16 +14,16 @@ import "./ShareWorkspaceDialogComponent.scss";
 export const ShareWorkspaceDialogComponent = observer(() => {
     const [shareKey, setShareKey] = useState<string>("");
     const [isGeneratingLink, setIsGeneratingLink] = useState<boolean>(false);
-    const [saveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
+    const [shouldSaveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
     const appStore = AppStore.Instance;
 
     // Reset the dialog when the active workspace changes
-    const shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
+    const isShareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
     useEffect(() => {
         setShareKey("");
         setIsGeneratingLink(false);
         setSaveBeforeShare(false);
-    }, [appStore.activeWorkspace, shareWorkspaceDialogVisible]);
+    }, [appStore.activeWorkspace, isShareWorkspaceDialogVisible]);
 
     const {activeWorkspace} = appStore;
     const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.isDarkTheme});
@@ -34,7 +34,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: true,
         lazy: true,
         canEscapeKeyClose: true,
-        isOpen: shareWorkspaceDialogVisible ?? false,
+        isOpen: isShareWorkspaceDialogVisible ?? false,
         onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
@@ -47,7 +47,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         setIsGeneratingLink(true);
 
         try {
-            if (activeWorkspace.name && saveBeforeShare) {
+            if (activeWorkspace.name && shouldSaveBeforeShare) {
                 await appStore.saveWorkspace(activeWorkspace.name);
             }
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
@@ -67,7 +67,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
         const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
-        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />;
+        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={shouldSaveBeforeShare} onChange={() => setSaveBeforeShare(!shouldSaveBeforeShare)} />;
         const readOnlyTooltip = (
             <span>
                 Workspace is not editable

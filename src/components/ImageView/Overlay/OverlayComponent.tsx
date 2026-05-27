@@ -15,10 +15,10 @@ export class OverlayComponentProps {
     overlaySettings: OverlaySettings;
     overlayStore: OverlayStore;
     image: ImageItem;
-    docked: boolean;
+    isDocked: boolean;
     top?: number;
     left?: number;
-    unscaled?: boolean;
+    isUnscaled?: boolean;
     channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
@@ -62,7 +62,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = this.props.unscaled
+        const frameView = this.props.isUnscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
@@ -203,7 +203,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlayStore.padding;
-        const moving = frame.isMoving;
+        const isMoving = frame.isMoving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
@@ -213,10 +213,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesColor = this.props.overlaySettings.axes.color;
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
-        const darktheme = AppStore.Instance.isDarkTheme;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
         const title = this.props.overlaySettings.title.hasCustomText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
-        const raDecReference = this.props.overlaySettings.labels.hasRaDecReference;
+        const isRaDecReference = this.props.overlaySettings.labels.hasRaDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;
@@ -228,7 +228,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumColumns = AppStore.Instance.channelMapStore.numColumns;
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
-        const offsetCoord = frame.isOffsetCoord;
+        const isOffsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
@@ -257,7 +257,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
         }
 
-        const className = classNames("overlay-canvas", {docked: this.props.docked});
+        const className = classNames("overlay-canvas", {docked: this.props.isDocked});
 
         return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />;
     }

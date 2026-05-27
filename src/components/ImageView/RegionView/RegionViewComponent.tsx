@@ -50,7 +50,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
-    private dragPanning: boolean;
+    private isDragPanning: boolean;
     private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
@@ -395,7 +395,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
-                this.dragPanning = true;
+                this.isDragPanning = true;
                 if (this.frame) {
                     const frame = this.frame.spatialReference || this.frame;
                     const stage = konvaEvent.target.getStage();
@@ -442,7 +442,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleDragEnd = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            this.dragPanning = false;
+            this.isDragPanning = false;
             const frame = this.frame;
 
             if (frame) {
@@ -598,7 +598,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        this.dragPanning = false;
+        this.isDragPanning = false;
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
@@ -628,7 +628,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (this.props.dragPanningEnabled && this.dragPanning) {
+        if (this.props.dragPanningEnabled && this.isDragPanning) {
             return;
         }
 

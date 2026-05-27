@@ -62,18 +62,18 @@ export class StokesDialogComponent extends React.Component {
         return files;
     }
 
-    @computed get stokesDialogVisible(): boolean {
+    @computed get isStokesDialogVisible(): boolean {
         return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes) ?? false;
     }
 
-    @computed get noneType(): boolean {
-        let load = true;
+    @computed get isNoneType(): boolean {
+        let shouldLoad = true;
         this.stokes.forEach(file => {
             if (file.polarizationType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-                load = false;
+                shouldLoad = false;
             }
         });
-        return load;
+        return shouldLoad;
     }
 
     constructor(props) {
@@ -82,9 +82,9 @@ export class StokesDialogComponent extends React.Component {
 
         this.disposers.push(
             reaction(
-                () => this.stokesDialogVisible,
-                stokesDialogVisible => {
-                    if (stokesDialogVisible) {
+                () => this.isStokesDialogVisible,
+                isStokesDialogVisible => {
+                    if (isStokesDialogVisible) {
                         const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                         this.stokes = new Map();
                         fileBrowserStore.selectedFiles.forEach(async file => {
@@ -181,7 +181,7 @@ export class StokesDialogComponent extends React.Component {
                 minHeight={StokesDialogComponent.MinHeight}
                 defaultWidth={StokesDialogComponent.DefaultWidth}
                 defaultHeight={StokesDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Stokes}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -206,7 +206,7 @@ export class StokesDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !this.noneType}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !this.isNoneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
                             data-testid="load-hypercube-button"
