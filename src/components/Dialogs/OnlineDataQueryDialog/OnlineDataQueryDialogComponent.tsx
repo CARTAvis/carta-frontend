@@ -18,7 +18,7 @@ const MIN_HEIGHT = 200;
 
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
-    const className = classNames("online-data-query-dialog", {[Classes.DARK]: appStore.darkTheme});
+    const className = classNames("online-data-query-dialog", {[Classes.DARK]: appStore.isDarkTheme});
     const dialogProps: DialogProps = {
         icon: "geosearch",
         className: className,
@@ -37,7 +37,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             defaultHeight={DEFAULT_HEIGHT}
             minWidth={MIN_WIDTH}
             minHeight={MIN_HEIGHT}
-            enableResizing={true}
+            isResizingEnabled={true}
             dialogId={DialogId.OnlineDataQuery}
         >
             <div className={Classes.DIALOG_BODY}>

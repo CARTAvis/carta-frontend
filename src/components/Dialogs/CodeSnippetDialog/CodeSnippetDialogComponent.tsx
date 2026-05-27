@@ -21,7 +21,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CodeSnippetDialogComponent extends React.Component {
-    @observable saveDialogOpen: boolean = false;
+    @observable isSaveDialogOpen: boolean = false;
     private editorRef;
 
     private static readonly DefaultWidth = 700;
@@ -35,12 +35,12 @@ export class CodeSnippetDialogComponent extends React.Component {
     }
 
     @action hideSaveDialog = () => {
-        this.saveDialogOpen = false;
+        this.isSaveDialogOpen = false;
         this.tryRefocusEditor();
     };
 
     @action showSaveDialog = () => {
-        this.saveDialogOpen = true;
+        this.isSaveDialogOpen = true;
     };
 
     private tryRefocusEditor = () => {
@@ -76,7 +76,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     handleExecuteClicked = async () => {
         const snippetStore = SnippetStore.Instance;
 
-        if (snippetStore.validInput && !snippetStore.isExecuting) {
+        if (snippetStore.isInputValid && !snippetStore.isExecuting) {
             const success = await snippetStore.executeCurrentSnippet();
             if (!success) {
                 AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
@@ -88,8 +88,8 @@ export class CodeSnippetDialogComponent extends React.Component {
     handleDeleteClicked = async () => {
         const appStore = AppStore.Instance;
         const activeSnippetName = appStore.snippetStore.activeSnippetName;
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
-        if (confirmed && activeSnippetName) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
+        if (isConfirmed && activeSnippetName) {
             await appStore.snippetStore.deleteSnippet(activeSnippetName);
             appStore.snippetStore.clearActiveSnippet();
         }
@@ -97,8 +97,8 @@ export class CodeSnippetDialogComponent extends React.Component {
 
     handleNewClicked = async () => {
         const appStore = AppStore.Instance;
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to clear the current snippet?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to clear the current snippet?");
+        if (isConfirmed) {
             appStore.snippetStore.clearActiveSnippet();
         }
     };
@@ -116,12 +116,12 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("code-snippet-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "console",
             className: className,
-            canEscapeKeyClose: !this.saveDialogOpen,
+            canEscapeKeyClose: !this.isSaveDialogOpen,
             canOutsideClickClose: false,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet) ?? false,
             isCloseButtonShown: true,
@@ -154,15 +154,15 @@ export class CodeSnippetDialogComponent extends React.Component {
                 defaultHeight={CodeSnippetDialogComponent.DefaultHeight}
                 minWidth={CodeSnippetDialogComponent.MinWidth}
                 minHeight={CodeSnippetDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Snippet}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
+                    <ThemeProvider darkTheme={appStore.isDarkTheme} children={editor} />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
+                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.isInputValid || snippetStore.isExecuting} text="Execute" />
                     </div>
                     <div className="spacer" />
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
@@ -171,7 +171,7 @@ export class CodeSnippetDialogComponent extends React.Component {
                         <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={snippetStore.isExecuting} text="Save" />
                     </div>
                 </div>
-                <SaveSnippetDialogComponent onSaveClicked={this.handleSaveClicked} onCancelClicked={this.hideSaveDialog} isOpen={this.saveDialogOpen} />
+                <SaveSnippetDialogComponent onSaveClicked={this.handleSaveClicked} onCancelClicked={this.hideSaveDialog} isOpen={this.isSaveDialogOpen} />
             </DraggableDialogComponent>
         );
     }

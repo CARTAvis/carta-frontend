@@ -26,7 +26,7 @@ const CUSTOM_COLOR_OPTION = "custom-color";
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
     private static readonly ChangeDelay = 100;
-    @observable displayColorPicker: boolean = false;
+    @observable shouldDisplayColorPicker: boolean = false;
 
     get autoColor(): string {
         return getColorForTheme(this.props.color);
@@ -49,7 +49,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === CUSTOM_COLOR_OPTION) {
-            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>

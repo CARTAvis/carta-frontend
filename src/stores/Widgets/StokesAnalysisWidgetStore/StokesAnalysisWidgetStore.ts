@@ -49,7 +49,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoLinePlots: boolean = false;
     @observable scatterChartArea: ChartArea = undefined as any;
     @observable statsType: CARTA.StatsType = CARTA.StatsType.Mean;
-    @observable fractionalPolVisible: boolean = DEFAULTS.fractionalPolVisible;
+    @observable isFractionalPolVisible: boolean = DEFAULTS.fractionalPolVisible;
     scatterOutRangePointsZIndex: Array<number>;
 
     // settings
@@ -59,12 +59,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number = DEFAULTS.lineWidth;
     @observable linePlotPointSize: number = DEFAULTS.linePlotPointSize;
     @observable scatterPlotPointSize: number = DEFAULTS.scatterPlotPointSize;
-    @observable equalAxes: boolean = DEFAULTS.equalAxes;
+    @observable areAxesEqual: boolean = DEFAULTS.equalAxes;
     @observable colorMap: string = DEFAULTS.colorMap;
     @observable colorPixel: {color: Uint8ClampedArray; size: number} = getColorsForValues(DEFAULTS.colorMap);
     @observable pointTransparency: number = DEFAULTS.pointTransparency;
-    @observable invertedColorMap: boolean = DEFAULTS.invertedColorMap;
-    @observable showReferenceAxes: boolean = true;
+    @observable isInvertedColorMap: boolean = DEFAULTS.invertedColorMap;
+    @observable shouldShowReferenceAxes: boolean = true;
     referenceAxesThickness: number = 2;
     readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
     @observable settingsTabId: StokesAnalysisSettingsTabs = StokesAnalysisSettingsTabs.CONVERSION;
@@ -76,7 +76,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
         const requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
         const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
-        if (widgetStore.fractionalPolVisible) {
+        if (widgetStore.isFractionalPolVisible) {
             if (Iz < 0) {
                 requiredCoordinate.push(StokesCoordinate.TotalIntensity);
             }
@@ -139,12 +139,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterChartArea = chartArea;
     };
 
-    @action setMouseMoveIntoScatterPlots = (val: boolean) => {
-        this.isMouseMoveIntoScatterPlots = val;
+    @action setMouseMoveIntoScatterPlots = (isMouseMoveIntoScatterPlots: boolean) => {
+        this.isMouseMoveIntoScatterPlots = isMouseMoveIntoScatterPlots;
     };
 
-    @action setMouseMoveIntoLinePlots = (val: boolean) => {
-        this.isMouseMoveIntoLinePlots = val;
+    @action setMouseMoveIntoLinePlots = (isMouseMoveIntoLinePlots: boolean) => {
+        this.isMouseMoveIntoLinePlots = isMouseMoveIntoLinePlots;
     };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
@@ -198,8 +198,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotCursorY = cursorVal.y;
     };
 
-    @action setFractionalPolVisible = (val: boolean) => {
-        this.fractionalPolVisible = val;
+    @action setFractionalPolVisible = (isFractionalPolVisible: boolean) => {
+        this.isFractionalPolVisible = isFractionalPolVisible;
         this.clearScatterPlotXYBounds();
     };
 
@@ -299,8 +299,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     // settings
-    @action setInvertedColorMap = (invertedColorMap: boolean) => {
-        this.invertedColorMap = invertedColorMap;
+    @action setInvertedColorMap = (isInvertedColorMap: boolean) => {
+        this.isInvertedColorMap = isInvertedColorMap;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -333,8 +333,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setEqualAxesValue = (val: boolean) => {
-        this.equalAxes = val;
+    @action setEqualAxesValue = (hasEqualAxes: boolean) => {
+        this.areAxesEqual = hasEqualAxes;
     };
 
     @action setColormap = (colormap: string) => {
@@ -352,8 +352,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
-    @action setShowReferenceAxes = (val: boolean) => {
-        this.showReferenceAxes = val;
+    @action setShowReferenceAxes = (shouldShowReferenceAxes: boolean) => {
+        this.shouldShowReferenceAxes = shouldShowReferenceAxes;
     };
 
     @computed get isLinePlotsAutoScaledX() {
@@ -373,7 +373,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     @computed get referenceAxesColor() {
-        return AppStore.Instance.darkTheme ? Colors.GRAY2 : Colors.GRAY3;
+        return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
     public init = (widgetSettings): void => {
@@ -407,7 +407,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             this.pointTransparency = widgetSettings.pointTransparency;
         }
         if (typeof widgetSettings.equalAxes === "boolean") {
-            this.equalAxes = widgetSettings.equalAxes;
+            this.areAxesEqual = widgetSettings.equalAxes;
         }
     };
 
@@ -421,7 +421,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             colorMap: this.colorMap,
             scatterPlotPointSize: this.scatterPlotPointSize,
             pointTransparency: this.pointTransparency,
-            equalAxes: this.equalAxes
+            equalAxes: this.areAxesEqual
         };
     };
 }

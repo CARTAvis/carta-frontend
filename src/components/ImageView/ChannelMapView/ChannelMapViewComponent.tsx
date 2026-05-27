@@ -18,7 +18,7 @@ import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 import {ChannelMapLabelComponent} from "./ChannelMapLabelComponent";
 
 export class ChannelMapViewComponentProps {
-    docked: boolean;
+    isDocked: boolean;
 }
 
 export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = observer((props: ChannelMapViewComponentProps) => {
@@ -29,7 +29,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const image = channelMapStore.displayedImage;
     const overlaySettings = appStore.overlaySettings;
 
-    const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
+    const [isImageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
     if (!frame) {
         return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
@@ -111,9 +111,9 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             left={left}
                             width={innerRenderWidth}
                             height={innerRenderHeight}
-                            docked={props.docked}
+                            isDocked={props.isDocked}
                             channel={channel}
-                            highlighted={channel === frame.requiredChannel}
+                            isHighlighted={channel === frame.requiredChannel}
                         />
                     )}
                     <RegionViewComponent
@@ -124,10 +124,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         top={top}
                         left={left}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        docked={props.docked}
+                        dragPanningEnabled={appStore.preferenceStore.isDragPanning}
+                        docked={props.isDocked}
                     />
-                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.docked} padding={10} />}
+                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.isDocked} padding={10} />}
                 </div>
             )
         );
@@ -145,12 +145,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             onMouseOver={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <ChannelMapInnerOverlayComponent frame={frame} docked={props.docked} />
+            <ChannelMapInnerOverlayComponent frame={frame} docked={props.isDocked} />
             {overlayComponents}
             <RasterViewComponent
                 key={"raster-view-component-channel-map"}
                 image={image}
-                docked={props.docked}
+                isDocked={props.isDocked}
                 pixelHighlightValue={channelMapStore.pixelHighlightValue}
                 row={0}
                 column={0}
@@ -166,24 +166,24 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 width={outerViewWidth}
                 left={outerPadding.left}
                 right={outerPadding.right}
-                docked={props.docked}
+                isDocked={props.isDocked}
                 unit={frame.requiredUnit}
                 top={outerPadding.top}
                 currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
-                cursorValueToPercentage={frame.requiredUnit === "%"}
+                hasCursorValueToPercentage={frame.requiredUnit === "%"}
                 isPreview={frame.isPreview}
-                visible={imageToolbarVisible}
+                isVisible={isImageToolbarVisible}
             />
             <ToolbarComponent
-                docked={props.docked}
-                visible={imageToolbarVisible}
+                isDocked={props.isDocked}
+                isVisible={isImageToolbarVisible}
                 frame={frame}
                 activeLayer={AppStore.Instance.activeLayer}
                 onActiveLayerChange={AppStore.Instance.updateActiveLayer}
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
-            {overlaySettings.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
+            {overlaySettings.colorbar.isVisible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{
@@ -192,14 +192,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 }}
                 overlaySettings={overlaySettings}
                 overlayStore={frame.channelMapOuterOverlayStore}
-                docked={props.docked}
-                unscaled={true}
+                isDocked={props.isDocked}
+                isUnscaled={true}
             />
         </div>
     );
 });
 
-const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: FrameStore; docked: boolean}) => {
+const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {frame: FrameStore; docked: boolean}) => {
     const appStore = AppStore.Instance;
     const overlaySettings = appStore.overlaySettings;
     const channelMapStore = appStore.channelMapStore;
@@ -272,7 +272,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
         });
     };
 
-    const className = classNames("overlay-canvas", {docked: docked});
+    const className = classNames("overlay-canvas", {docked: isDocked});
 
     return (
         <>
@@ -318,7 +318,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
                 overlaySettings={overlaySettings}
                 overlayStore={frame.channelMapInnerOverlayStore}
                 top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
-                docked={docked}
+                isDocked={isDocked}
                 channelMapDrawFunction={draw}
             />
         </>

@@ -11,11 +11,11 @@ import {HipsQueryStore, type HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
-const FilterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, exactMatch) => {
+const FilterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, isExactMatch) => {
     const normalizedTitle = `${survey.name} ${survey.type}`.toLowerCase();
     const normalizedQuery = query.toLowerCase();
 
-    if (exactMatch) {
+    if (isExactMatch) {
         return normalizedTitle === normalizedQuery;
     } else {
         return normalizedTitle.indexOf(normalizedQuery) >= 0;
@@ -40,7 +40,7 @@ const RenderPixelSize = () => {
 
 export const HipsQueryComponent = observer(() => {
     const hipsQueryStore = HipsQueryStore.Instance;
-    const [queryByObject, setQueryByObject] = useState<boolean>(true);
+    const [isQueryByObject, setQueryByObject] = useState<boolean>(true);
 
     return (
         <div className="hips-query-panel">
@@ -61,17 +61,17 @@ export const HipsQueryComponent = observer(() => {
                         />
                     </FormGroup>
                     <FormGroup inline={true} label=" " disabled={hipsQueryStore.isLoading}>
-                        <RadioGroup inline={true} selectedValue={queryByObject ? "object" : "center"} onChange={ev => setQueryByObject(ev.currentTarget.value === "object")} disabled={hipsQueryStore.isLoading}>
+                        <RadioGroup inline={true} selectedValue={isQueryByObject ? "object" : "center"} onChange={ev => setQueryByObject(ev.currentTarget.value === "object")} disabled={hipsQueryStore.isLoading}>
                             <Radio label="Query by object" value="object" />
                             <Radio label="Query by center" value="center" />
                         </RadioGroup>
                     </FormGroup>
-                    {queryByObject && (
+                    {isQueryByObject && (
                         <FormGroup inline={true} label="Object" disabled={hipsQueryStore.isLoading}>
                             <InputGroup value={hipsQueryStore.object} onChange={ev => hipsQueryStore.setObject(ev.target.value)} disabled={hipsQueryStore.isLoading} />
                         </FormGroup>
                     )}
-                    {!queryByObject && (
+                    {!isQueryByObject && (
                         <FormGroup inline={true} label="ICRS Center" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
                             <SafeNumericInput
                                 buttonPosition="none"
@@ -187,8 +187,8 @@ export const HipsQueryComponent = observer(() => {
                 <AnchorButton disabled={hipsQueryStore.isLoading} onClick={hipsQueryStore.clear} text="Clear" />
                 <AnchorButton
                     intent={Intent.SUCCESS}
-                    disabled={(queryByObject ? !hipsQueryStore.object : !isFinite(hipsQueryStore.center.x) || !isFinite(hipsQueryStore.center.y)) || !hipsQueryStore.isValid}
-                    onClick={queryByObject ? hipsQueryStore.queryByObject : hipsQueryStore.queryByCenter}
+                    disabled={(isQueryByObject ? !hipsQueryStore.object : !isFinite(hipsQueryStore.center.x) || !isFinite(hipsQueryStore.center.y)) || !hipsQueryStore.isValid}
+                    onClick={isQueryByObject ? hipsQueryStore.queryByObject : hipsQueryStore.queryByCenter}
                     text="Query"
                 />
             </div>

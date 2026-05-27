@@ -13,10 +13,10 @@ import "./SplashScreenComponent.scss";
 export class SplashScreenComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("splash-screen", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("splash-screen", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
-            <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible && !appStore.alertStore.alertVisible} usePortal={true}>
+            <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.isSplashScreenVisible && !appStore.alertStore.isAlertVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={150} />

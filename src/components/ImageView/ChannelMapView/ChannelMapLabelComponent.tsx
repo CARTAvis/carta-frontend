@@ -11,13 +11,13 @@ import {getColorForTheme} from "utilities";
 export class ChannelMapLabelComponentProps {
     overlaySettings: OverlaySettings;
     image: ImageItem;
-    docked: boolean;
+    isDocked: boolean;
     top: number;
     left: number;
     width: number;
     height: number;
     channel: number;
-    highlighted: boolean;
+    isHighlighted: boolean;
 }
 
 @observer
@@ -28,33 +28,33 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.displayedFrame;
 
-        const channelText = channelMapStore.showChannelString ? this.props.channel : "";
+        const channelText = channelMapStore.shouldShowChannelString ? this.props.channel : "";
 
         let spectralString = "";
         let velocityString = "";
-        if ((channelMapStore.showFrequencyString || channelMapStore.showVelocityString) && frame) {
+        if ((channelMapStore.shouldShowFrequencyString || channelMapStore.shouldShowVelocityString) && frame) {
             ({spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel));
         }
 
-        if (channelMapStore.showFrequencyString) {
+        if (channelMapStore.shouldShowFrequencyString) {
             spectralString = spectralString.replace(/^[^:]+:\s*/, "");
-            if (!channelMapStore.showFrequencyStringUnit) {
+            if (!channelMapStore.shouldShowFrequencyStringUnit) {
                 spectralString = spectralString.replace(/\s+[^ ]*$/, "");
             }
         } else {
             spectralString = "";
         }
 
-        if (channelMapStore.showVelocityString) {
+        if (channelMapStore.shouldShowVelocityString) {
             velocityString = velocityString.replace(/^[^:]+:\s*/, "");
-            if (!channelMapStore.showVelocityStringUnit) {
+            if (!channelMapStore.shouldShowVelocityStringUnit) {
                 velocityString = velocityString.replace(/\s+[^ ]*$/, "");
             }
         } else {
             velocityString = "";
         }
 
-        const className = classNames("channel-map-label-span", {docked: this.props.docked});
+        const className = classNames("channel-map-label-span", {docked: this.props.isDocked});
         const font = this.fonts[channelMapStore.font];
         const hightlightBorderWidth = 2;
 
@@ -62,7 +62,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
+                    color: channelMapStore.hasCustomColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DEFAULT_LABEL_COLOR),
                     position: "absolute",
                     top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
                     left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,
@@ -72,7 +72,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     padding: "5px",
-                    border: `${hightlightBorderWidth}px solid ${this.props.highlighted ? "red" : "transparent"}`,
+                    border: `${hightlightBorderWidth}px solid ${this.props.isHighlighted ? "red" : "transparent"}`,
                     fontFamily: font.family,
                     fontWeight: font.weight,
                     fontStyle: font.style,

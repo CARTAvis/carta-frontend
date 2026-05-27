@@ -35,10 +35,10 @@ export function exportTxtFile(fileName: string, content: string) {
     return null;
 }
 
-export async function exportScreenshot(imageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
+export async function exportScreenshot(isImageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
     try {
         // Screenshot of
-        const element = (imageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
+        const element = (isImageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
         if (!element) {
             return false;
         }

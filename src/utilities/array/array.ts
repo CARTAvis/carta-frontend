@@ -12,8 +12,8 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     if (!first || !last) {
         return null;
     }
-    const incremental = first.x <= last.x;
-    if (incremental) {
+    const isIncremental = first.x <= last.x;
+    if (isIncremental) {
         if (x <= first.x) {
             return {point: first, index: 0};
         } else if (x >= last.x) {
@@ -39,7 +39,7 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
         if (x === midPoint.x) {
             return {point: midPoint, index: middle};
         }
-        if (incremental) {
+        if (isIncremental) {
             if (x < midPoint.x) {
                 end = middle - 1;
             } else {

@@ -38,7 +38,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({validWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
@@ -77,7 +77,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             xAxis: "_RAJ2000",
             yAxis: "_DEJ2000"
         };
-        const frame = {validWcs: true, wcsInfo: "wcs"} as any;
+        const frame = {isValidWcs: true, wcsInfo: "wcs"} as any;
 
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogWidgets.set(1, "widget-1");
@@ -133,7 +133,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({validWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
