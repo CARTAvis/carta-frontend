@@ -57,7 +57,7 @@ export default defineConfig({
         rspack: {
             ignoreWarnings: [
                 {
-                    module: /@protobufjs\/inquire/,
+                    module: /protobufjs.*inquire/,
                     message: /Critical dependency: the request of a dependency is an expression/,
                 },
             ],
