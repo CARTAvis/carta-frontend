@@ -166,10 +166,10 @@ export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionTy
         case CARTA.RegionType.ANNRULER: {
             const positionAngle = getLinePositionAngle(points);
             const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
-            return shouldShiftYOnly ? {x: 0, y: PASTE_OFFSET} : {x: PASTE_OFFSET, y: 0};
+            return shouldShiftYOnly ? {x: 0, y: -PASTE_OFFSET} : {x: PASTE_OFFSET, y: 0};
         }
         default:
-            return {x: PASTE_OFFSET, y: PASTE_OFFSET};
+            return {x: PASTE_OFFSET, y: -PASTE_OFFSET};
     }
 }
 

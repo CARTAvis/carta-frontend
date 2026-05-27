@@ -95,11 +95,11 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    public static CopyRegion = () => {
+    public static copyRegion = () => {
         AppStore.Instance.copySelectedRegion();
     };
 
-    public static PasteRegion = () => {
+    public static pasteRegion = () => {
         AppStore.Instance.pasteRegion();
     };
 
@@ -146,8 +146,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.toggleCreateMode},
             {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.toggleRegionLock},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.unlockAllRegions},
-            {combo: "mod + c", label: "Copy selected region", onKeyDown: HotkeyService.CopyRegion},
-            {combo: "mod + v", label: "Paste copied region", onKeyDown: HotkeyService.PasteRegion},
+            {combo: "mod + c", label: "Copy selected region", onKeyDown: HotkeyService.copyRegion},
+            {combo: "mod + v", label: "Paste copied region", onKeyDown: HotkeyService.pasteRegion},
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.handleRegionEsc}
