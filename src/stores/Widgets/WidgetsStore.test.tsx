@@ -74,6 +74,6 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(children[0].props.nodeId).toBe("placeholder-2");
         expect(children[1].props.id).toBe("placeholder-2");
         expect(children[1].props.label).toBe("Missing widget");
-        expect(children[1].props.docked).toBe(true);
+        expect(children[1].props.isDocked).toBe(true);
     });
 });
