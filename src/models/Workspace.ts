@@ -7,7 +7,6 @@ import {type ContourConfigStore, type RenderConfigStore, type VectorOverlayConfi
 import {type Point2D} from "./Point2D/Point2D";
 
 // don't apply naming convention here to backward-compatible deserialization for legacy workspace keys
-/* eslint-disable @typescript-eslint/naming-convention */
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
@@ -133,7 +132,6 @@ export interface WorkspaceListItem {
     id?: string;
     date: number;
 }
-/* eslint-enable @typescript-eslint/naming-convention */
 
 export class WorkspaceConfig {
     public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {

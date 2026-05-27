@@ -67,8 +67,8 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
     widgetStore.setyAxis = jest.fn((nextYAxis: string) => {
         widgetStore.yAxis = nextYAxis;
     });
-    widgetStore.setAutoSelectImageOverlayAxesAttempted = jest.fn((attempted: boolean) => {
-        widgetStore.hasAttemptedAutoSelectImageOverlayAxes = attempted;
+    widgetStore.setAutoSelectImageOverlayAxesAttempted = jest.fn((isAttempted: boolean) => {
+        widgetStore.hasAttemptedAutoSelectImageOverlayAxes = isAttempted;
     });
 
     return widgetStore;
@@ -107,10 +107,10 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         profileStore.catalogCoordinateSystem.system = nextSystem;
         profileStore.activedSystem = SYSTEM_OVERLAY_MAP.get(nextSystem);
     });
-    profileStore.setHeaderDisplay.mockImplementation((display: boolean, columnName: string) => {
+    profileStore.setHeaderDisplay.mockImplementation((shouldDisplay: boolean, columnName: string) => {
         const header = profileStore.catalogControlHeader.get(columnName);
         if (header) {
-            header.display = display;
+            header.display = shouldDisplay;
         }
     });
 
@@ -151,7 +151,7 @@ const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
     const profileStore = CreateProfileStore(system, columns);
     const widgetStore = options.widgetStore ?? CreateWidgetStore(xAxis, yAxis);
-    const autoSelectEnabled = options.autoSelectEnabled ?? true;
+    const isAutoSelectEnabled = options.autoSelectEnabled ?? true;
     component["catalogFileNames"] = new Map<number, string>();
     component["widgetId"] = `catalog-overlay-test-${harnessId}`;
 
@@ -169,7 +169,7 @@ const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
     });
     Object.defineProperty(component, "shouldAutoSelectImageOverlayColumns", {
         configurable: true,
-        get: () => autoSelectEnabled
+        get: () => isAutoSelectEnabled
     });
 
     return {component, profileStore, widgetStore};

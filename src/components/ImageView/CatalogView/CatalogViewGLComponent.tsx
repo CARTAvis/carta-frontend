@@ -63,7 +63,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             }
             const numVertices = catalogStore.catalogCounts.get(fileId);
             const numSelectedVertices = catalogStore.catalogProfileStores.get(fileId)?.selectedPointIndices.length;
-            const showSelectedData = catalogWidgetStore.isShowingSelectedData;
+            const shouldShowSelectedData = catalogWidgetStore.isShowingSelectedData;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
@@ -78,7 +78,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeMinDiameter = catalogWidgetStore.sizeMin.diameter;
             const sizeColumnMaxClipd = catalogWidgetStore.sizeColumnMax.clipd;
             const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
-            const sizeArea = catalogWidgetStore.isSizeAreaMode;
+            const hasSizeArea = catalogWidgetStore.isSizeAreaMode;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
             const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
             const isAngularSize = catalogWidgetStore.isAngularSize;
@@ -88,13 +88,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
             const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
             const sizeMinorColumnMinClipd = catalogWidgetStore.sizeMinorColumnMin.clipd;
-            const sizeMinorArea = catalogWidgetStore.isSizeMinorAreaMode;
+            const hasSizeMinorArea = catalogWidgetStore.isSizeMinorAreaMode;
             const sizeMinorScalingType = catalogWidgetStore.sizeMinorScalingType;
             // color
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
             const colorMap = catalogWidgetStore.colorMap;
             const colorScalingType = catalogWidgetStore.colorScalingType;
-            const invertedColorMap = catalogWidgetStore.isInvertedColorMap;
+            const isColorMapInverted = catalogWidgetStore.isInvertedColorMap;
             const colorColumnMaxClipd = catalogWidgetStore.colorColumnMax.clipd;
             const colorColumnMinClipd = catalogWidgetStore.colorColumnMin.clipd;
             // orientation

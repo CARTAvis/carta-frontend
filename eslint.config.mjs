@@ -7,7 +7,7 @@ import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
-        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**", "src/components/**", "src/icons/**", "src/scripting/**", "src/utilities/**", "src/services/**", "src/models/**", "src/enums/**"]
+        ignores: ["node_modules/**", "wasm_src/**", "docs_website/**", "protobuf/**"]
     },
     {
         files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
@@ -89,7 +89,8 @@ export default [
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
-                    prefix: ["is", "should", "has", "can", "did", "will"]
+                    prefix: ["is", "are", "should", "has", "have", "can", "did", "will"],
+                    leadingUnderscore: "allow",
                 },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):

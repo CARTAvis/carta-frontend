@@ -579,7 +579,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
             plotType: widgetStore.plotType,
@@ -589,7 +589,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: widgetStore.setXYBounds,
             graphZoomReset: widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             mouseEntered: widgetStore.setMouseMoveIntoLinePlots,
             zeroLineWidth: 2,
             borderWidth: widgetStore.lineWidth,
@@ -613,7 +613,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 if (!this.widgetStore.isLineOrPolyline) {
-                    linePlotProps.showTopAxis = true;
+                    linePlotProps.shouldShowTopAxis = true;
                     if (this.frame.isValidWcs && widgetStore.isWcsAxisVisible) {
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                     }

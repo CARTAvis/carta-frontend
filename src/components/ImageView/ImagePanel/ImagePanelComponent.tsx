@@ -30,7 +30,7 @@ interface ImagePanelComponentProps {
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
-    @observable imageToolbarVisible: boolean = false;
+    @observable isImageToolbarVisible: boolean = false;
 
     private regionViewRef: RegionViewComponent;
 
@@ -87,11 +87,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     };
 
     @action onMouseEnter = () => {
-        this.imageToolbarVisible = true;
+        this.isImageToolbarVisible = true;
     };
 
     @action onMouseLeave = () => {
-        this.imageToolbarVisible = false;
+        this.isImageToolbarVisible = false;
     };
 
     onMouseDown = ev => {
@@ -110,7 +110,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    get cursorInfoRequired() {
+    get isCursorInfoRequired() {
         const appStore = AppStore.Instance;
         switch (appStore.preferenceStore.cursorInfoVisible) {
             case CursorInfoVisibility.Always:
@@ -159,17 +159,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
-            const showRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isRasterVisible);
-            const showContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isContourVisible);
-            const showVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isVectorOverlayVisible);
+            const shouldShowRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isRasterVisible);
+            const shouldShowContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isContourVisible);
+            const shouldShowVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isVectorOverlayVisible);
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
-                    {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {appStore.overlaySettings?.isVisible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayStore={frame.overlayStore} docked={this.props.docked} />}
-                    {this.cursorInfoRequired && frame.cursorInfo && !isColorBlending && (
+                    {shouldShowRaster && <RasterViewComponent image={this.props.image} isDocked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
+                    {shouldShowContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    {shouldShowVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    {appStore.overlaySettings?.isVisible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayStore={frame.overlayStore} isDocked={this.props.docked} />}
+                    {this.isCursorInfoRequired && frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? ((frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue.value) ?? 0) : 0}
@@ -178,11 +178,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             width={frame.overlayStore.viewWidth}
                             left={frame.overlayStore.padding.left}
                             right={frame.overlayStore.padding.right}
-                            docked={this.props.docked}
+                            isDocked={this.props.docked}
                             unit={frame.requiredUnit}
                             top={frame.overlayStore.padding.top}
                             currentStokes={appStore.activeFrame?.requiredPolarizationInfo}
-                            cursorValueToPercentage={frame.requiredUnit === "%"}
+                            hasCursorValueToPercentage={frame.requiredUnit === "%"}
                             isPreview={frame.isPreview}
                         />
                     )}
@@ -202,8 +202,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     />
                     {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
                         <ToolbarComponent
-                            docked={this.props.docked}
-                            visible={this.imageToolbarVisible}
+                            isDocked={this.props.docked}
+                            isVisible={this.isImageToolbarVisible}
                             frame={frame}
                             activeLayer={activeLayer}
                             onActiveLayerChange={appStore.updateActiveLayer}

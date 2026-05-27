@@ -20,12 +20,12 @@ type Statistic = {mean: number; count: number; validCount: number; std: number; 
 export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D | undefined = undefined;
-    @observable scatterborder: Border | undefined = undefined;
-    @observable dragmode: DragMode = "select";
+    @observable scatterBorder: Border | undefined = undefined;
+    @observable dragMode: DragMode = "select";
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
-    @observable nBinx: number | undefined = undefined;
+    @observable nBinX: number | undefined = undefined;
     @observable xColumnName: string;
     @observable yColumnName: string | undefined;
     @observable fitting: Fitting | null = null;
@@ -61,15 +61,15 @@ export class CatalogPlotWidgetStore {
     }
 
     @action setScatterborder(border: Border) {
-        this.scatterborder = border;
+        this.scatterBorder = border;
     }
 
     @action setHistogramXBorder(xborder: XBorder) {
         this.histogramBorder = xborder;
     }
 
-    @action setDragmode(mode: DragMode) {
-        this.dragmode = mode;
+    @action setDragMode(mode: DragMode) {
+        this.dragMode = mode;
     }
 
     @action setLogScaleY(isLogScaleY: boolean) {
@@ -77,7 +77,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @action setNumBinsX(val: number) {
-        this.nBinx = val;
+        this.nBinX = val;
     }
 
     @action setFitting(value: Fitting | null) {
@@ -98,7 +98,7 @@ export class CatalogPlotWidgetStore {
     };
 
     @computed get isScatterAutoScaled() {
-        return this.scatterborder === undefined;
+        return this.scatterBorder === undefined;
     }
 
     @computed get isHistogramAutoScaledX() {

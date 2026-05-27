@@ -29,7 +29,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
-        this.updatingDataStream = false;
+        this.isUpdatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
@@ -146,9 +146,9 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @action resetCatalogFilterRequest = () => {
         this.resetFilterRequest();
         this.resetUserFilters();
-        this.loadingData = false;
+        this.isLoadingData = false;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
-        this.updatingDataStream = false;
+        this.isUpdatingDataStream = false;
         this.sortingInfo.columnName = null;
         this.sortingInfo.sortingType = null;
         this.maxRows = this.catalogInfo.dataSize;
@@ -169,7 +169,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @computed get isLoadingOntoImage() {
-        return this.loadingData || this.updatingDataStream;
+        return this.isLoadingData || this.isUpdatingDataStream;
     }
 
     @computed get initCatalogControlHeader() {

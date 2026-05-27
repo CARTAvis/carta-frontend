@@ -13,8 +13,8 @@ import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
-    showPinButton: boolean;
-    showFloatingSettingsButton?: boolean;
+    shouldShowPinButton: boolean;
+    shouldShowFloatingSettingsButton?: boolean;
     children?: any;
     zIndex?: number;
     isSelected?: boolean;
@@ -152,7 +152,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.isDarkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.isDarkTheme});
         const buttonClass = classNames("floating-header-button", {[Classes.DARK]: appStore.isDarkTheme});
-        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.isDarkTheme, "floating-settings-content": !this.props.showPinButton});
+        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.isDarkTheme, "floating-settings-content": !this.props.shouldShowPinButton});
 
         const widgetConfig = this.props.widgetConfig;
 
@@ -189,7 +189,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
                         {widgetConfig.title}
                     </div>
-                    {this.props.showFloatingSettingsButton && (
+                    {this.props.shouldShowFloatingSettingsButton && (
                         <div
                             className={buttonClass}
                             onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title ?? "", widgetConfig.id ?? "", widgetConfig.type)}
@@ -207,7 +207,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                             </Tooltip>
                         </div>
                     )}
-                    {this.props.showPinButton && (
+                    {this.props.shouldShowPinButton && (
                         <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />

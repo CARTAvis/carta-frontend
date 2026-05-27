@@ -127,9 +127,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleWidthChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleWidthChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.x;
-        const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+        const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             this.props.region.setSize({x: value / scale, y: this.props.region.size.y});
             return true;
@@ -137,12 +137,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleWidthWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleWidthWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
             const value = this.props.frame.getImageXValueFromArcsec(arcsecValue);
             const existingValue = this.props.region.size.x;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
                 this.props.region.setSize({x: value / scale, y: this.props.region.size.y});
                 return true;
@@ -151,9 +151,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleHeightChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleHeightChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.y;
-        const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+        const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             this.props.region.setSize({x: this.props.region.size.x, y: value / scale});
             return true;
@@ -161,12 +161,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleHeightWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleHeightWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
             const value = this.props.frame.getImageYValueFromArcsec(arcsecValue);
             const existingValue = this.props.region.size.y;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
                 this.props.region.setSize({x: this.props.region.size.x, y: value / scale});
                 return true;
@@ -175,11 +175,11 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleLeftValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
+    private handleLeftValueChange = (value: number, existingValue: number, isFixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             const sizeDims = scale2D(region.size, scale);
             const rightValue = centerPoint.x + sizeDims.x / 2.0;
             const newCenter = {x: (value + rightValue) / 2.0, y: centerPoint.y};
@@ -192,28 +192,28 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleLeftChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleLeftChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.bottomLeftPoint.x;
-        return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
+        return this.handleLeftValueChange(value, existingValue, isFixedScreenSize);
     };
 
-    private handleLeftWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleLeftWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.bottomLeftWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.bottomLeftWCS.y});
             if (newPoint) {
                 const value = newPoint.x;
                 const existingValue = this.bottomLeftPoint.x;
-                return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
+                return this.handleLeftValueChange(value, existingValue, isFixedScreenSize);
             }
         }
         return false;
     };
 
-    private handleBottomValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
+    private handleBottomValueChange = (value: number, existingValue: number, isFixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             const sizeDims = scale2D(region.size, scale);
             const topValue = centerPoint.y + sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
@@ -226,28 +226,28 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleBottomChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleBottomChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.bottomLeftPoint.y;
-        return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
+        return this.handleBottomValueChange(value, existingValue, isFixedScreenSize);
     };
 
-    private handleBottomWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleBottomWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.bottomLeftWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.bottomLeftWCS.x, y: wcsString});
             if (newPoint) {
                 const value = newPoint.y;
                 const existingValue = this.bottomLeftPoint.y;
-                return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
+                return this.handleBottomValueChange(value, existingValue, isFixedScreenSize);
             }
         }
         return false;
     };
 
-    private handleRightValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
+    private handleRightValueChange = (value: number, existingValue: number, isFixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             const sizeDims = scale2D(region.size, scale);
             const leftValue = centerPoint.x - sizeDims.x / 2.0;
             const newCenter = {x: (value + leftValue) / 2.0, y: centerPoint.y};
@@ -260,28 +260,28 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleRightChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleRightChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.topRightPoint.x;
-        return this.handleRightValueChange(value, existingValue, fixedScreenSize);
+        return this.handleRightValueChange(value, existingValue, isFixedScreenSize);
     };
 
-    private handleRightWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleRightWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.topRightWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.topRightWCS.y});
             if (newPoint) {
                 const value = newPoint.x;
                 const existingValue = this.topRightPoint.x;
-                return this.handleRightValueChange(value, existingValue, fixedScreenSize);
+                return this.handleRightValueChange(value, existingValue, isFixedScreenSize);
             }
         }
         return false;
     };
 
-    private handleTopValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
+    private handleTopValueChange = (value: number, existingValue: number, isFixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
             const sizeDims = scale2D(region.size, scale);
             const bottomValue = centerPoint.y - sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + bottomValue) / 2.0};
@@ -294,18 +294,18 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleTopChange = (value: number, fixedScreenSize: boolean = false): boolean => {
+    private handleTopChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.topRightPoint.y;
-        return this.handleTopValueChange(value, existingValue, fixedScreenSize);
+        return this.handleTopValueChange(value, existingValue, isFixedScreenSize);
     };
 
-    private handleTopWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
+    private handleTopWCSChange = (wcsString: string, isFixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.topRightWCS) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.topRightWCS.x, y: wcsString});
             if (newPoint) {
                 const value = newPoint.y;
                 const existingValue = this.topRightPoint.y;
-                return this.handleTopValueChange(value, existingValue, fixedScreenSize);
+                return this.handleTopValueChange(value, existingValue, isFixedScreenSize);
             }
         }
         return false;

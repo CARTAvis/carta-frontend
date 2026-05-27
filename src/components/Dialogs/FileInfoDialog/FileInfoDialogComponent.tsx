@@ -39,7 +39,7 @@ export class FileInfoDialogComponent extends React.Component {
                 defaultHeight={FileInfoDialogComponent.DefaultHeight}
                 minWidth={FileInfoDialogComponent.MinWidth}
                 minHeight={FileInfoDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.FileInfo}
             >
                 <div className={Classes.DIALOG_BODY}>

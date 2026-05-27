@@ -105,8 +105,8 @@ export class FileInfoComponent extends React.Component<{
         this.listRef.current.scrollToRow({index: this.matchedIterLocation.line, align: "center"});
     };
 
-    private handleSearchPanelClicked = (opened: boolean) => {
-        this.isSearchOpened = opened ? true : false;
+    private handleSearchPanelClicked = (isOpened: boolean) => {
+        this.isSearchOpened = isOpened ? true : false;
         this.resetSearchString();
         this.resetMatchedIter();
         this.matchedTotal = 0;
