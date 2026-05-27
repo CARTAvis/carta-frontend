@@ -30,7 +30,7 @@ export class SpatialProfileStore {
             this.value = spatialProfileData.value;
             this.x = spatialProfileData.x;
             this.y = spatialProfileData.y;
-            spatialProfileData.profiles?.forEach(profile => this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile)));
+            spatialProfileData.profiles?.forEach(profile => this.profiles.set(profile.coordinate, ProtobufProcessing.processSpatialProfile(profile)));
         }
     }
 

@@ -2,7 +2,7 @@ import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
-import {contourShaders} from "./GLSL";
+import {CONTOUR_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     RangeScale: WebGLUniformLocation | null;
@@ -37,7 +37,7 @@ export class ContourWebGLService {
     vertexPositionAttribute: number;
     vertexNormalAttribute: number;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ContourWebGLService.staticInstance) {
             ContourWebGLService.staticInstance = new ContourWebGLService();
         }
@@ -57,7 +57,7 @@ export class ContourWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, contourShaders.vertexShader, contourShaders.fragmentShader);
+        const shaderProgram = getShaderProgram(this.gl, CONTOUR_SHADERS.vertexShader, CONTOUR_SHADERS.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         if (shaderProgram) {

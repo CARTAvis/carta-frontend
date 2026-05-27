@@ -99,8 +99,10 @@ export function getImageViewWeight(): number {
 }
 
 /** Track used IDs during a single createFlexLayoutModel() call to ensure uniqueness */
+/* eslint-disable @typescript-eslint/naming-convention */
 const usedIds = new Set<string>();
 const idCounters = new Map<string, number>();
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Gets a unique ID for a widget node. If the ID is already used (e.g., two

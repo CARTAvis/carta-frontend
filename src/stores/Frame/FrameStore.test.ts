@@ -1,8 +1,11 @@
+import * as AST from "ast_wrapper";
+
+import {SpectralSystem, SpectralType, SpectralUnit} from "enums";
 import {type FrameInfo, FrameStore} from "stores";
 
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 
-const stokesCubeframeInfo: FrameInfo = {
+const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
@@ -51,7 +54,7 @@ const stokesCubeframeInfo: FrameInfo = {
     generated: false
 };
 
-const emptyframeInfo: FrameInfo = {
+const EMPTYFRAME_INFO: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
@@ -66,10 +69,34 @@ const emptyframeInfo: FrameInfo = {
     generated: false
 };
 
+const ROTATED_STOKES_CUBEFRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
+        dimensions: 4,
+        width: 512,
+        height: 256,
+        depth: 8,
+        stokes: 2,
+        axesNumbers: {spatialX: 4, spatialY: 1, spectral: 3, stokes: 2, depth: 3},
+        headerEntries: [
+            {name: "CTYPE1", value: "DEC--SIN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "STOKES"},
+            {name: "CTYPE3", value: "FREQ"},
+            {name: "CRVAL3", value: "3.440912937187E+11", entryType: 1, numericValue: 344091293718.7},
+            {name: "CUNIT3", value: "Hz"},
+            {name: "CTYPE4", value: "RA---SIN"},
+            {name: "CUNIT4", value: "deg"},
+            {name: "SPECSYS", value: "LSRK"}
+        ]
+    } as any
+};
+
 describe("FrameStore", () => {
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
-            const frame = new FrameStore(stokesCubeframeInfo);
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             const beam = frame.beamProperties;
             expect(beam).toHaveProperty("majorAxis", 0.9315811991691589);
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
@@ -79,7 +106,7 @@ describe("FrameStore", () => {
 
     describe("beamAllChannels", () => {
         test("returns a list of beams from all channels with the current stokes", () => {
-            const frame = new FrameStore(stokesCubeframeInfo);
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             let beams = frame.beamAllChannels;
             expect(beams).toHaveLength(3);
             expect(beams[1]).toHaveProperty("majorAxis", 0.9315744042396545);
@@ -107,6 +134,13 @@ describe("FrameStore", () => {
             mockGetFreqInGHz = jest.spyOn(SpectralDefinition, "GetFreqInGHz");
         });
 
+        afterAll(() => {
+            mockBeamAllChannels.mockRestore();
+            mockSpectralAxis.mockRestore();
+            mockChannelInfo.mockRestore();
+            mockGetFreqInGHz.mockRestore();
+        });
+
         test("returns correct beam config", () => {
             mockBeamAllChannels.mockImplementation(() => [
                 {majorAxis: 0.9315811991691589, minorAxis: 0.8433393239974976, pa: 42.576087951660156},
@@ -121,11 +155,46 @@ describe("FrameStore", () => {
             });
             mockGetFreqInGHz.mockImplementation((a, b) => b);
 
-            const frame = new FrameStore(emptyframeInfo);
+            const frame = new FrameStore(EMPTYFRAME_INFO);
             const config = frame.intensityConfig;
             expect(config["bmaj"]).toEqual([0.9315811991691589, 0.9315744042396545, 0.9315680265426636]);
             expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);
             expect(config["freqGHz"]).toEqual([90.73634849111, 90.73631797353188, 90.73628745595375]);
+        });
+    });
+
+    describe("swapped spectral WCS updates", () => {
+        beforeEach(() => {
+            jest.clearAllMocks();
+            (AST.makeSwappedFrameSet as jest.Mock).mockReturnValue(1);
+        });
+
+        test("reapplies spectral unit and system when the swapped WCS is rebuilt", () => {
+            // Construct with EMPTYFRAME_INFO to avoid triggering the isSwappedZ constructor path
+            // (which calls unmocked AST internals), then swap in the real frameInfo before testing.
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+            frame["wcsInfo3D"] = 11;
+            frame["wcsInfo"] = 7;
+            frame["requiredChannel"] = 4;
+            frame["spectralType"] = SpectralType.FREQ;
+            frame["spectralUnit"] = SpectralUnit.GHZ;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            frame["restFreqStore"] = {restFreqInHz: undefined};
+
+            frame["updateDirAxisInfo"]();
+            expect(frame.isSwappedZ).toBe(true);
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true}));
+            frame.updateSpectralVsDirectionWcs();
+
+            expect(AST.makeSwappedFrameSet).toHaveBeenCalledWith(11, 1, 2, 4, 512);
+
+            const lastSettings = (AST.set as jest.Mock).mock.calls.at(-1)?.[1];
+            expect(lastSettings).toContain("Format(1)=dms.*");
+            expect(lastSettings).toContain('Unit(1)=""');
+            expect(lastSettings).toContain("Unit(2)=GHz");
+            expect(lastSettings).toContain("StdOfRest=LSRK");
+            expect(lastSettings).toContain("Label(2)=[LSRK] Frequency");
         });
     });
 });

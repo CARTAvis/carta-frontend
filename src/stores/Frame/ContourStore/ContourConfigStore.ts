@@ -8,19 +8,19 @@ import {ContourDashMode} from "enums";
 import {type PreferenceStore} from "stores";
 
 export class ContourConfigStore {
-    @observable enabled: boolean = false;
+    @observable isEnabled: boolean = false;
     @observable levels: number[] = [];
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
     @observable color: RGBColor;
-    @observable colormapEnabled: boolean = false;
+    @observable isColormapEnabled: boolean = false;
     @observable colormap: string;
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;
     @observable dashMode: ContourDashMode = ContourDashMode.NegativeOnly;
     @observable thickness: number;
-    @observable visible: boolean = true;
+    @observable isVisible: boolean = true;
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -30,14 +30,14 @@ export class ContourConfigStore {
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
         this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
+        this.isColormapEnabled = this.preferenceStore.isContourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
         this.thickness = this.preferenceStore.contourThickness;
         makeObservable(this);
     }
 
-    @action setEnabled(val: boolean) {
-        this.enabled = val;
+    @action setEnabled(isEnabled: boolean) {
+        this.isEnabled = isEnabled;
     }
 
     @action setContourConfiguration = (levels: number[], smoothingMode: CARTA.SmoothingMode, smoothingFactor: number) => {
@@ -66,8 +66,8 @@ export class ContourConfigStore {
         this.colormap = colormap;
     };
 
-    @action setColormapEnabled = (val: boolean) => {
-        this.colormapEnabled = val;
+    @action setColormapEnabled = (isColormapEnabled: boolean) => {
+        this.isColormapEnabled = isColormapEnabled;
     };
 
     @action setColormapBias = (val: number) => {
@@ -78,12 +78,12 @@ export class ContourConfigStore {
         this.colormapContrast = val;
     };
 
-    @action setVisible = (visible: boolean) => {
-        this.visible = visible;
+    @action setVisible = (isVisible: boolean) => {
+        this.isVisible = isVisible;
     };
 
     @action toggleVisibility = () => {
-        this.visible = !this.visible;
+        this.isVisible = !this.isVisible;
     };
 
     @action updateFromWorkspace = (config: WorkspaceContourConfig) => {
@@ -94,9 +94,9 @@ export class ContourConfigStore {
         this.colormapBias = config.colormapBias;
         this.dashMode = config.dashMode;
         this.thickness = config.thickness;
-        this.visible = config.visible;
+        this.isVisible = config.visible;
 
-        this.colormapEnabled = config.colormapEnabled;
+        this.isColormapEnabled = config.colormapEnabled;
         if (config.color) {
             this.color = config.color;
         }

@@ -18,21 +18,21 @@ import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
-    private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
-    private static readonly ACTIONS_COLUMN_DEFAULT_WIDTH = 75;
-    private static readonly NAME_COLUMN_MIN_WIDTH = 50;
-    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
-    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
-    private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 140;
-    private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
-    private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
-    private static readonly ROW_HEIGHT = 35;
-    private static readonly HEADER_ROW_HEIGHT = 25;
+    private static readonly ActionColumnDefaultWidth = 25;
+    private static readonly ActionsColumnDefaultWidth = 75;
+    private static readonly NameColumnMinWidth = 50;
+    private static readonly NameColumnDefaultWidth = 150;
+    private static readonly TypeColumnDefaultWidth = 90;
+    private static readonly CenterColumnDefaultWidth = 140;
+    private static readonly SizeColumnDefaultWidth = 160;
+    private static readonly RotationColumnDefaultWidth = 80;
+    private static readonly RowHeight = 35;
+    private static readonly HeaderRowHeight = 25;
     private listRef = React.createRef<any>();
     private readonly disposers: IReactionDisposer[] = [];
     private pendingScrollTarget = -1;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",
@@ -59,7 +59,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
-    @observable regionsLock: boolean = false;
+    @observable isRegionsLocked: boolean = false;
 
     private scrollToSelected = (selected: number) => {
         const listRefCurrent = this.listRef.current;
@@ -127,12 +127,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action private toggleRegionsLock = (locked?: boolean) => {
-        this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
+    @action private toggleRegionsLock = (isLocked?: boolean) => {
+        this.isRegionsLocked = isLocked !== undefined ? isLocked : !this.isRegionsLocked;
     };
 
     private syncRegionsLocked = () => {
-        AppStore.Instance.activeFrame?.regionSet.setLocked(this.regionsLock);
+        AppStore.Instance.activeFrame?.regionSet.setLocked(this.isRegionsLocked);
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
@@ -149,7 +149,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
-            if (this.regionsLock !== activeFrame?.regionSet.locked) {
+            if (this.isRegionsLocked !== activeFrame?.regionSet.isLocked) {
                 this.syncRegionsLocked();
             }
             this.toggleRegionVisibility();
@@ -184,8 +184,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionDeleteClicked = async () => {
         const appStore = AppStore.Instance;
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+        if (isConfirmed) {
             await appStore.deleteAllRegions();
         }
     };
@@ -201,7 +201,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const darkTheme = appStore.darkTheme;
+        const isDarkTheme = appStore.isDarkTheme;
         const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {
@@ -225,37 +225,37 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const padding = 5;
-        const requiredTableHeight = RegionListComponent.ROW_HEIGHT * (this.validRegions.length + 1);
+        const requiredTableHeight = RegionListComponent.RowHeight * (this.validRegions.length + 1);
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
 
-        let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
+        let nameWidth = RegionListComponent.NameColumnDefaultWidth;
         const availableWidth = this.width - 2 * padding;
         let fixedWidth =
-            RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH +
-            RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH +
-            RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH +
-            RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH +
-            RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
+            RegionListComponent.ActionsColumnDefaultWidth +
+            RegionListComponent.TypeColumnDefaultWidth +
+            RegionListComponent.CenterColumnDefaultWidth +
+            RegionListComponent.SizeColumnDefaultWidth +
+            RegionListComponent.RotationColumnDefaultWidth;
         nameWidth = availableWidth - fixedWidth;
 
-        let showSizeColumn = true;
-        let showRotationColumn = true;
+        let shouldShowSizeColumn = true;
+        let shouldShowRotationColumn = true;
         // Dynamically hide size column if name size is too short
-        if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
-            showSizeColumn = false;
-            fixedWidth -= RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH;
+        if (nameWidth < RegionListComponent.NameColumnMinWidth) {
+            shouldShowSizeColumn = false;
+            fixedWidth -= RegionListComponent.SizeColumnDefaultWidth;
             if (availableWidth > fixedWidth) {
                 nameWidth = availableWidth - fixedWidth;
             }
 
             // If it's still too short, hide the rotation column as well
-            if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
-                showRotationColumn = false;
-                fixedWidth -= RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
+            if (nameWidth < RegionListComponent.NameColumnMinWidth) {
+                shouldShowRotationColumn = false;
+                fixedWidth -= RegionListComponent.RotationColumnDefaultWidth;
                 if (availableWidth > fixedWidth) {
                     nameWidth = availableWidth - fixedWidth;
                 } else {
-                    nameWidth = RegionListComponent.NAME_COLUMN_MIN_WIDTH;
+                    nameWidth = RegionListComponent.NameColumnMinWidth;
                 }
             }
         }
@@ -266,7 +266,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
             const region = frame.regionSet.regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
-            const _isLocked = region.locked;
+            const _isRegionLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
@@ -278,7 +278,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
             return (
-                <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                <ButtonGroup className="float" style={{width: RegionListComponent.ActionColumnDefaultWidth * 3}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
                         <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
                     </Tooltip>
@@ -292,17 +292,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
+        const headerRenderer = (regionsVisibility: RegionsOpacity, isRegionsLock: boolean) => {
             return (props: {index: number; style: CSSProperties}) => {
-                const className = classNames("row-header", {[Classes.DARK]: darkTheme});
+                const className = classNames("row-header", {[Classes.DARK]: isDarkTheme});
 
                 return (
                     <div className={className} style={props.style}>
-                        <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                        <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
                             <Tooltip disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock all regions" position={Position.BOTTOM}>
                                 <Icon
-                                    icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                                    icon={isRegionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
                                     onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
                                     style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
                                 />
@@ -319,19 +319,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <div className="cell" style={{width: nameWidth}}>
                             Name
                         </div>
-                        <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>
+                        <div className="cell" style={{width: RegionListComponent.TypeColumnDefaultWidth}}>
                             Type
                         </div>
-                        <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
-                            {frame.validWcs ? "Center" : "Pixel Center"}
+                        <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
+                            {frame.isValidWcs ? "Center" : "Pixel Center"}
                         </div>
-                        {showSizeColumn && (
-                            <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
-                                {frame.validWcs ? "Size" : "Size (px)"}
+                        {shouldShowSizeColumn && (
+                            <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
+                                {frame.isValidWcs ? "Size" : "Size (px)"}
                             </div>
                         )}
-                        {showRotationColumn && (
-                            <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
+                        {shouldShowRotationColumn && (
+                            <div className="cell" style={{width: RegionListComponent.RotationColumnDefaultWidth}}>
                                 P.A. (deg)
                             </div>
                         )}
@@ -345,11 +345,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {[Classes.DARK]: darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {[Classes.DARK]: isDarkTheme, selected: selectedRegion?.regionId === region.regionId});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.validWcs) {
+                if (frame.isValidWcs) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -362,16 +362,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 centerContent = "Invalid";
             }
             const centerEntry = (
-                <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                     {centerContent}
                 </div>
             );
 
             let sizeEntry: React.ReactNode;
-            if (showSizeColumn) {
+            if (shouldShowSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.validWcs) {
+                    if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
@@ -405,7 +405,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Width and height";
                 }
                 sizeEntry = (
-                    <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT && (
                             <Tooltip content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}
@@ -420,16 +420,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 lockEntry = (
                     <div
                         className="cell"
-                        style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
-                        onClick={regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        style={{width: RegionListComponent.ActionColumnDefaultWidth}}
+                        onClick={regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
-                        <Icon icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"} style={{opacity: regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}} />
+                        <Icon
+                            icon={region.isLocked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                            style={{opacity: regionSet?.isLocked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                        />
                     </div>
                 );
             } else {
                 lockEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
+                    <div className="cell" style={{width: RegionListComponent.ActionsColumnDefaultWidth}}>
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
@@ -440,7 +443,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)} data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}>
+                    <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleFocusClicked(ev, region)} data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}>
                         <CustomIcon icon="center" />
                     </div>
                 );
@@ -449,7 +452,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let exportEntry: React.ReactNode;
             if (region.regionId) {
                 exportEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
                         <Tooltip content="Export region" position={Position.BOTTOM}>
                             <Icon icon="cloud-upload" />
                         </Tooltip>
@@ -467,13 +470,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className="cell" style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.nameString}
                     </div>
-                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                        {RegionStore.RegionTypeString(region.regionType)}
+                    <div className="cell" style={{width: RegionListComponent.TypeColumnDefaultWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
+                        {RegionStore.regionTypeString(region.regionType)}
                     </div>
                     {centerEntry}
-                    {showSizeColumn && sizeEntry}
-                    {showRotationColumn && (
-                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    {shouldShowSizeColumn && sizeEntry}
+                    {shouldShowRotationColumn && (
+                        <div className="cell" style={{width: RegionListComponent.RotationColumnDefaultWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                             {toFixed(region.rotation, 1)}
                         </div>
                     )}
@@ -484,22 +487,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (
             <ResizeDetector onResize={this.onResize}>
                 <div className="region-list-widget">
-                    <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})} data-testid="region-list-table">
+                    <div className={classNames("region-list-table", {[Classes.DARK]: isDarkTheme})} data-testid="region-list-table">
                         <List
-                            rowHeight={RegionListComponent.HEADER_ROW_HEIGHT}
-                            defaultHeight={RegionListComponent.HEADER_ROW_HEIGHT}
+                            rowHeight={RegionListComponent.HeaderRowHeight}
+                            defaultHeight={RegionListComponent.HeaderRowHeight}
                             rowCount={1}
-                            style={{height: RegionListComponent.HEADER_ROW_HEIGHT, width: "100%"}}
+                            style={{height: RegionListComponent.HeaderRowHeight, width: "100%"}}
                             className="list-header"
-                            rowComponent={headerRenderer(this.regionsVisibility, this.regionsLock)}
+                            rowComponent={headerRenderer(this.regionsVisibility, this.isRegionsLocked)}
                             rowProps={{} as any}
                         />
                         <List
                             onRowsRendered={this.onListRendered}
-                            defaultHeight={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
+                            defaultHeight={tableHeight - RegionListComponent.HeaderRowHeight - padding * 2}
                             rowCount={this.validRegions.length}
-                            rowHeight={RegionListComponent.ROW_HEIGHT}
-                            style={{height: tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2, width: "100%"}}
+                            rowHeight={RegionListComponent.RowHeight}
+                            style={{height: tableHeight - RegionListComponent.HeaderRowHeight - padding * 2, width: "100%"}}
                             listRef={this.listRef}
                             rowComponent={rowRenderer}
                             rowProps={{} as any}
@@ -524,7 +527,7 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
 
         const frame = this.props.frame;
         const region = this.props.region;
-        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.isValidWcs)) {
             return null;
         }
 

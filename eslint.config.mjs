@@ -15,7 +15,8 @@ export default [
             parser: tsParser,
             parserOptions: {
                 ecmaVersion: "latest",
-                sourceType: "module"
+                sourceType: "module",
+                project: ["./tsconfig.eslint.json"]
             }
         },
         plugins: {
@@ -26,6 +27,89 @@ export default [
             "@blueprintjs": bpEslintPlugin
         },
         rules: {
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "default",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                    trailingUnderscore: "forbid"
+                },
+                {
+                    selector: [
+                        "enumMember",
+                        "objectLiteralProperty",
+                        "typeProperty",
+                        "objectLiteralMethod",
+                        "typeMethod"
+                    ],
+                    format: null
+                },
+                {
+                    selector: ["class", "enum", "interface", "typeAlias", "typeParameter"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: "classProperty",
+                    modifiers: ["public", "static", "readonly"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "classProperty",
+                    modifiers: ["private", "static", "readonly"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "classProperty",
+                    modifiers: ["protected"],
+                    format: ["camelCase"],
+                },
+                {
+                    selector: "variable",
+                    modifiers: ["const", "global"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "variable",
+                    types: ["function"],
+                    modifiers: ["const", "global"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["public", "static"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "are", "should", "has", "have", "can", "did", "will"],
+                    leadingUnderscore: "allow",
+                },
+                // exceptions for certain patterns and don't follow the above conventions
+                // list of exception for legacy code (try not to add another exception):
+                // const N = maxIndex - minIndex;
+                // const M = controlPoints.length + (closed ? 1 : 0);
+                // const Jys = Object.values(Jansky);
+                // const SN = 2;
+                // const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
+                // const UIn8 = getBufferElementType(data) === "UIn8";
+                // return this.fixedParams.filter(p => p === true).length;
+                {
+                    selector: ["classProperty", "classicAccessor", "variable", "parameter"],
+                    filter: {
+                        regex: "^(N|M|p|UIn8|Iz|Jys|SN)$|^(CARTA|HDU|WCS)",
+                        match: true
+                    },
+                    format: null,
+                },
+            ],
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
                 "error",
@@ -54,7 +138,7 @@ export default [
                             "^@?\\w"
                         ],
                         [
-                            "^(components|enums|icons|models|services|stores|utilities)(/.*|$)"
+                            "^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"
                         ],
                         [
                             "^\\u0000"

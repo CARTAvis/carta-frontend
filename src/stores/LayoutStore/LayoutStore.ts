@@ -12,20 +12,20 @@ const MAX_LAYOUT = 10;
 export class LayoutStore {
     private static staticInstance: LayoutStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!LayoutStore.staticInstance) {
             LayoutStore.staticInstance = new LayoutStore();
         }
         return LayoutStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
     private layoutNameToBeSaved: string;
 
     @observable layoutModel: Model | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
-    @observable supportsServer: boolean = false;
+    @observable hasServerSupport: boolean = false;
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     // Reference to the FlexLayout Layout component (set from App.tsx)
@@ -60,7 +60,7 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach(presetName => {
-            const presetConfig = LayoutConfig.GetPresetConfig(presetName);
+            const presetConfig = LayoutConfig.getPresetConfig(presetName);
             if (presetConfig) {
                 this.layouts[presetName] = presetConfig;
             }
@@ -107,11 +107,11 @@ export class LayoutStore {
             content: []
         };
         // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
-        LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, []);
+        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, []);
 
         // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
         const dockedComponentConfigs: any[] = [];
-        const modelJson = LayoutConfig.CreateFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
+        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -150,7 +150,7 @@ export class LayoutStore {
             return;
         }
 
-        const configToSave = LayoutConfig.CreateConfigToSave(appStore, currentModelJson);
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
         if (!configToSave) {
             appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
             return;
@@ -171,9 +171,9 @@ export class LayoutStore {
         }
     }
 
-    private handleSaveResult = (success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
+    private handleSaveResult = (isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -227,9 +227,9 @@ export class LayoutStore {
         }
     }
 
-    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
+    private handleRenameResult = (oldName: string, newName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
             }
@@ -263,9 +263,9 @@ export class LayoutStore {
         }
     }
 
-    private handleDeleteResult = (layoutName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
+    private handleDeleteResult = (layoutName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }

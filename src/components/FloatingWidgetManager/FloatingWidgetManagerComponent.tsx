@@ -36,10 +36,12 @@ import {AppStore, CatalogStore, type WidgetConfig, type WidgetProps, WidgetsStor
 
 type FloatingWidgetRenderer = (widgetConfig: WidgetConfig) => React.ReactNode;
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const RenderDocklessWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
     return widgetConfig => <Component id={widgetConfig.id} docked={false} />;
 };
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const RenderFloatingSettingsWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
     return widgetConfig => <Component id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
 };
@@ -108,22 +110,22 @@ export class FloatingWidgetManagerComponent extends React.Component {
     private getWidgetContentRenderers = () => {
         if (!this.floatingWidgetContentRenderers) {
             this.floatingWidgetContentRenderers = new Map<string, FloatingWidgetRenderer>([
-                [ImageViewComponent.WIDGET_CONFIG.type, RenderDocklessWidget(ImageViewComponent)],
-                [LayerListComponent.WIDGET_CONFIG.type, RenderDocklessWidget(LayerListComponent)],
-                [LogComponent.WIDGET_CONFIG.type, RenderDocklessWidget(LogComponent)],
-                [RenderConfigComponent.WIDGET_CONFIG.type, RenderDocklessWidget(RenderConfigComponent)],
-                [AnimatorComponent.WIDGET_CONFIG.type, RenderDocklessWidget(AnimatorComponent)],
-                [ChannelMapControlComponent.WIDGET_CONFIG.type, RenderDocklessWidget(ChannelMapControlComponent)],
-                [SpatialProfilerComponent.WIDGET_CONFIG.type, RenderDocklessWidget(SpatialProfilerComponent)],
-                [SpectralProfilerComponent.WIDGET_CONFIG.type, RenderDocklessWidget(SpectralProfilerComponent)],
-                [SpectralLineQueryComponent.WIDGET_CONFIG.type, RenderDocklessWidget(SpectralLineQueryComponent)],
-                [StatsComponent.WIDGET_CONFIG.type, RenderDocklessWidget(StatsComponent)],
-                [HistogramComponent.WIDGET_CONFIG.type, RenderDocklessWidget(HistogramComponent)],
-                [RegionListComponent.WIDGET_CONFIG.type, RenderDocklessWidget(RegionListComponent)],
-                [StokesAnalysisComponent.WIDGET_CONFIG.type, RenderDocklessWidget(StokesAnalysisComponent)],
-                [CursorInfoComponent.WIDGET_CONFIG.type, RenderDocklessWidget(CursorInfoComponent)],
-                [CatalogPlotComponent.WIDGET_CONFIG.type, RenderDocklessWidget(CatalogPlotComponent)],
-                [PvGeneratorComponent.WIDGET_CONFIG.type, RenderDocklessWidget(PvGeneratorComponent)]
+                [ImageViewComponent.WidgetConfig.type, RenderDocklessWidget(ImageViewComponent)],
+                [LayerListComponent.WidgetConfig.type, RenderDocklessWidget(LayerListComponent)],
+                [LogComponent.WidgetConfig.type, RenderDocklessWidget(LogComponent)],
+                [RenderConfigComponent.WidgetConfig.type, RenderDocklessWidget(RenderConfigComponent)],
+                [AnimatorComponent.WidgetConfig.type, RenderDocklessWidget(AnimatorComponent)],
+                [ChannelMapControlComponent.WidgetConfig.type, RenderDocklessWidget(ChannelMapControlComponent)],
+                [SpatialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpatialProfilerComponent)],
+                [SpectralProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpectralProfilerComponent)],
+                [SpectralLineQueryComponent.WidgetConfig.type, RenderDocklessWidget(SpectralLineQueryComponent)],
+                [StatsComponent.WidgetConfig.type, RenderDocklessWidget(StatsComponent)],
+                [HistogramComponent.WidgetConfig.type, RenderDocklessWidget(HistogramComponent)],
+                [RegionListComponent.WidgetConfig.type, RenderDocklessWidget(RegionListComponent)],
+                [StokesAnalysisComponent.WidgetConfig.type, RenderDocklessWidget(StokesAnalysisComponent)],
+                [CursorInfoComponent.WidgetConfig.type, RenderDocklessWidget(CursorInfoComponent)],
+                [CatalogPlotComponent.WidgetConfig.type, RenderDocklessWidget(CatalogPlotComponent)],
+                [PvGeneratorComponent.WidgetConfig.type, RenderDocklessWidget(PvGeneratorComponent)]
             ]);
         }
 
@@ -133,14 +135,14 @@ export class FloatingWidgetManagerComponent extends React.Component {
     private getWidgetSettingsRenderers = () => {
         if (!this.floatingWidgetSettingsRenderers) {
             this.floatingWidgetSettingsRenderers = new Map<string, FloatingWidgetRenderer>([
-                [ImageViewComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(ImageViewSettingsPanelComponent)],
-                [StokesAnalysisComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(StokesAnalysisSettingsPanelComponent)],
-                [SpectralProfilerComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(SpectralProfilerSettingsPanelComponent)],
-                [SpatialProfilerComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(SpatialProfilerSettingsPanelComponent)],
-                [RenderConfigComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(RenderConfigSettingsPanelComponent)],
-                [HistogramComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(HistogramSettingsPanelComponent)],
-                [CatalogOverlayComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
-                [LayerListComponent.WIDGET_CONFIG.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)]
+                [ImageViewComponent.WidgetConfig.type, RenderFloatingSettingsWidget(ImageViewSettingsPanelComponent)],
+                [StokesAnalysisComponent.WidgetConfig.type, RenderFloatingSettingsWidget(StokesAnalysisSettingsPanelComponent)],
+                [SpectralProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(SpectralProfilerSettingsPanelComponent)],
+                [SpatialProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(SpatialProfilerSettingsPanelComponent)],
+                [RenderConfigComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RenderConfigSettingsPanelComponent)],
+                [HistogramComponent.WidgetConfig.type, RenderFloatingSettingsWidget(HistogramSettingsPanelComponent)],
+                [CatalogOverlayComponent.WidgetConfig.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
+                [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)]
             ]);
         }
 
@@ -155,19 +157,19 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
         switch (widget.type) {
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 this.removeCatalogOverlayWidget(widget.componentId);
                 break;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
+            case CatalogPlotComponent.WidgetConfig.type:
                 this.removeCatalogPlotWidget(widget.componentId);
                 break;
-            case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
+            case LayerListSettingsPanelComponent.WidgetConfig.type:
                 this.removeLayerListSettingsWidget(widget);
                 break;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
+            case PvPreviewComponent.WidgetConfig.type:
                 this.removePvPreviewWidget(widget);
                 break;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
+            case PvGeneratorComponent.WidgetConfig.type:
                 this.removePvGeneratorWidget(widget.id);
                 break;
             default:
@@ -177,11 +179,11 @@ export class FloatingWidgetManagerComponent extends React.Component {
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
-        if (widgetConfig.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+        if (widgetConfig.type === CatalogOverlayComponent.WidgetConfig.type) {
             return <CatalogOverlayComponent id={widgetConfig.componentId ?? ""} docked={false} />;
         }
 
-        if (widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type) {
+        if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
             return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
         }
 
@@ -190,7 +192,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
             return renderWidget(widgetConfig);
         }
 
-        return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title ?? ""} />;
+        return <PlaceholderComponent id={widgetConfig.id} isDocked={false} label={widgetConfig.title ?? ""} />;
     }
 
     private getWidgetSettings(widgetConfig: WidgetConfig) {
@@ -217,12 +219,12 @@ export class FloatingWidgetManagerComponent extends React.Component {
         return (
             <div>
                 {widgetConfigs.map(w => {
-                    let showSettingsButton = this.showFloatingSettingsButton(w);
-                    if (w.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-                        showSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
+                    let shouldShowSettingsButton = this.showFloatingSettingsButton(w);
+                    if (w.type === RenderConfigComponent.WidgetConfig.type) {
+                        shouldShowSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
                     }
 
-                    const showPinButton = this.showPin(w);
+                    const shouldShowPinButton = this.showPin(w);
                     const id = this.getFloatingWidgetId(w);
 
                     const zIndex = zIndexManager.findIndex(id);
@@ -235,13 +237,13 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={zIndex}
-                                showPinButton={showPinButton}
+                                shouldShowPinButton={shouldShowPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                showFloatingSettingsButton={showSettingsButton}
+                                shouldShowFloatingSettingsButton={shouldShowSettingsButton}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
+                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );

@@ -10,7 +10,7 @@ import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "u
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!AnimatorStore.staticInstance) {
             AnimatorStore.staticInstance = new AnimatorStore();
         }
@@ -24,12 +24,12 @@ export class AnimatorStore {
     @observable maxStep: number = 50;
     @observable minStep: number = 1;
     @observable animationMode: AnimationMode = AnimationMode.CHANNEL;
-    @observable animationActive: boolean = false;
+    @observable isAnimationActive: boolean = false;
     @observable playMode: PlayMode = PlayMode.FORWARD;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
-        if (this.animationActive) {
+        if (this.isAnimationActive) {
             return;
         }
         this.animationMode = val;
@@ -44,7 +44,7 @@ export class AnimatorStore {
     };
 
     @flow.bound *startAnimation() {
-        if (this.startAnimationDisabled) {
+        if (this.shouldStartAnimationDisable) {
             return;
         }
 
@@ -57,7 +57,7 @@ export class AnimatorStore {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
             }
-            this.animationActive = true;
+            this.isAnimationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -116,7 +116,7 @@ export class AnimatorStore {
             })
         };
 
-        this.animationActive = true;
+        this.isAnimationActive = true;
 
         try {
             yield appStore.backendService.startAnimation(animationMessage);
@@ -136,7 +136,7 @@ export class AnimatorStore {
         this.stopHandle = undefined;
 
         // Ignore stop when not playing
-        if (!this.animationActive) {
+        if (!this.isAnimationActive) {
             return;
         }
 
@@ -146,7 +146,7 @@ export class AnimatorStore {
             return;
         }
 
-        this.animationActive = false;
+        this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
@@ -177,7 +177,7 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
+        if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
             AppStore.Instance.nextImage();
         }
     };
@@ -195,12 +195,12 @@ export class AnimatorStore {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 
-    @computed get serverAnimationActive() {
-        return this.animationActive && this.animationMode !== AnimationMode.FRAME;
+    @computed get isServerAnimationActive() {
+        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
-    @computed get startAnimationDisabled() {
+    @computed get shouldStartAnimationDisable() {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return true;

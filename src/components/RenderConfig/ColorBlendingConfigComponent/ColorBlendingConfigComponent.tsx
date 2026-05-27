@@ -19,7 +19,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
+    const colormapSetOptions = Array.from(ColorBlendingStore.COLORMAP_SETS, ([set, colormapSetConfig]) => (
         <MenuItem
             text=""
             icon={
@@ -59,7 +59,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 <Tooltip content="Raster scaling matching enabled" disabled={!frame.rasterScalingReference}>
                     <ColormapComponent
                         disabled={!!frame.rasterScalingReference}
-                        inverted={renderConfig.inverted}
+                        inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
@@ -117,7 +117,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const buttonTextCutoff = 550;
 
     return (
-        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.darkTheme})}>
+        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.isDarkTheme})}>
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>

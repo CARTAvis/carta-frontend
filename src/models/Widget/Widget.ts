@@ -56,69 +56,69 @@ export interface DefaultWidgetConfig {
 
 export const GetDefaultWidgetConfig = (type: string): DefaultWidgetConfig => {
     switch (type) {
-        case ImageViewComponent.WIDGET_CONFIG.type:
-            return ImageViewComponent.WIDGET_CONFIG;
-        case RenderConfigComponent.WIDGET_CONFIG.type:
-            return RenderConfigComponent.WIDGET_CONFIG;
-        case LayerListComponent.WIDGET_CONFIG.type:
-            return LayerListComponent.WIDGET_CONFIG;
-        case LogComponent.WIDGET_CONFIG.type:
-            return LogComponent.WIDGET_CONFIG;
-        case AnimatorComponent.WIDGET_CONFIG.type:
-            return AnimatorComponent.WIDGET_CONFIG;
-        case ChannelMapControlComponent.WIDGET_CONFIG.type:
-            return ChannelMapControlComponent.WIDGET_CONFIG;
-        case SpatialProfilerComponent.WIDGET_CONFIG.type:
-            return SpatialProfilerComponent.WIDGET_CONFIG;
-        case SpectralProfilerComponent.WIDGET_CONFIG.type:
-            return SpectralProfilerComponent.WIDGET_CONFIG;
-        case StatsComponent.WIDGET_CONFIG.type:
-            return StatsComponent.WIDGET_CONFIG;
-        case HistogramComponent.WIDGET_CONFIG.type:
-            return HistogramComponent.WIDGET_CONFIG;
-        case RegionListComponent.WIDGET_CONFIG.type:
-            return RegionListComponent.WIDGET_CONFIG;
-        case StokesAnalysisComponent.WIDGET_CONFIG.type:
-            return StokesAnalysisComponent.WIDGET_CONFIG;
-        case CatalogOverlayComponent.WIDGET_CONFIG.type:
-            return CatalogOverlayComponent.WIDGET_CONFIG;
-        case CatalogPlotComponent.WIDGET_CONFIG.type:
-            return CatalogPlotComponent.WIDGET_CONFIG;
-        case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-            return SpectralLineQueryComponent.WIDGET_CONFIG;
-        case CursorInfoComponent.WIDGET_CONFIG.type:
-            return CursorInfoComponent.WIDGET_CONFIG;
-        case PvGeneratorComponent.WIDGET_CONFIG.type:
-            return PvGeneratorComponent.WIDGET_CONFIG;
-        case PvPreviewComponent.WIDGET_CONFIG.type:
-            return PvPreviewComponent.WIDGET_CONFIG;
+        case ImageViewComponent.WidgetConfig.type:
+            return ImageViewComponent.WidgetConfig;
+        case RenderConfigComponent.WidgetConfig.type:
+            return RenderConfigComponent.WidgetConfig;
+        case LayerListComponent.WidgetConfig.type:
+            return LayerListComponent.WidgetConfig;
+        case LogComponent.WidgetConfig.type:
+            return LogComponent.WidgetConfig;
+        case AnimatorComponent.WidgetConfig.type:
+            return AnimatorComponent.WidgetConfig;
+        case ChannelMapControlComponent.WidgetConfig.type:
+            return ChannelMapControlComponent.WidgetConfig;
+        case SpatialProfilerComponent.WidgetConfig.type:
+            return SpatialProfilerComponent.WidgetConfig;
+        case SpectralProfilerComponent.WidgetConfig.type:
+            return SpectralProfilerComponent.WidgetConfig;
+        case StatsComponent.WidgetConfig.type:
+            return StatsComponent.WidgetConfig;
+        case HistogramComponent.WidgetConfig.type:
+            return HistogramComponent.WidgetConfig;
+        case RegionListComponent.WidgetConfig.type:
+            return RegionListComponent.WidgetConfig;
+        case StokesAnalysisComponent.WidgetConfig.type:
+            return StokesAnalysisComponent.WidgetConfig;
+        case CatalogOverlayComponent.WidgetConfig.type:
+            return CatalogOverlayComponent.WidgetConfig;
+        case CatalogPlotComponent.WidgetConfig.type:
+            return CatalogPlotComponent.WidgetConfig;
+        case SpectralLineQueryComponent.WidgetConfig.type:
+            return SpectralLineQueryComponent.WidgetConfig;
+        case CursorInfoComponent.WidgetConfig.type:
+            return CursorInfoComponent.WidgetConfig;
+        case PvGeneratorComponent.WidgetConfig.type:
+            return PvGeneratorComponent.WidgetConfig;
+        case PvPreviewComponent.WidgetConfig.type:
+            return PvPreviewComponent.WidgetConfig;
         default:
-            return PlaceholderComponent.WIDGET_CONFIG;
+            return PlaceholderComponent.WidgetConfig;
     }
 };
 
 export const GetDefaultWidgetSettingsConfig = (type: string): DefaultWidgetConfig => {
     switch (type) {
-        case ImageViewComponent.WIDGET_CONFIG.type:
-            return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
-        case StokesAnalysisComponent.WIDGET_CONFIG.type:
-            return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
-        case SpectralProfilerComponent.WIDGET_CONFIG.type:
-            return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
-        case SpatialProfilerComponent.WIDGET_CONFIG.type:
-            return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-        case RenderConfigComponent.WIDGET_CONFIG.type:
-            return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
-        case HistogramComponent.WIDGET_CONFIG.type:
-            return HistogramSettingsPanelComponent.WIDGET_CONFIG;
-        case CatalogOverlayComponent.WIDGET_CONFIG.type:
-            return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
-        case LayerListComponent.WIDGET_CONFIG.type:
-            return LayerListSettingsPanelComponent.WIDGET_CONFIG;
-        case PvGeneratorComponent.WIDGET_CONFIG.type:
-            return PvPreviewComponent.WIDGET_CONFIG;
+        case ImageViewComponent.WidgetConfig.type:
+            return ImageViewSettingsPanelComponent.WidgetConfig;
+        case StokesAnalysisComponent.WidgetConfig.type:
+            return StokesAnalysisSettingsPanelComponent.WidgetConfig;
+        case SpectralProfilerComponent.WidgetConfig.type:
+            return SpectralProfilerSettingsPanelComponent.WidgetConfig;
+        case SpatialProfilerComponent.WidgetConfig.type:
+            return SpatialProfilerSettingsPanelComponent.WidgetConfig;
+        case RenderConfigComponent.WidgetConfig.type:
+            return RenderConfigSettingsPanelComponent.WidgetConfig;
+        case HistogramComponent.WidgetConfig.type:
+            return HistogramSettingsPanelComponent.WidgetConfig;
+        case CatalogOverlayComponent.WidgetConfig.type:
+            return CatalogOverlayPlotSettingsPanelComponent.WidgetConfig;
+        case LayerListComponent.WidgetConfig.type:
+            return LayerListSettingsPanelComponent.WidgetConfig;
+        case PvGeneratorComponent.WidgetConfig.type:
+            return PvPreviewComponent.WidgetConfig;
         default:
-            return PlaceholderComponent.WIDGET_CONFIG;
+            return PlaceholderComponent.WidgetConfig;
     }
 };
 
