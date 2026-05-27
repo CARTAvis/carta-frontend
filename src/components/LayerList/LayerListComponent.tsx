@@ -212,9 +212,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let spatialMatchingButton: React.ReactNode;
         if (appStore.spatialReference) {
+            const isSpatialReference = frame === appStore.spatialReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.spatialReference) {
-                tooltipSubtitle = `${frame.filename} is the current spatial reference`;
+            if (isSpatialReference) {
+                tooltipSubtitle = "Click to match or unmatch all images to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
             }
@@ -232,12 +233,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.spatialReference})}
+                        className={classNames({outlined: isSpatialReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spatialReference}
                         intent={frame.spatialReference ? "success" : "none"}
-                        onClick={() => appStore.toggleSpatialMatching(frame)}
+                        onClick={() => (isSpatialReference ? appStore.matchAllSpatial() : appStore.toggleSpatialMatching(frame))}
                         data-testid={"image-list-" + rowIndex + "-matching-xy"}
                     >
                         XY
@@ -248,9 +249,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let spectralMatchingButton: React.ReactNode;
         if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
+            const isSpectralReference = frame === appStore.spectralReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.spectralReference) {
-                tooltipSubtitle = `${frame.filename} is the current spectral reference`;
+            if (isSpectralReference) {
+                tooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
@@ -268,12 +270,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.spectralReference})}
+                        className={classNames({outlined: isSpectralReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
-                        onClick={() => appStore.toggleSpectralMatching(frame)}
+                        onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
                         data-testid={"image-list-" + rowIndex + "-matching-z"}
                     >
                         Z
@@ -284,9 +286,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let renderConfigMatchingButton: React.ReactNode;
         if (appStore.rasterScalingReference) {
+            const isRasterScalingReference = frame === appStore.rasterScalingReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.rasterScalingReference) {
-                tooltipSubtitle = `${frame.filename} is the current raster scaling reference`;
+            if (isRasterScalingReference) {
+                tooltipSubtitle = "Click to match or unmatch all images to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
             }
@@ -304,12 +307,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.rasterScalingReference})}
+                        className={classNames({outlined: isRasterScalingReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.rasterScalingReference}
                         intent={frame.rasterScalingReference ? "success" : "none"}
-                        onClick={() => appStore.toggleRasterScalingMatching(frame)}
+                        onClick={() => (isRasterScalingReference ? appStore.matchAllRasterScaling() : appStore.toggleRasterScalingMatching(frame))}
+                        data-testid={"image-list-" + rowIndex + "-matching-r"}
                     >
                         R
                     </AnchorButton>
@@ -391,11 +395,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             } else {
                 const frame = image?.store;
                 if (frame) {
+                    const canSetSpectralReference = frame.frameInfo.fileInfoExtended.depth > 1;
+                    const areAllReferencesAlreadySet = appStore.spatialReference === frame && appStore.rasterScalingReference === frame && (!canSetSpectralReference || appStore.spectralReference === frame);
                     return (
                         <Menu>
                             <MenuDivider title={frame.filename} />
+                            <MenuItem disabled={areAllReferencesAlreadySet} text="Set as all references" onClick={() => appStore.setAllReferences(frame)} />
                             <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                            <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                            <MenuItem disabled={appStore.spectralReference === frame || !canSetSpectralReference} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                             <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                             <MenuDivider />
                             <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
