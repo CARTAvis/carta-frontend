@@ -28,11 +28,11 @@ export class App extends React.Component {
         }
     };
 
-    private renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
+    private renderAlertComponent = (alertStore: AlertStore, isDarkTheme: boolean) => {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: isDarkTheme})} isOpen={alertStore.isAlertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -40,8 +40,8 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({[Classes.DARK]: darkTheme})}
-                        isOpen={alertStore.alertVisible}
+                        className={classNames({[Classes.DARK]: isDarkTheme})}
+                        isOpen={alertStore.isAlertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
                         intent={Intent.DANGER}
@@ -52,7 +52,7 @@ export class App extends React.Component {
                 );
             case AlertType.Retry:
                 const cancelProps =
-                    alertStore.showDashboardLink && ApiService.runtimeConfig?.dashboardAddress
+                    alertStore.shouldShowDashboardLink && ApiService.runtimeConfig?.dashboardAddress
                         ? {
                               cancelButtonText: "Open CARTA Dashboard",
                               onCancel: () => window.open(ApiService.runtimeConfig.dashboardAddress, "_blank")
@@ -62,8 +62,8 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({[Classes.DARK]: darkTheme})}
-                        isOpen={alertStore.alertVisible}
+                        className={classNames({[Classes.DARK]: isDarkTheme})}
+                        isOpen={alertStore.isAlertVisible}
                         confirmButtonText="Retry"
                         {...cancelProps}
                         intent={Intent.DANGER}
@@ -85,10 +85,10 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
-        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
+        const className = classNames("App", {[Classes.DARK]: appStore.isDarkTheme});
+        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.isDarkTheme});
 
-        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
+        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.isDarkTheme);
 
         return (
             <div className={className}>
@@ -97,9 +97,9 @@ export class App extends React.Component {
                 <TaskProgressDialogComponent
                     progress={0}
                     timeRemaining={0}
-                    isOpen={appStore.resumingSession || appStore.loadingWorkspace}
+                    isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
                     cancellable={false}
-                    text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
+                    text={appStore.isResumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
                 <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
                     <div className={glClassName} ref={this.setAppContainerRef} />

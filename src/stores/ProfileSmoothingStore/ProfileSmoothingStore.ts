@@ -53,8 +53,8 @@ export class ProfileSmoothingStore {
         }
     };
 
-    @action setIsOverlayOn = (val: boolean) => {
-        this.isOverlayOn = val;
+    @action setIsOverlayOn = (isOverlayOn: boolean) => {
+        this.isOverlayOn = isOverlayOn;
     };
 
     @action setBoxcarSize = (val: number) => {

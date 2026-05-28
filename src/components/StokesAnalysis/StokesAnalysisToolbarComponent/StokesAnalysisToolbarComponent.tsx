@@ -33,25 +33,25 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
     public render() {
         const widgetStore = this.props.widgetStore;
         const appStore = AppStore.Instance;
-        let enableFractionalPol = false;
+        let isFractionalPolEnabled = false;
 
         if (appStore?.activeFrame?.stokesFiles?.length) {
             appStore.activeFrame.stokesFiles.forEach(file => {
                 if (file.polarizationType === CARTA.PolarizationType.I) {
-                    enableFractionalPol = true;
+                    isFractionalPolEnabled = true;
                 }
             });
         } else {
             if (widgetStore.effectiveFrame?.regionSet) {
-                enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+                isFractionalPolEnabled = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
             }
         }
 
         return (
             <div className="stokes-analysis-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} onFrameChanged={this.handleFrameChanged} />
-                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
-                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!isFractionalPolEnabled}>
+                    <Switch checked={widgetStore.isFractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!isFractionalPolEnabled} />
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">

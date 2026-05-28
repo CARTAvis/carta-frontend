@@ -8,7 +8,7 @@ import {type HistogramWidgetStore} from "stores/Widgets";
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
     private static readonly BinsLowerBound = 2;
-    private resetMaxNumBins: boolean;
+    private shouldResetMaxNumBins: boolean;
     private minPixIntent: Intent;
     private maxPixIntent: Intent;
 
@@ -27,17 +27,17 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get sliderMaxValue(): number {
-        if (this.resetMaxNumBins) {
+        if (this.shouldResetMaxNumBins) {
             const currentNumBins = this.widgetStore.currentNumBins ?? 0;
             this.widgetStore.setMaxNumBins(currentNumBins * 2);
-            this.resetMaxNumBins = false;
+            this.shouldResetMaxNumBins = false;
         }
         return this.widgetStore.maxNumBins;
     }
 
-    private onSetAutoBounds = (autoBounds: boolean) => {
-        this.widgetStore.setAutoBounds(autoBounds);
-        if (autoBounds) {
+    private onSetAutoBounds = (isAutoBounds: boolean) => {
+        this.widgetStore.setAutoBounds(isAutoBounds);
+        if (isAutoBounds) {
             this.minPixIntent = Intent.NONE;
             this.maxPixIntent = Intent.NONE;
         }
@@ -67,9 +67,9 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         this.minPixIntent = Intent.NONE;
     };
 
-    private onSetAutoBins = (autoBin: boolean) => {
-        this.widgetStore.setAutoBins(autoBin);
-        this.resetMaxNumBins = true;
+    private onSetAutoBins = (isAutoBin: boolean) => {
+        this.widgetStore.setAutoBins(isAutoBin);
+        this.shouldResetMaxNumBins = true;
     };
 
     private onMaxNumBinsChanged = (currentMaxNumBins: number) => {
@@ -84,7 +84,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
     private onResetConfig = () => {
         this.widgetStore.onResetConfig();
-        this.resetMaxNumBins = true;
+        this.shouldResetMaxNumBins = true;
 
         // Reset the intent for min/max pixel filler
         this.minPixIntent = Intent.NONE;
@@ -112,14 +112,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
                     <Switch
-                        checked={this.widgetStore.currentAutoBounds}
+                        checked={this.widgetStore.isCurrentAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBounds(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.currentAutoBounds && (
+                {!this.widgetStore.isCurrentAutoBounds && (
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
                             <Tooltip content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
@@ -140,14 +140,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto bins"}>
                     <Switch
-                        checked={this.widgetStore.currentAutoBins}
+                        checked={this.widgetStore.isCurrentAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBins(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.currentAutoBins && (
+                {!this.widgetStore.isCurrentAutoBins && (
                     <div className="line-boundary">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
@@ -171,7 +171,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetConfigPanel = (
             <React.Fragment>
                 <FormGroup label="Reset config" inline={true}>
-                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
+                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.isCurrentAutoBounds && this.widgetStore.isCurrentAutoBins} onClick={this.onResetConfig}>
                         Reset config
                     </Button>
                 </FormGroup>

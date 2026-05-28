@@ -171,6 +171,13 @@ EMSCRIPTEN_KEEPALIVE AstCmpMap* getSpatialMapping(AstFrameSet* src, AstFrameSet*
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
+    auto clearStatusAndReturnNull = []() -> AstFrameSet* {
+        if (!astOK) {
+            astClearStatus;
+        }
+        return nullptr;
+    };
+
     // 2D scale and rotation matrix
     double sinTheta = sin(angle);
     double cosTheta = cos(angle);
@@ -179,7 +186,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
 
     if (matrixMap == AST__NULL) {
         cout << "Creating matrix map failed." << endl;
-        return nullptr;
+        return clearStatusAndReturnNull();
     }
 
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsInfo, AST__BASE);
@@ -194,13 +201,57 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     AstShiftMap* shiftMapToOrigin = astShiftMap(2, offsetToOrigin, "");
     AstShiftMap* shiftMapFromOrigin = astShiftMap(2, offsetFromOrigin, "");
 
-    //  Combined mapping
+    // Combined mapping
     AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
     AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
+
+    auto cleanUpAfterFailure = [&]() {
+        if (wcsInfoTransformed) {
+            astDelete(wcsInfoTransformed);
+        }
+        if (combinedMap2) {
+            astAnnul(combinedMap2);
+        }
+        if (combinedMap) {
+            astAnnul(combinedMap);
+        }
+        if (shiftMapFromOrigin) {
+            astAnnul(shiftMapFromOrigin);
+        }
+        if (shiftMapToOrigin) {
+            astAnnul(shiftMapToOrigin);
+        }
+        if (pixToSkyMapping) {
+            astAnnul(pixToSkyMapping);
+        }
+        if (skyFrame) {
+            astAnnul(skyFrame);
+        }
+        if (pixFrameCopy) {
+            astAnnul(pixFrameCopy);
+        }
+        if (pixFrame) {
+            astAnnul(pixFrame);
+        }
+        if (matrixMap) {
+            astAnnul(matrixMap);
+        }
+    };
+
+    if (!astOK || !pixFrame || !pixFrameCopy || !skyFrame || !pixToSkyMapping || !wcsInfoTransformed || !shiftMapToOrigin || !shiftMapFromOrigin || !combinedMap || !combinedMap2) {
+        cout << "Creating transformed frame set failed." << endl;
+        cleanUpAfterFailure();
+        return clearStatusAndReturnNull();
+    }
 
     astAddFrame(wcsInfoTransformed, 1, combinedMap2, pixFrameCopy);
     astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
     astSetI(wcsInfoTransformed, "Current", 3);
+    if (!astOK) {
+        cout << "Creating transformed frame set failed." << endl;
+        cleanUpAfterFailure();
+        return clearStatusAndReturnNull();
+    }
     return wcsInfoTransformed;
 }
 

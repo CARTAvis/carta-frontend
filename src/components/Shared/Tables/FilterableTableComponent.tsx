@@ -24,9 +24,9 @@ export class FilterableTableComponentProps {
     columnHeaders: Array<CARTA.ICatalogHeader>;
     numVisibleRows: number;
     columnWidths?: Array<number>;
-    loadingCell?: boolean;
+    isLoadingCell?: boolean;
     selectedDataIndex?: number[];
-    showSelectedData?: boolean;
+    shouldShowSelectedData?: boolean;
     updateTableRef?: (ref: Table2) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
@@ -35,7 +35,7 @@ export class FilterableTableComponentProps {
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType | null) => void;
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType | null};
-    disableSort?: boolean;
+    shouldDisableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
     sortedIndexMap?: Array<number>;
     sortedIndices?: Array<number>;
@@ -146,9 +146,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private renderCheckboxColumn = (columnHeader: CARTA.ICatalogHeader, columnData: any) => {
-        let selected = 0;
-        columnData?.forEach(isSelected => (selected += isSelected ? 1 : 0));
-        const selectionType = selected === 0 ? RowSelectionType.None : selected === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate;
+        let selectedCount = 0;
+        columnData?.forEach(isSelected => (selectedCount += isSelected ? 1 : 0));
+        const selectionType = selectedCount === 0 ? RowSelectionType.None : selectedCount === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate;
 
         return (
             <Column
@@ -175,7 +175,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
-            rowIndex = this.props.showSelectedData && this.props.sortedIndices ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
+            rowIndex = this.props.shouldShowSelectedData && this.props.sortedIndices ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
         }
         let cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         if (typeof cellContext === "boolean" && this.props.catalogType === CatalogType.FILE) {
@@ -201,9 +201,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 );
             }
         }
-        const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
+        const isSelected = dataIndex && dataIndex.includes(index) && !this.props.shouldShowSelectedData;
         return (
-            <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
+            <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={isSelected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
                 <>
                     <div data-testid={"filterable-table-" + rowIndex + "-" + columnIndex}>{cell}</div>
                 </>
@@ -230,7 +230,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const filterSyntax = column.dataType ? this.getFilterSyntax(column.dataType) : null;
         const sortingInfo = this.props.sortingInfo;
         const headerDescription = controlHeader?.dataIndex != null ? this.props.tableHeaders?.[controlHeader.dataIndex]?.description : undefined;
-        const disableSort = this.props.disableSort;
+        const shouldDisableSort = this.props.shouldDisableSort;
         const nameRenderer = () => {
             // sharing css with fileList table
             let sortIcon = "sort";
@@ -247,10 +247,10 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 }
             }
             return (
-                <div className="sort-label" onClick={() => (disableSort || !column.name ? null : this.props.updateSortRequest?.(column.name, nextSortType))}>
-                    <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
+                <div className="sort-label" onClick={() => (shouldDisableSort || !column.name ? null : this.props.updateSortRequest?.(column.name, nextSortType))}>
+                    <Label disabled={shouldDisableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
+                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}>
                             {column.name}
                         </Tooltip>
                     </Label>
@@ -285,7 +285,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private isLoading(rowIndex: number): boolean {
-        if (this.props.loadingCell && rowIndex + 4 > this.props.numVisibleRows) {
+        if (this.props.isLoadingCell && rowIndex + 4 > this.props.numVisibleRows) {
             return true;
         }
         return false;
@@ -294,7 +294,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private infiniteScroll = (rowIndices: RowIndices) => {
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
-        if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
+        if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.isLoadingCell && !this.props.shouldShowSelectedData) {
             this.props.updateByInfiniteScroll?.(rowIndices.rowIndexEnd);
         }
     };
@@ -346,7 +346,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
         const tableCheckData = lineSelectionIndex != null ? this.props.dataset.get(lineSelectionIndex)?.data?.slice() : undefined;
 
-        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
             <Table2

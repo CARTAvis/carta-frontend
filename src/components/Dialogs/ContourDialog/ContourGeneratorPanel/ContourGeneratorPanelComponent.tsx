@@ -393,7 +393,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
                             items={[ContourGeneratorType.StartStepMultiplier, ContourGeneratorType.MinMaxNScaling, ContourGeneratorType.PercentagesRefValue, ContourGeneratorType.MeanSigmaList]}
-                            onItemSelect={val => (this.generator = val)}
+                            onItemSelect={val => runInAction(() => (this.generator = val))}
                             itemRenderer={this.renderGeneratorSelectItem}
                         >
                             <Button text={this.generator} rightIcon="double-caret-vertical" alignText={"right"} />

@@ -105,8 +105,8 @@ export class ApiService {
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
         this._tokenExpiryHandler = undefined;
-        const tokenRefreshed = await this.refreshAccessToken();
-        if (tokenRefreshed) {
+        const didTokenRefresh = await this.refreshAccessToken();
+        if (didTokenRefresh) {
             console.debug("Authenticated");
             const dt = this.tokenLifetime;
             // Queue up an access token refresh 10 seconds before the current one expires
@@ -197,9 +197,9 @@ export class ApiService {
         if (preferences) {
             this.upgradePreferences(preferences);
             console.log(preferences);
-            const valid = ApiService.preferenceValidator(preferences);
+            const isValid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
-            if (!valid) {
+            if (!isValid) {
                 for (const error of ApiService.preferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
@@ -284,8 +284,8 @@ export class ApiService {
                     obj[key] = preferences[key];
                 }
 
-                const valid = ApiService.preferenceValidator(obj);
-                if (!valid) {
+                const isValid = ApiService.preferenceValidator(obj);
+                if (!isValid) {
                     console.log(ApiService.preferenceValidator.errors);
                 }
 
@@ -351,8 +351,8 @@ export class ApiService {
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
                 LayoutConfig.upgradeLayout(layout);
-                const valid = LayoutConfig.layoutValidator(layout);
-                if (!valid) {
+                const isValid = LayoutConfig.layoutValidator(layout);
+                if (!isValid) {
                     console.log(LayoutConfig.layoutValidator.errors);
                 } else {
                     validLayouts[layoutName] = layout;
@@ -437,8 +437,8 @@ export class ApiService {
             const validSnippets = new Map<string, Snippet>();
             for (const snippetName of Object.keys(savedSnippets)) {
                 const snippet = savedSnippets[snippetName];
-                const valid = ApiService.snippetValidator(snippet);
-                if (!valid) {
+                const isValid = ApiService.snippetValidator(snippet);
+                if (!isValid) {
                     console.log(ApiService.snippetValidator.errors);
                 } else {
                     validSnippets.set(snippetName, snippet);
@@ -550,8 +550,8 @@ export class ApiService {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
-                    const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                    if (valid) {
+                    const isValid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                    if (isValid) {
                         return workspace;
                     } else {
                         //console.log(ApiService.WorkspaceValidator.errors);

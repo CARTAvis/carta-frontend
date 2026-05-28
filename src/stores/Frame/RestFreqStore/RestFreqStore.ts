@@ -8,17 +8,17 @@ export class RestFreqStore {
     @observable customRestFreq: Freq;
 
     @computed get restFreqInHz(): number | undefined {
-        if (this.inValidInput) {
+        if (this.isInvalidInput) {
             return undefined;
         }
         return Freq.convertUnitToHz(this.customRestFreq);
     }
 
-    @computed get inValidInput(): boolean {
+    @computed get isInvalidInput(): boolean {
         return !isFinite(this.customRestFreq.value);
     }
 
-    @computed get resetDisable(): boolean {
+    @computed get isResetDisabled(): boolean {
         return !isFinite(this.headerRestFreq.value);
     }
 

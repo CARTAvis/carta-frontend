@@ -122,7 +122,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
             case PvPreviewComponent.WidgetConfig.type:
                 return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
             default:
-                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title ?? ""} />;
+                return <PlaceholderComponent id={widgetConfig.id} isDocked={false} label={widgetConfig.title ?? ""} />;
         }
     }
 
@@ -187,12 +187,12 @@ export class FloatingWidgetManagerComponent extends React.Component {
         return (
             <div>
                 {widgetConfigs.map(w => {
-                    let showSettingsButton = this.showFloatingSettingsButton(w);
+                    let shouldShowSettingsButton = this.showFloatingSettingsButton(w);
                     if (w.type === RenderConfigComponent.WidgetConfig.type) {
-                        showSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
+                        shouldShowSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
                     }
 
-                    const showPinButton = this.showPin(w);
+                    const shouldShowPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
                     const zIndex = zIndexManager.findIndex(id);
@@ -205,13 +205,13 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={zIndex}
-                                showPinButton={showPinButton}
+                                shouldShowPinButton={shouldShowPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                showFloatingSettingsButton={showSettingsButton}
+                                shouldShowFloatingSettingsButton={shouldShowSettingsButton}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
+                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );
