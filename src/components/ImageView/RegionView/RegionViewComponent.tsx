@@ -731,12 +731,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string = "default";
-        if (regionSet.mode === RegionMode.CREATING) {
-            cursor = "crosshair";
-        } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
-            cursor = "move";
-        } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
-            cursor = "default";
+        if (!this.props.frame?.isPreview) {
+            if (regionSet.mode === RegionMode.CREATING) {
+                cursor = "crosshair";
+            } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
+                cursor = "move";
+            } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
+                cursor = "default";
+            }
         }
 
         return (
