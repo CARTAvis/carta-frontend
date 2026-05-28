@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes ([#2804](https://github.com/CARTAvis/carta-frontend/issues/2804)).
 * Fixed incorrect spectral cursor WCS information for rotated Stokes cubes after changing Stokes ([#2795](https://github.com/CARTAvis/carta-frontend/issues/2795)).
 * Fixed the persistent streaming progress indicator when generating contours ([#2805](https://github.com/CARTAvis/carta-frontend/issues/2805)).
+* Prevent creating regions in PV preview ([[#2816](https://github.com/CARTAvis/carta-frontend/issues/2816)]).
 
 ## [6.0.0-beta.1]
 

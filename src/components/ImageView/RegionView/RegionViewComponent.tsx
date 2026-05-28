@@ -161,6 +161,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
         const frame = this.frame;
+        if (frame.isPreview) {
+            return;
+        }
         const regionType = frame.regionSet.newRegionType;
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
