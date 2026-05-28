@@ -255,31 +255,94 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo
     return wcsInfoTransformed;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createOffsetFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createOffsetFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY, int skyRefIs)
 {
+    if (!wcsInfo || !astIsAFrameSet(wcsInfo)) {
+        return nullptr;
+    }
+
     AstFrameSet* wcsInfoOffset = static_cast<AstFrameSet*> astCopy(wcsInfo);
+    if (!wcsInfoOffset || !astOK) {
+        astClearStatus;
+        return nullptr;
+    }
+
     int currentFrame = astGetI(wcsInfoOffset, "Current");
     int baseFrame = astGetI(wcsInfoOffset, "Base");
+    if (!astOK) {
+        astClearStatus;
+        wcsInfoOffset = static_cast<AstFrameSet*>(astAnnul(wcsInfoOffset));
+        return nullptr;
+    }
 
     // Use AST's built-in offset coordinate system which properly handles spherical geometry
     // Temporarily switch to the sky frame to ensure SkyRef attributes apply correctly.
     astSetI(wcsInfoOffset, "Current", 2);
     astSetD(wcsInfoOffset, "SkyRef(1)", offsetX);
     astSetD(wcsInfoOffset, "SkyRef(2)", offsetY);
-    // Set SkyRefIs to Origin to use the SkyRef position as the origin of the offset coordinate system
-    astSet(wcsInfoOffset, "SkyRefIs=Origin");
-    astSet(wcsInfoOffset, "Label(1)=Offset coordinate,Label(2)=Offset coordinate");
+    if (skyRefIs == 1) {
+        astSet(wcsInfoOffset, "SkyRefIs=Pole");
+        astSet(wcsInfoOffset, "Label(1)=Offset longitude,Label(2)=Offset colatitude");
+
+        // Remap the sky frame so the latitude axis shows colatitude: lat' = pi/2 - lat.
+        double matrixElements[] = {1.0, 0.0, 0.0, -1.0};
+        double shifts[] = {0.0, 0.5 * M_PI};
+        AstMatrixMap* flipLatMap = astMatrixMap(2, 2, 0, matrixElements, "");
+        AstShiftMap* shiftLatMap = astShiftMap(2, shifts, "");
+        AstCmpMap* colatMap = astCmpMap(flipLatMap, shiftLatMap, 1, "");
+        if (!flipLatMap || !shiftLatMap || !colatMap || !astOK) {
+            astClearStatus;
+            if (colatMap) {
+                colatMap = static_cast<AstCmpMap*>(astAnnul(colatMap));
+            }
+            if (shiftLatMap) {
+                shiftLatMap = static_cast<AstShiftMap*>(astAnnul(shiftLatMap));
+            }
+            if (flipLatMap) {
+                flipLatMap = static_cast<AstMatrixMap*>(astAnnul(flipLatMap));
+            }
+            wcsInfoOffset = static_cast<AstFrameSet*>(astAnnul(wcsInfoOffset));
+            return nullptr;
+        }
+        astRemapFrame(wcsInfoOffset, 2, colatMap);
+
+        colatMap = static_cast<AstCmpMap*>(astAnnul(colatMap));
+        shiftLatMap = static_cast<AstShiftMap*>(astAnnul(shiftLatMap));
+        flipLatMap = static_cast<AstMatrixMap*>(astAnnul(flipLatMap));
+        if (!astOK) {
+            astClearStatus;
+            wcsInfoOffset = static_cast<AstFrameSet*>(astAnnul(wcsInfoOffset));
+            return nullptr;
+        }
+    } else {
+        astSet(wcsInfoOffset, "SkyRefIs=Origin");
+        astSet(wcsInfoOffset, "Label(1)=Offset coordinate,Label(2)=Offset coordinate");
+    }
     astSetI(wcsInfoOffset, "Current", currentFrame);
 
     // 2D pixel offset
     double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
     AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
-    astAddFrame(wcsInfoOffset, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
+    AstFrame* offsetGridFrame = astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID");
+    astAddFrame(wcsInfoOffset, AST__BASE, pixelShiftMap, offsetGridFrame);
+
+    pixelShiftMap = static_cast<AstShiftMap*>(astAnnul(pixelShiftMap));
+    offsetGridFrame = static_cast<AstFrame*>(astAnnul(offsetGridFrame));
+    if (!astOK) {
+        astClearStatus;
+        wcsInfoOffset = static_cast<AstFrameSet*>(astAnnul(wcsInfoOffset));
+        return nullptr;
+    }
 
     // If the current frame was the base (image coordinates), switch to the newly-added offset image frame.
     if (currentFrame == baseFrame) {
         int offsetFrame = astGetI(wcsInfoOffset, "Nframe");
         astSetI(wcsInfoOffset, "Current", offsetFrame);
+    }
+    if (!astOK) {
+        astClearStatus;
+        wcsInfoOffset = static_cast<AstFrameSet*>(astAnnul(wcsInfoOffset));
+        return nullptr;
     }
 
     return wcsInfoOffset;
