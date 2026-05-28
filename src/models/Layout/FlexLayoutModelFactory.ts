@@ -18,17 +18,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
 
 /** Map of widget type strings to their default FlexLayout tab node JSON */
 const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
-    [
-        "image-view",
-        {
-            type: "tab",
-            component: "image-view",
-            name: "No image loaded",
-            id: "image-view",
-            enableClose: false,
-            enableDrag: false
-        }
-    ],
+    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: false}],
     ["render-config", {type: "tab", component: "render-config", name: "Render Configuration", id: "render-config"}],
     ["region-list", {type: "tab", component: "region-list", name: "Region List", id: "region-list"}],
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
@@ -139,9 +129,8 @@ function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
 
     switch (node.type) {
         case "row":
-            return convertRowOrColumn(node, false);
         case "column":
-            return convertRowOrColumn(node, true);
+            return convertRowOrColumn(node);
         case "stack":
             return convertStack(node);
         case "component":
@@ -151,7 +140,7 @@ function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
     }
 }
 
-function convertRowOrColumn(node: any, isVertical: boolean): IJsonRowNode {
+function convertRowOrColumn(node: any): IJsonRowNode {
     // In FlexLayout, a "row" lays out children horizontally by default.
     // GL's "column" lays out children vertically, which is a FlexLayout "row"
     // that is a child inside a parent row (FlexLayout handles orientation via nesting).

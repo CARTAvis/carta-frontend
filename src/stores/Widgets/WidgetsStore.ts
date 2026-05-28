@@ -1070,11 +1070,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const ws = new SpatialProfileWidgetStore();
+            const widgetStore = new SpatialProfileWidgetStore();
             if (widgetSettings) {
-                ws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.spatialProfileWidgets.set(id, ws);
+            this.spatialProfileWidgets.set(id, widgetStore);
         }
         return id;
     }
@@ -1090,11 +1090,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const ws = new SpectralProfileWidgetStore();
+            const widgetStore = new SpectralProfileWidgetStore();
             if (widgetSettings) {
-                ws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.spectralProfileWidgets.set(id, ws);
+            this.spectralProfileWidgets.set(id, widgetStore);
         }
         return id;
     }
@@ -1110,8 +1110,8 @@ export class WidgetsStore {
     // check whether any spectral widget is streaming data
     @computed get isSpectralWidgetStreamingData(): boolean {
         let isStreamingData = false;
-        this.spectralProfileWidgets.forEach(ws => {
-            isStreamingData = isStreamingData || ws.isStreamingData;
+        this.spectralProfileWidgets.forEach(widgetStore => {
+            isStreamingData = isStreamingData || widgetStore.isStreamingData;
         });
         return isStreamingData;
     }
@@ -1129,11 +1129,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const ws = new StokesAnalysisWidgetStore();
+            const widgetStore = new StokesAnalysisWidgetStore();
             if (widgetSettings) {
-                ws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.stokesAnalysisWidgets.set(id, ws);
+            this.stokesAnalysisWidgets.set(id, widgetStore);
         }
         return id;
     }
@@ -1197,11 +1197,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const cws = new CatalogWidgetStore(catalogFileId);
+            const widgetStore = new CatalogWidgetStore(catalogFileId);
             if (widgetSettings) {
-                cws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.catalogWidgets.set(id, cws);
+            this.catalogWidgets.set(id, widgetStore);
             catalogStore.catalogWidgets.set(catalogFileId, id);
         }
         return id;
@@ -1313,11 +1313,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const ws = new HistogramWidgetStore();
+            const widgetStore = new HistogramWidgetStore();
             if (widgetSettings) {
-                ws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.histogramWidgets.set(id, ws);
+            this.histogramWidgets.set(id, widgetStore);
         }
         return id;
     }
@@ -1333,11 +1333,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const ws = new RenderConfigWidgetStore();
+            const widgetStore = new RenderConfigWidgetStore();
             if (widgetSettings) {
-                ws.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.renderConfigWidgets.set(id, ws);
+            this.renderConfigWidgets.set(id, widgetStore);
         }
         return id;
     }
