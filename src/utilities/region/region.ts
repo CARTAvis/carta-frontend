@@ -1,6 +1,7 @@
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
+import {PasteOffsetUnit} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
@@ -191,6 +192,17 @@ export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionTyp
             });
         default:
             return points.map(point => ({x: point.x + offsetX, y: point.y + offsetY}));
+    }
+}
+
+export function getPasteRegionOffset(pasteOffsetUnit: PasteOffsetUnit, zoomLevel: number): number {
+    if (pasteOffsetUnit === PasteOffsetUnit.ScreenPixel) {
+        return PASTE_OFFSET / zoomLevel;
+    } else if (pasteOffsetUnit === PasteOffsetUnit.Auto && zoomLevel < 1) {
+        return PASTE_OFFSET / zoomLevel;
+    } else {
+        const offset = PASTE_OFFSET / Math.ceil(zoomLevel / 5);
+        return offset > 1 ? offset : 1;
     }
 }
 
