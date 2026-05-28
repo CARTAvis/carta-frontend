@@ -1,6 +1,8 @@
 import {CARTA} from "carta-protobuf";
 
-import {getLinePositionAngle, getPasteShiftDelta, getRegionCenter, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
+import {PasteOffsetUnit} from "enums";
+
+import {getLinePositionAngle, getPasteRegionOffset as getPasteRegionOffset, getPasteShiftDelta, getRegionCenter, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
 
 jest.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
@@ -19,6 +21,36 @@ jest.mock("utilities", () => ({
 
 // Minimal RegionStore mock
 const MockRegion = (regionId: number, centerX: number, centerY: number, isValid = true) => ({regionId, center: {x: centerX, y: centerY}, isValid}) as any;
+
+describe("getPasteRegionOffset", () => {
+    it("ScreenPixel: divides PASTE_OFFSET by zoomLevel", () => {
+        expect(getPasteRegionOffset(PasteOffsetUnit.ScreenPixel, 2)).toBe(PASTE_OFFSET / 2);
+        expect(getPasteRegionOffset(PasteOffsetUnit.ScreenPixel, 0.5)).toBe(PASTE_OFFSET / 0.5);
+    });
+
+    it("Auto with zoomLevel < 1: divides PASTE_OFFSET by zoomLevel", () => {
+        expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 0.5)).toBe(PASTE_OFFSET / 0.5);
+    });
+
+    it("Auto with zoomLevel >= 1: uses ceil(zoomLevel/5) divisor, minimum 1", () => {
+        // zoomLevel = 1 → ceil(1/5) = 1 → PASTE_OFFSET / 1 = 20 > 1
+        expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 1)).toBe(PASTE_OFFSET / Math.ceil(1 / 5));
+        // zoomLevel = 5 → ceil(5/5) = 1 → PASTE_OFFSET / 1 = 20
+        expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 5)).toBe(PASTE_OFFSET / Math.ceil(5 / 5));
+        // zoomLevel = 100 → ceil(100/5) = 20 → PASTE_OFFSET / 20 = 1, not < 1 so returns 1
+        expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 100)).toBe(1);
+    });
+
+    it("ImagePixel: uses ceil(zoomLevel/5) divisor (same as Auto >= 1 branch)", () => {
+        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 1)).toBe(PASTE_OFFSET / Math.ceil(1 / 5));
+        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 10)).toBe(PASTE_OFFSET / Math.ceil(10 / 5));
+    });
+
+    it("never returns a value less than 1", () => {
+        expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 1000)).toBeGreaterThanOrEqual(1);
+        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 1000)).toBeGreaterThanOrEqual(1);
+    });
+});
 
 describe("getRegionCenter", () => {
     it("returns the first point for POINT regions", () => {
