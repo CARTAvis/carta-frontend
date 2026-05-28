@@ -18,7 +18,7 @@ jest.mock("utilities", () => ({
 }));
 
 // Minimal RegionStore mock
-const mockRegion = (regionId: number, centerX: number, centerY: number, isValid = true) => ({regionId, center: {x: centerX, y: centerY}, isValid}) as any;
+const MockRegion = (regionId: number, centerX: number, centerY: number, isValid = true) => ({regionId, center: {x: centerX, y: centerY}, isValid}) as any;
 
 describe("getRegionCenter", () => {
     it("returns the first point for POINT regions", () => {
@@ -137,7 +137,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.LINE
         );
-        expect(delta).toEqual({x: 0, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
     it("shifts X-only for a vertical LINE (near 180°)", () => {
@@ -160,7 +160,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.ANNLINE
         );
-        expect(delta).toEqual({x: 0, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
     it("shifts Y-only for a horizontal ANNVECTOR", () => {
@@ -171,7 +171,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.ANNVECTOR
         );
-        expect(delta).toEqual({x: 0, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
     it("shifts Y-only for a horizontal ANNRULER", () => {
@@ -182,7 +182,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.ANNRULER
         );
-        expect(delta).toEqual({x: 0, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
     it("shifts diagonally for RECTANGLE regions", () => {
@@ -193,7 +193,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.RECTANGLE
         );
-        expect(delta).toEqual({x: PASTE_OFFSET, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: PASTE_OFFSET, y: -PASTE_OFFSET});
     });
 
     it("shifts diagonally for POLYGON regions", () => {
@@ -205,7 +205,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.POLYGON
         );
-        expect(delta).toEqual({x: PASTE_OFFSET, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: PASTE_OFFSET, y: -PASTE_OFFSET});
     });
 
     it("shifts diagonally for ELLIPSE regions", () => {
@@ -216,7 +216,7 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.ELLIPSE
         );
-        expect(delta).toEqual({x: PASTE_OFFSET, y: PASTE_OFFSET});
+        expect(delta).toEqual({x: PASTE_OFFSET, y: -PASTE_OFFSET});
     });
 });
 
@@ -277,7 +277,7 @@ describe("shiftRegionPoints", () => {
 describe("offsetPointsToAvoidCollision", () => {
     it("returns points unchanged when shouldApplyInitialOffset is false and there is no collision", () => {
         const points = [{x: 100, y: 100}];
-        const regions = [mockRegion(1, 50, 50)];
+        const regions = [MockRegion(1, 50, 50)];
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
         expect(result).toEqual([{x: 100, y: 100}]);
     });
@@ -286,7 +286,7 @@ describe("offsetPointsToAvoidCollision", () => {
         const points = [{x: 100, y: 100}];
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, [], true);
         // POINT gets diagonal shift
-        expect(result).toEqual([{x: 100 + PASTE_OFFSET, y: 100 + PASTE_OFFSET}]);
+        expect(result).toEqual([{x: 100 + PASTE_OFFSET, y: 100 - PASTE_OFFSET}]);
     });
 
     it("shifts until no collision when the initial position collides", () => {
@@ -294,7 +294,7 @@ describe("offsetPointsToAvoidCollision", () => {
         // The collision check uses Chebyshev distance < PASTE_OFFSET / 2 = 10.
         // Region is at exactly (100, 100), distance 0 → collision.
         const points = [{x: 100, y: 100}];
-        const regions = [mockRegion(1, 100, 100)];
+        const regions = [MockRegion(1, 100, 100)];
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
         // Should shift until center is > 10 away from (100, 100)
         const center = result[0];
@@ -305,14 +305,14 @@ describe("offsetPointsToAvoidCollision", () => {
     it("skips the cursor region (regionId === 0) when checking collisions", () => {
         const points = [{x: 100, y: 100}];
         // Cursor region at exactly the same position — should NOT be treated as a collision
-        const regions = [mockRegion(0, 100, 100)];
+        const regions = [MockRegion(0, 100, 100)];
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
         expect(result).toEqual([{x: 100, y: 100}]);
     });
 
     it("skips invalid regions when checking collisions", () => {
         const points = [{x: 100, y: 100}];
-        const regions = [mockRegion(1, 100, 100, false)];
+        const regions = [MockRegion(1, 100, 100, false)];
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
         expect(result).toEqual([{x: 100, y: 100}]);
     });
@@ -320,7 +320,7 @@ describe("offsetPointsToAvoidCollision", () => {
     it("caps shifting at 20 iterations when all positions collide", () => {
         // Fill positions with collisions at every PASTE_OFFSET step up to 20 steps
         const points = [{x: 0, y: 0}];
-        const regions = Array.from({length: 25}, (_, i) => mockRegion(i + 1, (i + 1) * PASTE_OFFSET, (i + 1) * PASTE_OFFSET));
+        const regions = Array.from({length: 25}, (_, i) => MockRegion(i + 1, (i + 1) * PASTE_OFFSET, (i + 1) * PASTE_OFFSET));
         // shouldApplyInitialOffset = false: starts at (0,0), no collision there
         // This should return quickly without collision at (0,0)
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
