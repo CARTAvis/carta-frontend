@@ -76,7 +76,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, PASTE_OFFSET, ProtobufProcessing, type RegionClipboardData} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -3187,7 +3187,16 @@ export class AppStore {
         }
 
         const shouldApplyInitialOffset = clipboard.sourceFileId === frame.frameInfo.fileId;
-        const targetPoints = offsetPointsToAvoidCollision(clipboard.controlPoints, clipboard.regionType, frame.regionSet.regions, shouldApplyInitialOffset);
+        const pasteOffsetUnit = this.preferenceStore.regionPasteOffsetUnit;
+        let pasteOffset: number;
+        if (pasteOffsetUnit === Enums.PasteOffsetUnit.ScreenPixel) {
+            pasteOffset = PASTE_OFFSET / frame.zoomLevel;
+        } else if (pasteOffsetUnit === Enums.PasteOffsetUnit.Auto && frame.zoomLevel < 1) {
+            pasteOffset = PASTE_OFFSET / frame.zoomLevel;
+        } else {
+            pasteOffset = PASTE_OFFSET;
+        }
+        const targetPoints = offsetPointsToAvoidCollision(clipboard.controlPoints, clipboard.regionType, frame.regionSet.regions, shouldApplyInitialOffset, pasteOffset);
 
         const region = frame.regionSet.addExistingRegion(
             targetPoints,

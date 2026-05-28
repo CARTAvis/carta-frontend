@@ -158,7 +158,7 @@ export function getLinePositionAngle(points: Point2D[]): number {
     return (angle + 360) % 360;
 }
 
-export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionType): Point2D {
+export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionType, pasteOffset: number = PASTE_OFFSET): Point2D {
     switch (regionType) {
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE:
@@ -166,10 +166,10 @@ export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionTy
         case CARTA.RegionType.ANNRULER: {
             const positionAngle = getLinePositionAngle(points);
             const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
-            return shouldShiftYOnly ? {x: 0, y: -PASTE_OFFSET} : {x: PASTE_OFFSET, y: 0};
+            return shouldShiftYOnly ? {x: 0, y: -pasteOffset} : {x: pasteOffset, y: 0};
         }
         default:
-            return {x: PASTE_OFFSET, y: -PASTE_OFFSET};
+            return {x: pasteOffset, y: -pasteOffset};
     }
 }
 
@@ -194,10 +194,10 @@ export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionTyp
     }
 }
 
-export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CARTA.RegionType, regions: RegionStore[], shouldApplyInitialOffset: boolean): Point2D[] {
+export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CARTA.RegionType, regions: RegionStore[], shouldApplyInitialOffset: boolean, pasteOffset: number = PASTE_OFFSET): Point2D[] {
     let shiftedPoints = points.map(point => ({x: point.x, y: point.y}));
     let attempts = 0;
-    const shiftDelta = getPasteShiftDelta(points, regionType);
+    const shiftDelta = getPasteShiftDelta(points, regionType, pasteOffset);
 
     const hasCollision = (center: Point2D) => {
         return regions.some(region => {
@@ -205,7 +205,7 @@ export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CART
                 return false;
             }
 
-            return Math.max(Math.abs(region.center.x - center.x), Math.abs(region.center.y - center.y)) < PASTE_OFFSET / 2;
+            return Math.max(Math.abs(region.center.x - center.x), Math.abs(region.center.y - center.y)) < pasteOffset / 2;
         });
     };
 

@@ -71,6 +71,7 @@ export enum PreferenceKeys {
     REGION_TYPE = "regionType",
     REGION_CREATION_MODE = "regionCreationMode",
     REGION_SIZE = "regionSize",
+    REGION_PASTE_OFFSET_UNIT = "regionPasteOffsetUnit",
 
     ANNOTATION_COLOR = "annotationColor",
     ANNOTATION_LINE_WIDTH = "annotationLineWidth",
@@ -132,4 +133,10 @@ export enum FileFilterMode {
     Content = "content",
     Extension = "extension",
     All = "all"
+}
+
+export enum PasteOffsetUnit {
+    Auto = "auto",
+    ScreenPixel = "screenPx",
+    ImagePixel = "imagePx"
 }

@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 
@@ -94,7 +94,8 @@ const DEFAULTS = {
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
-        regionSize: 30
+        regionSize: 30,
+        regionPasteOffsetUnit: PasteOffsetUnit.Auto
     },
     ANNOTATION: {
         annotationColor: "#ffba01",
@@ -425,6 +426,10 @@ export class PreferenceStore {
 
     @computed get regionSize(): number {
         return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
+    }
+
+    @computed get regionPasteOffsetUnit(): PasteOffsetUnit {
+        return this.preferences.get(PreferenceKeys.REGION_PASTE_OFFSET_UNIT) ?? DEFAULTS.REGION.regionPasteOffsetUnit;
     }
 
     // getters for annotation
@@ -793,7 +798,15 @@ export class PreferenceStore {
      * Reset the region settings
      */
     @action resetRegionSettings = () => {
-        this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
+        this.clearPreferences([
+            PreferenceKeys.REGION_COLOR,
+            PreferenceKeys.REGION_CREATION_MODE,
+            PreferenceKeys.REGION_DASH_LENGTH,
+            PreferenceKeys.REGION_LINE_WIDTH,
+            PreferenceKeys.REGION_TYPE,
+            PreferenceKeys.REGION_SIZE,
+            PreferenceKeys.REGION_PASTE_OFFSET_UNIT
+        ]);
     };
 
     /**
