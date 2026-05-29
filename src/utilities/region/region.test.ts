@@ -2,14 +2,17 @@ import {CARTA} from "carta-protobuf";
 
 import {PasteOffsetUnit} from "enums";
 
-import {getPasteRegionOffset as getPasteRegionOffset, getPasteShiftDelta, getRegionCenter, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
+import {getPasteRegionOffset as getPasteRegionOffset, getPasteShiftDelta, getRegionCenter, getTransformedRegionProperties, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
 
 jest.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
 }));
 
 jest.mock("models", () => ({
-    Transform2D: class {}
+    Transform2D: class {
+        scale = 2;
+        rotation = 0;
+    }
 }));
 
 jest.mock("utilities", () => ({
@@ -21,6 +24,47 @@ jest.mock("utilities", () => ({
 
 // Minimal RegionStore mock
 const MockRegion = (regionId: number, centerX: number, centerY: number, isValid = true) => ({regionId, center: {x: centerX, y: centerY}, isValid}) as any;
+
+const MockedIsAstBadPoint = jest.requireMock("utilities").isAstBadPoint as jest.Mock;
+const MockedScale2D = jest.requireMock("utilities").scale2D as jest.Mock;
+const MockedTransformPoint = jest.requireMock("utilities").transformPoint as jest.Mock;
+
+beforeEach(() => {
+    MockedIsAstBadPoint.mockReset();
+    MockedScale2D.mockReset();
+    MockedTransformPoint.mockReset();
+    MockedIsAstBadPoint.mockReturnValue(false);
+    MockedScale2D.mockImplementation((point, factor) => ({x: point.x * factor, y: point.y * factor}));
+    MockedTransformPoint.mockImplementation((_mapping, point) => ({x: point.x + 100, y: point.y + 100}));
+});
+
+describe("getTransformedRegionProperties", () => {
+    it("treats ANNCOMPASS as a center-plus-size region when transforming", () => {
+        const result = getTransformedRegionProperties(
+            {
+                regionType: CARTA.RegionType.ANNCOMPASS,
+                center: {x: 1, y: 2},
+                size: {x: 4, y: 6},
+                controlPoints: [
+                    {x: 1, y: 2},
+                    {x: 4, y: 6}
+                ],
+                rotation: 15
+            },
+            {} as any
+        );
+
+        expect(result).toEqual({
+            controlPoints: [
+                {x: 101, y: 102},
+                {x: 2, y: 3}
+            ],
+            rotation: 15
+        });
+        expect(MockedTransformPoint).toHaveBeenCalledTimes(1);
+        expect(MockedScale2D).toHaveBeenCalledWith({x: 4, y: 6}, 0.5);
+    });
+});
 
 describe("getPasteRegionOffset", () => {
     it("ScreenPixel: divides PASTE_OFFSET by zoomLevel", () => {
@@ -41,9 +85,9 @@ describe("getPasteRegionOffset", () => {
         expect(getPasteRegionOffset(PasteOffsetUnit.Auto, 100)).toBe(1);
     });
 
-    it("ImagePixel: uses ceil(zoomLevel/5) divisor (same as Auto >= 1 branch)", () => {
-        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 1)).toBe(PASTE_OFFSET / Math.ceil(1 / 5));
-        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 10)).toBe(PASTE_OFFSET / Math.ceil(10 / 5));
+    it("ImagePixel: keeps a constant image-space offset regardless of zoom", () => {
+        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 1)).toBe(PASTE_OFFSET);
+        expect(getPasteRegionOffset(PasteOffsetUnit.ImagePixel, 10)).toBe(PASTE_OFFSET);
     });
 
     it("never returns a value less than 1", () => {

@@ -86,9 +86,10 @@ export function getRegionPixelProperties(regionType: CARTA.RegionType, controlPo
  * Transforms a region's control points and rotation from one coordinate frame to
  * another using the supplied AST spatial mapping.
  *
- * For box-like regions (rectangle, ellipse, and their annotation equivalents) the
- * center is reprojected and the size is rescaled by the local Jacobian; for all
- * other region types every control point is reprojected individually.
+ * For box-like regions (rectangle, ellipse, compass, and their annotation
+ * equivalents) the center is reprojected and the size is rescaled by the local
+ * Jacobian; for all other region types every control point is reprojected
+ * individually.
  *
  * @param region - Source region geometry expressed in the origin frame.
  * @param spatialTransformAST - AST mapping from the origin frame to the target frame.
@@ -100,6 +101,7 @@ export function getTransformedRegionProperties(region: RegionTransformSource, sp
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNRECTANGLE:
         case CARTA.RegionType.ANNELLIPSE:
+        case CARTA.RegionType.ANNCOMPASS:
         case CARTA.RegionType.ANNTEXT: {
             const center = transformPoint(spatialTransformAST, region.center, false);
             if (isAstBadPoint(center)) {
@@ -256,9 +258,10 @@ export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionTyp
  *
  * - **ScreenPixel**: returns `PASTE_OFFSET / zoomLevel` so the on-screen distance
  *   is always the same regardless of zoom.
+ * - **ImagePixel**: returns `PASTE_OFFSET` so the image-space offset stays fixed.
  * - **Auto** with `zoomLevel < 1`: same as ScreenPixel (zoomed out, keep visible gap).
- * - **Auto / ImagePixel** with `zoomLevel >= 1`: divides by `ceil(zoomLevel / 5)` so
- *   the offset shrinks in steps as the user zooms in; minimum returned value is 1.
+ * - **Auto** with `zoomLevel >= 1`: divides by `ceil(zoomLevel / 5)` so the
+ *   offset shrinks in steps as the user zooms in; minimum returned value is 1.
  *
  * @param pasteOffsetUnit - The unit mode chosen in user preferences.
  * @param zoomLevel - The current image zoom level (image pixels per screen pixel).
@@ -267,7 +270,9 @@ export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionTyp
 export function getPasteRegionOffset(pasteOffsetUnit: PasteOffsetUnit, zoomLevel: number): number {
     if (pasteOffsetUnit === PasteOffsetUnit.ScreenPixel) {
         return PASTE_OFFSET / zoomLevel;
-    } else if (pasteOffsetUnit === PasteOffsetUnit.Auto && zoomLevel < 1) {
+    } else if (pasteOffsetUnit === PasteOffsetUnit.ImagePixel) {
+        return PASTE_OFFSET;
+    } else if (zoomLevel < 1) {
         return PASTE_OFFSET / zoomLevel;
     } else {
         const offset = PASTE_OFFSET / Math.ceil(zoomLevel / 5);

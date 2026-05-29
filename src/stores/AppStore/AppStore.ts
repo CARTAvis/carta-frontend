@@ -3163,7 +3163,7 @@ export class AppStore {
     @action copySelectedRegion = () => {
         const region = this.selectedRegion;
         if (!region) {
-            return;
+            return false;
         }
 
         this.regionClipboard = {
@@ -3178,36 +3178,46 @@ export class AppStore {
             annotationStyles: _.cloneDeep((region as any).getAnnotationStyles?.())
         };
         AppToaster.show(SuccessToast("clipboard", "Region is copied"));
+        return true;
     };
 
     @action pasteRegion = () => {
         const clipboard = this.regionClipboard;
         const frame = this.activeFrame;
         if (!clipboard || !frame) {
-            return;
+            return false;
         }
 
-        const shouldApplyInitialOffset = clipboard.sourceFileId === frame.frameInfo.fileId;
-        const pasteOffset = getPasteRegionOffset(this.preferenceStore.regionPasteOffsetUnit, frame.zoomLevel);
-        const targetPoints = offsetPointsToAvoidCollision(clipboard.controlPoints, clipboard.regionType, frame.regionSet.regions, shouldApplyInitialOffset, pasteOffset);
+        const targetRegionFrame = frame.spatialReference ?? frame;
+        const sourceControlPoints = clipboard.controlPoints.map(point => ({x: point.x, y: point.y}));
+        const annotationStyles = _.cloneDeep(clipboard.annotationStyles);
 
-        const region = frame.regionSet.addExistingRegion(
+        let targetPoints = sourceControlPoints;
+
+        const shouldApplyInitialOffset = clipboard.sourceFileId === targetRegionFrame.frameInfo.fileId;
+        const pasteOffset = getPasteRegionOffset(this.preferenceStore.regionPasteOffsetUnit, targetRegionFrame.zoomLevel);
+        targetPoints = offsetPointsToAvoidCollision(targetPoints, clipboard.regionType, targetRegionFrame.regionSet.regions, shouldApplyInitialOffset, pasteOffset);
+
+        const region = targetRegionFrame.regionSet.addExistingRegion(
             targetPoints,
             clipboard.rotation,
             clipboard.regionType,
-            frame.regionSet.getTempRegionId(),
+            targetRegionFrame.regionSet.getTempRegionId(),
             clipboard.name,
             clipboard.color,
             clipboard.lineWidth,
             clipboard.dashLength ? [clipboard.dashLength] : [],
             false,
-            _.cloneDeep(clipboard.annotationStyles)
+            annotationStyles
         );
 
         if (region) {
             region.setLocked(false);
-            frame.regionSet.selectRegion(region);
+            targetRegionFrame.regionSet.selectRegion(region);
+            return true;
         }
+
+        return false;
     };
 
     @action deleteSelectedRegion = () => {
