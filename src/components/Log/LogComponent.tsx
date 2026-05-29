@@ -1,11 +1,12 @@
 import * as React from "react";
-import ScrollToBottom from "react-scroll-to-bottom";
 import {Button, Code, Colors, FormGroup, HTMLSelect, type Intent, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 import {HelpType} from "enums";
 import {type DefaultWidgetConfig, LogStore, type WidgetProps} from "stores";
+
+import {LogEntryList} from "./LogEntryList";
 
 import "./LogComponent.scss";
 
@@ -113,13 +114,7 @@ export class LogComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="log">
-                {entryElements.length ? (
-                    <ScrollToBottom initialScrollBehavior="auto" debug={false} className="log-entry-list" followButtonClassName="log-entry-follow">
-                        {entryElements}
-                    </ScrollToBottom>
-                ) : (
-                    <NonIdealState className="log-entry-list" icon="application" title="No log entries" />
-                )}
+                <div className="log-content">{entryElements.length ? <LogEntryList>{entryElements}</LogEntryList> : <NonIdealState className="log-entry-list log-entry-empty" icon="application" title="No log entries" />}</div>
 
                 <div className="log-footer">
                     <FormGroup inline={true} label="Log level:" className="log-level">
