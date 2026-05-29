@@ -78,6 +78,23 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             )
         );
 
+        // Cancel region creation when the active image switches away from this frame.
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame,
+                activeFrame => {
+                    if (activeFrame !== this.frame && this.frame.regionSet.mode === RegionMode.CREATING) {
+                        if (this.creatingRegion) {
+                            this.frame.regionSet.deleteRegion(this.creatingRegion);
+                            this.creatingRegion = null;
+                        }
+                        this.frame.regionSet.setMode(RegionMode.MOVING);
+                        AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
+                    }
+                }
+            )
+        );
+
         this.disposers.push(
             reaction(
                 () => {
@@ -732,7 +749,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
-            cursor = this.props.frame?.isPreview ? "not-allowed" : "crosshair";
+            cursor = frame?.isPreview ? "not-allowed" : "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
             cursor = "move";
         } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
