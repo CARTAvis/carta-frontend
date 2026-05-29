@@ -146,28 +146,22 @@ export function getRegionCenter(points: Point2D[], regionType: CARTA.RegionType)
     }
 }
 
-export function getLinePositionAngle(points: Point2D[]): number {
-    if (points.length < 2) {
-        return 0;
-    }
-
-    let angle = (Math.atan((points[1].x - points[0].x) / (points[0].y - points[1].y)) * 180.0) / Math.PI;
-    if (points[1].y > points[0].y) {
-        angle += 180;
-    }
-
-    return (angle + 360) % 360;
-}
-
 export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionType, pasteOffset: number = PASTE_OFFSET): Point2D {
     switch (regionType) {
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE:
         case CARTA.RegionType.ANNVECTOR:
         case CARTA.RegionType.ANNRULER: {
-            const positionAngle = getLinePositionAngle(points);
-            const shouldShiftYOnly = (positionAngle >= 45 && positionAngle <= 135) || (positionAngle >= 225 && positionAngle <= 315);
-            return shouldShiftYOnly ? {x: 0, y: -pasteOffset} : {x: pasteOffset, y: 0};
+            // Shift perpendicular to the line: rotate direction vector 90° clockwise → (ry, -rx),
+            // then scale so the dominant component equals pasteOffset.
+            const rx = points[1].x - points[0].x;
+            const ry = points[1].y - points[0].y;
+            const maxComponent = Math.max(Math.abs(rx), Math.abs(ry));
+            if (maxComponent === 0) {
+                return {x: pasteOffset, y: -pasteOffset};
+            }
+            const scale = pasteOffset / maxComponent;
+            return {x: ry * scale, y: -rx * scale};
         }
         default:
             return {x: pasteOffset, y: -pasteOffset};
@@ -225,7 +219,7 @@ export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CART
         shiftedPoints = shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
     }
 
-    while (attempts < 20 && hasCollision(getRegionCenter(shiftedPoints, regionType))) {
+    while (attempts <= regions.length && hasCollision(getRegionCenter(shiftedPoints, regionType))) {
         shiftedPoints = shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
         attempts++;
     }

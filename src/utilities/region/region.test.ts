@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {PasteOffsetUnit} from "enums";
 
-import {getLinePositionAngle, getPasteRegionOffset as getPasteRegionOffset, getPasteShiftDelta, getRegionCenter, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
+import {getPasteRegionOffset as getPasteRegionOffset, getPasteShiftDelta, getRegionCenter, offsetPointsToAvoidCollision, PASTE_OFFSET, shiftRegionPoints} from "./region";
 
 jest.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
@@ -126,42 +126,8 @@ describe("getRegionCenter", () => {
     });
 });
 
-describe("getLinePositionAngle", () => {
-    it("returns 0 for a line with fewer than 2 points", () => {
-        expect(getLinePositionAngle([{x: 0, y: 0}])).toBe(0);
-    });
-
-    it("computes ~90° for a horizontal line going right", () => {
-        // points going to the right: dx > 0, dy = 0
-        const angle = getLinePositionAngle([
-            {x: 0, y: 0},
-            {x: 100, y: 0}
-        ]);
-        expect(angle).toBeCloseTo(90);
-    });
-
-    it("computes ~180° for a vertical line going down in pixel coordinates", () => {
-        // In pixel coords, y increases downward; points[1].y > points[0].y
-        const angle = getLinePositionAngle([
-            {x: 0, y: 0},
-            {x: 0, y: 10}
-        ]);
-        expect(angle).toBeCloseTo(180);
-    });
-
-    it("computes ~0° for a vertical line going up in pixel coordinates", () => {
-        // points[1].y < points[0].y
-        const angle = getLinePositionAngle([
-            {x: 0, y: 10},
-            {x: 0, y: 0}
-        ]);
-        expect(angle).toBeCloseTo(0);
-    });
-});
-
 describe("getPasteShiftDelta", () => {
-    it("shifts Y-only for a horizontal LINE (near 90°)", () => {
-        // Horizontal line → positionAngle ≈ 90°, in [45, 135]
+    it("shifts Y-only for a horizontal LINE (perpendicular, dx > 0, dy = 0)", () => {
         const delta = getPasteShiftDelta(
             [
                 {x: 0, y: 0},
@@ -172,8 +138,7 @@ describe("getPasteShiftDelta", () => {
         expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
-    it("shifts X-only for a vertical LINE (near 180°)", () => {
-        // Vertical line going down → positionAngle ≈ 180°, not in [45,135] or [225,315]
+    it("shifts X-only for a vertical LINE (perpendicular, dx = 0, dy > 0)", () => {
         const delta = getPasteShiftDelta(
             [
                 {x: 0, y: 0},
@@ -181,10 +146,21 @@ describe("getPasteShiftDelta", () => {
             ],
             CARTA.RegionType.LINE
         );
-        expect(delta).toEqual({x: PASTE_OFFSET, y: 0});
+        expect(delta).toEqual({x: PASTE_OFFSET, y: -0});
     });
 
-    it("shifts Y-only for a horizontal ANNLINE", () => {
+    it("shifts diagonally for a diagonal LINE (dx = dy)", () => {
+        const delta = getPasteShiftDelta(
+            [
+                {x: 0, y: 0},
+                {x: 100, y: 100}
+            ],
+            CARTA.RegionType.LINE
+        );
+        expect(delta).toEqual({x: PASTE_OFFSET, y: -PASTE_OFFSET});
+    });
+
+    it("shifts Y-only for a horizontal ANNLINE (perpendicular)", () => {
         const delta = getPasteShiftDelta(
             [
                 {x: 0, y: 0},
@@ -195,7 +171,7 @@ describe("getPasteShiftDelta", () => {
         expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
-    it("shifts Y-only for a horizontal ANNVECTOR", () => {
+    it("shifts Y-only for a horizontal ANNVECTOR (perpendicular)", () => {
         const delta = getPasteShiftDelta(
             [
                 {x: 0, y: 0},
@@ -206,7 +182,7 @@ describe("getPasteShiftDelta", () => {
         expect(delta).toEqual({x: 0, y: -PASTE_OFFSET});
     });
 
-    it("shifts Y-only for a horizontal ANNRULER", () => {
+    it("shifts Y-only for a horizontal ANNRULER (perpendicular)", () => {
         const delta = getPasteShiftDelta(
             [
                 {x: 0, y: 0},
@@ -349,13 +325,27 @@ describe("offsetPointsToAvoidCollision", () => {
         expect(result).toEqual([{x: 100, y: 100}]);
     });
 
-    it("caps shifting at 20 iterations when all positions collide", () => {
-        // Fill positions with collisions at every PASTE_OFFSET step up to 20 steps
+    it("returns start position when there is no collision at the initial position", () => {
         const points = [{x: 0, y: 0}];
         const regions = Array.from({length: 25}, (_, i) => MockRegion(i + 1, (i + 1) * PASTE_OFFSET, (i + 1) * PASTE_OFFSET));
         // shouldApplyInitialOffset = false: starts at (0,0), no collision there
-        // This should return quickly without collision at (0,0)
         const result = offsetPointsToAvoidCollision(points, CARTA.RegionType.POINT, regions, false);
         expect(result).toEqual([{x: 0, y: 0}]);
+    });
+
+    it("finds a unique position beyond 20 pastes (no collision after 22+ pastes)", () => {
+        // Simulate 22 already-pasted regions placed at PASTE_OFFSET, 2*PASTE_OFFSET, ..., 22*PASTE_OFFSET
+        // (POINT gets diagonal delta {x: PASTE_OFFSET, y: -PASTE_OFFSET})
+        // The source region is at (0, 0).
+        const originalPoints = [{x: 0, y: 0}];
+        const regions = [
+            MockRegion(0, 0, 0), // source at P0
+            ...Array.from({length: 22}, (_, i) => MockRegion(i + 1, (i + 1) * PASTE_OFFSET, -(i + 1) * PASTE_OFFSET))
+        ];
+        // The 23rd paste (shouldApplyInitialOffset=true) should land at P0+23*delta, not P0+22*delta
+        const result = offsetPointsToAvoidCollision(originalPoints, CARTA.RegionType.POINT, regions, true);
+        const expectedX = 23 * PASTE_OFFSET;
+        const expectedY = -23 * PASTE_OFFSET;
+        expect(result[0]).toEqual({x: expectedX, y: expectedY});
     });
 });
