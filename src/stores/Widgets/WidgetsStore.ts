@@ -26,7 +26,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {COMPONENT_MAP, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, GetDefaultWidgetConfig, GetDefaultWidgetSettingsConfig} from "models";
+import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, WIDGET_MAP} from "models";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -555,7 +555,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            const config = new WidgetConfig(id, GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WIDGET_MAP.get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -617,7 +617,7 @@ export class WidgetsStore {
             return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
         }
 
-        const componentClass = COMPONENT_MAP.get(component);
+        const componentClass = WIDGET_MAP.get(component)?.component;
         if (!componentClass) {
             return null;
         }
@@ -852,7 +852,7 @@ export class WidgetsStore {
             return;
         }
         // Get floating settings config
-        const defaultConfig = GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WIDGET_MAP.get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const widgetConfig = new WidgetConfig(id, defaultConfig);
@@ -876,7 +876,7 @@ export class WidgetsStore {
         }
 
         // Get widget type from config
-        const widgetConfig = new WidgetConfig(id, GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, WIDGET_MAP.get(type)?.config ?? PlaceholderComponent.WidgetConfig);
         widgetConfig.title = title;
 
         if (type === CatalogOverlayComponent.WidgetConfig.type) {
@@ -913,7 +913,7 @@ export class WidgetsStore {
 
     @action onHelpPinedClick = (ev: React.MouseEvent, node: TabNode) => {
         const type = node.getComponent() || "";
-        const widgetConfig = GetDefaultWidgetConfig(type);
+        const widgetConfig = WIDGET_MAP.get(type)?.config ?? PlaceholderComponent.WidgetConfig;
         const rect = node.getRect();
         let centerX = 0;
         if (rect && rect.width) {
@@ -1258,7 +1258,7 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        const defaultConfig = GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = WIDGET_MAP.get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
