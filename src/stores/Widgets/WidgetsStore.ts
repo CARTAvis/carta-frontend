@@ -29,6 +29,7 @@ import {
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
 import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -872,6 +873,9 @@ export class WidgetsStore {
                 const node = layoutModel.getNodeById(nodeId);
                 if (node && node.getType() === "tab") {
                     const tabNode = node as TabNode;
+                    if (!canPopoutWidget(tabNode.getComponent() || "")) {
+                        return undefined;
+                    }
                     const parent = tabNode.getParent();
                     if (parent && parent.getType() === "tabset") {
                         this.savePopoutPosition(tabNode, parent as TabSetNode);
@@ -886,7 +890,11 @@ export class WidgetsStore {
                 const node = layoutModel.getNodeById(nodeId);
                 if (node && node.getType() === "tabset") {
                     const tabsetNode = node as TabSetNode;
-                    for (const child of tabsetNode.getChildren()) {
+                    const childTabs = tabsetNode.getChildren() as TabNode[];
+                    if (!childTabs.every(child => canPopoutWidget(child.getComponent() || ""))) {
+                        return undefined;
+                    }
+                    for (const child of childTabs) {
                         this.savePopoutPosition(child as TabNode, tabsetNode);
                     }
                 }
@@ -1201,15 +1209,19 @@ export class WidgetsStore {
         if (!layoutModel) {
             return;
         }
+        if (!canPopoutWidget(widgetConfig.type)) {
+            return;
+        }
 
         const id = widgetConfig.id;
+        const canPopout = canPopoutWidget(widgetConfig.type);
         const tabJson: any = {
             type: "tab",
             component: widgetConfig.type,
             name: widgetConfig.title || widgetConfig.type,
             id,
-            // remove the below line if we migrate plotly.js to chart.js
-            ...(widgetConfig.type === CatalogPlotComponent.WidgetConfig.type && {enablePopout: false})
+            enablePopout: canPopout,
+            enablePopoutIcon: canPopout
         };
 
         if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {

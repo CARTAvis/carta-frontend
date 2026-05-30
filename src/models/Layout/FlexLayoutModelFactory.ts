@@ -10,7 +10,8 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     tabSetEnableTabStrip: true,
     splitterSize: 4,
     splitterExtra: 4,
-    tabEnablePopout: true,
+    tabEnablePopout: false,
+    tabEnablePopoutIcon: false,
     tabSetEnableClose: false,
     tabSetEnableDeleteWhenEmpty: true,
     tabEnableRenderOnDemand: true
@@ -30,8 +31,7 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["layer-list", {type: "tab", component: "layer-list", name: "Image List", id: "layer-list"}],
     ["log", {type: "tab", component: "log", name: "Log", id: "log"}],
     ["catalog-overlay", {type: "tab", component: "catalog-overlay", name: "Catalog Overlay", id: "catalog-overlay"}],
-    // remove ", enablePopout: false" if we migrate plotly.js to chart.js
-    ["catalog-plot", {type: "tab", component: "catalog-plot", name: "Catalog Plot", id: "catalog-plot", enablePopout: false}],
+    ["catalog-plot", {type: "tab", component: "catalog-plot", name: "Catalog Plot", id: "catalog-plot"}],
     ["spectral-line-query", {type: "tab", component: "spectral-line-query", name: "Spectral Line Query", id: "spectral-line-query"}],
     ["cursor-info", {type: "tab", component: "cursor-info", name: "Cursor Info", id: "cursor-info"}],
     ["pv-generator", {type: "tab", component: "pv-generator", name: "PV Generator", id: "pv-generator"}],
@@ -40,13 +40,22 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["channel-map-control", {type: "tab", component: "channel-map-control", name: "Channel Map", id: "channel-map-control"}]
 ]);
 
+export function canPopoutWidget(widgetType: string): boolean {
+    return widgetType === "image-view";
+}
+
 /**
  * Gets the default FlexLayout tab JSON for a widget type.
  * Returns a shallow copy so callers can modify it safely.
  */
 export function getComponentTabJson(widgetType: string): IJsonTabNode | undefined {
     const config = COMPONENT_CONFIG.get(widgetType);
-    return config ? {...config} : undefined;
+    if (!config) {
+        return undefined;
+    }
+
+    const canPopout = canPopoutWidget(widgetType);
+    return {...config, enablePopout: canPopout, enablePopoutIcon: canPopout};
 }
 
 /**
@@ -201,7 +210,7 @@ function convertStack(node: any): IJsonTabSetNode {
 
 function convertComponent(node: any): IJsonTabNode {
     const widgetType = node.id?.replace(/-\d+$/, "") || node.id;
-    const templateConfig = COMPONENT_CONFIG.get(widgetType);
+    const templateConfig = getComponentTabJson(widgetType);
 
     if (!templateConfig) {
         return {

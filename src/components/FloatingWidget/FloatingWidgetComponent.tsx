@@ -7,6 +7,7 @@ import {observer} from "mobx-react";
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
 import {HelpType, ImageType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
@@ -59,13 +60,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const widgetConfig = this.props.widgetConfig;
 
         if (layoutRef?.current) {
+            const canPopout = canPopoutWidget(widgetConfig.type);
             const tabJson: any = {
                 type: "tab",
                 component: widgetConfig.type,
                 name: widgetConfig.title || widgetConfig.type,
                 id: widgetConfig.id,
-                // remove the below line if we migrate plotly.js to chart.js
-                ...(widgetConfig.type === "catalog-plot" && {enablePopout: false})
+                enablePopout: canPopout,
+                enablePopoutIcon: canPopout
             };
 
             if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {

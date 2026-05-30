@@ -1,6 +1,7 @@
 import type React from "react";
 
 import {AppStore} from "stores/AppStore/AppStore";
+import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetsStore} from "./WidgetsStore";
 
@@ -10,9 +11,14 @@ describe("WidgetsStore PV preview test ids", () => {
         isDarkTheme: false,
         imageViewConfigStore: {visibleImages: []}
     };
+    const layoutModelMock = {
+        getNodeById: jest.fn()
+    };
 
     beforeEach(() => {
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStoreMock as any);
+        jest.spyOn(LayoutStore, "Instance", "get").mockReturnValue({layoutModel: layoutModelMock} as any);
+        layoutModelMock.getNodeById.mockReset();
     });
 
     afterEach(() => {
@@ -76,5 +82,29 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(children[1].props.id).toBe("placeholder-2");
         expect(children[1].props.label).toBe("Missing widget");
         expect(children[1].props.isDocked).toBe(true);
+    });
+
+    test("blocks popout actions for non-image tabs", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        layoutModelMock.getNodeById.mockReturnValue({
+            getType: () => "tab",
+            getComponent: () => "stats"
+        });
+
+        const result = widgetsStore.onAction({type: "FlexLayout_PopoutTab", data: {node: "stats-0"}});
+
+        expect(result).toBeUndefined();
+    });
+
+    test("blocks popout tabset actions when any tab is not image-view", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        layoutModelMock.getNodeById.mockReturnValue({
+            getType: () => "tabset",
+            getChildren: () => [{getComponent: () => "image-view"}, {getComponent: () => "stats"}]
+        });
+
+        const result = widgetsStore.onAction({type: "FlexLayout_PopoutTabset", data: {node: "tabset-1"}});
+
+        expect(result).toBeUndefined();
     });
 });
