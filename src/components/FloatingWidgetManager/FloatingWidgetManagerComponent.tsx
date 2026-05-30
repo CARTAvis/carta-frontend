@@ -36,12 +36,10 @@ import {AppStore, CatalogStore, type WidgetConfig, type WidgetProps, WidgetsStor
 
 type FloatingWidgetRenderer = (widgetConfig: WidgetConfig) => React.ReactNode;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const RenderDocklessWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
     return widgetConfig => <Component id={widgetConfig.id} docked={false} />;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const RenderFloatingSettingsWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
     return widgetConfig => <Component id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
 };
