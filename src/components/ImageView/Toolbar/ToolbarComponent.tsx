@@ -1,11 +1,11 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewComponent} from "components";
+import {ImageViewComponent, OffsetCoordinateControlsComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {ImageViewLayer, RegionMode, SystemType} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
@@ -179,9 +179,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <FormGroup inline={false} className="offset-group">
                     <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
                     <Collapse isOpen={frame.isOffsetCoord}>
-                        <Tooltip content="Set origin to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffsetCenter()} />
-                        </Tooltip>
+                        <OffsetCoordinateControlsComponent
+                            className="offset-collapse-content"
+                            isWcsCoordinates={overlay.isWcsCoordinates && overlay.global.isValidWcs}
+                            isOffsetCoord={frame.isOffsetCoord}
+                            skyRefIs={frame.skyRefIs}
+                            onSkyRefIsChanged={frame.setSkyRefIs}
+                            onUpdateOffsetCenter={frame.updateOffsetCenter}
+                        />
                     </Collapse>
                 </FormGroup>
             </Menu>

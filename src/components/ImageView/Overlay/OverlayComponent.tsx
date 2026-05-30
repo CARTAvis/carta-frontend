@@ -4,12 +4,23 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {ImageType} from "enums";
+import {ImageType, SkyRefIs} from "enums";
 import {type ImageItem, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
+
+interface OffsetCoordAxisSetting {
+    unit: string;
+    format: string;
+}
+
+interface OffsetCoordAxisSettings {
+    axis1: OffsetCoordAxisSetting;
+    axis2: OffsetCoordAxisSetting;
+}
 
 export class OverlayComponentProps {
     overlaySettings: OverlaySettings;
@@ -25,6 +36,7 @@ export class OverlayComponentProps {
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
+    private static readonly OffsetCoordUnitSwitchFactor = 2;
 
     componentDidMount() {
         this.updateImage();
@@ -48,6 +60,53 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.canvas.width = this.props.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
             this.canvas.height = this.props.overlayStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
+    }
+
+    private getLatReferenceSize(frame: FrameStore, viewSizeArcsec: number): number {
+        if (frame.skyRefIs !== SkyRefIs.Pole || !frame.wcsInfoOffset) {
+            return viewSizeArcsec;
+        }
+
+        const wcsInfoOffsetSky = AST.copy(frame.wcsInfoOffset);
+        if (!wcsInfoOffsetSky) {
+            return viewSizeArcsec;
+        }
+
+        let centerWcs: {x: number; y: number} | undefined;
+        try {
+            AST.setI(wcsInfoOffsetSky, "Current", 2);
+            centerWcs = AST.transformPoint(wcsInfoOffsetSky, frame.center.x, frame.center.y, true);
+        } finally {
+            AST.deleteObject(wcsInfoOffsetSky);
+        }
+
+        if (!centerWcs || !isFinite(centerWcs.y)) {
+            return viewSizeArcsec;
+        }
+
+        const latValueArcsec = (Math.abs(centerWcs.y) * (3600 * 180)) / Math.PI;
+        return Math.max(viewSizeArcsec, latValueArcsec);
+    }
+
+    private getOffsetCoordAxisSetting(referenceSizeArcsec: number): OffsetCoordAxisSetting {
+        if (referenceSizeArcsec < 60 * OverlayComponent.OffsetCoordUnitSwitchFactor) {
+            return {unit: "arcsec", format: "s.*"};
+        }
+        if (referenceSizeArcsec < 3600 * OverlayComponent.OffsetCoordUnitSwitchFactor) {
+            return {unit: "arcmin", format: "m.*"};
+        }
+        return {unit: "deg", format: "d.*"};
+    }
+
+    private getOffsetCoordAxisSettings(frame: FrameStore, viewSizeArcsec: number): OffsetCoordAxisSettings {
+        const axis2ReferenceSize = this.getLatReferenceSize(frame, viewSizeArcsec);
+        const axis2Setting = this.getOffsetCoordAxisSetting(axis2ReferenceSize);
+        // Pole-mode axis 1 is offset longitude (0-360 deg), so keep degree formatting regardless of view size.
+        const axis1Setting = frame.skyRefIs === SkyRefIs.Pole ? {unit: "deg", format: "d.*"} : axis2Setting;
+        return {
+            axis1: axis1Setting,
+            axis2: axis2Setting
+        };
     }
 
     renderCanvas = () => {
@@ -106,27 +165,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
-                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
-                const factor = 2; // jump factor
-                let unit;
-                let format;
-
-                if (viewSize < 60 * factor) {
-                    unit = "arcsec";
-                    format = "s.*";
-                } else if (viewSize < 3600 * factor) {
-                    unit = "arcmin";
-                    format = "m.*";
-                } else {
-                    unit = "deg";
-                    format = "d.*";
-                }
+                const viewSizeArcsec = Math.min(fovSizeInArcsec.x, fovSizeInArcsec.y);
+                const {axis1, axis2} = this.getOffsetCoordAxisSettings(frame, viewSizeArcsec);
 
                 // disable unit labels when custom labels on
                 if (settings.labels.hasCustomText) {
-                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
+                    AST.set(tempWcsInfo, `Format(1)=${axis1.format}, Format(2)=${axis2.format}, Unit(1)="", Unit(2)=""`);
                 } else {
-                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                    AST.set(tempWcsInfo, `Format(1)=${axis1.format}, Format(2)=${axis2.format}, Unit(1)=${axis1.unit}, Unit(2)=${axis2.unit}`);
                 }
             }
 
@@ -242,6 +288,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const isOffsetCoord = frame.isOffsetCoord;
+        const skyRefIs = frame.skyRefIs;
         const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {

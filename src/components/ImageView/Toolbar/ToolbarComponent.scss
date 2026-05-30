@@ -70,9 +70,6 @@
     .#{$ns}-form-content {
         display: inline-flex;
         align-items: center;
-        .#{$ns}-popover-target {
-            margin-left: 5px;
-        }
     }
 
     .offset-switch {
