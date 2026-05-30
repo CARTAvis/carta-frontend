@@ -1,6 +1,6 @@
 import * as React from "react";
 
-const getBasePointingEventInit = (event: MouseEvent | PointerEvent): MouseEventInit => {
+function getBasePointingEventInit(event: MouseEvent | PointerEvent): MouseEventInit {
     return {
         bubbles: true,
         cancelable: true,
@@ -18,7 +18,7 @@ const getBasePointingEventInit = (event: MouseEvent | PointerEvent): MouseEventI
         buttons: event.buttons,
         relatedTarget: null
     };
-};
+}
 
 /**
  * Forwards mouse, pointer, and touch tracking events from a popout window's document
@@ -29,7 +29,7 @@ const getBasePointingEventInit = (event: MouseEvent | PointerEvent): MouseEventI
  * Only move/end events are forwarded. Down events reach the correct listeners through
  * React's synthetic event system without any forwarding.
  */
-export function PopoutEventForwarder({popoutWindow}: {popoutWindow: Window}) {
+export const PopoutEventForwarder = ({popoutWindow}: {popoutWindow: Window}) => {
     React.useEffect(() => {
         if (popoutWindow === window) {
             return () => {};
@@ -95,4 +95,4 @@ export function PopoutEventForwarder({popoutWindow}: {popoutWindow: Window}) {
     }, [popoutWindow]);
 
     return null;
-}
+};

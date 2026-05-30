@@ -24,11 +24,11 @@ export class App extends React.Component {
         LayoutStore.Instance.layoutRef = this.layoutRef;
     }
 
-    private renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
+    private renderAlertComponent = (alertStore: AlertStore, isDarkTheme: boolean) => {
         const baseAlertProps = {
             icon: alertStore.alertIcon,
-            className: classNames({[Classes.DARK]: darkTheme}),
-            isOpen: alertStore.alertVisible
+            className: classNames({[Classes.DARK]: isDarkTheme}),
+            isOpen: alertStore.isAlertVisible
         };
 
         switch (alertStore.alertType) {
@@ -46,10 +46,10 @@ export class App extends React.Component {
                 );
             case AlertType.Retry:
                 const cancelProps =
-                    alertStore.showDashboardLink && ApiService.RuntimeConfig?.dashboardAddress
+                    alertStore.shouldShowDashboardLink && ApiService.runtimeConfig?.dashboardAddress
                         ? {
                               cancelButtonText: "Open CARTA Dashboard",
-                              onCancel: () => window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank")
+                              onCancel: () => window.open(ApiService.runtimeConfig.dashboardAddress, "_blank")
                           }
                         : {};
 
@@ -67,10 +67,10 @@ export class App extends React.Component {
         const appStore = AppStore.Instance;
         const layoutStore = appStore.layoutStore;
         const widgetsStore = appStore.widgetsStore;
-        const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
-        const layoutClassName = classNames("layout-container", {"dark-theme": appStore.darkTheme});
+        const className = classNames("App", {[Classes.DARK]: appStore.isDarkTheme});
+        const layoutClassName = classNames("layout-container", {"dark-theme": appStore.isDarkTheme});
 
-        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
+        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.isDarkTheme);
 
         return (
             <div className={className}>
@@ -79,9 +79,9 @@ export class App extends React.Component {
                 <TaskProgressDialogComponent
                     progress={0}
                     timeRemaining={0}
-                    isOpen={appStore.resumingSession || appStore.loadingWorkspace}
+                    isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
                     cancellable={false}
-                    text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
+                    text={appStore.isResumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
                 <div className={layoutClassName}>
                     {layoutStore.layoutModel && (

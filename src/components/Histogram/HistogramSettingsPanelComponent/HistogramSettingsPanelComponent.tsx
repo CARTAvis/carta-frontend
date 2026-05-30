@@ -22,7 +22,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
             type: "floating-settings",
@@ -71,7 +71,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                             regionString = region.nameString;
                         }
                     }
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     if (this.floatingSettingsId) {
                         appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
                     }
@@ -200,9 +200,9 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            logScaleY: widgetStore.logScaleY,
+            isLogScaleY: widgetStore.isLogScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,

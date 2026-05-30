@@ -16,7 +16,7 @@ export class ResizableDialogComponentProps {
     defaultHeight: number;
     minWidth?: number;
     minHeight?: number;
-    enableResizing: boolean;
+    isResizingEnabled: boolean;
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     dialogId: string;
@@ -101,16 +101,16 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     render() {
         const {width: windowWidth, height: windowHeight} = getViewportDimensions();
 
-        const resizeEnabled = this.props.enableResizing;
+        const isResizeEnabled = this.props.isResizingEnabled;
         const resizeSettings: ResizeEnable = {
-            top: resizeEnabled,
-            bottom: resizeEnabled,
-            left: resizeEnabled,
-            right: resizeEnabled,
-            topLeft: resizeEnabled,
-            topRight: resizeEnabled,
-            bottomLeft: resizeEnabled,
-            bottomRight: resizeEnabled
+            top: isResizeEnabled,
+            bottom: isResizeEnabled,
+            left: isResizeEnabled,
+            right: isResizeEnabled,
+            topLeft: isResizeEnabled,
+            topRight: isResizeEnabled,
+            bottomLeft: isResizeEnabled,
+            bottomRight: isResizeEnabled
         };
 
         const appStore = AppStore.Instance;

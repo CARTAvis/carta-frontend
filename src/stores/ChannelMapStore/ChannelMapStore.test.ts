@@ -15,10 +15,10 @@ describe("ChannelMapStore", () => {
 
     describe("setChannelMapEnabled", () => {
         it("updates the channel map mode correctly", () => {
-            expect(store.channelMapEnabled).toBe(false);
+            expect(store.isChannelMapEnabled).toBe(false);
 
             store.setChannelMapEnabled(true);
-            expect(store.channelMapEnabled).toBe(true);
+            expect(store.isChannelMapEnabled).toBe(true);
         });
     });
 

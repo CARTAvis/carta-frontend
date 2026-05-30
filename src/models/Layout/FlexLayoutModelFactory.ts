@@ -18,17 +18,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
 
 /** Map of widget type strings to their default FlexLayout tab node JSON */
 const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
-    [
-        "image-view",
-        {
-            type: "tab",
-            component: "image-view",
-            name: "No image loaded",
-            id: "image-view",
-            enableClose: false,
-            enableDrag: false
-        }
-    ],
+    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: false}],
     ["render-config", {type: "tab", component: "render-config", name: "Render Configuration", id: "render-config"}],
     ["region-list", {type: "tab", component: "region-list", name: "Region List", id: "region-list"}],
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
@@ -78,12 +68,17 @@ export function createFlexLayoutModel(dockedConfig: any): IJsonModel {
     // Reset ID tracking for this model creation
     usedIds.clear();
     idCounters.clear();
-    const layoutNode = convertNode(dockedConfig);
-    return {
-        global: FLEXLAYOUT_GLOBAL_CONFIG,
-        borders: [],
-        layout: layoutNode as IJsonRowNode
-    };
+    try {
+        const layoutNode = convertNode(dockedConfig);
+        return {
+            global: FLEXLAYOUT_GLOBAL_CONFIG,
+            borders: [],
+            layout: layoutNode as IJsonRowNode
+        };
+    } finally {
+        usedIds.clear();
+        idCounters.clear();
+    }
 }
 
 /**
@@ -95,8 +90,10 @@ export function getImageViewWeight(): number {
 }
 
 /** Track used IDs during a single createFlexLayoutModel() call to ensure uniqueness */
+/* eslint-disable @typescript-eslint/naming-convention */
 const usedIds = new Set<string>();
 const idCounters = new Map<string, number>();
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Gets a unique ID for a widget node. If the ID is already used (e.g., two
@@ -133,9 +130,8 @@ function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
 
     switch (node.type) {
         case "row":
-            return convertRowOrColumn(node, false);
         case "column":
-            return convertRowOrColumn(node, true);
+            return convertRowOrColumn(node);
         case "stack":
             return convertStack(node);
         case "component":
@@ -145,7 +141,7 @@ function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
     }
 }
 
-function convertRowOrColumn(node: any, isVertical: boolean): IJsonRowNode {
+function convertRowOrColumn(node: any): IJsonRowNode {
     // In FlexLayout, a "row" lays out children horizontally by default.
     // GL's "column" lays out children vertically, which is a FlexLayout "row"
     // that is a child inside a parent row (FlexLayout handles orientation via nesting).

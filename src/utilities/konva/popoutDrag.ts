@@ -7,7 +7,7 @@ interface PopoutDragListenerConfig {
     useCapture?: boolean;
 }
 
-const PopoutDragListeners: PopoutDragListenerConfig[] = [
+const POPOUT_DRAG_LISTENERS: PopoutDragListenerConfig[] = [
     {type: "mouseup", listener: DD._endDragBefore as EventListener, useCapture: true},
     {type: "touchend", listener: DD._endDragBefore as EventListener, useCapture: true},
     {type: "mousemove", listener: DD._drag as EventListener},
@@ -27,12 +27,12 @@ export function setupKonvaPopoutDragListeners(stage: Konva.Stage | null): (() =>
         return null;
     }
 
-    const updateListeners = (addListeners: boolean) => {
-        PopoutDragListeners.forEach(({type, listener, useCapture}) => {
-            if (addListeners) {
-                popoutWindow.addEventListener(type, listener, useCapture);
+    const updateListeners = (shouldAddListeners: boolean) => {
+        POPOUT_DRAG_LISTENERS.forEach(({type, listener, useCapture: shouldUseCapture}) => {
+            if (shouldAddListeners) {
+                popoutWindow.addEventListener(type, listener, shouldUseCapture);
             } else {
-                popoutWindow.removeEventListener(type, listener, useCapture);
+                popoutWindow.removeEventListener(type, listener, shouldUseCapture);
             }
         });
     };

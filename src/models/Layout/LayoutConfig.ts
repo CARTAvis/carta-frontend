@@ -5,13 +5,14 @@ import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getIm
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
 import {findDeep} from "utilities";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
 export class LayoutConfig {
-    public static LayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
-    public static CurrentSchemaVersion = 2;
+    public static layoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
+    public static currentSchemaVersion = 2;
 
-    public static GetPresetConfig = (presetName: string) => {
+    public static getPresetConfig = (presetName: string) => {
         if (!presetName) {
             return null;
         }
@@ -25,7 +26,7 @@ export class LayoutConfig {
         const imageViewerWidth = 60;
 
         return {
-            layoutVersion: LayoutConfig.CurrentSchemaVersion,
+            layoutVersion: LayoutConfig.currentSchemaVersion,
             docked: {
                 type: "row",
                 content: [
@@ -48,7 +49,7 @@ export class LayoutConfig {
         };
     };
 
-    public static UpgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
+    public static upgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
         // Upgrade to V2 if required
         if (layout.layoutVersion === 1) {
             const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
@@ -79,7 +80,7 @@ export class LayoutConfig {
     };
 
     // Note: layoutConfig is formalized(modified) during validation if valid
-    public static IsUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
+    public static isUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
         if (!layoutName || !layoutConfig) {
             return false;
         }
@@ -88,11 +89,11 @@ export class LayoutConfig {
             return false;
         }
 
-        const validLayout = LayoutConfig.LayoutValidator(layoutConfig);
-        if (validLayout) {
+        const isValidLayout = LayoutConfig.layoutValidator(layoutConfig);
+        if (isValidLayout) {
             return true;
         } else {
-            console.log(LayoutConfig.LayoutValidator.errors);
+            console.log(LayoutConfig.layoutValidator.errors);
             return false;
         }
     };
@@ -101,11 +102,11 @@ export class LayoutConfig {
      * Converts the app's abstract layout config into a FlexLayout IJsonModel.
      * Also collects component configs for initializing widget stores.
      */
-    public static CreateFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[]) => {
+    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[]) => {
         // Convert the abstract config to FlexLayout model JSON first — this assigns unique IDs
         const modelJson = createFlexLayoutModel({type: dockedConfig.type, content: dockedConfig.content});
         // Then collect component configs (uses _assignedId set by createFlexLayoutModel)
-        LayoutConfig.CollectComponentConfigs(dockedConfig.content, componentConfigs);
+        LayoutConfig.collectComponentConfigs(dockedConfig.content, componentConfigs);
         return modelJson;
     };
 
@@ -113,7 +114,7 @@ export class LayoutConfig {
      * Recursively collects component configs from the abstract layout tree.
      * Each component config has: id, props, widgetSettings, plotType.
      */
-    private static CollectComponentConfigs = (content: any[], componentConfigs: any[]) => {
+    private static collectComponentConfigs = (content: any[], componentConfigs: any[]) => {
         if (!content || !Array.isArray(content)) {
             return;
         }
@@ -125,7 +126,7 @@ export class LayoutConfig {
 
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
                 if (child.content) {
-                    LayoutConfig.CollectComponentConfigs(child.content, componentConfigs);
+                    LayoutConfig.collectComponentConfigs(child.content, componentConfigs);
                 }
             } else if (child.type === "component" && child.id) {
                 const widgetType = child.id.replace(/-\d+$/, "");
@@ -153,7 +154,7 @@ export class LayoutConfig {
     /**
      * Creates the abstract config from the current FlexLayout model for saving.
      */
-    public static CreateConfigToSave = (appStore: AppStore, modelJson: any) => {
+    public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
         if (!appStore || !modelJson) {
             return null;
         }
@@ -162,13 +163,13 @@ export class LayoutConfig {
         const abstractConfig = extractAbstractConfig(modelJson);
 
         const configToSave = {
-            layoutVersion: LayoutConfig.CurrentSchemaVersion,
+            layoutVersion: LayoutConfig.currentSchemaVersion,
             docked: abstractConfig,
             floating: [] as any[]
         };
 
         // Enrich docked widgets with widget settings
-        LayoutConfig.EnrichSaveConfig(appStore, configToSave.docked);
+        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
 
         // Handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
@@ -186,7 +187,7 @@ export class LayoutConfig {
             };
             // add widget settings
             let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
                 const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
                 const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
@@ -210,21 +211,21 @@ export class LayoutConfig {
     /**
      * Recursively enriches the abstract config with widget settings from current widget stores.
      */
-    private static EnrichSaveConfig = (appStore: AppStore, node: any) => {
+    private static enrichSaveConfig = (appStore: AppStore, node: any) => {
         if (!node || !node.content) {
             return;
         }
 
         for (const child of node.content) {
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                LayoutConfig.EnrichSaveConfig(appStore, child);
+                LayoutConfig.enrichSaveConfig(appStore, child);
             } else if (child.type === "component" && child.id) {
                 // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
                 // since child.id is the collapsed base type (e.g. "catalog-plot")
                 const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
                 let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-                if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
                     const catalogFileId = CatalogStore.Instance.catalogProfiles.get(instanceId) ?? NaN;
                     const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
                     widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
@@ -248,7 +249,7 @@ export class LayoutConfig {
      * Legacy compatibility: Collects component configs from abstract layout tree.
      * Used when applying a layout to initialize widget stores before creating the FlexLayout model.
      */
-    public static CreateConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
         if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -271,7 +272,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.createConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");

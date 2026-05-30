@@ -13,9 +13,9 @@ import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
-    showPinButton: boolean;
+    shouldShowPinButton: boolean;
     canPopout?: boolean;
-    showFloatingSettingsButton?: boolean;
+    shouldShowFloatingSettingsButton?: boolean;
     children?: any;
     zIndex?: number;
     isSelected?: boolean;
@@ -68,9 +68,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 ...(widgetConfig.type === "catalog-plot" && {enablePopout: false})
             };
 
-            if (widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
+            if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
                 tabJson.config = {id: widgetConfig.id, label: widgetConfig.title};
-            } else if (widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type) {
+            } else if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
                 tabJson.config = {id: widgetConfig.parentId};
             } else {
                 tabJson.config = {id: widgetConfig.id};
@@ -127,7 +127,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     private getHelpType = (): HelpType | undefined => {
         const {widgetConfig} = this.props;
 
-        if (widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+        if (widgetConfig.type === RenderConfigComponent.WidgetConfig.type) {
             return AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG;
         }
 
@@ -156,7 +156,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
 
         const toggleOrShow = (helpType: HelpType) => {
-            if (helpStore.helpVisible && helpStore.type === helpType) {
+            if (helpStore.isHelpVisible && helpStore.type === helpType) {
                 helpStore.hideHelpDrawer();
             } else {
                 helpStore.showHelpDrawer(helpType, centerX);
@@ -169,10 +169,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     public render() {
         const headerHeight = FloatingWidgetComponent.HeaderHeight;
         const appStore = AppStore.Instance;
-        const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
-        const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
-        const buttonClass = classNames("floating-header-button", {[Classes.DARK]: appStore.darkTheme});
-        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
+        const className = classNames("floating-widget", {[Classes.DARK]: appStore.isDarkTheme});
+        const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.isDarkTheme});
+        const buttonClass = classNames("floating-header-button", {[Classes.DARK]: appStore.isDarkTheme});
+        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.isDarkTheme, "floating-settings-content": !this.props.shouldShowPinButton});
 
         const widgetConfig = this.props.widgetConfig;
 
@@ -209,7 +209,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
                         {widgetConfig.title}
                     </div>
-                    {this.props.showFloatingSettingsButton && (
+                    {this.props.shouldShowFloatingSettingsButton && (
                         <div
                             className={buttonClass}
                             onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title ?? "", widgetConfig.id ?? "", widgetConfig.type)}
@@ -231,14 +231,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                             </Tooltip>
                         </div>
                     )}
-                    {this.props.showPinButton && this.props.canPopout && (
+                    {this.props.shouldShowPinButton && this.props.canPopout && (
                         <div className={buttonClass} onClick={this.handlePopout}>
                             <Tooltip content="Pop out to new window" position={Position.BOTTOM_RIGHT}>
                                 <CustomIcon icon="popout" viewBox="1 1.5 16 16" />
                             </Tooltip>
                         </div>
                     )}
-                    {this.props.showPinButton && (
+                    {this.props.shouldShowPinButton && (
                         <div className={buttonClass} draggable onDragStart={this.handlePinDragStart} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <span>

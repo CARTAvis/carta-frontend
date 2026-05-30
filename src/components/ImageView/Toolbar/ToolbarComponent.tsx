@@ -1,11 +1,11 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewComponent} from "components";
+import {ImageViewComponent, OffsetCoordinateControlsComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {ImageViewLayer, RegionMode, SystemType} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
@@ -16,8 +16,8 @@ import {toFixed} from "utilities";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
-    docked: boolean;
-    visible: boolean;
+    isDocked: boolean;
+    isVisible: boolean;
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
@@ -87,7 +87,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handlePanZoomShortCutClicked = () => {
         const widgetsStore = AppStore.Instance.widgetsStore;
-        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const parentType = ImageViewComponent.WidgetConfig.type;
         const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
         if (settingsWidget) {
             widgetsStore.removeFloatingWidget(settingsWidget.id);
@@ -104,8 +104,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>
-                        Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br />
-                        {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        Background color is {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "transparent" : "filled"}.<br />
+                        {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
                         <br />
                     </small>
                 </i>
@@ -123,11 +123,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             bottom: frame.overlayStore.padding.bottom,
             right: frame.overlayStore.padding.right,
             left: frame.overlayStore.padding.left,
-            opacity: this.props.visible ? 1 : 0,
+            opacity: this.props.isVisible ? 1 : 0,
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.isDocked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -154,8 +154,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const regionMenu = (
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
-                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                    const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(type);
+                    const regionIcon = RegionStore.isRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                     return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
                 <MenuDivider></MenuDivider>
@@ -179,27 +179,32 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <FormGroup inline={false} className="offset-group">
                     <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
                     <Collapse isOpen={frame.isOffsetCoord}>
-                        <Tooltip content="Set origin to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffsetCenter()} />
-                        </Tooltip>
+                        <OffsetCoordinateControlsComponent
+                            className="offset-collapse-content"
+                            isWcsCoordinates={overlay.isWcsCoordinates && overlay.global.isValidWcs}
+                            isOffsetCoord={frame.isOffsetCoord}
+                            skyRefIs={frame.skyRefIs}
+                            onSkyRefIsChanged={frame.setSkyRefIs}
+                            onUpdateOffsetCenter={frame.updateOffsetCenter}
+                        />
                     </Collapse>
                 </FormGroup>
             </Menu>
         );
 
-        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
-        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+        const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(frame.regionSet.newRegionType);
+        const regionIcon = RegionStore.isRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
-        const spatialMatchingEnabled = !!frame.spatialReference;
-        const spectralMatchingEnabled = !!frame.spectralReference;
+        const isSpatialMatchingEnabled = !!frame.spatialReference;
+        const isSpectralMatchingEnabled = !!frame.spectralReference;
         const canEnableSpatialMatching = appStore.spatialReference !== frame;
         const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
-        const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
+        const wcsButtonSuperscript = (isSpatialMatchingEnabled ? "x" : "") + (isSpectralMatchingEnabled ? "z" : "");
         const wcsButtonTooltipEntries: string[] = [];
-        if (spectralMatchingEnabled) {
+        if (isSpectralMatchingEnabled) {
             wcsButtonTooltipEntries.push(`Spectral (${appStore.spectralMatchingType})`);
         }
-        if (spatialMatchingEnabled) {
+        if (isSpatialMatchingEnabled) {
             wcsButtonTooltipEntries.push("Spatial");
         }
         const wcsButtonTooltip = wcsButtonTooltipEntries.join(" and ") || "None";
@@ -209,17 +214,17 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem
                     text={`Spectral (${appStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
-                    active={spectralMatchingEnabled && spatialMatchingEnabled}
+                    active={isSpectralMatchingEnabled && isSpatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
                 <MenuItem
                     text={`Spectral (${appStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
-                    active={spectralMatchingEnabled && !spatialMatchingEnabled}
+                    active={isSpectralMatchingEnabled && !isSpatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}
                 />
-                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
-                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
+                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!isSpectralMatchingEnabled && isSpatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
+                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!isSpectralMatchingEnabled && !isSpatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
             </Menu>
         );
 
@@ -231,10 +236,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const baseFrame = this.props.frame;
         const numSourcesArray = appStore.catalogStore.visibleCatalogFiles.get(baseFrame)?.map(fileId => appStore.catalogStore.catalogCounts.get(fileId));
-        const numSourcesIsZero = numSourcesArray?.every(element => element === 0);
+        const isNumSourcesZero = numSourcesArray?.every(element => element === 0);
 
-        const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
+        const isCatalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
+        const isCatalogSelectionDisabled = appStore.catalogNum === 0 || isNumSourcesZero === true;
 
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
@@ -245,7 +250,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
-                {appStore.toolbarExpanded && (
+                {appStore.isToolbarExpanded && (
                     <React.Fragment>
                         {!frame.isPreview && (
                             <>
@@ -282,9 +287,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 >
                                     <AnchorButton
                                         icon={"locate"}
-                                        active={catalogOverlayEnabled}
+                                        active={isCatalogOverlayEnabled}
                                         onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)}
-                                        disabled={catalogSelectionDisabled}
+                                        disabled={isCatalogSelectionDisabled}
                                         data-testid="toolbar-catalog-selection-button"
                                     />
                                 </Tooltip>
@@ -411,18 +416,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
+                                        <AnchorButton disabled={!frame.isValidWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
                                     </Tooltip>
                                 </Popover>
                             </>
                         )}
                         <Tooltip position={tooltipPosition} content="Toggle grid">
-                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} data-testid="grid-button" />
+                            <AnchorButton icon="grid" active={grid.isVisible} onClick={() => grid.setVisible(!grid.isVisible)} data-testid="grid-button" />
                         </Tooltip>
                         {!frame.isPreview && (
                             <>
                                 <Tooltip position={tooltipPosition} content="Toggle labels">
-                                    <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} data-testid="toggle-labels-button" />
+                                    <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} data-testid="toggle-labels-button" />
                                 </Tooltip>
                                 <Popover content={exportImageMenu} position={Position.TOP} minimal={true}>
                                     <Tooltip
@@ -441,8 +446,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         )}
                     </React.Fragment>
                 )}
-                <Tooltip position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
-                    <AnchorButton active={appStore.toolbarExpanded} icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} data-testid="toggle-toolbar-button" />
+                <Tooltip position={tooltipPosition} content={appStore.isToolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
+                    <AnchorButton active={appStore.isToolbarExpanded} icon={appStore.isToolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} data-testid="toggle-toolbar-button" />
                 </Tooltip>
             </ButtonGroup>
         );

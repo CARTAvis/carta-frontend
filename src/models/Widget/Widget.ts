@@ -1,3 +1,5 @@
+import {type ComponentType} from "react";
+
 import {
     AnimatorComponent,
     CatalogOverlayComponent,
@@ -12,7 +14,6 @@ import {
     LayerListComponent,
     LayerListSettingsPanelComponent,
     LogComponent,
-    PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
@@ -28,6 +29,12 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {type HelpType} from "enums";
+
+export interface DockedWidgetComponentProps {
+    id: string;
+    docked: boolean;
+    floatingSettingsId?: string;
+}
 
 export interface DefaultWidgetConfig {
     id: string;
@@ -46,92 +53,39 @@ export interface DefaultWidgetConfig {
     componentId?: string;
 }
 
-export const GetDefaultWidgetConfig = (type: string): DefaultWidgetConfig => {
-    switch (type) {
-        case ImageViewComponent.WIDGET_CONFIG.type:
-            return ImageViewComponent.WIDGET_CONFIG;
-        case RenderConfigComponent.WIDGET_CONFIG.type:
-            return RenderConfigComponent.WIDGET_CONFIG;
-        case LayerListComponent.WIDGET_CONFIG.type:
-            return LayerListComponent.WIDGET_CONFIG;
-        case LogComponent.WIDGET_CONFIG.type:
-            return LogComponent.WIDGET_CONFIG;
-        case AnimatorComponent.WIDGET_CONFIG.type:
-            return AnimatorComponent.WIDGET_CONFIG;
-        case ChannelMapControlComponent.WIDGET_CONFIG.type:
-            return ChannelMapControlComponent.WIDGET_CONFIG;
-        case SpatialProfilerComponent.WIDGET_CONFIG.type:
-            return SpatialProfilerComponent.WIDGET_CONFIG;
-        case SpectralProfilerComponent.WIDGET_CONFIG.type:
-            return SpectralProfilerComponent.WIDGET_CONFIG;
-        case StatsComponent.WIDGET_CONFIG.type:
-            return StatsComponent.WIDGET_CONFIG;
-        case HistogramComponent.WIDGET_CONFIG.type:
-            return HistogramComponent.WIDGET_CONFIG;
-        case RegionListComponent.WIDGET_CONFIG.type:
-            return RegionListComponent.WIDGET_CONFIG;
-        case StokesAnalysisComponent.WIDGET_CONFIG.type:
-            return StokesAnalysisComponent.WIDGET_CONFIG;
-        case CatalogOverlayComponent.WIDGET_CONFIG.type:
-            return CatalogOverlayComponent.WIDGET_CONFIG;
-        case CatalogPlotComponent.WIDGET_CONFIG.type:
-            return CatalogPlotComponent.WIDGET_CONFIG;
-        case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-            return SpectralLineQueryComponent.WIDGET_CONFIG;
-        case CursorInfoComponent.WIDGET_CONFIG.type:
-            return CursorInfoComponent.WIDGET_CONFIG;
-        case PvGeneratorComponent.WIDGET_CONFIG.type:
-            return PvGeneratorComponent.WIDGET_CONFIG;
-        case PvPreviewComponent.WIDGET_CONFIG.type:
-            return PvPreviewComponent.WIDGET_CONFIG;
-        default:
-            return PlaceholderComponent.WIDGET_CONFIG;
-    }
-};
+export interface WidgetRegistration {
+    config: DefaultWidgetConfig;
+    settingsConfig?: DefaultWidgetConfig;
+    component: ComponentType<DockedWidgetComponentProps>;
+}
 
-export const GetDefaultWidgetSettingsConfig = (type: string): DefaultWidgetConfig => {
-    switch (type) {
-        case ImageViewComponent.WIDGET_CONFIG.type:
-            return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
-        case StokesAnalysisComponent.WIDGET_CONFIG.type:
-            return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
-        case SpectralProfilerComponent.WIDGET_CONFIG.type:
-            return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
-        case SpatialProfilerComponent.WIDGET_CONFIG.type:
-            return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-        case RenderConfigComponent.WIDGET_CONFIG.type:
-            return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
-        case HistogramComponent.WIDGET_CONFIG.type:
-            return HistogramSettingsPanelComponent.WIDGET_CONFIG;
-        case CatalogOverlayComponent.WIDGET_CONFIG.type:
-            return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
-        case LayerListComponent.WIDGET_CONFIG.type:
-            return LayerListSettingsPanelComponent.WIDGET_CONFIG;
-        case PvGeneratorComponent.WIDGET_CONFIG.type:
-            return PvPreviewComponent.WIDGET_CONFIG;
-        default:
-            return PlaceholderComponent.WIDGET_CONFIG;
-    }
-};
+const CreateWidgetMap = () =>
+    new Map<string, WidgetRegistration>([
+        [ImageViewComponent.WidgetConfig.type, {config: ImageViewComponent.WidgetConfig, settingsConfig: ImageViewSettingsPanelComponent.WidgetConfig, component: ImageViewComponent}],
+        [RenderConfigComponent.WidgetConfig.type, {config: RenderConfigComponent.WidgetConfig, settingsConfig: RenderConfigSettingsPanelComponent.WidgetConfig, component: RenderConfigComponent}],
+        [LayerListComponent.WidgetConfig.type, {config: LayerListComponent.WidgetConfig, settingsConfig: LayerListSettingsPanelComponent.WidgetConfig, component: LayerListComponent}],
+        [LogComponent.WidgetConfig.type, {config: LogComponent.WidgetConfig, component: LogComponent}],
+        [AnimatorComponent.WidgetConfig.type, {config: AnimatorComponent.WidgetConfig, component: AnimatorComponent}],
+        [ChannelMapControlComponent.WidgetConfig.type, {config: ChannelMapControlComponent.WidgetConfig, component: ChannelMapControlComponent}],
+        [SpatialProfilerComponent.WidgetConfig.type, {config: SpatialProfilerComponent.WidgetConfig, settingsConfig: SpatialProfilerSettingsPanelComponent.WidgetConfig, component: SpatialProfilerComponent}],
+        [SpectralProfilerComponent.WidgetConfig.type, {config: SpectralProfilerComponent.WidgetConfig, settingsConfig: SpectralProfilerSettingsPanelComponent.WidgetConfig, component: SpectralProfilerComponent}],
+        [StatsComponent.WidgetConfig.type, {config: StatsComponent.WidgetConfig, component: StatsComponent}],
+        [HistogramComponent.WidgetConfig.type, {config: HistogramComponent.WidgetConfig, settingsConfig: HistogramSettingsPanelComponent.WidgetConfig, component: HistogramComponent}],
+        [RegionListComponent.WidgetConfig.type, {config: RegionListComponent.WidgetConfig, component: RegionListComponent}],
+        [StokesAnalysisComponent.WidgetConfig.type, {config: StokesAnalysisComponent.WidgetConfig, settingsConfig: StokesAnalysisSettingsPanelComponent.WidgetConfig, component: StokesAnalysisComponent}],
+        [CatalogOverlayComponent.WidgetConfig.type, {config: CatalogOverlayComponent.WidgetConfig, settingsConfig: CatalogOverlayPlotSettingsPanelComponent.WidgetConfig, component: CatalogOverlayComponent}],
+        [CatalogPlotComponent.WidgetConfig.type, {config: CatalogPlotComponent.WidgetConfig, component: CatalogPlotComponent}],
+        [SpectralLineQueryComponent.WidgetConfig.type, {config: SpectralLineQueryComponent.WidgetConfig, component: SpectralLineQueryComponent}],
+        [CursorInfoComponent.WidgetConfig.type, {config: CursorInfoComponent.WidgetConfig, component: CursorInfoComponent}],
+        [PvGeneratorComponent.WidgetConfig.type, {config: PvGeneratorComponent.WidgetConfig, settingsConfig: PvPreviewComponent.WidgetConfig, component: PvGeneratorComponent}],
+        [PvPreviewComponent.WidgetConfig.type, {config: PvPreviewComponent.WidgetConfig, component: PvPreviewComponent}]
+    ]);
 
-export const COMPONENT_MAP: Map<string, any> = new Map<string, any>([
-    ["placeholder", PlaceholderComponent],
-    ["image-view", ImageViewComponent],
-    ["spatial-profiler", SpatialProfilerComponent],
-    ["spectral-profiler", SpectralProfilerComponent],
-    ["spectral-line-query", SpectralLineQueryComponent],
-    ["stats", StatsComponent],
-    ["histogram", HistogramComponent],
-    ["render-config", RenderConfigComponent],
-    ["region-list", RegionListComponent],
-    ["layer-list", LayerListComponent],
-    ["cursor-info", CursorInfoComponent],
-    ["pv-generator", PvGeneratorComponent],
-    ["pv-preview", PvPreviewComponent],
-    ["log", LogComponent],
-    ["animator", AnimatorComponent],
-    ["channel-map-control", ChannelMapControlComponent],
-    ["stokes", StokesAnalysisComponent],
-    ["catalog-overlay", CatalogOverlayComponent],
-    ["catalog-plot", CatalogPlotComponent]
-]);
+let widgetMap: Map<string, WidgetRegistration> | undefined;
+
+export function getWidgetMap() {
+    if (!widgetMap) {
+        widgetMap = CreateWidgetMap();
+    }
+    return widgetMap;
+}
