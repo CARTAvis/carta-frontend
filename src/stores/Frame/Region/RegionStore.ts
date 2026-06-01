@@ -654,6 +654,17 @@ export class RegionStore {
         }
     };
 
+    @action removeControlPoint = (index: number, shouldSkipUpdate = false, hasShapeChanged = true) => {
+        if (index < 0 || index >= this.controlPoints.length) {
+            return;
+        }
+
+        const points = this.controlPoints.slice();
+        points.splice(index, 1);
+        this.setControlPoints(points, shouldSkipUpdate, hasShapeChanged);
+        this.deselectPoint();
+    };
+
     private simplePolygonTest(point: number = -1) {
         const points = this.controlPoints.slice();
         // Only allow optimised test if the polygon is currently marked as simple, to avoid cases where multiple line segments intersect

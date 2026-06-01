@@ -156,6 +156,25 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         ]);
     });
 
+    test("deselects point after removing a polygon control point", () => {
+        const polygon = MakeRegion(CARTA.RegionType.POLYGON, [
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 10, y: 10},
+            {x: 0, y: 10}
+        ]);
+
+        polygon.selectPoint(1);
+        polygon.removeControlPoint(1);
+
+        expect(polygon.controlPoints).toEqual([
+            {x: 0, y: 0},
+            {x: 10, y: 10},
+            {x: 0, y: 10}
+        ]);
+        expect(polygon.selectedPointIndex).toBe(-1);
+    });
+
     test("simple shape side movement keeps dimensions positive", () => {
         const rectangle = MakeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},
