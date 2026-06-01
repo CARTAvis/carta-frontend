@@ -412,7 +412,7 @@ export class HotkeyService extends React.Component<{}> {
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const fineMoveMultiplier = 1;
         const normalMoveMultiplier = 10;
-        const coarseMoveMultiplier = 100;
+        const coarseMoveMultiplier = 20;
         const items = [
             // Fine up/down movement is handled by MoveSelectedRegionOrChangeChannel because those combos also change channels.
             {combo: `${modString}left`, label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.moveSelectedRegion(-1, 0, fineMoveMultiplier, false)},
