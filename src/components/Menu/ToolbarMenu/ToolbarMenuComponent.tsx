@@ -80,7 +80,7 @@ export class ToolbarMenuComponent extends React.Component {
         const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
-        const isRegionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
+        const isRegionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog || appStore.activeFrame.isPreview;
 
         const commonTooltip = (
             <span>

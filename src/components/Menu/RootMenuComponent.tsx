@@ -268,7 +268,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
-                <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
                     content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
@@ -280,7 +280,7 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip>
-                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled || appStore.activeFrame?.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem>
