@@ -39,6 +39,8 @@ const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
 const KEYCODE_ESC = 27;
 const POINTER_DRAG_THRESHOLD = 4;
+const REGION_SELECTION_BOX_FILL = "rgba(98, 171, 221, 0.36)";
+const REGION_SELECTION_BOX_STROKE = "rgba(127, 195, 255, 0.7)";
 
 interface RegionSelectionBox {
     start: Point2D;
@@ -927,7 +929,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const selectionRect = this.getRegionSelectionRect();
         const selectionBox =
             selectionRect && this.isSelectionRectLargeEnough(selectionRect) ? (
-                <Rect x={selectionRect.x} y={selectionRect.y} width={selectionRect.width} height={selectionRect.height} fill={"rgba(45, 114, 210, 0.12)"} stroke={"#2D72D2"} strokeWidth={1} listening={false} />
+                <Rect x={selectionRect.x} y={selectionRect.y} width={selectionRect.width} height={selectionRect.height} fill={REGION_SELECTION_BOX_FILL} stroke={REGION_SELECTION_BOX_STROKE} strokeWidth={1} listening={false} />
             ) : null;
         if (this.currentCursorPos && this.creatingRegion?.isPolygonalRegion && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
