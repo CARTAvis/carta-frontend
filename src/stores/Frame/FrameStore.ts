@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {Polarizations, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {Polarizations, RegionId, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -39,6 +39,7 @@ import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, typ
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     ASTSettingsString,
+    buildSwappedZWcsSettings,
     clamp,
     formattedArcsec,
     formattedFrequency,
@@ -50,6 +51,7 @@ import {
     getPixelValueFromWCS,
     getRegionPixelProperties,
     GetRequiredTiles,
+    getSwappedDirAxisInfo,
     getTransformedChannel,
     getTransformedRegionProperties,
     getUnformattedWCSPoint,
@@ -207,6 +209,7 @@ export class FrameStore {
     @observable intensityUnit: string | undefined = undefined;
 
     @observable isOffsetCoord: boolean = false;
+    @observable skyRefIs: SkyRefIs = SkyRefIs.Origin;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -1434,6 +1437,7 @@ export class FrameStore {
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }
+        this.applySwappedZWcsSettings();
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
@@ -1454,6 +1458,7 @@ export class FrameStore {
                     if (this.spectralFrame) {
                         AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
                     }
+                    this.applySwappedZWcsSettings();
 
                     if (this.spectralReference) {
                         const spectralReference = this.spectralReference;
@@ -1976,32 +1981,52 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    public updateSpectralVsDirectionWcs = () => {
+    private updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
             if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
                 AST.deleteObject(this.wcsInfo);
             }
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
-            AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
+            this.applySwappedZWcsSettings();
         }
     };
 
-    private updateDirAxisInfo = () => {
-        // For direction vs. spectral image, get rendered direction axis index and size
-        this.dirAxis = this.dirX < this.dirY ? this.dirX : this.dirY;
-        this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
-
-        // Get rendered and hidden direction axes formats
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
-        const axisValue = axisName?.value ?? "Unknown";
-        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
-            this.dirAxisFormat = "d.*";
-            this.depthAxisFormat = `d.${WCS_PRECISION}`;
-        } else {
-            this.dirAxisFormat = this.dirX < this.dirY ? "hms.*" : "dms.*";
-            this.depthAxisFormat = this.dirX < this.dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+    private applySwappedZWcsSettings = () => {
+        if (!this.isSwappedZ || !this.spectralAxis?.valid || !this.wcsInfo) {
+            return;
         }
+
+        const settings = buildSwappedZWcsSettings({
+            dirAxis: this.dirAxis,
+            dirAxisFormat: this.dirAxisFormat,
+            spectralAxis: this.spectral,
+            spectralType: this.spectralType,
+            spectralUnit: this.spectralUnit,
+            spectralSystem: this.spectralSystem,
+            restFreqInHz: this.restFreqStore?.restFreqInHz,
+            dirX: this.dirX,
+            dirXLabel: this.dirXLabel,
+            dirY: this.dirY,
+            dirYLabel: this.dirYLabel
+        });
+
+        AST.set(this.wcsInfo, settings);
+    };
+
+    private updateDirAxisInfo = () => {
+        const {dirAxis, dirAxisSize, dirAxisFormat, depthAxisFormat} = getSwappedDirAxisInfo(
+            this.dirX,
+            this.dirY,
+            this.frameInfo.fileInfoExtended.width,
+            this.frameInfo.fileInfoExtended.height,
+            this.frameInfo.fileInfoExtended.headerEntries,
+            WCS_PRECISION
+        );
+
+        this.dirAxis = dirAxis;
+        this.dirAxisSize = dirAxisSize;
+        this.dirAxisFormat = dirAxisFormat;
+        this.depthAxisFormat = depthAxisFormat;
     };
 
     private sanitizeChannelNumber(channel: number) {
@@ -2334,6 +2359,9 @@ export class FrameStore {
             for (const frame of this.secondarySpatialImages) {
                 frame.isOffsetCoord = isOffset;
             }
+            if (isOffset) {
+                this.createWcsInfoOffset();
+            }
         }
     }
 
@@ -2346,36 +2374,60 @@ export class FrameStore {
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
+    /**
+     * Set the SkyRefIs mode (Origin or Pole) and re-create the offset frameset.
+     */
+    @action setSkyRefIs = (value: SkyRefIs) => {
+        if (this.spatialReference) {
+            this.spatialReference.setSkyRefIs(value);
+            return;
+        }
+
+        this.skyRefIs = value;
+        for (const frame of this.secondarySpatialImages) {
+            frame.skyRefIs = value;
+        }
+
+        if (this.isOffsetCoord) {
+            this.createWcsInfoOffset();
+        }
+    };
+
     @action private createWcsInfoOffset = () => {
         if (this.spatialReference) {
             this.spatialReference.createWcsInfoOffset();
-        } else {
-            if (this.wcsInfo && this.offsetCenter) {
-                if (this.wcsInfoOffset) {
-                    AST.deleteObject(this.wcsInfoOffset);
-                    this.wcsInfoOffset = undefined as any;
-                }
+            return;
+        }
 
-                const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+        if (!this.wcsInfo || !this.offsetCenter) {
+            return;
+        }
 
-                if (centerInRad) {
-                    this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
-                    for (const frame of this.secondarySpatialImages) {
-                        const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
-                            if (frame.wcsInfoOffset) {
-                                AST.deleteObject(frame.wcsInfoOffset);
-                            }
-                            frame.wcsInfoOffset = AST.createOffsetFrameset(
-                                frame.wcsInfo,
-                                frameCenterInRad.x,
-                                frameCenterInRad.y,
-                                this.offsetCenter.x - frame.spatialTransform.translation.x,
-                                this.offsetCenter.y - frame.spatialTransform.translation.y
-                            );
-                        }
-                    }
+        if (this.wcsInfoOffset) {
+            AST.deleteObject(this.wcsInfoOffset);
+            this.wcsInfoOffset = undefined as any;
+        }
+
+        const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+        if (!centerInRad) {
+            return;
+        }
+
+        this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y, this.skyRefIs);
+        for (const frame of this.secondarySpatialImages) {
+            const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
+            if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
+                if (frame.wcsInfoOffset) {
+                    AST.deleteObject(frame.wcsInfoOffset);
                 }
+                frame.wcsInfoOffset = AST.createOffsetFrameset(
+                    frame.wcsInfo,
+                    frameCenterInRad.x,
+                    frameCenterInRad.y,
+                    this.offsetCenter.x - frame.spatialTransform.translation.x,
+                    this.offsetCenter.y - frame.spatialTransform.translation.y,
+                    this.skyRefIs
+                );
             }
         }
     };
@@ -2554,6 +2606,7 @@ export class FrameStore {
 
         this.spectralType = coord.type;
         this.spectralUnit = coord.unit;
+        this.applySwappedZWcsSettings();
         if (shouldAlignSpectralSiblings) {
             (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
         }
@@ -2577,6 +2630,7 @@ export class FrameStore {
     @action setSpectralSystem = (spectralSystem: SpectralSystem, shouldAlignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
+            this.applySwappedZWcsSettings();
 
             if (shouldAlignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
@@ -3051,12 +3105,16 @@ export class FrameStore {
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         this.isOffsetCoord = frame.isOffsetCoord;
+        this.skyRefIs = frame.skyRefIs;
 
-        // initialize wcsInfoOffset if it is not existed
-        if (this.isOffsetCoord && !this.wcsInfoOffset && this.offsetCenter) {
+        // Initialize or refresh wcsInfoOffset for spatially matched frame.
+        if (this.isOffsetCoord && this.offsetCenter) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
-                this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                if (this.wcsInfoOffset) {
+                    AST.deleteObject(this.wcsInfoOffset);
+                }
+                this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y, this.skyRefIs);
             }
         }
 
@@ -3171,7 +3229,7 @@ export class FrameStore {
     // Spectral WCS matching
     @action setSpectralReference = (frame: FrameStore) => {
         if (frame === this) {
-            this.clearSpatialReference();
+            this.clearSpectralReference();
             console.log(`Skipping spectral self-reference`);
             return false;
         }
@@ -3252,6 +3310,11 @@ export class FrameStore {
             return;
         }
 
+        if (this.rasterScalingReference && this.rasterScalingReference !== frame) {
+            this.clearRasterScalingReference();
+        }
+
+        this.secondaryRasterScalingImages = [];
         this.rasterScalingReference = frame;
         this.rasterScalingReference.addSecondaryRasterScalingImage(this);
         this.renderConfig.updateFrom(frame.renderConfig);

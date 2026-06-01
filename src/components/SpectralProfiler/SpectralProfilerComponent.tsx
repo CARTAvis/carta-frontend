@@ -348,7 +348,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -356,7 +356,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             markers: this.fillVisibleSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
@@ -371,7 +371,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map<string, MultiPlotProps>(),
-            exportCommentsGenerator: this.getExportComments
+            exportCommentsGenerator: this.getExportComments,
+            testId: this.widgetId
         };
 
         const frame = this.widgetStore.effectiveFrame;
@@ -402,7 +403,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             type: this.widgetStore.plotType,
                             borderColor: currentPlotData.colors?.[i],
                             order: 1,
-                            hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
+                            isHidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
                             followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : undefined
                         });
                     }
@@ -441,7 +442,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
-                            noExport: true
+                            shouldNotExport: true
                         };
                         linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
@@ -456,7 +457,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
-                            noExport: true
+                            shouldNotExport: true
                         };
                         linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set("fittingModel", fittingPlotProps);
@@ -472,7 +473,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 pointRadius: 1,
                                 order: 0,
                                 opacity: 0.6,
-                                noExport: true
+                                shouldNotExport: true
                             };
                             linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                             linePlotProps.multiPlotPropsMap.set(`fittingModel(${i + 1})`, individualPlotProps);
@@ -488,7 +489,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
-                                noExport: true
+                                shouldNotExport: true
                             };
                             linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                             linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);

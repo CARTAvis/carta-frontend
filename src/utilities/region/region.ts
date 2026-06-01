@@ -187,13 +187,13 @@ export function doSelectionRectAndRegionPointsIntersect(selectionRect: Rect2D, p
     return doRectsIntersect(selectionRect, getBoundingRect(points));
 }
 
-export function doSelectionRectAndRulerPathsIntersect(selectionRect: Rect2D, paths: Point2D[][], auxiliaryLineVisible: boolean): boolean {
+export function doSelectionRectAndRulerPathsIntersect(selectionRect: Rect2D, paths: Point2D[][], isAuxiliaryLineVisible: boolean): boolean {
     const segments = paths.flatMap(path => getPathSegments(path));
     if (paths.some(path => path.some(point => isPointInRect(point, selectionRect))) || segments.some(([start, end]) => doesLineSegmentIntersectRect(start, end, selectionRect))) {
         return true;
     }
 
-    if (!auxiliaryLineVisible || paths.length < 3) {
+    if (!isAuxiliaryLineVisible || paths.length < 3) {
         return false;
     }
 

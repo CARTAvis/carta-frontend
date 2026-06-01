@@ -943,7 +943,7 @@ export class PreferenceDialogComponent extends React.Component {
                 minHeight={PreferenceDialogComponent.MinHeight}
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Preference}
             >
                 <div className={Classes.DIALOG_BODY}>

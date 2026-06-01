@@ -2,7 +2,6 @@ import * as React from "react";
 import {Rnd} from "react-rnd";
 import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import type * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
@@ -13,8 +12,8 @@ import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
-    showPinButton: boolean;
-    showFloatingSettingsButton?: boolean;
+    shouldShowPinButton: boolean;
+    shouldShowFloatingSettingsButton?: boolean;
     children?: any;
     zIndex?: number;
     isSelected?: boolean;
@@ -27,17 +26,13 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
     private static readonly HeaderHeight = 25;
     private static readonly RootMenuHeight = 40;
-    private pinElementRef: HTMLElement | null = null;
     private rnd: Rnd | null = null;
 
     componentDidMount() {
-        this.updateDragSource();
         this.updatePositionAndSize();
     }
 
     componentDidUpdate(prevProps: FloatingWidgetComponentProps) {
-        this.updateDragSource();
-
         const prevConfig = prevProps.widgetConfig;
         const currConfig = this.props.widgetConfig;
 
@@ -52,36 +47,34 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    updateDragSource() {
+    private handlePinDragStart = (e: React.DragEvent) => {
         const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && this.pinElementRef) {
-            // Check for existing drag sources
-            const layout = layoutStore.dockedLayout;
-            const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
-            const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
-            if (existingSource) {
-                return;
-            }
+        const layoutRef = layoutStore.layoutRef;
+        const widgetConfig = this.props.widgetConfig;
 
-            // Render config widget
-            const itemConfig: GoldenLayout.ItemConfigType = {
-                type: "react-component",
-                component: this.props.widgetConfig.type,
-                title: this.props.widgetConfig.title,
-                id: this.props.widgetConfig.id,
-                isClosable: this.props.widgetConfig.isCloseable,
-                props: {id: this.props.widgetConfig.type === PvPreviewComponent.WidgetConfig.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id, docked: true}
+        if (layoutRef?.current) {
+            const tabJson: any = {
+                type: "tab",
+                component: widgetConfig.type,
+                name: widgetConfig.title || widgetConfig.type,
+                id: widgetConfig.id
             };
 
-            if (this.props.widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
-                itemConfig.props.label = this.props.widgetConfig.title;
+            if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
+                tabJson.config = {id: widgetConfig.id, label: widgetConfig.title};
+            } else if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
+                tabJson.config = {id: widgetConfig.parentId};
+            } else {
+                tabJson.config = {id: widgetConfig.id};
             }
 
-            if (this.pinElementRef && itemConfig) {
-                layout.createDragSource(this.pinElementRef, itemConfig);
-            }
+            layoutRef.current.addTabWithDragAndDrop(e.nativeEvent, tabJson, node => {
+                if (node) {
+                    AppStore.Instance.widgetsStore.removeFloatingWidget(widgetConfig.id, true);
+                }
+            });
         }
-    }
+    };
 
     private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
@@ -92,58 +85,77 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         this.rnd.updatePosition({x: widgetConfig.defaultX ?? 0, y: widgetConfig.defaultY ?? 0});
     };
 
+    private getCatalogOverlaySettingsTab = (parentId: string): number | undefined => {
+        const catalogStore = CatalogStore.Instance;
+        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
+        if (!catalogFileId) {
+            return undefined;
+        }
+
+        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+        if (!catalogWidgetStoreId) {
+            return undefined;
+        }
+
+        return AppStore.Instance.widgetsStore.catalogWidgets.get(catalogWidgetStoreId)?.settingsTabId;
+    };
+
+    private getSettingsTab = (parentId: string, parentType?: string): number | undefined => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+
+        switch (parentType) {
+            case "spatial-profiler":
+                return widgetsStore.spatialProfileWidgets.get(parentId)?.settingsTabId;
+            case "spectral-profiler":
+                return widgetsStore.spectralProfileWidgets.get(parentId)?.settingsTabId;
+            case "catalog-overlay":
+                return this.getCatalogOverlaySettingsTab(parentId);
+            case "stokes":
+            default:
+                return widgetsStore.stokesAnalysisWidgets.get(parentId)?.settingsTabId;
+        }
+    };
+
+    private getHelpType = (): HelpType | undefined => {
+        const {widgetConfig} = this.props;
+
+        if (widgetConfig.type === RenderConfigComponent.WidgetConfig.type) {
+            return AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG;
+        }
+
+        if (!Array.isArray(widgetConfig.helpType)) {
+            return widgetConfig.helpType;
+        }
+
+        const parentId = AppStore.Instance.widgetsStore.floatingSettingsWidgets.get(widgetConfig.id);
+        if (parentId === undefined) {
+            return undefined;
+        }
+
+        const settingsTab = this.getSettingsTab(parentId, widgetConfig.parentType);
+        return settingsTab === undefined ? undefined : widgetConfig.helpType[settingsTab];
+    };
+
     private onClickHelpButton = () => {
         if (!this.rnd) {
             return;
         }
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
-
-        if (this.props.widgetConfig.type === RenderConfigComponent.WidgetConfig.type) {
-            HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+        const helpStore = HelpStore.Instance;
+        const helpType = this.getHelpType();
+        if (!helpType) {
             return;
         }
 
-        if (Array.isArray(this.props.widgetConfig.helpType)) {
-            const widgetsStore = AppStore.Instance.widgetsStore;
-            const widgetParentType = this.props.widgetConfig.parentType;
-            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
-            let settingsTab: number | undefined;
-
-            if (parentId !== undefined) {
-                switch (widgetParentType) {
-                    case "spatial-profiler":
-                        const spatialWidget = widgetsStore.spatialProfileWidgets.get(parentId);
-                        settingsTab = spatialWidget?.settingsTabId;
-                        break;
-                    case "spectral-profiler":
-                        const spectralWidget = widgetsStore.spectralProfileWidgets.get(parentId);
-                        settingsTab = spectralWidget?.settingsTabId;
-                        break;
-                    case "catalog-overlay":
-                        const catalogStore = CatalogStore.Instance;
-                        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
-                        if (catalogFileId) {
-                            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-                            if (catalogWidgetStoreId) {
-                                const catalogWidget = widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                                settingsTab = catalogWidget?.settingsTabId;
-                            }
-                        }
-                        break;
-                    case "stokes":
-                    default:
-                        const stokesWidget = widgetsStore.stokesAnalysisWidgets.get(parentId);
-                        settingsTab = stokesWidget?.settingsTabId;
-                        break;
-                }
+        const toggleOrShow = (helpType: HelpType) => {
+            if (helpStore.isHelpVisible && helpStore.type === helpType) {
+                helpStore.hideHelpDrawer();
+            } else {
+                helpStore.showHelpDrawer(helpType, centerX);
             }
+        };
 
-            if (settingsTab !== undefined && this.props.widgetConfig.helpType[settingsTab]) {
-                HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
-            }
-        } else if (this.props.widgetConfig.helpType) {
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
-        }
+        toggleOrShow(helpType);
     };
 
     public render() {
@@ -152,7 +164,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.isDarkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.isDarkTheme});
         const buttonClass = classNames("floating-header-button", {[Classes.DARK]: appStore.isDarkTheme});
-        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.isDarkTheme, "floating-settings-content": !this.props.showPinButton});
+        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.isDarkTheme, "floating-settings-content": !this.props.shouldShowPinButton});
 
         const widgetConfig = this.props.widgetConfig;
 
@@ -171,7 +183,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
                 minHeight={widgetConfig.minHeight + headerHeight}
-                bounds={".gl-container-app"}
+                bounds={".layout-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
@@ -189,28 +201,34 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
                         {widgetConfig.title}
                     </div>
-                    {this.props.showFloatingSettingsButton && (
+                    {this.props.shouldShowFloatingSettingsButton && (
                         <div
                             className={buttonClass}
                             onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title ?? "", widgetConfig.id ?? "", widgetConfig.type)}
                             data-testid={this.props.widgetConfig?.id + "-header-settings-button"}
                         >
                             <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"cog"} />
+                                <span>
+                                    <Icon icon={"cog"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}
                     {widgetConfig.helpType && (
-                        <div className={buttonClass} onClick={this.onClickHelpButton}>
+                        <div className={buttonClass} onClick={this.onClickHelpButton} data-testid={this.props.widgetConfig?.id + "-header-help-button"}>
                             <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"help"} />
+                                <span>
+                                    <Icon icon={"help"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}
-                    {this.props.showPinButton && (
-                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
+                    {this.props.shouldShowPinButton && (
+                        <div className={buttonClass} draggable onDragStart={this.handlePinDragStart} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
-                                <Icon icon={"pin"} />
+                                <span>
+                                    <Icon icon={"pin"} />
+                                </span>
                             </Tooltip>
                         </div>
                     )}

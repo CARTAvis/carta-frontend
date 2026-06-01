@@ -68,14 +68,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
-    private dragPanning: boolean;
+    private isDragPanning: boolean;
     private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
     private suppressedClickButton: SuppressedClickButton | null = null;
-    private suppressNextRegionClickSelection = false;
-    private regionSelectionStartedOnRegion = false;
+    private shouldSuppressNextRegionClickSelection = false;
+    private didRegionSelectionStartOnRegion = false;
     private regionSelectionDragNode: Konva.Node | null = null;
     private middleClickPan: MiddleClickPanState | null = null;
     private layerRef = React.createRef<any>();
@@ -425,7 +425,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
-                this.dragPanning = true;
+                this.isDragPanning = true;
                 if (this.frame) {
                     const frame = this.frame.spatialReference || this.frame;
                     const stage = konvaEvent.target.getStage();
@@ -482,7 +482,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            this.dragPanning = false;
+            this.isDragPanning = false;
             const frame = this.frame;
 
             if (frame) {
@@ -695,8 +695,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private shouldSuppressRegionSelection = (evt?: MouseEvent): boolean => {
-        if (evt?.button === 0 && this.suppressNextRegionClickSelection) {
-            this.suppressNextRegionClickSelection = false;
+        if (evt?.button === 0 && this.shouldSuppressNextRegionClickSelection) {
+            this.shouldSuppressNextRegionClickSelection = false;
             return true;
         }
         return false;
@@ -727,8 +727,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (this.shouldStartRegionSelection(konvaEvent)) {
             const start = this.getRegionSelectionCanvasPoint(mouseEvent);
             this.regionSelectionBox = {start, end: start};
-            this.regionSelectionStartedOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
-            const dragNode = this.regionSelectionStartedOnRegion ? this.getRegionSelectionDragNode(konvaEvent) : null;
+            this.didRegionSelectionStartOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
+            const dragNode = this.didRegionSelectionStartOnRegion ? this.getRegionSelectionDragNode(konvaEvent) : null;
             if (dragNode) {
                 this.regionSelectionDragNode = this.disableDraggableNode(dragNode);
             }
@@ -774,7 +774,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        this.dragPanning = false;
+        this.isDragPanning = false;
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
@@ -823,7 +823,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        if (this.props.dragPanningEnabled && this.dragPanning) {
+        if (this.props.dragPanningEnabled && this.isDragPanning) {
             return;
         }
 
@@ -875,8 +875,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @action private finishRegionSelection = () => {
         const selectionRect = this.getRegionSelectionRect();
         const isLargeEnough = !!selectionRect && this.isSelectionRectLargeEnough(selectionRect);
-        this.suppressNextRegionClickSelection = this.regionSelectionStartedOnRegion && isLargeEnough;
-        this.regionSelectionStartedOnRegion = false;
+        this.shouldSuppressNextRegionClickSelection = this.didRegionSelectionStartOnRegion && isLargeEnough;
+        this.didRegionSelectionStartOnRegion = false;
         this.regionSelectionBox = null;
         this.restoreRegionSelectionDragNode();
         this.clearSuppressedClick();

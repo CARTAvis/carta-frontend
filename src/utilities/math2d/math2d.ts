@@ -229,26 +229,26 @@ export function doesLineSegmentIntersectRect(start: Point2D, end: Point2D, rect:
     return corners.some((corner, index) => lineSegmentsIntersect(start, end, corner, corners[(index + 1) % corners.length]));
 }
 
-export function getPathSegments(points: Point2D[], closed: boolean = false): LineSegment2D[] {
+export function getPathSegments(points: Point2D[], isClosed: boolean = false): LineSegment2D[] {
     if (points.length < 2) {
         return [];
     }
 
-    const segmentCount = closed ? points.length : points.length - 1;
+    const segmentCount = isClosed ? points.length : points.length - 1;
     return Array.from({length: segmentCount}, (_, index) => [points[index], points[(index + 1) % points.length]]);
 }
 
 export function isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
-    let inside = false;
+    let isInside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
         const a = polygon[i];
         const b = polygon[j];
-        const intersects = a.y > point.y !== b.y > point.y && point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x;
-        if (intersects) {
-            inside = !inside;
+        const isIntersecting = a.y > point.y !== b.y > point.y && point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x;
+        if (isIntersecting) {
+            isInside = !isInside;
         }
     }
-    return inside;
+    return isInside;
 }
 
 export function getRotatedBoxPoints(center: Point2D, halfWidth: number, halfHeight: number, rotation: number): Point2D[] {
@@ -277,8 +277,8 @@ export function simplePolygonTest(points: Point2D[]) {
         for (let j = i + 2; j < points.length; j++) {
             const c = points[j];
             const d = points[(j + 1) % points.length];
-            const intersection = lineSegmentsProperlyIntersect(a, b, c, d);
-            if (intersection) {
+            const hasIntersection = lineSegmentsProperlyIntersect(a, b, c, d);
+            if (hasIntersection) {
                 return false;
             }
         }
@@ -299,8 +299,8 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     for (let j = 1; j < points.length; j++) {
         const c = points[(j + pointIndex) % points.length];
         const d = points[(j + pointIndex + 1) % points.length];
-        const intersection = lineSegmentsProperlyIntersect(a, b, c, d);
-        if (intersection) {
+        const hasIntersection = lineSegmentsProperlyIntersect(a, b, c, d);
+        if (hasIntersection) {
             return false;
         }
     }
@@ -334,13 +334,13 @@ export function closestPointIndexToCursor(cursor: Point2D, points: readonly Poin
     return minIndex;
 }
 
-export function polygonPerimeter(points: Point2D[], closed: boolean = true): number {
+export function polygonPerimeter(points: Point2D[], isClosed: boolean = true): number {
     let totalLength = 0;
     const N = points.length;
     for (let i = 1; i < N; i++) {
         totalLength += pointDistance(points[i], points[i - 1]);
     }
-    if (closed) {
+    if (isClosed) {
         totalLength += pointDistance(points[N - 1], points[0]);
     }
     return totalLength;

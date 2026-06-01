@@ -24,7 +24,7 @@ export class ToolbarMenuComponent extends React.Component {
     };
 
     regionTooltip = (type: CARTA.RegionType) => {
-        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        const isRegionModeCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
         let tooltip: JSX.Element | null = null;
         switch (type) {
             case CARTA.RegionType.RECTANGLE:
@@ -32,9 +32,9 @@ export class ToolbarMenuComponent extends React.Component {
             case CARTA.RegionType.LINE:
                 tooltip = (
                     <small>
-                        Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
+                        Click-and-drag to define a region ({isRegionModeCenter ? "center to corner" : "corner to corner"}).
                         <br />
-                        Hold Ctrl/Cmd to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
+                        Hold Ctrl/Cmd to define a region ({isRegionModeCenter ? "corner to corner" : "center to corner"}).
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
@@ -80,7 +80,7 @@ export class ToolbarMenuComponent extends React.Component {
         const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
-        const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
+        const isRegionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
 
         const commonTooltip = (
             <span>
@@ -113,14 +113,14 @@ export class ToolbarMenuComponent extends React.Component {
                                     icon={regionIcon}
                                     onClick={() => this.handleRegionTypeClicked(type)}
                                     active={isRegionCreating && newRegionType === type}
-                                    disabled={regionButtonsDisabled}
+                                    disabled={isRegionButtonsDisabled}
                                     data-testid={typeString.toLowerCase() + "-region-shortcut-button"}
                                 />
                             </Tooltip>
                         );
                     })}
 
-                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
+                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={isRegionButtonsDisabled}>
                         <Tooltip
                             content={
                                 <span>
@@ -131,7 +131,7 @@ export class ToolbarMenuComponent extends React.Component {
                         >
                             <AnchorButton
                                 icon={"annotation"}
-                                disabled={regionButtonsDisabled}
+                                disabled={isRegionButtonsDisabled}
                                 active={isRegionCreating === true && appStore.activeFrame?.regionSet.isNewRegionAnnotation === true}
                                 data-testid="annotation-shortcut-dropdown"
                             />
@@ -161,6 +161,8 @@ export class ToolbarMenuComponent extends React.Component {
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
+                                    draggable={true}
+                                    onDragStart={(e: React.DragEvent) => WidgetsStore.Instance.handleToolbarWidgetDragStart(e, widgetConfig.widgetConfig)}
                                 />
                             </Tooltip>
                         );
@@ -230,7 +232,7 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} />
+                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} data-testid={DialogId.Snippet + "-button"} />
                         </Tooltip>
                     )}
                 </ButtonGroup>

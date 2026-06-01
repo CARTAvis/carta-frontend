@@ -1992,7 +1992,7 @@ export class AppStore {
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
                     AppToaster.clear();
-                    if (this.backendService.connectionDropped) {
+                    if (this.backendService.hasConnectionDropped) {
                         AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
                         AppToaster.show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
@@ -2110,7 +2110,6 @@ export class AppStore {
         reaction(
             () => this.activeImage,
             image => {
-                this.widgetsStore.updateRenderConfigSettingsVisibility();
                 if (image && image.type === ImageType.FRAME) {
                     const frame = image.store;
                     this.catalogStore.resetActiveCatalogFile(frame?.id);
@@ -2120,13 +2119,6 @@ export class AppStore {
                 }
             }
         );
-
-        // Update image panel page buttons
-        autorun(() => {
-            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
-                this.widgetsStore.updateImagePanelPageButtons();
-            }
-        });
 
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
@@ -2156,7 +2148,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            this.initCarta(this.isAstReady, this.tileService?.zfpReady ?? false, this.isCartaComputeReady, !!this.apiService?.authenticated);
+            this.initCarta(this.isAstReady, this.tileService?.isZfpReady ?? false, this.isCartaComputeReady, !!this.apiService?.authenticated);
         });
 
         autorun(() => {
@@ -2623,7 +2615,7 @@ export class AppStore {
         // Clear requirements once session has resumed
         this.initRequirements();
         this.isResumingSession = false;
-        this.backendService.connectionDropped = false;
+        this.backendService.hasConnectionDropped = false;
 
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {
@@ -3295,10 +3287,14 @@ export class AppStore {
             }
         }
 
-        if (this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame))) {
+        if (this.isFrameInColorBlendingImages(frame)) {
             return await this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
         }
         return true;
+    };
+
+    private isFrameInColorBlendingImages = (frame: FrameStore): boolean => {
+        return this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame));
     };
 
     @action toggleSpatialMatching = (frame: FrameStore) => {
@@ -3308,6 +3304,31 @@ export class AppStore {
 
         this.setSpatialMatchingEnabled(frame, !frame.spatialReference);
     };
+
+    @flow.bound *matchAllSpatial() {
+        if (!this.spatialReference) {
+            return;
+        }
+
+        const shouldEnable = !this.frames.some(frame => frame !== this.spatialReference && frame.spatialReference);
+        const framesToUpdate = this.frames.filter(frame => frame !== this.spatialReference && (shouldEnable || frame.spatialReference));
+
+        if (!shouldEnable && framesToUpdate.some(frame => this.isFrameInColorBlendingImages(frame))) {
+            const confirmed = yield this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
+            if (!confirmed) {
+                return;
+            }
+
+            for (const frame of framesToUpdate) {
+                frame.clearSpatialReference();
+            }
+            return;
+        }
+
+        for (const frame of framesToUpdate) {
+            yield this.setSpatialMatchingEnabled(frame, shouldEnable);
+        }
+    }
 
     @action setSpectralReference = (frame: FrameStore) => {
         const oldRef = this.spectralReference;
@@ -3329,6 +3350,10 @@ export class AppStore {
             } else if (f.spectralReference) {
                 f.setSpectralReference(frame);
             }
+        }
+
+        if (oldRef?.secondarySpectralImages.length) {
+            oldRef.secondarySpectralImages = [];
         }
     };
 
@@ -3361,6 +3386,18 @@ export class AppStore {
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
     };
 
+    @action matchAllSpectral = () => {
+        if (!this.spectralReference) {
+            return;
+        }
+
+        const eligibleFrames = this.frames.filter(frame => frame !== this.spectralReference && frame.frameInfo.fileInfoExtended.depth > 1);
+        const shouldEnable = !eligibleFrames.some(frame => frame.spectralReference);
+        for (const frame of eligibleFrames) {
+            this.setSpectralMatchingEnabled(frame, shouldEnable);
+        }
+    };
+
     @action setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
         this.spectralMatchingType = spectralMatchingType;
         for (const f of this.frames) {
@@ -3391,7 +3428,28 @@ export class AppStore {
                 f.setRasterScalingReference(frame);
             }
         }
+
+        if (oldRef?.secondaryRasterScalingImages.length) {
+            oldRef.secondaryRasterScalingImages = [];
+        }
     };
+
+    @flow.bound *setAllReferences(frame: FrameStore) {
+        if (this.spatialReference !== frame) {
+            yield this.setSpatialReference(frame);
+        }
+
+        // User cancelled the color-blending alert; abort setting the remaining references.
+        if (this.spatialReference !== frame) {
+            return;
+        }
+
+        if (frame.frameInfo.fileInfoExtended.depth > 1) {
+            this.setSpectralReference(frame);
+        }
+
+        this.setRasterScalingReference(frame);
+    }
 
     @action clearRasterScalingReference = () => {
         this.rasterScalingReference = null;
@@ -3418,6 +3476,18 @@ export class AppStore {
         }
 
         this.setRasterScalingMatchingEnabled(frame, !frame.rasterScalingReference);
+    };
+
+    @action matchAllRasterScaling = () => {
+        if (!this.rasterScalingReference) {
+            return;
+        }
+
+        const shouldEnable = !this.frames.some(frame => frame !== this.rasterScalingReference && frame.rasterScalingReference);
+        const framesToUpdate = this.frames.filter(frame => frame !== this.rasterScalingReference);
+        for (const frame of framesToUpdate) {
+            this.setRasterScalingMatchingEnabled(frame, shouldEnable);
+        }
     };
 
     @action setMatchingEnabled = (isSpatial: boolean, isSpectral: boolean) => {
@@ -3507,15 +3577,15 @@ export class AppStore {
         return new Promise<void>(resolve => {
             when(
                 () => {
-                    const isTilesLoading = this.tileService.remainingTiles > 0;
-                    let isContoursLoading = false;
+                    const isLoadingTiles = this.tileService.remainingTiles > 0;
+                    let isLoadingContours = false;
                     for (const frame of this.imageViewConfigStore.visibleFrames) {
                         if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
-                            isContoursLoading = true;
+                            isLoadingContours = true;
                             break;
                         }
                     }
-                    return !isTilesLoading && !isContoursLoading;
+                    return !isLoadingTiles && !isLoadingContours;
                 },
                 () => {
                     this.setIsCanvasUpdated(false);

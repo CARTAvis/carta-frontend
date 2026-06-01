@@ -276,7 +276,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false, interactive: boolean = true): React.ReactNode {
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false, isInteractive: boolean = true): React.ReactNode {
         const selectedPointIndex = isRotator ? this.props.region.rotationPointIndex : key;
         const isSelected = this.props.region.isPointSelectionSupported && this.props.region.selectedPointIndex === selectedPointIndex;
         return (
@@ -288,7 +288,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 rotation={rotation}
                 isRotator={isRotator}
                 isSelected={isSelected}
-                interactive={interactive}
+                interactive={isInteractive}
                 opacity={this.props.region.visualOpacity}
                 selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                 onMouseEnter={this.handleAnchorMouseEnter}

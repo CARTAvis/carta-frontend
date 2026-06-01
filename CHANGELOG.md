@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
+* Added support for pole-mode offset coordinates ([#2672](https://github.com/CARTAvis/carta-frontend/issues/2672)).
 * Added keyboard-first region editing with arrow-key region movement, fine/coarse movement modifiers, zoom-aware movement steps, and context-aware deselection/cancel behavior ([#292](https://github.com/CARTAvis/carta-frontend/issues/292)).
 * Added keyboard selection and movement of region control points, including `Tab`/`Shift+Tab` point cycling and `Enter` to enter point-selection mode for supported region types.
 * Added multi-region selection workflows in the image viewer, including `Cmd/Ctrl+Click` selection toggling, `Shift+Drag` box selection, grouped dragging, grouped deletion, and selection-aware region dialog opening ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
 * Added multi-region selection workflows in the region list, including `Cmd/Ctrl+Click`, `Shift+Click`, `Shift+Arrow`, `Cmd/Ctrl+A`, selection cycling, and selection-aware context menu actions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
 * Added multi-region editing in the Region dialog for shared appearance controls, selected-region lock/unlock, hide/show, export, and delete actions [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955).
-### Changed
-* Reorganized the Hotkeys dialog region sections to separate general region actions, image-viewer region actions, and region-list actions.
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750))
 * Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix the spatial profile chart that occasionally disappears when the line region is outside the image ([#2775](https://github.com/CARTAvis/carta-frontend/issues/2775)).
 * Fixed spectral profiler colors not updating when switching the GUI theme ([#2801](https://github.com/CARTAvis/carta-frontend/issues/2801)).
 * Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes ([#2804](https://github.com/CARTAvis/carta-frontend/issues/2804)).
+* Fixed incorrect spectral cursor WCS information for rotated Stokes cubes after changing Stokes ([#2795](https://github.com/CARTAvis/carta-frontend/issues/2795)).
+* Fixed the persistent streaming progress indicator when generating contours ([#2805](https://github.com/CARTAvis/carta-frontend/issues/2805)).
+### Changed
+* Changed the layout managers from GoldenLayout to FlexLayout without changing the existing layout features and behaviors ([#2729](https://github.com/CARTAvis/carta-frontend/issues/2729)).
+* Reorganized the Hotkeys dialog region sections to separate general region actions, image-viewer region actions, and region-list actions.
 
 ## [6.0.0-beta.1]
 

@@ -186,7 +186,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            meanRmsVisible: widgetStore.isMeanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,

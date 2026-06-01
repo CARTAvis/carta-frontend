@@ -1,6 +1,5 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
-import $ from "jquery";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -47,24 +46,24 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
 }
 
 export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
-    const panelElement = $(`#image-panel-${column}-${row}`)?.first();
-    if (!panelElement?.length) {
+    const panelElement = document.getElementById(`image-panel-${column}-${row}`);
+    if (!panelElement) {
         return null;
     }
-    const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
-    const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
-    const overlayCanvasArray = panelElement.find(".overlay-canvas") as JQuery<HTMLCanvasElement>;
-    const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
-    const vectorOverlayCanvas = panelElement.find(".vector-overlay-canvas")?.[0] as HTMLCanvasElement;
+    const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
+    const contourCanvas = panelElement.querySelector(".contour-canvas") as HTMLCanvasElement;
+    const overlayCanvasArray = panelElement.querySelectorAll(".overlay-canvas") as NodeListOf<HTMLCanvasElement>;
+    const catalogCanvas = panelElement.querySelector(".catalog-canvas") as HTMLCanvasElement;
+    const vectorOverlayCanvas = panelElement.querySelector(".vector-overlay-canvas") as HTMLCanvasElement;
 
     if (!rasterCanvas || !overlayCanvasArray?.length) {
         return null;
     }
 
-    const colorbarCanvas = panelElement.find(".colorbar-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
-    const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
-    const regionDivArray = panelElement.find(".region-stage") as JQuery<HTMLDivElement>;
-    const channelMapLabelArray = panelElement.find(".channel-map-label-span") as JQuery<HTMLSpanElement>;
+    const colorbarCanvas = panelElement.querySelector(".colorbar-stage canvas") as HTMLCanvasElement;
+    const beamProfileCanvas = panelElement.querySelector(".beam-profile-stage canvas") as HTMLCanvasElement;
+    const regionDivArray = panelElement.querySelectorAll(".region-stage") as NodeListOf<HTMLDivElement>;
+    const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
 
     const appStore = AppStore.Instance;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -108,7 +107,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     }
 
     if (beamProfileCanvas) {
-        const beamProfileDiv = panelElement.find(".beam-profile-stage")?.[0] as HTMLDivElement;
+        const beamProfileDiv = panelElement.querySelector(".beam-profile-stage") as HTMLDivElement;
         const offsetLeft = beamProfileDiv?.offsetLeft * appStore.pixelRatio || 0;
         const offsetTop = beamProfileDiv?.offsetTop * appStore.pixelRatio || 0;
         ctx.drawImage(beamProfileCanvas, offsetLeft, offsetTop);
@@ -186,21 +185,21 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedGridSize: Point2D;
     private readonly disposers: IReactionDisposer[] = [];
 
-    @observable showRatioIndicator: boolean = false;
+    @observable shouldShowRatioIndicator: boolean = false;
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
+            const isAutoFitRequired = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
-            if (requiresAutoFit) {
+            if (isAutoFitRequired) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());
             }
         }
     };
 
-    @action setRatioIndicatorVisible = (val: boolean) => {
-        this.showRatioIndicator = val;
+    @action setRatioIndicatorVisible = (isVisible: boolean) => {
+        this.shouldShowRatioIndicator = isVisible;
     };
 
     constructor(props: WidgetProps) {
@@ -226,9 +225,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
                 const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
                 // Compare to cached image size to prevent duplicate events when changing frames
-                const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
-                const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
-                if (imageSizeChanged || gridSizeChanged) {
+                const isImageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+                const isGridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+                if (isImageSizeChanged || isGridSizeChanged) {
                     this.cachedImageSize = imageSize;
                     this.cachedGridSize = imageGridSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
@@ -261,7 +260,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return appStore.channelMapStore.isChannelMapEnabled
-            ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
+            ? [<ChannelMapViewComponent isDocked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);
@@ -296,7 +295,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             divContents = (
                 <React.Fragment>
                     {this.panels}
-                    <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
+                    <div style={{opacity: this.shouldShowRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
                         <p>
                             {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
                         </p>

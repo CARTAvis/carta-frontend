@@ -150,20 +150,26 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
-        const lockDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible : !!region && (regionSet?.isLocked || region.opacity === RegionOpacity.Invisible);
-        const showLockedIcon = isMultiRegion ? lockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false) : lockDisabled || !!region?.isLocked;
-        const regionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
-        const deleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
+        const isLockDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible : !!region && (regionSet?.isLocked || region.opacity === RegionOpacity.Invisible);
+        const shouldShowLockedIcon = isMultiRegion ? isLockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false) : isLockDisabled || !!region?.isLocked;
+        const isRegionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
+        const isDeleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
         const tooltips = region && region.regionId !== CURSOR_REGION_ID && (
             <React.Fragment>
-                <Tooltip content={isMultiRegion ? (showLockedIcon ? "Unlock selected regions" : "Lock selected regions") : showLockedIcon ? "Unlock region" : "Lock region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={showLockedIcon ? "lock" : "unlock"} onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock} disabled={lockDisabled} />
-                </Tooltip>
-                <Tooltip content={isMultiRegion ? (regionVisible ? "Hide selected regions" : "Show selected regions") : regionVisible ? "Hide region" : "Show region"}>
+                <Tooltip content={isMultiRegion ? (shouldShowLockedIcon ? "Unlock selected regions" : "Lock selected regions") : shouldShowLockedIcon ? "Unlock region" : "Lock region"}>
                     <AnchorButton
                         intent={Intent.WARNING}
                         minimal={true}
-                        icon={regionVisible ? "eye-open" : "eye-off"}
+                        icon={shouldShowLockedIcon ? "lock" : "unlock"}
+                        onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock}
+                        disabled={isLockDisabled}
+                    />
+                </Tooltip>
+                <Tooltip content={isMultiRegion ? (isRegionVisible ? "Hide selected regions" : "Show selected regions") : isRegionVisible ? "Hide region" : "Show region"}>
+                    <AnchorButton
+                        intent={Intent.WARNING}
+                        minimal={true}
+                        icon={isRegionVisible ? "eye-open" : "eye-off"}
                         onClick={() => regionSet?.toggleSelectedRegionsVisibility()}
                         style={{opacity: getRegionIconOpacity(isMultiRegion ? selectedRegionsOpacity : region.opacity)}}
                     />
@@ -187,7 +193,7 @@ export class RegionDialogComponent extends React.Component {
                 defaultHeight={RegionDialogComponent.DefaultHeight}
                 minHeight={RegionDialogComponent.MinHeight}
                 minWidth={RegionDialogComponent.MinWidth}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Region}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -196,7 +202,7 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {(configurationPanel || isMultiRegion) && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={deleteDisabled} style={{userSelect: "none"}} />}
+                        {(configurationPanel || isMultiRegion) && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={isDeleteDisabled} style={{userSelect: "none"}} />}
                     </div>
                 </div>
             </DraggableDialogComponent>

@@ -285,7 +285,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (image.type === ImageType.COLOR_BLENDING) {
             return (
                 <ResizeDetector onResize={this.onResize} throttleTime={1000}>
-                    <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    <div className="render-config-container">
+                        <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    </div>
                 </ResizeDetector>
             );
         }
@@ -301,13 +303,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.isDarkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
-            logY: this.widgetStore.isLogScaleY,
+            isLogY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
-            showYAxisTicks: false,
-            showYAxisLabel: false,
+            shouldShowYAxisTicks: false,
+            shouldShowYAxisLabel: false,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -315,11 +317,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map(),
+            testId: this.widgetId + "-histogram"
         };
 
         const scaleMinVal = frame.renderConfig.scaleMinVal;
@@ -412,7 +415,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.shouldUseSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
-                if (linePlotProps.logY) {
+                if (linePlotProps.isLogY) {
                     colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin!) + x * (Math.log10(linePlotProps.yMax!) - Math.log10(linePlotProps.yMin!))));
                 } else {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
@@ -430,7 +433,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     borderColor: appStore.isDarkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5,
                     opacity: 0.5,
-                    noExport: true
+                    shouldNotExport: true
                 };
                 linePlotProps.multiPlotPropsMap?.set("colormapScaling", colormapScalingProps);
             }
@@ -438,9 +441,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
-        const displayRankButtons = this.width > percentileButtonCutoff;
+        const shouldDisplayRankButtons = this.width > percentileButtonCutoff;
         let percentileButtonsDiv, percentileSelectDiv;
-        if (displayRankButtons) {
+        if (shouldDisplayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
                 <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
@@ -473,7 +476,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 <div className="render-config-container">
                     {this.width > histogramCutoff && (
                         <div className="histogram-container">
-                            {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
+                            {shouldDisplayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                             <div className="histogram-plot">
                                 <LinePlotComponent {...linePlotProps} />
                                 {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}

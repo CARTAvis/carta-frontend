@@ -299,10 +299,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
-                darkMode: appStore.isDarkTheme,
+                isDarkMode: appStore.isDarkTheme,
                 imageName: imageName,
                 plotName: plotName,
-                logY: this.widgetStore.isLogScaleY,
+                isLogY: this.widgetStore.isLogScaleY,
                 plotType: this.widgetStore.plotType,
                 tickTypeY: TickType.Scientific,
                 graphZoomedX: this.widgetStore.setXBounds,
@@ -310,11 +310,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 graphZoomedXY: this.widgetStore.setXYBounds,
                 graphZoomReset: this.widgetStore.clearXYBounds,
                 graphCursorMoved: this.onGraphCursorMoved,
-                scrollZoom: true,
+                shouldScrollZoom: true,
                 mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
                 borderWidth: this.widgetStore.lineWidth,
                 pointRadius: this.widgetStore.linePlotPointSize,
-                zeroLineWidth: 2
+                zeroLineWidth: 2,
+                testId: this.widgetId
             };
 
             if (frame.renderConfig?.histogram?.bins?.length) {

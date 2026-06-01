@@ -159,7 +159,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         region.setControlPoints([edit.center, edit.size]);
     };
 
-    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
+    private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, shouldKeepAspect: boolean) => {
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
@@ -175,7 +175,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 size: region.size,
                 rotation: region.rotation,
                 anchor,
-                keepAspect,
+                keepAspect: shouldKeepAspect,
                 newAnchorPoint,
                 textScale: AppStore.Instance.imageRatio / zoomLevel
             })
@@ -382,7 +382,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private genAnchors = (interactive: boolean): React.ReactNode[] => {
+    private genAnchors = (isInteractive: boolean): React.ReactNode[] => {
         const region = this.props.region;
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
@@ -432,7 +432,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     rotation={-region.rotation}
                     isRotator={config.anchor === "rotator"}
                     isSelected={isSelectedSimpleShapeAnchor}
-                    interactive={interactive}
+                    interactive={isInteractive}
                     opacity={region.visualOpacity}
                     selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                     onMouseEnter={this.handleAnchorMouseEnter}

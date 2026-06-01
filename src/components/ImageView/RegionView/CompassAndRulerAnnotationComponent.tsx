@@ -197,7 +197,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.isDarkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -241,7 +241,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         updateOffset();
     }, []);
 
-    const generateProps = (north: boolean) => {
+    const generateProps = (isNorth: boolean) => {
         return {
             stroke: region.color,
             fill: region.color,
@@ -251,7 +251,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
-            points: north ? northPointArray : eastPointArray,
+            points: isNorth ? northPointArray : eastPointArray,
             pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
             pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
             hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
@@ -269,12 +269,12 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         fontStyle: region.fontStyle
     };
 
-    const anchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
-    const anchorOpacity = anchorsInteractive ? region.visualOpacity : 0;
+    const areAnchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
+    const anchorOpacity = areAnchorsInteractive ? region.visualOpacity : 0;
     const anchorCommonProps = {
         rotation: 0,
         isRotator: false,
-        interactive: anchorsInteractive && props.isFocused,
+        interactive: areAnchorsInteractive && props.isFocused,
         opacity: anchorOpacity,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
@@ -518,7 +518,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.isDarkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -526,8 +526,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const [textOffsetX, setTextOffsetX] = React.useState(0);
     const [xTextOffsetX, setXTextOffsetX] = React.useState(0);
     const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
-    const anchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
-    const anchorOpacity = anchorsInteractive ? region.visualOpacity : 0;
+    const areAnchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
+    const anchorOpacity = areAnchorsInteractive ? region.visualOpacity : 0;
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
@@ -653,7 +653,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosStart.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={anchorsInteractive && props.isFocused}
+                            interactive={areAnchorsInteractive && props.isFocused}
                             opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
@@ -670,7 +670,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosFinish.y}
                             rotation={0}
                             isRotator={false}
-                            interactive={anchorsInteractive && props.isFocused}
+                            interactive={areAnchorsInteractive && props.isFocused}
                             opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}

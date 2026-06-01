@@ -105,8 +105,8 @@ export function getSimpleShapeAnchorPointIndex(anchor: string): number {
     return SIMPLE_SHAPE_ANCHOR_POINT_INDEXES.get(anchor as SimpleShapeAnchor) ?? -1;
 }
 
-export function getSimpleShapePointSelectionOrder(includeRotator: boolean): number[] {
-    return includeRotator ? [...SIMPLE_SHAPE_POINT_SELECTION_ORDER, SIMPLE_SHAPE_ROTATION_POINT_INDEX] : [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
+export function getSimpleShapePointSelectionOrder(shouldIncludeRotator: boolean): number[] {
+    return shouldIncludeRotator ? [...SIMPLE_SHAPE_POINT_SELECTION_ORDER, SIMPLE_SHAPE_ROTATION_POINT_INDEX] : [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
 }
 
 export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType, textScale: number): number {
@@ -256,7 +256,7 @@ function getSimpleShapeSize(regionType: CARTA.RegionType, bounds: SimpleShapeBou
     return {x: height / 2, y: width / 2};
 }
 
-function getSimpleShapeSizeFromDimensions(regionType: CARTA.RegionType, width: number, height: number, textScale: number, anchor: string, keepAspect: boolean): Point2D {
+function getSimpleShapeSizeFromDimensions(regionType: CARTA.RegionType, width: number, height: number, textScale: number, anchor: string, shouldKeepAspect: boolean): Point2D {
     if (isRectangleRegionType(regionType)) {
         return {x: Math.max(MIN_EDITED_REGION_DIMENSION, width), y: Math.max(MIN_EDITED_REGION_DIMENSION, height)};
     }
@@ -265,8 +265,8 @@ function getSimpleShapeSizeFromDimensions(regionType: CARTA.RegionType, width: n
         const isAnchorX = anchor === "left" || anchor === "right";
         const isAnchorY = anchor === "top" || anchor === "bottom";
         return {
-            x: Math.max(MIN_EDITED_REGION_DIMENSION, !keepAspect && isAnchorY ? width : width / textScale),
-            y: Math.max(MIN_EDITED_REGION_DIMENSION, !keepAspect && isAnchorX ? height : height / textScale)
+            x: Math.max(MIN_EDITED_REGION_DIMENSION, !shouldKeepAspect && isAnchorY ? width : width / textScale),
+            y: Math.max(MIN_EDITED_REGION_DIMENSION, !shouldKeepAspect && isAnchorX ? height : height / textScale)
         };
     }
 
