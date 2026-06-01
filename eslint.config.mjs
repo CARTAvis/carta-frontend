@@ -76,8 +76,13 @@ export default [
                     format: ["PascalCase"],
                 },
                 {
-                    selector: ["function", "variable", "parameter", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
+                    selector: ["function", "variable", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                     format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: ["parameter"],
+                    format: ["camelCase", "PascalCase"],
                     leadingUnderscore: "allow",
                 },
                 {

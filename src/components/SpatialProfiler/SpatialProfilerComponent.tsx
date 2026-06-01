@@ -595,7 +595,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             borderWidth: widgetStore.lineWidth,
             pointRadius: widgetStore.linePlotPointSize,
             multiPlotPropsMap: new Map<string, MultiPlotProps>(),
-            order: 1
+            order: 1,
+            testId: this.widgetId
         };
 
         if (appStore.activeFrame) {

@@ -23,6 +23,16 @@ export class ResizableDialogComponentProps {
     children?: React.ReactNode;
 }
 
+function getViewportDimensions() {
+    const documentElement = document.documentElement;
+    const body = document.getElementsByTagName("body")[0];
+
+    return {
+        width: window.innerWidth || documentElement.clientWidth || body.clientWidth,
+        height: window.innerHeight || documentElement.clientHeight || body.clientHeight
+    };
+}
+
 @observer
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd = React.createRef<HTMLDivElement>();
@@ -68,6 +78,11 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         if (closeButton) {
             closeButton.setAttribute("data-testid", `${this.props.dialogId}-header-close-button`);
         }
+
+        const helpButton = this.dd.current.getElementsByClassName("help-button")?.[0];
+        if (helpButton) {
+            helpButton.setAttribute("data-testid", `${this.props.dialogId}-header-help-button`);
+        }
     };
 
     private onClickHelpButton = () => {
@@ -84,12 +99,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     render() {
-        const w = window,
-            d = document,
-            e = d.documentElement,
-            g = d.getElementsByTagName("body")[0],
-            windowWidth = w.innerWidth || e.clientWidth || g.clientWidth,
-            windowHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+        const {width: windowWidth, height: windowHeight} = getViewportDimensions();
 
         const isResizeEnabled = this.props.isResizingEnabled;
         const resizeSettings: ResizeEnable = {
@@ -111,7 +121,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 {this.props.dialogProps.isOpen && (
                     <Rnd
                         enableResizing={resizeSettings}
-                        bounds={".gl-container-app"}
+                        bounds={".layout-container"}
                         dragGrid={[1, 1]}
                         resizeGrid={[25, 25]}
                         default={{

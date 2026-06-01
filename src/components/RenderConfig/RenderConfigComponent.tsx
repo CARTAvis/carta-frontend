@@ -285,7 +285,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (image.type === ImageType.COLOR_BLENDING) {
             return (
                 <ResizeDetector onResize={this.onResize} throttleTime={1000}>
-                    <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    <div className="render-config-container">
+                        <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    </div>
                 </ResizeDetector>
             );
         }
@@ -319,7 +321,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map(),
+            testId: this.widgetId + "-histogram"
         };
 
         const scaleMinVal = frame.renderConfig.scaleMinVal;
