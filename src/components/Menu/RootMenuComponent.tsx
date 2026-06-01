@@ -268,7 +268,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
-                <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
                     content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
