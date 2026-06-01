@@ -1,4 +1,4 @@
-import * as GoldenLayout from "golden-layout";
+import {DockLocation, type DropInfo, type Layout, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -22,12 +22,14 @@ export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
     private layoutNameToBeSaved: string;
 
-    // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout | null = null;
+    @observable layoutModel: Model | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
     @observable hasServerSupport: boolean = false;
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
+
+    // Reference to the FlexLayout Layout component (set from App.tsx)
+    public layoutRef: React.RefObject<Layout> = {current: null};
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
@@ -82,6 +84,13 @@ export class LayoutStore {
         return this.userLayoutNames.length;
     }
 
+    private clearCurrentLayout = () => {
+        const appStore = AppStore.Instance;
+        appStore.widgetsStore.removeFloatingWidgets();
+        appStore.widgetsStore.clearDockedWidgets();
+        this.layoutModel = null;
+    };
+
     @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
@@ -90,45 +99,29 @@ export class LayoutStore {
 
         const config = this.layouts[layoutName];
         const appStore = AppStore.Instance;
-        // destroy old layout & clear floating widgets
-        if (this.dockedLayout) {
-            appStore.widgetsStore.removeFloatingWidgets();
-            this.dockedLayout.destroy();
-        }
+        this.clearCurrentLayout();
 
         // generate docked config & collect docked components
         const dockedConfig = {
             type: config.docked.type,
             content: []
         };
-        const dockedComponentConfigs = [];
-        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
-        // use component configs to init widget stores, IDs in componentConfigs will be updated
+        // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
+        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, []);
+
+        // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
+        const dockedComponentConfigs: any[] = [];
+        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
+
+        // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
-        // generate new layout config & apply
-        // Does this work?
-        // @ts-ignore
-        this.dockedLayout = new GoldenLayout(
-            {
-                settings: {
-                    showPopoutIcon: false,
-                    showCloseIcon: false
-                },
-                dimensions: {
-                    minItemWidth: 250,
-                    minItemHeight: 200,
-                    dragProxyWidth: 600,
-                    dragProxyHeight: 270
-                },
-                content: [dockedConfig]
-            },
-            appStore.getAppContainer()
-        );
-        if (this.dockedLayout) {
-            appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-            this.dockedLayout.init();
-            appStore.widgetsStore.updateImageWidgetTitle();
-        }
+
+        this.layoutModel = Model.fromJson(modelJson);
+        this.layoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
+        });
+
+        appStore.widgetsStore.updateImageWidgetTitle();
         this.currentLayoutName = layoutName;
 
         return true;
@@ -136,7 +129,7 @@ export class LayoutStore {
 
     @flow.bound *saveLayout() {
         const appStore = AppStore.Instance;
-        if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
+        if (!this.layouts || !this.layoutNameToBeSaved || !this.layoutModel) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
@@ -151,15 +144,15 @@ export class LayoutStore {
             return;
         }
 
-        const currentConfig = this.dockedLayout.toConfig();
-        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
+        const currentModelJson = this.layoutModel.toJson();
+        if (!currentModelJson || !currentModelJson.layout) {
             appStore.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
-        const configToSave = LayoutConfig.createConfigToSave(appStore, currentConfig.content[0]);
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
         if (!configToSave) {
-            appStore.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
+            appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
             return;
         }
 
@@ -192,7 +185,7 @@ export class LayoutStore {
         const appStore = AppStore.Instance;
         const dynamicLayout = appStore.dynamicLayoutStore;
 
-        if (!this.layouts || !newName || !this.dockedLayout) {
+        if (!this.layouts || !newName || !this.layoutModel) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
