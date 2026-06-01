@@ -731,8 +731,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string = "default";
-        if (regionSet.mode === RegionMode.CREATING) {
-            cursor = this.props.frame?.isPreview ? "not-allowed" : "crosshair";
+        if (this.props.frame?.isPreview && AppStore.Instance.activeFrame?.regionSet.mode === RegionMode.CREATING) {
+            cursor = "not-allowed";
+        } else if (regionSet.mode === RegionMode.CREATING) {
+            cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.isEditing) {
             cursor = "move";
         } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
