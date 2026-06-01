@@ -218,12 +218,33 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const selectedRegions = regionSet.selectedRegionsList;
         const isMultiSelected = regionSet.selectedRegionCount > 1;
+        const deleteDisabled = regionSet.isLocked || selectedRegions.every(selectedRegion => selectedRegion.isLocked);
+        const deleteSelectedRegionsMenuItem = (
+            <MenuItem
+                icon="trash"
+                intent="danger"
+                text="Delete"
+                disabled={deleteDisabled}
+                onClick={() => {
+                    appStore.deleteSelectedRegions();
+                }}
+            />
+        );
+
+        if (!isMultiSelected) {
+            showContextMenu({
+                content: <Menu>{deleteSelectedRegionsMenuItem}</Menu>,
+                targetOffset: {left: ev.clientX, top: ev.clientY},
+                isDarkTheme: appStore.isDarkTheme
+            });
+            return;
+        }
+
         const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
         const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
         const lockDisabled = regionSet.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible;
         const showLockedIcon = lockDisabled || regionSet.isAllSelectedRegionsLocked;
-        const deleteDisabled = regionSet.isLocked || selectedRegions.every(selectedRegion => selectedRegion.isLocked);
-        const title = isMultiSelected ? `${regionSet.selectedRegionCount} regions selected` : region.nameString;
+        const title = `${regionSet.selectedRegionCount} regions selected`;
 
         showContextMenu({
             content: (
@@ -244,10 +265,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             regionSet.toggleSelectedRegionsVisibility();
                         }}
                     />
-                    {!isMultiSelected && <MenuItem icon={<CustomIcon icon="center" />} text="Focus" onClick={() => region.focusCenter()} />}
                     <MenuItem
                         icon="cloud-upload"
-                        text={isMultiSelected ? "Export regions" : "Export region"}
+                        text="Export regions"
                         onClick={() => {
                             FileBrowserStore.Instance.showExportSelectedRegions();
                         }}
@@ -255,15 +275,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <MenuDivider />
                     <MenuItem icon="settings" text="Region properties" onClick={() => DialogStore.Instance.showDialog(DialogId.Region)} />
                     <MenuDivider />
-                    <MenuItem
-                        icon="trash"
-                        intent="danger"
-                        text="Delete"
-                        disabled={deleteDisabled}
-                        onClick={() => {
-                            appStore.deleteSelectedRegions();
-                        }}
-                    />
+                    {deleteSelectedRegionsMenuItem}
                 </Menu>
             ),
             targetOffset: {left: ev.clientX, top: ev.clientY},
