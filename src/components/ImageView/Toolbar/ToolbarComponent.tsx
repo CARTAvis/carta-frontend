@@ -266,7 +266,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={handleDistanceMeasuringClicked} />
+                                    <AnchorButton
+                                        icon={<CustomIcon icon="distanceMeasuring" />}
+                                        active={appStore.activeLayer === ImageViewLayer.RegionCreating}
+                                        onClick={handleDistanceMeasuringClicked}
+                                        data-testid="toolbar-distance-measuring-button"
+                                    />
                                 </Tooltip>
                                 <Tooltip
                                     position={tooltipPosition}
@@ -280,7 +285,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={"locate"} active={isCatalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={isCatalogSelectionDisabled} />
+                                    <AnchorButton
+                                        icon={"locate"}
+                                        active={isCatalogOverlayEnabled}
+                                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)}
+                                        disabled={isCatalogSelectionDisabled}
+                                        data-testid="toolbar-catalog-selection-button"
+                                    />
                                 </Tooltip>
                                 {frame.regionSet.mode === RegionMode.CREATING && (
                                     <Popover popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
@@ -327,7 +338,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                        <AnchorButton
+                                            icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon}
+                                            onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
+                                            data-testid="toolbar-region-creating-button"
+                                        />
                                     </Tooltip>
                                 )}
                                 <Tooltip
@@ -349,6 +364,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
                                         onDoubleClick={this.handlePanZoomShortCutClicked}
                                         active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
+                                        data-testid="toolbar-region-moving-button"
                                     />
                                 </Tooltip>
                             </>
@@ -357,11 +373,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} data-testid="zoom-in-button" />
                         </Tooltip>
                         <Tooltip position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
-                            <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
+                            <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} data-testid="zoom-out-button" />
                         </Tooltip>
                         {!frame.isPreview && (
                             <Tooltip position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
-                                <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>
+                                <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked} data-testid="zoom-to-1x-fit-button">
                                     1.0x
                                 </AnchorButton>
                             </Tooltip>
@@ -411,7 +427,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         {!frame.isPreview && (
                             <>
                                 <Tooltip position={tooltipPosition} content="Toggle labels">
-                                    <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} />
+                                    <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} data-testid="toggle-labels-button" />
                                 </Tooltip>
                                 <Popover content={exportImageMenu} position={Position.TOP} minimal={true}>
                                     <Tooltip
@@ -423,7 +439,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton disabled={appStore.isExportingImage} icon="floppy-disk" />
+                                        <AnchorButton disabled={appStore.isExportingImage} icon="floppy-disk" data-testid="export-image-view-button" />
                                     </Tooltip>
                                 </Popover>
                             </>
@@ -431,7 +447,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     </React.Fragment>
                 )}
                 <Tooltip position={tooltipPosition} content={appStore.isToolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
-                    <AnchorButton active={appStore.isToolbarExpanded} icon={appStore.isToolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
+                    <AnchorButton active={appStore.isToolbarExpanded} icon={appStore.isToolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} data-testid="toggle-toolbar-button" />
                 </Tooltip>
             </ButtonGroup>
         );

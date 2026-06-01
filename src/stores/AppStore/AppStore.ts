@@ -2109,7 +2109,6 @@ export class AppStore {
         reaction(
             () => this.activeImage,
             image => {
-                this.widgetsStore.updateRenderConfigSettingsVisibility();
                 if (image && image.type === ImageType.FRAME) {
                     const frame = image.store;
                     this.catalogStore.resetActiveCatalogFile(frame?.id);
@@ -2119,13 +2118,6 @@ export class AppStore {
                 }
             }
         );
-
-        // Update image panel page buttons
-        autorun(() => {
-            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
-                this.widgetsStore.updateImagePanelPageButtons();
-            }
-        });
 
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);

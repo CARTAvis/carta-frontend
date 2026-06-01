@@ -35,14 +35,14 @@ $shadow-color: rgba($blue2, 0.1);
         color: $title-color;
         border-bottom: 1px solid $border-color;
         &.#{$ns}-dark {
-            background-color: color.adjust($widget-background-dark, $lightness: 10%);
+            background-color: color.adjust($dark-gray5, $lightness: 5%);
             border-bottom: 1px solid $border-color-dark;
         }
 
         &.selected {
             background-color: color.adjust($widget-background, $lightness: -10%);
             &.#{$ns}-dark {
-                background-color: color.adjust($widget-background-dark, $lightness: 15%);
+                background-color: color.adjust($dark-gray5, $lightness: 10%);
                 border-bottom: 1px solid $border-color-dark;
             }
         }
@@ -50,7 +50,7 @@ $shadow-color: rgba($blue2, 0.1);
         &.selected {
             color: $selected-title-color;
             &.#{$ns}-dark {
-                color: $white;
+                color: $blue5;
             }
         }
 

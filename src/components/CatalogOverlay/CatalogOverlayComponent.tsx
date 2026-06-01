@@ -84,7 +84,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
+    // Overwrite scrollToRegion to avoid crashes when viewportRect is undefined during unpin.
     // https://github.com/palantir/blueprint/blob/841b2e12fec1970704b754f7794c683c735d0439/packages/table/src/table.tsx#L761
     scrollToRegion = (ref, region) => {
         if (ref) {
@@ -1035,9 +1035,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                            <AnchorButton data-testid="catalog-size-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>
+                                Size
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-color-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>
+                                Color
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-orientation-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>
+                                Orientation
+                            </AnchorButton>
                         </ButtonGroup>
                     </div>
                     <SplitPane className="catalog-table" direction="vertical" onResizeEnd={this.handleSplitChange}>

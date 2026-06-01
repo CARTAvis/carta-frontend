@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect spectral cursor WCS information for rotated Stokes cubes after changing Stokes ([#2795](https://github.com/CARTAvis/carta-frontend/issues/2795)).
 * Fixed the persistent streaming progress indicator when generating contours ([#2805](https://github.com/CARTAvis/carta-frontend/issues/2805)).
 * Prevent creating regions in the PV preview widget ([#2816](https://github.com/CARTAvis/carta-frontend/issues/2816)).
+### Changed
+* Changed the layout managers from GoldenLayout to FlexLayout without changing the existing layout features and behaviors ([#2729](https://github.com/CARTAvis/carta-frontend/issues/2729)).
 
 ## [6.0.0-beta.1]
 

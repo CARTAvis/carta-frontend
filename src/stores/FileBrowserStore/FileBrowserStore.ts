@@ -645,8 +645,8 @@ export class FileBrowserStore {
     @flow.bound *setSelectedFiles(selection: ISelectedFile[]) {
         this.selectedFiles = selection;
 
-        // for dynamic layout
-        if (PreferenceStore.Instance.isDynamicLayoutEnabled && selection.length > 0 && selection.every(item => item.isFile)) {
+        // for dynamic layout (skip catalog mode — catalog files are not image files)
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled && this.browserMode !== BrowserMode.Catalog && selection.length > 0 && selection.every(item => item.isFile)) {
             this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
             AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
         }

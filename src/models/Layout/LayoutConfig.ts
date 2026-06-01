@@ -1,152 +1,12 @@
 import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
-import {PresetLayout} from "models";
+import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, PresetLayout} from "models";
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
 import {findDeep} from "utilities";
-import {smoothStepOffset} from "utilities/math/math";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
-
-const COMPONENT_CONFIG = new Map<string, any>([
-    [
-        "image-view",
-        {
-            type: "react-component",
-            component: "image-view",
-            title: "No image loaded",
-            height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
-            id: "image-view",
-            isClosable: false
-        }
-    ],
-    [
-        "render-config",
-        {
-            type: "react-component",
-            component: "render-config",
-            title: "Render Configuration",
-            id: "render-config"
-        }
-    ],
-    [
-        "region-list",
-        {
-            type: "react-component",
-            component: "region-list",
-            title: "Region List",
-            id: "region-list"
-        }
-    ],
-    [
-        "animator",
-        {
-            type: "react-component",
-            component: "animator",
-            title: "Animator",
-            id: "animator"
-        }
-    ],
-    [
-        "spatial-profiler",
-        {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler"
-        }
-    ],
-    [
-        "spectral-profiler",
-        {
-            type: "react-component",
-            component: "spectral-profiler",
-            id: "spectral-profiler",
-            title: "Z Profile: Cursor"
-        }
-    ],
-    [
-        "stokes",
-        {
-            type: "react-component",
-            component: "stokes",
-            id: "stokes",
-            title: "Stokes Analysis"
-        }
-    ],
-    [
-        "histogram",
-        {
-            type: "react-component",
-            component: "histogram",
-            title: "Histogram",
-            id: "histogram"
-        }
-    ],
-    [
-        "stats",
-        {
-            type: "react-component",
-            component: "stats",
-            title: "Statistics",
-            id: "stats"
-        }
-    ],
-    [
-        "layer-list",
-        {
-            type: "react-component",
-            component: "layer-list",
-            title: "Image List",
-            id: "layer-list"
-        }
-    ],
-    [
-        "log",
-        {
-            type: "react-component",
-            component: "log",
-            title: "Log",
-            id: "log"
-        }
-    ],
-    [
-        "catalog-overlay",
-        {
-            type: "react-component",
-            component: "catalog-overlay",
-            title: "Catalog Overlay",
-            id: "catalog-overlay"
-        }
-    ],
-    [
-        "catalog-plot",
-        {
-            type: "react-component",
-            component: "catalog-plot",
-            title: "Catalog Plot",
-            id: "catalog-plot"
-        }
-    ],
-    [
-        "spectral-line-query",
-        {
-            type: "react-component",
-            component: "spectral-line-query",
-            title: "Spectral Line Query",
-            id: "spectral-line-query"
-        }
-    ],
-    [
-        "cursor-info",
-        {
-            type: "react-component",
-            component: "cursor-info",
-            title: "Cursor Info",
-            id: "cursor-info"
-        }
-    ]
-]);
 
 export class LayoutConfig {
     public static layoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
@@ -162,6 +22,9 @@ export class LayoutConfig {
             return null;
         }
 
+        const imageViewerHeight = getImageViewWeight(); // modify WidgetsStore.ts as well if changing this
+        const imageViewerWidth = 60;
+
         return {
             layoutVersion: LayoutConfig.currentSchemaVersion,
             docked: {
@@ -169,11 +32,15 @@ export class LayoutConfig {
                 content: [
                     {
                         type: "column",
-                        width: 60,
-                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                        width: imageViewerWidth,
+                        content: [
+                            {type: "component", id: "image-view", height: imageViewerHeight},
+                            {...config.leftBottomContent, height: 100 - imageViewerHeight}
+                        ]
                     },
                     {
                         type: "column",
+                        width: 100 - imageViewerWidth,
                         content: config.rightColumnContent
                     }
                 ]
@@ -231,30 +98,86 @@ export class LayoutConfig {
         }
     };
 
-    public static createConfigToSave = (appStore: AppStore, rootConfig: any) => {
-        if (!appStore || !rootConfig || !("type" in rootConfig) || !("content" in rootConfig)) {
+    /**
+     * Converts the app's abstract layout config into a FlexLayout IJsonModel.
+     * Also collects component configs for initializing widget stores.
+     */
+    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[]) => {
+        // Convert the abstract config to FlexLayout model JSON first — this assigns unique IDs
+        const modelJson = createFlexLayoutModel({type: dockedConfig.type, content: dockedConfig.content});
+        // Then collect component configs (uses _assignedId set by createFlexLayoutModel)
+        LayoutConfig.collectComponentConfigs(dockedConfig.content, componentConfigs);
+        return modelJson;
+    };
+
+    /**
+     * Recursively collects component configs from the abstract layout tree.
+     * Each component config has: id, props, widgetSettings, plotType.
+     */
+    private static collectComponentConfigs = (content: any[], componentConfigs: any[]) => {
+        if (!content || !Array.isArray(content)) {
+            return;
+        }
+
+        for (const child of content) {
+            if (!child.type) {
+                continue;
+            }
+
+            if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                if (child.content) {
+                    LayoutConfig.collectComponentConfigs(child.content, componentConfigs);
+                }
+            } else if (child.type === "component" && child.id) {
+                const widgetType = child.id.replace(/-\d+$/, "");
+                const tabJson = getComponentTabJson(widgetType);
+                if (tabJson) {
+                    // Use the unique ID assigned by createFlexLayoutModel if available
+                    const assignedId = child._assignedId || child.id;
+                    const componentConfig: any = {
+                        id: widgetType,
+                        component: widgetType,
+                        props: {appStore: AppStore.Instance, id: assignedId, docked: true}
+                    };
+                    if (child.widgetSettings) {
+                        componentConfig.widgetSettings = child.widgetSettings;
+                    }
+                    if (child.plotType) {
+                        componentConfig.plotType = child.plotType;
+                    }
+                    componentConfigs.push(componentConfig);
+                }
+            }
+        }
+    };
+
+    /**
+     * Creates the abstract config from the current FlexLayout model for saving.
+     */
+    public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
+        if (!appStore || !modelJson) {
             return null;
         }
 
+        // Extract abstract config from FlexLayout model JSON
+        const abstractConfig = extractAbstractConfig(modelJson);
+
         const configToSave = {
             layoutVersion: LayoutConfig.currentSchemaVersion,
-            docked: {
-                type: rootConfig.type,
-                content: []
-            },
+            docked: abstractConfig,
             floating: [] as any[]
         };
 
-        // 1. generate config from current docked widgets
-        LayoutConfig.genSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
+        // Enrich docked widgets with widget settings
+        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
 
-        // 2. handle floating widgets
+        // Handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
             // skip saving floating settings panel
             if (config?.type === "floating-settings") {
                 return;
             }
-            const floatingConfig = {
+            const floatingConfig: any = {
                 type: "component",
                 id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
@@ -272,12 +195,12 @@ export class LayoutConfig {
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
             }
             if (widgetSettingsConfig) {
-                floatingConfig["widgetSettings"] = widgetSettingsConfig;
+                floatingConfig.widgetSettings = widgetSettingsConfig;
             }
             // add plot type
             const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
             if (plotWidget) {
-                floatingConfig["plotType"] = plotWidget.plotType;
+                floatingConfig.plotType = plotWidget.plotType;
             }
             configToSave.floating.push(floatingConfig);
         });
@@ -285,67 +208,47 @@ export class LayoutConfig {
         return configToSave;
     };
 
-    private static genSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
-        if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
+    /**
+     * Recursively enriches the abstract config with widget settings from current widget stores.
+     */
+    private static enrichSaveConfig = (appStore: AppStore, node: any) => {
+        if (!node || !node.content) {
             return;
         }
 
-        parentContent.forEach(child => {
-            if (child.type) {
-                if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    const simpleChild = {
-                        type: child.type,
-                        content: []
-                    };
-                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
-                        // save active tab
-                        simpleChild["activeItemIndex"] = child.activeItemIndex;
-                    }
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    newParentContent.push(simpleChild);
-                    if (child.content) {
-                        LayoutConfig.genSimpleConfigToSave(appStore, simpleChild.content, child.content);
-                    }
-                } else if (child.type === "component" && child.id) {
-                    const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                    const simpleChild = {
-                        type: child.type,
-                        id: widgetType
-                    };
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    // add widget settings
-                    let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-                    if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
-                        const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
-                        const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
-                    } else {
-                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
-                    }
-                    if (widgetSettingsConfig) {
-                        simpleChild["widgetSettings"] = widgetSettingsConfig;
-                    }
-                    // add plot type
-                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(child.id);
-                    if (plotWidget) {
-                        simpleChild["plotType"] = plotWidget.plotType;
-                    }
-                    newParentContent.push(simpleChild);
+        for (const child of node.content) {
+            if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                LayoutConfig.enrichSaveConfig(appStore, child);
+            } else if (child.type === "component" && child.id) {
+                // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
+                // since child.id is the collapsed base type (e.g. "catalog-plot")
+                const instanceId = child._instanceId || child.id;
+                const widgetType = child.id.replace(/(-component)?-\d+$/, "");
+                let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
+                if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
+                    const catalogFileId = CatalogStore.Instance.catalogProfiles.get(instanceId) ?? NaN;
+                    const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
+                } else {
+                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 }
+                if (widgetSettingsConfig) {
+                    child.widgetSettings = widgetSettingsConfig;
+                }
+                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
+                if (plotWidget) {
+                    child.plotType = plotWidget.plotType;
+                }
+                // Clean up internal field so it doesn't persist in saved layouts
+                delete child._instanceId;
             }
-        });
+        }
     };
 
+    /**
+     * Legacy compatibility: Collects component configs from abstract layout tree.
+     * Used when applying a layout to initialize widget stores before creating the FlexLayout model.
+     */
     public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
         if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
@@ -354,19 +257,18 @@ export class LayoutConfig {
         parentContent.forEach(child => {
             if (child.type) {
                 if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    const simpleChild = {
+                    const simpleChild: any = {
                         type: child.type,
                         content: []
                     };
                     if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
-                        // load active tab
-                        simpleChild["activeItemIndex"] = child.activeItemIndex;
+                        simpleChild.activeItemIndex = child.activeItemIndex;
                     }
                     if (child.width) {
-                        simpleChild["width"] = child.width;
+                        simpleChild.width = child.width;
                     }
                     if (child.height) {
-                        simpleChild["height"] = child.height;
+                        simpleChild.height = child.height;
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
@@ -374,23 +276,34 @@ export class LayoutConfig {
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(widgetType)) {
-                        const componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
+                    const tabJson = getComponentTabJson(widgetType);
+                    if (tabJson) {
+                        const componentConfig: any = {
+                            ...tabJson,
+                            id: widgetType,
+                            props: {appStore: AppStore.Instance, id: "", docked: true}
+                        };
                         if (child.width) {
-                            componentConfig["width"] = child.width;
+                            componentConfig.width = child.width;
                         }
                         if (child.height) {
-                            componentConfig["height"] = child.height;
+                            componentConfig.height = child.height;
                         }
-                        if ("widgetSettings" in child) {
-                            componentConfig["widgetSettings"] = child.widgetSettings;
+                        if (child.widgetSettings) {
+                            componentConfig.widgetSettings = child.widgetSettings;
                         }
-                        if ("plotType" in child) {
-                            componentConfig["plotType"] = child.plotType;
+                        if (child.plotType) {
+                            componentConfig.plotType = child.plotType;
                         }
-                        componentConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
                         componentConfigs.push(componentConfig);
-                        newParentContent.push(componentConfig);
+                        newParentContent.push({
+                            type: child.type,
+                            id: child.id,
+                            width: child.width,
+                            height: child.height,
+                            widgetSettings: child.widgetSettings,
+                            plotType: child.plotType
+                        });
                     }
                 }
             }
