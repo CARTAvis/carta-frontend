@@ -3169,7 +3169,7 @@ export class AppStore {
             dashLength: region.dashLength,
             annotationStyles: _.cloneDeep((region as any).getAnnotationStyles?.())
         };
-        AppToaster.show(SuccessToast("clipboard", "Region is copied"));
+        AppToaster.show(SuccessToast("clipboard", "Region copied to clipboard"));
         return true;
     };
 
