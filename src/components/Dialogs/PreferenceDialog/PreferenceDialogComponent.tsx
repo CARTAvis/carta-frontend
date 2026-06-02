@@ -11,7 +11,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
-import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
+import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
@@ -621,6 +621,13 @@ export class PreferenceDialogComponent extends React.Component {
                         <Radio label="Center to corner" value={RegionCreationMode.CENTER} />
                         <Radio label="Corner to corner" value={RegionCreationMode.CORNER} />
                     </RadioGroup>
+                </FormGroup>
+                <FormGroup inline={true} label="Paste offset">
+                    <HTMLSelect value={preference.regionPasteOffsetUnit} onChange={ev => preference.setPreference(PreferenceKeys.REGION_PASTE_OFFSET_UNIT, ev.currentTarget.value)}>
+                        <option value={PasteOffsetUnit.Auto}>Auto</option>
+                        <option value={PasteOffsetUnit.ScreenPixel}>Screen px</option>
+                        <option value={PasteOffsetUnit.ImagePixel}>Image px</option>
+                    </HTMLSelect>
                 </FormGroup>
             </React.Fragment>
         );

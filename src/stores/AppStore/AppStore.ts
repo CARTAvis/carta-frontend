@@ -76,7 +76,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -157,6 +157,7 @@ export class AppStore {
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>> = new Map();
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>> = new Map();
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>> = new Map();
+    @observable regionClipboard: RegionClipboardData | null = null;
 
     // Reference images
     @observable spatialReference: FrameStore | null = null;
@@ -3151,6 +3152,68 @@ export class AppStore {
         }
         return null;
     }
+
+    @action copySelectedRegion = (): boolean => {
+        const region = this.selectedRegion;
+        if (!region) {
+            return false;
+        }
+
+        this.regionClipboard = {
+            sourceFileId: region.fileId,
+            regionType: region.regionType,
+            controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
+            rotation: region.rotation,
+            name: region.name,
+            color: region.color,
+            lineWidth: region.lineWidth,
+            dashLength: region.dashLength,
+            annotationStyles: _.cloneDeep((region as any).getAnnotationStyles?.())
+        };
+        AppToaster.show(SuccessToast("clipboard", "Region copied to clipboard"));
+        return true;
+    };
+
+    @action pasteRegion = (): boolean => {
+        const clipboard = this.regionClipboard;
+        const frame = this.activeFrame;
+        if (!clipboard || !frame) {
+            return false;
+        }
+
+        const targetRegionFrame = frame.spatialReference ?? frame;
+        const targetRegionSet = targetRegionFrame.regionSet;
+        const shouldApplyInitialOffset = clipboard.sourceFileId === targetRegionFrame.frameInfo.fileId;
+        const pasteOffset = getPasteRegionOffset(this.preferenceStore.regionPasteOffsetUnit, targetRegionFrame.zoomLevel);
+        const targetPoints = offsetPointsToAvoidCollision(
+            clipboard.controlPoints.map(point => ({...point})),
+            clipboard.regionType,
+            targetRegionSet.regions,
+            shouldApplyInitialOffset,
+            pasteOffset
+        );
+
+        const region = targetRegionSet.addExistingRegion(
+            targetPoints,
+            clipboard.rotation,
+            clipboard.regionType,
+            targetRegionSet.getTempRegionId(),
+            clipboard.name,
+            clipboard.color,
+            clipboard.lineWidth,
+            clipboard.dashLength ? [clipboard.dashLength] : [],
+            false,
+            _.cloneDeep(clipboard.annotationStyles)
+        );
+
+        if (!region) {
+            return false;
+        }
+
+        region.setLocked(false);
+        targetRegionSet.selectSingleRegion(region);
+        return true;
+    };
 
     @action deleteSelectedRegions = (): boolean => {
         const frame = this.activeFrame;

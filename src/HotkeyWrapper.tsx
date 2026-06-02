@@ -136,6 +136,20 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    public static copyRegion = (event: KeyboardEvent) => {
+        if (AppStore.Instance.copySelectedRegion()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+
+    public static pasteRegion = (event: KeyboardEvent) => {
+        if (AppStore.Instance.pasteRegion()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+
     public static handleRegionEsc = () => {
         const appStore = AppStore.Instance;
         const regionSet = appStore.activeFrame?.regionSet;
@@ -265,6 +279,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift + l", label: "Unlock all regions"},
             {combo: "h", label: "Toggle selected region(s) visibility"},
             {combo: "shift + h", label: "Show all regions"},
+            {combo: "mod + c", label: "Copy focused region"},
+            {combo: "mod + v", label: "Paste copied region"},
             {combo: "double-click", label: "Region properties"},
             {combo: "delete", label: "Delete selected region(s)"},
             {combo: "backspace", label: "Delete selected region(s)"}
@@ -323,6 +339,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "h", label: "Toggle selected region(s) visibility", onKeyDown: HotkeyService.toggleRegionVisibility},
             {combo: "shift + h", label: "Show all regions", onKeyDown: HotkeyService.showAllRegions},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.unlockAllRegions},
+            {combo: "mod + c", label: "Copy focused region", onKeyDown: HotkeyService.copyRegion, preventDefault: false},
+            {combo: "mod + v", label: "Paste copied region", onKeyDown: HotkeyService.pasteRegion, preventDefault: false},
             {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
             {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.handleRegionEsc},
