@@ -105,12 +105,27 @@ jest.mock("stores", () => ({
     WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
 }));
 
+import {CARTA} from "carta-protobuf";
+
 import {ImageType} from "enums";
 import {CURSOR_REGION_ID} from "stores/Frame";
 
 import {AppStore} from "./AppStore";
 
-const MakeRegion = (regionId: number, isLocked = false) => ({fileId: 1, regionId, isLocked}) as any;
+const MakeRegion = (regionId: number, isLocked = false, overrides: Partial<any> = {}) =>
+    ({
+        color: "#f00",
+        controlPoints: [{x: regionId * 10, y: regionId * 10}],
+        dashLength: 0,
+        fileId: 1,
+        isLocked,
+        lineWidth: 1,
+        name: `region-${regionId}`,
+        regionId,
+        regionType: CARTA.RegionType.POINT,
+        rotation: 0,
+        ...overrides
+    }) as any;
 
 describe("AppStore.deleteSelectedRegions", () => {
     const appStore = AppStore.Instance;
@@ -207,5 +222,198 @@ describe("AppStore.deleteSelectedRegions", () => {
 
         expect(isResult).toBe(false);
         expect(regionSet.deleteRegion).not.toHaveBeenCalled();
+    });
+});
+
+describe("AppStore region copy-paste", () => {
+    const appStore = AppStore.Instance;
+
+    beforeEach(() => {
+        appStore.setActiveImage(null);
+        appStore.regionClipboard = null;
+    });
+
+    const setActiveFrame = (regionSet: any, frameOverrides: Partial<any> = {}) => {
+        const frame = {
+            frameInfo: {fileId: 1},
+            regionSet,
+            secondarySpatialImages: [],
+            spatialReference: null,
+            zoomLevel: 1,
+            ...frameOverrides
+        };
+        Object.defineProperty(appStore, "imageViewConfigStore", {
+            configurable: true,
+            value: {
+                frames: [frame],
+                visibleFrames: []
+            }
+        });
+        appStore.setActiveImage({type: ImageType.FRAME, store: frame} as any);
+        return frame;
+    };
+
+    test("copies all selected regions in selection order", () => {
+        const cursor = MakeRegion(CURSOR_REGION_ID);
+        const first = MakeRegion(1, false, {name: "first"});
+        const second = MakeRegion(2, false, {name: "second"});
+        const regionSet = {
+            focusedRegion: second,
+            regions: [cursor, first, second],
+            selectedRegionIds: new Set([second.regionId, first.regionId]),
+            selectedRegionsList: [second, first]
+        };
+        setActiveFrame(regionSet);
+
+        expect(appStore.copySelectedRegion()).toBe(true);
+
+        expect(appStore.regionClipboard?.sourceFileId).toBe(1);
+        expect(appStore.regionClipboard?.focusedRegionIndex).toBe(0);
+        expect(appStore.regionClipboard?.regions.map(region => region.name)).toEqual(["second", "first"]);
+    });
+
+    test("copies single selected region", () => {
+        const focusedRegion = MakeRegion(7);
+        const regionSet = {
+            focusedRegion,
+            regions: [focusedRegion],
+            selectedRegionIds: new Set([focusedRegion.regionId]),
+            selectedRegionsList: [focusedRegion]
+        };
+        setActiveFrame(regionSet);
+
+        expect(appStore.copySelectedRegion()).toBe(true);
+
+        expect(appStore.regionClipboard?.focusedRegionIndex).toBe(0);
+        expect(appStore.regionClipboard?.regions).toHaveLength(1);
+        expect(appStore.regionClipboard?.regions[0].name).toBe("region-7");
+    });
+
+    test("pastes copied regions with each region's own offset and selects the pasted group", () => {
+        const existingRegion = MakeRegion(1, false, {center: {x: 10, y: 10}});
+        const pastedRegions: any[] = [];
+        let nextRegionId = -1;
+        const regionSet = {
+            addExistingRegion: jest.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
+                const region = MakeRegion(regionId, false, {
+                    annotationStyles,
+                    color,
+                    controlPoints: points,
+                    dashLength: dashes[0] ?? 0,
+                    lineWidth,
+                    name,
+                    regionType,
+                    rotation,
+                    setLocked: jest.fn()
+                });
+                pastedRegions.push(region);
+                return region;
+            }),
+            getTempRegionId: jest.fn(() => nextRegionId--),
+            regions: [existingRegion],
+            selectedRegionIds: new Set(),
+            setSelectionByIds: jest.fn()
+        };
+        setActiveFrame(regionSet);
+        appStore.regionClipboard = {
+            focusedRegionIndex: 0,
+            sourceFileId: 1,
+            regions: [
+                {
+                    annotationStyles: undefined,
+                    color: "#f00",
+                    controlPoints: [{x: 10, y: 10}],
+                    dashLength: 0,
+                    lineWidth: 1,
+                    name: "anchor",
+                    regionType: CARTA.RegionType.POINT,
+                    rotation: 0
+                },
+                {
+                    annotationStyles: undefined,
+                    color: "#0f0",
+                    controlPoints: [{x: 30, y: 10}],
+                    dashLength: 0,
+                    lineWidth: 2,
+                    name: "offset",
+                    regionType: CARTA.RegionType.POINT,
+                    rotation: 0
+                }
+            ]
+        };
+
+        expect(appStore.pasteRegion()).toBe(true);
+
+        expect(regionSet.addExistingRegion).toHaveBeenCalledTimes(2);
+        expect(pastedRegions[0].controlPoints).toEqual([{x: 30, y: -10}]);
+        expect(pastedRegions[1].controlPoints).toEqual([{x: 50, y: -10}]);
+        expect(regionSet.setSelectionByIds).toHaveBeenCalledWith([-1, -2], -1);
+        expect(pastedRegions[0].setLocked).toHaveBeenCalledWith(false);
+        expect(pastedRegions[1].setLocked).toHaveBeenCalledWith(false);
+    });
+
+    test("pastes mixed line and point regions using their single-region paste directions", () => {
+        const pastedRegions: any[] = [];
+        let nextRegionId = -1;
+        const regionSet = {
+            addExistingRegion: jest.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
+                const region = MakeRegion(regionId, false, {
+                    annotationStyles,
+                    color,
+                    controlPoints: points,
+                    dashLength: dashes[0] ?? 0,
+                    lineWidth,
+                    name,
+                    regionType,
+                    rotation,
+                    setLocked: jest.fn()
+                });
+                pastedRegions.push(region);
+                return region;
+            }),
+            getTempRegionId: jest.fn(() => nextRegionId--),
+            regions: [],
+            selectedRegionIds: new Set(),
+            setSelectionByIds: jest.fn()
+        };
+        setActiveFrame(regionSet);
+        appStore.regionClipboard = {
+            focusedRegionIndex: 0,
+            sourceFileId: 1,
+            regions: [
+                {
+                    annotationStyles: undefined,
+                    color: "#f00",
+                    controlPoints: [
+                        {x: 0, y: 0},
+                        {x: 20, y: 0}
+                    ],
+                    dashLength: 0,
+                    lineWidth: 1,
+                    name: "line",
+                    regionType: CARTA.RegionType.LINE,
+                    rotation: 0
+                },
+                {
+                    annotationStyles: undefined,
+                    color: "#0f0",
+                    controlPoints: [{x: 50, y: 50}],
+                    dashLength: 0,
+                    lineWidth: 2,
+                    name: "point",
+                    regionType: CARTA.RegionType.POINT,
+                    rotation: 0
+                }
+            ]
+        };
+
+        expect(appStore.pasteRegion()).toBe(true);
+
+        expect(pastedRegions[0].controlPoints).toEqual([
+            {x: 0, y: -20},
+            {x: 20, y: -20}
+        ]);
+        expect(pastedRegions[1].controlPoints).toEqual([{x: 70, y: 30}]);
+        expect(regionSet.setSelectionByIds).toHaveBeenCalledWith([-1, -2], -1);
     });
 });

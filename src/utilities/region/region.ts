@@ -53,9 +53,8 @@ export interface RegionTransformSource {
     rotation: number;
 }
 
-/** Serialisable region data stored on the clipboard for copy-paste operations. */
-export interface RegionClipboardData {
-    sourceFileId: number;
+/** Serialisable geometry and style data for one copied region. */
+export interface RegionClipboardItem {
     regionType: CARTA.RegionType;
     controlPoints: Point2D[];
     rotation: number;
@@ -64,6 +63,13 @@ export interface RegionClipboardData {
     lineWidth: number;
     dashLength: number;
     annotationStyles?: any;
+}
+
+/** Serialisable region data stored on the clipboard for copy-paste operations. */
+export interface RegionClipboardData {
+    sourceFileId: number;
+    regions: RegionClipboardItem[];
+    focusedRegionIndex: number;
 }
 
 /**
