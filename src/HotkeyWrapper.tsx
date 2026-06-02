@@ -282,8 +282,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "mod + c", label: "Copy focused region"},
             {combo: "mod + v", label: "Paste copied region"},
             {combo: "double-click", label: "Region properties"},
-            {combo: "delete", label: "Delete selected region(s)"},
-            {combo: "backspace", label: "Delete selected region(s)"}
+            {combo: "delete", label: "Delete selected point/region(s)"},
+            {combo: "backspace", label: "Delete selected point/region(s)"}
         ];
         return items.map(item => ({...base, ...item}));
     }
