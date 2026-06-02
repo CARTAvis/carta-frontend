@@ -243,7 +243,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegionsOpacity = regionSet.selectedRegionsOpacity;
         const hasVisibleSelectedRegions = selectedRegionsOpacity !== RegionOpacity.Invisible;
         const isLockDisabled = regionSet.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible;
-        const shouldShowLockedIcon = isLockDisabled || regionSet.isAllSelectedRegionsLocked;
+        const shouldShowLockedIcon = isLockDisabled || regionSet.areAllSelectedRegionsLocked;
         const title = `${regionSet.selectedRegionCount} regions selected`;
 
         showContextMenu({
@@ -485,7 +485,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
             const className = classNames("row-header", {[Classes.DARK]: isDarkTheme});
             const isLockDisabled = !regionSet.visibleEditableRegionsList.length;
-            const areAllRegionsLocked = regionSet.isAllEditableRegionsLocked;
+            const areAllRegionsLocked = regionSet.areAllEditableRegionsLocked;
             const lockIcon = areAllRegionsLocked ? "lock" : "unlock";
             const lockTooltip = areAllRegionsLocked ? "Unlock all regions" : "Lock all regions";
             const regionsOpacity = regionSet.editableRegionsOpacity;

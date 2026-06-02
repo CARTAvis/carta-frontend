@@ -151,7 +151,7 @@ export class RegionDialogComponent extends React.Component {
         }
 
         const isLockDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible : !!region && (regionSet?.isLocked || region.opacity === RegionOpacity.Invisible);
-        const shouldShowLockedIcon = isMultiRegion ? isLockDisabled || (regionSet?.isAllSelectedRegionsLocked ?? false) : isLockDisabled || !!region?.isLocked;
+        const shouldShowLockedIcon = isMultiRegion ? isLockDisabled || (regionSet?.areAllSelectedRegionsLocked ?? false) : isLockDisabled || !!region?.isLocked;
         const isRegionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
         const isDeleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
         const tooltips = region && region.regionId !== CURSOR_REGION_ID && (

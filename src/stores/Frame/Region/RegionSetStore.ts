@@ -63,7 +63,7 @@ export class RegionSetStore {
         return this.editableRegionsList.filter(region => region.isVisible);
     }
 
-    @computed get isAllSelectedRegionsLocked(): boolean {
+    @computed get areAllSelectedRegionsLocked(): boolean {
         const selectedRegions = this.selectedRegionsList.filter(region => region.isVisible);
         return selectedRegions.length > 0 && selectedRegions.every(region => region.isLocked);
     }
@@ -76,7 +76,7 @@ export class RegionSetStore {
         return this.getRegionsOpacity(this.editableRegionsList);
     }
 
-    @computed get isAllEditableRegionsLocked(): boolean {
+    @computed get areAllEditableRegionsLocked(): boolean {
         const editableRegions = this.visibleEditableRegionsList;
         return editableRegions.length > 0 && editableRegions.every(region => region.isLocked);
     }
@@ -700,7 +700,7 @@ export class RegionSetStore {
     };
 
     @action toggleEditableRegionsLocked = () => {
-        const shouldLock = !this.isAllEditableRegionsLocked;
+        const shouldLock = !this.areAllEditableRegionsLocked;
         this.visibleEditableRegionsList.forEach(region => region.setLocked(shouldLock));
     };
 
