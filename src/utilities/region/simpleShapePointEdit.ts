@@ -81,6 +81,16 @@ interface SimpleShapeCenterResizeInput {
     textScale: number;
 }
 
+/**
+ * Computes updated simple-shape geometry after dragging an edge or corner handle.
+ *
+ * The drag delta is transformed into the shape's local coordinate system, then
+ * applied to the selected side or corner before the updated center is rotated
+ * back into image coordinates.
+ *
+ * @param input - Current shape geometry, selected handle, drag delta, and text scale.
+ * @returns Updated center and size, or null when the selected point is not resizable.
+ */
 export function getMovedSimpleShapeSide(input: SimpleShapePointEditInput): SimpleShapePointEditResult | null {
     const rotation = (input.rotation * Math.PI) / 180.0;
     const localDelta = rotate2D(input.delta, -rotation);
@@ -97,18 +107,46 @@ export function getMovedSimpleShapeSide(input: SimpleShapePointEditInput): Simpl
     };
 }
 
+/**
+ * Looks up the anchor name for a simple-shape edit point index.
+ *
+ * @param selectedPointIndex - Edit point index.
+ * @returns Anchor name, or an empty string when the point index is not recognized.
+ */
 export function getSimpleShapeAnchorName(selectedPointIndex: number): string {
     return SIMPLE_SHAPE_POINT_ANCHOR_NAMES.get(selectedPointIndex) ?? "";
 }
 
+/**
+ * Looks up the edit point index for a simple-shape anchor.
+ *
+ * @param anchor - Anchor name such as `top`, `bottom-right`, or `rotator`.
+ * @returns Edit point index, or -1 when the anchor is not recognized.
+ */
 export function getSimpleShapeAnchorPointIndex(anchor: string): number {
     return SIMPLE_SHAPE_ANCHOR_POINT_INDEXES.get(anchor as SimpleShapeAnchor) ?? -1;
 }
 
+/**
+ * Returns the keyboard traversal order for simple-shape edit points.
+ *
+ * @param shouldIncludeRotator - Whether to append the rotation handle index.
+ * @returns Edit point indexes in selection order.
+ */
 export function getSimpleShapePointSelectionOrder(shouldIncludeRotator: boolean): number[] {
     return shouldIncludeRotator ? [...SIMPLE_SHAPE_POINT_SELECTION_ORDER, SIMPLE_SHAPE_ROTATION_POINT_INDEX] : [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
 }
 
+/**
+ * Returns the size scale used to place handles for a simple-shape region type.
+ *
+ * Rectangle and text annotations store box dimensions, while ellipse-like shapes
+ * use radius-style dimensions.
+ *
+ * @param regionType - Region type being edited.
+ * @param textScale - Text annotation scale factor.
+ * @returns Multiplier used when deriving handle positions from stored size.
+ */
 export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType, textScale: number): number {
     if (isRectangleRegionType(regionType)) {
         return 0.5;
@@ -121,6 +159,15 @@ export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType, text
     return 1;
 }
 
+/**
+ * Computes simple-shape geometry after resizing from a corner handle.
+ *
+ * The opposite corner remains fixed while the dragged anchor defines the new box
+ * extent in the shape's local coordinate system.
+ *
+ * @param input - Resize inputs including region type, anchors, rotation, and text scale.
+ * @returns Updated center and size for the resized shape.
+ */
 export function getResizedSimpleShapeFromCorner(input: SimpleShapeCornerResizeInput): SimpleShapePointEditResult {
     let w: number;
     let h: number;
@@ -156,6 +203,12 @@ export function getResizedSimpleShapeFromCorner(input: SimpleShapeCornerResizeIn
     };
 }
 
+/**
+ * Computes simple-shape size after resizing outward from the center.
+ *
+ * @param input - Resize inputs including center, anchor, aspect-lock state, and text scale.
+ * @returns Updated shape size.
+ */
 export function getResizedSimpleShapeFromCenter(input: SimpleShapeCenterResizeInput): Point2D {
     let w: number;
     let h: number;
@@ -189,14 +242,32 @@ export function getResizedSimpleShapeFromCenter(input: SimpleShapeCenterResizeIn
     return getSimpleShapeSizeFromDimensions(input.regionType, w, h, input.textScale, input.anchor, input.keepAspect);
 }
 
+/**
+ * Checks whether a simple-shape region stores size as full box dimensions.
+ *
+ * @param regionType - Region type to inspect.
+ * @returns True for rectangle and text annotation region types.
+ */
 export function usesSimpleShapeBoxSize(regionType: CARTA.RegionType): boolean {
     return isRectangleRegionType(regionType) || isTextRegionType(regionType);
 }
 
+/**
+ * Checks whether a region type is a rectangle or rectangle annotation.
+ *
+ * @param regionType - Region type to inspect.
+ * @returns True for rectangle region types.
+ */
 export function isRectangleRegionType(regionType: CARTA.RegionType): boolean {
     return regionType === CARTA.RegionType.RECTANGLE || regionType === CARTA.RegionType.ANNRECTANGLE;
 }
 
+/**
+ * Checks whether a region type is a text annotation.
+ *
+ * @param regionType - Region type to inspect.
+ * @returns True for text annotation regions.
+ */
 export function isTextRegionType(regionType: CARTA.RegionType): boolean {
     return regionType === CARTA.RegionType.ANNTEXT;
 }

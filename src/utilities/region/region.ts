@@ -27,6 +27,12 @@ const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
 export const PASTE_OFFSET = 20;
 
+/**
+ * Returns the next opacity state in the region visibility cycle.
+ *
+ * @param current - Current region opacity state.
+ * @returns The next opacity state: visible, semi-transparent, or invisible.
+ */
 export function getNextRegionOpacity(current: RegionOpacity): RegionOpacity {
     switch (current) {
         case RegionOpacity.Visible:
@@ -260,6 +266,16 @@ export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CART
     return shiftedPoints;
 }
 
+/**
+ * Builds representative points used for region selection hit testing.
+ *
+ * Point regions contribute their center, line-like and polygonal regions
+ * contribute their control points, and simple shapes contribute sampled points
+ * around their rotated bounding box.
+ *
+ * @param region - Region to sample.
+ * @returns Points in image pixel coordinates used by selection geometry tests.
+ */
 export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.ANNPOINT) {
         return [region.center];
@@ -280,6 +296,17 @@ export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     return getRotatedBoxPoints(region.center, halfWidth, halfHeight, rotation);
 }
 
+/**
+ * Builds a path from an origin to the first point reaching a target radial distance.
+ *
+ * The final point is interpolated between the previous path point and the first
+ * point whose distance from the origin is at least `targetDistance`.
+ *
+ * @param origin - Starting point of the path.
+ * @param points - Candidate path points in traversal order.
+ * @param targetDistance - Distance from the origin at which to stop the path.
+ * @returns Path points ending at the interpolated target distance when reached.
+ */
 export function getInterpolatedPathAtDistance(origin: Point2D, points: Point2D[], targetDistance: number): Point2D[] {
     const path = [origin];
     let previousPoint = origin;
@@ -306,6 +333,16 @@ export function getInterpolatedPathAtDistance(origin: Point2D, points: Point2D[]
     return path;
 }
 
+/**
+ * Converts region selection points into line segments for hit testing.
+ *
+ * Compass annotations expose two segments from the shared origin, closed
+ * polygonal/simple-shape regions close their path, and open paths remain open.
+ *
+ * @param region - Region that owns the sampled points.
+ * @param points - Selection points produced for the region.
+ * @returns Line segments used to test intersection with a selection rectangle.
+ */
 export function getRegionSelectionSegments(region: RegionStore, points: Point2D[]): LineSegment2D[] {
     if (region.regionType === CARTA.RegionType.ANNCOMPASS && points.length >= 3) {
         return [
@@ -330,6 +367,17 @@ export function getRegionSelectionSegments(region: RegionStore, points: Point2D[
     return [];
 }
 
+/**
+ * Tests whether a selection rectangle intersects sampled region geometry.
+ *
+ * The test checks contained points first, then segment intersections. When no
+ * segments are supplied, it falls back to bounding-rectangle overlap.
+ *
+ * @param selectionRect - Axis-aligned selection rectangle.
+ * @param points - Sampled region points.
+ * @param segments - Region segments connecting sampled points.
+ * @returns True when the selection rectangle intersects the sampled geometry.
+ */
 export function doSelectionRectAndRegionPointsIntersect(selectionRect: Rect2D, points: Point2D[], segments: LineSegment2D[]): boolean {
     if (points.some(point => isPointInRect(point, selectionRect))) {
         return true;
@@ -342,6 +390,18 @@ export function doSelectionRectAndRegionPointsIntersect(selectionRect: Rect2D, p
     return doRectsIntersect(selectionRect, getBoundingRect(points));
 }
 
+/**
+ * Tests whether a selection rectangle intersects ruler annotation paths.
+ *
+ * Ruler paths are checked by point containment and segment intersection. When
+ * the auxiliary line is visible, the implied triangle between ruler arms is also
+ * considered selectable.
+ *
+ * @param selectionRect - Axis-aligned selection rectangle.
+ * @param paths - Ruler paths represented as ordered point arrays.
+ * @param isAuxiliaryLineVisible - Whether the auxiliary triangle should be tested.
+ * @returns True when the selection rectangle intersects the ruler geometry.
+ */
 export function doSelectionRectAndRulerPathsIntersect(selectionRect: Rect2D, paths: Point2D[][], isAuxiliaryLineVisible: boolean): boolean {
     const segments = paths.flatMap(path => getPathSegments(path));
     if (paths.some(path => path.some(point => isPointInRect(point, selectionRect))) || segments.some(([start, end]) => doesLineSegmentIntersectRect(start, end, selectionRect))) {

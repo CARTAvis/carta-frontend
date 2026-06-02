@@ -184,6 +184,16 @@ function isPointOnLineSegment(point: Point2D, start: Point2D, end: Point2D): boo
     return point.x <= Math.max(start.x, end.x) && point.x >= Math.min(start.x, end.x) && point.y <= Math.max(start.y, end.y) && point.y >= Math.min(start.y, end.y);
 }
 
+/**
+ * Tests whether two line segments intersect, including endpoint touches and
+ * collinear overlaps.
+ *
+ * @param a - First endpoint of the first segment.
+ * @param b - Second endpoint of the first segment.
+ * @param c - First endpoint of the second segment.
+ * @param d - Second endpoint of the second segment.
+ * @returns True when the two finite segments intersect.
+ */
 export function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
     const orientationA = lineOrientation(a, b, c);
     const orientationB = lineOrientation(a, b, d);
@@ -197,20 +207,47 @@ export function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Poi
     return (orientationA === 0 && isPointOnLineSegment(c, a, b)) || (orientationB === 0 && isPointOnLineSegment(d, a, b)) || (orientationC === 0 && isPointOnLineSegment(a, c, d)) || (orientationD === 0 && isPointOnLineSegment(b, c, d));
 }
 
+/**
+ * Tests whether a point lies inside or on the boundary of an axis-aligned rect.
+ *
+ * @param point - Point to test.
+ * @param rect - Axis-aligned rectangle.
+ * @returns True when the point is inside the rectangle bounds.
+ */
 export function isPointInRect(point: Point2D, rect: Rect2D): boolean {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
+/**
+ * Tests whether two axis-aligned rectangles overlap or touch.
+ *
+ * @param a - First rectangle.
+ * @param b - Second rectangle.
+ * @returns True when the rectangles have any shared area or boundary.
+ */
 export function doRectsIntersect(a: Rect2D, b: Rect2D): boolean {
     return a.x <= b.x + b.width && a.x + a.width >= b.x && a.y <= b.y + b.height && a.y + a.height >= b.y;
 }
 
+/**
+ * Builds a positive-size axis-aligned rectangle from any two opposite corners.
+ *
+ * @param start - First corner point.
+ * @param end - Opposite corner point.
+ * @returns Rectangle with non-negative width and height.
+ */
 export function getRectFromPoints(start: Point2D, end: Point2D): Rect2D {
     const x = Math.min(start.x, end.x);
     const y = Math.min(start.y, end.y);
     return {x, y, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y)};
 }
 
+/**
+ * Returns the four corners of an axis-aligned rectangle in clockwise order.
+ *
+ * @param rect - Rectangle to convert.
+ * @returns Top-left, top-right, bottom-right, and bottom-left points.
+ */
 export function getRectCorners(rect: Rect2D): Point2D[] {
     return [
         {x: rect.x, y: rect.y},
@@ -220,6 +257,16 @@ export function getRectCorners(rect: Rect2D): Point2D[] {
     ];
 }
 
+/**
+ * Tests whether a line segment intersects an axis-aligned rectangle.
+ *
+ * Segments fully contained in the rectangle are treated as intersections.
+ *
+ * @param start - Segment start point.
+ * @param end - Segment end point.
+ * @param rect - Rectangle to test against.
+ * @returns True when the segment crosses, touches, or lies inside the rectangle.
+ */
 export function doesLineSegmentIntersectRect(start: Point2D, end: Point2D, rect: Rect2D): boolean {
     if (isPointInRect(start, rect) || isPointInRect(end, rect)) {
         return true;
@@ -229,6 +276,13 @@ export function doesLineSegmentIntersectRect(start: Point2D, end: Point2D, rect:
     return corners.some((corner, index) => lineSegmentsIntersect(start, end, corner, corners[(index + 1) % corners.length]));
 }
 
+/**
+ * Converts a point path into adjacent line segments.
+ *
+ * @param points - Ordered path points.
+ * @param isClosed - Whether to connect the last point back to the first.
+ * @returns Adjacent segment pairs, or an empty array for fewer than two points.
+ */
 export function getPathSegments(points: Point2D[], isClosed: boolean = false): LineSegment2D[] {
     if (points.length < 2) {
         return [];
@@ -238,6 +292,13 @@ export function getPathSegments(points: Point2D[], isClosed: boolean = false): L
     return Array.from({length: segmentCount}, (_, index) => [points[index], points[(index + 1) % points.length]]);
 }
 
+/**
+ * Tests whether a point is inside a polygon using an even-odd ray cast.
+ *
+ * @param point - Point to test.
+ * @param polygon - Polygon vertices in path order.
+ * @returns True when the point is inside the polygon.
+ */
 export function isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
     let isInside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -251,6 +312,18 @@ export function isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
     return isInside;
 }
 
+/**
+ * Returns eight sampled points around a rotated box.
+ *
+ * The returned points include the four corners and four edge midpoints, rotated
+ * about the supplied center.
+ *
+ * @param center - Box center point.
+ * @param halfWidth - Half of the unrotated box width.
+ * @param halfHeight - Half of the unrotated box height.
+ * @param rotation - Rotation angle in radians.
+ * @returns Rotated corner and edge-midpoint coordinates.
+ */
 export function getRotatedBoxPoints(center: Point2D, halfWidth: number, halfHeight: number, rotation: number): Point2D[] {
     return [
         {x: -halfWidth, y: -halfHeight},
