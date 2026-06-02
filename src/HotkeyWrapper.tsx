@@ -2,10 +2,11 @@ import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
 import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionOpacity} from "enums";
 import {AppStore} from "stores";
-import {CURSOR_REGION_ID} from "stores/Frame";
+import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {getNextRegionOpacity} from "utilities";
 
 import "./HotkeyWrapper.scss";
@@ -214,6 +215,44 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    public static getImageDeltaForKeyboardMove = (frame: FrameStore, deltaX: number, deltaY: number, acceleratedMultiplier: number, shouldScaleWithZoom: boolean = true): Point2D => {
+        let activeFrameDelta: Point2D;
+        if (!shouldScaleWithZoom) {
+            activeFrameDelta = {
+                x: deltaX * acceleratedMultiplier,
+                y: deltaY * acceleratedMultiplier
+            };
+        } else {
+            const frameView = frame.requiredFrameView;
+            const imageWidth = frameView ? frameView.xMax - frameView.xMin : NaN;
+            const imageHeight = frameView ? frameView.yMax - frameView.yMin : NaN;
+            const canUseScreenPixels = frame.renderWidth > 0 && frame.renderHeight > 0 && isFinite(imageWidth) && isFinite(imageHeight);
+            if (!canUseScreenPixels) {
+                const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
+                activeFrameDelta = {
+                    x: deltaX * acceleratedMultiplier * zoomMultiplier,
+                    y: deltaY * acceleratedMultiplier * zoomMultiplier
+                };
+            } else {
+                activeFrameDelta = {
+                    x: deltaX * acceleratedMultiplier * (imageWidth / frame.renderWidth),
+                    y: deltaY * acceleratedMultiplier * (imageHeight / frame.renderHeight)
+                };
+            }
+        }
+
+        if (!frame.spatialReference || !frame.spatialTransform) {
+            return activeFrameDelta;
+        }
+
+        const referenceOrigin = frame.spatialTransform.transformCoordinate({x: 0, y: 0}, true);
+        const referenceShifted = frame.spatialTransform.transformCoordinate(activeFrameDelta, true);
+        return {
+            x: referenceShifted.x - referenceOrigin.x,
+            y: referenceShifted.y - referenceOrigin.y
+        };
+    };
+
     public static moveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, shouldScaleWithZoom: boolean = true) => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
@@ -222,9 +261,7 @@ export class HotkeyService extends React.Component<{}> {
             return;
         }
 
-        const zoomMultiplier = shouldScaleWithZoom ? Math.max(1, 1 / frame.zoomLevel) : 1;
-        const actualDeltaX = deltaX * acceleratedMultiplier * zoomMultiplier;
-        const actualDeltaY = deltaY * acceleratedMultiplier * zoomMultiplier;
+        const {x: actualDeltaX, y: actualDeltaY} = HotkeyService.getImageDeltaForKeyboardMove(frame, deltaX, deltaY, acceleratedMultiplier, shouldScaleWithZoom);
         const canEditSelectedPoint = region.isVisible && !region.isLocked && frame.regionSet.selectedRegionCount <= 1 && region.isPointSelectionSupported;
 
         if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
@@ -233,7 +270,7 @@ export class HotkeyService extends React.Component<{}> {
         }
 
         if (canEditSelectedPoint && region.isCompassRegion && region.hasSelectedPoint) {
-            region.moveSelectedPoint((deltaX * acceleratedMultiplier) / 10, 0);
+            region.moveSelectedPoint(actualDeltaX / 10, 0);
             return;
         }
 
