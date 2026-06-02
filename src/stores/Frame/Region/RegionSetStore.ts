@@ -52,7 +52,7 @@ export class RegionSetStore {
     };
 
     // temporary region IDs are < 0 and used
-    private getTempRegionId = () => {
+    public getTempRegionId = () => {
         let regionId = -1;
         if (this.regions.length) {
             const minRegionId = Math.min(...this.regions.map(r => r.regionId));

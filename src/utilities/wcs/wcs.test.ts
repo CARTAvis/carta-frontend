@@ -20,6 +20,15 @@ jest.mock("stores", () => ({
     }
 }));
 
+jest.mock("stores/Frame", () => ({
+    __esModule: true,
+    RenderConfigStore: {
+        COLOR_MAPS_CUSTOM: "custom",
+        COLOR_MAPS_PANEL: "panel"
+    },
+    CURSOR_REGION_ID: 0
+}));
+
 import {buildSwappedZWcsSettings, getSwappedDirAxisInfo} from "./wcs";
 
 describe("getSwappedDirAxisInfo", () => {
