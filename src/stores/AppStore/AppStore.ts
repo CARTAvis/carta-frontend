@@ -2846,12 +2846,9 @@ export class AppStore {
 
     @flow.bound
     public *saveWorkspace(name: string) {
-        if (this.layoutStore?.layoutModel) {
-            const currentModelJson = this.layoutStore.layoutModel.toJson();
-            if (currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0) {
-                this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
-                return false;
-            }
+        if (this.layoutStore?.hasPopoutWidget) {
+            this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
+            return false;
         }
 
         const workspace: Workspace = {
