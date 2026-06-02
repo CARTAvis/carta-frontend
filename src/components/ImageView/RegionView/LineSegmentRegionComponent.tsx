@@ -161,10 +161,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         if (node) {
             const index = node.index;
             const region = this.props.region;
-            // Can only remove points if the polygon currently has 4 or more control points
-            if (index >= 0 && index < region.controlPoints.length && region.controlPoints.length >= 4) {
-                konvaEvent.cancelBubble = true;
-                region.removeControlPoint(index);
+            if (region.isPolygonalRegion && index >= 0 && index < region.controlPoints.length && region.controlPoints.length >= 4) {
+                region.selectPoint(index);
+                if (region.removeSelectedPoint()) {
+                    konvaEvent.cancelBubble = true;
+                }
             }
         }
     };

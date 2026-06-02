@@ -640,6 +640,15 @@ export class RegionStore {
         this.deselectPoint();
     };
 
+    @action removeSelectedPoint = () => {
+        if (this.isPolygonalRegion && this.hasSelectedPoint && this.controlPoints.length >= 4) {
+            this.removeControlPoint(this.selectedPointIndex);
+            return true;
+        }
+
+        return false;
+    };
+
     private simplePolygonTest(point: number = -1) {
         const points = this.controlPoints.slice();
         // Only allow optimised test if the polygon is currently marked as simple, to avoid cases where multiple line segments intersect

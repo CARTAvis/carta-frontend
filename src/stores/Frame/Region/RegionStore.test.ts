@@ -175,6 +175,43 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(polygon.selectedPointIndex).toBe(-1);
     });
 
+    test("removes selected polygonal point when enough control points remain", () => {
+        const polyline = MakeRegion(CARTA.RegionType.POLYLINE, [
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 10, y: 10},
+            {x: 0, y: 10}
+        ]);
+
+        polyline.selectPoint(2);
+
+        expect(polyline.removeSelectedPoint()).toBe(true);
+        expect(polyline.controlPoints).toEqual([
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 0, y: 10}
+        ]);
+        expect(polyline.selectedPointIndex).toBe(-1);
+    });
+
+    test("does not remove selected polygonal point at minimum editable point count", () => {
+        const polygon = MakeRegion(CARTA.RegionType.POLYGON, [
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 0, y: 10}
+        ]);
+
+        polygon.selectPoint(1);
+
+        expect(polygon.removeSelectedPoint()).toBe(false);
+        expect(polygon.controlPoints).toEqual([
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 0, y: 10}
+        ]);
+        expect(polygon.selectedPointIndex).toBe(1);
+    });
+
     test("simple shape side movement keeps dimensions positive", () => {
         const rectangle = MakeRegion(CARTA.RegionType.RECTANGLE, [
             {x: 0, y: 0},

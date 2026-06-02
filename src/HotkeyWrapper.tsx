@@ -411,12 +411,20 @@ export class HotkeyService extends React.Component<{}> {
             return true;
         }
 
+        const focusedRegion = regionSet.focusedRegion;
+        if (focusedRegion?.hasSelectedPoint && regionSet.selectedRegionCount <= 1) {
+            if (focusedRegion.isVisible && !focusedRegion.isLocked) {
+                focusedRegion.removeSelectedPoint();
+            }
+            return true;
+        }
+
         if (regionSet.selectedRegionIds?.size > 0) {
             appStore.deleteSelectedRegions();
             return true;
         }
 
-        if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+        if (focusedRegion && focusedRegion.regionId !== CURSOR_REGION_ID) {
             appStore.deleteSelectedRegions();
             return true;
         }
