@@ -42,10 +42,15 @@ export class ContourStore {
         this.addContourData(indexOffsets, vertexData, progress);
     };
 
+    @action setProgress = (progress: number) => {
+        this.progress = progress;
+    };
+
     @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
         const numVertices = sourceVertices.length / 2;
 
         if (!numVertices) {
+            this.progress = progress;
             return;
         }
 
