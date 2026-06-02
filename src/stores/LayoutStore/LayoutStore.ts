@@ -151,6 +151,11 @@ export class LayoutStore {
             return;
         }
 
+        if (currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0) {
+            appStore.alertStore.showAlert("Cannot save layout while an image view is popped out. Please dock it first.");
+            return;
+        }
+
         const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
         if (!configToSave) {
             appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
