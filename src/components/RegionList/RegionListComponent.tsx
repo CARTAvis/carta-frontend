@@ -473,7 +473,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={!hasDeletableRegions} />
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
-                        <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                        <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} disabled={frame.isPreview} />
                     </Tooltip>
                     <Tooltip content={exportTooltip} position={Position.BOTTOM}>
                         <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />

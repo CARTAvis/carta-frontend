@@ -71,7 +71,7 @@ export class HotkeyService extends React.Component<{}> {
 
     public static toggleCreateMode = () => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
+        if (appStore.activeFrame && !appStore.activeFrame.isPreview) {
             appStore.toggleActiveLayer();
             appStore.activeFrame.regionSet.toggleMode();
         }

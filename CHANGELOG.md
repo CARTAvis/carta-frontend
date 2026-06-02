@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
 * Added support for pole-mode offset coordinates ([#2672](https://github.com/CARTAvis/carta-frontend/issues/2672)).
+* Prevent creating regions in the PV preview widget ([#2816](https://github.com/CARTAvis/carta-frontend/issues/2816)).
 * Added copy and paste region support ([#1960](https://github.com/CARTAvis/carta-frontend/issues/1960)).
 * Added keyboard-first region editing with arrow-key region movement, fine/coarse movement modifiers, zoom-aware movement steps, and context-aware deselection/cancel behavior ([#292](https://github.com/CARTAvis/carta-frontend/issues/292)).
 * Added keyboard selection and movement of region control points, including `Tab`/`Shift+Tab` point cycling and `Enter` to enter point-selection mode for supported region types.

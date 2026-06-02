@@ -131,7 +131,7 @@ export class FileBrowserStore {
                 break;
             case BrowserMode.Catalog:
             default:
-                if (AppStore.Instance.isAppendFileDisabled) {
+                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.activeFrame?.isPreview) {
                     return;
                 }
         }

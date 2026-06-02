@@ -186,6 +186,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
         const frame = this.frame;
+        if (frame.isPreview) {
+            return;
+        }
         const regionType = frame.regionSet.newRegionType;
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
@@ -954,7 +957,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string = "default";
-        if (regionSet.mode === RegionMode.CREATING) {
+        if (this.props.frame?.isPreview && AppStore.Instance.activeFrame?.regionSet.mode === RegionMode.CREATING) {
+            cursor = "not-allowed";
+        } else if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
         } else if (regionSet.focusedRegion && regionSet.focusedRegion.isEditing) {
             cursor = "move";
