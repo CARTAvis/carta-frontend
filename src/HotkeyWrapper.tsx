@@ -255,8 +255,7 @@ export const HotkeysRegistrar = () => {
     React.useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             // Only handle if not in an editable element
-            const target = event.target as Element;
-            if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.closest("input, textarea, [contenteditable]"))) {
+            if (isEditableTarget(event.target)) {
                 return;
             }
 
@@ -295,7 +294,7 @@ function getForwardedKeyboardEventInit(event: KeyboardEvent): KeyboardEventInit 
 
 function isEditableTarget(target: EventTarget | null): boolean {
     const element = target as Element | null;
-    return Boolean(element && (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element.closest("input, textarea, [contenteditable]")));
+    return Boolean(element && (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element.closest?.("input, textarea, [contenteditable]")));
 }
 
 export const PopoutKeyboardForwarder = ({popoutWindow}: {popoutWindow: Window}) => {
