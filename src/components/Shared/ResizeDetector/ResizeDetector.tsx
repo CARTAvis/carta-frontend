@@ -45,8 +45,7 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRe
                 if (entry.isIntersecting) {
                     const el = activeRef.current;
                     if (el) {
-                        const {width, height} = el.getBoundingClientRect();
-                        onResize(width, height);
+                        onResize(el.clientWidth, el.clientHeight);
                     }
                 }
             }
@@ -57,8 +56,7 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRe
             forceResizeRef.current = () => {
                 const el = activeRef.current;
                 if (el) {
-                    const {width, height} = el.getBoundingClientRect();
-                    onResize(width, height);
+                    onResize(el.clientWidth, el.clientHeight);
                 }
             };
         }
