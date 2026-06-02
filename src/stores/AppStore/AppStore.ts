@@ -2007,6 +2007,15 @@ export class AppStore {
                                 true
                             )
                             .then(this.onReconnectAlertClosed);
+
+                        if (this.layoutStore?.layoutModel) {
+                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
+                                const win = layoutWindow.window;
+                                if (win && !win.closed) {
+                                    win.close();
+                                }
+                            }
+                        }
                     }
                     break;
                 default:
