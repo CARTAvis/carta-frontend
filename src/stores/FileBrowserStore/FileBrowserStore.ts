@@ -900,7 +900,7 @@ export class FileBrowserStore {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {
-            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            const activeRegionId = appStore.focusedRegion?.regionId ?? RegionId.CURSOR;
             frame.regionSet.regions.forEach((region, index) => {
                 if (region.regionId !== RegionId.CURSOR) {
                     options.push({

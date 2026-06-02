@@ -322,7 +322,7 @@ export class SpectralProfileSelectionStore {
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
             const appStore = AppStore.Instance;
-            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            const activeRegionId = appStore.focusedRegion?.regionId ?? RegionId.CURSOR;
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
             options = options.concat(
                 filteredRegions?.map(r => {
@@ -378,7 +378,7 @@ export class SpectralProfileSelectionStore {
         const appStore = AppStore.Instance;
         if (this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedRegionIds?.length === 1) {
             const selectedRegionId = this.selectedRegionIds[0];
-            return selectedRegionId === (appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR);
+            return selectedRegionId === (appStore.focusedRegion?.regionId ?? RegionId.CURSOR);
         }
         return false;
     }

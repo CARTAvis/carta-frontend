@@ -3146,16 +3146,13 @@ export class AppStore {
         return this.frames?.findIndex(frame => frame?.frameInfo.fileId === fileId);
     }
 
-    @computed get selectedRegion(): RegionStore | null {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.focusedRegion && this.activeFrame.regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
-            return this.activeFrame.regionSet.focusedRegion;
-        }
-        return null;
+    @computed get focusedRegion(): RegionStore | null {
+        return this.activeFrame?.regionSet?.focusedRegion ?? null;
     }
 
     @action copySelectedRegion = (): boolean => {
-        const region = this.selectedRegion;
-        if (!region) {
+        const region = this.focusedRegion;
+        if (!region || region.regionId === CURSOR_REGION_ID) {
             return false;
         }
 

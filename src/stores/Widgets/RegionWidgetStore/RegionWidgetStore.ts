@@ -107,12 +107,12 @@ export class RegionWidgetStore {
 
     @computed get isMatchingSelectedRegion(): boolean {
         if (this.isEffectiveFrameEqualToActiveFrame) {
-            if (this.appStore.selectedRegion) {
-                return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
-            } else {
-                if (this.effectiveRegionId === RegionId.CURSOR || this.effectiveRegionId === RegionId.IMAGE) {
-                    return true;
-                }
+            const focusedRegion = this.appStore.focusedRegion;
+            if (this.effectiveRegionId === focusedRegion?.regionId) {
+                return true;
+            }
+            if (focusedRegion?.regionId === RegionId.CURSOR && this.effectiveRegionId === RegionId.IMAGE) {
+                return true;
             }
         }
         return false;
