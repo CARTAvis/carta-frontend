@@ -19,7 +19,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
 
 /** Map of widget type strings to their default FlexLayout tab node JSON */
 const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
-    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: false}],
+    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: true}],
     ["render-config", {type: "tab", component: "render-config", name: "Render Configuration", id: "render-config"}],
     ["region-list", {type: "tab", component: "region-list", name: "Region List", id: "region-list"}],
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
