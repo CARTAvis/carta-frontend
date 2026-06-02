@@ -39,16 +39,20 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRe
 
         // IntersectionObserver catches visibility transitions (e.g. tab shown after a
         // sibling was popped out) where ResizeObserver won't fire because the element
-        // size hasn't actually changed between hide and show.
+        // size hasn't actually changed between hide and show. Workaround: skip the first
+        // intersection event to get the correct element size.
+        let isInitial = true;
         const intersectionObserver = new win.IntersectionObserver(entries => {
             for (const entry of entries) {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !isInitial) {
                     const el = activeRef.current;
                     if (el) {
-                        onResize(el.clientWidth, el.clientHeight);
+                        const {width, height} = el.getBoundingClientRect();
+                        onResize(width, height);
                     }
                 }
             }
+            isInitial = false;
         });
         intersectionObserver.observe(element);
 
@@ -56,7 +60,8 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRe
             forceResizeRef.current = () => {
                 const el = activeRef.current;
                 if (el) {
-                    onResize(el.clientWidth, el.clientHeight);
+                    const {width, height} = el.getBoundingClientRect();
+                    onResize(width, height);
                 }
             };
         }
