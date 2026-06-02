@@ -15,11 +15,11 @@ import {
     getApproximateEllipsePoints,
     getApproximatePolygonPoints,
     getMovedSimpleShapeSide,
+    getRegionCenterFromPoints,
     getRegionPixelProperties,
     getSimpleShapePointSelectionOrder,
     isAstBadPoint,
     length2D,
-    midpoint2D,
     minMax2D,
     rotate2D,
     scale2D,
@@ -27,7 +27,8 @@ import {
     simplePolygonPointTest,
     simplePolygonTest,
     subtract2D,
-    transformPoint
+    transformPoint,
+    translateRegionPoints
 } from "utilities";
 
 export const CURSOR_REGION_ID = 0;
@@ -214,30 +215,7 @@ export class RegionStore {
         if (!this.isValid) {
             return {x: 0, y: 0};
         }
-        switch (this.regionType) {
-            case CARTA.RegionType.POINT:
-            case CARTA.RegionType.ANNPOINT:
-            case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
-                return this.controlPoints[CENTER_POINT_INDEX];
-            case CARTA.RegionType.POLYGON:
-            case CARTA.RegionType.ANNPOLYGON:
-            case CARTA.RegionType.POLYLINE:
-            case CARTA.RegionType.ANNPOLYLINE:
-                const bounds = minMax2D(this.controlPoints);
-                return midpoint2D(bounds.minPoint, bounds.maxPoint);
-            case CARTA.RegionType.LINE:
-            case CARTA.RegionType.ANNLINE:
-            case CARTA.RegionType.ANNVECTOR:
-            case CARTA.RegionType.ANNRULER:
-                return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
-            default:
-                return {x: 0, y: 0};
-        }
+        return getRegionCenterFromPoints(this.controlPoints, this.regionType);
     }
 
     /**
@@ -561,16 +539,13 @@ export class RegionStore {
             return;
         }
 
+        const translatedPoints = translateRegionPoints(this.controlPoints, this.regionType, delta);
         if (this.isPolygonalRegion || this.isLineLikeRegion) {
-            this.setControlPoints(
-                this.controlPoints.map(point => add2D(point, delta)),
-                shouldSkipUpdate,
-                false
-            );
+            this.setControlPoints(translatedPoints, shouldSkipUpdate, false);
             return;
         }
 
-        this.setCenter(add2D(this.center, delta), shouldSkipUpdate);
+        this.setCenter(translatedPoints[CENTER_POINT_INDEX], shouldSkipUpdate);
     };
 
     /**

@@ -380,7 +380,19 @@ function hasRegionCenterCollision(center: Point2D, regions: RegionStore[], paste
     });
 }
 
-function translateRegionPoints(points: Point2D[], regionType: CARTA.RegionType, delta: Point2D): Point2D[] {
+/**
+ * Returns translated control points for a region without mutating the input.
+ *
+ * Center-based regions move only their center control point and preserve size or
+ * offset control points. Line-like and polygonal regions move every control
+ * point by the supplied delta.
+ *
+ * @param points - Region control points in image pixel coordinates.
+ * @param regionType - Type of the region represented by the control points.
+ * @param delta - Image-pixel translation to apply.
+ * @returns A new control point array translated according to the region type.
+ */
+export function translateRegionPoints(points: Point2D[], regionType: CARTA.RegionType, delta: Point2D): Point2D[] {
     switch (regionType) {
         case CARTA.RegionType.POINT:
         case CARTA.RegionType.ANNPOINT:
@@ -396,13 +408,25 @@ function translateRegionPoints(points: Point2D[], regionType: CARTA.RegionType, 
     }
 }
 
-function getRegionCenterFromPoints(points: Point2D[], regionType: CARTA.RegionType): Point2D {
+/**
+ * Computes a region center from raw control points.
+ *
+ * Line-like regions use the midpoint between their two endpoints. Polygonal
+ * regions use the center of their control-point bounding box. Center-based
+ * regions use their first control point. Invalid or incomplete inputs fall back
+ * to the first control point when available, otherwise `{x: 0, y: 0}`.
+ *
+ * @param points - Region control points in image pixel coordinates.
+ * @param regionType - Type of the region represented by the control points.
+ * @returns The computed center point in image pixel coordinates.
+ */
+export function getRegionCenterFromPoints(points: Point2D[], regionType: CARTA.RegionType): Point2D {
     switch (regionType) {
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE:
         case CARTA.RegionType.ANNVECTOR:
         case CARTA.RegionType.ANNRULER:
-            return points.length >= 2 ? midpoint2D(points[0], points[1]) : (points[0] ?? {x: 0, y: 0});
+            return points.length >= 2 ? midpoint2D(points[CENTER_POINT_INDEX], points[1]) : (points[CENTER_POINT_INDEX] ?? {x: 0, y: 0});
         case CARTA.RegionType.POLYGON:
         case CARTA.RegionType.ANNPOLYGON:
         case CARTA.RegionType.POLYLINE:
@@ -413,6 +437,6 @@ function getRegionCenterFromPoints(points: Point2D[], regionType: CARTA.RegionTy
             const bounds = minMax2D(points);
             return midpoint2D(bounds.minPoint, bounds.maxPoint);
         default:
-            return points[0] ?? {x: 0, y: 0};
+            return points[CENTER_POINT_INDEX] ?? {x: 0, y: 0};
     }
 }
