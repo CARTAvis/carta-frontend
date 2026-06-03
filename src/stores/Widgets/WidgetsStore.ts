@@ -1,6 +1,7 @@
 import * as React from "react";
-import {Classes} from "@blueprintjs/core";
-import {Actions, type BorderNode, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
+import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
+import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
+import {PopoutKeyboardForwarder} from "HotkeyWrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {Observer} from "mobx-react";
 
@@ -25,8 +26,10 @@ import {
     StatsComponent,
     StokesAnalysisComponent
 } from "components";
+import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
 import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -45,6 +48,7 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
+import {smoothStepOffset} from "utilities";
 
 export type {DefaultWidgetConfig} from "models";
 
@@ -105,6 +109,18 @@ interface Disposable {
     dispose(): void;
 }
 
+interface PopoutPositionInfo {
+    parentTabsetId: string;
+    tabIndex: number;
+    wasAlone: boolean;
+    grandparentId: string;
+    tabsetIndexInParent: number;
+    tabsetWeight: number;
+    siblingTabsetId?: string;
+    wasBeforeSibling?: boolean;
+    grandparentOrientation: string;
+}
+
 export class WidgetsStore {
     private static staticInstance: WidgetsStore;
 
@@ -139,8 +155,11 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
     private beingUnpinned: Set<string> = new Set();
+    private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
+    private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
 
     private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
+    private static readonly ImageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
     private static readonly HideHelpButtonWidgets = ["pv-preview"];
 
     public readonly CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean; icon: string; onClick: () => void; widgetConfig: DefaultWidgetConfig}>([
@@ -408,6 +427,20 @@ export class WidgetsStore {
         return typeof (store as Disposable | undefined)?.dispose === "function";
     };
 
+    private static copyStylesToPopoutWindow(popoutWindow: Window): void {
+        const popoutDoc = popoutWindow.document;
+        // Guard: only copy once per popout window
+        if (popoutDoc.documentElement.dataset.stylesCopied === "true") {
+            return;
+        }
+        // Copy all <style> and <link rel="stylesheet"> from main document
+        const nodes = document.head.querySelectorAll("style, link[rel='stylesheet']");
+        nodes.forEach(node => {
+            popoutDoc.head.appendChild(node.cloneNode(true));
+        });
+        popoutDoc.documentElement.dataset.stylesCopied = "true";
+    }
+
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
@@ -548,6 +581,50 @@ export class WidgetsStore {
         });
     };
 
+    public clearPopoutPositions = () => {
+        this.popoutPositions.clear();
+    };
+
+    private getNearestSibling = (tabsetNode: TabSetNode) => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const siblingIndex = tabsetIndex > 0 ? tabsetIndex - 1 : tabsetIndex + 1;
+        return grandparent.getChildren()[siblingIndex] ?? null;
+    };
+
+    private getPopoutPositionInfo = (tabNode: TabNode, tabsetNode: TabSetNode): PopoutPositionInfo | null => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const nearestSibling = this.getNearestSibling(tabsetNode);
+
+        return {
+            parentTabsetId: tabsetNode.getId(),
+            tabIndex: tabsetNode.getChildren().indexOf(tabNode),
+            wasAlone: tabsetNode.getChildren().length === 1,
+            grandparentId: grandparent.getId(),
+            tabsetIndexInParent: tabsetIndex,
+            tabsetWeight: tabsetNode.getWeight(),
+            siblingTabsetId: nearestSibling?.getId(),
+            wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
+            grandparentOrientation: grandparent.getOrientation().getName()
+        };
+    };
+
+    private savePopoutPosition = (tabNode: TabNode, tabsetNode: TabSetNode) => {
+        const popoutPositionInfo = this.getPopoutPositionInfo(tabNode, tabsetNode);
+        if (popoutPositionInfo) {
+            this.popoutPositions.set(tabNode.getId(), popoutPositionInfo);
+        }
+    };
+
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
             let savedConfigId = savedConfig.id;
@@ -628,6 +705,31 @@ export class WidgetsStore {
             floatingSettingsId: config.floatingSettingsId
         };
         const element = React.createElement(componentClass, props);
+
+        // Wrap popped-out tabs with Blueprint providers so overlays render in the popout window
+        if (node.isPoppedOut()) {
+            const popoutWindow = node.getWindow();
+            if (popoutWindow) {
+                const popoutBody = popoutWindow.document.body;
+                // Apply theme classes to popout body so CSS selectors match
+                if (AppStore.Instance.isDarkTheme) {
+                    popoutBody.classList.add(Classes.DARK, "layout-container", "dark-theme");
+                } else {
+                    popoutBody.classList.remove(Classes.DARK, "dark-theme");
+                    popoutBody.classList.add("layout-container");
+                }
+                WidgetsStore.copyStylesToPopoutWindow(popoutWindow);
+                return React.createElement(
+                    PortalProvider,
+                    {portalContainer: popoutBody},
+                    React.createElement(
+                        OverlaysProvider,
+                        null,
+                        React.createElement(HotkeysProvider, null, React.createElement(PopoutKeyboardForwarder, {popoutWindow: popoutWindow}), React.createElement(PopoutEventForwarder, {popoutWindow: popoutWindow}), element)
+                    )
+                );
+            }
+        }
         return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
     };
 
@@ -651,7 +753,7 @@ export class WidgetsStore {
         const buttons: React.ReactNode[] = [];
 
         // Button order from left to right: channel-map, previous, multi-panel, next, settings, help, detach
-        // (built-in maximize is appended by FlexLayout after these)
+        // (built-in popout and maximize are appended by FlexLayout after these)
 
         if (component === "image-view") {
             buttons.push(
@@ -672,7 +774,7 @@ export class WidgetsStore {
                                 isDarkTheme,
                                 onClick: () => this.onChannelMapButtonClick(),
                                 testId: nodeId + "-header-channel-map-button",
-                                title: "enable/disable channel map"
+                                title: "Enable/Disable channel map"
                             }),
                             CreateWidgetButton({
                                 buttonKey: "prev-page-" + nodeId,
@@ -681,7 +783,7 @@ export class WidgetsStore {
                                 isDisabled: !hasPrevious,
                                 onClick: () => this.onPreviousPageClick(),
                                 testId: nodeId + "-header-previous-page-button",
-                                title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
+                                title: imagePanelMode === ImagePanelMode.None ? "Previous image" : "Previous page"
                             }),
                             CreateWidgetButton({
                                 buttonKey: "image-panel-" + nodeId,
@@ -698,7 +800,7 @@ export class WidgetsStore {
                                 isDisabled: !hasNext,
                                 onClick: () => this.onNextPageClick(),
                                 testId: nodeId + "-header-next-page-button",
-                                title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page"
+                                title: imagePanelMode === ImagePanelMode.None ? "Next image" : "Next page"
                             })
                         );
                     }
@@ -715,7 +817,7 @@ export class WidgetsStore {
                         isDarkTheme,
                         onClick: () => this.onCogPinedClick(selectedNode),
                         testId: nodeId + "-header-settings-button",
-                        title: "settings"
+                        title: "Settings"
                     })
                 );
             }
@@ -729,12 +831,12 @@ export class WidgetsStore {
                     isDarkTheme,
                     onClick: event => this.onHelpPinedClick(event, selectedNode),
                     testId: nodeId + "-header-help-button",
-                    title: "help"
+                    title: "Help"
                 })
             );
         }
 
-        if (component !== "image-view") {
+        if (component !== "image-view" && !selectedNode.isPoppedOut()) {
             buttons.push(
                 CreateWidgetButton({
                     buttonKey: "unpin-" + nodeId,
@@ -742,7 +844,7 @@ export class WidgetsStore {
                     isDarkTheme,
                     onClick: () => this.unpinWidget(selectedNode),
                     testId: nodeId + "-header-dock-button",
-                    title: "detach"
+                    title: "Detach"
                 })
             );
         }
@@ -765,9 +867,200 @@ export class WidgetsStore {
             return action;
         }
 
-        if (action.type === Actions.DELETE_TAB) {
+        if (action.type === "FlexLayout_PopoutTab") {
             const nodeId = action.data?.node;
             if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tab") {
+                    const tabNode = node as TabNode;
+                    if (!canPopoutWidget(tabNode.getComponent() || "")) {
+                        return undefined;
+                    }
+                    const parent = tabNode.getParent();
+                    if (parent && parent.getType() === "tabset") {
+                        this.savePopoutPosition(tabNode, parent as TabSetNode);
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_PopoutTabset") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tabset") {
+                    const tabsetNode = node as TabSetNode;
+                    const childTabs = tabsetNode.getChildren() as TabNode[];
+                    if (!childTabs.every(child => canPopoutWidget(child.getComponent() || ""))) {
+                        return undefined;
+                    }
+                    for (const child of childTabs) {
+                        this.savePopoutPosition(child as TabNode, tabsetNode);
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_CloseWindow") {
+            const windowId = action.data?.windowId;
+            const windowsMap = layoutModel.getwindowsMap();
+            const closingWindow = windowsMap.get(windowId);
+            if (closingWindow) {
+                const tabNodes: TabNode[] = [];
+                closingWindow.visitNodes((node, _level) => {
+                    if (node.getType() === "tab") {
+                        tabNodes.push(node as TabNode);
+                    }
+                });
+
+                // Restore tabs that originated from floating widgets back to floating state
+                const floatingTabs = tabNodes.filter(t => this.floatingOriginPopouts.has(t.getId()));
+                if (floatingTabs.length > 0) {
+                    for (const tabNode of floatingTabs) {
+                        const tabId = tabNode.getId();
+                        const savedConfig = this.floatingOriginPopouts.get(tabId)!;
+                        this.beingUnpinned.add(tabId);
+                        layoutModel.doAction(Actions.deleteTab(tabId));
+                        this.beingUnpinned.delete(tabId);
+                        this.addFloatingWidget(savedConfig);
+                        this.floatingOriginPopouts.delete(tabId);
+                        this.popoutPositions.delete(tabId);
+                    }
+                    // If all tabs were floating-origin, skip the normal restore logic
+                    if (floatingTabs.length === tabNodes.length) {
+                        return undefined;
+                    }
+                }
+
+                const remainingTabs = tabNodes.filter(t => !floatingTabs.includes(t));
+                const haveAllPositions = remainingTabs.length > 0 && remainingTabs.every(t => this.popoutPositions.has(t.getId()));
+                if (haveAllPositions) {
+                    // Sort tabs by tabIndex so multi-tab tabsets restore in original order
+                    remainingTabs.sort((a, b) => {
+                        const posA = this.popoutPositions.get(a.getId())!;
+                        const posB = this.popoutPositions.get(b.getId())!;
+                        return posA.tabIndex - posB.tabIndex;
+                    });
+
+                    // Track newly-created tabsets for popped-out multi-tab tabsets
+                    // Maps original parentTabsetId → new tabset ID after first tab is restored
+                    const recreatedTabsets = new Map<string, string>();
+
+                    for (const tabNode of remainingTabs) {
+                        const tabId = tabNode.getId();
+                        const savedPos = this.popoutPositions.get(tabId)!;
+
+                        if (!savedPos.wasAlone) {
+                            // Check if another tab from the same tabset already recreated it
+                            const newTabsetId = recreatedTabsets.get(savedPos.parentTabsetId);
+                            if (newTabsetId) {
+                                const newTabset = layoutModel.getNodeById(newTabsetId);
+                                if (newTabset) {
+                                    const clampedIndex = Math.min(savedPos.tabIndex, newTabset.getChildren().length);
+                                    layoutModel.doAction(Actions.moveNode(tabId, newTabsetId, DockLocation.CENTER, clampedIndex));
+                                    this.popoutPositions.delete(tabId);
+                                    continue;
+                                }
+                            }
+
+                            const originalTabset = layoutModel.getNodeById(savedPos.parentTabsetId);
+                            if (originalTabset) {
+                                const clampedIndex = Math.min(savedPos.tabIndex, originalTabset.getChildren().length);
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.parentTabsetId, DockLocation.CENTER, clampedIndex));
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        const grandparentRow = layoutModel.getNodeById(savedPos.grandparentId);
+                        if (grandparentRow) {
+                            const clampedIndex = Math.min(savedPos.tabsetIndexInParent, grandparentRow.getChildren().length);
+                            layoutModel.doAction(Actions.moveNode(tabId, savedPos.grandparentId, DockLocation.CENTER, clampedIndex));
+                            // Track the new tabset so sibling tabs from the same popped-out tabset rejoin it
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
+                            this.popoutPositions.delete(tabId);
+                            continue;
+                        }
+
+                        // Sibling fallback: grandparent row was tidied away, find sibling and place next to it
+                        if (savedPos.siblingTabsetId) {
+                            const siblingNode = layoutModel.getNodeById(savedPos.siblingTabsetId);
+                            if (siblingNode) {
+                                const isVertical = savedPos.grandparentOrientation === Orientation.VERT.getName();
+                                let location: DockLocation;
+                                if (isVertical) {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.TOP : DockLocation.BOTTOM;
+                                } else {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.LEFT : DockLocation.RIGHT;
+                                }
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.siblingTabsetId, location, -1));
+                                // Track new tabset for sibling tabs
+                                if (!savedPos.wasAlone) {
+                                    const restoredTab = layoutModel.getNodeById(tabId);
+                                    const parentId = restoredTab?.getParent()?.getId();
+                                    if (parentId) {
+                                        recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                    }
+                                }
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        // Fallback: move to root
+                        const root = layoutModel.getRoot();
+                        if (root) {
+                            layoutModel.doAction(Actions.moveNode(tabId, root.getId(), DockLocation.CENTER, -1));
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
+                        }
+                        this.popoutPositions.delete(tabId);
+                    }
+
+                    // Ensure image-view tabset occupies 68% of its parent row
+                    // when any popped-out tab returns to the same row
+                    const imageViewNode = layoutModel.getNodeById("image-view");
+                    if (imageViewNode) {
+                        const imageTabset = imageViewNode.getParent();
+                        if (imageTabset && imageTabset.getType() === "tabset") {
+                            const row = imageTabset.getParent();
+                            if (row && row.getType() === "row" && row.getChildren().length > 1) {
+                                let otherWeightSum = 0;
+                                for (const child of row.getChildren()) {
+                                    if (child.getId() !== imageTabset.getId()) {
+                                        otherWeightSum += (child as TabSetNode).getWeight();
+                                    }
+                                }
+                                if (otherWeightSum > 0) {
+                                    const pct = WidgetsStore.ImageViewerRestoredHeightPercent;
+                                    const imageWeight = (pct / (100 - pct)) * otherWeightSum;
+                                    layoutModel.doAction(Actions.updateNodeAttributes(imageTabset.getId(), {weight: imageWeight}));
+                                }
+                            }
+                        }
+                    }
+
+                    return undefined;
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_DeleteTab") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                this.popoutPositions.delete(nodeId);
+
                 const node = layoutModel.getNodeById(nodeId);
                 if (node && node.getType() === "tab") {
                     const tabNode = node as TabNode;
@@ -911,6 +1204,43 @@ export class WidgetsStore {
         this.beingUnpinned.delete(id);
     };
 
+    @action popoutFloatingWidget = (widgetConfig: WidgetConfig) => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return;
+        }
+        if (!canPopoutWidget(widgetConfig.type)) {
+            return;
+        }
+
+        const id = widgetConfig.id;
+        const canPopout = canPopoutWidget(widgetConfig.type);
+        const tabJson: any = {
+            type: "tab",
+            component: widgetConfig.type,
+            name: widgetConfig.title || widgetConfig.type,
+            id,
+            enablePopout: canPopout,
+            enablePopoutIcon: canPopout
+        };
+
+        if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
+            tabJson.config = {id, label: widgetConfig.title};
+        } else if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
+            tabJson.config = {id: widgetConfig.parentId};
+        } else {
+            tabJson.config = {id};
+        }
+
+        const firstTabSet = layoutModel.getFirstTabSet();
+        this.floatingOriginPopouts.set(id, widgetConfig);
+        this.beingUnpinned.add(id);
+        layoutModel.doAction(Actions.addNode(tabJson, firstTabSet.getId(), DockLocation.CENTER, -1, false));
+        layoutModel.doAction(Actions.popoutTab(id));
+        this.removeFloatingWidget(id, true);
+        this.beingUnpinned.delete(id);
+    };
+
     @action onHelpPinedClick = (ev: React.MouseEvent, node: TabNode) => {
         const type = node.getComponent() || "";
         const widgetConfig = getWidgetMap().get(type)?.config ?? PlaceholderComponent.WidgetConfig;
@@ -919,12 +1249,13 @@ export class WidgetsStore {
         if (rect && rect.width) {
             centerX = ev.currentTarget.getBoundingClientRect().right + 36 - rect.width * 0.5; // 36(px) is the length between help button and right border of widget
         }
+        const containerWidth = (ev.currentTarget as Element).ownerDocument.body.clientWidth;
         const helpStore = HelpStore.Instance;
         const toggleOrShow = (helpType: HelpType) => {
             if (helpStore.isHelpVisible && helpStore.type === helpType) {
                 helpStore.hideHelpDrawer();
             } else {
-                helpStore.showHelpDrawer(helpType, centerX);
+                helpStore.showHelpDrawer(helpType, centerX, containerWidth);
             }
         };
         if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
@@ -961,7 +1292,7 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
+        return imagePanelMode === ImagePanelMode.None ? "Switch to multi-panel" : "Switch to single panel";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
