@@ -163,6 +163,7 @@ export class RegionDialogComponent extends React.Component {
                         icon={shouldShowLockedIcon ? "lock" : "unlock"}
                         onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock}
                         disabled={isLockDisabled}
+                        data-testid="region-dialog-lock-button"
                     />
                 </Tooltip>
                 <Tooltip content={isMultiRegion ? (isRegionVisible ? "Hide selected regions" : "Show selected regions") : isRegionVisible ? "Hide region" : "Show region"}>
@@ -172,15 +173,16 @@ export class RegionDialogComponent extends React.Component {
                         icon={isRegionVisible ? "eye-open" : "eye-off"}
                         onClick={() => regionSet?.toggleSelectedRegionsVisibility()}
                         style={{opacity: getRegionIconOpacity(isMultiRegion ? selectedRegionsOpacity : region.opacity)}}
+                        data-testid="region-dialog-visibility-button"
                     />
                 </Tooltip>
                 {!isMultiRegion && (
                     <Tooltip content="Focus">
-                        <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
+                        <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} data-testid="region-dialog-focus-button" />
                     </Tooltip>
                 )}
                 <Tooltip content={isMultiRegion ? "Export selected regions" : "Export region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} />
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} data-testid="region-dialog-export-button" />
                 </Tooltip>
             </React.Fragment>
         );
@@ -202,7 +204,9 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {(configurationPanel || isMultiRegion) && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={isDeleteDisabled} style={{userSelect: "none"}} />}
+                        {(configurationPanel || isMultiRegion) && (
+                            <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={isDeleteDisabled} style={{userSelect: "none"}} data-testid="region-dialog-delete-button" />
+                        )}
                     </div>
                 </div>
             </DraggableDialogComponent>
