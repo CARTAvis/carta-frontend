@@ -2659,8 +2659,10 @@ export class FrameStore {
                     this.contourStores.set(contourSet.level, contourStore);
                 }
 
-                if (processedData.progress != null && contourSet.coordinates) {
-                    if (!contourStore.isComplete && processedData.progress > 0) {
+                if (processedData.progress != null) {
+                    if (!contourSet.coordinates) {
+                        contourStore.setProgress(processedData.progress);
+                    } else if (!contourStore.isComplete && processedData.progress > 0) {
                         contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
                     } else {
                         contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
