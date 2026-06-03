@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Dialog, Hotkey, type HotkeyConfig, Hotkeys, useHotkeys} from "@blueprintjs/core";
+import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -7,10 +7,6 @@ import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
 import {AppStore} from "stores";
 
 import "./HotkeyWrapper.scss";
-
-const WithHotkeyDefaults = (defaults: Partial<HotkeyConfig>, hotkeys: HotkeyConfig[]): HotkeyConfig[] => {
-    return hotkeys.map(hotkey => ({...defaults, ...hotkey}));
-};
 
 @observer
 export class HotkeyService extends React.Component<{}> {
@@ -119,7 +115,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "mod + click", label: "Pan image (inside region)"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     // For display in custom hotkeys dialog
@@ -130,7 +126,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift", label: "Symmetric region creation"},
             {combo: "double-click", label: "Region properties"}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     public static regionHotkeys() {
@@ -144,7 +140,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.handleRegionEsc}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     public static frameControlHotkeys() {
@@ -159,7 +155,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}shift + up`, label: "Next Stokes cube", onKeyDown: HotkeyService.nextStokes},
             {combo: `${modString}shift + down`, label: "Previous Stokes cube", onKeyDown: HotkeyService.prevStokes}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     // Hidden hotkeys for input method compatibility
@@ -171,7 +167,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}“`, label: "Previous image", onKeyDown: appStore.prevImage}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     public static fileControlHotkeys() {
@@ -186,7 +182,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}G`, label: "Import catalog", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)},
             {combo: `${modString}E`, label: "Export image", onKeyDown: () => appStore.exportImage(1)}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     public static otherHotkeys() {
@@ -197,7 +193,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "f", label: "Freeze/unfreeze cursor position", onKeyDown: appStore.toggleCursorFrozen},
             {combo: "g", label: "Mirror cursor on multipanel view", onKeyDown: appStore.toggleCursorMirror}
         ];
-        return WithHotkeyDefaults(base, items);
+        return items.map(item => ({...base, ...item}));
     }
 
     // For display in custom hotkeys dialog
