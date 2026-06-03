@@ -471,7 +471,7 @@ export class RegionStore {
      *
      * @param p - Specifies the x and y size components.
      *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
-     * @param skipUpdate - Whether to update the changes with the backend.
+     * @param shouldSkipUpdate - Whether to update the changes with the backend.
      */
     @action setSize = (p: Point2D, shouldSkipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {

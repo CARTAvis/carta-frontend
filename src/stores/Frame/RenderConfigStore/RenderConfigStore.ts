@@ -429,7 +429,7 @@ export class RenderConfigStore {
     /**
      * Invert the colormap.
      *
-     * @param inverted - True for inverting colormap.
+     * @param isInverted - True for inverting colormap.
      */
     @action setInverted = (isInverted: boolean) => {
         this.isInverted = isInverted;

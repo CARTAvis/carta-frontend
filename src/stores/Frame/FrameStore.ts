@@ -2453,7 +2453,7 @@ export class FrameStore {
      *
      * @param x - x-axis value in the pixel coordinates.
      * @param y - y-axis value in the pixel coordinates.
-     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @param shouldEnableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
     @action setOffsetCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {
@@ -2692,7 +2692,7 @@ export class FrameStore {
     /**
      * Sets the channel of the frame.
      * @param channel - The channel index to set.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setChannel = (channel: number, isRecursive: boolean = true) => {
         this.setChannels(channel, this.requiredStokes, isRecursive);
@@ -2702,7 +2702,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame. Required for carta-python.
      * If the provided `polarization` value is not found in the frame, the function will return without making any changes.
      * @param polarization - The polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokes = (polarization: Polarizations, isRecursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
@@ -2716,7 +2716,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame by the index.
      * If the provided `polarizationIndex` is not a valid index or exceeds the range, the function will return without making any changes.
      * @param polarizationIndex - The index of the polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokesByIndex = (polarizationIndex: number, isRecursive: boolean = false) => {
         if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
@@ -2733,7 +2733,7 @@ export class FrameStore {
      * Sets the channel and the Stokes parameter of the frame.
      * @param channel - The channel index to set.
      * @param stokes - The Stokes parameter to set. Standard polarization requires the polarization index (eg. "I": 0). Computed polarization requires the polarization value (eg. "Pangle": 17).
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setChannels = (channel: number, stokes: number, isRecursive: boolean) => {
         if (stokes < 0) {
@@ -2837,7 +2837,7 @@ export class FrameStore {
      *
      * @param x - x-axis value in the pixel coordinates.
      * @param y - y-axis value in the pixel coordinates.
-     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @param shouldEnableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
     @action setCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {

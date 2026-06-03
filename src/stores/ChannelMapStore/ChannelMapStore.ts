@@ -111,7 +111,7 @@ export class ChannelMapStore {
 
     /**
      * Enables or disables the channel map mode.
-     * @param enabled - Whether to enable the channel map mode.
+     * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
         this.isChannelMapEnabled = isEnabled;
@@ -189,7 +189,7 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the channel string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
     @action setShowChannelString = (shouldShow: boolean) => {
         this.shouldShowChannelString = shouldShow;
@@ -197,7 +197,7 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the frequency string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
     @action setShowFrequencyString = (shouldShow: boolean) => {
         this.shouldShowFrequencyString = shouldShow;
@@ -205,7 +205,7 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the velocity string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
     @action setShowVelocityString = (shouldShow: boolean) => {
         this.shouldShowVelocityString = shouldShow;
@@ -213,7 +213,7 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the unit of the frequency string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
     @action setShowFrequencyStringUnit = (shouldShow: boolean) => {
         this.shouldShowFrequencyStringUnit = shouldShow;
@@ -221,7 +221,7 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the unit of the velocity string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
     @action setShowVelocityStringUnit = (shouldShow: boolean) => {
         this.shouldShowVelocityStringUnit = shouldShow;
@@ -245,7 +245,7 @@ export class ChannelMapStore {
 
     /**
      * Sets whether to use a custom color for rendering the channel map label.
-     * @param customColor - True to use a custom color, false to use the default color.
+     * @param hasCustomColor - True to use a custom color, false to use the default color.
      */
     @action setCustomColor = (hasCustomColor: boolean) => {
         this.hasCustomColor = hasCustomColor;
