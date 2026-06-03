@@ -1767,7 +1767,9 @@ export class WidgetsStore {
         }
         return id;
     }
+    // endregion
 
+    // region Floating Widgets
     @action selectFloatingWidget = (id: string) => {
         const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
         const N = this.floatingWidgets.length;

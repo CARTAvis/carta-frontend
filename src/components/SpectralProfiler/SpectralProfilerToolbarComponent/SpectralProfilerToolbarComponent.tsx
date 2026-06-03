@@ -104,55 +104,41 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
 @observer
 class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
-    private selectProfileItem = <T,>(category: MultiProfileCategory, selectedItem: T, selectSingleMode: (item: T) => void, selectMultiMode: (item: T) => void) => {
-        const profileSelectionStore = this.props.profileSelectionStore;
-        if (profileSelectionStore.activeProfileCategory !== category) {
-            selectSingleMode(selectedItem);
-            return;
-        }
-
-        selectMultiMode(selectedItem);
-    };
-
     // Frame selection does not allow multiple selection
-    private onFrameItemClick = (selectedFrame: number, _itemIndex: number) => {
+    private onFrameItemClick = (selectedFrame: number, itemIndex: number) => {
         const profileSelectionStore = this.props.profileSelectionStore;
-        this.selectProfileItem(
-            MultiProfileCategory.IMAGE,
-            selectedFrame,
-            value => profileSelectionStore.selectFrame(value),
-            value => profileSelectionStore.selectFrameMultiMode(value)
-        );
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE) {
+            profileSelectionStore.selectFrame(selectedFrame);
+        } else {
+            profileSelectionStore.selectFrameMultiMode(selectedFrame);
+        }
     };
 
-    private onRegionItemClick = (selectedRegion: number, _itemIndex: number) => {
+    private onRegionItemClick = (selectedRegion: number, itemIndex: number) => {
         const profileSelectionStore = this.props.profileSelectionStore;
-        this.selectProfileItem(
-            MultiProfileCategory.REGION,
-            selectedRegion,
-            value => profileSelectionStore.selectRegionSingleMode(value),
-            value => profileSelectionStore.selectRegionMultiMode(value)
-        );
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
+            profileSelectionStore.selectRegionSingleMode(selectedRegion);
+        } else {
+            profileSelectionStore.selectRegionMultiMode(selectedRegion);
+        }
     };
 
-    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, _itemIndex: number) => {
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number) => {
         const profileSelectionStore = this.props.profileSelectionStore;
-        this.selectProfileItem(
-            MultiProfileCategory.STATISTIC,
-            selectedStatsType,
-            value => profileSelectionStore.selectStatSingleMode(value),
-            value => profileSelectionStore.selectStatMultiMode(value)
-        );
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
+            profileSelectionStore.selectStatSingleMode(selectedStatsType);
+        } else {
+            profileSelectionStore.selectStatMultiMode(selectedStatsType);
+        }
     };
 
-    private onStokesItemClick = (selectedStokes: string, _itemIndex: number) => {
+    private onStokesItemClick = (selectedStokes: string, itemIndex: number) => {
         const profileSelectionStore = this.props.profileSelectionStore;
-        this.selectProfileItem(
-            MultiProfileCategory.STOKES,
-            selectedStokes,
-            value => profileSelectionStore.selectCoordinateSingleMode(value),
-            value => profileSelectionStore.selectCoordinateMultiMode(value)
-        );
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
+            profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
+        } else {
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes);
+        }
     };
 
     public render() {
