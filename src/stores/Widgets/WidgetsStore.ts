@@ -774,7 +774,7 @@ export class WidgetsStore {
                                 isDarkTheme,
                                 onClick: () => this.onChannelMapButtonClick(),
                                 testId: nodeId + "-header-channel-map-button",
-                                title: "enable/disable channel map"
+                                title: "Enable/Disable channel map"
                             }),
                             CreateWidgetButton({
                                 buttonKey: "prev-page-" + nodeId,
@@ -783,7 +783,7 @@ export class WidgetsStore {
                                 isDisabled: !hasPrevious,
                                 onClick: () => this.onPreviousPageClick(),
                                 testId: nodeId + "-header-previous-page-button",
-                                title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page"
+                                title: imagePanelMode === ImagePanelMode.None ? "Previous image" : "Previous page"
                             }),
                             CreateWidgetButton({
                                 buttonKey: "image-panel-" + nodeId,
@@ -800,7 +800,7 @@ export class WidgetsStore {
                                 isDisabled: !hasNext,
                                 onClick: () => this.onNextPageClick(),
                                 testId: nodeId + "-header-next-page-button",
-                                title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page"
+                                title: imagePanelMode === ImagePanelMode.None ? "Next image" : "Next page"
                             })
                         );
                     }
@@ -817,7 +817,7 @@ export class WidgetsStore {
                         isDarkTheme,
                         onClick: () => this.onCogPinedClick(selectedNode),
                         testId: nodeId + "-header-settings-button",
-                        title: "settings"
+                        title: "Settings"
                     })
                 );
             }
@@ -831,7 +831,7 @@ export class WidgetsStore {
                     isDarkTheme,
                     onClick: event => this.onHelpPinedClick(event, selectedNode),
                     testId: nodeId + "-header-help-button",
-                    title: "help"
+                    title: "Help"
                 })
             );
         }
@@ -844,7 +844,7 @@ export class WidgetsStore {
                     isDarkTheme,
                     onClick: () => this.unpinWidget(selectedNode),
                     testId: nodeId + "-header-dock-button",
-                    title: "detach"
+                    title: "Detach"
                 })
             );
         }
@@ -1292,7 +1292,7 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
+        return imagePanelMode === ImagePanelMode.None ? "Switch to multi-panel" : "Switch to single panel";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {

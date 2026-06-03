@@ -235,7 +235,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     )}
                     {this.props.shouldShowPinButton && this.props.canPopout && (
                         <div className={buttonClass} onClick={this.handlePopout}>
-                            <Tooltip content="Pop out to new window" position={Position.BOTTOM_RIGHT}>
+                            <Tooltip content="Pop out to a new window" position={Position.BOTTOM_RIGHT}>
                                 <CustomIcon icon="popout" viewBox="1 1.5 16 16" />
                             </Tooltip>
                         </div>
