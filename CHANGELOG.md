@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
 * Added support for pole-mode offset coordinates ([#2672](https://github.com/CARTAvis/carta-frontend/issues/2672)).
 * Added copy and paste region support ([#1960](https://github.com/CARTAvis/carta-frontend/issues/1960)).
+* Added Astropy-style sinh and asinh image scaling options with hover previews in the scaling dropdown ([#1992](https://github.com/CARTAvis/carta-frontend/issues/1992)).
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750)).
 * Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
