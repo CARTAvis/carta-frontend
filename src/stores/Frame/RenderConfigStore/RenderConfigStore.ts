@@ -454,6 +454,12 @@ export class RenderConfigStore {
         this.updateSiblings();
     };
 
+    /**
+     * Set bias and contrast together.
+     *
+     * @param bias - The bias value of the colormap.
+     * @param contrast - The contrast value of the colormap.
+     */
     @action setBiasContrast = (bias: number, contrast: number) => {
         this.bias = bias;
         this.contrast = contrast;
