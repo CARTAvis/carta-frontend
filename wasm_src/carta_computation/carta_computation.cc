@@ -253,6 +253,14 @@ float clamp(float d, float min, float max) {
     return t > max ? max : t;
 }
 
+float normalizedSinhScale(float x, float alpha) {
+    const float invAlpha = 1.0 / alpha;
+    if (invAlpha > 20.0) {
+        return exp((x - 1.0) * invAlpha) * (1.0 - exp(-2.0 * x * invAlpha)) / (1.0 - exp(-2.0 * invAlpha));
+    }
+    return sinh(x * invAlpha) / sinh(invAlpha);
+}
+
 float scaleValue(float x, int scaling, float alpha, float gamma) {
     switch (scaling) {
         case SQUARE:
@@ -266,7 +274,7 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
         case GAMMA:
             return pow(x, gamma);
         case SINH:
-            return sinh(x / alpha) / sinh(1.0 / alpha);
+            return normalizedSinhScale(x, alpha);
         case ASINH:
             return asinh(x / alpha) / asinh(1.0 / alpha);
         default:
