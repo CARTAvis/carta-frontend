@@ -141,6 +141,38 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
+    private renderScalingAlphaInput(preference: PreferenceStore): React.ReactNode {
+        let value: number;
+        let preferenceKey: PreferenceKeys;
+
+        switch (preference.scaling) {
+            case FrameScaling.LOG:
+                value = preference.scalingAlphaLog;
+                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
+                break;
+            case FrameScaling.POWER:
+                value = preference.scalingAlphaPower;
+                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
+                break;
+            case FrameScaling.SINH:
+                value = preference.scalingAlphaSinh;
+                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH;
+                break;
+            case FrameScaling.ASINH:
+                value = preference.scalingAlphaAsinh;
+                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH;
+                break;
+            default:
+                return null;
+        }
+
+        return (
+            <FormGroup label={"Alpha"} inline={true}>
+                <SafeNumericInput min={RenderConfigStore.ALPHA_MIN} max={RenderConfigStore.ALPHA_MAX} buttonPosition={"none"} value={value} onValueChange={newValue => preference.setPreference(preferenceKey, newValue)} />
+            </FormGroup>
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -246,50 +278,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {preference.scaling === FrameScaling.LOG && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlphaLog}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.POWER && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlphaPower}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.SINH && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlphaSinh}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.ASINH && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlphaAsinh}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, value)}
-                        />
-                    </FormGroup>
-                )}
+                {this.renderScalingAlphaInput(preference)}
                 {preference.scaling === FrameScaling.GAMMA && (
                     <FormGroup label={"Gamma"} inline={true}>
                         <SafeNumericInput
