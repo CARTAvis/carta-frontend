@@ -132,6 +132,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         contrast={renderConfig.contrast}
                         setBias={renderConfig.setBias}
                         setContrast={renderConfig.setContrast}
+                        setBiasContrast={renderConfig.setBiasContrast}
                         resetBias={renderConfig.resetBias}
                         resetContrast={renderConfig.resetContrast}
                         boardWidth={130}

@@ -454,6 +454,12 @@ export class RenderConfigStore {
         this.updateSiblings();
     };
 
+    @action setBiasContrast = (bias: number, contrast: number) => {
+        this.bias = bias;
+        this.contrast = contrast;
+        this.updateSiblings();
+    };
+
     /**
      * Set the contrast to be default value 1.
      */
