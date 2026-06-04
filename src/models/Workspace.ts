@@ -138,7 +138,7 @@ export interface WorkspaceListItem {
 
 export class WorkspaceConfig {
     public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {
-        const {scaling, colorMap, bias, contrast, gamma, alpha, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
+        const {scaling, colorMap, bias, contrast, gamma, alphaLog, alphaPower, alphaSinh, alphaAsinh, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
 
         return {
             scaling,
@@ -146,7 +146,10 @@ export class WorkspaceConfig {
             bias,
             contrast,
             gamma,
-            alpha,
+            alphaLog,
+            alphaPower,
+            alphaSinh,
+            alphaAsinh,
             inverted: isInverted,
             useCubeHistogram: isUsingCubeHistogram,
             useCubeHistogramContours: isUsingCubeHistogramContours,
