@@ -23,9 +23,9 @@ typedef enum {
     POWER = 4,
     GAMMA = 5,
     EXP = 6,
-    SINH = 7,
-    ASINH = 8,
-    CUSTOM = 9
+    CUSTOM = 7,
+    SINH = 8,
+    ASINH = 9
 } FrameScaling;
 
 typedef enum {
