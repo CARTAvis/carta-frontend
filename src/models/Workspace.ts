@@ -15,6 +15,7 @@ export interface WorkspaceRenderConfig {
     bias?: number;
     contrast?: number;
     gamma?: number;
+    alpha?: number;
     alphaLog?: number;
     alphaPower?: number;
     alphaSinh?: number;

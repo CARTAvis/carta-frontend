@@ -542,8 +542,8 @@ export class RenderConfigStore {
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = config.gamma ?? this.gamma;
-        this.alphaLog = config.alphaLog ?? this.alphaLog;
-        this.alphaPower = config.alphaPower ?? this.alphaPower;
+        this.alphaLog = config.alphaLog ?? config.alpha ?? this.alphaLog;
+        this.alphaPower = config.alphaPower ?? config.alpha ?? this.alphaPower;
         this.alphaSinh = config.alphaSinh ?? this.alphaSinh;
         this.alphaAsinh = config.alphaAsinh ?? this.alphaAsinh;
         this.isInverted = config.inverted ?? this.isInverted;
