@@ -118,27 +118,27 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     const flippedSumMean = fitHistogramResult.center;
     const flippedSumStddev = fitHistogramResult.stddev;
 
-    let INDEX_FROM, INDEX_TO;
-    let SWITCH = false;
+    let indexFrom, indexTo;
+    let isInRange = false;
     const xMeanSegment: number[] = [];
     const yMeanSegment: number[] = [];
     const SN = 2;
-    const FLOOR = flippedSumMean - SN * flippedSumStddev;
-    const CEILING = flippedSumMean + SN * flippedSumStddev;
+    const floor = flippedSumMean - SN * flippedSumStddev;
+    const ceiling = flippedSumMean + SN * flippedSumStddev;
     for (let i = 0; i < yDataFlippedSum.length; i++) {
         const value = yDataFlippedSum[i];
-        if (value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
-            INDEX_FROM = i;
-            SWITCH = true;
-        } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
-            INDEX_TO = i;
-            SWITCH = false;
-            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
-        } else if (value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
-            INDEX_TO = i;
-            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
+        if (value < ceiling && value > floor && isInRange === false && i <= yDataFlippedSum.length - 2) {
+            indexFrom = i;
+            isInRange = true;
+        } else if ((value > ceiling || value < floor) && isInRange === true) {
+            indexTo = i;
+            isInRange = false;
+            xMeanSegment.push(_.mean(xInput.slice(indexFrom, indexTo)));
+            yMeanSegment.push(_.mean(yInput.slice(indexFrom, indexTo)));
+        } else if (value < ceiling && value > floor && isInRange === true && i === yDataFlippedSum.length - 1) {
+            indexTo = i;
+            xMeanSegment.push(_.mean(xInput.slice(indexFrom, indexTo)));
+            yMeanSegment.push(_.mean(yInput.slice(indexFrom, indexTo)));
             break;
         }
     }
@@ -240,7 +240,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
 
     // 1st: marking channels with signals
     const lineBoxs: {fromIndex; toIndex; fromIndexOri; toIndexOri}[] = [];
-    let switchFrom = false;
+    let isSignalStarted = false;
     const nSigmaThreshold = 2;
     const signalChCountThreshold = 4;
     const floor = intensitySmoothedMean - nSigmaThreshold * intensitySmoothedStddev;
@@ -252,12 +252,12 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         toIndexOri;
     for (let i = 0; i < ySmoothed.length; i++) {
         const value = ySmoothed[i];
-        if ((value > ceiling || value < floor) && switchFrom === false) {
+        if ((value > ceiling || value < floor) && isSignalStarted === false) {
             fromIndex = i;
-            switchFrom = true;
-        } else if (value < ceiling && value > floor && switchFrom === true) {
+            isSignalStarted = true;
+        } else if (value < ceiling && value > floor && isSignalStarted === true) {
             toIndex = i - 1;
-            switchFrom = false;
+            isSignalStarted = false;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
             if (
@@ -266,7 +266,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
             ) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
-        } else if ((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
+        } else if ((value > ceiling || value < floor) && isSignalStarted === true && i === ySmoothed.length - 1) {
             toIndex = i;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);

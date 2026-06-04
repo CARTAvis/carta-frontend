@@ -7,6 +7,7 @@
     user-select: none;
     border: 1px solid transparent;
     border-radius: $pt-border-radius;
+    overflow: hidden;
 
     &.active {
         border: 1px solid $red3;

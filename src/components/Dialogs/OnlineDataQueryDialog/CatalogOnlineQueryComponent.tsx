@@ -9,8 +9,8 @@ import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "co
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
-import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {AppStore, CatalogOnlineQueryConfigStore, type VizierItem} from "stores";
+import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, NUMBER_FORMAT_LABEL} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
 
@@ -64,10 +64,10 @@ export class CatalogQueryComponent extends React.Component {
             return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         }
 
-        const disable = configStore.isQuerying || configStore.isObjectQuerying;
+        const isDisabled = configStore.isQuerying || configStore.isObjectQuerying;
         let sourceIndicater;
         let objectSize: number | undefined = this.objectSize;
-        if (configStore.disableObjectSearch) {
+        if (configStore.isObjectSearchDisabled) {
             objectSize = undefined;
         }
 
@@ -80,42 +80,42 @@ export class CatalogQueryComponent extends React.Component {
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
         const formatX = appStore.overlaySettings.numbers.formatTypeX;
         const formatY = appStore.overlaySettings.numbers.formatTypeY;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
+                <FormGroup inline={false} label="Database" disabled={isDisabled} className={isVizier ? "vizier-databse" : ""}>
                     <Select
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
                         onItemSelect={db => configStore.setCatalogDB(db)}
                         itemRenderer={this.renderDBPopOver}
-                        disabled={disable}
+                        disabled={isDisabled}
                         popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.catalogDB} disabled={isDisabled} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 {isVizier ? (
-                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
-                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
+                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={isDisabled} className={isVizier ? "vizier-key-words" : ""}>
+                        <InputGroup asyncControl={false} disabled={isDisabled} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
                     </FormGroup>
                 ) : null}
-                <FormGroup inline={false} label="Object" disabled={disable}>
-                    <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
+                <FormGroup inline={false} label="Object" disabled={isDisabled}>
+                    <InputGroup asyncControl={false} disabled={isDisabled} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
+                    <Tooltip content="Reset center coordinates by object" disabled={isDisabled || configStore.isObjectSearchDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Button disabled={isDisabled || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={false} label="Search radius" disabled={disable}>
-                    <Tooltip content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <FormGroup inline={false} label="Search radius" disabled={isDisabled}>
+                    <Tooltip content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             asyncControl={true}
-                            disabled={disable}
+                            disabled={isDisabled}
                             buttonPosition={"none"}
                             value={configStore.searchRadius}
                             onValueChange={(value: number) => configStore.setSearchRadius(value)}
@@ -129,38 +129,38 @@ export class CatalogQueryComponent extends React.Component {
                         activeItem={null}
                         onItemSelect={units => configStore.setRadiusUnits(units)}
                         itemRenderer={this.renderUnitsPopOver}
-                        disabled={disable}
+                        disabled={isDisabled}
                         popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.radiusUnits} disabled={isDisabled} rightIcon="double-caret-vertical" />
                     </Select>
-                    <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
+                    <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()}>
                             Set to viewer
                         </Button>
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={false} label="Center coordinates" disabled={disable}>
+                <FormGroup inline={false} label="Center coordinates" disabled={isDisabled}>
                     <Select
                         items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
                         onItemSelect={type => appStore.overlaySettings.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
-                        disabled={disable}
+                        disabled={isDisabled}
                         popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} rightIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="X WCS coordinate"
-                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            disabled={!wcsInfo || !centerWcsPoint || isDisabled}
                             value={centerWcsPoint ? centerWcsPoint.x : ""}
                             onBlur={this.handleCenterWcsXChange}
                             onKeyDown={this.handleCenterWcsXChange}
@@ -172,15 +172,15 @@ export class CatalogQueryComponent extends React.Component {
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="Y WCS coordinate"
-                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            disabled={!wcsInfo || !centerWcsPoint || isDisabled}
                             value={centerWcsPoint ? centerWcsPoint.y : ""}
                             onBlur={this.handleCenterWcsYChange}
                             onKeyDown={this.handleCenterWcsYChange}
                             data-testid="catalog-query-center-y-input"
                         />
                     </Tooltip>
-                    <Tooltip content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} data-testid="catalog-query-reset-center-button" />
+                    <Tooltip content="Reset to current view center" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Button icon="locate" disabled={isDisabled} onClick={() => configStore.setFrameCenter()} data-testid="catalog-query-reset-center-button" />
                     </Tooltip>
                 </FormGroup>
                 <ClearableNumericInputComponent
@@ -192,11 +192,11 @@ export class CatalogQueryComponent extends React.Component {
                     onValueChanged={val => configStore.setMaxObjects(val)}
                     onValueCleared={() => configStore.resetMaxObjects()}
                     displayExponential={false}
-                    disabled={disable}
+                    disabled={isDisabled}
                     inline={false}
                 />
-                {configStore.showVizierResult ? (
-                    <FormGroup inline={false} label="VizieR catalog" disabled={disable}>
+                {configStore.shouldShowVizierResult ? (
+                    <FormGroup inline={false} label="VizieR catalog" disabled={isDisabled}>
                         <MultiSelect
                             placeholder={"Please select catalog tables"}
                             fill={true}
@@ -224,7 +224,7 @@ export class CatalogQueryComponent extends React.Component {
         return (
             <div className="catalog-query-panel">
                 <ScrollShadow>{configBoard}</ScrollShadow>
-                <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
+                <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={isDisabled} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} />
                     </div>
@@ -235,9 +235,9 @@ export class CatalogQueryComponent extends React.Component {
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
+                        {configStore.canLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                         <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlaySettings.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <AnchorButton intent={Intent.SUCCESS} disabled={disable || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
+                            <AnchorButton intent={Intent.SUCCESS} disabled={isDisabled || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
                         </Tooltip>
                     </div>
                 </div>
@@ -389,7 +389,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
@@ -419,7 +419,7 @@ export class CatalogQueryComponent extends React.Component {
         }
         const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const wcsInfo = frame.isValidWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;

@@ -43,3 +43,8 @@ export enum CoordinateMode {
     Image = "Image",
     World = "World"
 }
+
+export enum SkyRefIs {
+    Origin = 0,
+    Pole = 1
+}

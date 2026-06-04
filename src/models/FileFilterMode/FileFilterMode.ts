@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {FileFilterMode} from "enums";
 
-export function ToFileListFilterMode(mode: FileFilterMode): CARTA.FileListFilterMode {
+export const ToFileListFilterMode = (mode: FileFilterMode): CARTA.FileListFilterMode => {
     switch (mode) {
         case FileFilterMode.Content:
             return CARTA.FileListFilterMode.Content;
@@ -11,4 +11,4 @@ export function ToFileListFilterMode(mode: FileFilterMode): CARTA.FileListFilter
         default:
             return CARTA.FileListFilterMode.AllFiles;
     }
-}
+};

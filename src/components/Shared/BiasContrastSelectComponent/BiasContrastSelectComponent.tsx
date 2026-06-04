@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
 import {clamp} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 const DRAG_MOVE_INTERVAL = 10;
 const DOUBLE_CLICK_THRESHOLD = 300;
@@ -28,6 +29,8 @@ interface BiasContrastSelectComponentProps {
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
     private updateValuesTimer: ReturnType<typeof setTimeout> | undefined;
+    private stageRef: Konva.Stage | null = null;
+    private popoutDragCleanup: (() => void) | null = null;
 
     private updateValues = (x: number, y: number, interval: number) => {
         clearTimeout(this.updateValuesTimer);
@@ -64,9 +67,26 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
         return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
     };
 
+    componentDidUpdate() {
+        this.setupPopoutDragListeners();
+    }
+
     componentWillUnmount() {
         clearTimeout(this.updateValuesTimer);
         this.updateValuesTimer = undefined;
+        this.cleanupPopoutDragListeners();
+    }
+
+    private setupPopoutDragListeners() {
+        this.cleanupPopoutDragListeners();
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef);
+    }
+
+    private cleanupPopoutDragListeners() {
+        if (this.popoutDragCleanup) {
+            this.popoutDragCleanup();
+            this.popoutDragCleanup = null;
+        }
     }
 
     render() {
@@ -88,7 +108,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
         return (
             <React.Fragment>
-                <Stage className={"bias-contrast-stage"} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
+                <Stage className={"bias-contrast-stage"} ref={ref => (this.stageRef = ref)} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
                     <Layer>{twoDimensionBoard}</Layer>
                 </Stage>
                 <FormGroup label={"Bias"} inline={true}>

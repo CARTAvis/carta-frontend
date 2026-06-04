@@ -32,152 +32,183 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {ImageType} from "enums";
-import {AppStore, CatalogStore, type WidgetConfig, WidgetsStore} from "stores";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
+import {AppStore, CatalogStore, type WidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+
+type FloatingWidgetRenderer = (widgetConfig: WidgetConfig) => React.ReactNode;
+
+const RenderDocklessWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
+    return widgetConfig => <Component id={widgetConfig.id} docked={false} />;
+};
+
+const RenderFloatingSettingsWidget = (Component: React.ComponentType<WidgetProps>): FloatingWidgetRenderer => {
+    return widgetConfig => <Component id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
+};
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
+    private static readonly FloatingSettingsWidgetTypes = new Set<string>(["stokes", "spectral-profiler", "spatial-profiler", "render-config", "histogram", "catalog-overlay", "layer-list"]);
+
     private floatingSettingType = "floating-settings";
+    private floatingWidgetContentRenderers?: Map<string, FloatingWidgetRenderer>;
+    private floatingWidgetSettingsRenderers?: Map<string, FloatingWidgetRenderer>;
+
+    private removeFloatingWidget = (widgetId: string) => {
+        WidgetsStore.Instance.removeFloatingWidget(widgetId);
+    };
+
+    private getPreviewFrameIndex = (widgetId: string) => {
+        return parseInt(widgetId.split("-")[2]);
+    };
+
+    private removeCatalogOverlayWidget = (componentId?: string) => {
+        if (!componentId) {
+            return;
+        }
+
+        const widgetsStore = WidgetsStore.Instance;
+        widgetsStore.removeFloatingWidgetComponent(componentId);
+        CatalogStore.Instance.catalogProfiles.delete(componentId);
+    };
+
+    private removeCatalogPlotWidget = (componentId?: string) => {
+        if (!componentId) {
+            return;
+        }
+
+        const widgetsStore = WidgetsStore.Instance;
+        widgetsStore.removeFloatingWidgetComponent(componentId);
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+    };
+
+    private removeLayerListSettingsWidget = (widget: WidgetConfig) => {
+        if (widget.parentId) {
+            WidgetsStore.Instance.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
+        }
+
+        this.removeFloatingWidget(widget.id);
+    };
+
+    private removePvPreviewWidget = (widget: WidgetConfig) => {
+        if (widget.parentId) {
+            WidgetsStore.Instance.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(this.getPreviewFrameIndex(widget.parentId));
+        }
+
+        this.removeFloatingWidget(widget.id);
+    };
+
+    private removePvGeneratorWidget = (widgetId: string) => {
+        WidgetsStore.Instance.pvGeneratorWidgets.get(widgetId)?.removePreviewFrame(this.getPreviewFrameIndex(widgetId));
+        this.removeFloatingWidget(widgetId);
+    };
+
+    private getFloatingWidgetId = (widget: WidgetConfig) => {
+        return widget.componentId ? widget.componentId : widget.id;
+    };
+
+    private getWidgetContentRenderers = () => {
+        if (!this.floatingWidgetContentRenderers) {
+            this.floatingWidgetContentRenderers = new Map<string, FloatingWidgetRenderer>([
+                [ImageViewComponent.WidgetConfig.type, RenderDocklessWidget(ImageViewComponent)],
+                [LayerListComponent.WidgetConfig.type, RenderDocklessWidget(LayerListComponent)],
+                [LogComponent.WidgetConfig.type, RenderDocklessWidget(LogComponent)],
+                [RenderConfigComponent.WidgetConfig.type, RenderDocklessWidget(RenderConfigComponent)],
+                [AnimatorComponent.WidgetConfig.type, RenderDocklessWidget(AnimatorComponent)],
+                [ChannelMapControlComponent.WidgetConfig.type, RenderDocklessWidget(ChannelMapControlComponent)],
+                [SpatialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpatialProfilerComponent)],
+                [SpectralProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpectralProfilerComponent)],
+                [SpectralLineQueryComponent.WidgetConfig.type, RenderDocklessWidget(SpectralLineQueryComponent)],
+                [StatsComponent.WidgetConfig.type, RenderDocklessWidget(StatsComponent)],
+                [HistogramComponent.WidgetConfig.type, RenderDocklessWidget(HistogramComponent)],
+                [RegionListComponent.WidgetConfig.type, RenderDocklessWidget(RegionListComponent)],
+                [StokesAnalysisComponent.WidgetConfig.type, RenderDocklessWidget(StokesAnalysisComponent)],
+                [CursorInfoComponent.WidgetConfig.type, RenderDocklessWidget(CursorInfoComponent)],
+                [CatalogPlotComponent.WidgetConfig.type, RenderDocklessWidget(CatalogPlotComponent)],
+                [PvGeneratorComponent.WidgetConfig.type, RenderDocklessWidget(PvGeneratorComponent)]
+            ]);
+        }
+
+        return this.floatingWidgetContentRenderers;
+    };
+
+    private getWidgetSettingsRenderers = () => {
+        if (!this.floatingWidgetSettingsRenderers) {
+            this.floatingWidgetSettingsRenderers = new Map<string, FloatingWidgetRenderer>([
+                [ImageViewComponent.WidgetConfig.type, RenderFloatingSettingsWidget(ImageViewSettingsPanelComponent)],
+                [StokesAnalysisComponent.WidgetConfig.type, RenderFloatingSettingsWidget(StokesAnalysisSettingsPanelComponent)],
+                [SpectralProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(SpectralProfilerSettingsPanelComponent)],
+                [SpatialProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(SpatialProfilerSettingsPanelComponent)],
+                [RenderConfigComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RenderConfigSettingsPanelComponent)],
+                [HistogramComponent.WidgetConfig.type, RenderFloatingSettingsWidget(HistogramSettingsPanelComponent)],
+                [CatalogOverlayComponent.WidgetConfig.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
+                [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)]
+            ]);
+        }
+
+        return this.floatingWidgetSettingsRenderers;
+    };
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
         const zIndexManager = AppStore.Instance.zIndexManager;
-        const id = widget.componentId ? widget.componentId : widget.id;
-        zIndexManager.updateIndexOnSelect(id);
+        zIndexManager.updateIndexOnSelect(this.getFloatingWidgetId(widget));
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        const widgetsStore = WidgetsStore.Instance;
         switch (widget.type) {
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                // remove widget component only
-                if (widget.componentId !== undefined) {
-                    widgetsStore.removeFloatingWidgetComponent(widget.componentId);
-                    CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
-                }
+            case CatalogOverlayComponent.WidgetConfig.type:
+                this.removeCatalogOverlayWidget(widget.componentId);
                 break;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
-                if (widget.componentId !== undefined) {
-                    widgetsStore.removeFloatingWidgetComponent(widget.componentId);
-                    CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
-                }
+            case CatalogPlotComponent.WidgetConfig.type:
+                this.removeCatalogPlotWidget(widget.componentId);
                 break;
-            case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
-                if (widget.parentId !== undefined) {
-                    widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
-                }
-                widgetsStore.removeFloatingWidget(widget.id);
+            case LayerListSettingsPanelComponent.WidgetConfig.type:
+                this.removeLayerListSettingsWidget(widget);
                 break;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
-                if (widget.parentId !== undefined) {
-                    widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
-                }
-                widgetsStore.removeFloatingWidget(widget.id);
+            case PvPreviewComponent.WidgetConfig.type:
+                this.removePvPreviewWidget(widget);
                 break;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                widgetsStore.pvGeneratorWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
-                widgetsStore.removeFloatingWidget(widget.id);
+            case PvGeneratorComponent.WidgetConfig.type:
+                this.removePvGeneratorWidget(widget.id);
                 break;
             default:
-                widgetsStore.removeFloatingWidget(widget.id);
+                this.removeFloatingWidget(widget.id);
                 break;
         }
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
-        switch (widgetConfig.type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return <ImageViewComponent id={widgetConfig.id} docked={false} />;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return <LayerListComponent id={widgetConfig.id} docked={false} />;
-            case LogComponent.WIDGET_CONFIG.type:
-                return <LogComponent id={widgetConfig.id} docked={false} />;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return <RenderConfigComponent id={widgetConfig.id} docked={false} />;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                return <AnimatorComponent id={widgetConfig.id} docked={false} />;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
-                return <ChannelMapControlComponent id={widgetConfig.id} docked={false} />;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return <SpatialProfilerComponent id={widgetConfig.id} docked={false} />;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return <SpectralProfilerComponent id={widgetConfig.id} docked={false} />;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                return <SpectralLineQueryComponent id={widgetConfig.id} docked={false} />;
-            case StatsComponent.WIDGET_CONFIG.type:
-                return <StatsComponent id={widgetConfig.id} docked={false} />;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return <HistogramComponent id={widgetConfig.id} docked={false} />;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                return <RegionListComponent id={widgetConfig.id} docked={false} />;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return <StokesAnalysisComponent id={widgetConfig.id} docked={false} />;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
-                return <CursorInfoComponent id={widgetConfig.id} docked={false} />;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return <CatalogOverlayComponent id={widgetConfig.componentId ?? ""} docked={false} />;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
-                return <CatalogPlotComponent id={widgetConfig.id} docked={false} />;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
-                return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
-            default:
-                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title ?? ""} />;
+        if (widgetConfig.type === CatalogOverlayComponent.WidgetConfig.type) {
+            return <CatalogOverlayComponent id={widgetConfig.componentId ?? ""} docked={false} />;
         }
+
+        if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
+            return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
+        }
+
+        const renderWidget = this.getWidgetContentRenderers().get(widgetConfig.type);
+        if (renderWidget) {
+            return renderWidget(widgetConfig);
+        }
+
+        return <PlaceholderComponent id={widgetConfig.id} isDocked={false} label={widgetConfig.title ?? ""} />;
     }
 
     private getWidgetSettings(widgetConfig: WidgetConfig) {
-        if (widgetConfig.parentId) {
-            switch (widgetConfig.parentType) {
-                case ImageViewComponent.WIDGET_CONFIG.type:
-                    return <ImageViewSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                    return <StokesAnalysisSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                    return <SpectralProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                    return <SpatialProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case RenderConfigComponent.WIDGET_CONFIG.type:
-                    return <RenderConfigSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case HistogramComponent.WIDGET_CONFIG.type:
-                    return <HistogramSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                    return <CatalogOverlayPlotSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                case LayerListComponent.WIDGET_CONFIG.type:
-                    return <LayerListSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
-                default:
-                    return null;
-            }
+        if (!widgetConfig.parentId) {
+            return null;
         }
-        return null;
+
+        const renderWidgetSettings = widgetConfig.parentType ? this.getWidgetSettingsRenderers().get(widgetConfig.parentType) : undefined;
+        return renderWidgetSettings ? renderWidgetSettings(widgetConfig) : null;
     }
 
     private showPin(widgetConfig: WidgetConfig) {
-        if (widgetConfig.type && widgetConfig.type === this.floatingSettingType) {
-            return false;
-        }
-        return true;
+        return widgetConfig.type !== this.floatingSettingType;
     }
 
     private showFloatingSettingsButton(widgetConfig: WidgetConfig) {
-        switch (widgetConfig.type) {
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return true;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return true;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return true;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return true;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return true;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return true;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return true;
-            default:
-                return false;
-        }
+        return FloatingWidgetManagerComponent.FloatingSettingsWidgetTypes.has(widgetConfig.type);
     }
 
     public render() {
@@ -187,13 +218,14 @@ export class FloatingWidgetManagerComponent extends React.Component {
         return (
             <div>
                 {widgetConfigs.map(w => {
-                    let showSettingsButton = this.showFloatingSettingsButton(w);
-                    if (w.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-                        showSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
+                    let shouldShowSettingsButton = this.showFloatingSettingsButton(w);
+                    if (w.type === RenderConfigComponent.WidgetConfig.type) {
+                        shouldShowSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
                     }
 
-                    const showPinButton = this.showPin(w);
-                    const id = w.componentId ? w.componentId : w.id;
+                    const shouldShowPinButton = this.showPin(w);
+                    const canPopout = canPopoutWidget(w.type);
+                    const id = this.getFloatingWidgetId(w);
 
                     const zIndex = zIndexManager.findIndex(id);
                     const numFloatingObjs = zIndexManager.floatingObjsNum;
@@ -205,13 +237,14 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={zIndex}
-                                showPinButton={showPinButton}
+                                shouldShowPinButton={shouldShowPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                showFloatingSettingsButton={showSettingsButton}
+                                shouldShowFloatingSettingsButton={shouldShowSettingsButton}
+                                canPopout={canPopout}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
+                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );

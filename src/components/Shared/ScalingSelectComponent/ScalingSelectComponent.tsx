@@ -24,7 +24,7 @@ interface ScalingComponentProps {
     disabled?: boolean;
 }
 
-const equationPngMap = new Map([
+const EQUATION_PNG_MAP = new Map([
     [FrameScaling.LINEAR, linearPng],
     [FrameScaling.LOG, logPng],
     [FrameScaling.SQRT, sqrtPng],
@@ -35,6 +35,7 @@ const equationPngMap = new Map([
     [FrameScaling.ASINH, asinhPng]
 ]);
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ScalingSelect = Select<FrameScaling>;
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
@@ -50,7 +51,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
-        const equationImage = equationPngMap.get(scaling);
+        const equationImage = EQUATION_PNG_MAP.get(scaling);
         return (
             <MenuItem
                 active={modifiers.active}

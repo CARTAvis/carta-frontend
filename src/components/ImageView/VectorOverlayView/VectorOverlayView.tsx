@@ -208,8 +208,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         // TODO: support non-uniform pixel ratios
         // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.colormapEnabled ? 1 : 0);
-        if (frame.vectorOverlayConfig.colormapEnabled) {
+        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.isColormapEnabled ? 1 : 0);
+        if (frame.vectorOverlayConfig.isColormapEnabled) {
             this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
             this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
             this.gl.uniform1f(shaderUniforms.Contrast, frame.vectorOverlayConfig.colormapContrast);
@@ -247,8 +247,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                // let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
+                const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, colormap, lengthMin, lengthMax, isVisible} = config;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
                 config.intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 

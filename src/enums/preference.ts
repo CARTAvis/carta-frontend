@@ -74,6 +74,7 @@ export enum PreferenceKeys {
     REGION_TYPE = "regionType",
     REGION_CREATION_MODE = "regionCreationMode",
     REGION_SIZE = "regionSize",
+    REGION_PASTE_OFFSET_UNIT = "regionPasteOffsetUnit",
 
     ANNOTATION_COLOR = "annotationColor",
     ANNOTATION_LINE_WIDTH = "annotationLineWidth",
@@ -101,6 +102,7 @@ export enum PreferenceKeys {
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
+    CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS = "catalogAutoSelectImageOverlayColumns",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
@@ -134,4 +136,10 @@ export enum FileFilterMode {
     Content = "content",
     Extension = "extension",
     All = "all"
+}
+
+export enum PasteOffsetUnit {
+    Auto = "auto",
+    ScreenPixel = "screenPx",
+    ImagePixel = "imagePx"
 }

@@ -9,8 +9,8 @@ import {AppStore} from "stores";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
-    darkMode: boolean;
-    visible: boolean;
+    isDarkMode: boolean;
+    isVisible: boolean;
     exportImage?: () => void;
     exportData: () => void;
 }
@@ -23,8 +23,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>
-                        Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br />
-                        {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        Background color is {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "transparent" : "filled"}.<br />
+                        {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
                         <br />
                     </small>
                 </i>
@@ -34,9 +34,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const styleProps: CSSProperties = {
-            opacity: this.props.visible ? 1 : 0
+            opacity: this.props.isVisible ? 1 : 0
         };
-        const className = classNames("profiler-toolbar", {[Classes.DARK]: this.props.darkMode});
+        const className = classNames("profiler-toolbar", {[Classes.DARK]: this.props.isDarkMode});
 
         return (
             <ButtonGroup className={className} style={styleProps}>

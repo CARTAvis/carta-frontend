@@ -16,11 +16,21 @@ export class ResizableDialogComponentProps {
     defaultHeight: number;
     minWidth?: number;
     minHeight?: number;
-    enableResizing: boolean;
+    isResizingEnabled: boolean;
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     dialogId: string;
     children?: React.ReactNode;
+}
+
+function getViewportDimensions() {
+    const documentElement = document.documentElement;
+    const body = document.getElementsByTagName("body")[0];
+
+    return {
+        width: window.innerWidth || documentElement.clientWidth || body.clientWidth,
+        height: window.innerHeight || documentElement.clientHeight || body.clientHeight
+    };
 }
 
 @observer
@@ -68,6 +78,11 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         if (closeButton) {
             closeButton.setAttribute("data-testid", `${this.props.dialogId}-header-close-button`);
         }
+
+        const helpButton = this.dd.current.getElementsByClassName("help-button")?.[0];
+        if (helpButton) {
+            helpButton.setAttribute("data-testid", `${this.props.dialogId}-header-help-button`);
+        }
     };
 
     private onClickHelpButton = () => {
@@ -84,23 +99,18 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     render() {
-        const w = window,
-            d = document,
-            e = d.documentElement,
-            g = d.getElementsByTagName("body")[0],
-            windowWidth = w.innerWidth || e.clientWidth || g.clientWidth,
-            windowHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+        const {width: windowWidth, height: windowHeight} = getViewportDimensions();
 
-        const resizeEnabled = this.props.enableResizing;
+        const isResizeEnabled = this.props.isResizingEnabled;
         const resizeSettings: ResizeEnable = {
-            top: resizeEnabled,
-            bottom: resizeEnabled,
-            left: resizeEnabled,
-            right: resizeEnabled,
-            topLeft: resizeEnabled,
-            topRight: resizeEnabled,
-            bottomLeft: resizeEnabled,
-            bottomRight: resizeEnabled
+            top: isResizeEnabled,
+            bottom: isResizeEnabled,
+            left: isResizeEnabled,
+            right: isResizeEnabled,
+            topLeft: isResizeEnabled,
+            topRight: isResizeEnabled,
+            bottomLeft: isResizeEnabled,
+            bottomRight: isResizeEnabled
         };
 
         const appStore = AppStore.Instance;
@@ -111,7 +121,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 {this.props.dialogProps.isOpen && (
                     <Rnd
                         enableResizing={resizeSettings}
-                        bounds={".gl-container-app"}
+                        bounds={".layout-container"}
                         dragGrid={[1, 1]}
                         resizeGrid={[25, 25]}
                         default={{

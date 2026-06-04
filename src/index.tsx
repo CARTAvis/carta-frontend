@@ -1,4 +1,3 @@
-import * as React from "react";
 import {createRoot} from "react-dom/client";
 import {FocusStyleManager, HotkeysProvider, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";
@@ -26,29 +25,16 @@ for (const val of [allMaps, linearPng, logPng, sqrtPng, squaredPng, gammaPng, po
 // Remove focus on tabs
 FocusStyleManager.onlyShowFocusOnTabs();
 
-// GoldenLayout requires these in the global namespace
-window["React"] = React; // tslint:disable-line
-// Ensure any roots created by GoldenLayout are wrapped with providers
-window["createRoot"] = (container: Element | DocumentFragment) => {
-    const root = createRoot(container);
-    const originalRender = root.render.bind(root);
-    root.render = (children: React.ReactNode) => {
-        const wrappedChildren = React.createElement(HotkeysProvider, {renderDialog: () => React.createElement(React.Fragment)}, React.createElement(OverlaysProvider, null, children));
-        originalRender(wrappedChildren);
-    };
-    return root;
-}; // tslint:disable-line
-
 async function fetchConfig() {
     const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");
     const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
     try {
         const res = await axios.get(configUrl);
-        ApiService.SetRuntimeConfig(res?.data);
+        ApiService.setRuntimeConfig(res?.data);
     } catch (e) {
         console.log("No runtime config provided. Using default configuration");
         console.error(e);
-        ApiService.SetRuntimeConfig({});
+        ApiService.setRuntimeConfig({});
     }
 
     const container = document.getElementById("root") as HTMLElement;

@@ -3,6 +3,7 @@ import {pluginEslint} from "@rsbuild/plugin-eslint";
 import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
+import {pluginTypeCheck} from '@rsbuild/plugin-type-check';
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
 export default defineConfig({
@@ -17,13 +18,13 @@ export default defineConfig({
         pluginReact(),
         pluginSass(),
         pluginNodePolyfill(),
-        pluginGlsl()
+        pluginGlsl(),
+        pluginTypeCheck()
     ],
     source: {
         decorators: {
             version: "legacy",
         },
-        preEntry: "./src/setupGoldenLayout.ts",
         define: {
             'process.env.BUILD_DATE': JSON.stringify(new Date().toISOString()),
         },
@@ -53,6 +54,12 @@ export default defineConfig({
     },
     tools: {
         rspack: {
+            ignoreWarnings: [
+                {
+                    module: /protobufjs.*inquire/,
+                    message: /Critical dependency: the request of a dependency is an expression/,
+                },
+            ],
             node: {
                 __filename: false,
                 __dirname: false,

@@ -47,7 +47,7 @@
             position: inherit !important;
             min-height: calc(100% - 30px) !important;
 
-            .Resizer {
+            .split-pane-divider {
                 background: rgba(0, 0, 0, 0);
                 opacity: 0;
                 z-index: 1;
@@ -58,7 +58,7 @@
                 -webkit-background-clip: padding;
                 background-clip: padding-box;
             }
-            .Resizer.horizontal {
+            .split-pane-divider.vertical {
                 height: 11px;
                 margin: -5px 0;
                 border-top: 5px solid rgba(255, 255, 255, 0);
@@ -66,18 +66,18 @@
                 cursor: row-resize;
                 width: 100%;
             }
-            .Resizer.disabled {
+            .split-pane-divider[aria-disabled="true"] {
                 cursor: not-allowed;
             }
-            .Resizer.disabled:hover {
+            .split-pane-divider[aria-disabled="true"]:hover {
                 border-color: transparent;
             }
 
-            .Pane1 {
+            .split-pane-pane:first-child {
                 min-height: 10px !important;
             }
 
-            .Pane2 {
+            .split-pane-pane:last-child {
                 min-height: 10px !important;
             }
 

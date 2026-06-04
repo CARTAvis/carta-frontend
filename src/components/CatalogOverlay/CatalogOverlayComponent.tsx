@@ -1,12 +1,12 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {CARTA} from "carta-protobuf";
+import type {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
@@ -14,7 +14,7 @@ import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType,
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, type ProcessedColumnData, toFixed} from "utilities";
+import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -29,23 +29,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
-
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
-    static readonly axisDataType = [
-        CARTA.ColumnType.Double,
-        CARTA.ColumnType.Float,
-        CARTA.ColumnType.Int8,
-        CARTA.ColumnType.Uint8,
-        CARTA.ColumnType.Int16,
-        CARTA.ColumnType.Uint16,
-        CARTA.ColumnType.Int32,
-        CARTA.ColumnType.Uint32,
-        CARTA.ColumnType.Int64,
-        CARTA.ColumnType.Uint64
-    ];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
@@ -75,6 +62,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
+    @computed get shouldAutoSelectImageOverlayColumns(): boolean {
+        return PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+    }
+
     @action handleCatalogFileChange = (fileId: number) => {
         CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
     };
@@ -93,7 +84,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
+    // Overwrite scrollToRegion to avoid crashes when viewportRect is undefined during unpin.
     // https://github.com/palantir/blueprint/blob/841b2e12fec1970704b754f7794c683c735d0439/packages/table/src/table.tsx#L761
     scrollToRegion = (ref, region) => {
         if (ref) {
@@ -121,7 +112,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && catalogWidgetStore) {
             dataset = profileStore.catalogData;
             numVisibleRows = profileStore.numVisibleRows;
-            if (profileStore.regionSelected && catalogWidgetStore.showSelectedData) {
+            if (profileStore.regionSelected && catalogWidgetStore.isShowingSelectedData) {
                 if (profileStore.isFileBasedCatalog) {
                     dataset = profileStore.selectedData;
                 }
@@ -131,14 +122,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {dataset, numVisibleRows};
     }
 
-    @computed get enablePlotButton(): boolean {
+    @computed get isPlotButtonEnabled(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const enable = !profileStore?.loadingData && !profileStore?.updatingDataStream && catalogWidgetStore?.xAxis !== CatalogOverlay.NONE;
+        const isEnabled = !profileStore?.isLoadingData && !profileStore?.isUpdatingDataStream && catalogWidgetStore?.xAxis !== CatalogOverlay.NONE;
         if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.Histogram) {
-            return enable;
+            return isEnabled;
         } else {
-            return catalogWidgetStore?.yAxis !== CatalogOverlay.NONE && enable;
+            return catalogWidgetStore?.yAxis !== CatalogOverlay.NONE && isEnabled;
         }
     }
 
@@ -177,6 +168,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
             })
         );
+
+        this.disposers.push(
+            // Auto-select coordinate columns by common prefixes when axes are None (attempt at most once per catalog)
+            reaction(
+                () => {
+                    const catalogWidgetStore = this.widgetStore;
+                    const canAutoSelectAxes = this.catalogFileId !== undefined && this.profileStore !== undefined && catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
+                    return [catalogWidgetStore, canAutoSelectAxes] as const;
+                },
+                ([catalogWidgetStore, canAutoSelectAxes]) => {
+                    if (!catalogWidgetStore || !canAutoSelectAxes || catalogWidgetStore.hasAttemptedAutoSelectImageOverlayAxes) {
+                        return;
+                    }
+
+                    this.autoSelectAxes();
+                    catalogWidgetStore.setAutoSelectImageOverlayAxesAttempted(true);
+                },
+                {fireImmediately: true}
+            )
+        );
     }
 
     componentWillUnmount() {
@@ -204,18 +215,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
-            if (profileStore.regionSelected && catalogWidgetStore.catalogTableAutoScroll && !catalogWidgetStore.showSelectedData) {
+            if (profileStore.regionSelected && catalogWidgetStore.isCatalogTableAutoScrollEnabled && !catalogWidgetStore.isShowingSelectedData) {
                 this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             }
         }
     };
 
-    private updateTableSize(ref: any, docked: boolean) {
+    private updateTableSize(ref: any, isDocked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
         // trigger table update
-        if (docked) {
+        if (isDocked) {
             ref.scrollToRegion(Regions.column(0));
         }
     }
@@ -227,18 +238,30 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const header = profileStore?.catalogControlHeader.get(columnName);
         profileStore?.setHeaderDisplay(val, columnName);
 
+        if (this.shouldAutoSelectImageOverlayColumns && val === true && (catalogWidgetStore?.xAxis === CatalogOverlay.NONE || catalogWidgetStore?.yAxis === CatalogOverlay.NONE)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        }
+
         const shouldUpdateFilter = (val === true || (header?.filter !== "" && val === false)) && profileStore?.isFileBasedCatalog;
 
         if (shouldUpdateFilter) {
+            profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore?.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
 
-        if (catalogWidgetStore?.xAxis === columnName) {
+        const isXAxisRemoved = catalogWidgetStore?.xAxis === columnName;
+        const isYAxisRemoved = catalogWidgetStore?.yAxis === columnName;
+
+        if (isXAxisRemoved) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
         }
-        if (catalogWidgetStore?.yAxis === columnName) {
+        if (isYAxisRemoved) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
+        }
+
+        if (this.shouldAutoSelectImageOverlayColumns && (isXAxisRemoved || isYAxisRemoved)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), isXAxisRemoved, isYAxisRemoved);
         }
     }
 
@@ -261,16 +284,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private renderSwitchButtonCell(rowIndex: number, columnName: string) {
         const profileStore = this.profileStore;
         const headerInfo = profileStore?.catalogControlHeader.get(columnName);
-        const display = headerInfo?.display ?? false;
-        const disable = profileStore?.loadingData;
+        const shouldDisplay = headerInfo?.display ?? false;
+        const isDisabled = profileStore?.isLoadingData;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <>
                     <Switch
                         className="cell-switch-button"
                         key={`cell_switch_button_${rowIndex}`}
-                        disabled={disable}
-                        checked={display}
+                        disabled={isDisabled}
+                        checked={shouldDisplay}
                         onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}
                         data-testid={"catalog-header-table-switch-" + rowIndex}
                     />
@@ -289,12 +312,162 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                if (isCatalogAxisDataType(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }
         });
         return axisOptions;
+    }
+
+    private getAutoSelectableAxisOptions(shouldIncludeHidden = false): string[] {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return [];
+        }
+
+        const axisOptions: string[] = [];
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined) {
+                return;
+            }
+
+            const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
+            if (!isCatalogAxisDataType(dataType) || (!shouldIncludeHidden && !header.display) || isExcludedCoordinateName(columnName)) {
+                return;
+            }
+
+            axisOptions.push(columnName);
+        });
+        return axisOptions;
+    }
+
+    private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return false;
+        }
+
+        let didEnableColumns = false;
+        for (const columnName of columnNames) {
+            if (!columnName) {
+                continue;
+            }
+            const header = profileStore.catalogControlHeader.get(columnName);
+            if (header && !header.display) {
+                profileStore.setHeaderDisplay(true, columnName);
+                didEnableColumns = true;
+            }
+        }
+        return didEnableColumns;
+    }
+
+    private setAutoSelectedAxes(axisOptions: string[], shouldSelectXAxis = true, shouldSelectYAxis = true, shouldEnableHiddenColumns = false): {didSelectX: boolean; didSelectY: boolean; enabledHiddenColumns: boolean} {
+        const catalogWidgetStore = this.widgetStore;
+        if (catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
+        }
+
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        const xColumnName = shouldSelectXAxis ? findAutoSelectedCatalogAxisColumn(this.xAxisLabel, catalogWidgetStore.xAxis, axisOptions, system) : undefined;
+        const yColumnName = shouldSelectYAxis ? findAutoSelectedCatalogAxisColumn(this.yAxisLabel, catalogWidgetStore.yAxis, axisOptions, system) : undefined;
+
+        let areHiddenColumnsEnabled = false;
+        if (shouldEnableHiddenColumns) {
+            areHiddenColumnsEnabled = this.enableAxisColumns([xColumnName, yColumnName]);
+        }
+
+        if (xColumnName) {
+            catalogWidgetStore.setxAxis(xColumnName);
+        }
+        if (yColumnName) {
+            catalogWidgetStore.setyAxis(yColumnName);
+        }
+
+        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
+    }
+
+    private autoSelectAxes(shouldForceReset = false) {
+        const catalogWidgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        if (!this.shouldAutoSelectImageOverlayColumns || catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return;
+        }
+
+        if (shouldForceReset) {
+            catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
+            catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
+        }
+
+        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        if (selected.didSelectX && selected.didSelectY) {
+            return;
+        }
+
+        const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
+        if (fallback.enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
+            profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
+            profileStore.setIsUpdateColumn(true);
+            this.handleFilterRequest();
+        }
+    }
+
+    private applyImageOverlayPlot() {
+        const profileStore = this.profileStore;
+        const appStore = AppStore.Instance;
+        const catalogStore = CatalogStore.Instance;
+        const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+
+        if (
+            !profileStore ||
+            !catalogWidgetStore ||
+            catalogFileId === undefined ||
+            catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay ||
+            catalogWidgetStore.xAxis === CatalogOverlay.NONE ||
+            catalogWidgetStore.yAxis === CatalogOverlay.NONE
+        ) {
+            return;
+        }
+
+        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
+        if (frame) {
+            catalogWidgetStore.setPlottedImageOverlayState(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
+            const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
+            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
+            catalogStore.clearImageCoordsData(catalogFileId);
+            if (imageCoords.wcsX && imageCoords.wcsY) {
+                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem.system, 0, 0);
+            }
+            profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
+        }
+        if (profileStore.shouldUpdateData) {
+            profileStore.setUpdatingDataStream(true);
+            const catalogFilter = profileStore.updateRequestDataSize;
+            appStore.sendCatalogFilter(catalogFilter);
+        }
+    }
+
+    @action private handleCatalogSystemChange(system: CatalogSystemType) {
+        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
+        if (!profileStore || profileStore.catalogCoordinateSystem.system === system) {
+            return;
+        }
+
+        const previousSystem = profileStore.activedSystem;
+        profileStore.setCatalogCoordinateSystem(system);
+        if (this.shouldAutoSelectImageOverlayColumns) {
+            this.autoSelectAxes(true);
+            return;
+        }
+
+        const shouldClearAxes = previousSystem?.x !== profileStore.activedSystem?.x || previousSystem?.y !== profileStore.activedSystem?.y;
+        if (catalogWidgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay && shouldClearAxes) {
+            catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
+            catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
+        }
     }
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
@@ -306,7 +479,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable(): string {
+    @computed get xAxisLabel(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -318,7 +491,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get yAxisLable(): string {
+    @computed get yAxisLabel(): CatalogOverlay {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -336,37 +509,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 return <Column key={columnName} name={columnName} cellRenderer={rowIndex => this.renderSwitchButtonCell(rowIndex, headerNames[rowIndex])} />;
             default:
                 return <Column key={columnName} name={columnName} />;
-        }
-    }
-
-    private static GetDataType(type: CARTA.ColumnType) {
-        switch (type) {
-            case CARTA.ColumnType.Bool:
-                return "bool";
-            case CARTA.ColumnType.Int8:
-                return "byte";
-            case CARTA.ColumnType.Int16:
-                return "short";
-            case CARTA.ColumnType.Int32:
-                return "int";
-            case CARTA.ColumnType.Int64:
-                return "long";
-            case CARTA.ColumnType.Uint8:
-                return "unsigned byte";
-            case CARTA.ColumnType.Uint16:
-                return "unsigned short";
-            case CARTA.ColumnType.Uint32:
-                return "unsigned int";
-            case CARTA.ColumnType.Uint64:
-                return "unsigned long";
-            case CARTA.ColumnType.Double:
-                return "double";
-            case CARTA.ColumnType.Float:
-                return "float";
-            case CARTA.ColumnType.String:
-                return "string";
-            default:
-                return "unsupported";
         }
     }
 
@@ -389,7 +531,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             headerNames.push(header.name);
             headerDescriptions.push(header.description);
             units.push(header.units);
-            types.push(CatalogOverlayComponent.GetDataType(header.dataType));
+            types.push(getCatalogDataTypeDisplayName(header.dataType));
         }
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
@@ -427,7 +569,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnWidths={columnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
-                cellRendererDependencies={[headerDisplays, profileStore.loadingData]} // trigger re-render on controlHeader change
+                cellRendererDependencies={[headerDisplays, profileStore.isLoadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
             </Table2>
@@ -465,6 +607,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         catalogWidgetStore?.setShowSelectedData(false);
     };
 
+    private shouldPreserveImageOverlayDuringColumnUpdate(): boolean {
+        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
+        if (!profileStore?.isUpdateColumnMode || catalogWidgetStore?.catalogPlotType !== CatalogPlotType.ImageOverlay || catalogWidgetStore.xAxis === CatalogOverlay.NONE || catalogWidgetStore.yAxis === CatalogOverlay.NONE) {
+            return false;
+        }
+
+        const coords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
+        return Boolean(coords.wcsX && coords.wcsY);
+    }
+
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
@@ -475,7 +628,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         // Skip if normal conditions prevent filtering AND we're not in column update mode
-        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.isLoadingOntoImage || !profileStore.shouldUpdateTableView || !profileStore.hasFilter);
 
         if (shouldSkipRequest) {
             return;
@@ -484,7 +637,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(catalogFileId);
+            if (!this.shouldPreserveImageOverlayDuringColumnUpdate()) {
+                appStore.catalogStore.clearImageCoordsData(catalogFileId);
+            }
             if (profileStore.isFileBasedCatalog) {
                 profileStore.updateTableStatus(false);
                 profileStore.resetFilterRequest();
@@ -525,8 +680,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateByInfiniteScroll = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const selectedOnly = catalogWidgetStore?.showSelectedData;
-        if (profileStore?.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
+        const isSelectedOnly = catalogWidgetStore?.isShowingSelectedData;
+        if (profileStore?.isLoadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !isSelectedOnly) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = profileStore.updateRequestDataSize;
             filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
@@ -576,32 +731,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // init plot data
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
-                profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (frame) {
-                    const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
-                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    catalogStore.clearImageCoordsData(catalogFileId);
-                    if (imageCoords.wcsX && imageCoords.wcsY) {
-                        catalogStore.convertToImageCoordinate(
-                            catalogFileId,
-                            imageCoords.wcsX,
-                            imageCoords.wcsY,
-                            wcs,
-                            imageCoords.xHeaderInfo?.units ?? "",
-                            imageCoords.yHeaderInfo?.units ?? "",
-                            profileStore.catalogCoordinateSystem.system,
-                            0,
-                            0
-                        );
-                    }
-                    profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
-                }
-                if (profileStore.shouldUpdateData) {
-                    profileStore.setUpdatingDataStream(true);
-                    const catalogFilter = profileStore.updateRequestDataSize;
-                    appStore.sendCatalogFilter(catalogFilter);
-                }
+                this.applyImageOverlayPlot();
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
@@ -637,14 +767,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        if (!catalogWidgetStore?.showSelectedData) {
+        if (!catalogWidgetStore?.isShowingSelectedData) {
             if (selectedDataIndices.length === 1) {
                 const selectedPointIndexs = profileStore?.selectedPointIndices;
-                let highlighted = false;
+                let isHighlighted = false;
                 if (selectedPointIndexs?.length === 1) {
-                    highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
+                    isHighlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
                 }
-                if (!highlighted) {
+                if (!isHighlighted) {
                     profileStore?.setSelectedPointIndices(selectedDataIndices, true);
                 } else {
                     profileStore?.setSelectedPointIndices([], false);
@@ -665,9 +795,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    @action private handleSplitChange = (newSize: number) => {
+    @computed get isImageOverlaySelectionDirty(): boolean {
+        const catalogWidgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        if (!catalogWidgetStore || !profileStore || catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay || !catalogWidgetStore.hasPlottedImageOverlay) {
+            return false;
+        }
+
+        const shouldPlotMoreRows = catalogWidgetStore.plottedImageOverlayMaxRows !== undefined && profileStore.maxRows > catalogWidgetStore.plottedImageOverlayMaxRows;
+        return (
+            catalogWidgetStore.plottedImageOverlayXAxis !== catalogWidgetStore.xAxis ||
+            catalogWidgetStore.plottedImageOverlayYAxis !== catalogWidgetStore.yAxis ||
+            catalogWidgetStore.plottedImageOverlaySystem !== profileStore.catalogCoordinateSystem.system ||
+            shouldPlotMoreRows
+        );
+    }
+
+    @action private handleSplitChange = (sizes: number[]) => {
+        const newSize = sizes[1]; // second pane (data table) size
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION, CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
@@ -692,7 +839,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
-        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
@@ -717,18 +864,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
 
     private onCompleteRender = () => {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
         if (profileStore?.regionSelected) {
-            if (widgetStore?.showSelectedData) {
+            if (widgetStore?.isShowingSelectedData) {
                 // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
             } else {
-                if (widgetStore?.catalogTableAutoScroll) {
+                if (widgetStore?.isCatalogTableAutoScrollEnabled) {
                     this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
                     widgetStore.setCatalogTableAutoScroll(false);
                 }
@@ -767,9 +914,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnHeaders: profileStore.displayedColumnHeaders,
             numVisibleRows: catalogTable.numVisibleRows,
             columnWidths: validColumnWidths.length === expectedColumnCount ? validColumnWidths : undefined,
-            loadingCell: profileStore.loadingData,
+            isLoadingCell: profileStore.isLoadingData,
             selectedDataIndex: profileStore.selectedPointIndices,
-            showSelectedData: catalogWidgetStore.showSelectedData,
+            shouldShowSelectedData: catalogWidgetStore.isShowingSelectedData,
             updateTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: profileStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
@@ -780,7 +927,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnName: profileStore.sortingInfo.columnName ?? "",
                 sortingType: profileStore.sortingInfo.sortingType
             },
-            disableSort: profileStore.loadOntoImage,
+            shouldDisableSort: profileStore.isLoadingOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
             catalogType: profileStore.catalogType,
@@ -834,14 +981,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         const systemOptions: CatalogSystemType[] = [];
-        AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
+        AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.forEach((value, key) => {
             systemOptions.push(key);
         });
 
-        const activeSystem = AbstractCatalogProfileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
+        const activeSystem = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME.get(profileStore.catalogCoordinateSystem.system);
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
-        const disable = profileStore.loadOntoImage;
+        const isImageOverlaySelectionDirty = this.isImageOverlaySelectionDirty;
+        const plotButtonText = isImageOverlay && isImageOverlaySelectionDirty ? "Update plot" : "Plot";
+        const plotButtonIntent = isImageOverlay && isImageOverlaySelectionDirty ? Intent.DANGER : Intent.PRIMARY;
+        const isOverlayDisabled = profileStore.isLoadingOntoImage;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600) {
@@ -872,7 +1022,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 filterable={false}
                                 items={systemOptions}
                                 activeItem={profileStore.catalogCoordinateSystem.system}
-                                onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
+                                onItemSelect={system => this.handleCatalogSystemChange(system as CatalogSystemType)}
                                 itemRenderer={this.renderSystemPopOver}
                                 disabled={!isImageOverlay}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -885,23 +1035,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
-                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                            <AnchorButton data-testid="catalog-size-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>
+                                Size
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-color-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>
+                                Color
+                            </AnchorButton>
+                            <AnchorButton data-testid="catalog-orientation-button" onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>
+                                Orientation
+                            </AnchorButton>
                         </ButtonGroup>
                     </div>
-                    <SplitPane
-                        className="catalog-table"
-                        split="horizontal"
-                        primary={"second"}
-                        minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
-                        maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
-                        size={catalogWidgetStore.tableSeparatorPosition}
-                        onDragFinished={this.handleSplitChange}
-                        onResizerDoubleClick={this.handleHideHeader}
-                    >
+                    <SplitPane className="catalog-table" direction="vertical" onResizeEnd={this.handleSplitChange}>
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
-                        <Pane className={"catalog-overlay-data-container"}>
+                        <Pane
+                            className={"catalog-overlay-data-container"}
+                            minSize={`${CatalogWidgetStore.MIN_TABLE_SEPARATOR_POSITION}%`}
+                            maxSize={`${CatalogWidgetStore.MAX_TABLE_SEPARATOR_POSITION}%`}
+                            size={catalogWidgetStore.tableSeparatorPosition}
+                        >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>
                     </SplitPane>
@@ -925,39 +1077,45 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
-                                        disabled={disable}
+                                        disabled={isOverlayDisabled}
                                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                         filterable={true}
                                         noResults={noResults}
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={isOverlayDisabled} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                     </Select>
                                 </FormGroup>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
+                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
                                         items={this.axisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
-                                        disabled={isHistogram || disable}
+                                        disabled={isHistogram || isOverlayDisabled}
                                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                         filterable={true}
                                         noResults={noResults}
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
+                                        <Button
+                                            className="catalog-axis-button"
+                                            text={catalogWidgetStore.yAxis}
+                                            disabled={isHistogram || isOverlayDisabled}
+                                            rightIcon="double-caret-vertical"
+                                            data-testid="catalog-rendering-column-y-dropdown"
+                                        />
                                     </Select>
                                 </FormGroup>
 
@@ -968,7 +1126,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     onValueChanged={val => profileStore.setMaxRows(val)}
                                     onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                     displayExponential={false}
-                                    disabled={disable || !profileStore.isFileBasedCatalog}
+                                    disabled={isOverlayDisabled || !profileStore.isFileBasedCatalog}
                                 />
                             </div>
                         </div>
@@ -978,12 +1136,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     intent={Intent.SUCCESS}
                                     text="Apply filter"
                                     onClick={this.handleFilterRequest}
-                                    disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter}
+                                    disabled={isOverlayDisabled || !profileStore.shouldUpdateTableView || !profileStore.hasFilter}
                                     data-testid="catalog-filter-button"
                                 />
-                                <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
-                                <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
-                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
+                                <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={isOverlayDisabled} data-testid="catalog-reset-button" />
+                                <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={isOverlayDisabled} data-testid="catalog-close-button" />
+                                <AnchorButton intent={plotButtonIntent} text={plotButtonText} onClick={this.handlePlotClick} disabled={!this.isPlotButtonEnabled} data-testid="catalog-plot-button" />
                             </div>
                         </div>
                     </div>
