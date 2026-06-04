@@ -52,7 +52,13 @@ float sinhScale(float x) {
     return (exp(x) - exp(-x)) / 2.0;
 }
 
-
+float normalizedSinhScale(float x, float alpha) {
+    float invAlpha = 1.0 / alpha;
+    if (invAlpha > 20.0) {
+        return exp((x - 1.0) * invAlpha) * (1.0 - exp(-2.0 * x * invAlpha)) / (1.0 - exp(-2.0 * invAlpha));
+    }
+    return sinhScale(x * invAlpha) / sinhScale(invAlpha);
+}
 
 void main(void) {
     // Tile border
@@ -96,13 +102,15 @@ void main(void) {
         x = log(uAlpha * x + 1.0) / log(uAlpha + 1.0);
     }
     else if (uScaleType == POWER) {
-        x = (pow(uAlpha, x) - 1.0) / (uAlpha - 1.0);
+        if (abs(uAlpha - 1.0) >= 1.0e-6) {
+            x = (pow(uAlpha, x) - 1.0) / (uAlpha - 1.0);
+        }
     }
     else if (uScaleType == GAMMA) {
         x = pow(x, uGamma);
     }
     else if (uScaleType == SINH) {
-        x = sinhScale(x / uAlpha) / sinhScale(1.0 / uAlpha);
+        x = normalizedSinhScale(x, uAlpha);
     }
     else if (uScaleType == ASINH) {
         x = asinhScale(x / uAlpha) / asinhScale(1.0 / uAlpha);

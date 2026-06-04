@@ -13,6 +13,7 @@ jest.mock("stores/Frame", () => ({
 }));
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
+const POWER_SCALING = 4;
 const SINH_SCALING = 7;
 const ASINH_SCALING = 8;
 const SCALING_TYPES = [SINH_SCALING, ASINH_SCALING];
@@ -174,7 +175,7 @@ describe("sinh/asinh scaling", () => {
     });
 
     test("scaleValue endpoints hold for various alpha values", () => {
-        for (const alpha of [0.1, 0.5, 1, 10, 1000]) {
+        for (const alpha of [1e-6, 0.1, 0.5, 1, 10, 1000]) {
             for (const scaling of SCALING_TYPES) {
                 expect(scaleValue(0, scaling as any, alpha)).toBeCloseTo(0, 12);
                 expect(scaleValue(1, scaling as any, alpha)).toBeCloseTo(1, 12);
@@ -203,6 +204,32 @@ describe("sinh/asinh scaling", () => {
                 expect(scaleValueInverse(sinhScaled, SINH_SCALING as any, alpha)).toBeCloseTo(x, 6);
                 expect(scaleValueInverse(asinhScaled, ASINH_SCALING as any, alpha)).toBeCloseTo(x, 6);
             }
+        }
+    });
+
+    test("sinh scaling stays finite at the minimum alpha", () => {
+        const alpha = 1e-6;
+        for (const x of TEST_SAMPLES) {
+            const scaled = scaleValue(x, SINH_SCALING as any, alpha);
+            expect(Number.isFinite(scaled)).toBe(true);
+            expect(scaled).toBeGreaterThanOrEqual(0);
+            expect(scaled).toBeLessThanOrEqual(1);
+        }
+
+        for (const x of [0, 0.25, 0.5, 0.75, 1]) {
+            const restored = scaleValueInverse(x, SINH_SCALING as any, alpha);
+            expect(Number.isFinite(restored)).toBe(true);
+            expect(restored).toBeGreaterThanOrEqual(0);
+            expect(restored).toBeLessThanOrEqual(1);
+        }
+    });
+});
+
+describe("power scaling", () => {
+    test("alpha=1 uses the linear limit", () => {
+        for (const x of TEST_SAMPLES) {
+            expect(scaleValue(x, POWER_SCALING as any, 1)).toBeCloseTo(x, 12);
+            expect(scaleValueInverse(x, POWER_SCALING as any, 1)).toBeCloseTo(x, 12);
         }
     });
 });

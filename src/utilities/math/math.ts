@@ -108,6 +108,28 @@ function getSmoothedValue(bias: number, contrast: number) {
     return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
+function normalizedSinhScale(x: number, alpha: number): number {
+    const invAlpha = 1.0 / alpha;
+    if (invAlpha > 20) {
+        return (Math.exp((x - 1.0) * invAlpha) * (1.0 - Math.exp(-2.0 * x * invAlpha))) / (1.0 - Math.exp(-2.0 * invAlpha));
+    }
+    return Math.sinh(x * invAlpha) / Math.sinh(invAlpha);
+}
+
+function normalizedSinhScaleInverse(x: number, alpha: number): number {
+    if (x <= 0) {
+        return 0;
+    }
+    if (x >= 1) {
+        return 1;
+    }
+    const invAlpha = 1.0 / alpha;
+    if (invAlpha > 20) {
+        return clamp(1.0 + alpha * Math.log(x), 0, 1);
+    }
+    return clamp(alpha * Math.asinh(x * Math.sinh(invAlpha)), 0, 1);
+}
+
 export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
@@ -121,13 +143,13 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             scaleValue = Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
             break;
         case FrameScaling.POWER:
-            scaleValue = (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            scaleValue = Math.abs(alpha - 1.0) < 1e-12 ? x : (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
             break;
         case FrameScaling.GAMMA:
             scaleValue = Math.pow(x, gamma);
             break;
         case FrameScaling.SINH:
-            scaleValue = Math.sinh(x / alpha) / Math.sinh(1.0 / alpha);
+            scaleValue = normalizedSinhScale(x, alpha);
             break;
         case FrameScaling.ASINH:
             scaleValue = Math.asinh(x / alpha) / Math.asinh(1.0 / alpha);
@@ -178,13 +200,13 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
         case FrameScaling.LOG:
             return (Math.pow(alpha + 1, scaleValue) - 1.0) / alpha;
         case FrameScaling.POWER:
-            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
+            return Math.abs(alpha - 1.0) < 1e-12 ? scaleValue : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
         case FrameScaling.GAMMA:
             return Math.pow(scaleValue, 1.0 / gamma);
         case FrameScaling.SINH:
-            return alpha * Math.asinh(scaleValue * Math.sinh(1.0 / alpha));
+            return normalizedSinhScaleInverse(scaleValue, alpha);
         case FrameScaling.ASINH:
-            return alpha * Math.sinh(scaleValue * Math.asinh(1.0 / alpha));
+            return clamp(alpha * Math.sinh(scaleValue * Math.asinh(1.0 / alpha)), 0, 1);
         default:
             return scaleValue;
     }
