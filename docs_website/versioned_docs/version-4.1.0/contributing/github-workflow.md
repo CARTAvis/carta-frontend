@@ -61,50 +61,50 @@ Each check item in the checklist section is explained below:
 
 For linked issues (if there are): this section is for checking the status of the issues that are linked in the above description.
 
--   assignee and label added: assign yourself to the issue you are working on. Add labels to the issue.
+- assignee and label added: assign yourself to the issue you are working on. Add labels to the issue.
 
--   GitHub Project estimate added: provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
+- GitHub Project estimate added: provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
 
 For the pull request: this section is for checking the status of the pull request and reviewing the code changes.
 
--   reviewers and assignee added: assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.
+- reviewers and assignee added: assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.
 
--   GitHub Project estimate added: provide an estimate for the time required to review the pull request.
+- GitHub Project estimate added: provide an estimate for the time required to review the pull request.
 
--   changelog updated / no changelog update needed: updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.
+- changelog updated / no changelog update needed: updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.
 
--   unit test added (for functions with no dependenies): it is recommended to add unit tests for functions that are related to the code changes.
+- unit test added (for functions with no dependenies): it is recommended to add unit tests for functions that are related to the code changes.
 
--   API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines/#writing-api-documentation) for adding API documentation.
+- API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines/#writing-api-documentation) for adding API documentation.
 
 For dependencies: this section is for checking repositories that have dependencies on carta-frontend or are dependencies of carta-frontend.
 
--   e2e test passing / corresponding fix added: check if the end-to-end tests are passing. This will be checked during the review.
+- e2e test passing / corresponding fix added: check if the end-to-end tests are passing. This will be checked during the review.
 
--   protobuf version bumped / no protobuf version bumped needed: updating the protobuf version is required when the behavior of the protobuf messages is changed.
+- protobuf version bumped / no protobuf version bumped needed: updating the protobuf version is required when the behavior of the protobuf messages is changed.
 
--   protobuf updated to the latest dev commit / no protobuf update needed: updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge. Check [here](#merging-a-pull-request-with-protobuf-changes-required) for the steps.
+- protobuf updated to the latest dev commit / no protobuf update needed: updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge. Check [here](#merging-a-pull-request-with-protobuf-changes-required) for the steps.
 
--   corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged): updating ICD tests is required when there are changes in `BackendService`.
+- corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged): updating ICD tests is required when there are changes in `BackendService`.
 
--   user manual prepared (for large new features): preparing user manual updates in advance is required for large new features.
+- user manual prepared (for large new features): preparing user manual updates in advance is required for large new features.
 
 #### CI checks
 
 Please ensure that the CI passes successfully when making the pull request. The CI checks various items:
 
--   Codebase formatting: Check [here](./developer-tips/#checking-and-fixing-code-format) for automatic codebase formatting.
--   Production builds with different Node versions: The build will not be successful if the lint check fails. Check [here](./developer-tips/#code-linting) for details.
--   Documentation page formatting: Check [here](./documentation-guidelines/#formatting) for automatic formatting.
--   Production build of the documentation website: Details of building the website locally can be found [here](./documentation-guidelines/#building-documentation).
+- Codebase formatting: Check [here](./developer-tips/#checking-and-fixing-code-format) for automatic codebase formatting.
+- Production builds with different Node versions: The build will not be successful if the lint check fails. Check [here](./developer-tips/#code-linting) for details.
+- Documentation page formatting: Check [here](./documentation-guidelines/#formatting) for automatic formatting.
+- Production build of the documentation website: Details of building the website locally can be found [here](./documentation-guidelines/#building-documentation).
 
 ### Merging a pull request
 
 The assignee of the pull request is responsible for merging the pull request. When merging the pull request, ensure the following:
 
--   Sufficient reviewers have approved the pull request.
--   All items in the checklist are completed.
--   All CI checks have passed successfully.
+- Sufficient reviewers have approved the pull request.
+- All items in the checklist are completed.
+- All CI checks have passed successfully.
 
 After merging the pull request, make sure to close the linked issue if necessary. GitHub automatically closes issues when they are linked properly. Remember to delete the branch after the merge.
 
