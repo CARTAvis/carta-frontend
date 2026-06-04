@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, MenuItem, type PopoverProps} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {type ItemRenderer, Select} from "@blueprintjs/select";
 // Equation PNG images
 import asinhPng from "static/equations/asinh.png";
 import gammaPng from "static/equations/gamma.png";
@@ -41,13 +41,30 @@ const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
+    const [activeItem, setActiveItem] = React.useState(props.selectedItem);
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isDropdownOpen) {
+            setActiveItem(props.selectedItem);
+        }
+    }, [isDropdownOpen, props.selectedItem]);
+
     const handleActiveItemChange = (activeItem: FrameScaling | null) => {
         if (activeItem !== null) {
+            setActiveItem(activeItem);
             props.onItemHover?.(activeItem);
         }
     };
 
-    const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers}) => {
+    const handleScalingHover = (scaling: FrameScaling) => {
+        if (activeItem !== scaling) {
+            setActiveItem(scaling);
+            props.onItemHover?.(scaling);
+        }
+    };
+
+    const renderScalingSelectItem: ItemRenderer<FrameScaling> = (scaling, {handleClick, handleFocus, modifiers}) => {
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
@@ -59,7 +76,8 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                onMouseEnter={() => props.onItemHover?.(scaling)}
+                onFocus={handleFocus}
+                onMouseEnter={() => handleScalingHover(scaling)}
                 text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : RenderConfigStore.SCALING_TYPES.get(scaling)}
                 style={{width: "320px"}}
             />
@@ -68,12 +86,18 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
 
     const popoverProps = {
         ...SCALING_POPOVER_PROPS,
-        onInteraction: (isOpen: boolean) => props.onDropdownOpenChange?.(isOpen)
+        onInteraction: (isOpen: boolean) => {
+            setIsDropdownOpen(isOpen);
+            if (isOpen) {
+                setActiveItem(props.selectedItem);
+            }
+            props.onDropdownOpenChange?.(isOpen);
+        }
     };
 
     return (
         <ScalingSelect
-            activeItem={props.selectedItem}
+            activeItem={activeItem}
             onItemSelect={props.onItemSelect}
             onActiveItemChange={handleActiveItemChange}
             popoverProps={popoverProps}
