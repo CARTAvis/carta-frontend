@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Changelog | API | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/api/4.1.0/changelog"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="4.1.0"><meta data-rh="true" name="docusaurus_tag" content="docs-default-4.1.0"><meta data-rh="true" name="docsearch:version" content="4.1.0"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-4.1.0"><meta data-rh="true" property="og:title" content="Changelog | API | CARTA Frontend Documentation"><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/api/4.1.0/changelog"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/4.1.0/changelog" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/4.1.0/changelog" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Changelog","item":"https://cartavis.org/carta-frontend/api/4.1.0/changelog"}]}</script><link rel="stylesheet" href="/carta-frontend/assets/css/styles.4d1ce761.css">
-<script src="/carta-frontend/assets/js/runtime~main.4f24f4fe.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.08f5e95f.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.c9cab38c.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.d2af0940.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -21,7 +21,13 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <ul>
 <li class="">Added quick XY/Z/R matching actions to the matching icons and a &quot;Set as all references&quot; action to the Image List right-click menu (<a href="https://github.com/CARTAvis/carta-frontend/issues/2390" target="_blank" rel="noopener noreferrer" class="">#2390</a>).</li>
 <li class="">Added support for pole-mode offset coordinates (<a href="https://github.com/CARTAvis/carta-frontend/issues/2672" target="_blank" rel="noopener noreferrer" class="">#2672</a>).</li>
+<li class="">Prevent creating regions in the PV preview widget (<a href="https://github.com/CARTAvis/carta-frontend/issues/2816" target="_blank" rel="noopener noreferrer" class="">#2816</a>).</li>
 <li class="">Added copy and paste region support (<a href="https://github.com/CARTAvis/carta-frontend/issues/1960" target="_blank" rel="noopener noreferrer" class="">#1960</a>).</li>
+<li class="">Added keyboard-first region editing with arrow-key region movement, fine/coarse movement modifiers, zoom-aware movement steps, and context-aware deselection/cancel behavior (<a href="https://github.com/CARTAvis/carta-frontend/issues/292" target="_blank" rel="noopener noreferrer" class="">#292</a>).</li>
+<li class="">Added keyboard selection and movement of region control points, including <code>Tab</code>/<code>Shift+Tab</code> point cycling and <code>Enter</code> to enter point-selection mode for supported region types.</li>
+<li class="">Added multi-region selection workflows in the image viewer, including <code>Cmd/Ctrl+Click</code> selection toggling, <code>Shift+Drag</code> box selection, grouped dragging, grouped deletion, and selection-aware region dialog opening (<a href="https://github.com/CARTAvis/carta-frontend/issues/1040" target="_blank" rel="noopener noreferrer" class="">#1040</a> and <a href="https://github.com/CARTAvis/carta-frontend/issues/1955" target="_blank" rel="noopener noreferrer" class="">#1955</a>).</li>
+<li class="">Added multi-region selection workflows in the region list, including <code>Cmd/Ctrl+Click</code>, <code>Shift+Click</code>, <code>Shift+Arrow</code>, <code>Cmd/Ctrl+A</code>, selection cycling, and selection-aware context menu actions (<a href="https://github.com/CARTAvis/carta-frontend/issues/1040" target="_blank" rel="noopener noreferrer" class="">#1040</a> and <a href="https://github.com/CARTAvis/carta-frontend/issues/1955" target="_blank" rel="noopener noreferrer" class="">#1955</a>).</li>
+<li class="">Added multi-region editing in the Region dialog for shared appearance controls, selected-region lock/unlock, hide/show, export, and delete actions <a href="https://github.com/CARTAvis/carta-frontend/issues/1955" target="_blank" rel="noopener noreferrer" class="">#1955</a>.</li>
 </ul>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fixed">Fixed<a href="#fixed" class="hash-link" aria-label="Direct link to Fixed" title="Direct link to Fixed" translate="no">​</a></h3>
 <ul>
@@ -33,11 +39,11 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <li class="">Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes (<a href="https://github.com/CARTAvis/carta-frontend/issues/2804" target="_blank" rel="noopener noreferrer" class="">#2804</a>).</li>
 <li class="">Fixed incorrect spectral cursor WCS information for rotated Stokes cubes after changing Stokes (<a href="https://github.com/CARTAvis/carta-frontend/issues/2795" target="_blank" rel="noopener noreferrer" class="">#2795</a>).</li>
 <li class="">Fixed the persistent streaming progress indicator when generating contours (<a href="https://github.com/CARTAvis/carta-frontend/issues/2805" target="_blank" rel="noopener noreferrer" class="">#2805</a>).</li>
-<li class="">Prevent creating regions in the PV preview widget (<a href="https://github.com/CARTAvis/carta-frontend/issues/2816" target="_blank" rel="noopener noreferrer" class="">#2816</a>).</li>
 </ul>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="changed">Changed<a href="#changed" class="hash-link" aria-label="Direct link to Changed" title="Direct link to Changed" translate="no">​</a></h3>
 <ul>
 <li class="">Changed the layout managers from GoldenLayout to FlexLayout without changing the existing layout features and behaviors (<a href="https://github.com/CARTAvis/carta-frontend/issues/2729" target="_blank" rel="noopener noreferrer" class="">#2729</a>).</li>
+<li class="">Reorganized the Hotkeys dialog region sections to separate general region actions, image-viewer region actions, and region-list actions.</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="600-beta1">[6.0.0-beta.1]<a href="#600-beta1" class="hash-link" aria-label="Direct link to [6.0.0-beta.1]" title="Direct link to [6.0.0-beta.1]" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fixed-1">Fixed<a href="#fixed-1" class="hash-link" aria-label="Direct link to Fixed" title="Direct link to Fixed" translate="no">​</a></h3>
