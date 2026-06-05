@@ -1,29 +1,41 @@
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, runInAction} from "mobx";
 
-import {RegionMode, type RegionsOpacity} from "enums";
+import {RegionMode, RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {getNextRegionOpacity, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
+type AdjacentRegionOptions = {
+    wrap?: boolean;
+    range?: boolean;
+    includeCursor?: boolean;
+    selectedOnly?: boolean;
+    preserveSelection?: boolean;
+};
+
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
-    @observable selectedRegion: RegionStore | null;
+    @observable focusedRegion: RegionStore | null;
+    @observable selectedRegionIds: Set<number> = new Set();
     @observable mode: RegionMode = RegionMode.MOVING;
     @observable newRegionType: CARTA.RegionType;
-    @observable opacity: number = 1;
     @observable isLocked: boolean = false;
     @observable isHoverImage: Boolean = false;
-    private pointShapeCache: CARTA.PointAnnotationShape;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
     private readonly preference: PreferenceStore;
+    private activeRegionDragTargets: RegionStore[] | null = null;
+    private selectionPivotRegionId: number | null = null;
+    private keyboardRangeAnchorRegionId: number | null = null;
+    private keyboardRangeDisplacement: number = 0;
+    private keyboardRangeBaseSelection: Set<number> = new Set();
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
         this.frame = frame;
@@ -31,9 +43,368 @@ export class RegionSetStore {
         this.preference = preference;
         this.newRegionType = preference.regionType;
         this.addPointRegion(frame.center, true);
-        this.selectedRegion = this.regions[0] ?? null;
+        this.focusedRegion = this.regions[0] ?? null;
         makeObservable(this);
     }
+
+    @computed get selectedRegionCount(): number {
+        return this.selectedRegionIds.size;
+    }
+
+    @computed get selectedRegionsList(): RegionStore[] {
+        return Array.from(this.selectedRegionIds).map(id => this.regionMap.get(id)!);
+    }
+
+    @computed get editableRegionsList(): RegionStore[] {
+        return this.regions.filter(region => !region.isTemporary && region.regionId !== CURSOR_REGION_ID);
+    }
+
+    @computed get visibleEditableRegionsList(): RegionStore[] {
+        return this.editableRegionsList.filter(region => region.isVisible);
+    }
+
+    @computed get areAllSelectedRegionsLocked(): boolean {
+        const selectedRegions = this.selectedRegionsList.filter(region => region.isVisible);
+        return selectedRegions.length > 0 && selectedRegions.every(region => region.isLocked);
+    }
+
+    @computed get selectedRegionsOpacity(): RegionOpacity {
+        return this.getRegionsOpacity(this.selectedRegionsList);
+    }
+
+    @computed get editableRegionsOpacity(): RegionOpacity {
+        return this.getRegionsOpacity(this.editableRegionsList);
+    }
+
+    @computed get areAllEditableRegionsLocked(): boolean {
+        const editableRegions = this.visibleEditableRegionsList;
+        return editableRegions.length > 0 && editableRegions.every(region => region.isLocked);
+    }
+
+    private getRegionsOpacity = (regions: RegionStore[]): RegionOpacity => {
+        if (!regions.length || regions.every(region => region.opacity === RegionOpacity.Invisible)) {
+            return RegionOpacity.Invisible;
+        }
+        if (regions.every(region => region.opacity === RegionOpacity.SemiTransparent)) {
+            return RegionOpacity.SemiTransparent;
+        }
+        return RegionOpacity.Visible;
+    };
+
+    isRegionInMultiSelection = (region: RegionStore | null | undefined): boolean => {
+        return !!region && this.selectedRegionCount > 1 && this.selectedRegionIds.has(region.regionId);
+    };
+
+    @action clearSelection = () => {
+        this.selectedRegionIds = new Set();
+        this.focusedRegion = this.cursorRegion;
+        this.resetSelectionRangeState();
+    };
+
+    @action setSelectionByIds = (ids: number[], focusRegionId?: number) => {
+        const regionMap = this.regionMap;
+        const newSet = new Set<number>();
+        for (const id of ids) {
+            if (id !== CURSOR_REGION_ID && regionMap.has(id)) {
+                newSet.add(id);
+            }
+        }
+        this.selectedRegionIds = newSet;
+
+        const selectedIds = Array.from(newSet);
+        if (selectedIds.length === 0) {
+            this.focusedRegion = this.cursorRegion;
+            return;
+        }
+        if (selectedIds.length > 1) {
+            this.deselectPointsInSelection(newSet);
+        }
+
+        const focusRegion = focusRegionId !== undefined && newSet.has(focusRegionId) ? regionMap.get(focusRegionId) : regionMap.get(selectedIds[selectedIds.length - 1]);
+        if (focusRegion) {
+            this.setFocusedRegion(focusRegion);
+            this.selectionPivotRegionId = focusRegion.regionId;
+        }
+    };
+
+    @action selectSingleRegion = (region: RegionStore) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+        this.selectedRegionIds = new Set([region.regionId]);
+        if (region.isPointSelectionSupported) {
+            region.deselectPoint();
+        }
+        this.setFocusedRegion(region);
+        this.selectionPivotRegionId = region.regionId;
+        this.resetKeyboardRangeState();
+    };
+
+    @action replaceRegionId = (previousRegionId: number, regionId: number) => {
+        if (previousRegionId === regionId) {
+            return;
+        }
+
+        if (this.selectedRegionIds.has(previousRegionId)) {
+            const selectedIds = new Set(this.selectedRegionIds);
+            selectedIds.delete(previousRegionId);
+            selectedIds.add(regionId);
+            this.selectedRegionIds = selectedIds;
+        }
+
+        if (this.selectionPivotRegionId === previousRegionId) {
+            this.selectionPivotRegionId = regionId;
+        }
+
+        if (this.keyboardRangeAnchorRegionId === previousRegionId) {
+            this.keyboardRangeAnchorRegionId = regionId;
+        }
+
+        if (this.keyboardRangeBaseSelection.has(previousRegionId)) {
+            const selectedIds = new Set(this.keyboardRangeBaseSelection);
+            selectedIds.delete(previousRegionId);
+            selectedIds.add(regionId);
+            this.keyboardRangeBaseSelection = selectedIds;
+        }
+    };
+
+    @action toggleRegionSelection = (region: RegionStore) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+
+        const selectedIds = new Set(this.selectedRegionIds);
+        if (selectedIds.has(region.regionId)) {
+            selectedIds.delete(region.regionId);
+        } else {
+            selectedIds.add(region.regionId);
+        }
+
+        const ids = Array.from(selectedIds);
+        this.setSelectionByIds(ids, selectedIds.has(region.regionId) ? region.regionId : undefined);
+        this.resetKeyboardRangeState();
+    };
+
+    @action applyRegionBoxSelection = (regionIds: number[]) => {
+        const regionMap = this.regionMap;
+        const boxSelectionIds = Array.from(new Set(regionIds.filter(id => id !== CURSOR_REGION_ID && regionMap.has(id))));
+        if (!boxSelectionIds.length) {
+            return;
+        }
+
+        const selectedIds = new Set(this.selectedRegionIds);
+        const hasSelectedRegion = boxSelectionIds.some(id => selectedIds.has(id));
+        const hasUnselectedRegion = boxSelectionIds.some(id => !selectedIds.has(id));
+
+        if (hasSelectedRegion && hasUnselectedRegion) {
+            boxSelectionIds.forEach(id => selectedIds.add(id));
+        } else {
+            boxSelectionIds.forEach(id => {
+                if (selectedIds.has(id)) {
+                    selectedIds.delete(id);
+                } else {
+                    selectedIds.add(id);
+                }
+            });
+        }
+
+        const ids = Array.from(selectedIds);
+        this.setSelectionByIds(ids, boxSelectionIds[boxSelectionIds.length - 1] ?? ids[ids.length - 1]);
+        this.resetKeyboardRangeState();
+    };
+
+    @action selectAllRegions = () => {
+        const selectableRegions = this.editableRegionsList;
+        if (!selectableRegions.length) {
+            return;
+        }
+
+        const focusedRegionId = this.focusedRegion?.regionId;
+        const focusRegionId = focusedRegionId && selectableRegions.some(region => region.regionId === focusedRegionId) ? focusedRegionId : selectableRegions[selectableRegions.length - 1].regionId;
+        this.setSelectionByIds(
+            selectableRegions.map(region => region.regionId),
+            focusRegionId
+        );
+        this.selectionPivotRegionId = focusRegionId;
+        this.resetKeyboardRangeState();
+    };
+
+    @action selectRegionFromList = (region: RegionStore, regions: RegionStore[], options: {toggle?: boolean; range?: boolean} = {}) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+
+        const hasSelection = this.selectedRegionCount > 0;
+        const regionIndex = regions.findIndex(candidate => candidate.regionId === region.regionId);
+        const pivotIndex = this.selectionPivotRegionId !== null ? regions.findIndex(candidate => candidate.regionId === this.selectionPivotRegionId) : -1;
+
+        if (options.toggle && hasSelection) {
+            this.toggleRegionSelection(region);
+            return;
+        }
+
+        if (options.range && hasSelection && pivotIndex >= 0 && regionIndex >= 0) {
+            this.setSelectionRange(regions, pivotIndex, regionIndex, region.regionId);
+            this.resetKeyboardRangeState();
+            return;
+        }
+
+        if (this.isRegionInMultiSelection(region)) {
+            this.setFocusedRegion(region);
+            this.selectionPivotRegionId = region.regionId;
+            this.resetKeyboardRangeState();
+            return;
+        }
+
+        this.selectSingleRegion(region);
+    };
+
+    @action selectAdjacentRegionFromList = (regions: RegionStore[], direction: 1 | -1, options: Pick<AdjacentRegionOptions, "wrap" | "range" | "includeCursor"> = {}) => {
+        this.selectAdjacentRegion(regions, direction, options);
+    };
+
+    private selectAdjacentRegion = (regions: RegionStore[], direction: 1 | -1, options: AdjacentRegionOptions = {}) => {
+        let list = options.includeCursor ? regions : this.getSelectableRegions(regions);
+        if (options.selectedOnly) {
+            list = list.filter(region => this.selectedRegionIds.has(region.regionId));
+        }
+        if (!list.length) {
+            return;
+        }
+
+        const focusedId = this.focusedRegion?.regionId ?? -1;
+        const focusedIndex = list.findIndex(region => region.regionId === focusedId);
+
+        if (options.range) {
+            this.extendKeyboardSelectionRange(list, focusedIndex, direction);
+            return;
+        }
+
+        const startIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? -1 : list.length;
+        const nextIndex = options.wrap ? this.wrapIndex(startIndex + direction, list.length) : this.clampIndex(startIndex + direction, list.length);
+        const region = list[nextIndex];
+        if (!region) {
+            return;
+        }
+
+        if (options.preserveSelection) {
+            this.setFocusedRegion(region);
+            this.selectionPivotRegionId = region.regionId;
+            this.resetKeyboardRangeState();
+        } else {
+            this.selectSingleRegion(region);
+        }
+        region.deselectPoint();
+    };
+
+    private getSelectableRegions = (regions: RegionStore[]): RegionStore[] => {
+        return regions.filter(region => region.regionId !== CURSOR_REGION_ID);
+    };
+
+    private setSelectionRange = (regions: RegionStore[], startIndex: number, endIndex: number, focusRegionId: number) => {
+        const start = Math.min(startIndex, endIndex);
+        const end = Math.max(startIndex, endIndex);
+        const ids: number[] = [];
+        for (let i = start; i <= end; i++) {
+            const region = regions[i];
+            if (region && region.regionId !== CURSOR_REGION_ID) {
+                ids.push(region.regionId);
+            }
+        }
+        this.setSelectionByIds(ids, focusRegionId);
+    };
+
+    private extendKeyboardSelectionRange = (regions: RegionStore[], focusedIndex: number, direction: 1 | -1) => {
+        const n = regions.length;
+        let anchorIndex = this.keyboardRangeAnchorRegionId !== null ? regions.findIndex(region => region.regionId === this.keyboardRangeAnchorRegionId) : -1;
+        if (anchorIndex >= 0 && focusedIndex !== this.wrapIndex(anchorIndex + this.keyboardRangeDisplacement, n)) {
+            anchorIndex = -1;
+        }
+
+        let displacement: number;
+        if (anchorIndex < 0) {
+            anchorIndex = focusedIndex >= 0 ? focusedIndex : direction > 0 ? 0 : n - 1;
+            this.keyboardRangeAnchorRegionId = regions[anchorIndex].regionId;
+            this.keyboardRangeBaseSelection = new Set(this.selectedRegionIds);
+            this.selectionPivotRegionId = regions[anchorIndex].regionId;
+            displacement = direction;
+        } else {
+            displacement = this.keyboardRangeDisplacement + direction;
+        }
+
+        displacement = Math.max(-(n - 1), Math.min(n - 1, displacement));
+        this.keyboardRangeDisplacement = displacement;
+
+        const selectedIds = new Set<number>(this.keyboardRangeBaseSelection);
+        const sign = displacement >= 0 ? 1 : -1;
+        const steps = Math.abs(displacement);
+        for (let i = 0; i <= steps; i++) {
+            selectedIds.add(regions[this.wrapIndex(anchorIndex + sign * i, n)].regionId);
+        }
+
+        const focusRegionId = regions[this.wrapIndex(anchorIndex + displacement, n)].regionId;
+        this.setSelectionByIds(Array.from(selectedIds), focusRegionId);
+    };
+
+    private resetSelectionRangeState = () => {
+        this.selectionPivotRegionId = null;
+        this.resetKeyboardRangeState();
+    };
+
+    private resetKeyboardRangeState = () => {
+        this.keyboardRangeAnchorRegionId = null;
+        this.keyboardRangeDisplacement = 0;
+        this.keyboardRangeBaseSelection = new Set();
+    };
+
+    private wrapIndex = (value: number, length: number): number => {
+        return ((value % length) + length) % length;
+    };
+
+    private clampIndex = (value: number, length: number): number => {
+        return Math.max(0, Math.min(length - 1, value));
+    };
+
+    private getRegionDragTargets = (origin: RegionStore): RegionStore[] => {
+        if (!origin || origin.regionId === CURSOR_REGION_ID) {
+            return [];
+        }
+
+        const selectedRegions = this.selectedRegionIds.has(origin.regionId) ? this.selectedRegionsList : [origin];
+
+        return selectedRegions.filter(region => region.isVisible && !region.isLocked);
+    };
+
+    @action beginRegionDrag = (origin: RegionStore) => {
+        if (!this.selectedRegionIds.has(origin.regionId)) {
+            this.selectSingleRegion(origin);
+        } else {
+            this.setFocusedRegion(origin);
+        }
+
+        this.activeRegionDragTargets = this.getRegionDragTargets(origin);
+        for (const region of this.activeRegionDragTargets) {
+            region.beginEditing();
+        }
+    };
+
+    @action endRegionDrag = (origin: RegionStore) => {
+        const activeRegionDragTargets = this.activeRegionDragTargets ?? this.getRegionDragTargets(origin);
+        for (const region of activeRegionDragTargets) {
+            region.endEditing();
+        }
+        this.activeRegionDragTargets = null;
+    };
+
+    @action translateRegionDrag = (origin: RegionStore, delta: Point2D) => {
+        const activeRegionDragTargets = this.activeRegionDragTargets ?? this.getRegionDragTargets(origin);
+        for (const region of activeRegionDragTargets) {
+            region.translate(delta);
+        }
+    };
 
     public updateCursorRegionPosition = (pos: Point2D) => {
         if (pos && this.regions.length > 0) {
@@ -83,8 +454,12 @@ export class RegionSetStore {
         return regionMap;
     }
 
+    @computed private get cursorRegion(): RegionStore | null {
+        return this.regions.find(region => region.regionId === CURSOR_REGION_ID) ?? null;
+    }
+
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
-        return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
+        return this.regions?.filter(r => r.isValid && r.regionId !== CURSOR_REGION_ID)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
     @computed get isNewRegionAnnotation(): boolean {
@@ -114,9 +489,8 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], isTemporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, isTemporary);
     };
-    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, isCursorRegion = false) => {
-        this.pointShapeCache = shape;
-        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, isCursorRegion, this.getTempRegionId());
+    @action addAnnPointRegion = (center: Point2D, shape?: CARTA.PointAnnotationShape, isCursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, isCursorRegion, this.getTempRegionId(), "", shape);
     };
 
     @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, isTemporary: boolean = false) => {
@@ -216,8 +590,8 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, isTemporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") => {
-        const region = this.initRegion(points, rotation, regionType, regionId, regionName);
+    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, isTemporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "", pointShape?: CARTA.PointAnnotationShape) => {
+        const region = this.initRegion(points, rotation, regionType, regionId, regionName, pointShape);
         this.regions.push(region);
 
         if (!isTemporary) {
@@ -227,7 +601,7 @@ export class RegionSetStore {
         return region;
     };
 
-    private initRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string): RegionStore => {
+    private initRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string, pointShape?: CARTA.PointAnnotationShape): RegionStore => {
         type CommonInputs = [BackendService, number, FrameStore, Point2D[], CARTA.RegionType, number, number, string];
         type StyleInputs = [string, number, number];
         const commonInputs: CommonInputs = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, rotation, regionName];
@@ -241,8 +615,11 @@ export class RegionSetStore {
                 return new RulerAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNTEXT:
                 return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
-            case CARTA.RegionType.ANNPOINT:
-                return new PointAnnotationStore(...commonInputs, ...annotationStyles);
+            case CARTA.RegionType.ANNPOINT: {
+                const region = new PointAnnotationStore(...commonInputs, ...annotationStyles);
+                region.initializeStyles({pointShape: pointShape ?? this.preference.pointAnnotationShape, pointWidth: this.preference.pointAnnotationWidth});
+                return region;
+            }
             case CARTA.RegionType.ANNVECTOR:
                 return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNELLIPSE:
@@ -261,34 +638,98 @@ export class RegionSetStore {
             const ack = await this.backendService.setRegion(fileId, -1, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
             if (ack.regionId != null) {
-                region.setRegionId(ack.regionId);
+                const regionId = ack.regionId;
+                runInAction(() => {
+                    region.setRegionId(regionId);
+                });
             }
         } catch (err) {
             console.error(err);
         }
     };
 
-    @action selectRegion = (region: RegionStore) => {
+    @action setFocusedRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
-            this.selectedRegion = region;
+            if (this.focusedRegion && this.focusedRegion !== region && this.focusedRegion.isPointSelectionSupported) {
+                this.focusedRegion.deselectPoint();
+            }
+            if (region.regionId !== CURSOR_REGION_ID && !this.selectedRegionIds.has(region.regionId)) {
+                this.selectedRegionIds = new Set([...this.selectedRegionIds, region.regionId]);
+                if (this.selectedRegionIds.size > 1) {
+                    this.deselectPointsInSelection(this.selectedRegionIds);
+                }
+            }
+            this.focusedRegion = region;
         }
     };
 
-    @action selectRegionByIndex = (index: number) => {
-        if (index >= 0 && index < this.regions.length) {
-            this.selectedRegion = this.regions[index];
+    private deselectPointsInSelection = (selectedIds: Set<number>) => {
+        for (const region of this.regions) {
+            if (selectedIds.has(region.regionId) && region.isPointSelectionSupported) {
+                region.deselectPoint();
+            }
         }
     };
 
-    @action deselectRegion = () => {
-        this.selectedRegion = null;
+    private selectAdjacentRegionFromHotkey = (direction: 1 | -1) => {
+        if (this.regions.length <= 1) {
+            return;
+        }
+
+        const isMultiSelection = this.selectedRegionCount > 1;
+        this.selectAdjacentRegion(this.regions, direction, {wrap: true, selectedOnly: isMultiSelection, preserveSelection: isMultiSelection});
+    };
+
+    @action selectNextRegion = () => {
+        this.selectAdjacentRegionFromHotkey(1);
+    };
+
+    @action selectPreviousRegion = () => {
+        this.selectAdjacentRegionFromHotkey(-1);
+    };
+
+    @action toggleSelectedRegionsVisibility = () => {
+        const opacity = getNextRegionOpacity(this.selectedRegionsOpacity);
+        this.selectedRegionsList.forEach(region => region.setOpacity(opacity));
+    };
+
+    @action toggleSelectedRegionsLocked = () => {
+        const visibleSelectedRegions = this.selectedRegionsList.filter(region => region.isVisible);
+        const shouldLock = visibleSelectedRegions.length > 0 && !visibleSelectedRegions.every(region => region.isLocked);
+        visibleSelectedRegions.forEach(region => region.setLocked(shouldLock));
+    };
+
+    @action toggleEditableRegionsLocked = () => {
+        const shouldLock = !this.areAllEditableRegionsLocked;
+        this.visibleEditableRegionsList.forEach(region => region.setLocked(shouldLock));
+    };
+
+    @action setEditableRegionsOpacity = (opacity: RegionOpacity) => {
+        this.editableRegionsList.forEach(region => region.setOpacity(opacity));
+    };
+
+    @action toggleEditableRegionsVisibility = () => {
+        this.setEditableRegionsOpacity(getNextRegionOpacity(this.editableRegionsOpacity));
     };
 
     @action deleteRegion = (region: RegionStore) => {
-        // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
-            if (region === this.selectedRegion) {
-                this.selectedRegion = this.regions[0];
+            if (this.selectedRegionIds.has(region.regionId)) {
+                const selectedIds = new Set(this.selectedRegionIds);
+                selectedIds.delete(region.regionId);
+                this.selectedRegionIds = selectedIds;
+            }
+            if (region === this.focusedRegion) {
+                const editableRegions = this.editableRegionsList;
+                const deletedIndex = editableRegions.findIndex(candidate => candidate.regionId === region.regionId);
+                const remainingRegions = editableRegions.filter(candidate => candidate.regionId !== region.regionId);
+                const nextRegionIndex = deletedIndex >= 0 ? Math.min(deletedIndex, remainingRegions.length - 1) : remainingRegions.length - 1;
+                const nextFocusedRegion = remainingRegions[nextRegionIndex];
+                if (nextFocusedRegion) {
+                    this.selectSingleRegion(nextFocusedRegion);
+                } else {
+                    this.clearSelection();
+                }
             }
             const selectedInd = this.regions.findIndex(r => r === region);
             const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
@@ -406,10 +847,11 @@ export class RegionSetStore {
                         newRegion.setColor(region.color);
                         (newRegion as PointAnnotationStore).initializeStyles(annotationStyles);
                     } else {
-                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], annotationStyles);
+                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], true, annotationStyles);
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.isLocked);
+                    newRegion.setOpacity(region.opacity);
                     // Link the two regions together
                     newRegion.modifiedTimestamp = region.modifiedTimestamp;
                     newId--;
@@ -418,14 +860,7 @@ export class RegionSetStore {
         }
     };
 
-    @action setOpacity(opacity: RegionsOpacity) {
-        this.opacity = opacity;
-    }
-
-    @action setLocked(isLocked?: boolean) {
-        this.isLocked = isLocked === undefined ? !this.isLocked : isLocked;
-        if (this.isLocked) {
-            this.selectRegionByIndex(0);
-        }
+    @action setLocked(shouldLock?: boolean) {
+        this.isLocked = shouldLock === undefined ? !this.isLocked : shouldLock;
     }
 }

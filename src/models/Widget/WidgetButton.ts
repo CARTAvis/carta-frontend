@@ -47,6 +47,13 @@ export const FlexLayoutDomMarker = ({nodeId, target, children}: React.PropsWithC
             const maximizeButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/max']");
             if (maximizeButton) {
                 maximizeButton.setAttribute("data-testid", nodeId + "-header-maximize-button");
+                maximizeButton.setAttribute("title", "Maximise");
+            }
+
+            const popoutButton = markerRef.current?.parentElement?.querySelector<HTMLButtonElement>("button[data-layout-path$='/button/popout']");
+            if (popoutButton) {
+                popoutButton.setAttribute("data-testid", nodeId + "-header-popout-button");
+                popoutButton.setAttribute("title", "Pop out to a new window");
             }
         }
 

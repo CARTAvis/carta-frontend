@@ -69,6 +69,11 @@
                 background: rgba($blue3, 0.1);
             }
 
+            // Active (focused) region row — stronger highlight than secondary
+            &.active {
+                background: rgba($blue3, 0.2);
+            }
+
             &.#{$ns}-dark {
                 background: $dark-gray3;
 
@@ -78,6 +83,10 @@
 
                 &.selected {
                     background: rgba($blue3, 0.2);
+                }
+
+                &.active {
+                    background: rgba($blue3, 0.35);
                 }
             }
 

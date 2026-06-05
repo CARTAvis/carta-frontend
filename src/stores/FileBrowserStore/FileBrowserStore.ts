@@ -719,6 +719,20 @@ export class FileBrowserStore {
         }
     };
 
+    @action showExportSelectedRegions = () => {
+        this.showFileBrowser(BrowserMode.RegionExport, false);
+        this.clearExportRegionIndexes(SelectionMode.All);
+
+        const regions = AppStore.Instance.activeFrame?.regionSet.regions;
+        const selectedRegions = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList;
+        if (!regions?.length || !selectedRegions?.length) {
+            return;
+        }
+
+        const selectedIndexes = selectedRegions.map(region => regions.findIndex(candidate => candidate === region)).filter(index => index >= 0);
+        this.updateExportRegionIndexes(selectedIndexes);
+    };
+
     @action setSaveRestFreqVal = (val: number) => {
         this.saveRestFreq.value = val;
     };
@@ -886,7 +900,7 @@ export class FileBrowserStore {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {
-            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            const activeRegionId = appStore.focusedRegion?.regionId ?? RegionId.CURSOR;
             frame.regionSet.regions.forEach((region, index) => {
                 if (region.regionId !== RegionId.CURSOR) {
                     options.push({

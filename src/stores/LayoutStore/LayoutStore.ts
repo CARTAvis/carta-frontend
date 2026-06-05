@@ -84,6 +84,14 @@ export class LayoutStore {
         return this.userLayoutNames.length;
     }
 
+    @computed get hasPopoutWidget(): boolean {
+        if (!this.layoutModel) {
+            return false;
+        }
+        const currentModelJson = this.layoutModel.toJson();
+        return !!(currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0);
+    }
+
     private clearCurrentLayout = () => {
         const appStore = AppStore.Instance;
         appStore.widgetsStore.removeFloatingWidgets();
@@ -100,6 +108,7 @@ export class LayoutStore {
         const config = this.layouts[layoutName];
         const appStore = AppStore.Instance;
         this.clearCurrentLayout();
+        appStore.widgetsStore.clearPopoutPositions();
 
         // generate docked config & collect docked components
         const dockedConfig = {
@@ -147,6 +156,11 @@ export class LayoutStore {
         const currentModelJson = this.layoutModel.toJson();
         if (!currentModelJson || !currentModelJson.layout) {
             appStore.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
+            return;
+        }
+
+        if (this.hasPopoutWidget) {
+            appStore.alertStore.showAlert("Cannot save layout while an image view is popped out. Please dock it first.");
             return;
         }
 

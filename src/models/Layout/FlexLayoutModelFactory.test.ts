@@ -1,4 +1,4 @@
-import {createFlexLayoutModel, extractAbstractConfig} from "./FlexLayoutModelFactory";
+import {canPopoutWidget, createFlexLayoutModel, extractAbstractConfig, getComponentTabJson} from "./FlexLayoutModelFactory";
 
 const CollectTabIds = (node: any): string[] => {
     if (!node) {
@@ -10,6 +10,18 @@ const CollectTabIds = (node: any): string[] => {
     }
 
     return (node.children || []).flatMap((child: any) => CollectTabIds(child));
+};
+
+const CollectTabs = (node: any): any[] => {
+    if (!node) {
+        return [];
+    }
+
+    if (node.type === "tab") {
+        return [node];
+    }
+
+    return (node.children || []).flatMap((child: any) => CollectTabs(child));
 };
 
 const StripInstanceIds = (node: any): any => {
@@ -97,5 +109,34 @@ describe("FlexLayoutModelFactory", () => {
         });
 
         expect(CollectTabIds(recoveredModel.layout)).toStrictEqual(["stats-0"]);
+    });
+
+    test("only image-view tabs enable popout", () => {
+        expect(canPopoutWidget("image-view")).toBe(true);
+        expect(canPopoutWidget("stats")).toBe(false);
+        expect(getComponentTabJson("image-view")?.enablePopout).toBe(true);
+        expect(getComponentTabJson("image-view")?.enablePopoutIcon).toBe(true);
+        expect(getComponentTabJson("stats")?.enablePopout).toBe(false);
+        expect(getComponentTabJson("stats")?.enablePopoutIcon).toBe(false);
+    });
+
+    test("created FlexLayout model applies popout flags to live tabs", () => {
+        const modelJson = createFlexLayoutModel({
+            type: "row",
+            content: [
+                {type: "component", id: "stats"},
+                {type: "component", id: "image-view"}
+            ]
+        });
+        const tabs = CollectTabs(modelJson.layout);
+        const statsTab = tabs.find(tab => tab.component === "stats");
+        const imageViewTab = tabs.find(tab => tab.component === "image-view");
+
+        expect(modelJson.global.tabEnablePopout).toBe(false);
+        expect(modelJson.global.tabEnablePopoutIcon).toBe(false);
+        expect(statsTab?.enablePopout).toBe(false);
+        expect(statsTab?.enablePopoutIcon).toBe(false);
+        expect(imageViewTab?.enablePopout).toBe(true);
+        expect(imageViewTab?.enablePopoutIcon).toBe(true);
     });
 });

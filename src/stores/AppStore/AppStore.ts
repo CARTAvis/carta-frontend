@@ -76,7 +76,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData} from "utilities";
+import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -1400,11 +1400,7 @@ export class AppStore {
      * Deletes all regions including annotations.
      */
     @action deleteAllRegions = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID) {
-                this.deleteRegion(x);
-            }
-        });
+        this.deleteAllMatchingRegions(() => true);
         AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
     };
 
@@ -1412,20 +1408,25 @@ export class AppStore {
      * Deletes all annotations.
      */
     @action deleteAllAnnotations = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID && x.isAnnotation) {
-                this.deleteRegion(x);
-            }
-        });
+        this.deleteAllMatchingRegions(region => region.isAnnotation);
     };
 
     /**
      * Deletes all regular regions.
      */
     @action deleteAllRegularRegions = () => {
-        this.activeFrame?.regionSet.regionMap.forEach(x => {
-            if (x.regionId !== CURSOR_REGION_ID && !x.isAnnotation) {
-                this.deleteRegion(x);
+        this.deleteAllMatchingRegions(region => !region.isAnnotation);
+    };
+
+    @action private deleteAllMatchingRegions = (predicate: (region: RegionStore) => boolean) => {
+        const regionSet = this.activeFrame?.regionSet;
+        if (!regionSet || regionSet.isLocked) {
+            return;
+        }
+
+        regionSet.regionMap.forEach(region => {
+            if (region.regionId !== CURSOR_REGION_ID && !region.isLocked && predicate(region)) {
+                this.deleteRegion(region);
             }
         });
     };
@@ -2008,6 +2009,15 @@ export class AppStore {
                                 true
                             )
                             .then(this.onReconnectAlertClosed);
+
+                        if (this.layoutStore?.layoutModel) {
+                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
+                                const win = layoutWindow.window;
+                                if (win && !win.closed) {
+                                    win.close();
+                                }
+                            }
+                        }
                     }
                     break;
                 default:
@@ -2120,6 +2130,13 @@ export class AppStore {
             }
         );
 
+        // Update image panel page buttons (now handled reactively via onRenderTab in FlexLayout)
+        autorun(() => {
+            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
+                // FlexLayout re-renders tab buttons automatically via onRenderTab
+            }
+        });
+
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
@@ -2208,7 +2225,7 @@ export class AppStore {
             profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it is the cursor data
-            if (spatialProfileData.regionId === 0) {
+            if (spatialProfileData.regionId === CURSOR_REGION_ID) {
                 this.getFrame(spatialProfileData.fileId ?? -1)?.setCursorValue({x: spatialProfileData.x ?? 0, y: spatialProfileData.y ?? 0}, spatialProfileData.channel ?? 0, spatialProfileData.value ?? 0);
             }
         }
@@ -2779,7 +2796,7 @@ export class AppStore {
                                 region.setLocked(regionInfo.locked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
-                                    frame.regionSet.selectRegion(region);
+                                    frame.regionSet.selectSingleRegion(region);
                                 }
                             }
                         }
@@ -2831,6 +2848,11 @@ export class AppStore {
 
     @flow.bound
     public *saveWorkspace(name: string) {
+        if (this.layoutStore?.hasPopoutWidget) {
+            this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
+            return false;
+        }
+
         const workspace: Workspace = {
             workspaceVersion: 0,
             frontendVersion: CARTA_INFO.version,
@@ -2876,12 +2898,12 @@ export class AppStore {
                 workspaceFile.references.spatial = frame.spatialReference.frameInfo.fileId;
             } else if (frame.regionSet?.regions.length) {
                 workspaceFile.regionsSet = {
-                    selectedRegion: frame.regionSet.selectedRegion?.regionId
+                    selectedRegion: frame.regionSet.focusedRegion?.regionId
                 };
                 workspaceFile.regionsSet.regions = [];
                 for (const region of frame.regionSet.regions) {
                     // Skip cursor region
-                    if (region.regionId === 0) {
+                    if (region.regionId === CURSOR_REGION_ID) {
                         continue;
                     }
                     workspaceFile.regionsSet.regions.push({
@@ -3145,21 +3167,23 @@ export class AppStore {
         return this.frames?.findIndex(frame => frame?.frameInfo.fileId === fileId);
     }
 
-    @computed get selectedRegion(): RegionStore | null {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
-            return this.activeFrame.regionSet.selectedRegion;
-        }
-        return null;
+    @computed get focusedRegion(): RegionStore | null {
+        return this.activeFrame?.regionSet?.focusedRegion ?? null;
     }
 
-    @action copySelectedRegion = () => {
-        const region = this.selectedRegion;
-        if (!region) {
+    @action copySelectedRegion = (): boolean => {
+        const focusedRegion = this.focusedRegion;
+        const regionSet = this.activeFrame?.regionSet;
+        if (!focusedRegion || !regionSet || focusedRegion.regionId === CURSOR_REGION_ID) {
             return false;
         }
 
-        this.regionClipboard = {
-            sourceFileId: region.fileId,
+        const regions = regionSet.selectedRegionsList;
+        if (!regions.length) {
+            return false;
+        }
+
+        const toClipboardItem = (region: RegionStore): RegionClipboardItem => ({
             regionType: region.regionType,
             controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
             rotation: region.rotation,
@@ -3168,54 +3192,99 @@ export class AppStore {
             lineWidth: region.lineWidth,
             dashLength: region.dashLength,
             annotationStyles: _.cloneDeep((region as any).getAnnotationStyles?.())
+        });
+        const focusedRegionIndex = Math.max(
+            0,
+            regions.findIndex(region => region.regionId === focusedRegion.regionId)
+        );
+
+        this.regionClipboard = {
+            sourceFileId: focusedRegion.fileId,
+            regions: regions.map(toClipboardItem),
+            focusedRegionIndex
         };
-        AppToaster.show(SuccessToast("clipboard", "Region copied to clipboard"));
+        AppToaster.show(SuccessToast("clipboard", `${regions.length === 1 ? "Region" : `${regions.length} regions`} copied to clipboard`));
         return true;
     };
 
-    @action pasteRegion = () => {
+    @action pasteRegion = (): boolean => {
         const clipboard = this.regionClipboard;
         const frame = this.activeFrame;
-        if (!clipboard || !frame) {
+        if (!clipboard?.regions?.length || !frame) {
             return false;
         }
 
         const targetRegionFrame = frame.spatialReference ?? frame;
-        const sourceControlPoints = clipboard.controlPoints.map(point => ({x: point.x, y: point.y}));
-        const annotationStyles = _.cloneDeep(clipboard.annotationStyles);
-
-        let targetPoints = sourceControlPoints;
-
+        const targetRegionSet = targetRegionFrame.regionSet;
         const shouldApplyInitialOffset = clipboard.sourceFileId === targetRegionFrame.frameInfo.fileId;
         const pasteOffset = getPasteRegionOffset(this.preferenceStore.regionPasteOffsetUnit, targetRegionFrame.zoomLevel);
-        targetPoints = offsetPointsToAvoidCollision(targetPoints, clipboard.regionType, targetRegionFrame.regionSet.regions, shouldApplyInitialOffset, pasteOffset);
 
-        const region = targetRegionFrame.regionSet.addExistingRegion(
-            targetPoints,
-            clipboard.rotation,
-            clipboard.regionType,
-            targetRegionFrame.regionSet.getTempRegionId(),
-            clipboard.name,
-            clipboard.color,
-            clipboard.lineWidth,
-            clipboard.dashLength ? [clipboard.dashLength] : [],
-            false,
-            annotationStyles
+        const pastedRegions = clipboard.regions
+            .map(regionData => {
+                const targetPoints = offsetPointsToAvoidCollision(
+                    regionData.controlPoints.map(point => ({...point})),
+                    regionData.regionType,
+                    targetRegionSet.regions,
+                    shouldApplyInitialOffset,
+                    pasteOffset
+                );
+                const region = targetRegionSet.addExistingRegion(
+                    targetPoints,
+                    regionData.rotation,
+                    regionData.regionType,
+                    targetRegionSet.getTempRegionId(),
+                    regionData.name,
+                    regionData.color,
+                    regionData.lineWidth,
+                    regionData.dashLength ? [regionData.dashLength] : [],
+                    false,
+                    _.cloneDeep(regionData.annotationStyles)
+                );
+                region?.setLocked(false);
+                return region;
+            })
+            .filter((region): region is RegionStore => !!region);
+
+        if (!pastedRegions.length) {
+            return false;
+        }
+
+        targetRegionSet.setSelectionByIds(
+            pastedRegions.map(region => region.regionId),
+            (pastedRegions[clipboard.focusedRegionIndex] ?? pastedRegions[0])?.regionId
         );
+        return true;
+    };
 
-        if (region) {
-            region.setLocked(false);
-            targetRegionFrame.regionSet.selectRegion(region);
-            return true;
+    @action deleteSelectedRegions = (): boolean => {
+        const frame = this.activeFrame;
+        if (!frame || !frame.regionSet) {
+            return false;
+        }
+
+        const regionSet = frame.regionSet;
+        if (regionSet.isLocked) {
+            return false;
+        }
+
+        if (regionSet.selectedRegionIds?.size > 0) {
+            const toDelete = frame.regionSet.regions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.isLocked);
+            if (toDelete.length > 0) {
+                toDelete.forEach(r => this.deleteRegion(r));
+                return true;
+            }
+            return false;
+        }
+
+        if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+            if (!regionSet.focusedRegion.isLocked) {
+                this.deleteRegion(regionSet.focusedRegion);
+                return true;
+            }
+            return false;
         }
 
         return false;
-    };
-
-    @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.isLocked) {
-            this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
-        }
     };
 
     @action deleteRegion = (region: RegionStore) => {

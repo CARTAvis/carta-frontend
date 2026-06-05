@@ -1,14 +1,48 @@
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {PasteOffsetUnit} from "enums";
+import {PasteOffsetUnit, RegionId, RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
-import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
+import {type RegionStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
+
+import {
+    add2D,
+    doesLineSegmentIntersectRect,
+    doRectsIntersect,
+    getPathSegments,
+    getRectCorners,
+    getRotatedBoxPoints,
+    isPointInPolygon,
+    isPointInRect,
+    length2D,
+    type LineSegment2D,
+    midpoint2D,
+    minMax2D,
+    type Rect2D,
+    subtract2D
+} from "../math2d/math2d";
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
 export const PASTE_OFFSET = 20;
+
+/**
+ * Returns the next opacity state in the region visibility cycle.
+ *
+ * @param current - Current region opacity state.
+ * @returns The next opacity state: visible, semi-transparent, or invisible.
+ */
+export function getNextRegionOpacity(current: RegionOpacity): RegionOpacity {
+    switch (current) {
+        case RegionOpacity.Visible:
+            return RegionOpacity.SemiTransparent;
+        case RegionOpacity.SemiTransparent:
+            return RegionOpacity.Invisible;
+        default:
+            return RegionOpacity.Visible;
+    }
+}
 
 /** Properties needed to transform a region into a different coordinate frame. */
 export interface RegionTransformSource {
@@ -19,9 +53,8 @@ export interface RegionTransformSource {
     rotation: number;
 }
 
-/** Serialisable region data stored on the clipboard for copy-paste operations. */
-export interface RegionClipboardData {
-    sourceFileId: number;
+/** Serialisable geometry and style data for one copied region. */
+export interface RegionClipboardItem {
     regionType: CARTA.RegionType;
     controlPoints: Point2D[];
     rotation: number;
@@ -30,6 +63,13 @@ export interface RegionClipboardData {
     lineWidth: number;
     dashLength: number;
     annotationStyles?: any;
+}
+
+/** Serialisable region data stored on the clipboard for copy-paste operations. */
+export interface RegionClipboardData {
+    sourceFileId: number;
+    regions: RegionClipboardItem[];
+    focusedRegionIndex: number;
 }
 
 /**
@@ -131,65 +171,14 @@ function getSizePixelString(point: Point2D): string {
 }
 
 /**
- * Returns the logical center of a region given its control points.
- *
- * - **Line / vector / ruler** types: midpoint of the two endpoints.
- * - **Polygon / polyline** types: center of the axis-aligned bounding box.
- * - All other types: the first control point (which is the stored center).
- *
- * @param points - Control points of the region in image pixel coordinates.
- * @param regionType - The type of the region.
- * @returns The center point of the region.
- */
-export function getRegionCenter(points: Point2D[], regionType: CARTA.RegionType): Point2D {
-    switch (regionType) {
-        case CARTA.RegionType.LINE:
-        case CARTA.RegionType.ANNLINE:
-        case CARTA.RegionType.ANNVECTOR:
-        case CARTA.RegionType.ANNRULER:
-            if (points.length >= 2) {
-                return {
-                    x: (points[0].x + points[1].x) / 2,
-                    y: (points[0].y + points[1].y) / 2
-                };
-            }
-            return points[0] ?? {x: 0, y: 0};
-        case CARTA.RegionType.POLYGON:
-        case CARTA.RegionType.ANNPOLYGON:
-        case CARTA.RegionType.POLYLINE:
-        case CARTA.RegionType.ANNPOLYLINE:
-            if (!points.length) {
-                return {x: 0, y: 0};
-            }
-
-            let minX = points[0].x;
-            let maxX = points[0].x;
-            let minY = points[0].y;
-            let maxY = points[0].y;
-            for (const point of points) {
-                minX = Math.min(minX, point.x);
-                maxX = Math.max(maxX, point.x);
-                minY = Math.min(minY, point.y);
-                maxY = Math.max(maxY, point.y);
-            }
-
-            return {
-                x: (minX + maxX) / 2,
-                y: (minY + maxY) / 2
-            };
-        default:
-            return points[0] ?? {x: 0, y: 0};
-    }
-}
-
-/**
  * Computes the translation delta used to offset a pasted region away from its
  * source position.
  *
  * For line-like regions (LINE, ANNLINE, ANNVECTOR, ANNRULER) the shift is
- * perpendicular to the line direction: the direction vector is rotated 90°
- * clockwise and scaled so its dominant component equals `pasteOffset`.
- * For all other region types the shift is the fixed diagonal `{x: pasteOffset, y: -pasteOffset}`.
+ * perpendicular to the line direction: the direction vector is rotated 90
+ * degrees clockwise and scaled so its dominant component equals `pasteOffset`.
+ * For all other region types the shift is the fixed diagonal
+ * `{x: pasteOffset, y: -pasteOffset}`.
  *
  * @param points - Control points of the region in image pixel coordinates.
  * @param regionType - The type of the region.
@@ -202,53 +191,21 @@ export function getPasteShiftDelta(points: Point2D[], regionType: CARTA.RegionTy
         case CARTA.RegionType.ANNLINE:
         case CARTA.RegionType.ANNVECTOR:
         case CARTA.RegionType.ANNRULER: {
-            // Shift perpendicular to the line: rotate direction vector 90° clockwise → (ry, -rx),
-            // then scale so the dominant component equals pasteOffset.
-            const rx = points[1].x - points[0].x;
-            const ry = points[1].y - points[0].y;
-            const maxComponent = Math.max(Math.abs(rx), Math.abs(ry));
+            if (points.length < 2) {
+                return {x: pasteOffset, y: -pasteOffset};
+            }
+
+            const delta = subtract2D(points[1], points[0]);
+            const maxComponent = Math.max(Math.abs(delta.x), Math.abs(delta.y));
             if (maxComponent === 0) {
                 return {x: pasteOffset, y: -pasteOffset};
             }
+
             const scale = pasteOffset / maxComponent;
-            return {x: ry * scale, y: -rx * scale};
+            return {x: delta.y * scale, y: -delta.x * scale};
         }
         default:
             return {x: pasteOffset, y: -pasteOffset};
-    }
-}
-
-/**
- * Translates a region's control points by the given offset.
- *
- * For center-based region types (POINT, RECTANGLE, ELLIPSE, and their annotation
- * equivalents) only the first control point (the center) is shifted; size and
- * shape points remain unchanged. For all other types every control point is shifted.
- *
- * @param points - Control points of the region in image pixel coordinates.
- * @param regionType - The type of the region.
- * @param offsetX - Horizontal translation in image pixels.
- * @param offsetY - Vertical translation in image pixels.
- * @returns A new array of shifted control points (original array is not mutated).
- */
-export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionType, offsetX: number, offsetY: number): Point2D[] {
-    switch (regionType) {
-        case CARTA.RegionType.POINT:
-        case CARTA.RegionType.ANNPOINT:
-        case CARTA.RegionType.RECTANGLE:
-        case CARTA.RegionType.ANNRECTANGLE:
-        case CARTA.RegionType.ELLIPSE:
-        case CARTA.RegionType.ANNELLIPSE:
-        case CARTA.RegionType.ANNTEXT:
-        case CARTA.RegionType.ANNCOMPASS:
-            return points.map((point, index) => {
-                if (index === 0) {
-                    return {x: point.x + offsetX, y: point.y + offsetY};
-                }
-                return {x: point.x, y: point.y};
-            });
-        default:
-            return points.map(point => ({x: point.x + offsetX, y: point.y + offsetY}));
     }
 }
 
@@ -264,30 +221,29 @@ export function shiftRegionPoints(points: Point2D[], regionType: CARTA.RegionTyp
  *   offset shrinks in steps as the user zooms in; minimum returned value is 1.
  *
  * @param pasteOffsetUnit - The unit mode chosen in user preferences.
- * @param zoomLevel - The current image zoom level (image pixels per screen pixel).
+ * @param zoomLevel - The current image zoom level.
  * @returns The paste offset in image pixels.
  */
 export function getPasteRegionOffset(pasteOffsetUnit: PasteOffsetUnit, zoomLevel: number): number {
-    if (pasteOffsetUnit === PasteOffsetUnit.ScreenPixel) {
+    if (pasteOffsetUnit === PasteOffsetUnit.ScreenPixel || (pasteOffsetUnit === PasteOffsetUnit.Auto && zoomLevel < 1)) {
         return PASTE_OFFSET / zoomLevel;
-    } else if (pasteOffsetUnit === PasteOffsetUnit.ImagePixel) {
-        return PASTE_OFFSET;
-    } else if (zoomLevel < 1) {
-        return PASTE_OFFSET / zoomLevel;
-    } else {
-        const offset = PASTE_OFFSET / Math.ceil(zoomLevel / 5);
-        return offset > 1 ? offset : 1;
     }
+
+    if (pasteOffsetUnit === PasteOffsetUnit.ImagePixel) {
+        return PASTE_OFFSET;
+    }
+
+    return Math.max(PASTE_OFFSET / Math.ceil(zoomLevel / 5), 1);
 }
 
 /**
  * Shifts a region's control points until its center no longer overlaps any
  * existing region, using repeated applications of {@link getPasteShiftDelta}.
  *
- * An initial shift is applied when `shouldApplyInitialOffset` is `true` (i.e.
- * the region is being pasted onto the same file it was copied from). After that,
- * the loop continues shifting until the center is collision-free or the number of
- * attempts exceeds the count of existing regions.
+ * An initial shift is applied when `shouldApplyInitialOffset` is `true`, i.e.
+ * the region is being pasted onto the same file it was copied from. After that,
+ * the loop continues shifting until the center is collision-free or the number
+ * of attempts exceeds the count of existing regions.
  *
  * Collision is defined as a Chebyshev distance smaller than `pasteOffset / 2`
  * from any valid, non-cursor region center.
@@ -297,31 +253,256 @@ export function getPasteRegionOffset(pasteOffsetUnit: PasteOffsetUnit, zoomLevel
  * @param regions - All regions currently present on the target frame.
  * @param shouldApplyInitialOffset - Whether to apply one shift before collision checking.
  * @param pasteOffset - Collision radius and shift magnitude in image pixels. Defaults to {@link PASTE_OFFSET}.
- * @returns A new set of control points that does not collide with any existing region (or the best position found within the attempt limit).
+ * @returns A new set of control points that does not collide with any existing region, or the best position found within the attempt limit.
  */
 export function offsetPointsToAvoidCollision(points: Point2D[], regionType: CARTA.RegionType, regions: RegionStore[], shouldApplyInitialOffset: boolean, pasteOffset: number = PASTE_OFFSET): Point2D[] {
-    let shiftedPoints = points.map(point => ({x: point.x, y: point.y}));
+    let shiftedPoints = points.map(point => ({...point}));
     let attempts = 0;
     const shiftDelta = getPasteShiftDelta(points, regionType, pasteOffset);
 
-    const hasCollision = (center: Point2D) => {
-        return regions.some(region => {
-            if (region.regionId === CURSOR_REGION_ID || !region.isValid) {
-                return false;
-            }
-
-            return Math.max(Math.abs(region.center.x - center.x), Math.abs(region.center.y - center.y)) < pasteOffset / 2;
-        });
-    };
-
     if (shouldApplyInitialOffset) {
-        shiftedPoints = shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
+        shiftedPoints = translateRegionPoints(shiftedPoints, regionType, shiftDelta);
     }
 
-    while (attempts <= regions.length && hasCollision(getRegionCenter(shiftedPoints, regionType))) {
-        shiftedPoints = shiftRegionPoints(shiftedPoints, regionType, shiftDelta.x, shiftDelta.y);
+    while (attempts <= regions.length && hasRegionCenterCollision(getRegionCenterFromPoints(shiftedPoints, regionType), regions, pasteOffset)) {
+        shiftedPoints = translateRegionPoints(shiftedPoints, regionType, shiftDelta);
         attempts++;
     }
 
     return shiftedPoints;
+}
+
+/**
+ * Builds representative points used for region selection hit testing.
+ *
+ * Point regions contribute their center, line-like and polygonal regions
+ * contribute their control points, and simple shapes contribute sampled points
+ * around their rotated bounding box.
+ *
+ * @param region - Region to sample.
+ * @returns Points in image pixel coordinates used by selection geometry tests.
+ */
+export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
+    if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.ANNPOINT) {
+        return [region.center];
+    }
+
+    if (region.isPolygonalRegion || region.isLineLikeRegion) {
+        return region.controlPoints;
+    }
+
+    const rotation = (region.rotation * Math.PI) / 180.0;
+    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE) {
+        // Ellipse size stores semi-major in y and semi-minor in x.
+        return getRotatedBoxPoints(region.center, region.size.y, region.size.x, rotation);
+    }
+
+    const halfWidth = region.size.x / 2;
+    const halfHeight = region.size.y / 2;
+    return getRotatedBoxPoints(region.center, halfWidth, halfHeight, rotation);
+}
+
+/**
+ * Builds a path from an origin to the first point reaching a target radial distance.
+ *
+ * The final point is interpolated between the previous path point and the first
+ * point whose distance from the origin is at least `targetDistance`.
+ *
+ * @param origin - Starting point of the path.
+ * @param points - Candidate path points in traversal order.
+ * @param targetDistance - Distance from the origin at which to stop the path.
+ * @returns Path points ending at the interpolated target distance when reached.
+ */
+export function getInterpolatedPathAtDistance(origin: Point2D, points: Point2D[], targetDistance: number): Point2D[] {
+    const path = [origin];
+    let previousPoint = origin;
+    let previousDistance = 0;
+
+    for (const point of points) {
+        const distance = length2D(subtract2D(point, origin));
+
+        if (distance >= targetDistance) {
+            const segmentLength = distance - previousDistance;
+            const ratio = segmentLength > 0 ? (targetDistance - previousDistance) / segmentLength : 0;
+            path.push({
+                x: previousPoint.x + (point.x - previousPoint.x) * ratio,
+                y: previousPoint.y + (point.y - previousPoint.y) * ratio
+            });
+            return path;
+        }
+
+        path.push(point);
+        previousPoint = point;
+        previousDistance = distance;
+    }
+
+    return path;
+}
+
+/**
+ * Converts region selection points into line segments for hit testing.
+ *
+ * Compass annotations expose two segments from the shared origin, closed
+ * polygonal/simple-shape regions close their path, and open paths remain open.
+ *
+ * @param region - Region that owns the sampled points.
+ * @param points - Selection points produced for the region.
+ * @returns Line segments used to test intersection with a selection rectangle.
+ */
+export function getRegionSelectionSegments(region: RegionStore, points: Point2D[]): LineSegment2D[] {
+    if (region.regionType === CARTA.RegionType.ANNCOMPASS && points.length >= 3) {
+        return [
+            [points[0], points[1]],
+            [points[0], points[2]]
+        ];
+    }
+
+    if (region.isLineLikeRegion) {
+        return getPathSegments(points);
+    }
+
+    if (region.isPolygonalRegion) {
+        const isClosed = region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON;
+        return getPathSegments(points, isClosed);
+    }
+
+    if (region.isSimpleShapeRegion) {
+        return getPathSegments(points, true);
+    }
+
+    return [];
+}
+
+/**
+ * Tests whether a selection rectangle intersects sampled region geometry.
+ *
+ * The test checks contained points first, then segment intersections. When no
+ * segments are supplied, it falls back to bounding-rectangle overlap.
+ *
+ * @param selectionRect - Axis-aligned selection rectangle.
+ * @param points - Sampled region points.
+ * @param segments - Region segments connecting sampled points.
+ * @returns True when the selection rectangle intersects the sampled geometry.
+ */
+export function doSelectionRectAndRegionPointsIntersect(selectionRect: Rect2D, points: Point2D[], segments: LineSegment2D[]): boolean {
+    if (points.some(point => isPointInRect(point, selectionRect))) {
+        return true;
+    }
+
+    if (segments.length) {
+        return segments.some(([start, end]) => doesLineSegmentIntersectRect(start, end, selectionRect));
+    }
+
+    return doRectsIntersect(selectionRect, getBoundingRect(points));
+}
+
+/**
+ * Tests whether a selection rectangle intersects ruler annotation paths.
+ *
+ * Ruler paths are checked by point containment and segment intersection. When
+ * the auxiliary line is visible, the implied triangle between ruler arms is also
+ * considered selectable.
+ *
+ * @param selectionRect - Axis-aligned selection rectangle.
+ * @param paths - Ruler paths represented as ordered point arrays.
+ * @param isAuxiliaryLineVisible - Whether the auxiliary triangle should be tested.
+ * @returns True when the selection rectangle intersects the ruler geometry.
+ */
+export function doSelectionRectAndRulerPathsIntersect(selectionRect: Rect2D, paths: Point2D[][], isAuxiliaryLineVisible: boolean): boolean {
+    const segments = paths.flatMap(path => getPathSegments(path));
+    if (paths.some(path => path.some(point => isPointInRect(point, selectionRect))) || segments.some(([start, end]) => doesLineSegmentIntersectRect(start, end, selectionRect))) {
+        return true;
+    }
+
+    if (!isAuxiliaryLineVisible || paths.length < 3) {
+        return false;
+    }
+
+    const triangle = [paths[1][0], paths[0][0], paths[2][0]].filter(Boolean);
+    return triangle.length === 3 && getRectCorners(selectionRect).some(point => isPointInPolygon(point, triangle));
+}
+
+function getBoundingRect(points: Point2D[]): Rect2D {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const point of points) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+    }
+    return {x: minX, y: minY, width: maxX - minX, height: maxY - minY};
+}
+
+function hasRegionCenterCollision(center: Point2D, regions: RegionStore[], pasteOffset: number): boolean {
+    return regions.some(region => {
+        if (region.regionId === RegionId.CURSOR || !region.isValid) {
+            return false;
+        }
+
+        return Math.max(Math.abs(region.center.x - center.x), Math.abs(region.center.y - center.y)) < pasteOffset / 2;
+    });
+}
+
+/**
+ * Returns translated control points for a region without mutating the input.
+ *
+ * Center-based regions move only their center control point and preserve size or
+ * offset control points. Line-like and polygonal regions move every control
+ * point by the supplied delta.
+ *
+ * @param points - Region control points in image pixel coordinates.
+ * @param regionType - Type of the region represented by the control points.
+ * @param delta - Image-pixel translation to apply.
+ * @returns A new control point array translated according to the region type.
+ */
+export function translateRegionPoints(points: Point2D[], regionType: CARTA.RegionType, delta: Point2D): Point2D[] {
+    switch (regionType) {
+        case CARTA.RegionType.POINT:
+        case CARTA.RegionType.ANNPOINT:
+        case CARTA.RegionType.RECTANGLE:
+        case CARTA.RegionType.ANNRECTANGLE:
+        case CARTA.RegionType.ELLIPSE:
+        case CARTA.RegionType.ANNELLIPSE:
+        case CARTA.RegionType.ANNTEXT:
+        case CARTA.RegionType.ANNCOMPASS:
+            return points.map((point, index) => (index === CENTER_POINT_INDEX ? add2D(point, delta) : {...point}));
+        default:
+            return points.map(point => add2D(point, delta));
+    }
+}
+
+/**
+ * Computes a region center from raw control points.
+ *
+ * Line-like regions use the midpoint between their two endpoints. Polygonal
+ * regions use the center of their control-point bounding box. Center-based
+ * regions use their first control point. Invalid or incomplete inputs fall back
+ * to the first control point when available, otherwise `{x: 0, y: 0}`.
+ *
+ * @param points - Region control points in image pixel coordinates.
+ * @param regionType - Type of the region represented by the control points.
+ * @returns The computed center point in image pixel coordinates.
+ */
+export function getRegionCenterFromPoints(points: Point2D[], regionType: CARTA.RegionType): Point2D {
+    switch (regionType) {
+        case CARTA.RegionType.LINE:
+        case CARTA.RegionType.ANNLINE:
+        case CARTA.RegionType.ANNVECTOR:
+        case CARTA.RegionType.ANNRULER:
+            return points.length >= 2 ? midpoint2D(points[CENTER_POINT_INDEX], points[1]) : (points[CENTER_POINT_INDEX] ?? {x: 0, y: 0});
+        case CARTA.RegionType.POLYGON:
+        case CARTA.RegionType.ANNPOLYGON:
+        case CARTA.RegionType.POLYLINE:
+        case CARTA.RegionType.ANNPOLYLINE:
+            if (!points.length) {
+                return {x: 0, y: 0};
+            }
+            const bounds = minMax2D(points);
+            return midpoint2D(bounds.minPoint, bounds.maxPoint);
+        default:
+            return points[CENTER_POINT_INDEX] ?? {x: 0, y: 0};
+    }
 }

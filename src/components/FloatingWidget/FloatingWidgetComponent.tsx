@@ -6,6 +6,8 @@ import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
 import {HelpType, ImageType} from "enums";
+import {CustomIcon} from "icons/CustomIcons";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
@@ -13,6 +15,7 @@ import "./FloatingWidgetComponent.scss";
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
     shouldShowPinButton: boolean;
+    canPopout?: boolean;
     shouldShowFloatingSettingsButton?: boolean;
     children?: any;
     zIndex?: number;
@@ -47,17 +50,24 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    private handlePopout = () => {
+        AppStore.Instance.widgetsStore.popoutFloatingWidget(this.props.widgetConfig);
+    };
+
     private handlePinDragStart = (e: React.DragEvent) => {
         const layoutStore = LayoutStore.Instance;
         const layoutRef = layoutStore.layoutRef;
         const widgetConfig = this.props.widgetConfig;
 
         if (layoutRef?.current) {
+            const canPopout = canPopoutWidget(widgetConfig.type);
             const tabJson: any = {
                 type: "tab",
                 component: widgetConfig.type,
                 name: widgetConfig.title || widgetConfig.type,
-                id: widgetConfig.id
+                id: widgetConfig.id,
+                enablePopout: canPopout,
+                enablePopoutIcon: canPopout
             };
 
             if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
@@ -220,6 +230,13 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                                 <span>
                                     <Icon icon={"help"} />
                                 </span>
+                            </Tooltip>
+                        </div>
+                    )}
+                    {this.props.shouldShowPinButton && this.props.canPopout && (
+                        <div className={buttonClass} onClick={this.handlePopout}>
+                            <Tooltip content="Pop out to a new window" position={Position.BOTTOM_RIGHT}>
+                                <CustomIcon icon="popout" viewBox="1 1.5 16 16" />
                             </Tooltip>
                         </div>
                     )}
