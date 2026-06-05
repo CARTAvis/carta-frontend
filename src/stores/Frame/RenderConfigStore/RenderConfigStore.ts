@@ -15,20 +15,12 @@ import {
     RENDER_CONFIG_CONTRAST_MAX,
     RENDER_CONFIG_CONTRAST_MIN,
     RENDER_CONFIG_GAMMA_MAX,
-    RENDER_CONFIG_GAMMA_MIN
+    RENDER_CONFIG_GAMMA_MIN,
+    RENDER_CONFIG_SCALING_TYPES
 } from "./RenderConfigConstants";
 
 export class RenderConfigStore {
-    public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"],
-        [FrameScaling.SINH, "Sinh"],
-        [FrameScaling.ASINH, "Asinh"]
-    ]);
+    public static readonly SCALING_TYPES = RENDER_CONFIG_SCALING_TYPES;
 
     public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     public static readonly COLOR_MAPS_CUSTOM = "custom";
@@ -557,7 +549,7 @@ export class RenderConfigStore {
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling ?? this.scaling;
+        this.scaling = config.scaling === undefined ? this.scaling : RenderConfigStore.isScalingValid(config.scaling) ? config.scaling : FrameScaling.LINEAR;
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }

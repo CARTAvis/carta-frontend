@@ -5,7 +5,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
-import {RENDER_CONFIG_ALPHA_MAX, RENDER_CONFIG_ALPHA_MIN, RENDER_CONFIG_GAMMA_MAX, RENDER_CONFIG_GAMMA_MIN} from "stores/Frame/RenderConfigStore/RenderConfigConstants";
+import {RENDER_CONFIG_ALPHA_MAX, RENDER_CONFIG_ALPHA_MIN, RENDER_CONFIG_GAMMA_MAX, RENDER_CONFIG_GAMMA_MIN, RENDER_CONFIG_SCALING_TYPES} from "stores/Frame/RenderConfigStore/RenderConfigConstants";
 import {clamp} from "utilities";
 
 const DEFAULTS = {
@@ -240,7 +240,8 @@ export class PreferenceStore {
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+        const scaling = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        return RENDER_CONFIG_SCALING_TYPES.has(scaling) ? scaling : DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
