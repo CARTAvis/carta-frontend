@@ -7,6 +7,17 @@ import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
+import {
+    RENDER_CONFIG_ALPHA_MAX,
+    RENDER_CONFIG_ALPHA_MIN,
+    RENDER_CONFIG_BIAS_MAX,
+    RENDER_CONFIG_BIAS_MIN,
+    RENDER_CONFIG_CONTRAST_MAX,
+    RENDER_CONFIG_CONTRAST_MIN,
+    RENDER_CONFIG_GAMMA_MAX,
+    RENDER_CONFIG_GAMMA_MIN
+} from "./RenderConfigConstants";
+
 export class RenderConfigStore {
     public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
         [FrameScaling.LINEAR, "Linear"],
@@ -25,14 +36,14 @@ export class RenderConfigStore {
 
     public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    public static readonly GAMMA_MIN = 0.1;
-    public static readonly GAMMA_MAX = 2;
-    public static readonly ALPHA_MIN = 0.1;
-    public static readonly ALPHA_MAX = 1000000;
-    public static readonly BIAS_MIN = -1;
-    public static readonly BIAS_MAX = 1;
-    public static readonly CONTRAST_MIN = 0;
-    public static readonly CONTRAST_MAX = 2;
+    public static readonly GAMMA_MIN = RENDER_CONFIG_GAMMA_MIN;
+    public static readonly GAMMA_MAX = RENDER_CONFIG_GAMMA_MAX;
+    public static readonly ALPHA_MIN = RENDER_CONFIG_ALPHA_MIN;
+    public static readonly ALPHA_MAX = RENDER_CONFIG_ALPHA_MAX;
+    public static readonly BIAS_MIN = RENDER_CONFIG_BIAS_MIN;
+    public static readonly BIAS_MAX = RENDER_CONFIG_BIAS_MAX;
+    public static readonly CONTRAST_MIN = RENDER_CONFIG_CONTRAST_MIN;
+    public static readonly CONTRAST_MAX = RENDER_CONFIG_CONTRAST_MAX;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number = 0;
@@ -90,6 +101,14 @@ export class RenderConfigStore {
 
     public static isGammaValid(gamma: number): boolean {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
+    }
+
+    private static clampGamma(gamma: number): number {
+        return clamp(gamma, RenderConfigStore.GAMMA_MIN, RenderConfigStore.GAMMA_MAX);
+    }
+
+    private static clampAlpha(alpha: number): number {
+        return clamp(alpha, RenderConfigStore.ALPHA_MIN, RenderConfigStore.ALPHA_MAX);
     }
 
     public static isColormapValid(colormap: string): boolean {
@@ -547,11 +566,11 @@ export class RenderConfigStore {
         }
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
-        this.gamma = config.gamma ?? this.gamma;
-        this.alphaLog = config.alphaLog ?? config.alpha ?? this.alphaLog;
-        this.alphaPower = config.alphaPower ?? config.alpha ?? this.alphaPower;
-        this.alphaSinh = config.alphaSinh ?? this.alphaSinh;
-        this.alphaAsinh = config.alphaAsinh ?? this.alphaAsinh;
+        this.gamma = RenderConfigStore.clampGamma(config.gamma ?? this.gamma);
+        this.alphaLog = RenderConfigStore.clampAlpha(config.alphaLog ?? config.alpha ?? this.alphaLog);
+        this.alphaPower = RenderConfigStore.clampAlpha(config.alphaPower ?? config.alpha ?? this.alphaPower);
+        this.alphaSinh = RenderConfigStore.clampAlpha(config.alphaSinh ?? this.alphaSinh);
+        this.alphaAsinh = RenderConfigStore.clampAlpha(config.alphaAsinh ?? this.alphaAsinh);
         this.isInverted = config.inverted ?? this.isInverted;
         this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;

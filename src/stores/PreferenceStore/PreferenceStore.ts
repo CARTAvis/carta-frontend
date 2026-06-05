@@ -5,6 +5,8 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
+import {RENDER_CONFIG_ALPHA_MAX, RENDER_CONFIG_ALPHA_MIN, RENDER_CONFIG_GAMMA_MAX, RENDER_CONFIG_GAMMA_MIN} from "stores/Frame/RenderConfigStore/RenderConfigConstants";
+import {clamp} from "utilities";
 
 const DEFAULTS = {
     SILENT: {
@@ -146,6 +148,8 @@ const DEFAULTS = {
     }
 };
 
+const LEGACY_RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha" as PreferenceKeys;
+
 /**
  * The store manages the preference setting
  */
@@ -256,23 +260,31 @@ export class PreferenceStore {
     }
 
     @computed get scalingAlphaLog(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaLog;
+        return clamp(
+            this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG) ?? this.preferences.get(LEGACY_RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaLog,
+            RENDER_CONFIG_ALPHA_MIN,
+            RENDER_CONFIG_ALPHA_MAX
+        );
     }
 
     @computed get scalingAlphaPower(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaPower;
+        return clamp(
+            this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER) ?? this.preferences.get(LEGACY_RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaPower,
+            RENDER_CONFIG_ALPHA_MIN,
+            RENDER_CONFIG_ALPHA_MAX
+        );
     }
 
     @computed get scalingAlphaSinh(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaSinh;
+        return clamp(this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaSinh, RENDER_CONFIG_ALPHA_MIN, RENDER_CONFIG_ALPHA_MAX);
     }
 
     @computed get scalingAlphaAsinh(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaAsinh;
+        return clamp(this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaAsinh, RENDER_CONFIG_ALPHA_MIN, RENDER_CONFIG_ALPHA_MAX);
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+        return clamp(this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma, RENDER_CONFIG_GAMMA_MIN, RENDER_CONFIG_GAMMA_MAX);
     }
 
     @computed get nanColorHex(): string {
@@ -743,6 +755,7 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
             PreferenceKeys.RENDER_CONFIG_SCALING,
+            LEGACY_RENDER_CONFIG_SCALING_ALPHA,
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG,
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER,
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH,
