@@ -95,10 +95,6 @@ export class RenderConfigStore {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
     }
 
-    private static clampGamma(gamma: number): number {
-        return clamp(gamma, RenderConfigStore.GAMMA_MIN, RenderConfigStore.GAMMA_MAX);
-    }
-
     private static clampAlpha(alpha: number): number {
         return clamp(alpha, RenderConfigStore.ALPHA_MIN, RenderConfigStore.ALPHA_MAX);
     }
@@ -556,9 +552,9 @@ export class RenderConfigStore {
         if (config.customColormapHexEnd) {
             this.setCustomHexEnd(config.customColormapHexEnd);
         }
-        this.bias = config.bias ?? this.bias;
-        this.contrast = config.contrast ?? this.contrast;
-        this.gamma = RenderConfigStore.clampGamma(config.gamma ?? this.gamma);
+        this.bias = clamp(config.bias ?? this.bias, RenderConfigStore.BIAS_MIN, RenderConfigStore.BIAS_MAX);
+        this.contrast = clamp(config.contrast ?? this.contrast, RenderConfigStore.CONTRAST_MIN, RenderConfigStore.CONTRAST_MAX);
+        this.gamma = clamp(config.gamma ?? this.gamma, RenderConfigStore.GAMMA_MIN, RenderConfigStore.GAMMA_MAX);
         this.alphaLog = RenderConfigStore.clampAlpha(config.alphaLog ?? config.alpha ?? this.alphaLog);
         this.alphaPower = RenderConfigStore.clampAlpha(config.alphaPower ?? config.alpha ?? this.alphaPower);
         this.alphaSinh = RenderConfigStore.clampAlpha(config.alphaSinh ?? this.alphaSinh);
