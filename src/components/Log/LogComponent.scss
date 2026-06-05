@@ -5,10 +5,20 @@
     height: 100%;
     min-width: 300px;
     user-select: text;
-    .log-entry-list {
+    .log-content {
         height: calc(100% - 30px);
+    }
+
+    .log-entry-scroll-container {
+        position: relative;
+        height: 100%;
+    }
+
+    .log-entry-list {
+        height: 100%;
         margin: 0;
         padding-bottom: 5px;
+        overflow-y: auto;
         div {
             padding-top: 2px;
             .#{$ns}-tag {
@@ -17,7 +27,14 @@
         }
     }
 
+    .log-entry-empty {
+        padding-bottom: 0;
+    }
+
     .log-entry-follow {
+        position: absolute;
+        right: 20px;
+        bottom: 5px;
         background: rgba($blue3, 0.3);
     }
 

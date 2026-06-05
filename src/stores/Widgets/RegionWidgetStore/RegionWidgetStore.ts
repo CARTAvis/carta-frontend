@@ -58,7 +58,7 @@ export class RegionWidgetStore {
             } else if (regionId === RegionId.NONE) {
                 return null;
             } else {
-                const selectedRegion = this.effectiveFrame.regionSet?.selectedRegion;
+                const selectedRegion = this.effectiveFrame.regionSet?.focusedRegion;
                 if (selectedRegion) {
                     switch (this.type) {
                         case RegionsType.CLOSED:
@@ -105,14 +105,14 @@ export class RegionWidgetStore {
         return undefined;
     }
 
-    @computed get matchesSelectedRegion(): boolean {
+    @computed get isMatchingSelectedRegion(): boolean {
         if (this.isEffectiveFrameEqualToActiveFrame) {
-            if (this.appStore.selectedRegion) {
-                return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
-            } else {
-                if (this.effectiveRegionId === RegionId.CURSOR || this.effectiveRegionId === RegionId.IMAGE) {
-                    return true;
-                }
+            const focusedRegion = this.appStore.focusedRegion;
+            if (this.effectiveRegionId === focusedRegion?.regionId) {
+                return true;
+            }
+            if (focusedRegion?.regionId === RegionId.CURSOR && this.effectiveRegionId === RegionId.IMAGE) {
+                return true;
             }
         }
         return false;
@@ -122,7 +122,7 @@ export class RegionWidgetStore {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
-    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
+    public static calculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
 
         widgetsMap.forEach(widgetStore => {

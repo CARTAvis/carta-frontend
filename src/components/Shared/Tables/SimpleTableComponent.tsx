@@ -11,7 +11,7 @@ export class SimpleTableComponentProps {
     columnWidths?: Array<number>;
     onColumnWidthChanged?: (index: number, size: number) => void;
     defaultRowHeight?: number;
-    enableGhostCells?: boolean;
+    areGhostCellsEnabled?: boolean;
     isIndexZero?: boolean;
     boldIndex?: number[];
     updateTableRef?: (ref: Table2) => void;
@@ -70,7 +70,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
                 selectionModes={SelectionModes.NONE}
-                enableGhostCells={this.props.enableGhostCells ?? true}
+                enableGhostCells={this.props.areGhostCellsEnabled ?? true}
                 defaultRowHeight={this.props.defaultRowHeight}
                 rowHeaderCellRenderer={this.renderRowHeaderCell}
                 enableRowResizing={false}

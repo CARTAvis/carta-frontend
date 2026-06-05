@@ -22,19 +22,20 @@ export declare type CustomIconName =
     | "polyline"
     | "imageFitting"
     | "lineFitting"
-    | "vectorOverlay";
+    | "vectorOverlay"
+    | "popout";
 
-export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
-    static readonly SIZE_STANDARD = 16;
-    static readonly SIZE_LARGE = 20;
+export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number; viewBox?: string}> {
+    public static readonly SIZE_STANDARD = 16;
+    public static readonly SIZE_LARGE = 20;
 
     public render() {
-        const className = classNames("custom-icon", Classes.ICON, {"dark-theme": AppStore.Instance.darkTheme});
+        const className = classNames("custom-icon", Classes.ICON, {"dark-theme": AppStore.Instance.isDarkTheme});
         const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
             <span className={className}>
-                <svg width={size} height={size} viewBox="0 0 16 16">
-                    {icons[this.props.icon]}
+                <svg width={size} height={size} viewBox={this.props.viewBox || "0 0 16 16"}>
+                    {ICONS[this.props.icon]}
                 </svg>
             </span>
         );
@@ -43,7 +44,7 @@ export class CustomIcon extends React.Component<{icon: CustomIconName; size?: nu
 }
 
 // copy content of tag <path/> in svg, and turn attributes fill-rule/clip-rule into fillRule/clipRule.
-const contourSvg = (
+const CONTOUR_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -56,7 +57,7 @@ const contourSvg = (
     />
 );
 
-const centerSvg = (
+const CENTER_SVG = (
     <g fillRule="evenodd" clipRule="evenodd">
         <circle className="st0" cx="8" cy="8" r="2" />
         <path
@@ -82,7 +83,7 @@ const centerSvg = (
     </g>
 );
 
-const regionListSvg = (
+const REGION_LIST_SVG = (
     <g>
         <g id="Layer_1-2" data-name="Layer 1">
             <path className="cls-1" d="M1,6H8A.9448.9448,0,0,0,9,5,.9448.9448,0,0,0,8,4H1A1,1,0,0,0,1,6Zm9,6H1a1,1,0,0,0,0,2h9a1,1,0,0,0,0-2Zm0-4H1a1,1,0,0,0,0,2h9a.9448.9448,0,0,0,1-1A.9448.9448,0,0,0,10,8Z" />
@@ -91,7 +92,7 @@ const regionListSvg = (
     </g>
 );
 
-const spatialProfilerSvg = (
+const SPATIAL_PROFILER_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -108,7 +109,7 @@ const spatialProfilerSvg = (
     />
 );
 
-const spectralProfilerSvg = (
+const SPECTRAL_PROFILER_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -122,7 +123,7 @@ const spectralProfilerSvg = (
     />
 );
 
-const stokesSvg = (
+const STOKES_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -143,7 +144,7 @@ const stokesSvg = (
     />
 );
 
-const spectralLineQuerySvg = (
+const SPECTRAL_LINE_QUERY_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -152,9 +153,9 @@ const spectralLineQuerySvg = (
     />
 );
 
-const profileSmoothingSvg = <path strokeWidth="2.42095" strokeLinecap="round" fill="none" d="M 1.413244,14.6062 H 3.9277429 V 8.378223 H 6.9751347 V 1.4946692 H 9.5085614 L 14.575415,14.576401" />;
+const PROFILE_SMOOTHING_SVG = <path strokeWidth="2.42095" strokeLinecap="round" fill="none" d="M 1.413244,14.6062 H 3.9277429 V 8.378223 H 6.9751347 V 1.4946692 H 9.5085614 L 14.575415,14.576401" />;
 
-const momentGeneratorSvg = (
+const MOMENT_GENERATOR_SVG = (
     <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -162,21 +163,21 @@ const momentGeneratorSvg = (
     />
 );
 
-const distanceMeasuringSvg = (
+const DISTANCE_MEASURING_SVG = (
     <path
         transform="scale(1.6, 1.6) translate(-2.5, -3)"
         d="M 11.390625 11.390625 L 10.824219 11.960938 L 10.542969 11.679688 L 11.113281 11.113281 L 9.769531 9.769531 L 9.199219 10.335938 L 8.921875 10.054688 L 9.488281 9.488281 L 8.144531 8.144531 L 7.574219 8.710938 L 7.296875 8.433594 L 7.863281 7.863281 L 6.511719 6.511719 L 5.953125 7.078125 L 5.664062 6.800781 L 6.230469 6.230469 L 4.886719 4.886719 L 4.320312 5.457031 L 4.039062 5.167969 L 4.609375 4.601562 L 3.199219 3.199219 L 3.199219 11.601562 C 3.199219 12.265625 3.734375 12.800781 4.398438 12.800781 L 12.800781 12.800781 Z M 4.800781 11.199219 L 4.800781 7.0625 L 8.9375 11.199219 Z M 4.800781 11.199219 "
     />
 );
 
-const cursorSvg = (
+const CURSOR_SVG = (
     <path
         transform="scale(0.9) translate(-1, -1)"
         d="M17.09,18.5l-3.47-3.47L12.5,18L10,10l8,2.5l-2.97,1.11l3.47,3.47L17.09,18.5z M10,3.5c-3.58,0-6.5,2.92-6.5,6.5 s2.92,6.5,6.5,6.5c0.15,0,0.3-0.01,0.45-0.02l0.46,1.46C10.61,17.98,10.31,18,10,18c-4.42,0-8-3.58-8-8s3.58-8,8-8l0,0 c4.42,0,8,3.58,8,8c0,0.31-0.02,0.61-0.05,0.91l-1.46-0.46c0.01-0.15,0.02-0.3,0.02-0.45C16.5,6.42,13.58,3.5,10,3.5 M10,6.5 c-1.93,0-3.5,1.57-3.5,3.5c0,1.76,1.31,3.23,3.01,3.47L10,15c0,0-0.01,0-0.01,0C7.23,15,5,12.76,5,10c0-2.76,2.24-5,5-5l0,0 c2.76,0,5,2.23,5,4.99c0,0,0,0.01,0,0.01l-1.53-0.49C13.23,7.81,11.76,6.5,10,6.5"
     />
 );
 
-const lineSvg = (
+const LINE_SVG = (
     <path
         transform="translate(2.5, -3.5) rotate(45, 8, 8) scale(1.0, 1.6) rotate(-15, 8, 8)"
         fillRule="evenodd"
@@ -185,14 +186,14 @@ const lineSvg = (
     />
 );
 
-const polylineSvg = (
+const POLYLINE_SVG = (
     <path
         transform="scale(0.75) translate(-1.5, -1) rotate(-5, 9, 9)"
         d="M23,8c0,1.1-0.9,2-2,2c-0.18,0-0.35-0.02-0.51-0.07l-3.56,3.55C16.98,13.64,17,13.82,17,14c0,1.1-0.9,2-2,2s-2-0.9-2-2 c0-0.18,0.02-0.36,0.07-0.52l-2.55-2.55C10.36,10.98,10.18,11,10,11s-0.36-0.02-0.52-0.07l-4.55,4.56C4.98,15.65,5,15.82,5,16 c0,1.1-0.9,2-2,2s-2-0.9-2-2s0.9-2,2-2c0.18,0,0.35,0.02,0.51,0.07l4.56-4.55C8.02,9.36,8,9.18,8,9c0-1.1,0.9-2,2-2s2,0.9,2,2 c0,0.18-0.02,0.36-0.07,0.52l2.55,2.55C14.64,12.02,14.82,12,15,12s0.36,0.02,0.52,0.07l3.55-3.56C19.02,8.35,19,8.18,19,8 c0-1.1,0.9-2,2-2S23,6.9,23,8z"
     />
 );
 
-const pvSvg = (
+const PV_SVG = (
     <>
         <path
             fillRule="evenodd"
@@ -204,7 +205,7 @@ const pvSvg = (
 );
 
 // Adapted creative commons license icon https://www.svgrepo.com/svg/66474/rainfall
-const vectorOverlaySvg = (
+const VECTOR_OVERLAY_SVG = (
     <g transform="translate(0, -12) scale(0.03, 0.03)">
         <g className="st0">
             <path
@@ -267,7 +268,7 @@ const vectorOverlaySvg = (
     </g>
 );
 
-const imageFittingSvg = (
+const IMAGE_FITTING_SVG = (
     <>
         <path
             stroke="null"
@@ -282,7 +283,7 @@ const imageFittingSvg = (
     </>
 );
 
-const lineFittingSvg = (
+const LINE_FITTING_SVG = (
     <>
         <path
             stroke="null"
@@ -298,22 +299,30 @@ const lineFittingSvg = (
     </>
 );
 
-const icons = {
-    contour: contourSvg,
-    center: centerSvg,
-    regionList: regionListSvg,
-    spatialProfiler: spatialProfilerSvg,
-    spectralProfiler: spectralProfilerSvg,
-    stokes: stokesSvg,
-    spectralLineQuery: spectralLineQuerySvg,
-    smoothing: profileSmoothingSvg,
-    moments: momentGeneratorSvg,
-    distanceMeasuring: distanceMeasuringSvg,
-    cursor: cursorSvg,
-    line: lineSvg,
-    polyline: polylineSvg,
-    pv: pvSvg,
-    imageFitting: imageFittingSvg,
-    lineFitting: lineFittingSvg,
-    vectorOverlay: vectorOverlaySvg
+const POPOUT_SVG = (
+    <>
+        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+    </>
+);
+
+const ICONS = {
+    contour: CONTOUR_SVG,
+    center: CENTER_SVG,
+    regionList: REGION_LIST_SVG,
+    spatialProfiler: SPATIAL_PROFILER_SVG,
+    spectralProfiler: SPECTRAL_PROFILER_SVG,
+    stokes: STOKES_SVG,
+    spectralLineQuery: SPECTRAL_LINE_QUERY_SVG,
+    smoothing: PROFILE_SMOOTHING_SVG,
+    moments: MOMENT_GENERATOR_SVG,
+    distanceMeasuring: DISTANCE_MEASURING_SVG,
+    cursor: CURSOR_SVG,
+    line: LINE_SVG,
+    polyline: POLYLINE_SVG,
+    pv: PV_SVG,
+    imageFitting: IMAGE_FITTING_SVG,
+    lineFitting: LINE_FITTING_SVG,
+    vectorOverlay: VECTOR_OVERLAY_SVG,
+    popout: POPOUT_SVG
 };

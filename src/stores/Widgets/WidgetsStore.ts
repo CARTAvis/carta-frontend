@@ -1,40 +1,35 @@
-import {Classes} from "@blueprintjs/core";
-import classNames from "classnames";
-import type * as GoldenLayout from "golden-layout";
-import $ from "jquery";
+import * as React from "react";
+import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
+import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
+import {PopoutKeyboardForwarder} from "HotkeyWrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {Observer} from "mobx-react";
 
 import {
     AnimatorComponent,
     CatalogOverlayComponent,
-    CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
     ChannelMapControlComponent,
     CursorInfoComponent,
     HistogramComponent,
-    HistogramSettingsPanelComponent,
     ImageViewComponent,
-    ImageViewSettingsPanelComponent,
     LayerListComponent,
-    LayerListSettingsPanelComponent,
     LogComponent,
     PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
-    RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
-    SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
     SpectralProfilerComponent,
-    SpectralProfilerSettingsPanelComponent,
     StatsComponent,
-    StokesAnalysisComponent,
-    // setting Panel
-    StokesAnalysisSettingsPanelComponent
+    StokesAnalysisComponent
 } from "components";
+import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
+import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -53,23 +48,9 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
+import {smoothStepOffset} from "utilities";
 
-export interface DefaultWidgetConfig {
-    id: string;
-    type: string;
-    minWidth: number;
-    minHeight: number;
-    defaultWidth: number;
-    defaultHeight: number;
-    defaultX?: number;
-    defaultY?: number;
-    isCloseable: boolean;
-    title?: string;
-    parentId?: string;
-    parentType?: string;
-    helpType?: HelpType | HelpType[];
-    componentId?: string;
-}
+export type {DefaultWidgetConfig} from "models";
 
 export class WidgetConfig implements DefaultWidgetConfig {
     id: string;
@@ -116,20 +97,34 @@ export class WidgetConfig implements DefaultWidgetConfig {
     }
 }
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export class WidgetProps {
     id: string;
     docked: boolean;
     floatingSettingsId?: string;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface Disposable {
     dispose(): void;
 }
 
+interface PopoutPositionInfo {
+    parentTabsetId: string;
+    tabIndex: number;
+    wasAlone: boolean;
+    grandparentId: string;
+    tabsetIndexInParent: number;
+    tabsetWeight: number;
+    siblingTabsetId?: string;
+    wasBeforeSibling?: boolean;
+    grandparentOrientation: string;
+}
+
 export class WidgetsStore {
     private static staticInstance: WidgetsStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!WidgetsStore.staticInstance) {
             WidgetsStore.staticInstance = new WidgetsStore();
         }
@@ -159,6 +154,13 @@ export class WidgetsStore {
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
+    private beingUnpinned: Set<string> = new Set();
+    private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
+    private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
+
+    private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
+    private static readonly ImageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
+    private static readonly HideHelpButtonWidgets = ["pv-preview"];
 
     public readonly CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean; icon: string; onClick: () => void; widgetConfig: DefaultWidgetConfig}>([
         [
@@ -167,17 +169,17 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "regionList",
                 onClick: () => WidgetsStore.Instance.createFloatingRegionListWidget(),
-                widgetConfig: RegionListComponent.WIDGET_CONFIG
+                widgetConfig: RegionListComponent.WidgetConfig
             }
         ],
-        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WIDGET_CONFIG}],
+        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WidgetConfig}],
         [
             WidgetType.SpatialProfiler,
             {
                 isCustomIcon: true,
                 icon: "spatialProfiler",
                 onClick: () => WidgetsStore.Instance.createFloatingSpatialProfilerWidget(),
-                widgetConfig: SpatialProfilerComponent.WIDGET_CONFIG
+                widgetConfig: SpatialProfilerComponent.WidgetConfig
             }
         ],
         [
@@ -186,7 +188,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "spectralProfiler",
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralProfilerWidget(),
-                widgetConfig: SpectralProfilerComponent.WIDGET_CONFIG
+                widgetConfig: SpectralProfilerComponent.WidgetConfig
             }
         ],
         [
@@ -195,7 +197,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "calculator",
                 onClick: () => WidgetsStore.Instance.createFloatingStatsWidget(),
-                widgetConfig: StatsComponent.WIDGET_CONFIG
+                widgetConfig: StatsComponent.WidgetConfig
             }
         ],
         [
@@ -204,7 +206,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "timeline-bar-chart",
                 onClick: () => WidgetsStore.Instance.createFloatingHistogramWidget(),
-                widgetConfig: HistogramComponent.WIDGET_CONFIG
+                widgetConfig: HistogramComponent.WidgetConfig
             }
         ],
         [
@@ -213,7 +215,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "video",
                 onClick: () => WidgetsStore.Instance.createFloatingAnimatorWidget(),
-                widgetConfig: AnimatorComponent.WIDGET_CONFIG
+                widgetConfig: AnimatorComponent.WidgetConfig
             }
         ],
         [
@@ -222,7 +224,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "heat-grid",
                 onClick: () => WidgetsStore.Instance.createFloatingChannelMapControlWidget(),
-                widgetConfig: ChannelMapControlComponent.WIDGET_CONFIG
+                widgetConfig: ChannelMapControlComponent.WidgetConfig
             }
         ],
         [
@@ -231,7 +233,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "style",
                 onClick: () => WidgetsStore.Instance.createFloatingRenderWidget(),
-                widgetConfig: RenderConfigComponent.WIDGET_CONFIG
+                widgetConfig: RenderConfigComponent.WidgetConfig
             }
         ],
         [
@@ -240,7 +242,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "stokes",
                 onClick: () => WidgetsStore.Instance.createFloatingStokesWidget(),
-                widgetConfig: StokesAnalysisComponent.WIDGET_CONFIG
+                widgetConfig: StokesAnalysisComponent.WidgetConfig
             }
         ],
         [
@@ -249,7 +251,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "layers",
                 onClick: () => WidgetsStore.Instance.createFloatingLayerListWidget(),
-                widgetConfig: LayerListComponent.WIDGET_CONFIG
+                widgetConfig: LayerListComponent.WidgetConfig
             }
         ],
         [
@@ -258,7 +260,7 @@ export class WidgetsStore {
                 isCustomIcon: false,
                 icon: "heatmap",
                 onClick: () => WidgetsStore.Instance.reloadFloatingCatalogWidget(),
-                widgetConfig: CatalogOverlayComponent.WIDGET_CONFIG
+                widgetConfig: CatalogOverlayComponent.WidgetConfig
             }
         ],
         [
@@ -267,7 +269,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "spectralLineQuery",
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralLineQueryWidget(),
-                widgetConfig: SpectralLineQueryComponent.WIDGET_CONFIG
+                widgetConfig: SpectralLineQueryComponent.WidgetConfig
             }
         ],
         [
@@ -276,7 +278,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "cursor",
                 onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
-                widgetConfig: CursorInfoComponent.WIDGET_CONFIG
+                widgetConfig: CursorInfoComponent.WidgetConfig
             }
         ],
         [
@@ -285,7 +287,7 @@ export class WidgetsStore {
                 isCustomIcon: true,
                 icon: "pv",
                 onClick: () => WidgetsStore.Instance.createFloatingPvGeneratorWidget(),
-                widgetConfig: PvGeneratorComponent.WIDGET_CONFIG
+                widgetConfig: PvGeneratorComponent.WidgetConfig
             }
         ]
     ]);
@@ -334,11 +336,9 @@ export class WidgetsStore {
         });
     };
 
-    public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+    public static resetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
-            storeMap.forEach(widgetStore => {
-                widgetStore.clearXYBounds();
-            });
+            storeMap.forEach(widgetStore => widgetStore.clearXYBounds());
         } else {
             storeMap.forEach(widgetStore => {
                 if (widgetStore.fileId === fileId) {
@@ -352,112 +352,27 @@ export class WidgetsStore {
         makeObservable(this);
 
         this.widgetsMap = new Map<string, Map<string, any>>([
-            [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
-            [SpectralProfilerComponent.WIDGET_CONFIG.type, this.spectralProfileWidgets],
-            [StatsComponent.WIDGET_CONFIG.type, this.statsWidgets],
-            [HistogramComponent.WIDGET_CONFIG.type, this.histogramWidgets],
-            [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
-            [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
-            [ChannelMapControlComponent.WIDGET_CONFIG.type, this.channelMapControlWidgets],
-            [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
-            [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
-            [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
-            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
-            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
-            [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
-            [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
-            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets],
-            [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
+            [SpatialProfilerComponent.WidgetConfig.type, this.spatialProfileWidgets],
+            [SpectralProfilerComponent.WidgetConfig.type, this.spectralProfileWidgets],
+            [StatsComponent.WidgetConfig.type, this.statsWidgets],
+            [HistogramComponent.WidgetConfig.type, this.histogramWidgets],
+            [RenderConfigComponent.WidgetConfig.type, this.renderConfigWidgets],
+            [AnimatorComponent.WidgetConfig.type, this.animatorWidgets],
+            [ChannelMapControlComponent.WidgetConfig.type, this.channelMapControlWidgets],
+            [LayerListComponent.WidgetConfig.type, this.layerListWidgets],
+            [LogComponent.WidgetConfig.type, this.logWidgets],
+            [RegionListComponent.WidgetConfig.type, this.regionListWidgets],
+            [StokesAnalysisComponent.WidgetConfig.type, this.stokesAnalysisWidgets],
+            [CatalogOverlayComponent.WidgetConfig.type, this.catalogWidgets],
+            [CatalogPlotComponent.WidgetConfig.type, this.catalogPlotWidgets],
+            [SpectralLineQueryComponent.WidgetConfig.type, this.spectralLineQueryWidgets],
+            [CursorInfoComponent.WidgetConfig.type, this.cursorInfoWidgets],
+            [PvGeneratorComponent.WidgetConfig.type, this.pvGeneratorWidgets]
         ]);
 
         this.defaultFloatingWidgetOffset = 100;
 
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
-    }
-
-    private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
-        switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListComponent.WIDGET_CONFIG;
-            case LogComponent.WIDGET_CONFIG.type:
-                return LogComponent.WIDGET_CONFIG;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                return AnimatorComponent.WIDGET_CONFIG;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
-                return ChannelMapControlComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerComponent.WIDGET_CONFIG;
-            case StatsComponent.WIDGET_CONFIG.type:
-                return StatsComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramComponent.WIDGET_CONFIG;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                return RegionListComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogPlotComponent.WIDGET_CONFIG.type:
-                return CatalogPlotComponent.WIDGET_CONFIG;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                return SpectralLineQueryComponent.WIDGET_CONFIG;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
-                return CursorInfoComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvGeneratorComponent.WIDGET_CONFIG;
-            case PvPreviewComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
-            default:
-                return PlaceholderComponent.WIDGET_CONFIG;
-        }
-    }
-
-    private static GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
-        switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                return HistogramSettingsPanelComponent.WIDGET_CONFIG;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                return LayerListSettingsPanelComponent.WIDGET_CONFIG;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
-            default:
-                return PlaceholderComponent.WIDGET_CONFIG;
-        }
-    }
-
-    // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
-        const glConfig: GoldenLayout.ReactComponentConfig = {
-            type: "react-component",
-            component: widgetConfig.type,
-            title: widgetConfig.title,
-            id: widgetConfig.id,
-            isClosable: widgetConfig.isCloseable,
-            props: {appStore: AppStore.Instance, id: widgetConfig.id, docked: true}
-        };
-
-        const widgetElement = document.getElementById(elementId);
-        if (widgetElement) {
-            layout.createDragSource(widgetElement, glConfig);
-        }
     }
 
     private getNextId = (defaultId: string) => {
@@ -483,13 +398,13 @@ export class WidgetsStore {
         if (!floatingSettingsWidgets) {
             return null;
         }
-        let settingShowed = false;
+        let isSettingShown = false;
         floatingSettingsWidgets.forEach(value => {
             if (value === parentId) {
-                settingShowed = true;
+                isSettingShown = true;
             }
         });
-        if (settingShowed) {
+        if (isSettingShown) {
             return null;
         }
         let nextIndex = 0;
@@ -512,6 +427,20 @@ export class WidgetsStore {
         return typeof (store as Disposable | undefined)?.dispose === "function";
     };
 
+    private static copyStylesToPopoutWindow(popoutWindow: Window): void {
+        const popoutDoc = popoutWindow.document;
+        // Guard: only copy once per popout window
+        if (popoutDoc.documentElement.dataset.stylesCopied === "true") {
+            return;
+        }
+        // Copy all <style> and <link rel="stylesheet"> from main document
+        const nodes = document.head.querySelectorAll("style, link[rel='stylesheet']");
+        nodes.forEach(node => {
+            popoutDoc.head.appendChild(node.cloneNode(true));
+        });
+        popoutDoc.documentElement.dataset.stylesCopied = "true";
+    }
+
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
@@ -526,88 +455,84 @@ export class WidgetsStore {
                 }
             }
             widgets.delete(widgetId);
+            this.removeCatalogAssociations(widgetId, widgetType);
         }
         // remove floating settings according floating settings Id
-        const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
-        if (floatingSettings) {
-            this.floatingSettingsWidgets.delete(widgetId);
+        this.floatingSettingsWidgets.delete(widgetId);
+    };
+
+    private removeCatalogAssociations = (widgetId: string, widgetType: string) => {
+        if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
+            CatalogStore.Instance.catalogProfiles.delete(widgetId);
+            // Also clear the fileId→widgetId mapping so that re-initializing the widget
+            // (e.g. during layout application) creates a fresh store instead of returning
+            // a stale reference to a store that no longer exists.
+            CatalogStore.Instance.catalogWidgets.forEach((storedWidgetId, fileId) => {
+                if (storedWidgetId === widgetId) {
+                    CatalogStore.Instance.catalogWidgets.delete(fileId);
+                }
+            });
+        } else if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
+            CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
         }
     };
 
-    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string => {
+    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null, preAssignedId: string | null = null): string => {
         let itemId;
         switch (widgetType) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                itemId = ImageViewComponent.WIDGET_CONFIG.id;
+            case ImageViewComponent.WidgetConfig.type:
+                itemId = ImageViewComponent.WidgetConfig.id;
                 break;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                itemId = this.addRenderConfigWidget(null, widgetSettings);
+            case RenderConfigComponent.WidgetConfig.type:
+                itemId = this.addRenderConfigWidget(preAssignedId, widgetSettings);
                 break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpatialProfileWidget(null, widgetSettings);
+            case SpatialProfilerComponent.WidgetConfig.type:
+                itemId = this.addSpatialProfileWidget(preAssignedId, widgetSettings);
                 break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpectralProfileWidget(null, widgetSettings);
+            case SpectralProfilerComponent.WidgetConfig.type:
+                itemId = this.addSpectralProfileWidget(preAssignedId, widgetSettings);
                 break;
-            case StatsComponent.WIDGET_CONFIG.type:
-                itemId = this.addStatsWidget();
+            case StatsComponent.WidgetConfig.type:
+                itemId = this.addStatsWidget(preAssignedId);
                 break;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                itemId = this.addHistogramWidget(null, widgetSettings);
+            case HistogramComponent.WidgetConfig.type:
+                itemId = this.addHistogramWidget(preAssignedId, widgetSettings);
                 break;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                itemId = this.addAnimatorWidget();
+            case AnimatorComponent.WidgetConfig.type:
+                itemId = this.addAnimatorWidget(preAssignedId);
                 break;
-            case ChannelMapControlComponent.WIDGET_CONFIG.type:
-                itemId = this.addAnimatorWidget();
+            case ChannelMapControlComponent.WidgetConfig.type:
+                itemId = this.addChannelMapControlWidget(preAssignedId);
                 break;
-            case LayerListComponent.WIDGET_CONFIG.type:
-                itemId = this.addLayerListWidget();
+            case LayerListComponent.WidgetConfig.type:
+                itemId = this.addLayerListWidget(preAssignedId);
                 break;
-            case LogComponent.WIDGET_CONFIG.type:
-                itemId = this.addLogWidget();
+            case LogComponent.WidgetConfig.type:
+                itemId = this.addLogWidget(preAssignedId);
                 break;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                itemId = this.addRegionListWidget();
+            case RegionListComponent.WidgetConfig.type:
+                itemId = this.addRegionListWidget(preAssignedId);
                 break;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                itemId = this.addStokesWidget(null, widgetSettings);
+            case StokesAnalysisComponent.WidgetConfig.type:
+                itemId = this.addStokesWidget(preAssignedId, widgetSettings);
                 break;
-            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpectralLineQueryWidget();
+            case SpectralLineQueryComponent.WidgetConfig.type:
+                itemId = this.addSpectralLineQueryWidget(preAssignedId);
                 break;
-            case CursorInfoComponent.WIDGET_CONFIG.type:
-                itemId = this.addCursorInfoWidget();
+            case CursorInfoComponent.WidgetConfig.type:
+                itemId = this.addCursorInfoWidget(preAssignedId);
                 break;
-            case PvGeneratorComponent.WIDGET_CONFIG.type:
-                itemId = this.addPvGeneratorWidget();
+            case PvGeneratorComponent.WidgetConfig.type:
+                itemId = this.addPvGeneratorWidget(preAssignedId);
                 break;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.catalogProfiles.set(itemId, 1);
-                if (widgetSettings) {
-                    this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);
-                }
+            case CatalogOverlayComponent.WidgetConfig.type:
+                itemId = this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId);
                 break;
             case CatalogPlotType.D2Scatter:
-                const scatterProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: "None",
-                    yColumnName: "None",
-                    plotType: CatalogPlotType.D2Scatter
-                };
-                itemId = this.addCatalogPlotWidget(scatterProps);
-                const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId);
                 break;
             case CatalogPlotType.Histogram:
-                const histogramProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: "None",
-                    yColumnName: undefined,
-                    plotType: CatalogPlotType.Histogram
-                };
-                itemId = this.addCatalogPlotWidget(histogramProps);
-                const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
-                CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -620,20 +545,94 @@ export class WidgetsStore {
         return itemId;
     };
 
+    private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
+        if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
+            const catalogFileId = widgetSettings["catalogFileId"];
+            const itemId = this.addCatalogWidget(catalogFileId, preAssignedId, widgetSettings);
+            // Ensure catalogProfiles is set to the saved fileId so the component can look
+            // up the correct file (the component constructor only defaults to fileId 1).
+            if (itemId) {
+                CatalogStore.Instance.catalogProfiles.set(itemId, catalogFileId);
+            }
+            return itemId;
+        }
+        const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        CatalogStore.Instance.catalogProfiles.set(itemId, 1);
+        return itemId;
+    };
+
+    private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null): string | null => {
+        const itemId = this.addCatalogPlotWidget(props, preAssignedId);
+        if (itemId) {
+            const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
+            CatalogStore.Instance.setCatalogPlots(componentId, 1, itemId);
+        }
+        return itemId;
+    };
+
     public removeFloatingWidgets = () => {
-        if (this.floatingWidgets) {
-            this.floatingWidgets.forEach(widgetConfig => this.removeFloatingWidget(widgetConfig.id));
+        this.floatingWidgets.slice().forEach(widgetConfig => this.removeFloatingWidget(widgetConfig.id));
+    };
+
+    @action public clearDockedWidgets = () => {
+        this.widgetsMap.forEach((widgets, widgetType) => {
+            const widgetIds = Array.from(widgets.keys());
+            widgetIds.forEach(widgetId => this.removeWidget(widgetId, widgetType));
+        });
+    };
+
+    public clearPopoutPositions = () => {
+        this.popoutPositions.clear();
+    };
+
+    private getNearestSibling = (tabsetNode: TabSetNode) => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const siblingIndex = tabsetIndex > 0 ? tabsetIndex - 1 : tabsetIndex + 1;
+        return grandparent.getChildren()[siblingIndex] ?? null;
+    };
+
+    private getPopoutPositionInfo = (tabNode: TabNode, tabsetNode: TabSetNode): PopoutPositionInfo | null => {
+        const grandparent = tabsetNode.getParent();
+        if (!grandparent) {
+            return null;
+        }
+
+        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+        const nearestSibling = this.getNearestSibling(tabsetNode);
+
+        return {
+            parentTabsetId: tabsetNode.getId(),
+            tabIndex: tabsetNode.getChildren().indexOf(tabNode),
+            wasAlone: tabsetNode.getChildren().length === 1,
+            grandparentId: grandparent.getId(),
+            tabsetIndexInParent: tabsetIndex,
+            tabsetWeight: tabsetNode.getWeight(),
+            siblingTabsetId: nearestSibling?.getId(),
+            wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
+            grandparentOrientation: grandparent.getOrientation().getName()
+        };
+    };
+
+    private savePopoutPosition = (tabNode: TabNode, tabsetNode: TabSetNode) => {
+        const popoutPositionInfo = this.getPopoutPositionInfo(tabNode, tabsetNode);
+        if (popoutPositionInfo) {
+            this.popoutPositions.set(tabNode.getId(), popoutPositionInfo);
         }
     };
 
-    createFloatingWidget = savedConfig => {
+    createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
             let savedConfigId = savedConfig.id;
             if (savedConfig.plotType) {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -649,14 +648,15 @@ export class WidgetsStore {
     };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
-        // init docked widgets
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
                 let componentConfigId = componentConfig.id;
                 if ("plotType" in componentConfig) {
                     componentConfigId = componentConfig.plotType;
                 }
-                const itemId = this.addWidgetByType(componentConfigId, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null);
+                // Pass the pre-assigned ID from the FlexLayout model so widget store IDs match tab node IDs
+                const preAssignedId = componentConfig.props.id || null;
+                const itemId = this.addWidgetByType(componentConfigId, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null, preAssignedId);
                 if (itemId) {
                     componentConfig.id = itemId;
                     componentConfig.props.id = itemId;
@@ -668,107 +668,430 @@ export class WidgetsStore {
         floating.forEach(savedConfig => this.createFloatingWidget(savedConfig));
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout) => {
-        if (!layout) {
-            console.log("Invalid parameters!");
+    private getWidgetComponentId = (node: TabNode): string => {
+        const config = node.getConfig() || {};
+        return typeof config.id === "string" && config.id.length > 0 ? config.id : node.getId();
+    };
+
+    private getWidgetTestId = (node: TabNode): string => node.getId();
+
+    // FlexLayout callback for App.tsx
+    renderWidgetFactory = (node: TabNode): React.ReactNode => {
+        const component = node.getComponent();
+        if (!component) {
+            return null;
+        }
+        const testId = this.getWidgetTestId(node);
+        const config = node.getConfig() || {};
+
+        if (component === PlaceholderComponent.WidgetConfig.type) {
+            const placeholderProps = {
+                id: this.getWidgetComponentId(node),
+                isDocked: true,
+                label: typeof config.label === "string" ? config.label : node.getName()
+            };
+            const element = React.createElement(PlaceholderComponent, placeholderProps);
+            return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
+        }
+
+        const componentClass = getWidgetMap().get(component)?.component;
+        if (!componentClass) {
+            return null;
+        }
+        const componentId = this.getWidgetComponentId(node);
+        const props: WidgetProps = {
+            id: componentId,
+            docked: true,
+            floatingSettingsId: config.floatingSettingsId
+        };
+        const element = React.createElement(componentClass, props);
+
+        // Wrap popped-out tabs with Blueprint providers so overlays render in the popout window
+        if (node.isPoppedOut()) {
+            const popoutWindow = node.getWindow();
+            if (popoutWindow) {
+                const popoutBody = popoutWindow.document.body;
+                // Apply theme classes to popout body so CSS selectors match
+                if (AppStore.Instance.isDarkTheme) {
+                    popoutBody.classList.add(Classes.DARK, "layout-container", "dark-theme");
+                } else {
+                    popoutBody.classList.remove(Classes.DARK, "dark-theme");
+                    popoutBody.classList.add("layout-container");
+                }
+                WidgetsStore.copyStylesToPopoutWindow(popoutWindow);
+                return React.createElement(
+                    PortalProvider,
+                    {portalContainer: popoutBody},
+                    React.createElement(
+                        OverlaysProvider,
+                        null,
+                        React.createElement(HotkeysProvider, null, React.createElement(PopoutKeyboardForwarder, {popoutWindow: popoutWindow}), React.createElement(PopoutEventForwarder, {popoutWindow: popoutWindow}), element)
+                    )
+                );
+            }
+        }
+        return React.createElement(React.Fragment, null, React.createElement(FlexLayoutDomMarker, {nodeId: testId, target: "tab-content"}), element);
+    };
+
+    // FlexLayout callback for App.tsx
+    onRenderTab = (node: TabNode, renderValues: ITabRenderValues) => {
+        const content = renderValues.content || node.getName();
+        renderValues.content = React.createElement(FlexLayoutDomMarker, {nodeId: this.getWidgetTestId(node), target: "tab"}, content);
+    };
+
+    // FlexLayout callback for App.tsx
+    onRenderTabSet = (tabSetNode: TabSetNode | BorderNode, renderValues: ITabSetRenderValues) => {
+        const selectedNode = tabSetNode.getSelectedNode() as TabNode | undefined;
+        if (!selectedNode) {
             return;
         }
 
-        layout.registerComponent("placeholder", PlaceholderComponent);
-        layout.registerComponent("image-view", ImageViewComponent);
-        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
-        layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
-        layout.registerComponent("spectral-line-query", SpectralLineQueryComponent);
-        layout.registerComponent("stats", StatsComponent);
-        layout.registerComponent("histogram", HistogramComponent);
-        layout.registerComponent("render-config", RenderConfigComponent);
-        layout.registerComponent("region-list", RegionListComponent);
-        layout.registerComponent("layer-list", LayerListComponent);
-        layout.registerComponent("cursor-info", CursorInfoComponent);
-        layout.registerComponent("pv-generator", PvGeneratorComponent);
-        layout.registerComponent("pv-preview", PvPreviewComponent);
-        layout.registerComponent("log", LogComponent);
-        layout.registerComponent("animator", AnimatorComponent);
-        layout.registerComponent("channel-map-control", ChannelMapControlComponent);
-        layout.registerComponent("stokes", StokesAnalysisComponent);
-        layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
-        layout.registerComponent("catalog-plot", CatalogPlotComponent);
+        const component = selectedNode.getComponent() || "";
+        const nodeId = this.getWidgetTestId(selectedNode);
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        const canMaximize = "canMaximize" in tabSetNode && typeof tabSetNode.canMaximize === "function" && tabSetNode.canMaximize();
+        const buttons: React.ReactNode[] = [];
 
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
-        const hideHelpButtonWidgets = ["pv-preview"];
-        // add drag source buttons for ToolbarMenuComponent
-        this.CARTAWidgets.forEach((props, widgetType) => {
-            const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
-            WidgetsStore.CreateDragSource(layout, props.widgetConfig, widgetButtonID);
-        });
+        // Button order from left to right: channel-map, previous, multi-panel, next, settings, help, detach
+        // (built-in popout and maximize are appended by FlexLayout after these)
 
-        layout.on("stackCreated", stack => {
-            const unpinButton = this.getControlButton("lm-pin", "detach", "unpin").on("click", () => this.unpinWidget(stack.getActiveContentItem()));
-            const helpButton = this.getControlButton("lm-help", "help", "help").on("click", ev => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
-            const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
-            const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
-            const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
-            const channelMapButton = this.getControlButton("lm-channel-map-panel", "enable/disable channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
-            this.updateImagePanelButton();
-            const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
-            stack.header.controlsContainer.prepend([channelMapButton, previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
+        if (component === "image-view") {
+            buttons.push(
+                React.createElement(Observer, {
+                    key: "image-view-controls-" + nodeId,
+                    children: () => {
+                        const config = AppStore.Instance.imageViewConfigStore;
+                        const imagePanelMode = config.imagePanelMode;
+                        const hasPrevious = config.currentImagePage > 0;
+                        const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
 
-            stack.on("activeContentItemChanged", (contentItem: any) => {
-                if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const config = stack.getActiveContentItem().config;
-                    const component = config.component;
-                    const stackHeaderControlButtons = stack.header.controlsContainer[0];
-
-                    // show/hide help button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-help")
-                        ?.attr("style", hideHelpButtonWidgets.includes(component) ? "display:none;" : "");
-
-                    // show/hide cog button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm_settings")
-                        ?.attr("style", showCogWidgets.includes(component) ? "" : "display:none;");
-
-                    // show/hide image panel buttons
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous, li.lm-channel-map-panel")
-                        ?.attr("style", component === "image-view" ? "" : "display:none;");
-
-                    // disable unpin button when active tab is image-view
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-pin")
-                        ?.attr("style", component === "image-view" ? "display:none;" : "");
-
-                    if (component === "image-view") {
-                        this.updateImagePanelPageButtons();
+                        return React.createElement(
+                            React.Fragment,
+                            null,
+                            CreateWidgetButton({
+                                buttonKey: "channel-map-" + nodeId,
+                                iconClassName: Classes.iconClass("heat-grid"),
+                                isDarkTheme,
+                                onClick: () => this.onChannelMapButtonClick(),
+                                testId: nodeId + "-header-channel-map-button",
+                                title: "Enable/Disable channel map"
+                            }),
+                            CreateWidgetButton({
+                                buttonKey: "prev-page-" + nodeId,
+                                iconClassName: Classes.iconClass("step-backward"),
+                                isDarkTheme,
+                                isDisabled: !hasPrevious,
+                                onClick: () => this.onPreviousPageClick(),
+                                testId: nodeId + "-header-previous-page-button",
+                                title: imagePanelMode === ImagePanelMode.None ? "Previous image" : "Previous page"
+                            }),
+                            CreateWidgetButton({
+                                buttonKey: "image-panel-" + nodeId,
+                                iconClassName: this.getImagePanelButtonIcon(imagePanelMode),
+                                isDarkTheme,
+                                onClick: () => this.onImagePanelButtonClick(),
+                                testId: nodeId + "-header-multipanel-view-switch",
+                                title: this.getImagePanelButtonTooltip(imagePanelMode)
+                            }),
+                            CreateWidgetButton({
+                                buttonKey: "next-page-" + nodeId,
+                                iconClassName: Classes.iconClass("step-forward"),
+                                isDarkTheme,
+                                isDisabled: !hasNext,
+                                onClick: () => this.onNextPageClick(),
+                                testId: nodeId + "-header-next-page-button",
+                                title: imagePanelMode === ImagePanelMode.None ? "Next image" : "Next page"
+                            })
+                        );
                     }
+                })
+            );
+        }
 
-                    stack.header.tabs.forEach(tab => {
-                        $(tab.element)?.attr("data-testid", tab.contentItem.config.id + "-header-title");
-                        $(tab.closeElement)?.attr("data-testid", tab.contentItem.config.id + "-header-close-button");
-                    });
-                    if (component === "image-view") {
-                        $(stackHeaderControlButtons)
-                            ?.find("li.lm-image-panel")
-                            ?.attr("data-testid", config.id + "-multipanel-view-switch");
-                    }
-                    if (showCogWidgets.includes(component)) {
-                        $(stackHeaderControlButtons)
-                            ?.find("li.lm_settings")
-                            ?.attr("data-testid", config.id + "-header-settings-button");
-                    }
+        if (WidgetsStore.ShowCogWidgets.includes(component)) {
+            if (!(component === RenderConfigComponent.WidgetConfig.type && AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING)) {
+                buttons.push(
+                    CreateWidgetButton({
+                        buttonKey: "cog-" + nodeId,
+                        iconClassName: Classes.iconClass("cog"),
+                        isDarkTheme,
+                        onClick: () => this.onCogPinedClick(selectedNode),
+                        testId: nodeId + "-header-settings-button",
+                        title: "Settings"
+                    })
+                );
+            }
+        }
 
-                    this.updateRenderConfigSettingsVisibility();
-                }
-            });
-        });
-        layout.on("componentCreated", this.handleItemCreation);
-        layout.on("itemDestroyed", this.handleItemRemoval);
-        layout.on("stateChanged", this.handleStateUpdates);
+        if (!WidgetsStore.HideHelpButtonWidgets.includes(component)) {
+            buttons.push(
+                CreateWidgetButton({
+                    buttonKey: "help-" + nodeId,
+                    iconClassName: Classes.iconClass("help"),
+                    isDarkTheme,
+                    onClick: event => this.onHelpPinedClick(event, selectedNode),
+                    testId: nodeId + "-header-help-button",
+                    title: "Help"
+                })
+            );
+        }
+
+        if (component !== "image-view" && !selectedNode.isPoppedOut()) {
+            buttons.push(
+                CreateWidgetButton({
+                    buttonKey: "unpin-" + nodeId,
+                    iconClassName: Classes.iconClass("unpin"),
+                    isDarkTheme,
+                    onClick: () => this.unpinWidget(selectedNode),
+                    testId: nodeId + "-header-dock-button",
+                    title: "Detach"
+                })
+            );
+        }
+
+        if (canMaximize) {
+            buttons.push(
+                React.createElement(FlexLayoutDomMarker, {key: "maximize-marker-" + nodeId, nodeId, target: "tabset-toolbar"}),
+                React.createElement(FlexLayoutDomMarker, {key: "tabstrip-marker-" + nodeId, nodeId, target: "tabset-tabstrip"})
+            );
+        }
+
+        if (buttons.length > 0) {
+            renderValues.buttons = [...buttons, ...(renderValues.buttons || [])];
+        }
     };
 
-    private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="${classNames(Classes.ICON_STANDARD, Classes.iconClass(icon))}" style/></li>`);
+    onAction = (action: any) => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return action;
+        }
+
+        if (action.type === "FlexLayout_PopoutTab") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tab") {
+                    const tabNode = node as TabNode;
+                    if (!canPopoutWidget(tabNode.getComponent() || "")) {
+                        return undefined;
+                    }
+                    const parent = tabNode.getParent();
+                    if (parent && parent.getType() === "tabset") {
+                        this.savePopoutPosition(tabNode, parent as TabSetNode);
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_PopoutTabset") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tabset") {
+                    const tabsetNode = node as TabSetNode;
+                    const childTabs = tabsetNode.getChildren() as TabNode[];
+                    if (!childTabs.every(child => canPopoutWidget(child.getComponent() || ""))) {
+                        return undefined;
+                    }
+                    for (const child of childTabs) {
+                        this.savePopoutPosition(child as TabNode, tabsetNode);
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_CloseWindow") {
+            const windowId = action.data?.windowId;
+            const windowsMap = layoutModel.getwindowsMap();
+            const closingWindow = windowsMap.get(windowId);
+            if (closingWindow) {
+                const tabNodes: TabNode[] = [];
+                closingWindow.visitNodes((node, _level) => {
+                    if (node.getType() === "tab") {
+                        tabNodes.push(node as TabNode);
+                    }
+                });
+
+                // Restore tabs that originated from floating widgets back to floating state
+                const floatingTabs = tabNodes.filter(t => this.floatingOriginPopouts.has(t.getId()));
+                if (floatingTabs.length > 0) {
+                    for (const tabNode of floatingTabs) {
+                        const tabId = tabNode.getId();
+                        const savedConfig = this.floatingOriginPopouts.get(tabId)!;
+                        this.beingUnpinned.add(tabId);
+                        layoutModel.doAction(Actions.deleteTab(tabId));
+                        this.beingUnpinned.delete(tabId);
+                        this.addFloatingWidget(savedConfig);
+                        this.floatingOriginPopouts.delete(tabId);
+                        this.popoutPositions.delete(tabId);
+                    }
+                    // If all tabs were floating-origin, skip the normal restore logic
+                    if (floatingTabs.length === tabNodes.length) {
+                        return undefined;
+                    }
+                }
+
+                const remainingTabs = tabNodes.filter(t => !floatingTabs.includes(t));
+                const haveAllPositions = remainingTabs.length > 0 && remainingTabs.every(t => this.popoutPositions.has(t.getId()));
+                if (haveAllPositions) {
+                    // Sort tabs by tabIndex so multi-tab tabsets restore in original order
+                    remainingTabs.sort((a, b) => {
+                        const posA = this.popoutPositions.get(a.getId())!;
+                        const posB = this.popoutPositions.get(b.getId())!;
+                        return posA.tabIndex - posB.tabIndex;
+                    });
+
+                    // Track newly-created tabsets for popped-out multi-tab tabsets
+                    // Maps original parentTabsetId → new tabset ID after first tab is restored
+                    const recreatedTabsets = new Map<string, string>();
+
+                    for (const tabNode of remainingTabs) {
+                        const tabId = tabNode.getId();
+                        const savedPos = this.popoutPositions.get(tabId)!;
+
+                        if (!savedPos.wasAlone) {
+                            // Check if another tab from the same tabset already recreated it
+                            const newTabsetId = recreatedTabsets.get(savedPos.parentTabsetId);
+                            if (newTabsetId) {
+                                const newTabset = layoutModel.getNodeById(newTabsetId);
+                                if (newTabset) {
+                                    const clampedIndex = Math.min(savedPos.tabIndex, newTabset.getChildren().length);
+                                    layoutModel.doAction(Actions.moveNode(tabId, newTabsetId, DockLocation.CENTER, clampedIndex));
+                                    this.popoutPositions.delete(tabId);
+                                    continue;
+                                }
+                            }
+
+                            const originalTabset = layoutModel.getNodeById(savedPos.parentTabsetId);
+                            if (originalTabset) {
+                                const clampedIndex = Math.min(savedPos.tabIndex, originalTabset.getChildren().length);
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.parentTabsetId, DockLocation.CENTER, clampedIndex));
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        const grandparentRow = layoutModel.getNodeById(savedPos.grandparentId);
+                        if (grandparentRow) {
+                            const clampedIndex = Math.min(savedPos.tabsetIndexInParent, grandparentRow.getChildren().length);
+                            layoutModel.doAction(Actions.moveNode(tabId, savedPos.grandparentId, DockLocation.CENTER, clampedIndex));
+                            // Track the new tabset so sibling tabs from the same popped-out tabset rejoin it
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
+                            this.popoutPositions.delete(tabId);
+                            continue;
+                        }
+
+                        // Sibling fallback: grandparent row was tidied away, find sibling and place next to it
+                        if (savedPos.siblingTabsetId) {
+                            const siblingNode = layoutModel.getNodeById(savedPos.siblingTabsetId);
+                            if (siblingNode) {
+                                const isVertical = savedPos.grandparentOrientation === Orientation.VERT.getName();
+                                let location: DockLocation;
+                                if (isVertical) {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.TOP : DockLocation.BOTTOM;
+                                } else {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.LEFT : DockLocation.RIGHT;
+                                }
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.siblingTabsetId, location, -1));
+                                // Track new tabset for sibling tabs
+                                if (!savedPos.wasAlone) {
+                                    const restoredTab = layoutModel.getNodeById(tabId);
+                                    const parentId = restoredTab?.getParent()?.getId();
+                                    if (parentId) {
+                                        recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                    }
+                                }
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        // Fallback: move to root
+                        const root = layoutModel.getRoot();
+                        if (root) {
+                            layoutModel.doAction(Actions.moveNode(tabId, root.getId(), DockLocation.CENTER, -1));
+                            if (!savedPos.wasAlone) {
+                                const restoredTab = layoutModel.getNodeById(tabId);
+                                const parentId = restoredTab?.getParent()?.getId();
+                                if (parentId) {
+                                    recreatedTabsets.set(savedPos.parentTabsetId, parentId);
+                                }
+                            }
+                        }
+                        this.popoutPositions.delete(tabId);
+                    }
+
+                    // Ensure image-view tabset occupies 68% of its parent row
+                    // when any popped-out tab returns to the same row
+                    const imageViewNode = layoutModel.getNodeById("image-view");
+                    if (imageViewNode) {
+                        const imageTabset = imageViewNode.getParent();
+                        if (imageTabset && imageTabset.getType() === "tabset") {
+                            const row = imageTabset.getParent();
+                            if (row && row.getType() === "row" && row.getChildren().length > 1) {
+                                let otherWeightSum = 0;
+                                for (const child of row.getChildren()) {
+                                    if (child.getId() !== imageTabset.getId()) {
+                                        otherWeightSum += (child as TabSetNode).getWeight();
+                                    }
+                                }
+                                if (otherWeightSum > 0) {
+                                    const pct = WidgetsStore.ImageViewerRestoredHeightPercent;
+                                    const imageWeight = (pct / (100 - pct)) * otherWeightSum;
+                                    layoutModel.doAction(Actions.updateNodeAttributes(imageTabset.getId(), {weight: imageWeight}));
+                                }
+                            }
+                        }
+                    }
+
+                    return undefined;
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_DeleteTab") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                this.popoutPositions.delete(nodeId);
+
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tab") {
+                    const tabNode = node as TabNode;
+                    const component = tabNode.getComponent() || "";
+                    const id = tabNode.getId();
+
+                    if (!this.beingUnpinned.has(id)) {
+                        const isCatalogTable = component === CatalogOverlayComponent.WidgetConfig.type;
+                        const isCatalogPlot = component === CatalogPlotComponent.WidgetConfig.type;
+                        const isPvPreview = component === PvPreviewComponent.WidgetConfig.type;
+
+                        if (!isCatalogTable && !isCatalogPlot) {
+                            this.removeWidget(id, component);
+                        }
+                        if (isCatalogTable) {
+                            CatalogStore.Instance.catalogProfiles.delete(id);
+                            this.removeAssociatedFloatingSetting(id);
+                        }
+                        if (isCatalogPlot) {
+                            CatalogStore.Instance.clearCatalogPlotsByWidgetId(id);
+                        }
+                        if (isPvPreview) {
+                            const regexPattern = /pv-generator-(\d+)/;
+                            const pvGeneratorId = id.match(regexPattern);
+                            this.pvGeneratorWidgets.get(pvGeneratorId?.[0] ?? "")?.removePreviewFrame(parseInt(id.split("-")[2]));
+                        }
+                    }
+                }
+            }
+        }
+        return action;
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
@@ -778,22 +1101,22 @@ export class WidgetsStore {
 
         let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
-            case RenderConfigComponent.WIDGET_CONFIG.type:
+            case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
                 break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+            case SpatialProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spatialProfileWidgets.get(widgetID);
                 break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+            case SpectralProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spectralProfileWidgets.get(widgetID);
                 break;
-            case HistogramComponent.WIDGET_CONFIG.type:
+            case HistogramComponent.WidgetConfig.type:
                 widgetStore = this.histogramWidgets.get(widgetID);
                 break;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+            case StokesAnalysisComponent.WidgetConfig.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            case CatalogOverlayComponent.WidgetConfig.type:
                 widgetStore = this.catalogWidgets.get(widgetID);
                 break;
             default:
@@ -803,28 +1126,26 @@ export class WidgetsStore {
         return widgetStore?.toConfig?.();
     };
 
-    @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
-        const parentItemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const parentId = parentItemConfig.id as string;
-        const parentType = parentItemConfig.component;
-        const parentTitle = parentItemConfig.title;
-
+    @action onCogPinedClick = (node: TabNode) => {
+        const parentId = node.getId();
+        const parentType = node.getComponent() || "";
+        const parentTitle = node.getName();
         // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram, Catalog Overlay, Layer List
         const floatingSettingsAppliedWidgets = [
-            ImageViewComponent.WIDGET_CONFIG.type,
-            StokesAnalysisComponent.WIDGET_CONFIG.type,
-            SpectralProfilerComponent.WIDGET_CONFIG.type,
-            SpatialProfilerComponent.WIDGET_CONFIG.type,
-            RenderConfigComponent.WIDGET_CONFIG.type,
-            HistogramComponent.WIDGET_CONFIG.type,
-            CatalogOverlayComponent.WIDGET_CONFIG.type,
-            LayerListComponent.WIDGET_CONFIG.type
+            ImageViewComponent.WidgetConfig.type,
+            StokesAnalysisComponent.WidgetConfig.type,
+            SpectralProfilerComponent.WidgetConfig.type,
+            SpatialProfilerComponent.WidgetConfig.type,
+            RenderConfigComponent.WidgetConfig.type,
+            HistogramComponent.WidgetConfig.type,
+            CatalogOverlayComponent.WidgetConfig.type,
+            LayerListComponent.WidgetConfig.type
         ];
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
         }
         // Get floating settings config
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = getWidgetMap().get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const widgetConfig = new WidgetConfig(id, defaultConfig);
@@ -837,28 +1158,28 @@ export class WidgetsStore {
         }
     };
 
-    @action unpinWidget = (item: GoldenLayout.ContentItem) => {
-        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const id = itemConfig.id as string;
-        const type = itemConfig.component;
-        const title = itemConfig.title;
+    @action unpinWidget = (node: TabNode) => {
+        const id = node.getId();
+        const type = node.getComponent() || "";
+        const title = node.getName();
 
         // Avoid floating ImageViewComponent
-        if (type === ImageViewComponent.WIDGET_CONFIG.type) {
+        if (type === ImageViewComponent.WidgetConfig.type) {
             return;
         }
 
         // Get widget type from config
-        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, getWidgetMap().get(type)?.config ?? PlaceholderComponent.WidgetConfig);
         widgetConfig.title = title;
 
-        if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+        if (type === CatalogOverlayComponent.WidgetConfig.type) {
             widgetConfig.componentId = id;
         }
 
-        if (type === PvPreviewComponent.WIDGET_CONFIG.type) {
-            widgetConfig.parentId = itemConfig.props.id;
-            widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
+        if (type === PvPreviewComponent.WidgetConfig.type) {
+            const nodeConfig = node.getConfig() || {};
+            widgetConfig.parentId = nodeConfig.id || id;
+            widgetConfig.parentType = PvPreviewComponent.WidgetConfig.parentType;
         }
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
@@ -867,79 +1188,111 @@ export class WidgetsStore {
         }
 
         // Set default size and position from the existing item
-        const container = item["container"] as GoldenLayout.Container;
-        if (container && container.width && container.height) {
-            // Snap size to grid
-            widgetConfig.setDefaultSize(Math.round(container.width / 25.0) * 25, Math.round(container.height / 25.0) * 25);
-            const el = container["_element"][0] as HTMLElement;
+        const rect = node.getRect();
+        if (rect && rect.width && rect.height) {
+            widgetConfig.setDefaultSize(Math.round(rect.width / 25.0) * 25, Math.round(rect.height / 25.0) * 25);
             // Snap position to grid and adjust for title and container offset
-            widgetConfig.setDefaultPosition(Math.round(el.offsetLeft / 25.0) * 25 + 5, Math.round(el.offsetTop / 25.0) * 25 - 25);
+            widgetConfig.setDefaultPosition(Math.round(rect.x / 25.0) * 25 + 5, Math.round(rect.y / 25.0) * 25 - 25);
         }
 
         this.addFloatingWidget(widgetConfig);
-        const config = item.config as GoldenLayout.ReactComponentConfig;
-        config.component = "floated";
-        item.remove();
+        this.beingUnpinned.add(id);
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (layoutModel) {
+            layoutModel.doAction(Actions.deleteTab(id));
+        }
+        this.beingUnpinned.delete(id);
     };
 
-    @action onHelpPinedClick = (ev: JQuery.ClickEvent<HTMLElement>, item: GoldenLayout.ContentItem) => {
-        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const type = itemConfig.component;
-        // Get widget config from type
-        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
-        const container = item["container"] as GoldenLayout.Container;
-        let centerX = 0;
-        if (container && container.width) {
-            centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
+    @action popoutFloatingWidget = (widgetConfig: WidgetConfig) => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return;
+        }
+        if (!canPopoutWidget(widgetConfig.type)) {
+            return;
         }
 
-        if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
-            HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
+        const id = widgetConfig.id;
+        const canPopout = canPopoutWidget(widgetConfig.type);
+        const tabJson: any = {
+            type: "tab",
+            component: widgetConfig.type,
+            name: widgetConfig.title || widgetConfig.type,
+            id,
+            enablePopout: canPopout,
+            enablePopoutIcon: canPopout
+        };
+
+        if (widgetConfig.type === PlaceholderComponent.WidgetConfig.type) {
+            tabJson.config = {id, label: widgetConfig.title};
+        } else if (widgetConfig.type === PvPreviewComponent.WidgetConfig.type) {
+            tabJson.config = {id: widgetConfig.parentId};
         } else {
-            const id = itemConfig.id as string;
+            tabJson.config = {id};
+        }
+
+        const firstTabSet = layoutModel.getFirstTabSet();
+        this.floatingOriginPopouts.set(id, widgetConfig);
+        this.beingUnpinned.add(id);
+        layoutModel.doAction(Actions.addNode(tabJson, firstTabSet.getId(), DockLocation.CENTER, -1, false));
+        layoutModel.doAction(Actions.popoutTab(id));
+        this.removeFloatingWidget(id, true);
+        this.beingUnpinned.delete(id);
+    };
+
+    @action onHelpPinedClick = (ev: React.MouseEvent, node: TabNode) => {
+        const type = node.getComponent() || "";
+        const widgetConfig = getWidgetMap().get(type)?.config ?? PlaceholderComponent.WidgetConfig;
+        const rect = node.getRect();
+        let centerX = 0;
+        if (rect && rect.width) {
+            centerX = ev.currentTarget.getBoundingClientRect().right + 36 - rect.width * 0.5; // 36(px) is the length between help button and right border of widget
+        }
+        const containerWidth = (ev.currentTarget as Element).ownerDocument.body.clientWidth;
+        const helpStore = HelpStore.Instance;
+        const toggleOrShow = (helpType: HelpType) => {
+            if (helpStore.isHelpVisible && helpStore.type === helpType) {
+                helpStore.hideHelpDrawer();
+            } else {
+                helpStore.showHelpDrawer(helpType, centerX, containerWidth);
+            }
+        };
+        if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
+            toggleOrShow(widgetConfig.helpType);
+        } else {
+            const id = node.getId();
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
             if (catalogPlotWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
+                toggleOrShow(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT);
             }
 
             const renderConfigWidgetStore = this.renderConfigWidgets.get(id);
             if (renderConfigWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+                toggleOrShow(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG);
             }
         }
     };
 
     onImagePanelButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
-        if (channelMapStore.channelMapEnabled) {
+        if (channelMapStore.isChannelMapEnabled) {
             channelMapStore.setChannelMapEnabled(false);
         } else {
-            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.isImageMultiPanelEnabled);
         }
     };
 
     onChannelMapButtonClick = () => {
-        const channelMapStore = AppStore.Instance.channelMapStore;
-        channelMapStore.setChannelMapEnabled(!channelMapStore.channelMapEnabled);
+        AppStore.Instance.channelMapStore.setChannelMapEnabled(!AppStore.Instance.channelMapStore.isChannelMapEnabled);
     };
 
-    setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
-        const preferenceStore = PreferenceStore.Instance;
-        preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
-        this.updateImagePanelButton();
-    };
-
-    private updateImagePanelButton = () => {
-        const imagePanelMode = AppStore.Instance.imageViewConfigStore.imagePanelMode;
-        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
-        if (imagePanelButton) {
-            imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
-            imagePanelButton.find(`.${Classes.ICON_STANDARD}`)?.attr("class", classNames(Classes.ICON_STANDARD, this.getImagePanelButtonIcon(imagePanelMode)));
-        }
+    setImageMultiPanelEnabled = (isMultiPanelEnabled: boolean) => {
+        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, isMultiPanelEnabled);
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
+        return imagePanelMode === ImagePanelMode.None ? "Switch to multi-panel" : "Switch to single panel";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
@@ -959,96 +1312,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         if (config.currentImagePage > 0) {
-            const firstIndexInPreviousPage = (config.currentImagePage - 1) * config.imagesPerPage;
-            appStore.setActiveImageByIndex(firstIndexInPreviousPage);
-        }
-    };
-
-    updateImagePanelPageButtons = () => {
-        const appStore = AppStore.Instance;
-        const config = appStore.imageViewConfigStore;
-        const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
-        if (nextPageButton) {
-            nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
-            nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
-        }
-
-        const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous[style!='display:none;']");
-        if (previousPageButton) {
-            previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
-            previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
-        }
-    };
-
-    /** Hides the settings buttons of docked render config widgets when color blending images are active. */
-    updateRenderConfigSettingsVisibility = () => {
-        const isBlending = AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING;
-        const layout = AppStore.Instance.layoutStore?.dockedLayout;
-        const renderConfigWidgets = layout?.root?.getItemsByFilter((item: any) => item.config.component === RenderConfigComponent.WIDGET_CONFIG.type && !item.container.isHidden) ?? [];
-        for (const widget of renderConfigWidgets) {
-            $(widget.parent.element)
-                ?.find("li.lm_settings")
-                ?.attr("style", isBlending ? "display:none;" : "");
-        }
-    };
-
-    @action handleItemCreation = (item: GoldenLayout.ContentItem) => {
-        const config = item.config as GoldenLayout.ReactComponentConfig;
-        const id = config.id as string;
-        const itemId = this.addWidgetByType(id);
-
-        if (itemId) {
-            config.id = itemId;
-            config.props.id = itemId;
-        }
-
-        $(item.element)?.attr("data-testid", config.id + "-content");
-    };
-
-    @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
-        if (item.config.type === "component") {
-            const config = item.config as GoldenLayout.ReactComponentConfig;
-            const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
-            const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
-            const isPvPreview = config.component === PvPreviewComponent.WIDGET_CONFIG.type;
-            // Clean up removed widget's store (ignoring items that have been floated)
-            const id = config.id as string;
-            if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
-                this.removeWidget(id, config.component);
-            }
-
-            // close UI, keep catalog file alive
-            if (isCatalogTable) {
-                CatalogStore.Instance.catalogProfiles.delete(id);
-                this.removeAssociatedFloatingSetting(id);
-            }
-
-            // remove all catalog plots associated to current catalog plot widget
-            if (isCatalogPlot) {
-                CatalogStore.Instance.clearCatalogPlotsByWidgetId(id);
-            }
-
-            // remove preview frame for current pv preview widget
-            if (isPvPreview) {
-                const regexPattern = /pv-generator-(\d+)/;
-                const pvGeneratorId = id.match(regexPattern);
-                this.pvGeneratorWidgets.get(pvGeneratorId?.[0] ?? "")?.removePreviewFrame(parseInt(id.split("-")[2]));
-            }
-        }
-    };
-
-    @action handleStateUpdates = (event: any) => {
-        if (event && event.origin && event.origin.isMaximised && event.origin.header) {
-            const header = event.origin.header as GoldenLayout.Header;
-            if (header.controlsContainer && header.controlsContainer.length) {
-                const controlsElement = header.controlsContainer[0];
-                if (controlsElement.children && controlsElement.children.length) {
-                    const maximiseElement = controlsElement.children[controlsElement.children.length - 1];
-                    if (maximiseElement) {
-                        maximiseElement.setAttribute("title", "restore");
-                    }
-                }
-            }
+            appStore.setActiveImageByIndex((config.currentImagePage - 1) * config.imagesPerPage);
         }
     };
 
@@ -1059,44 +1323,37 @@ export class WidgetsStore {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
         const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && activeImage && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
-
-        let newTitle;
-        if (titleImage) {
-            newTitle = titleImage?.store?.filename ?? "";
-        } else {
-            newTitle = "No image loaded";
-        }
-        return newTitle;
+        return titleImage ? (titleImage?.store?.filename ?? "") : "No image loaded";
     }
 
     /** Updates the title of the image view widget using {@link imageViewWidgetTitle}. */
     @action updateImageWidgetTitle = () => {
-        const layout = LayoutStore.Instance.dockedLayout;
+        const layoutModel = LayoutStore.Instance.layoutModel;
         const newTitle = this.imageViewWidgetTitle;
-
-        // Update GL title by searching for image-view components
-        if (layout?.root) {
-            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
-            if (imageViewComponents.length) {
-                if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
-                    imageViewComponents[0].setTitle(newTitle);
+        if (layoutModel) {
+            layoutModel.visitNodes(node => {
+                if (node.getType() === "tab") {
+                    const tabNode = node as TabNode;
+                    if (tabNode.getComponent() === ImageViewComponent.WidgetConfig.type && tabNode.getName() !== newTitle) {
+                        layoutModel.doAction(Actions.renameTab(tabNode.getId(), newTitle));
+                    }
                 }
-            }
+            });
         }
 
         // Update floating window title
-        const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
+        const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WidgetConfig.type);
         if (imageViewWidget && imageViewWidget.title !== newTitle) {
             this.setWidgetTitle(imageViewWidget.id, newTitle);
         }
     };
 
     @action setWidgetTitle(id: string, title: string) {
-        const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
-            if (matchingComponents.length) {
-                matchingComponents[0].setTitle(title);
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (layoutModel) {
+            const node = layoutModel.getNodeById(id);
+            if (node && node.getType() === "tab") {
+                layoutModel.doAction(Actions.renameTab(id, title));
             }
         }
 
@@ -1107,11 +1364,11 @@ export class WidgetsStore {
     }
 
     @action setWidgetComponentTitle(componentId: string, title: string) {
-        const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const matchingComponents = layoutStore.dockedLayout.root.getItemsById(componentId);
-            if (matchingComponents.length) {
-                matchingComponents[0].setTitle(title);
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (layoutModel) {
+            const node = layoutModel.getNodeById(componentId);
+            if (node && node.getType() === "tab") {
+                layoutModel.doAction(Actions.renameTab(componentId, title));
             }
         }
 
@@ -1129,16 +1386,18 @@ export class WidgetsStore {
     }
 
     // region Spatial Profile Widgets
-    createFloatingSpatialProfilerWidget = () => {
-        const id = this.addSpatialProfileWidget();
+    private createFloatingWidgetFromStore = (addWidgetStore: () => string | null, defaultConfig: DefaultWidgetConfig) => {
+        const id = addWidgetStore();
         if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpatialProfilerComponent.WIDGET_CONFIG));
+            this.addFloatingWidget(new WidgetConfig(id, defaultConfig));
         }
     };
 
+    createFloatingSpatialProfilerWidget = () => this.createFloatingWidgetFromStore(() => this.addSpatialProfileWidget(), SpatialProfilerComponent.WidgetConfig);
+
     @action addSpatialProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(SpatialProfilerComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpatialProfilerComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1154,16 +1413,11 @@ export class WidgetsStore {
     // endregion
 
     // region Spectral Profile Widgets
-    createFloatingSpectralProfilerWidget = () => {
-        const id = this.addSpectralProfileWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpectralProfilerComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingSpectralProfilerWidget = () => this.createFloatingWidgetFromStore(() => this.addSpectralProfileWidget(), SpectralProfilerComponent.WidgetConfig);
 
     @action addSpectralProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpectralProfilerComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1186,30 +1440,23 @@ export class WidgetsStore {
 
     // check whether any spectral widget is streaming data
     @computed get isSpectralWidgetStreamingData(): boolean {
-        let result = false;
+        let isStreamingData = false;
         this.spectralProfileWidgets.forEach(widgetStore => {
-            result = result || widgetStore.isStreamingData;
+            isStreamingData = isStreamingData || widgetStore.isStreamingData;
         });
-        return result;
+        return isStreamingData;
     }
 
-    public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore | undefined => {
-        return this.spectralProfileWidgets.get(id);
-    };
+    public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore | undefined => this.spectralProfileWidgets.get(id);
 
     // endregion
 
     // region Stokes Profile Widgets
-    createFloatingStokesWidget = () => {
-        const id = this.addStokesWidget();
-        if (id) {
-            this.addFloatingWidget(new WidgetConfig(id, StokesAnalysisComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingStokesWidget = () => this.createFloatingWidgetFromStore(() => this.addStokesWidget(), StokesAnalysisComponent.WidgetConfig);
 
     @action addStokesWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(StokesAnalysisComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1230,14 +1477,10 @@ export class WidgetsStore {
         let nextIndex = 0;
         const componentIds: string[] = [];
 
-        if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
-            CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
-                componentIds.push(componentId);
-            });
-        } else if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-            CatalogStore.Instance.catalogProfiles.forEach((value, componentId) => {
-                componentIds.push(componentId);
-            });
+        if (config.type === CatalogPlotComponent.WidgetConfig.type) {
+            CatalogStore.Instance.catalogPlots.forEach((_v, componentId) => componentIds.push(componentId));
+        } else if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
+            CatalogStore.Instance.catalogProfiles.forEach((_v, componentId) => componentIds.push(componentId));
         }
 
         while (true) {
@@ -1251,18 +1494,18 @@ export class WidgetsStore {
 
     createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
-        const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
-        return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
+        return {widgetStoreId, widgetComponentId};
     };
 
     reloadFloatingCatalogWidget = () => {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
-        const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const componentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
@@ -1281,15 +1524,15 @@ export class WidgetsStore {
 
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogOverlayComponent.WidgetConfig.type);
         }
 
         if (id) {
-            const catalogWidgetStore = new CatalogWidgetStore(catalogFileId);
+            const widgetStore = new CatalogWidgetStore(catalogFileId);
             if (widgetSettings) {
-                catalogWidgetStore.init(widgetSettings);
+                widgetStore.init(widgetSettings);
             }
-            this.catalogWidgets.set(id, catalogWidgetStore);
+            this.catalogWidgets.set(id, widgetStore);
             catalogStore.catalogWidgets.set(catalogFileId, id);
         }
         return id;
@@ -1299,7 +1542,7 @@ export class WidgetsStore {
 
     // region Catalog Plot Widgets
     createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string | null; widgetComponentId: string} => {
-        const defaultConfig = CatalogPlotComponent.WIDGET_CONFIG;
+        const defaultConfig = CatalogPlotComponent.WidgetConfig;
         const widgetStoreId = this.addCatalogPlotWidget(props);
         const widgetComponentId = this.getNextComponentId(defaultConfig);
         if (widgetStoreId !== null) {
@@ -1309,13 +1552,13 @@ export class WidgetsStore {
             config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
             this.addFloatingWidget(config);
         }
-        return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
+        return {widgetStoreId, widgetComponentId};
     };
 
     @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogPlotComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1327,18 +1570,13 @@ export class WidgetsStore {
     // endregion
 
     // region Spectral Line Query Widgets
-    createFloatingSpectralLineQueryWidget = () => {
-        const id = this.addSpectralLineQueryWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, SpectralLineQueryComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingSpectralLineQueryWidget = () => this.createFloatingWidgetFromStore(() => this.addSpectralLineQueryWidget(), SpectralLineQueryComponent.WidgetConfig);
 
     // add spectral line query widget store
     @action addSpectralLineQueryWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(SpectralLineQueryComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpectralLineQueryComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1351,11 +1589,11 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const defaultConfig = getWidgetMap().get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
-            config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
+            config.title = parentType === PvGeneratorComponent.WidgetConfig.type ? title : title + " Settings";
             config.parentId = parentId;
             config.parentType = parentType;
             if (config.id) {
@@ -1381,17 +1619,12 @@ export class WidgetsStore {
     // endregion
 
     // region Stats Widgets
-    createFloatingStatsWidget = () => {
-        const id = this.addStatsWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, StatsComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingStatsWidget = () => this.createFloatingWidgetFromStore(() => this.addStatsWidget(), StatsComponent.WidgetConfig);
 
     @action addStatsWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(StatsComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1403,16 +1636,11 @@ export class WidgetsStore {
     // endregion
 
     // region Histogram Widgets
-    createFloatingHistogramWidget = () => {
-        const id = this.addHistogramWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, HistogramComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingHistogramWidget = () => this.createFloatingWidgetFromStore(() => this.addHistogramWidget(), HistogramComponent.WidgetConfig);
 
     @action addHistogramWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(HistogramComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(HistogramComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1428,16 +1656,11 @@ export class WidgetsStore {
     // endregion
 
     // region Render Config Widgets
-    createFloatingRenderWidget = () => {
-        const id = this.addRenderConfigWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, RenderConfigComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingRenderWidget = () => this.createFloatingWidgetFromStore(() => this.addRenderConfigWidget(), RenderConfigComponent.WidgetConfig);
 
     @action addRenderConfigWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
-            id = this.getNextId(RenderConfigComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(RenderConfigComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1454,16 +1677,11 @@ export class WidgetsStore {
 
     // region Basic widget types (log, animator, region list, layer list, cursor info)
 
-    createFloatingLogWidget = () => {
-        const id = this.addLogWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, LogComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingLogWidget = () => this.createFloatingWidgetFromStore(() => this.addLogWidget(), LogComponent.WidgetConfig);
 
     @action addLogWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(LogComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(LogComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1472,16 +1690,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingAnimatorWidget = () => {
-        const id = this.addAnimatorWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, AnimatorComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingAnimatorWidget = () => this.createFloatingWidgetFromStore(() => this.addAnimatorWidget(), AnimatorComponent.WidgetConfig);
 
     @action addAnimatorWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(AnimatorComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(AnimatorComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1490,16 +1703,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingChannelMapControlWidget = () => {
-        const id = this.addChannelMapControlWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, ChannelMapControlComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingChannelMapControlWidget = () => this.createFloatingWidgetFromStore(() => this.addChannelMapControlWidget(), ChannelMapControlComponent.WidgetConfig);
 
     @action addChannelMapControlWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(ChannelMapControlComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(ChannelMapControlComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1508,16 +1716,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingRegionListWidget = () => {
-        const id = this.addRegionListWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, RegionListComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingRegionListWidget = () => this.createFloatingWidgetFromStore(() => this.addRegionListWidget(), RegionListComponent.WidgetConfig);
 
     @action addRegionListWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(RegionListComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(RegionListComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1526,16 +1729,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingLayerListWidget = () => {
-        const id = this.addLayerListWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, LayerListComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingLayerListWidget = () => this.createFloatingWidgetFromStore(() => this.addLayerListWidget(), LayerListComponent.WidgetConfig);
 
     @action addLayerListWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(LayerListComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(LayerListComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1544,16 +1742,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingCursorInfoWidget = () => {
-        const id = this.addCursorInfoWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, CursorInfoComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingCursorInfoWidget = () => this.createFloatingWidgetFromStore(() => this.addCursorInfoWidget(), CursorInfoComponent.WidgetConfig);
 
     @action addCursorInfoWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(CursorInfoComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CursorInfoComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1562,16 +1755,11 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingPvGeneratorWidget = () => {
-        const id = this.addPvGeneratorWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, PvGeneratorComponent.WIDGET_CONFIG));
-        }
-    };
+    createFloatingPvGeneratorWidget = () => this.createFloatingWidgetFromStore(() => this.addPvGeneratorWidget(), PvGeneratorComponent.WidgetConfig);
 
     @action addPvGeneratorWidget(id: string | null = null) {
         if (!id) {
-            id = this.getNextId(PvGeneratorComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(PvGeneratorComponent.WidgetConfig.type);
         }
 
         if (id) {
@@ -1610,14 +1798,14 @@ export class WidgetsStore {
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
-    @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
+    @action removeFloatingWidget = (id: string, shouldPreserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
             zIndexManager.updateIndexOnRemove(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
-            if (preserveStore) {
+            if (shouldPreserveStore) {
                 return;
             }
 
@@ -1647,11 +1835,11 @@ export class WidgetsStore {
                 }
             });
 
-            const layoutStore = LayoutStore.Instance;
-            if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-                const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === associatedFloatingSettingsId);
-                if (matchingComponents.length) {
-                    matchingComponents[0].remove();
+            const layoutModel = LayoutStore.Instance.layoutModel;
+            if (layoutModel && associatedFloatingSettingsId) {
+                const node = layoutModel.getNodeById(associatedFloatingSettingsId);
+                if (node) {
+                    layoutModel.doAction(Actions.deleteTab(associatedFloatingSettingsId));
                 }
             }
 
@@ -1660,5 +1848,42 @@ export class WidgetsStore {
                 this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);
             }
         }
+    };
+
+    handleToolbarWidgetDragStart = (e: React.DragEvent, widgetConfig: DefaultWidgetConfig) => {
+        const layoutRef = LayoutStore.Instance.layoutRef;
+        if (!layoutRef?.current) {
+            return;
+        }
+
+        const id = this.addWidgetByType(widgetConfig.type);
+        if (!id) {
+            return;
+        }
+
+        const tabJson: any = {
+            type: "tab",
+            component: widgetConfig.type,
+            name: widgetConfig.title || widgetConfig.type,
+            id,
+            config: {id}
+        };
+
+        let isDropped = false;
+        layoutRef.current.addTabWithDragAndDrop(e.nativeEvent, tabJson, (node: TabNode | undefined) => {
+            if (node) {
+                isDropped = true;
+            }
+        });
+
+        // Clean up widget store if drag was cancelled (no drop)
+        const target = e.currentTarget;
+        const onDragEnd = () => {
+            target.removeEventListener("dragend", onDragEnd);
+            if (!isDropped) {
+                this.removeWidget(id, widgetConfig.type);
+            }
+        };
+        target.addEventListener("dragend", onDragEnd);
     };
 }

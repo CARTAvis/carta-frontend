@@ -1,6 +1,6 @@
 // Mock for ast_wrapper WASM module
 
-const mockAstWrapper = {
+const MOCK_AST_WRAPPER = {
     onReady: Promise.resolve(),
 
     // Mock AST wrapper functions
@@ -38,6 +38,7 @@ const mockAstWrapper = {
     setD: jest.fn(),
     createTransformedFrameset: jest.fn(() => 1),
     createShiftmapFrameset: jest.fn(() => 1),
+    createOffsetFrameset: jest.fn(() => 1),
     fillTransformGrid: jest.fn(() => 1),
     pointList: jest.fn(() => 1),
     axPointList: jest.fn(() => 1),
@@ -82,8 +83,8 @@ const mockAstWrapper = {
 };
 
 // For ES modules compatibility (import * as AST)
-module.exports = mockAstWrapper;
+module.exports = MOCK_AST_WRAPPER;
 // Mark as ES module
 module.exports.__esModule = true;
 // Also export as default for different import styles
-module.exports.default = mockAstWrapper;
+module.exports.default = MOCK_AST_WRAPPER;
