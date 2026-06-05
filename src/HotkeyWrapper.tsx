@@ -35,9 +35,7 @@ export class HotkeyService extends React.Component<{}> {
 
     public static nextChannel = () => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.incrementChannels(1, 0);
-        }
+        appStore.activeFrame?.incrementChannels(1, 0);
     };
 
     public static prevChannel = () => {
@@ -612,8 +610,7 @@ export const HotkeysRegistrar = () => {
     React.useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             // Only handle if not in an editable element
-            const target = event.target as Element;
-            if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.closest("input, textarea, [contenteditable]"))) {
+            if (isEditableTarget(event.target)) {
                 return;
             }
 
@@ -630,6 +627,58 @@ export const HotkeysRegistrar = () => {
         document.addEventListener("keydown", onKeyDown, true);
         return () => document.removeEventListener("keydown", onKeyDown, true);
     }, []);
+
+    return null;
+};
+
+function getForwardedKeyboardEventInit(event: KeyboardEvent): KeyboardEventInit {
+    return {
+        bubbles: true,
+        cancelable: true,
+        key: event.key,
+        code: event.code,
+        location: event.location,
+        repeat: event.repeat,
+        ctrlKey: event.ctrlKey,
+        shiftKey: event.shiftKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+        isComposing: event.isComposing
+    };
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+    const element = target as Element | null;
+    return Boolean(element && (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element.closest?.("input, textarea, [contenteditable]")));
+}
+
+export const PopoutKeyboardForwarder = ({popoutWindow}: {popoutWindow: Window}) => {
+    React.useEffect(() => {
+        if (popoutWindow === window) {
+            return () => {};
+        }
+
+        const popoutDoc = popoutWindow.document;
+
+        const forwardKeyboardEvent = (event: KeyboardEvent) => {
+            if (isEditableTarget(event.target)) {
+                return;
+            }
+
+            const forwardedEvent = new KeyboardEvent(event.type, getForwardedKeyboardEventInit(event));
+            const shouldContinueDefaultHandling = document.dispatchEvent(forwardedEvent);
+            if (!shouldContinueDefaultHandling) {
+                event.preventDefault();
+            }
+        };
+
+        const keyboardEventTypes = ["keydown", "keyup"] as const;
+        keyboardEventTypes.forEach(eventType => popoutDoc.addEventListener(eventType, forwardKeyboardEvent, true));
+
+        return () => {
+            keyboardEventTypes.forEach(eventType => popoutDoc.removeEventListener(eventType, forwardKeyboardEvent, true));
+        };
+    }, [popoutWindow]);
 
     return null;
 };

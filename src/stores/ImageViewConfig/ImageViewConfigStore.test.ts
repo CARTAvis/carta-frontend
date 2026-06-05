@@ -1,4 +1,4 @@
-import {ImageType} from "enums";
+import {ImagePanelMode, ImageType} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
@@ -6,6 +6,8 @@ import {ImageViewConfigStore} from "./ImageViewConfigStore";
 const MockUpdateActiveImage = jest.fn();
 const MockIsActiveImage = jest.fn();
 const MockSetActiveImage = jest.fn();
+var mockChannelMapStore;
+var mockPreferenceStore;
 
 // Mock RenderConfigStore to handle import chain
 jest.mock("stores/Frame", () => ({
@@ -30,13 +32,6 @@ jest.mock("stores/Frame", () => ({
 }));
 
 jest.mock("stores", () => {
-    const instance = {
-        activeImage: null,
-        updateActiveImage: x => MockUpdateActiveImage(x),
-        isActiveImage: () => MockIsActiveImage(),
-        setActiveImage: x => MockSetActiveImage(x)
-    };
-
     class MockColorBlendingStore {
         id;
         selectedFrames: any[] = [];
@@ -47,9 +42,26 @@ jest.mock("stores", () => {
         }
     }
 
+    mockChannelMapStore = {isChannelMapEnabled: false};
+    mockPreferenceStore = {
+        imagePanelColumns: 3,
+        imagePanelRows: 2,
+        imagePanelMode: ImagePanelMode.None,
+        isImageMultiPanelEnabled: true
+    };
+
     return {
         AppStore: {
-            Instance: instance
+            Instance: {
+                activeImage: null,
+                channelMapStore: mockChannelMapStore,
+                updateActiveImage: x => MockUpdateActiveImage(x),
+                isActiveImage: () => MockIsActiveImage(),
+                setActiveImage: x => MockSetActiveImage(x)
+            }
+        },
+        PreferenceStore: {
+            Instance: mockPreferenceStore
         },
         FrameStore: jest.fn(frameInfo => ({
             id: frameInfo.fileId,
@@ -235,6 +247,43 @@ describe("ImageViewConfigStore", () => {
             imageViewConfigStore.addFrame(mockFrame1);
             imageViewConfigStore.removeAllImages();
             expect(imageViewConfigStore.imageNum).toBe(0);
+        });
+    });
+
+    describe("image panel dimensions", () => {
+        beforeEach(() => {
+            imageViewConfigStore.removeAllImages();
+            mockChannelMapStore.isChannelMapEnabled = false;
+            mockPreferenceStore.isImageMultiPanelEnabled = true;
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Dynamic;
+            mockPreferenceStore.imagePanelColumns = 4;
+            mockPreferenceStore.imagePanelRows = 3;
+        });
+
+        it("uses dynamic panel counts when multi-panel mode is dynamic", () => {
+            imageViewConfigStore.addFrame(mockFrame1);
+            imageViewConfigStore.addFrame(mockFrame2);
+            imageViewConfigStore.addFrame(mockFrame3);
+
+            expect(imageViewConfigStore.numImageColumns).toBe(3);
+            expect(imageViewConfigStore.numImageRows).toBe(1);
+        });
+
+        it("uses fixed panel counts when multi-panel mode is fixed", () => {
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Fixed;
+            mockPreferenceStore.imagePanelColumns = 5;
+            mockPreferenceStore.imagePanelRows = 4;
+
+            expect(imageViewConfigStore.numImageColumns).toBe(5);
+            expect(imageViewConfigStore.numImageRows).toBe(4);
+        });
+
+        it("collapses to a single panel when channel map mode is enabled", () => {
+            mockChannelMapStore.isChannelMapEnabled = true;
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Fixed;
+
+            expect(imageViewConfigStore.numImageColumns).toBe(1);
+            expect(imageViewConfigStore.numImageRows).toBe(1);
         });
     });
 

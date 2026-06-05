@@ -42,8 +42,13 @@ export class ContourStore {
         this.addContourData(indexOffsets, vertexData, progress);
     };
 
+    @action setProgress = (progress: number) => {
+        this.progress = progress;
+    };
+
     @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
         const numVertices = sourceVertices.length / 2;
+        this.progress = progress;
 
         if (!numVertices) {
             return;
@@ -62,7 +67,6 @@ export class ContourStore {
         const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
         this.vertexData.push(vertexData);
         this.indexOffsets.push(indexOffsets);
-        this.progress = progress;
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
         const index = this.vertexData.length - 1;

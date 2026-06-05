@@ -11,6 +11,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     splitterSize: 4,
     splitterExtra: 4,
     tabEnablePopout: false,
+    tabEnablePopoutIcon: false,
     tabSetEnableClose: false,
     tabSetEnableDeleteWhenEmpty: true,
     tabEnableRenderOnDemand: true
@@ -18,7 +19,7 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
 
 /** Map of widget type strings to their default FlexLayout tab node JSON */
 const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
-    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: false}],
+    ["image-view", {type: "tab", component: "image-view", name: "No image loaded", id: "image-view", enableClose: false, enableDrag: true}],
     ["render-config", {type: "tab", component: "render-config", name: "Render Configuration", id: "render-config"}],
     ["region-list", {type: "tab", component: "region-list", name: "Region List", id: "region-list"}],
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
@@ -39,13 +40,22 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["channel-map-control", {type: "tab", component: "channel-map-control", name: "Channel Map", id: "channel-map-control"}]
 ]);
 
+export function canPopoutWidget(widgetType: string): boolean {
+    return widgetType === "image-view";
+}
+
 /**
  * Gets the default FlexLayout tab JSON for a widget type.
  * Returns a shallow copy so callers can modify it safely.
  */
 export function getComponentTabJson(widgetType: string): IJsonTabNode | undefined {
     const config = COMPONENT_CONFIG.get(widgetType);
-    return config ? {...config} : undefined;
+    if (!config) {
+        return undefined;
+    }
+
+    const canPopout = canPopoutWidget(widgetType);
+    return {...config, enablePopout: canPopout, enablePopoutIcon: canPopout};
 }
 
 /**
@@ -200,7 +210,7 @@ function convertStack(node: any): IJsonTabSetNode {
 
 function convertComponent(node: any): IJsonTabNode {
     const widgetType = node.id?.replace(/-\d+$/, "") || node.id;
-    const templateConfig = COMPONENT_CONFIG.get(widgetType);
+    const templateConfig = getComponentTabJson(widgetType);
 
     if (!templateConfig) {
         return {

@@ -32,6 +32,7 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {ImageType} from "enums";
+import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, type WidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 
 type FloatingWidgetRenderer = (widgetConfig: WidgetConfig) => React.ReactNode;
@@ -223,6 +224,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     }
 
                     const shouldShowPinButton = this.showPin(w);
+                    const canPopout = canPopoutWidget(w.type);
                     const id = this.getFloatingWidgetId(w);
 
                     const zIndex = zIndexManager.findIndex(id);
@@ -239,6 +241,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 shouldShowFloatingSettingsButton={shouldShowSettingsButton}
+                                canPopout={canPopout}
                                 floatingWidgets={widgetConfigs.length}
                             >
                                 {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}

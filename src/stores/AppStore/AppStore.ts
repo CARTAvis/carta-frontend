@@ -2009,6 +2009,15 @@ export class AppStore {
                                 true
                             )
                             .then(this.onReconnectAlertClosed);
+
+                        if (this.layoutStore?.layoutModel) {
+                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
+                                const win = layoutWindow.window;
+                                if (win && !win.closed) {
+                                    win.close();
+                                }
+                            }
+                        }
                     }
                     break;
                 default:
@@ -2120,6 +2129,13 @@ export class AppStore {
                 }
             }
         );
+
+        // Update image panel page buttons (now handled reactively via onRenderTab in FlexLayout)
+        autorun(() => {
+            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
+                // FlexLayout re-renders tab buttons automatically via onRenderTab
+            }
+        });
 
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
@@ -2832,6 +2848,11 @@ export class AppStore {
 
     @flow.bound
     public *saveWorkspace(name: string) {
+        if (this.layoutStore?.hasPopoutWidget) {
+            this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
+            return false;
+        }
+
         const workspace: Workspace = {
             workspaceVersion: 0,
             frontendVersion: CARTA_INFO.version,

@@ -12,6 +12,7 @@ import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
@@ -78,6 +79,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionSelectionDragNode: Konva.Node | null = null;
     private middleClickPan: MiddleClickPanState | null = null;
     private layerRef = React.createRef<any>();
+    private popoutDragCleanup: (() => void) | null = null;
 
     constructor(props: any) {
         super(props);
@@ -129,6 +131,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame) {
             this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
+        this.setupPopoutDragListeners();
     }
 
     componentWillUnmount() {
@@ -136,6 +139,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.restoreMiddleClickPan();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.cleanupPopoutDragListeners();
     }
 
     @action componentDidUpdate(prevProps) {
@@ -170,6 +174,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             this.frame.setCursorPosition(imagePos);
         }
     }, 100);
+
+    private setupPopoutDragListeners() {
+        this.cleanupPopoutDragListeners();
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef.current);
+    }
+
+    private cleanupPopoutDragListeners() {
+        if (this.popoutDragCleanup) {
+            this.popoutDragCleanup();
+            this.popoutDragCleanup = null;
+        }
+    }
 
     private getCursorPosImageSpace = (offsetX: number, offsetY: number): Point2D => {
         const frame = this.frame;
