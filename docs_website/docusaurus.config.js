@@ -75,7 +75,7 @@ const config = {
                         current: {
                             label: devVersion
                         },
-                        "5.1.0": {
+                        "6.0.0": {
                             banner: "none"
                         }
                     },
