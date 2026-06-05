@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [6.0.0]
 
 ### Added
 * Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added multi-region selection workflows in the image viewer, including `Cmd/Ctrl+Click` selection toggling, `Shift+Drag` box selection, grouped dragging, grouped deletion, and selection-aware region dialog opening ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
 * Added multi-region selection workflows in the region list, including `Cmd/Ctrl+Click`, `Shift+Click`, `Shift+Arrow`, `Cmd/Ctrl+A`, selection cycling, and selection-aware context menu actions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
 * Added multi-region editing in the Region dialog for shared appearance controls, selected-region lock/unlock, hide/show, export, and delete actions [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955).
+* Image viewer can be popped out into a separate window ([#2003](https://github.com/CARTAvis/carta-frontend/issues/2003)).
 ### Fixed
 * Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750)).
 * Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
