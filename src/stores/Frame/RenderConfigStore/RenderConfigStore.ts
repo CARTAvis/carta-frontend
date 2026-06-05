@@ -211,7 +211,7 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the histogram.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogram - True for using the cube data.
      */
     @action setUseCubeHistogram = (isUsingCubeHistogram: boolean) => {
         if (isUsingCubeHistogram !== this.isUsingCubeHistogram) {
@@ -225,7 +225,7 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the contour.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogramContours - True for using the cube data.
      */
     @action setUseCubeHistogramContours = (isUsingCubeHistogramContours: boolean) => {
         this.isUsingCubeHistogramContours = isUsingCubeHistogramContours;
