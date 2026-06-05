@@ -2,9 +2,12 @@ import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
-import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode, RegionOpacity} from "enums";
 import {AppStore} from "stores";
+import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
+import {getNextRegionOpacity} from "utilities";
 
 import "./HotkeyWrapper.scss";
 
@@ -77,18 +80,57 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.selectedRegion) {
-                regionSet.selectedRegion.toggleLock();
+            if (regionSet.isLocked) {
+                return;
+            }
+
+            if (regionSet.selectedRegionCount > 0) {
+                regionSet.toggleSelectedRegionsLocked();
+                return;
+            }
+
+            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID && regionSet.focusedRegion.opacity !== RegionOpacity.Invisible) {
+                regionSet.focusedRegion.toggleLock();
             }
         }
+    };
+
+    public static toggleRegionVisibility = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            const regionSet = appStore.activeFrame.regionSet;
+
+            if (regionSet.selectedRegionCount > 0) {
+                regionSet.toggleSelectedRegionsVisibility();
+                return;
+            }
+
+            if (regionSet.focusedRegion && regionSet.focusedRegion.regionId !== CURSOR_REGION_ID) {
+                regionSet.focusedRegion.setOpacity(getNextRegionOpacity(regionSet.focusedRegion.opacity));
+            }
+        }
+    };
+
+    public static showAllRegions = () => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        regionSet.setEditableRegionsOpacity(RegionOpacity.Visible);
     };
 
     public static unlockAllRegions = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
+            if (regionSet.isLocked) {
+                return;
+            }
             for (const region of regionSet.regions) {
-                region.setLocked(false);
+                if (region.opacity !== RegionOpacity.Invisible) {
+                    region.setLocked(false);
+                }
             }
         }
     };
@@ -109,14 +151,143 @@ export class HotkeyService extends React.Component<{}> {
 
     public static handleRegionEsc = () => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            const regionSet = appStore.activeFrame.regionSet;
-            if (regionSet.selectedRegion) {
-                regionSet.deselectRegion();
-            } else if (regionSet.mode === RegionMode.CREATING) {
-                regionSet.setMode(RegionMode.MOVING);
-                appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const selectedRegion = regionSet.focusedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.deselectPoint();
+            return;
+        }
+
+        if (regionSet.selectedRegionCount > 0 || (!!selectedRegion && selectedRegion.regionId !== CURSOR_REGION_ID)) {
+            regionSet.clearSelection();
+        } else if (regionSet.mode === RegionMode.CREATING) {
+            regionSet.setMode(RegionMode.MOVING);
+            appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
+        }
+    };
+
+    public static enterPointSelection = () => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet?.focusedRegion || regionSet.selectedRegionCount > 1) {
+            return;
+        }
+
+        const region = regionSet.focusedRegion;
+        if (region.isPointSelectionSupported && !region.hasSelectedPoint) {
+            region.selectNextPoint();
+        }
+    };
+
+    public static selectNextRegionOrPoint = () => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const selectedRegion = regionSet.focusedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.selectNextPoint();
+        } else {
+            regionSet.selectNextRegion();
+        }
+    };
+
+    public static selectPreviousRegionOrPoint = () => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const selectedRegion = regionSet.focusedRegion;
+        if (selectedRegion?.hasSelectedPoint) {
+            selectedRegion.selectPreviousPoint();
+        } else {
+            regionSet.selectPreviousRegion();
+        }
+    };
+
+    public static getImageDeltaForKeyboardMove = (frame: FrameStore, deltaX: number, deltaY: number, acceleratedMultiplier: number, shouldScaleWithZoom: boolean = true): Point2D => {
+        let activeFrameDelta: Point2D;
+        if (!shouldScaleWithZoom) {
+            activeFrameDelta = {
+                x: deltaX * acceleratedMultiplier,
+                y: deltaY * acceleratedMultiplier
+            };
+        } else {
+            const frameView = frame.requiredFrameView;
+            const imageWidth = frameView ? frameView.xMax - frameView.xMin : NaN;
+            const imageHeight = frameView ? frameView.yMax - frameView.yMin : NaN;
+            const canUseScreenPixels = frame.renderWidth > 0 && frame.renderHeight > 0 && isFinite(imageWidth) && isFinite(imageHeight);
+            if (!canUseScreenPixels) {
+                const zoomMultiplier = Math.max(1, 1 / frame.zoomLevel);
+                activeFrameDelta = {
+                    x: deltaX * acceleratedMultiplier * zoomMultiplier,
+                    y: deltaY * acceleratedMultiplier * zoomMultiplier
+                };
+            } else {
+                activeFrameDelta = {
+                    x: deltaX * acceleratedMultiplier * (imageWidth / frame.renderWidth),
+                    y: deltaY * acceleratedMultiplier * (imageHeight / frame.renderHeight)
+                };
             }
+        }
+
+        if (!frame.spatialReference || !frame.spatialTransform) {
+            return activeFrameDelta;
+        }
+
+        const referenceOrigin = frame.spatialTransform.transformCoordinate({x: 0, y: 0}, true);
+        const referenceShifted = frame.spatialTransform.transformCoordinate(activeFrameDelta, true);
+        return {
+            x: referenceShifted.x - referenceOrigin.x,
+            y: referenceShifted.y - referenceOrigin.y
+        };
+    };
+
+    public static moveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number, shouldScaleWithZoom: boolean = true) => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const region = frame?.regionSet.focusedRegion;
+        if (!frame || !region || region.regionId === CURSOR_REGION_ID) {
+            return;
+        }
+
+        const {x: actualDeltaX, y: actualDeltaY} = HotkeyService.getImageDeltaForKeyboardMove(frame, deltaX, deltaY, acceleratedMultiplier, shouldScaleWithZoom);
+        const canEditSelectedPoint = region.isVisible && !region.isLocked && frame.regionSet.selectedRegionCount <= 1 && region.isPointSelectionSupported;
+
+        if (canEditSelectedPoint && region.hasSelectedRotationPoint) {
+            region.rotateSelectedPoint((-deltaX * acceleratedMultiplier) / 10);
+            return;
+        }
+
+        if (canEditSelectedPoint && region.isCompassRegion && region.hasSelectedPoint) {
+            region.moveSelectedPoint(actualDeltaX / 10, 0);
+            return;
+        }
+
+        if (canEditSelectedPoint && region.hasSelectedPoint) {
+            region.moveSelectedPoint(actualDeltaX, actualDeltaY);
+        } else {
+            frame.regionSet.translateRegionDrag(region, {x: actualDeltaX, y: actualDeltaY});
+        }
+    };
+
+    public static moveSelectedRegionOrChangeChannel = (deltaX: number, deltaY: number, channelDelta: number) => {
+        const appStore = AppStore.Instance;
+        const region = appStore.activeFrame?.regionSet.focusedRegion;
+        if (region && region.regionId !== CURSOR_REGION_ID) {
+            HotkeyService.moveSelectedRegion(deltaX, deltaY, 1, false);
+        } else if (channelDelta > 0) {
+            HotkeyService.nextChannel();
+        } else {
+            HotkeyService.prevChannel();
         }
     };
 
@@ -124,9 +295,10 @@ export class HotkeyService extends React.Component<{}> {
     public static navigationDisplayHotkeys() {
         const base = {group: "Navigation", global: true};
         const items = [
-            {combo: "click", label: "Pan image"},
-            {combo: "middle-click", label: "Pan image (inside region)"},
-            {combo: "mod + click", label: "Pan image (inside region)"},
+            {combo: "click + drag", label: "Pan image"},
+            {combo: "middle-click + drag", label: "Pan image (ignores regions)"},
+            {combo: "middle-click", label: "Center image"},
+            {combo: "mod + click", label: "Center image"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
         return items.map(item => ({...base, ...item}));
@@ -136,25 +308,184 @@ export class HotkeyService extends React.Component<{}> {
     public static regionDisplayHotkeys() {
         const base = {group: "Regions", global: true};
         const items = [
+            {combo: "click", label: "Select region/point"},
+            {combo: "mod + click", label: "Toggle region selection"},
+            {combo: "l", label: "Toggle selected region(s) lock"},
+            {combo: "shift + l", label: "Unlock all regions"},
+            {combo: "h", label: "Toggle selected region(s) visibility"},
+            {combo: "shift + h", label: "Show all regions"},
+            {combo: "mod + c", label: "Copy focused region"},
+            {combo: "mod + v", label: "Paste copied region"},
+            {combo: "double-click", label: "Region properties"},
+            {combo: "delete", label: "Delete selected point/region(s)"},
+            {combo: "backspace", label: "Delete selected point/region(s)"}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // For display in custom hotkeys dialog
+    public static regionImageViewerDisplayHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const base = {group: "Regions (Image Viewer)", global: true};
+        const items = [
+            {combo: "c", label: "Toggle region creation mode"},
             {combo: "mod", label: "Switch region creation mode"},
             {combo: "shift", label: "Symmetric region creation"},
-            {combo: "double-click", label: "Region properties"}
+            {combo: "shift + drag", label: "Region box selection"},
+            {combo: "double-click", label: "Add/remove polygon/polyline point"},
+            {combo: "esc", label: "Deselect region/point or cancel creation"},
+            {combo: "enter", label: "Enter point selection mode"},
+            {combo: "tab", label: "Select next region/point"},
+            {combo: "shift + tab", label: "Select previous region/point"},
+            {combo: "up", label: "Move region/point (↑ ↓ ← →)"},
+            {combo: "shift + up", label: "Coarse move (↑ ↓ ← →)"},
+            {combo: `${modString}up`, label: "Fine move (1 pixel, ↑ ↓ ← →)"}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // For display in custom hotkeys dialog
+    public static regionListDisplayHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const base = {group: "Regions (Region List)", global: true};
+        const items = [
+            {combo: "shift + click", label: "Select region range"},
+            {combo: `${modString}a`, label: "Select all regions"},
+            {combo: "up", label: "Select previous region"},
+            {combo: "down", label: "Select next region"},
+            {combo: "shift + up", label: "Extend selection upward"},
+            {combo: "shift + down", label: "Extend selection downward"},
+            {combo: "tab", label: "Select next region in selection"},
+            {combo: "shift + tab", label: "Select previous region in selection"},
+            {combo: "esc", label: "Deselect region(s)"},
+            {combo: "enter", label: "Region properties"},
+            {combo: "right-click", label: "Region context menu"}
         ];
         return items.map(item => ({...base, ...item}));
     }
 
     public static regionHotkeys() {
-        const appStore = AppStore.Instance;
         const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.toggleCreateMode},
-            {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.toggleRegionLock},
+            {combo: "l", label: "Toggle selected region(s) lock", onKeyDown: HotkeyService.toggleRegionLock},
+            {combo: "h", label: "Toggle selected region(s) visibility", onKeyDown: HotkeyService.toggleRegionVisibility},
+            {combo: "shift + h", label: "Show all regions", onKeyDown: HotkeyService.showAllRegions},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.unlockAllRegions},
-            {combo: "mod + c", label: "Copy selected region", onKeyDown: HotkeyService.copyRegion, preventDefault: false},
+            {combo: "mod + c", label: "Copy focused region", onKeyDown: HotkeyService.copyRegion, preventDefault: false},
             {combo: "mod + v", label: "Paste copied region", onKeyDown: HotkeyService.pasteRegion, preventDefault: false},
-            {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.handleRegionEsc}
+            {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
+            {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.handleRegionDeleteHotkey},
+            {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.handleRegionEsc},
+            {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.enterPointSelection},
+            {combo: "tab", label: "Select next region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.handleTab(e, HotkeyService.selectNextRegionOrPoint)},
+            {combo: "shift + tab", label: "Select previous region/point", preventDefault: false, onKeyDown: (e: KeyboardEvent) => HotkeyService.handleTab(e, HotkeyService.selectPreviousRegionOrPoint)}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // Only handle Tab/Shift+Tab when there is an active non-cursor region
+    public static handleTab(e: KeyboardEvent, action: () => void) {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        const region = regionSet?.focusedRegion;
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            return;
+        }
+
+        const activeEl = (document?.activeElement as Element) || null;
+        const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
+        if (isRegionListFocused && regionSet.selectedRegionCount <= 1) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        action();
+    }
+
+    public static handleRegionDeleteHotkey = async () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const regionSet = frame?.regionSet;
+        if (!frame || !regionSet) {
+            return;
+        }
+
+        // Delete selected/focused regions immediately. If Region List has focus and no
+        // explicit region was handled, confirm before deleting all regions.
+        const activeEl = (document?.activeElement as Element) || null;
+        const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
+        const isRegionDeleteHotkeyHandled = HotkeyService.tryHandleRegionDeleteHotkey();
+        if (!isRegionListFocused || isRegionDeleteHotkeyHandled) {
+            return;
+        }
+
+        const hasDeletableRegions = !regionSet.isLocked && regionSet.regions.some(r => r.regionId !== CURSOR_REGION_ID && !r.isLocked);
+        if (!hasDeletableRegions) {
+            return;
+        }
+
+        // No explicit selection; confirm deleting all regions
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+        if (isConfirmed) {
+            appStore.deleteAllRegions();
+        }
+    };
+
+    public static tryHandleRegionDeleteHotkey = (): boolean => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const regionSet = frame?.regionSet;
+        if (!frame || !regionSet) {
+            return false;
+        }
+
+        if (regionSet.isLocked) {
+            return true;
+        }
+
+        const focusedRegion = regionSet.focusedRegion;
+        if (focusedRegion?.hasSelectedPoint && regionSet.selectedRegionCount <= 1) {
+            if (focusedRegion.isVisible && !focusedRegion.isLocked) {
+                focusedRegion.removeSelectedPoint();
+            }
+            return true;
+        }
+
+        if (regionSet.selectedRegionIds?.size > 0) {
+            appStore.deleteSelectedRegions();
+            return true;
+        }
+
+        if (focusedRegion && focusedRegion.regionId !== CURSOR_REGION_ID) {
+            appStore.deleteSelectedRegions();
+            return true;
+        }
+
+        return false;
+    };
+
+    public static regionHiddenHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const base = {group: "Regions", global: true, allowInInput: false, preventDefault: true};
+        const fineMoveMultiplier = 1;
+        const normalMoveMultiplier = 10;
+        const coarseMoveMultiplier = 20;
+        const items = [
+            // Fine up/down movement is handled by MoveSelectedRegionOrChangeChannel because those combos also change channels.
+            {combo: `${modString}left`, label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.moveSelectedRegion(-1, 0, fineMoveMultiplier, false)},
+            {combo: `${modString}right`, label: "Move selected region right (fine)", onKeyDown: () => HotkeyService.moveSelectedRegion(1, 0, fineMoveMultiplier, false)},
+            {combo: "up", label: "Move selected region up", onKeyDown: () => HotkeyService.moveSelectedRegion(0, 1, normalMoveMultiplier)},
+            {combo: "down", label: "Move selected region down", onKeyDown: () => HotkeyService.moveSelectedRegion(0, -1, normalMoveMultiplier)},
+            {combo: "left", label: "Move selected region left", onKeyDown: () => HotkeyService.moveSelectedRegion(-1, 0, normalMoveMultiplier)},
+            {combo: "right", label: "Move selected region right", onKeyDown: () => HotkeyService.moveSelectedRegion(1, 0, normalMoveMultiplier)},
+            {combo: "shift + up", label: "Move selected region up (coarse)", onKeyDown: () => HotkeyService.moveSelectedRegion(0, 1, coarseMoveMultiplier)},
+            {combo: "shift + down", label: "Move selected region down (coarse)", onKeyDown: () => HotkeyService.moveSelectedRegion(0, -1, coarseMoveMultiplier)},
+            {combo: "shift + left", label: "Move selected region left (coarse)", onKeyDown: () => HotkeyService.moveSelectedRegion(-1, 0, coarseMoveMultiplier)},
+            {combo: "shift + right", label: "Move selected region right (coarse)", onKeyDown: () => HotkeyService.moveSelectedRegion(1, 0, coarseMoveMultiplier)}
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -166,8 +497,8 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
             {combo: `${modString}[`, label: "Previous image", onKeyDown: appStore.prevImage},
-            {combo: `${modString}up`, label: "Next channel", onKeyDown: HotkeyService.nextChannel},
-            {combo: `${modString}down`, label: "Previous channel", onKeyDown: HotkeyService.prevChannel},
+            {combo: `${modString}up`, label: "Next channel", onKeyDown: () => HotkeyService.moveSelectedRegionOrChangeChannel(0, 1, 1)},
+            {combo: `${modString}down`, label: "Previous channel", onKeyDown: () => HotkeyService.moveSelectedRegionOrChangeChannel(0, -1, -1)},
             {combo: `${modString}shift + up`, label: "Next Stokes cube", onKeyDown: HotkeyService.nextStokes},
             {combo: `${modString}shift + down`, label: "Previous Stokes cube", onKeyDown: HotkeyService.prevStokes}
         ];
@@ -223,9 +554,9 @@ export class HotkeyService extends React.Component<{}> {
         const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.navigationDisplayHotkeys());
 
         // Regions
-        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.regionHotkeys());
-        const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.regionDisplayHotkeys());
-        regionHotKeys.push(...regionDisplayOnlyHotkeys);
+        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.regionDisplayHotkeys());
+        const regionImageViewerHotKeys: React.ReactElement[] = toElements(HotkeyService.regionImageViewerDisplayHotkeys());
+        const regionListHotKeys: React.ReactElement[] = toElements(HotkeyService.regionListDisplayHotkeys());
 
         // Frame controls
         const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.frameControlHotkeys());
@@ -239,6 +570,8 @@ export class HotkeyService extends React.Component<{}> {
         return {
             navigationHotKeys,
             regionHotKeys,
+            regionImageViewerHotKeys,
+            regionListHotKeys,
             animatorHotkeys,
             fileHotkeys,
             otherHotKeys
@@ -247,7 +580,7 @@ export class HotkeyService extends React.Component<{}> {
 
     public static renderHotkeyGroups() {
         const hotkeys = HotkeyService.getHotkeyDefinitionsForDisplay();
-        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
+        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.animatorHotkeys, hotkeys.regionHotKeys, hotkeys.regionImageViewerHotKeys, hotkeys.regionListHotKeys, hotkeys.otherHotKeys];
 
         // Render each group; placement handled purely by CSS multi-column
         return hotkeyGroups.map((group, idx) => (
@@ -259,7 +592,17 @@ export class HotkeyService extends React.Component<{}> {
 }
 
 export const HotkeysRegistrar = () => {
-    const hotkeys = React.useMemo(() => [...HotkeyService.frameControlHotkeys(), ...HotkeyService.frameControlHiddenHotkeys(), ...HotkeyService.regionHotkeys(), ...HotkeyService.fileControlHotkeys(), ...HotkeyService.otherHotkeys()], []);
+    const hotkeys = React.useMemo(
+        () => [
+            ...HotkeyService.frameControlHotkeys(),
+            ...HotkeyService.frameControlHiddenHotkeys(),
+            ...HotkeyService.regionHotkeys(),
+            ...HotkeyService.regionHiddenHotkeys(),
+            ...HotkeyService.fileControlHotkeys(),
+            ...HotkeyService.otherHotkeys()
+        ],
+        []
+    );
 
     useHotkeys(hotkeys);
 

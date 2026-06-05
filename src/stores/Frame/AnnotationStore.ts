@@ -7,7 +7,7 @@ import {Font, FontStyle} from "enums";
 import {type Point2D} from "models";
 import {type BackendService} from "services";
 import {type FrameStore} from "stores/Frame";
-import {getPixelSizes, transformPoint} from "utilities";
+import {getPixelSizes, MIN_EDITED_REGION_DIMENSION, transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
 
@@ -285,6 +285,12 @@ export class CompassAnnotationStore extends RegionStore {
         this.setControlPoint(1, {x: length, y: length}, shouldSkipUpdate);
         this.modifiedTimestamp = performance.now();
     };
+
+    protected override moveSelectedCompassPoint(deltaX: number) {
+        if (deltaX !== 0) {
+            this.setLength(Math.max(MIN_EDITED_REGION_DIMENSION, this.length + deltaX));
+        }
+    }
 
     @action setNorthTextOffset = (offset: number, isX: boolean, shouldSkipTimestampUpdate: boolean = false) => {
         if (isX) {

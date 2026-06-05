@@ -24,16 +24,40 @@ export class AlertStore {
     @observable shouldShowDashboardLink: boolean = false;
     private interactionPromise: Deferred<boolean> | null;
 
+    private keyDownHandler = (ev: KeyboardEvent) => {
+        const hasNoModifier = !ev.shiftKey && !ev.altKey && !ev.metaKey && !ev.ctrlKey;
+        // Only intercept Enter when interactive or retry alert is visible
+        if (this.isAlertVisible && (this.alertType === AlertType.Interactive || this.alertType === AlertType.Retry) && ev.key === "Enter" && hasNoModifier) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.handleInteractiveAlertClosed(true);
+        }
+        // ESC key dismisses all alerts
+        if (this.isAlertVisible && ev.key === "Escape" && hasNoModifier) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.alertType === AlertType.Interactive || this.alertType === AlertType.Retry) {
+                this.handleInteractiveAlertClosed(false);
+            } else {
+                this.dismissAlert();
+            }
+        }
+    };
+
     @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
         this.alertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Info;
         this.shouldShowDashboardLink = shouldShowDashboard;
         this.isAlertVisible = true;
+
+        document.addEventListener("keydown", this.keyDownHandler, true);
     };
 
     @action dismissAlert = () => {
         this.isAlertVisible = false;
+
+        document.removeEventListener("keydown", this.keyDownHandler, true);
     };
 
     @action showInteractiveAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
@@ -43,6 +67,9 @@ export class AlertStore {
         this.isAlertVisible = true;
         this.shouldShowDashboardLink = shouldShowDashboard;
         this.interactionPromise = new Deferred<boolean>();
+
+        document.addEventListener("keydown", this.keyDownHandler, true);
+
         return this.interactionPromise.promise;
     };
 
@@ -53,11 +80,17 @@ export class AlertStore {
         this.isAlertVisible = true;
         this.shouldShowDashboardLink = shouldShowDashboard;
         this.interactionPromise = new Deferred<boolean>();
+
+        document.addEventListener("keydown", this.keyDownHandler, true);
+
         return this.interactionPromise.promise;
     };
 
     @action handleInteractiveAlertClosed = (isConfirmed: boolean) => {
         this.isAlertVisible = false;
+
+        document.removeEventListener("keydown", this.keyDownHandler, true);
+
         if (this.interactionPromise) {
             this.interactionPromise.resolve(isConfirmed);
             this.interactionPromise = null;
