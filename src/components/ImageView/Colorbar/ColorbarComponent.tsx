@@ -179,8 +179,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             />
         );
 
-        const ticks: JSX.Element[] = [];
-        const numbers: JSX.Element[] = [];
+        const ticks: React.JSX.Element[] = [];
+        const numbers: React.JSX.Element[] = [];
         if (colorbarSettings.isTickVisible || colorbarSettings.isNumberVisible) {
             const texts = frame.colorbarStore.texts;
             const positions = frame.colorbarStore.positions;

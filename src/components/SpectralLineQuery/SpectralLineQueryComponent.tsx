@@ -13,7 +13,6 @@ import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
 const PLOT_LINES_LIMIT = 1000;
 
@@ -98,7 +97,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     };
 
     private handleRedshiftChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const valueString = ev.currentTarget.value;

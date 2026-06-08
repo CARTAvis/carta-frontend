@@ -377,7 +377,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private contextMenuRenderer = (context: MenuContext): JSX.Element => {
+    private contextMenuRenderer = (context: MenuContext): React.JSX.Element => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
         if (!rows || !rows.length) {

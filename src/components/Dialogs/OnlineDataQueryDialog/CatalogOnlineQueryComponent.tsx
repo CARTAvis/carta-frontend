@@ -14,8 +14,6 @@ import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatVali
 
 import "./CatalogOnlineQueryComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
@@ -366,7 +364,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleRadiusChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const val = parseFloat(ev.currentTarget.value);
@@ -379,7 +377,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleCenterWcsXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -409,7 +407,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleCenterWcsYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 

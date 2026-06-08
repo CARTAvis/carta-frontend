@@ -5,8 +5,6 @@ import {observer} from "mobx-react";
 
 import {toExponential} from "utilities";
 
-const KEYCODE_ENTER = 13;
-
 export interface ClearableNumericInputProps extends NumericInputProps {
     label: string;
     labelInfo?: string | React.ReactNode;
@@ -59,7 +57,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     }
 
     handleChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const val = parseFloat(this.validation(ev.currentTarget.value));

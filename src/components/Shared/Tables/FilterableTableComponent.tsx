@@ -16,8 +16,6 @@ import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
 
-const KEYCODE_ENTER = 13;
-
 export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
@@ -279,7 +277,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode === KEYCODE_ENTER && this.props.applyFilterWithEnter) {
+        if (ev.type === "keydown" && ev.key === "Enter" && this.props.applyFilterWithEnter) {
             this.props.applyFilterWithEnter();
         }
     };
@@ -329,7 +327,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     render() {
         const table = this.props;
-        const tableColumns: JSX.Element[] = [];
+        const tableColumns: React.JSX.Element[] = [];
         const tableData = table.dataset;
         let lineSelectionIndex: number | undefined;
         table.columnHeaders?.forEach(header => {

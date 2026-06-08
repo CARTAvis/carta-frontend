@@ -145,7 +145,7 @@ export class FileInfoComponent extends React.Component<{
 
     // mode 1/-1: one step forward/backward, 99/-99: continuously forward/backward, 0: stop
     private handleClickMatched = (mode: number, keyEvent?) => {
-        if ((keyEvent && keyEvent?.keyCode !== 13) || this.searchString === "") {
+        if ((keyEvent && keyEvent.key !== "Enter") || this.searchString === "") {
             return;
         }
         if (mode === 0) {

@@ -22,7 +22,6 @@ import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConf
 
 import "./RenderConfigComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const COLORSCALE_LENGTH = 2048;
 
 @observer
@@ -165,7 +164,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     handleScaleMinChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -177,7 +176,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScaleMaxChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 

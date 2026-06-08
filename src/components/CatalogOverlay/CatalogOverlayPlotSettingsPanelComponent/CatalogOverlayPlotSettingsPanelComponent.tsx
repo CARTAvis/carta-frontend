@@ -33,7 +33,6 @@ const RHOMB = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
 const HEXAGON2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z" />;
 const HEXAGON = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
 const ELLIPSE = <ellipse cx="8" cy="8" rx="4" ry="7" />;
-const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -792,7 +791,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleChange = (ev, type: ValueClip) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const val = parseFloat(ev.currentTarget.value);

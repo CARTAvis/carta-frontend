@@ -23,7 +23,7 @@ class ProfileSelectionButtonComponentProps {
     isDisabled: boolean;
     isOptionsDisabled?: boolean;
     isSelectingSpecificItem?: boolean;
-    categoryTooltip: JSX.Element;
+    categoryTooltip: React.JSX.Element;
     dropdownTooltip: {nonActive: string; active: string; disabled: string};
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;

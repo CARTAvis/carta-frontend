@@ -72,7 +72,7 @@ export class LogComponent extends React.Component<WidgetProps> {
         const hiddenTags = logStore.hiddenTags;
 
         const tagList: string[] = [];
-        const entryElements: JSX.Element[] = [];
+        const entryElements: React.JSX.Element[] = [];
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
 
@@ -80,7 +80,7 @@ export class LogComponent extends React.Component<WidgetProps> {
                 continue;
             }
 
-            const entryTagSpans: JSX.Element[] = [];
+            const entryTagSpans: React.JSX.Element[] = [];
             const visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
             for (let j = 0; j < entry.tags.length; j++) {
                 const tag = entry.tags[j];

@@ -14,8 +14,6 @@ import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
 
 import "./HistogramSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
@@ -102,7 +100,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -125,7 +123,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -144,7 +142,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -163,7 +161,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 

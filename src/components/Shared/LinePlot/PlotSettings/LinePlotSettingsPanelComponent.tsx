@@ -49,7 +49,7 @@ export class LinePlotSettingsPanelComponentProps {
 
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
-    private getLineColorSelectors = (): JSX.Element | null => {
+    private getLineColorSelectors = (): React.JSX.Element | null => {
         const lineColorMap = this.props.lineColorMap;
         const setLineColor = this.props.setLineColor;
         if (lineColorMap && setLineColor) {

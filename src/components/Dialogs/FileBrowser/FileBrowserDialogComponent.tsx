@@ -1059,7 +1059,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private submitInputPath = (keyEvent?) => {
-        if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
+        if (keyEvent && keyEvent.key === "Enter" && this.inputPathString !== "") {
             this.handleBreadcrumbClicked(this.inputPathString);
             this.switchEditPathMode();
         }
