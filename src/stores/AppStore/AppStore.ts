@@ -1967,13 +1967,7 @@ export class AppStore {
         // Watch for system theme preference changes
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
         if (mediaQuery) {
-            if (mediaQuery.addEventListener) {
-                mediaQuery.addEventListener("change", changeEvent => this.handleThemeChange(changeEvent.matches));
-            } else if (mediaQuery.addListener) {
-                // Workaround for Safari
-                // @ts-ignore
-                mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
-            }
+            mediaQuery.addEventListener("change", changeEvent => this.handleThemeChange(changeEvent.matches));
         }
         this.handleThemeChange(mediaQuery.matches);
 
