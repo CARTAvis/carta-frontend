@@ -5,9 +5,8 @@ import {observer} from "mobx-react";
 
 import {DialogId} from "enums";
 import {AppStore} from "stores";
-import {copyToClipboard} from "utilities";
 
-import {AppToaster, WarningToast} from "../../Shared";
+import {AppToaster, copyToClipboardWithToast, WarningToast} from "../../Shared";
 
 import "./ShareWorkspaceDialogComponent.scss";
 
@@ -63,7 +62,16 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     if (shareKey) {
         const baseUrl = window.location.href.split("?")[0];
         const link = `${baseUrl}?key=${shareKey}`;
-        const copyButton = <AnchorButton intent={Intent.SUCCESS} variant="minimal" icon="clipboard" onClick={() => copyToClipboard(link)} />;
+        const copyButton = (
+            <AnchorButton
+                intent={Intent.SUCCESS}
+                variant="minimal"
+                icon="clipboard"
+                onClick={async () => {
+                    await copyToClipboardWithToast(link);
+                }}
+            />
+        );
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
         const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;

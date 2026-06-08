@@ -6,13 +6,13 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
+import {copyToClipboardWithToast, ExportImageMenuComponent} from "components/Shared";
 import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
 import {ApiService} from "services";
 import {AppStore, SnippetStore, WidgetsStore} from "stores";
-import {copyToClipboard, toFixed} from "utilities";
+import {toFixed} from "utilities";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
@@ -197,8 +197,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await copyToClipboard(appStore.backendService.sessionId.toString());
-                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                        await copyToClipboardWithToast(appStore.backendService.sessionId.toString(), "Session ID copied!");
                     } catch (err) {
                         console.error(err);
                     }
@@ -217,11 +216,10 @@ export class RootMenuComponent extends React.Component {
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl?.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            await copyToClipboard(finalUrl);
+                            await copyToClipboardWithToast(finalUrl, "Session URL copied!");
                         } else {
-                            await copyToClipboard(document.URL);
+                            await copyToClipboardWithToast(document.URL, "Session URL copied!");
                         }
-                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.error(err);
                     }
