@@ -155,7 +155,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             </span>
                         }
                     >
-                        <AnchorButton minimal={true} small={true} active={isRasterVisible} intent={isRasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
+                        <AnchorButton variant="minimal" size="small" active={isRasterVisible} intent={isRasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
                             R
                         </AnchorButton>
                     </Tooltip>
@@ -172,7 +172,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={isContourVisible} intent={isContourVisible ? "success" : "none"} onClick={toggleContourVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isContourVisible} intent={isContourVisible ? "success" : "none"} onClick={toggleContourVisible}>
                                 C
                             </AnchorButton>
                         </Tooltip>
@@ -190,7 +190,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={isVectorOverlayVisible} intent={isVectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isVectorOverlayVisible} intent={isVectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
                                 V
                             </AnchorButton>
                         </Tooltip>
@@ -234,8 +234,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isSpatialReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spatialReference}
                         intent={frame.spatialReference ? "success" : "none"}
                         onClick={() => (isSpatialReference ? appStore.matchAllSpatial() : appStore.toggleSpatialMatching(frame))}
@@ -271,8 +271,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isSpectralReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
@@ -308,8 +308,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isRasterScalingReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.rasterScalingReference}
                         intent={frame.rasterScalingReference ? "success" : "none"}
                         onClick={() => (isRasterScalingReference ? appStore.matchAllRasterScaling() : appStore.toggleRasterScalingMatching(frame))}

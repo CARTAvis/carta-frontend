@@ -140,7 +140,7 @@ export class LogComponent extends React.Component<WidgetProps> {
                         <div>{allTagSpans.length > 0 ? allTagSpans : "None"}</div>
                     </FormGroup>
                     <div className="log-footer-right">
-                        <Button minimal={true} intent={"warning"} icon="trash" onClick={this.onClearClicked} />
+                        <Button variant="minimal" intent={"warning"} icon="trash" onClick={this.onClearClicked} />
                     </div>
                 </div>
             </div>

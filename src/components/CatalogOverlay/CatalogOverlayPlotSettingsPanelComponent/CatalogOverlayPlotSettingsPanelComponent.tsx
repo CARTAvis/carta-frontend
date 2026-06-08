@@ -194,7 +194,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
+                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMap}>
@@ -223,7 +223,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
                             intent={widgetStore.isSizeColumnMinLocked ? "success" : "none"}
                             disabled={shouldDisableSizeMinorMap || widgetStore.isSizeMinorColumnMinLocked}
-                            minimal={true}
+                            variant="minimal"
                             onClick={widgetStore.toggleSizeColumnMinLock}
                         />
                     </div>
@@ -243,7 +243,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
                             intent={widgetStore.isSizeColumnMaxLocked ? "success" : "none"}
                             disabled={shouldDisableSizeMinorMap || widgetStore.isSizeMinorColumnMaxLocked}
-                            minimal={true}
+                            variant="minimal"
                             onClick={widgetStore.toggleSizeColumnMaxLock}
                         />
                     </div>
@@ -270,7 +270,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} rightIcon="double-caret-vertical" />
+                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -300,7 +300,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} rightIcon="double-caret-vertical" />
+                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -324,7 +324,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={isOverlayPanelDisabled} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.sizeMinorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMinorMap}>
@@ -353,7 +353,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
                             intent={widgetStore.isSizeMinorColumnMinLocked ? "success" : "none"}
                             disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMinLocked}
-                            minimal={true}
+                            variant="minimal"
                             onClick={widgetStore.toggleSizeMinorColumnMinLock}
                         />
                     </div>
@@ -373,7 +373,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
                             intent={widgetStore.isSizeMinorColumnMaxLocked ? "success" : "none"}
                             disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMaxLocked}
-                            minimal={true}
+                            variant="minimal"
                             onClick={widgetStore.toggleSizeMinorColumnMaxLock}
                         />
                     </div>
@@ -400,7 +400,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} rightIcon="double-caret-vertical" />
+                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -430,7 +430,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} rightIcon="double-caret-vertical" />
+                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -468,7 +468,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 filterable={false}
                                 resetOnSelect={true}
                             >
-                                <Button text={widgetStore.canvasSizeUnit} disabled={isOverlayPanelDisabled || !widgetStore.isSizeMapDisabled} rightIcon="double-caret-vertical" />
+                                <Button text={widgetStore.canvasSizeUnit} disabled={isOverlayPanelDisabled || !widgetStore.isSizeMapDisabled} endIcon="double-caret-vertical" />
                             </Select>
                         </FormGroup>
                     </Collapse>
@@ -510,7 +510,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
+                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Minor" disabled={!widgetStore.isSizeMinorTabEnabled}>
@@ -526,7 +526,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.isSizeMinorTabEnabled} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.isSizeMinorTabEnabled} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Unit">
@@ -540,7 +540,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={isOverlayPanelDisabled}>
@@ -598,7 +598,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.colorMapColumn} disabled={isOverlayPanelDisabled} rightIcon="double-caret-vertical" data-testid="catalog-settings-color-column-dropdown" />
+                        <Button text={widgetStore.colorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-color-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableColorMap}>
@@ -655,7 +655,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.orientationMapColumn} disabled={isOverlayPanelDisabled} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
+                        <Button text={widgetStore.orientationMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableOrientationMap && widgetStore.catalogDisplayMode !== CatalogDisplayMode.WORLD}>
@@ -729,7 +729,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             fill={true}
                         >
-                            <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} />
+                            <Button text={activeFileName} endIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} />
                         </Select>
                     </FormGroup>
                     <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={isOverlayPanelDisabled}>
@@ -745,7 +745,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             itemRenderer={this.renderShapePopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} data-testid="catalog-settings-shape-dropdown" />
+                            <Button icon={this.getCatalogShape(widgetStore.catalogShape)} endIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} data-testid="catalog-settings-shape-dropdown" />
                         </Select>
                     </FormGroup>
                     <FormGroup className={"file-menu"} inline={true} label="Mode" disabled={isOverlayPanelDisabled}>

@@ -126,7 +126,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
-                            small={true}
+                            size="small"
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => columnHeader.name && this.props.updateColumnFilter?.(ev.currentTarget.value, columnHeader.name)}
@@ -265,7 +265,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
-                            small={true}
+                            size="small"
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => column.name && this.props.updateColumnFilter?.(ev.currentTarget.value, column.name)}

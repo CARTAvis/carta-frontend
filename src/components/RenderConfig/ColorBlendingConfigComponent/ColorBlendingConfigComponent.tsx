@@ -74,7 +74,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip>
                     <Tooltip content="Remove layer" disabled={alphaIndex <= 0}>
-                        <Button icon="small-cross" minimal={true} style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
+                        <Button icon="small-cross" variant="minimal" style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
                     </Tooltip>
                 </div>
             </>
@@ -123,13 +123,13 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 <ButtonGroup>
                     <Popover minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
                         <Tooltip content={addLayerTooltip}>
-                            <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
+                            <Button icon="add" endIcon="caret-down" disabled={!newFrameOptions.length}>
                                 {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
                         </Tooltip>
                     </Popover>
                     <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
-                        <Button icon="color-fill" rightIcon="caret-down">
+                        <Button icon="color-fill" endIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>
                     </Popover>

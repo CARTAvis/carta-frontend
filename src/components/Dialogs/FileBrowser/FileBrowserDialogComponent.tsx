@@ -654,7 +654,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button variant="minimal" endIcon="caret-down">
                     {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
                 </Button>
             </Popover>
@@ -671,7 +671,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
+                <Button variant="minimal" endIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
             </Popover>
@@ -700,7 +700,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button variant="minimal" endIcon="caret-down">
                     {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
                 </Button>
             </Popover>
@@ -744,7 +744,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 placement="bottom-end"
             >
-                <Button minimal={true} icon="filter" rightIcon="caret-down">
+                <Button variant="minimal" icon="filter" endIcon="caret-down">
                     {filterName}
                 </Button>
             </Popover>
@@ -762,7 +762,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     }
                     placement="bottom-start"
                 >
-                    <Button minimal={true} icon={this.isImageArithmeticEnabled ? "calculator" : "search"} rightIcon="caret-down">
+                    <Button variant="minimal" icon={this.isImageArithmeticEnabled ? "calculator" : "search"} endIcon="caret-down">
                         {this.isImageArithmeticEnabled ? "Image arithmetic" : "Filter"}
                     </Button>
                 </Popover>
@@ -898,11 +898,11 @@ export class FileBrowserDialogComponent extends React.Component {
                                                 fileBrowserStore.selectFolder(fileList.directory, true);
                                             }
                                         }}
-                                        minimal={true}
+                                        variant="minimal"
                                     />
                                 </Tooltip>
                                 <Tooltip content={"Input directory path"} disabled={this.isEditPathEnabled}>
-                                    <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={this.switchEditPathMode} />
+                                    <AnchorButton className="edit-path-button" icon="edit" variant="minimal" onClick={this.switchEditPathMode} />
                                 </Tooltip>
                             </ButtonGroup>
                             {this.isEditPathEnabled ? (

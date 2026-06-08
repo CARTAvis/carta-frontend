@@ -141,7 +141,7 @@ export class RootMenuComponent extends React.Component {
             }
 
             const labelElement = (
-                <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
+                <Button className="snippet-run-button" size="small" variant="minimal" icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
             const menuItem = <MenuItem key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {snippet: snippet, name: name, newSnippet: false})} />;
@@ -490,7 +490,7 @@ export class RootMenuComponent extends React.Component {
                 {appStore.shouldShowNewRelease && (
                     <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
-                            <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                            <Button icon={"envelope"} intent={"warning"} variant="minimal" />
                         </Tooltip>
                     </Popover>
                 )}
@@ -506,7 +506,7 @@ export class RootMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
+                        <AnchorButton icon="share" variant="minimal" onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
                 {shouldShowLoadingIndicator && loadingIndicator}

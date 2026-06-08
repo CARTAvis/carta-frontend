@@ -212,7 +212,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     )}
                     {typeof props.isAutoScaledX !== "undefined" && typeof props.isAutoScaledY !== "undefined" && props.clearXYBounds && (
                         <FormGroup label={"Reset range"} inline={true} className="reset-range-content">
-                            <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
+                            <Button className="reset-range-button" icon={"zoom-to-fit"} size="small" disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
                                 Reset range
                             </Button>
                         </FormGroup>
