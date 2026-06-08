@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -53,7 +53,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;
-    private tableRef: Table2 | null = null;
+    private tableRef: Table | null = null;
     private cachedFilterString: string | undefined;
     private cachedSortingString: string | undefined;
     private cachedFileList: BrowserFileList | null;
@@ -499,7 +499,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const table = (
-            <Table2
+            <Table
                 ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
                 enableRowReordering={false}
@@ -523,7 +523,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
                 <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
-            </Table2>
+            </Table>
         );
 
         return (

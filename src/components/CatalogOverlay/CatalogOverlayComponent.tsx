@@ -2,7 +2,7 @@ import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import type {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
@@ -20,7 +20,7 @@ import "./CatalogOverlayComponent.scss";
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable private catalogTableRef: Table2 | undefined = undefined;
+    @observable private catalogTableRef: Table | undefined = undefined;
     @observable private height: number = 600;
     @observable private width: number = 720;
 
@@ -29,7 +29,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
-    private catalogHeaderTableRef: Table2 | undefined = undefined;
+    private catalogHeaderTableRef: Table | undefined = undefined;
     private catalogFileNames: Map<number, string>;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -555,7 +555,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <Table2
+            <Table
                 ref={ref => this.onControlHeaderTableRef(ref)}
                 numRows={numResultsRows}
                 enableRowReordering={false}
@@ -572,7 +572,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 cellRendererDependencies={[headerDisplays, profileStore.isLoadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 

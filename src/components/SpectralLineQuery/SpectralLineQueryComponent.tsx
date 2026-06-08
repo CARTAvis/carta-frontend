@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -23,8 +23,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable height: number = 600;
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
     private widgetId: string;
-    private headerTableRef: Table2 | undefined;
-    private resultTableRef: Table2 | undefined;
+    private headerTableRef: Table | undefined;
+    private resultTableRef: Table | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -176,7 +176,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnDescription);
 
         return (
-            <Table2
+            <Table
                 ref={ref => (this.headerTableRef = ref ?? undefined)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
@@ -193,7 +193,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 cellRendererDependencies={[this.widgetStore.displayedColumnHeaders]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 

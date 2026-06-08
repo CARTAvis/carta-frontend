@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Checkbox, Classes, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
-import {Cell, Column, ColumnHeaderCell, type Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import type {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -27,7 +27,7 @@ export class FilterableTableComponentProps {
     isLoadingCell?: boolean;
     selectedDataIndex?: number[];
     shouldShowSelectedData?: boolean;
-    updateTableRef?: (ref: Table2) => void;
+    updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
@@ -349,7 +349,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
-            <Table2
+            <Table
                 className={className}
                 ref={table.updateTableRef ?? null}
                 numRows={table.numVisibleRows}
@@ -368,7 +368,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 getCellClipboardData={undefined}
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 }

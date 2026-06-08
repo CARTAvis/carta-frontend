@@ -1,7 +1,7 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -471,7 +471,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <ResizeDetector onResize={this.onResize}>
                 <div className="layer-list-widget">
                     {this.width > 0 && (
-                        <Table2
+                        <Table
                             numRows={imageNum}
                             rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                             enableRowHeader={true}
@@ -492,7 +492,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                        </Table2>
+                        </Table>
                     )}
                 </div>
             </ResizeDetector>
