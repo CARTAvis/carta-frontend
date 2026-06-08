@@ -758,28 +758,28 @@ export class BackendService {
 
     cancelRequestingMoment(fileId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            return throwError(() => new Error("Not connected"));
         } else {
             const message = CARTA.StopMomentCalc.create({fileId});
             this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
                 return true;
             }
-            return throwError(new Error("Could not send event"));
+            return throwError(() => new Error("Could not send event"));
         }
     }
 
     @action("cancel requesting file list")
     cancelRequestingFileList(fileListType: CARTA.FileListType) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            return throwError(() => new Error("Not connected"));
         } else {
             const message = CARTA.StopFileList.create({fileListType: fileListType});
             this.logEvent(CARTA.EventType.STOP_FILE_LIST, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_FILE_LIST, new Uint8Array())) {
                 return true;
             }
-            return throwError(new Error("Could not send event"));
+            return throwError(() => new Error("Could not send event"));
         }
     }
 
@@ -817,14 +817,14 @@ export class BackendService {
 
     cancelRequestingPV(fileId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            return throwError(() => new Error("Not connected"));
         } else {
             const message = CARTA.StopPvCalc.create({fileId});
             this.logEvent(CARTA.EventType.STOP_PV_CALC, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_PV_CALC, CARTA.StopPvCalc.encode(message).finish())) {
                 return true;
             }
-            return throwError(new Error("Could not send event"));
+            return throwError(() => new Error("Could not send event"));
         }
     }
 
@@ -873,14 +873,14 @@ export class BackendService {
 
     cancelRequestingFitting(fileId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            return throwError(() => new Error("Not connected"));
         } else {
             const message = CARTA.StopFitting.create({fileId});
             this.logEvent(CARTA.EventType.STOP_FITTING, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_FITTING, CARTA.StopFitting.encode(message).finish())) {
                 return true;
             }
-            return throwError(new Error("Could not send event"));
+            return throwError(() => new Error("Could not send event"));
         }
     }
 
