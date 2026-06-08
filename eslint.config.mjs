@@ -115,6 +115,7 @@ export default [
                     format: null,
                 },
             ],
+            "@typescript-eslint/no-deprecated": "warn",
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
                 "error",
