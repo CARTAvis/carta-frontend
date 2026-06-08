@@ -163,7 +163,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 

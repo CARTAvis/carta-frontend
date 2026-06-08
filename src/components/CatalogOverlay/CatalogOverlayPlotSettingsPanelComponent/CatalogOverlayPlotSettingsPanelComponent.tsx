@@ -856,11 +856,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return <MenuItem icon={shapeItem} key={shape} text={""} onClick={itemProps.handleClick} active={itemProps.modifiers.active} data-testid={"catalog-settings-shape-" + CatalogOverlayShape[shape].toLowerCase().replaceAll("_", "-")} />;
     };
 
-    private handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    private handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
-    private handleSelectedAxisTabChanged = (newTabId: React.ReactText) => {
+    private handleSelectedAxisTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));
     };
 

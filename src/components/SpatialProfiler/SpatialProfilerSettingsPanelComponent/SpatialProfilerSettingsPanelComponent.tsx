@@ -181,7 +181,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 

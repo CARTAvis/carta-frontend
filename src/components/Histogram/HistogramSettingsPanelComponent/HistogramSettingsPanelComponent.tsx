@@ -91,7 +91,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         this.widgetStore?.setLogScale(changeEvent.target.checked);
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
