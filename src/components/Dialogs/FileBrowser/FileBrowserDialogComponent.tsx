@@ -189,7 +189,7 @@ export class FileBrowserDialogComponent extends React.Component {
             if (!directory) {
                 throw new Error("No catalog directory selected");
             }
-            yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS, CARTA.CatalogFileType.VOTable);
+            yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS);
         } else {
             const directory = fileBrowserStore.fileList?.directory;
             if (!directory) {
