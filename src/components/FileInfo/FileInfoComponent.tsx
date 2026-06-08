@@ -18,15 +18,15 @@ import "./FileInfoComponent.scss";
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
     HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
-    fileInfoExtended: CARTA.IFileInfoExtended | null;
+    fileInfoExtended: CARTA.FileInfoExtended.$Properties | null;
     regionFileInfo: string;
-    catalogFileInfo: CARTA.ICatalogFileInfo | null;
+    catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null;
     selectedTab: TabId;
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean;
     errorMessage: string;
     catalogHeaderTable?: SimpleTableComponentProps;
-    selectedFile?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    selectedFile?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
 }> {
     @observable searchString: string = "";
     @observable matchedIter: number = 0;
@@ -35,7 +35,7 @@ export class FileInfoComponent extends React.Component<{
     private isSearchOpened: boolean = false;
     private matchedTotal: number = 0;
     private matchedIterLocation: {line: number; num: number} = {line: -1, num: -1};
-    private selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | undefined;
+    private selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | undefined;
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{line: number; num: number}> = [];
     private listRef = React.createRef<any>();
@@ -346,7 +346,7 @@ export class FileInfoComponent extends React.Component<{
         return highlightedString;
     };
 
-    private renderImageHeaderList = (entries: CARTA.IHeaderEntry[]) => {
+    private renderImageHeaderList = (entries: CARTA.HeaderEntry.$Properties[]) => {
         if (this.props.selectedFile !== this.selectedFile) {
             this.isSearchOpened = false;
         }

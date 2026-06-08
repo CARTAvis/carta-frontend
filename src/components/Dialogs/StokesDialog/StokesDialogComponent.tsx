@@ -21,8 +21,8 @@ export class StokesDialogComponent extends React.Component {
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 250;
 
-    @observable stokes: Map<string, CARTA.IStokesFile> = new Map();
-    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
+    @observable stokes: Map<string, CARTA.StokesFile.$Properties> = new Map();
+    @observable stokesHeader: Map<string, CARTA.FileInfoExtended.$Properties> = new Map();
     private readonly disposers: IReactionDisposer[] = [];
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
@@ -36,7 +36,7 @@ export class StokesDialogComponent extends React.Component {
                     }
                 }
             });
-            const stokes: CARTA.IStokesFile = {
+            const stokes: CARTA.StokesFile.$Properties = {
                 directory: currentStoke.directory,
                 file: currentStoke.file,
                 hdu: currentStoke.hdu,
@@ -46,11 +46,11 @@ export class StokesDialogComponent extends React.Component {
         }
     };
 
-    @action setStokes = (fileName: string, stokes: CARTA.IStokesFile) => {
+    @action setStokes = (fileName: string, stokes: CARTA.StokesFile.$Properties) => {
         this.stokes.set(fileName, stokes);
     };
 
-    @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.IFileInfoExtended) => {
+    @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.FileInfoExtended.$Properties) => {
         this.stokesHeader.set(fileName, fileInfoExtended);
     };
 
@@ -220,7 +220,7 @@ export class StokesDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
-        const stokesFiles: CARTA.IStokesFile[] = [];
+        const stokesFiles: CARTA.StokesFile.$Properties[] = [];
         this.stokes.forEach(file => {
             stokesFiles.push(file);
         });

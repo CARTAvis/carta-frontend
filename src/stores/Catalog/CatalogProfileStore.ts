@@ -195,8 +195,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.maxRows = maxRows;
     }
 
-    @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
-        const catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
+    @computed get initCatalogFilterRequest(): CARTA.CatalogFilterRequest.$Properties {
+        const catalogFilter: CARTA.CatalogFilterRequest.$Properties = new CARTA.CatalogFilterRequest();
         const imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
         let previewDatasize = CatalogProfileStore.INIT_TABLE_ROWS;
         catalogFilter.fileId = this.catalogInfo.fileId;

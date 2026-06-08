@@ -76,7 +76,7 @@ export class SpectralLineQueryWidgetStore {
     @observable isIntensityLimitEnabled: boolean = true;
     @observable intensityLimitValue: number = -5;
     @observable isQuerying: boolean = false;
-    @observable columnHeaders: Array<CARTA.ICatalogHeader> = [];
+    @observable columnHeaders: Array<CARTA.CatalogHeader.$Properties> = [];
     @observable redshiftType: RedshiftType = RedshiftType.V;
     @observable redshiftInput: number = 0;
     @observable queryResultTableRef: Table | undefined = undefined;
@@ -369,8 +369,8 @@ export class SpectralLineQueryWidgetStore {
         return this.redshiftType === RedshiftType.V ? 1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT : 1 / (this.redshiftInput + 1);
     }
 
-    @computed get displayedColumnHeaders(): Array<CARTA.ICatalogHeader> {
-        const displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
+    @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader.$Properties> {
+        const displayedColumnHeaders: CARTA.CatalogHeader.$Properties[] = [];
         this.controlHeader?.forEach(controlHeader => {
             if (controlHeader.display && controlHeader.dataIndex !== undefined && controlHeader.dataIndex < this.columnHeaders?.length) {
                 displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
@@ -434,7 +434,7 @@ export class SpectralLineQueryWidgetStore {
         return selectedLines;
     }
 
-    private preprocessHeaders = (ackHeaders: CARTA.ICatalogHeader[]): Array<CARTA.CatalogHeader> => {
+    private preprocessHeaders = (ackHeaders: CARTA.CatalogHeader.$Properties[]): Array<CARTA.CatalogHeader> => {
         const columnHeaders: CARTA.CatalogHeader[] = [];
 
         // 1. collect headers & add description

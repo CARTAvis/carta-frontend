@@ -19,7 +19,7 @@ export type ColumnFilter = {index: number; columnFilter: string};
 export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
-    columnHeaders: Array<CARTA.ICatalogHeader>;
+    columnHeaders: Array<CARTA.CatalogHeader.$Properties>;
     numVisibleRows: number;
     columnWidths?: Array<number>;
     isLoadingCell?: boolean;
@@ -34,7 +34,7 @@ export class FilterableTableComponentProps {
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType | null};
     shouldDisableSort?: boolean;
-    tableHeaders?: Array<CARTA.ICatalogHeader>;
+    tableHeaders?: Array<CARTA.CatalogHeader.$Properties>;
     sortedIndexMap?: Array<number>;
     sortedIndices?: Array<number>;
     onCompleteRender?: () => void;
@@ -96,7 +96,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.ICatalogHeader, columnData: any, selectionType: RowSelectionType) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader.$Properties, columnData: any, selectionType: RowSelectionType) => {
         const controlHeader = columnHeader.name ? this.props.filter?.get(columnHeader.name) : undefined;
         const filterSyntax = columnHeader.dataType ? this.getFilterSyntax(columnHeader.dataType) : null;
         return (
@@ -143,7 +143,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCheckboxColumn = (columnHeader: CARTA.ICatalogHeader, columnData: any) => {
+    private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: any) => {
         let selectedCount = 0;
         columnData?.forEach(isSelected => (selectedCount += isSelected ? 1 : 0));
         const selectionType = selectedCount === 0 ? RowSelectionType.None : selectedCount === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate;
@@ -158,7 +158,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: Array<any> | NodeJS.TypedArray) => {
         return (
             <Column
                 key={columnHeader.name ?? "data"}
@@ -169,7 +169,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.ICatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.CatalogHeader.$Properties) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
@@ -220,7 +220,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return null;
     };
 
-    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.ICatalogHeader) => {
+    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader.$Properties) => {
         if (!isFinite(columnIndex) || !column || !column.name) {
             return null;
         }

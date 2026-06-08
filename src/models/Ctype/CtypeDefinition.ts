@@ -52,7 +52,7 @@ export const CtypeAbbrToName = (ctypes: string): string => {
     return ctypeName.join(", ");
 };
 
-export const FileCtypeInfo = (headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} => {
+export const FileCtypeInfo = (headerEntries: CARTA.FileInfoExtended.$Properties | CARTA.HeaderEntry.$Properties[] | null): {ctype: string; rank: number} => {
     if (headerEntries === null) {
         console.debug("no header");
         return {ctype: "", rank: 0};
