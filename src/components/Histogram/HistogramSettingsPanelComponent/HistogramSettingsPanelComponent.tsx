@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed, type IReactionDisposer} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 import type {LineKey} from "models";
 
@@ -20,6 +20,7 @@ const KEYCODE_ENTER = 13;
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: HistogramWidgetStore | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -38,16 +39,11 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): HistogramWidgetStore | undefined {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): HistogramWidgetStore | undefined {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.histogramWidgets.get(this.widgetId);
         }
-        console.log("can't find store for widget");
-        return undefined;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {

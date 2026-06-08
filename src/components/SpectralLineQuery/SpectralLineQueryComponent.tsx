@@ -3,13 +3,13 @@ import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
 import {HeaderTableColumnName, HelpType, RedshiftType, type SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
+import {SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
 
@@ -23,6 +23,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable height: number = 600;
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
     private widgetId: string;
+    private readonly cachedWidgetStore: SpectralLineQueryWidgetStore;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
@@ -45,6 +46,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
         this.widgetId = props.id;
+        let widgetStore = WidgetsStore.Instance.spectralLineQueryWidgets.get(this.widgetId);
+        if (!widgetStore) {
+            widgetStore = new SpectralLineQueryWidgetStore();
+            WidgetsStore.Instance.spectralLineQueryWidgets.set(this.widgetId, widgetStore);
+        }
+        this.cachedWidgetStore = widgetStore;
     }
 
     componentWillUnmount() {
@@ -52,16 +59,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.scrollToTopHandle = undefined;
     }
 
-    @computed get widgetStore(): SpectralLineQueryWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        throw new Error("Widget store not found");
+    get widgetStore(): SpectralLineQueryWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @action onResize = (width: number, height: number) => {

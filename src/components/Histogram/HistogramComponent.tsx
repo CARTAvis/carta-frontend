@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {HelpType, Polarizations, TickType} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
@@ -20,6 +20,7 @@ import "./HistogramComponent.scss";
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly cachedWidgetStore: HistogramWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -40,15 +41,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     private currentLinePlotProps: LinePlotComponentProps;
 
     get widgetStore(): HistogramWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new HistogramWidgetStore();
+        return this.cachedWidgetStore;
     }
 
     @computed get isTargetData(): boolean {
@@ -155,10 +148,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         } else {
             const widgetId = this.widgetId;
             if (widgetId && !appStore.widgetsStore.histogramWidgets.has(widgetId)) {
-                console.log(`can't find store for widget with id=${widgetId}`);
                 appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.histogramWidgets.get(this.widgetId) ?? new HistogramWidgetStore();
 
         makeObservable(this);
 

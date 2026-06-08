@@ -19,6 +19,7 @@ const KEYCODE_ENTER = 13;
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: SpatialProfileWidgetStore | null = null;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -38,15 +39,10 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     }
 
     get widgetStore(): SpatialProfileWidgetStore | null {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.spatialProfileWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {

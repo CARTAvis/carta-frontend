@@ -2,7 +2,6 @@ import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
 import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
-import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
@@ -18,6 +17,7 @@ const FILENAME_END_LEN = 15;
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private cachedWidgetStore: LayerListWidgetStore | null = null;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -35,21 +35,15 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): LayerListWidgetStore | null {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.layerListWidgets) {
-            const widgetStore = widgetsStore.layerListWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): LayerListWidgetStore | null {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.layerListWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props) {
         super(props);
-        makeObservable(this);
         this.widgetId = props.id;
     }
 
