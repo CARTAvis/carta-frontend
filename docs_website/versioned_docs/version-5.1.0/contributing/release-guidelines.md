@@ -21,7 +21,7 @@ In this document, 123 is a placeholder for the current release number, and 124 f
 ### After beta release
 
 1. `dev` branch: update `CHANGELOG.md`. Create a new `Unreleased` section.
-2. `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#Versioning)). Create a new version `123.0.0-beta.0`.
+2. `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Create a new version `123.0.0-beta.0`.
 
 ### Additional beta release
 
@@ -54,7 +54,7 @@ This process should be followed if changes have to be made after the beta packag
 
 1. `dev` branch: update the `package.json` version string to `124.0.0-dev`. Run `npm install` to update `package-lock.json`.
 2. `dev` branch: update `CHANGELOG.md`. Create a new `Unreleased` section.
-3. `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#Versioning)). Create a new version `123.0.0`.
+3. `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Create a new version `123.0.0`.
 
 ### Point release
 
@@ -70,4 +70,4 @@ This process should be followed if important bug fixes have to be released after
 
 ### After point release
 
-- `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#Versioning)). Replace version `123.0.0` with `123.0.1`.
+- `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Replace version `123.0.0` with `123.0.1`.
