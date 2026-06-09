@@ -2011,8 +2011,8 @@ export class AppStore {
                             .then(this.onReconnectAlertClosed);
 
                         if (this.layoutStore?.layoutModel) {
-                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
-                                const win = layoutWindow.window;
+                            for (const [, layoutConfig] of this.layoutStore.layoutModel.getLayouts()) {
+                                const win = layoutConfig.getWindow();
                                 if (win && !win.closed) {
                                     win.close();
                                 }
