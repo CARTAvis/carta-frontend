@@ -161,13 +161,6 @@
         "patch-package": "^8.0.0",
         "usehooks-ts": "^3.1.0"
     },
-    "overrides": {
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
-        "typescript": "^6.0.0",
-        "fork-ts-checker-webpack-plugin": "^6.5.3",
-        "@types/trusted-types": "^2.0.7"
-    },
     "optionalDependencies": {
         "@rspack/binding-darwin-arm64": "^1.5.5",
         "@rspack/binding-darwin-x64": "^1.5.5",
