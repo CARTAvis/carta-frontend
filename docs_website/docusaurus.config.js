@@ -48,11 +48,11 @@ const config = {
     projectName: "carta-frontend", // Usually your repo name.
     trailingSlash: false,
 
-    onBrokenLinks: "warn",
+    onBrokenLinks: "ignore",
 
     markdown: {
         hooks: {
-            onBrokenMarkdownLinks: "warn"
+            onBrokenMarkdownLinks: "throw"
         }
     },
 
