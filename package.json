@@ -168,11 +168,11 @@
         "@rspack/binding-linux-arm64-musl": "^1.5.5",
         "@rspack/binding-linux-x64-gnu": "^1.5.5",
         "@rspack/binding-linux-x64-musl": "^1.5.5",
-        "sass-embedded-darwin-arm64": "1.97.3",
-        "sass-embedded-darwin-x64": "1.97.3",
-        "sass-embedded-linux-arm64": "1.97.3",
-        "sass-embedded-linux-musl-arm64": "1.97.3",
-        "sass-embedded-linux-musl-x64": "1.97.3",
-        "sass-embedded-linux-x64": "1.97.3"
+        "sass-embedded-darwin-arm64": "^1.100.0",
+        "sass-embedded-darwin-x64": "^1.100.0",
+        "sass-embedded-linux-arm64": "^1.100.0",
+        "sass-embedded-linux-musl-arm64": "^1.100.0",
+        "sass-embedded-linux-musl-x64": "^1.100.0",
+        "sass-embedded-linux-x64": "^1.100.0"
     }
 }
