@@ -65,7 +65,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         [CARTA.FileType.DS9_REG, {type: "DS9", description: "DS9 Region Format"}],
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
         [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
-        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}]
+        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}],
+        [CARTA.FileType.ZARR, {type: "Zarr", description: "Zarr Image (XRADIO Schema)"}]
     ]);
 
     private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, {type: string; description: string}>([
