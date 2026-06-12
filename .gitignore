@@ -200,3 +200,9 @@ carta-frontend-*.tgz
 
 # eslint
 .eslintcache
+
+# agent skills
+.agents
+.claude
+.gemini
+AGENTS.md
