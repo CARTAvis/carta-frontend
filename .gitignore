@@ -206,3 +206,5 @@ carta-frontend-*.tgz
 .claude
 .gemini
 AGENTS.md
+CLAUDE.md
+GEMINI.md
