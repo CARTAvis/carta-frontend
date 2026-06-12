@@ -11,7 +11,7 @@ export class LogEntry {
 export class LogStore {
     private static staticInstance: LogStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!LogStore.staticInstance) {
             LogStore.staticInstance = new LogStore();
         }

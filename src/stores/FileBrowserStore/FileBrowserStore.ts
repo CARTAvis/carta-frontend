@@ -32,7 +32,7 @@ export interface ISelectedFile {
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!FileBrowserStore.staticInstance) {
             FileBrowserStore.staticInstance = new FileBrowserStore();
         }
@@ -42,19 +42,19 @@ export class FileBrowserStore {
     private static readonly ExtendedLoadingDelay = 500;
 
     @observable browserMode: BrowserMode = BrowserMode.File;
-    @observable appendingFrame: boolean = false;
+    @observable isAppendingFrame: boolean = false;
     @observable fileList: CARTA.IFileListResponse | null = null;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined = undefined;
     @observable selectedHDU: string | null = null;
     @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
     @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
-    @observable loadingList: boolean = false;
+    @observable isLoadingList: boolean = false;
     @observable isImportingRegions: boolean = false;
     @observable hasReceivedImportRegionAck = false;
-    @observable extendedLoading: boolean = false;
-    @observable loadingInfo: boolean = false;
-    @observable fileInfoResp: boolean = false;
+    @observable isExtendedLoading: boolean = false;
+    @observable isLoadingInfo: boolean = false;
+    @observable isFileInfoResp: boolean = false;
     @observable responseErrorMessage: string = "";
     @observable startingDirectory: string | null | undefined = "$BASE";
     @observable exportFilename: string | null | undefined = undefined;
@@ -115,27 +115,27 @@ export class FileBrowserStore {
         this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
     };
 
-    @action showFileBrowser = (mode: BrowserMode, append = false) => {
+    @action showFileBrowser = (mode: BrowserMode, shouldAppend = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
-                if (AppStore.Instance.appendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
+                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
                     return;
                 }
                 break;
             case BrowserMode.File:
-                if (!append && AppStore.Instance.openFileDisabled) {
+                if (!shouldAppend && AppStore.Instance.isOpenFileDisabled) {
                     return;
-                } else if (append && AppStore.Instance.appendFileDisabled) {
+                } else if (shouldAppend && AppStore.Instance.isAppendFileDisabled) {
                     return;
                 }
                 break;
             case BrowserMode.Catalog:
             default:
-                if (AppStore.Instance.appendFileDisabled) {
+                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.activeFrame?.isPreview) {
                     return;
                 }
         }
-        this.appendingFrame = append;
+        this.isAppendingFrame = shouldAppend;
         this.browserMode = mode;
         DialogStore.Instance.showDialog(DialogId.FileBrowser);
         this.fileList = null;
@@ -169,23 +169,23 @@ export class FileBrowserStore {
         this.extendedDelayHandle = setTimeout(() => this.setExtendedLoading(true), FileBrowserStore.ExtendedLoadingDelay);
     }
 
-    private clearExtendedDelayTimer(resetState: boolean = false) {
+    private clearExtendedDelayTimer(shouldResetState: boolean = false) {
         clearTimeout(this.extendedDelayHandle);
         this.extendedDelayHandle = undefined;
-        if (resetState) {
+        if (shouldResetState) {
             this.setExtendedLoading(false);
         }
     }
 
-    @action private setExtendedLoading = (val: boolean) => {
-        this.extendedLoading = val;
+    @action private setExtendedLoading = (isLoading: boolean) => {
+        this.isExtendedLoading = isLoading;
     };
 
     @flow.bound
     *getFileList(directory: string | null = "") {
         const appStore = AppStore.Instance;
 
-        this.loadingList = true;
+        this.isLoadingList = true;
         this.setExtendedDelayTimer();
 
         this.selectedFile = null;
@@ -233,7 +233,7 @@ export class FileBrowserStore {
             console.error(err);
             AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
         }
-        this.loadingList = false;
+        this.isLoadingList = false;
         this.resetLoadingStates();
     }
 
@@ -265,8 +265,8 @@ export class FileBrowserStore {
     @flow.bound
     *getFileInfo(directory: string | null | undefined, file: string | null | undefined, hdu: string | undefined) {
         const backendService = BackendService.Instance;
-        this.loadingInfo = true;
-        this.fileInfoResp = false;
+        this.isLoadingInfo = true;
+        this.isFileInfoResp = false;
         this.HDUfileInfoExtended = null;
         this.responseErrorMessage = "";
 
@@ -279,23 +279,23 @@ export class FileBrowserStore {
                     this.selectedHDU = HDUList[0];
                 }
                 this.updateFileInfoInFileList(res.fileInfo);
-                this.loadingInfo = false;
+                this.isLoadingInfo = false;
             }
-            this.fileInfoResp = true;
+            this.isFileInfoResp = true;
         } catch (err) {
             console.error(err);
             this.responseErrorMessage = err;
-            this.fileInfoResp = false;
+            this.isFileInfoResp = false;
             this.HDUfileInfoExtended = null;
-            this.loadingInfo = false;
+            this.isLoadingInfo = false;
         }
     }
 
     @flow.bound
     *getRegionFileInfo(directory: string | null | undefined, file: string | null | undefined) {
         const backendService = BackendService.Instance;
-        this.loadingInfo = true;
-        this.fileInfoResp = false;
+        this.isLoadingInfo = true;
+        this.isFileInfoResp = false;
         this.regionFileInfo = null;
         this.responseErrorMessage = "";
 
@@ -303,23 +303,23 @@ export class FileBrowserStore {
             const res = yield backendService.getRegionFileInfo(directory, file);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.updateFileInfoInFileList(res.fileInfo);
-                this.loadingInfo = false;
+                this.isLoadingInfo = false;
                 this.regionFileInfo = res.contents;
             }
-            this.fileInfoResp = true;
+            this.isFileInfoResp = true;
         } catch (err) {
             console.error(err);
             this.responseErrorMessage = err;
-            this.fileInfoResp = false;
+            this.isFileInfoResp = false;
             this.regionFileInfo = null;
-            this.loadingInfo = false;
+            this.isLoadingInfo = false;
         }
     }
 
     @flow.bound *getCatalogFileInfo(directory: string | null | undefined, filename: string | null | undefined) {
         const backendService = BackendService.Instance;
-        this.loadingInfo = true;
-        this.fileInfoResp = false;
+        this.isLoadingInfo = true;
+        this.isFileInfoResp = false;
         this.catalogFileInfo = null;
         this.catalogHeaders = [];
         this.responseErrorMessage = "";
@@ -328,19 +328,19 @@ export class FileBrowserStore {
             const res = yield backendService.getCatalogFileInfo(directory, filename);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.updateFileInfoInFileList(res.fileInfo);
-                this.loadingInfo = false;
+                this.isLoadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
                 this.catalogHeaders = res.headers.sort((a, b) => {
                     return a.columnIndex - b.columnIndex;
                 });
             }
-            this.fileInfoResp = true;
+            this.isFileInfoResp = true;
         } catch (err) {
             console.error(err);
             this.responseErrorMessage = err;
-            this.fileInfoResp = false;
+            this.isFileInfoResp = false;
             this.catalogFileInfo = null;
-            this.loadingInfo = false;
+            this.isLoadingInfo = false;
         }
     }
 
@@ -385,7 +385,7 @@ export class FileBrowserStore {
                 directory,
                 file,
                 hdu,
-                polarizationType: FileBrowserStore.GetStokesType(response.info?.[k], response.file)
+                polarizationType: FileBrowserStore.getStokesType(response.info?.[k], response.file)
             };
         } catch (err) {
             console.error(err);
@@ -413,15 +413,15 @@ export class FileBrowserStore {
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
      */
-    private static GetStokesType = (fileInfoExtended: CARTA.IFileInfoExtended | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
-        let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
+    private static getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
+        let type = FileBrowserStore.getTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-            type = FileBrowserStore.GetTypeFromName(file);
+            type = FileBrowserStore.getTypeFromName(file);
         }
         return type;
     };
 
-    private static GetTypeFromHeader = (headers: CARTA.IHeaderEntry[] | null | undefined): CARTA.PolarizationType => {
+    private static getTypeFromHeader = (headers: CARTA.IHeaderEntry[] | null | undefined): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
 
         const ctype = headers?.find(obj => obj.value?.toUpperCase() === "STOKES");
@@ -442,7 +442,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    private static GetTypeFromName = (fileName: string | null | undefined): CARTA.PolarizationType => {
+    private static getTypeFromName = (fileName: string | null | undefined): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
         const words = fileName?.split(/[._]/);
         words?.forEach(word => {
@@ -475,8 +475,8 @@ export class FileBrowserStore {
         }
     };
 
-    @action selectFolder = (folder: string, absolutePath: boolean = false) => {
-        if (absolutePath) {
+    @action selectFolder = (folder: string, isAbsolutePath: boolean = false) => {
+        if (isAbsolutePath) {
             this.getFileList(folder);
             return;
         }
@@ -513,7 +513,7 @@ export class FileBrowserStore {
     @action saveStartingDirectory(directory?: string) {
         this.setStartingDirectory(directory);
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
+        if (preferenceStore.shouldKeepLastUsedFolder) {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
         } else {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
@@ -534,7 +534,7 @@ export class FileBrowserStore {
 
     @action restoreStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
+        if (preferenceStore.shouldKeepLastUsedFolder) {
             if (preferenceStore.lastUsedFolder?.length > 0) {
                 this.startingDirectory = preferenceStore.lastUsedFolder;
             } else {
@@ -645,8 +645,8 @@ export class FileBrowserStore {
     @flow.bound *setSelectedFiles(selection: ISelectedFile[]) {
         this.selectedFiles = selection;
 
-        // for dynamic layout
-        if (PreferenceStore.Instance.dynamicLayoutEnable && selection.length > 0 && selection.every(item => item.isFile)) {
+        // for dynamic layout (skip catalog mode — catalog files are not image files)
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled && this.browserMode !== BrowserMode.Catalog && selection.length > 0 && selection.every(item => item.isFile)) {
             this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
             AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
         }
@@ -687,7 +687,7 @@ export class FileBrowserStore {
     };
 
     @action resetLoadingStates = () => {
-        this.loadingList = false;
+        this.isLoadingList = false;
         this.clearExtendedDelayTimer(true);
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
@@ -695,7 +695,7 @@ export class FileBrowserStore {
     };
 
     @action cancelRequestingFileList = () => {
-        this.loadingList = false;
+        this.isLoadingList = false;
         if (this.loadingProgress < 1.0) {
             if (this.browserMode === BrowserMode.Catalog) {
                 BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
@@ -717,6 +717,20 @@ export class FileBrowserStore {
         } else {
             this.resetExportRegionIndexes(SelectionMode.All);
         }
+    };
+
+    @action showExportSelectedRegions = () => {
+        this.showFileBrowser(BrowserMode.RegionExport, false);
+        this.clearExportRegionIndexes(SelectionMode.All);
+
+        const regions = AppStore.Instance.activeFrame?.regionSet.regions;
+        const selectedRegions = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList;
+        if (!regions?.length || !selectedRegions?.length) {
+            return;
+        }
+
+        const selectedIndexes = selectedRegions.map(region => regions.findIndex(candidate => candidate === region)).filter(index => index >= 0);
+        this.updateExportRegionIndexes(selectedIndexes);
     };
 
     @action setSaveRestFreqVal = (val: number) => {
@@ -886,15 +900,15 @@ export class FileBrowserStore {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {
-            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            const activeRegionId = appStore.focusedRegion?.regionId ?? RegionId.CURSOR;
             frame.regionSet.regions.forEach((region, index) => {
                 if (region.regionId !== RegionId.CURSOR) {
                     options.push({
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType),
-                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType),
+                        icon: RegionStore.regionIconString(region.regionType),
+                        isCustomIcon: RegionStore.isRegionCustomIcon(region.regionType),
                         isAnnotation: region.isAnnotation
                     });
                 }
@@ -911,11 +925,11 @@ export class FileBrowserStore {
         return this.exportRegionOptions?.reduce((a, option) => a + (option.isAnnotation ? 1 : 0), 0);
     }
 
-    @computed get includesAnnotation(): boolean {
+    @computed get hasAnnotation(): boolean {
         return this.exportRegionOptions?.some(option => option.isAnnotation);
     }
 
-    @computed get includesRegion(): boolean {
+    @computed get hasRegion(): boolean {
         return this.exportRegionOptions?.some(option => !option.isAnnotation);
     }
 

@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, RegionId, type SpectralSystem} from "enums";
+import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
@@ -14,18 +14,13 @@ import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
-enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
-
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
     private widgetId: string;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "pv-generator",
             type: "pv-generator",
@@ -151,7 +146,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === PvGeneratorComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addPvGeneratorWidget();
             if (id) {
@@ -167,8 +162,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         makeObservable(this);
     }
 
-    @action setisValidSpectralRange = (bool: boolean) => {
-        this.isValidSpectralRange = bool;
+    @action setisValidSpectralRange = (isValid: boolean) => {
+        this.isValidSpectralRange = isValid;
     };
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -238,8 +233,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private handleSpectralRangeChanged = (value: number, max: boolean) => {
-        if (max) {
+    private handleSpectralRangeChanged = (value: number, isMax: boolean) => {
+        if (isMax) {
             this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
         } else {
             this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});
@@ -290,7 +285,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = regionId ?? RegionId.NONE;
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.isAnimationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
         const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit && this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE;
         const hint = (
             <span>
@@ -390,7 +385,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes order">
-                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                    <HTMLSelect value={this.axesOrder[this.widgetStore.isReverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch

@@ -1,4 +1,4 @@
-import * as GoldenLayout from "golden-layout";
+import {DockLocation, type DropInfo, type Layout, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -12,22 +12,24 @@ const MAX_LAYOUT = 10;
 export class LayoutStore {
     private static staticInstance: LayoutStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!LayoutStore.staticInstance) {
             LayoutStore.staticInstance = new LayoutStore();
         }
         return LayoutStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
     private layoutNameToBeSaved: string;
 
-    // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout | null = null;
+    @observable layoutModel: Model | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
-    @observable supportsServer: boolean = false;
+    @observable hasServerSupport: boolean = false;
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
+
+    // Reference to the FlexLayout Layout component (set from App.tsx)
+    public layoutRef: React.RefObject<Layout> = {current: null};
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
@@ -58,7 +60,7 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach(presetName => {
-            const presetConfig = LayoutConfig.GetPresetConfig(presetName);
+            const presetConfig = LayoutConfig.getPresetConfig(presetName);
             if (presetConfig) {
                 this.layouts[presetName] = presetConfig;
             }
@@ -82,6 +84,21 @@ export class LayoutStore {
         return this.userLayoutNames.length;
     }
 
+    @computed get hasPopoutWidget(): boolean {
+        if (!this.layoutModel) {
+            return false;
+        }
+        const currentModelJson = this.layoutModel.toJson();
+        return !!(currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0);
+    }
+
+    private clearCurrentLayout = () => {
+        const appStore = AppStore.Instance;
+        appStore.widgetsStore.removeFloatingWidgets();
+        appStore.widgetsStore.clearDockedWidgets();
+        this.layoutModel = null;
+    };
+
     @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
@@ -90,45 +107,30 @@ export class LayoutStore {
 
         const config = this.layouts[layoutName];
         const appStore = AppStore.Instance;
-        // destroy old layout & clear floating widgets
-        if (this.dockedLayout) {
-            appStore.widgetsStore.removeFloatingWidgets();
-            this.dockedLayout.destroy();
-        }
+        this.clearCurrentLayout();
+        appStore.widgetsStore.clearPopoutPositions();
 
         // generate docked config & collect docked components
         const dockedConfig = {
             type: config.docked.type,
             content: []
         };
-        const dockedComponentConfigs = [];
-        LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
-        // use component configs to init widget stores, IDs in componentConfigs will be updated
+        // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
+        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, []);
+
+        // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
+        const dockedComponentConfigs: any[] = [];
+        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
+
+        // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
-        // generate new layout config & apply
-        // Does this work?
-        // @ts-ignore
-        this.dockedLayout = new GoldenLayout(
-            {
-                settings: {
-                    showPopoutIcon: false,
-                    showCloseIcon: false
-                },
-                dimensions: {
-                    minItemWidth: 250,
-                    minItemHeight: 200,
-                    dragProxyWidth: 600,
-                    dragProxyHeight: 270
-                },
-                content: [dockedConfig]
-            },
-            appStore.getAppContainer()
-        );
-        if (this.dockedLayout) {
-            appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-            this.dockedLayout.init();
-            appStore.widgetsStore.updateImageWidgetTitle();
-        }
+
+        this.layoutModel = Model.fromJson(modelJson);
+        this.layoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
+        });
+
+        appStore.widgetsStore.updateImageWidgetTitle();
         this.currentLayoutName = layoutName;
 
         return true;
@@ -136,7 +138,7 @@ export class LayoutStore {
 
     @flow.bound *saveLayout() {
         const appStore = AppStore.Instance;
-        if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
+        if (!this.layouts || !this.layoutNameToBeSaved || !this.layoutModel) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
@@ -151,15 +153,20 @@ export class LayoutStore {
             return;
         }
 
-        const currentConfig = this.dockedLayout.toConfig();
-        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
+        const currentModelJson = this.layoutModel.toJson();
+        if (!currentModelJson || !currentModelJson.layout) {
             appStore.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
-        const configToSave = LayoutConfig.CreateConfigToSave(appStore, currentConfig.content[0]);
+        if (this.hasPopoutWidget) {
+            appStore.alertStore.showAlert("Cannot save layout while an image view is popped out. Please dock it first.");
+            return;
+        }
+
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
         if (!configToSave) {
-            appStore.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
+            appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
             return;
         }
 
@@ -178,9 +185,9 @@ export class LayoutStore {
         }
     }
 
-    private handleSaveResult = (success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
+    private handleSaveResult = (isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -192,7 +199,7 @@ export class LayoutStore {
         const appStore = AppStore.Instance;
         const dynamicLayout = appStore.dynamicLayoutStore;
 
-        if (!this.layouts || !newName || !this.dockedLayout) {
+        if (!this.layouts || !newName || !this.layoutModel) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
@@ -234,9 +241,9 @@ export class LayoutStore {
         }
     }
 
-    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
+    private handleRenameResult = (oldName: string, newName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
             }
@@ -270,9 +277,9 @@ export class LayoutStore {
         }
     }
 
-    private handleDeleteResult = (layoutName: string, success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
+    private handleDeleteResult = (layoutName: string, isSuccessful: boolean) => {
+        if (isSuccessful) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }

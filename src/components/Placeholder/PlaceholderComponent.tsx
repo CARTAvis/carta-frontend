@@ -10,12 +10,12 @@ import "./PlaceholderComponent.scss";
 class PlaceholderComponentProps {
     id: string;
     label: string;
-    docked: boolean;
+    isDocked: boolean;
 }
 
 @observer
 export class PlaceholderComponent extends React.Component<PlaceholderComponentProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "placeholder",
             type: "placeholder",

@@ -30,15 +30,15 @@ export class ScatterPlotComponentProps {
     yMax?: number;
     xLabel?: string;
     yLabel?: string;
-    logY?: boolean;
+    isLogY?: boolean;
     lineColor?: string;
     opacity?: number;
-    darkMode?: boolean;
+    isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
-    showTopAxis?: boolean;
+    shouldShowTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     graphClicked?: (x: number, y: number, data: {x: number; y: number; z?: number}[]) => void;
     graphRightClicked?: (x: number) => void;
@@ -48,19 +48,19 @@ export class ScatterPlotComponentProps {
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number, y: number) => void;
     mouseEntered?: (value: boolean) => void;
-    scrollZoom?: boolean;
+    shouldScrollZoom?: boolean;
     colorRangeEnd?: number;
-    showXAxisTicks?: boolean;
-    showXAxisLabel?: boolean;
+    shouldShowXAxisTicks?: boolean;
+    shouldShowXAxisLabel?: boolean;
     xZeroLineColor?: string;
     yZeroLineColor?: string;
-    showZeroLine?: boolean;
-    showLegend?: boolean;
+    shouldShowZeroLine?: boolean;
+    shouldShowLegend?: boolean;
     xTickMarkLength?: number;
     plotType?: PlotType;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    zIndex?: boolean;
+    isZIndex?: boolean;
     pointRadius?: number;
     indicatorInteractionChannel?: {currentChannel: Point3D; hoveredChannel: Point3D; start: boolean};
     zeroLineWidth?: number;
@@ -196,7 +196,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     width={Math.ceil(chartArea.right - chartArea.left + 1)}
                     height={Math.ceil(chartArea.bottom - chartArea.top + 1)}
                     listening={false}
-                    stroke={this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
+                    stroke={this.props.isDarkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
                     strokeWidth={1}
                 />
             );
@@ -291,7 +291,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             this.props.yMax !== undefined
         ) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
-            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
+            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
                 const xPixelValue = this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true);
                 const yPixelValue = this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false);
@@ -314,7 +314,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             this.props.yMax !== undefined
         ) {
             const channelC = this.props.indicatorInteractionChannel.currentChannel;
-            const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
+            const markerColor = this.props.isDarkMode ? Colors.RED4 : Colors.RED2;
             if (channelC.x >= this.props.xMin && channelC.x <= this.props.xMax && channelC.y >= this.props.yMin && channelC.y <= this.props.yMax) {
                 const xPixelValue = this.getPixelValue(channelC.x, this.props.xMin, this.props.xMax, true);
                 const yPixelValue = this.getPixelValue(channelC.y, this.props.yMin, this.props.yMax, false);
@@ -328,7 +328,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
         if (this.isMouseEntered && this.props.cursorNearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined && this.props.yMin !== undefined && this.props.yMax !== undefined) {
             const nearestPoint = this.props.cursorNearestPoint;
-            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
+            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (nearestPoint.x >= this.props.xMin && nearestPoint.x <= this.props.xMax && nearestPoint.y >= this.props.yMin && nearestPoint.y <= this.props.yMax) {
                 const devicePixelRatio = window.devicePixelRatio || 1;
                 const xPixelValue = this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true);
@@ -361,7 +361,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         const ctx = composedCanvas.getContext("2d");
         if (ctx) {
-            ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+            ctx.fillStyle = AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.isDarkMode ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
             ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
             ctx.drawImage(canvas, 0, 0);
 
@@ -508,8 +508,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
-        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (modifierPressed || this.props.dragAction === "pan") {
+        const isModifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (isModifierPressed || this.props.dragAction === "pan") {
             this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
         } else if (this.props.dragAction === "lassoSelect") {
             this.startLassoSelection(mouseEvent.offsetX, mouseEvent.offsetY);
@@ -610,7 +610,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageWheel = ev => {
-        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedXY && this.chartArea && this.props.xMin !== undefined && this.props.xMax !== undefined && this.props.yMin !== undefined && this.props.yMax !== undefined) {
+        if (this.props.data && this.props.shouldScrollZoom && this.props.graphZoomedXY && this.chartArea && this.props.xMin !== undefined && this.props.xMax !== undefined && this.props.yMin !== undefined && this.props.yMax !== undefined) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -733,7 +733,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                         </Stage>
                     )}
                     {(this.props.data !== undefined || (this.props.multiPlotPropsMap?.size ?? 0) > 0) && (
-                        <ToolbarComponent darkMode={this.props.darkMode ?? false} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData}>
+                        <ToolbarComponent isDarkMode={this.props.isDarkMode ?? false} isVisible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData}>
                             {this.props.toolbarChildren}
                         </ToolbarComponent>
                     )}

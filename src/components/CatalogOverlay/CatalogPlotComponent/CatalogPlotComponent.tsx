@@ -51,7 +51,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "catalog-plot",
             type: "catalog-plot",
@@ -114,7 +114,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             reaction(
                 () => this.widgetStore?.statisticColumnName,
                 () => {
-                    if (this.widgetStore?.enableStatistic) {
+                    if (this.widgetStore?.isStatisticEnabled) {
                         this.updateStatistic();
                     }
                 }
@@ -176,11 +176,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
-            const xColumn = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
-            const yColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
+            const isXColumnEmpty = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
+            const isYColumnEmpty = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore?.plotType) {
                 case CatalogPlotType.D2Scatter:
-                    if (!xColumn && !yColumn && plotWidgetStore.scatterborder === undefined) {
+                    if (!isXColumnEmpty && !isYColumnEmpty && plotWidgetStore.scatterBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
@@ -193,7 +193,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     }
                     break;
                 case CatalogPlotType.Histogram:
-                    if (!xColumn && plotWidgetStore.histogramBorder === undefined) {
+                    if (!isXColumnEmpty && plotWidgetStore.histogramBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         if (xColumnName) {
                             const histogramCoords = profileStore?.get1DPlotData(xColumnName);
@@ -318,13 +318,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return {bins: [] as Point2D[], binSize: 0, start: 0, binIndices: [] as number[][], border: undefined};
         }
         const slicedData = coords.wcsData.slice(0, numVisibleRows);
-        const nBinx = widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX;
-        const result = computeHistogramBins(slicedData, nBinx);
+        const nBinX = widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX;
+        const result = computeHistogramBins(slicedData, nBinX);
         const xRange = this.getHistogramXBorder(coords.wcsData);
         return {bins: result.bins, binSize: result.binSize, start: result.start, binIndices: result.binIndices, border: xRange};
     }
 
-    @computed get enablePlotButton(): boolean {
+    @computed get isPlotButtonEnabled(): boolean {
         const emptyColumn = CatalogPlotComponent.emptyColumn;
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
@@ -333,9 +333,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
-            return widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
-            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
         } else {
             return false;
         }
@@ -362,14 +362,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return DEFAULT_NUM_BINS;
         }
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        const nBinx = coords.wcsData?.length ? Math.ceil(Math.sqrt(coords.wcsData.length)) : DEFAULT_NUM_BINS;
-        return nBinx;
+        const nBinX = coords.wcsData?.length ? Math.ceil(Math.sqrt(coords.wcsData.length)) : DEFAULT_NUM_BINS;
+        return nBinX;
     }
 
     private updateStatistic = () => {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
-        if (!widgetStore?.enableStatistic || !profileStore || !widgetStore.statisticColumnName) {
+        if (!widgetStore?.isStatisticEnabled || !profileStore || !widgetStore.statisticColumnName) {
             return;
         }
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
@@ -443,16 +443,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const widgetsStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        const val = changeEvent.target.checked;
+        const isChecked = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
-            catalogWidgetStore.setShowSelectedData(val);
+            catalogWidgetStore.setShowSelectedData(isChecked);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
 
     private handleLogScaleYChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        const val = changeEvent.target.checked;
-        this.widgetStore?.setLogScaleY(val);
+        const isLogScaleY = changeEvent.target.checked;
+        this.widgetStore?.setLogScaleY(isLogScaleY);
     };
 
     private onScatterCursorMoved = (x: number, y: number) => {
@@ -536,7 +536,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onGraphClicked = (x: number, y: number, _data: {x: number; y: number; z?: number}[]) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        if (!widgetStore || !selectionMode.includes(widgetStore.dragmode)) {
+        if (!widgetStore || !selectionMode.includes(widgetStore.dragMode)) {
             return;
         }
         const scatter = this.scatterData;
@@ -642,7 +642,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private getScatterDragAction = (): "boxSelect" | "lassoSelect" | "zoom" | "pan" => {
-        const dragmode = this.widgetStore?.dragmode;
+        const dragmode = this.widgetStore?.dragMode;
         if (dragmode === "lasso") {
             return "lassoSelect";
         }
@@ -717,7 +717,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramDragStartX: number | undefined;
     private histogramDragCurrentX: number | undefined;
     private histogramPanPrevX: number | undefined;
-    private histogramDragHandled = false;
+    private isHistogramDragHandled = false;
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
@@ -764,7 +764,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
             const xScale = chart.scales["x"];
             if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
-                this.histogramDragHandled = true;
+                this.isHistogramDragHandled = true;
                 const x1 = xScale.getValueForPixel(this.histogramDragStartX);
                 const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
                 if (x1 !== undefined && x2 !== undefined) {
@@ -810,8 +810,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private fillPlotBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
-        const isDarkTheme = AppStore.Instance.darkTheme;
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, width, height);
     }
 
@@ -893,7 +893,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         comment += `\n# xLabel: ${xColumnName}`;
         comment += `\n# yLabel: ${yColumnName}`;
 
-        if (widgetStore.showFittingResult && widgetStore.fittingResultString) {
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
             comment += "\n# " + widgetStore.fittingResultString.split("\n").join("\n# ");
         }
 
@@ -921,7 +921,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
         } else {
-            border = widgetStore.scatterborder;
+            border = widgetStore.scatterBorder;
         }
         if (!border) {
             return null;
@@ -944,7 +944,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 selectedIndices={selectedSet}
                 hasSelection={selectedSet.size > 0}
                 pointSize={5}
-                darkMode={AppStore.Instance.darkTheme}
+                darkMode={AppStore.Instance.isDarkTheme}
                 onRef={ref => (this.webglOverlayRef = ref)}
             />
         );
@@ -965,10 +965,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const columnsName = profileStore.displayedColumnHeaders;
         const xyOptions = [CatalogPlotComponent.emptyColumn];
-        const disabled = !this.enablePlotButton;
+        const isDisabled = !this.isPlotButtonEnabled;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
-        const isDarkTheme = AppStore.Instance.darkTheme;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
         const labelColor = isDarkTheme ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = isDarkTheme ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
 
@@ -1023,8 +1023,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderHistogramLog = (
-            <FormGroup label={"Log scale"} inline={true} disabled={disabled}>
-                <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
+            <FormGroup label={"Log scale"} inline={true} disabled={isDisabled}>
+                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} />
             </FormGroup>
         );
 
@@ -1087,21 +1087,21 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 label="Bins"
                 min={1}
                 integerOnly={true}
-                value={widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX}
+                value={widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX}
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
-                disabled={disabled}
+                disabled={isDisabled}
                 data-testid="catalog-plot-widget-bin-input"
             />
         );
 
         const renderLinearRegressionButton = (
-            <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
+            <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={isDisabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
         );
 
         const infoStrings = [this.genProfilerInfo];
-        if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
+        if (widgetStore.isStatisticResultVisible && widgetStore.isStatisticEnabled) {
             infoStrings.push(widgetStore.statisticString);
         }
 
@@ -1171,21 +1171,21 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         max: xMax
                     },
                     y: {
-                        type: widgetStore.logScaleY ? "logarithmic" : "linear",
+                        type: widgetStore.isLogScaleY ? "logarithmic" : "linear",
                         title: {display: true, text: "Count", color: labelColor},
                         ticks: {
                             color: labelColor
                         },
                         grid: {color: gridColor},
                         border: {color: gridColor},
-                        min: widgetStore.logScaleY ? 1 : 0,
-                        beginAtZero: !widgetStore.logScaleY
+                        min: widgetStore.isLogScaleY ? 1 : 0,
+                        beginAtZero: !widgetStore.isLogScaleY
                     }
                 },
                 onClick: (_event, elements) => {
                     // Skip if a drag action (zoom/select) was just handled
-                    if (this.histogramDragHandled) {
-                        this.histogramDragHandled = false;
+                    if (this.isHistogramDragHandled) {
+                        this.isHistogramDragHandled = false;
                         return;
                     }
                     if (widgetStore.histogramDragMode === "select" && elements.length > 0) {
@@ -1319,7 +1319,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             onDoubleClick={this.onDoubleClick}
                         >
                             <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
-                            <ToolbarComponent darkMode={isDarkTheme} visible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
+                            <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
                                 <Tooltip content="Box select">
                                     <AnchorButton icon="widget" active={widgetStore.histogramDragMode === "select"} onClick={() => widgetStore.setHistogramDragMode("select")} />
                                 </Tooltip>
@@ -1337,11 +1337,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             </div>
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                                 <Tooltip content={"Show only selected sources at image and table viewer"}>
-                                    <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                        <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
+                                    <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
+                                        <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
                                     </FormGroup>
                                 </Tooltip>
-                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
                             </div>
                         </div>
                     </div>
@@ -1355,11 +1355,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
         } else {
-            border = widgetStore.scatterborder;
+            border = widgetStore.scatterBorder;
         }
 
         const scatterMultiPlotMap = new Map<string, MultiPlotProps>();
-        if (widgetStore.showFittingResult) {
+        if (widgetStore.isFittingResultVisible) {
             const fitting = widgetStore.fitting;
             const minMaxX = widgetStore.minMaxX;
             if (fitting && minMaxX) {
@@ -1373,14 +1373,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     type: PlotType.LINES,
                     borderColor: Colors.GREEN2,
                     order: 0,
-                    hidden: false,
+                    isHidden: false,
                     borderWidth: 2.5
                 });
             }
         }
 
         let scatterExtraPluginOptions: ChartOptions<"scatter">["plugins"] | undefined;
-        if (widgetStore.showFittingResult && widgetStore.fittingResultString) {
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
             const fittingAnnotation: AnnotationOptions = {
                 type: "label",
                 xValue: border?.xMin,
@@ -1420,7 +1420,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             yMax={border?.yMax}
                             xLabel={widgetStore.xColumnName}
                             yLabel={widgetStore.yColumnName}
-                            darkMode={isDarkTheme}
+                            isDarkMode={isDarkTheme}
                             tickTypeX={TickType.Automatic}
                             tickTypeY={TickType.Automatic}
                             graphZoomedXY={this.onScatterZoomedXY}
@@ -1428,7 +1428,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             graphCursorMoved={this.onScatterCursorMoved}
                             graphClicked={this.onGraphClicked}
                             pointRadius={0.001}
-                            scrollZoom={true}
+                            shouldScrollZoom={true}
                             multiPlotPropsMap={scatterMultiPlotMap}
                             dragAction={this.getScatterDragAction()}
                             onBoxSelected={this.onBoxSelected}
@@ -1441,16 +1441,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             toolbarChildren={
                                 <React.Fragment>
                                     <Tooltip content="Box select">
-                                        <AnchorButton icon="widget" active={widgetStore.dragmode === "select"} onClick={() => widgetStore.setDragmode("select")} />
+                                        <AnchorButton icon="widget" active={widgetStore.dragMode === "select"} onClick={() => widgetStore.setDragMode("select")} />
                                     </Tooltip>
                                     <Tooltip content="Lasso select">
-                                        <AnchorButton icon="polygon-filter" active={widgetStore.dragmode === "lasso"} onClick={() => widgetStore.setDragmode("lasso")} />
+                                        <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === "lasso"} onClick={() => widgetStore.setDragMode("lasso")} />
                                     </Tooltip>
                                     <Tooltip content="Zoom">
-                                        <AnchorButton icon="zoom-in" active={widgetStore.dragmode === "zoom"} onClick={() => widgetStore.setDragmode("zoom")} />
+                                        <AnchorButton icon="zoom-in" active={widgetStore.dragMode === "zoom"} onClick={() => widgetStore.setDragMode("zoom")} />
                                     </Tooltip>
                                     <Tooltip content="Pan">
-                                        <AnchorButton icon="move" active={widgetStore.dragmode === "pan"} onClick={() => widgetStore.setDragmode("pan")} />
+                                        <AnchorButton icon="move" active={widgetStore.dragMode === "pan"} onClick={() => widgetStore.setDragMode("pan")} />
                                     </Tooltip>
                                 </React.Fragment>
                             }
@@ -1462,12 +1462,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         </div>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
-                                <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                    <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
+                                <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
+                                    <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
                                 </FormGroup>
                             </Tooltip>
                             {renderLinearRegressionButton}
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
                         </div>
                     </div>
                 </div>

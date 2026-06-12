@@ -1,6 +1,8 @@
 import {type Point2D} from "models";
 
 type Point3D = {x: number; y: number; z?: number};
+export type LineSegment2D = [Point2D, Point2D];
+export type Rect2D = {x: number; y: number; width: number; height: number};
 
 export function dot2D(a: Point2D, b: Point2D): number {
     return a.x * b.x + a.y * b.y;
@@ -155,7 +157,7 @@ export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): {poin
     };
 }
 
-function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+function lineSegmentsProperlyIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
     const lineCD = subtract2D(d, c);
     const crossA = cross2D(lineCD, subtract2D(a, d));
     const crossB = cross2D(lineCD, subtract2D(b, d));
@@ -168,6 +170,171 @@ function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): 
     } else {
         return false;
     }
+}
+
+function lineOrientation(a: Point2D, b: Point2D, c: Point2D): number {
+    const value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+    if (Math.abs(value) < 1e-9) {
+        return 0;
+    }
+    return value > 0 ? 1 : 2;
+}
+
+function isPointOnLineSegment(point: Point2D, start: Point2D, end: Point2D): boolean {
+    return point.x <= Math.max(start.x, end.x) && point.x >= Math.min(start.x, end.x) && point.y <= Math.max(start.y, end.y) && point.y >= Math.min(start.y, end.y);
+}
+
+/**
+ * Tests whether two line segments intersect, including endpoint touches and
+ * collinear overlaps.
+ *
+ * @param a - First endpoint of the first segment.
+ * @param b - Second endpoint of the first segment.
+ * @param c - First endpoint of the second segment.
+ * @param d - Second endpoint of the second segment.
+ * @returns True when the two finite segments intersect.
+ */
+export function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+    const orientationA = lineOrientation(a, b, c);
+    const orientationB = lineOrientation(a, b, d);
+    const orientationC = lineOrientation(c, d, a);
+    const orientationD = lineOrientation(c, d, b);
+
+    if (orientationA !== orientationB && orientationC !== orientationD) {
+        return true;
+    }
+
+    return (orientationA === 0 && isPointOnLineSegment(c, a, b)) || (orientationB === 0 && isPointOnLineSegment(d, a, b)) || (orientationC === 0 && isPointOnLineSegment(a, c, d)) || (orientationD === 0 && isPointOnLineSegment(b, c, d));
+}
+
+/**
+ * Tests whether a point lies inside or on the boundary of an axis-aligned rect.
+ *
+ * @param point - Point to test.
+ * @param rect - Axis-aligned rectangle.
+ * @returns True when the point is inside the rectangle bounds.
+ */
+export function isPointInRect(point: Point2D, rect: Rect2D): boolean {
+    return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
+}
+
+/**
+ * Tests whether two axis-aligned rectangles overlap or touch.
+ *
+ * @param a - First rectangle.
+ * @param b - Second rectangle.
+ * @returns True when the rectangles have any shared area or boundary.
+ */
+export function doRectsIntersect(a: Rect2D, b: Rect2D): boolean {
+    return a.x <= b.x + b.width && a.x + a.width >= b.x && a.y <= b.y + b.height && a.y + a.height >= b.y;
+}
+
+/**
+ * Builds a positive-size axis-aligned rectangle from any two opposite corners.
+ *
+ * @param start - First corner point.
+ * @param end - Opposite corner point.
+ * @returns Rectangle with non-negative width and height.
+ */
+export function getRectFromPoints(start: Point2D, end: Point2D): Rect2D {
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    return {x, y, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y)};
+}
+
+/**
+ * Returns the four corners of an axis-aligned rectangle in clockwise order.
+ *
+ * @param rect - Rectangle to convert.
+ * @returns Top-left, top-right, bottom-right, and bottom-left points.
+ */
+export function getRectCorners(rect: Rect2D): Point2D[] {
+    return [
+        {x: rect.x, y: rect.y},
+        {x: rect.x + rect.width, y: rect.y},
+        {x: rect.x + rect.width, y: rect.y + rect.height},
+        {x: rect.x, y: rect.y + rect.height}
+    ];
+}
+
+/**
+ * Tests whether a line segment intersects an axis-aligned rectangle.
+ *
+ * Segments fully contained in the rectangle are treated as intersections.
+ *
+ * @param start - Segment start point.
+ * @param end - Segment end point.
+ * @param rect - Rectangle to test against.
+ * @returns True when the segment crosses, touches, or lies inside the rectangle.
+ */
+export function doesLineSegmentIntersectRect(start: Point2D, end: Point2D, rect: Rect2D): boolean {
+    if (isPointInRect(start, rect) || isPointInRect(end, rect)) {
+        return true;
+    }
+
+    const corners = getRectCorners(rect);
+    return corners.some((corner, index) => lineSegmentsIntersect(start, end, corner, corners[(index + 1) % corners.length]));
+}
+
+/**
+ * Converts a point path into adjacent line segments.
+ *
+ * @param points - Ordered path points.
+ * @param isClosed - Whether to connect the last point back to the first.
+ * @returns Adjacent segment pairs, or an empty array for fewer than two points.
+ */
+export function getPathSegments(points: Point2D[], isClosed: boolean = false): LineSegment2D[] {
+    if (points.length < 2) {
+        return [];
+    }
+
+    const segmentCount = isClosed ? points.length : points.length - 1;
+    return Array.from({length: segmentCount}, (_, index) => [points[index], points[(index + 1) % points.length]]);
+}
+
+/**
+ * Tests whether a point is inside a polygon using an even-odd ray cast.
+ *
+ * @param point - Point to test.
+ * @param polygon - Polygon vertices in path order.
+ * @returns True when the point is inside the polygon.
+ */
+export function isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
+    let isInside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const a = polygon[i];
+        const b = polygon[j];
+        const isIntersecting = a.y > point.y !== b.y > point.y && point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x;
+        if (isIntersecting) {
+            isInside = !isInside;
+        }
+    }
+    return isInside;
+}
+
+/**
+ * Returns eight sampled points around a rotated box.
+ *
+ * The returned points include the four corners and four edge midpoints, rotated
+ * about the supplied center.
+ *
+ * @param center - Box center point.
+ * @param halfWidth - Half of the unrotated box width.
+ * @param halfHeight - Half of the unrotated box height.
+ * @param rotation - Rotation angle in radians.
+ * @returns Rotated corner and edge-midpoint coordinates.
+ */
+export function getRotatedBoxPoints(center: Point2D, halfWidth: number, halfHeight: number, rotation: number): Point2D[] {
+    return [
+        {x: -halfWidth, y: -halfHeight},
+        {x: 0, y: -halfHeight},
+        {x: halfWidth, y: -halfHeight},
+        {x: halfWidth, y: 0},
+        {x: halfWidth, y: halfHeight},
+        {x: 0, y: halfHeight},
+        {x: -halfWidth, y: halfHeight},
+        {x: -halfWidth, y: 0}
+    ].map(offset => add2D(center, rotate2D(offset, rotation)));
 }
 
 // Brute-force method of checking if a polygon is simple
@@ -183,8 +350,8 @@ export function simplePolygonTest(points: Point2D[]) {
         for (let j = i + 2; j < points.length; j++) {
             const c = points[j];
             const d = points[(j + 1) % points.length];
-            const intersection = lineSegmentsIntersect(a, b, c, d);
-            if (intersection) {
+            const hasIntersection = lineSegmentsProperlyIntersect(a, b, c, d);
+            if (hasIntersection) {
                 return false;
             }
         }
@@ -205,8 +372,8 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     for (let j = 1; j < points.length; j++) {
         const c = points[(j + pointIndex) % points.length];
         const d = points[(j + pointIndex + 1) % points.length];
-        const intersection = lineSegmentsIntersect(a, b, c, d);
-        if (intersection) {
+        const hasIntersection = lineSegmentsProperlyIntersect(a, b, c, d);
+        if (hasIntersection) {
             return false;
         }
     }
@@ -240,13 +407,13 @@ export function closestPointIndexToCursor(cursor: Point2D, points: readonly Poin
     return minIndex;
 }
 
-export function polygonPerimeter(points: Point2D[], closed: boolean = true): number {
+export function polygonPerimeter(points: Point2D[], isClosed: boolean = true): number {
     let totalLength = 0;
     const N = points.length;
     for (let i = 1; i < N; i++) {
         totalLength += pointDistance(points[i], points[i - 1]);
     }
-    if (closed) {
+    if (isClosed) {
         totalLength += pointDistance(points[N - 1], points[0]);
     }
     return totalLength;
@@ -260,7 +427,7 @@ export function angle2D(a: Point2D, b: Point2D) {
 
 // Ray-casting algorithm for point-in-polygon test
 export function pointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
-    let inside = false;
+    let isInside = false;
     const n = polygon.length;
     for (let i = 0, j = n - 1; i < n; j = i++) {
         const xi = polygon[i].x;
@@ -268,10 +435,10 @@ export function pointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
         const xj = polygon[j].x;
         const yj = polygon[j].y;
         if (yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi) {
-            inside = !inside;
+            isInside = !isInside;
         }
     }
-    return inside;
+    return isInside;
 }
 
 export function round2D(a: Point2D) {

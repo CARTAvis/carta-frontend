@@ -20,11 +20,11 @@ import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
-    @observable documentationAlertVisible: boolean = false;
-    @observable disableCheckRelease: boolean = false;
+    @observable isDocumentationAlertVisible: boolean = false;
+    @observable isCheckReleaseDisabled: boolean = false;
 
     @action toggleDisableCheckRelease = () => {
-        this.disableCheckRelease = !this.disableCheckRelease;
+        this.isCheckReleaseDisabled = !this.isCheckReleaseDisabled;
     };
 
     private documentationAlertTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -40,7 +40,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     private handleDashboardClicked = () => {
-        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+        window.open(ApiService.runtimeConfig.dashboardAddress, "_blank");
     };
 
     private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
@@ -119,7 +119,7 @@ export class RootMenuComponent extends React.Component {
 
     private newReleaseButtonOnClick = () => {
         const appStore = AppStore.Instance;
-        if (this.disableCheckRelease) {
+        if (this.isCheckReleaseDisabled) {
             appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
         }
         appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
@@ -128,7 +128,7 @@ export class RootMenuComponent extends React.Component {
 
     @computed get snippetsMenu() {
         const appStore = AppStore.Instance;
-        if (!appStore.preferenceStore.codeSnippetsEnabled) {
+        if (!appStore.preferenceStore.isCodeSnippetsEnabled) {
             return null;
         }
 
@@ -182,13 +182,13 @@ export class RootMenuComponent extends React.Component {
         const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
+        if (apiService.authenticated && ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress) {
+        if (ApiService.runtimeConfig.logoutAddress) {
             serverMenu.push(<MenuItem key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        if (ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
         serverMenu.push(
@@ -238,10 +238,10 @@ export class RootMenuComponent extends React.Component {
         }
 
         let saveImageTooltip: string | React.JSX.Element = "";
-        let hideImageTooltip = true;
+        let shouldHideImageTooltip = true;
         if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
             saveImageTooltip = "Not allowed in read-only mode";
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         } else if (appStore.activeImage?.type !== ImageType.FRAME) {
             saveImageTooltip = (
                 <span>
@@ -250,25 +250,25 @@ export class RootMenuComponent extends React.Component {
                     <small>To save color-blending images, please save as a workspace via the File menu.</small>
                 </span>
             );
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         }
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
-                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
+                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.isOpenFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
+                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
+                <Tooltip content={saveImageTooltip} disabled={shouldHideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
+                        disabled={appStore.isAppendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
-                <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
                     content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
@@ -280,13 +280,13 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip>
-                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled || appStore.activeFrame?.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
-                <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                <MenuItem text="Open Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
+                <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
                 <MenuDivider />
                 <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />
                 {serverSubMenu}
@@ -319,7 +319,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
                 <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
+                {appStore.preferenceStore.isCodeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
@@ -341,7 +341,7 @@ export class RootMenuComponent extends React.Component {
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                if (appStore.backendService.connectionDropped) {
+                if (appStore.backendService.hasConnectionDropped) {
                     connectivityTooltip = (
                         <span>
                             Reconnected to server {userString} after disconnect. Some errors may occur
@@ -376,38 +376,38 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const vectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const isLoadingTiles = appStore.tileService.remainingTiles > 0;
+        const isLoadingContours = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const isLoadingVectorOverlay = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
-        let showLoadingIndicator = false;
+        let shouldShowLoadingIndicator = false;
 
-        if (tilesLoading || contoursLoading || vectorOverlayLoading) {
+        if (isLoadingTiles || isLoadingContours || isLoadingVectorOverlay) {
             let tilesTooltipContent;
-            if (tilesLoading) {
+            if (isLoadingTiles) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
-            if (contoursLoading && appStore.activeFrame) {
+            if (isLoadingContours && appStore.activeFrame) {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
-            if (vectorOverlayLoading && appStore.activeFrame) {
+            if (isLoadingVectorOverlay && appStore.activeFrame) {
                 vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
-                    {contoursLoading && tilesLoading && <br />}
+                    {isLoadingContours && isLoadingTiles && <br />}
                     {contourTooltipContent}
                     {vectorOverlayTooltipContent}
                 </React.Fragment>
             );
 
-            showLoadingIndicator = true;
+            shouldShowLoadingIndicator = true;
         }
 
         let loadingIndicator;
@@ -422,7 +422,7 @@ export class RootMenuComponent extends React.Component {
         }
 
         const newReleaseMessage = (
-            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.darkTheme})}>
+            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.isDarkTheme})}>
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png" />
                     <div className={Classes.ALERT_CONTENTS}>
@@ -442,7 +442,7 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
+                    <Switch checked={this.isCheckReleaseDisabled} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );
@@ -464,7 +464,7 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Widgets" />
                     </Menu>
                 </Popover>
-                {appStore.preferenceStore.codeSnippetsEnabled && this.snippetsMenu && (
+                {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
                     <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
@@ -478,8 +478,8 @@ export class RootMenuComponent extends React.Component {
                 </Popover>
                 <ToolbarMenuComponent />
                 <Alert
-                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
-                    isOpen={this.documentationAlertVisible}
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
+                    isOpen={this.isDocumentationAlertVisible}
                     onClose={this.handleAlertDismissed}
                     canEscapeKeyCancel={true}
                     canOutsideClickCancel={true}
@@ -487,14 +487,14 @@ export class RootMenuComponent extends React.Component {
                 >
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {appStore.showNewRelease && (
+                {appStore.shouldShowNewRelease && (
                     <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
                             <Button icon={"envelope"} intent={"warning"} minimal={true} />
                         </Tooltip>
                     </Popover>
                 )}
-                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && !appStore.layoutStore?.hasPopoutWidget && (
                     <Tooltip
                         content={
                             <span>
@@ -509,8 +509,8 @@ export class RootMenuComponent extends React.Component {
                         <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
-                {showLoadingIndicator && loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode && (
+                {shouldShowLoadingIndicator && loadingIndicator}
+                {appStore.preferenceStore.isLowBandwidthMode && (
                     <Tooltip
                         content={
                             <span>
@@ -543,15 +543,15 @@ export class RootMenuComponent extends React.Component {
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
         if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
-            this.documentationAlertVisible = true;
+            this.isDocumentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
             this.documentationAlertTimeoutHandle = undefined;
-            this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
+            this.documentationAlertTimeoutHandle = setTimeout(() => (this.isDocumentationAlertVisible = false), 10000);
         }
     };
 
     handleAlertDismissed = () => {
-        this.documentationAlertVisible = false;
+        this.isDocumentationAlertVisible = false;
     };
 
     handleImageSelect = (image: ImageViewItem) => {

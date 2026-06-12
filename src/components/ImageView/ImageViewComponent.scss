@@ -6,6 +6,7 @@
     position: relative;
     user-select: none;
     display: grid;
+    overflow: hidden;
 
     .image-ratio-popup {
         transition: opacity 0.5s;

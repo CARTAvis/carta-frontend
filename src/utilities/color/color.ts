@@ -5,177 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
 
-export const SWATCH_COLORS = [
-    Colors.BLUE3,
-    Colors.ORANGE3,
-    Colors.GREEN3,
-    Colors.RED3,
-    Colors.VIOLET3,
-    Colors.SEPIA3,
-    Colors.INDIGO3,
-    Colors.GRAY3,
-    Colors.LIME3,
-    Colors.TURQUOISE3,
-    Colors.FOREST3,
-    Colors.GOLD3,
-    Colors.CERULEAN3,
-    Colors.ROSE3,
-    Colors.VERMILION3,
-    Colors.LIGHT_GRAY3,
-    Colors.DARK_GRAY3,
-    Colors.WHITE,
-    Colors.BLACK
-];
-export const DEFAULT_COLOR = SWATCH_COLORS[0];
-
-const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cerulean", "rose", "vermilion", "light_gray", "dark_gray"];
-export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
-    return `auto-${color}`;
-});
-
-const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
-
-// Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
-// Validate with regex ^auto-(blue|orange|green...)$
-const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
-
-/**
- * All provided colormaps.
- */
-export const COLOR_MAPS_ALL = [
-    "accent",
-    "afmhot",
-    "autumn",
-    "binary",
-    "Blues",
-    "bone",
-    "BrBG",
-    "brg",
-    "BuGn",
-    "BuPu",
-    "bwr",
-    "CMRmap",
-    "cool",
-    "coolwarm",
-    "copper",
-    "cubehelix",
-    "dark2",
-    "flag",
-    "gist_earth",
-    "gist_gray",
-    "gist_heat",
-    "gist_ncar",
-    "gist_rainbow",
-    "gist_stern",
-    "gist_yarg",
-    "GnBu",
-    "gnuplot",
-    "gnuplot2",
-    "gray",
-    "greens",
-    "greys",
-    "hot",
-    "hsv",
-    "inferno",
-    "jet",
-    "magma",
-    "nipy_spectral",
-    "ocean",
-    "oranges",
-    "OrRd",
-    "paired",
-    "pastel1",
-    "pastel2",
-    "pink",
-    "PiYG",
-    "plasma",
-    "PRGn",
-    "prism",
-    "PuBu",
-    "PuBuGn",
-    "PuOr",
-    "PuRd",
-    "purples",
-    "rainbow",
-    "RdBu",
-    "RdGy",
-    "RdPu",
-    "RdYlBu",
-    "RdYlGn",
-    "reds",
-    "seismic",
-    "set1",
-    "set2",
-    "set3",
-    "spectral",
-    "spring",
-    "summer",
-    "tab10",
-    "tab20",
-    "tab20b",
-    "tab20c",
-    "terrain",
-    "viridis",
-    "winter",
-    "Wistia",
-    "YlGn",
-    "YlGnBu",
-    "YlOrBr",
-    "YlOrRd",
-    "Red",
-    "Orange",
-    "Yellow",
-    "Green",
-    "Cyan",
-    "Blue",
-    "Violet",
-    "Magenta"
-];
-
-/**
- * The selected colormaps shown in the option.
- */
-export const COLOR_MAPS_SELECTED = [
-    "afmhot",
-    "Blues",
-    "coolwarm",
-    "cubehelix",
-    "gist_heat",
-    "gist_stern",
-    "gnuplot",
-    "gnuplot2",
-    "gray",
-    "greens",
-    "greys",
-    "hot",
-    "inferno",
-    "jet",
-    "magma",
-    "nipy_spectral",
-    "plasma",
-    "rainbow",
-    "RdBu",
-    "RdGy",
-    "reds",
-    "seismic",
-    "spectral",
-    "tab10",
-    "viridis"
-];
-
-/**
- * Some commonly used single-color gradients.
- */
-export const COLOR_MAPS_MONO = new Map<string, string>([
-    ["Red", "#ff0000"],
-    ["Orange", "#ffa500"],
-    ["Yellow", "#ffff00"],
-    ["Green", "#00ff00"],
-    ["Cyan", "#00ffff"],
-    ["Blue", "#0000ff"],
-    ["Violet", "#7f00ff"],
-    ["Magenta", "#ff00ff"]
-]);
+import {COLOR_MAPS_ALL, SUPPORTED_AUTO_COLORS_REGEX} from "./constants";
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -185,6 +15,7 @@ function initContextWithSize(width: number, height: number) {
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const imageObj = new Image();
 imageObj.src = allMaps;
 imageObj.onload = () => {
@@ -212,11 +43,6 @@ export function isAutoColor(color: string): boolean {
     return SUPPORTED_AUTO_COLORS_REGEX.test(color);
 }
 
-export function genColorFromIndex(index: number) {
-    const selectedColor = Number.isInteger(index) && index >= 0 ? SELECTABLE_COLORS[index % SELECTABLE_COLORS.length] : SELECTABLE_COLORS[0];
-    return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.darkTheme ? "4" : "2"}`];
-}
-
 export function getColorForTheme(color: string): string {
     if (!isAutoColor(color)) {
         return color;
@@ -229,7 +55,7 @@ export function getColorForTheme(color: string): string {
     }
 
     const requiredColor = color.substr(5).toUpperCase();
-    return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+    return Colors[`${requiredColor}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 
 function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {
