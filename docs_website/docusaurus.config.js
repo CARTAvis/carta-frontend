@@ -13,11 +13,11 @@ const devVersion = packageJson.version;
 const apiOnClick = `
     const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
     const currentVersion = versionLink?.textContent;
-    let version = '';
+    let version = '/' + '${versions[0]}';
     if (currentVersion) {
         if (currentVersion === 'Next' || currentVersion === '${devVersion}') {
             version = '/next';
-        } else if (currentVersion !== '${versions?.[0]}') {
+        } else {
             version = '/' + currentVersion;
         }
     }
@@ -75,8 +75,9 @@ const config = {
                         current: {
                             label: devVersion
                         },
-                        "6.0.0": {
-                            banner: "none"
+                        [versions[0]]: {
+                            banner: "none",
+                            path: versions[0]
                         }
                     },
                     sidebarPath: require.resolve("./sidebars.js")
@@ -157,7 +158,12 @@ const config = {
                 readmes: true,
                 readmeName: "docs_website/api/api.md",
                 changelogs: true,
-                tsconfigName: "tsconfig.json"
+                tsconfigName: "tsconfig.json",
+                versions: {
+                    [versions[0]]: {
+                        path: versions[0]
+                    }
+                }
             }
         ],
         require.resolve("docusaurus-lunr-search"),
