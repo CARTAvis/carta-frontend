@@ -46,7 +46,6 @@ This process should be followed if changes have to be made after the beta packag
 4. `release/123.0` branch: update the `package.json` version string to `123.0.0`. Run `npm install` to update `package-lock.json`.
 5. Create a `v123.0.0` tag using the release branch.
 6. Create packages from the release branch.
-7. `release/123.0` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Create a new version `123.0.0`.
 
 **Note**
 Test the release branch. Make any required fixes in the `dev` branch, and merge them into the release branch. Ideally, bump the version and create a new tag every time changes are merged. If you don't want to bump the version, remember to destroy and recreate the latest tag.
@@ -56,6 +55,7 @@ Test the release branch. Make any required fixes in the `dev` branch, and merge 
 1. `start_dev_cycle` branch: update the `package.json` version string to `124.0.0-dev`. Run `npm install` to update `package-lock.json`.
 2. `start_dev_cycle` branch: update `CHANGELOG.md`. Create a new `Unreleased` section.
 3. Merge the `start_dev_cycle` branch into the `dev` branch.
+4. `release/123.0` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Create a new version `123.0.0`.
 
 ### Point release
 
