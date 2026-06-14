@@ -8,14 +8,13 @@ const packageJson = require("../package.json");
 
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-const devVersion = packageJson.version;
 
 const apiOnClick = `
     const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
     const currentVersion = versionLink?.textContent;
     let version = '';
     if (currentVersion) {
-        if (currentVersion === 'Next' || currentVersion === '${devVersion}') {
+        if (currentVersion === 'Next') {
             version = '/next';
         } else if (currentVersion !== '${versions[0]}') {
             version = '/' + currentVersion;
@@ -73,7 +72,7 @@ const config = {
                 docs: {
                     versions: {
                         current: {
-                            label: devVersion
+                            label: "Next"
                         },
                         [versions[0]]: {
                             banner: "none"
