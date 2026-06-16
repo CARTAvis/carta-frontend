@@ -197,7 +197,7 @@ export class ApiService {
         }
 
         if (preferences) {
-            this.upgradePreferences(preferences);
+            await this.upgradePreferences(preferences);
             console.log(preferences);
             const isValid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
@@ -223,43 +223,55 @@ export class ApiService {
         return preferences;
     };
 
-    private upgradePreferences = (preferences: any) => {
+    private upgradePreferences = async (preferences: any) => {
         // Upgrade to V2 if required
         if (preferences["version"] === 1) {
+            let hasChanged = false;
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
-            preferences[astColorKey] = `auto-${color}`;
-            this.setPreference(astColorKey, preferences[astColorKey]);
+            if (astColorKey in preferences) {
+                const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
+                const newAstColor = `auto-${color}`;
+                if (preferences[astColorKey] !== newAstColor) {
+                    preferences[astColorKey] = newAstColor;
+                    hasChanged = true;
+                }
+            }
 
             // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
             const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-            if (/[A-Z]/.test(preferences[key])) {
+            if (preferences[key] && /[A-Z]/.test(preferences[key])) {
                 preferences[key] = preferences[key].toLowerCase();
-                this.setPreference(key, preferences[key]);
+                hasChanged = true;
             }
 
             // This is to ensure consistency in the unit used for the preview cube size limit
             const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
             const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
-            const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
-            if (typeof conversionFactor === "number") {
-                const gbSize = preferences[cubeSizeKey] * conversionFactor;
-                if (gbSize !== preferences[cubeSizeKey]) {
-                    preferences[cubeSizeKey] = gbSize;
-                    this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            if (cubeSizeUnitKey in preferences) {
+                const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+                if (typeof conversionFactor === "number") {
+                    const gbSize = preferences[cubeSizeKey] * conversionFactor;
+                    if (gbSize !== preferences[cubeSizeKey]) {
+                        preferences[cubeSizeKey] = gbSize;
+                    }
+                } else {
+                    // set an invalid value to cubeSizeKey to be removed by the validator
+                    preferences[cubeSizeKey] = -1;
                 }
-            } else if (cubeSizeUnitKey in preferences) {
-                // set an invalid value to cubeSizeKey to be removed by the validator
-                preferences[cubeSizeKey] = -1;
+                delete preferences[cubeSizeUnitKey];
+                await this.clearPreferences([cubeSizeUnitKey]);
+                hasChanged = true;
             }
-            delete preferences[cubeSizeUnitKey];
-            this.clearPreferences([cubeSizeUnitKey]);
 
             preferences["version"] = 2;
-            this.setPreference("version", 2);
+            hasChanged = true;
+
+            if (hasChanged) {
+                await this.setPreferences(preferences);
+            }
         }
     };
 
@@ -273,7 +285,7 @@ export class ApiService {
         const obj = {version: 2};
         if (typeof window !== "undefined") {
             const currentPrefs = AppStore.Instance?.preferenceStore?.preferences;
-            if (currentPrefs) {
+            if (currentPrefs && currentPrefs.size > 0) {
                 for (const [k, v] of currentPrefs.entries()) {
                     obj[k] = v;
                 }
@@ -545,10 +557,10 @@ export class ApiService {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
                         const workspace = existingWorkspaces[workspaceName];
-                        if (!workspace) {
-                            // TODO: handle validation errors
-                        } else {
+                        if (workspace && ApiService.workspaceValidator(workspace)) {
                             validWorkspaces.push({name: workspaceName, date: workspace?.date ?? Date.now() / 1000});
+                        } else {
+                            console.error(`Workspace ${workspaceName} validation failed:`, ApiService.workspaceValidator.errors);
                         }
                     }
                     return validWorkspaces;
