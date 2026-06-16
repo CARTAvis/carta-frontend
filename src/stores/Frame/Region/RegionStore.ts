@@ -63,7 +63,7 @@ export class RegionStore {
     @observable isLocked: boolean = false;
     @observable opacity: RegionOpacity = RegionOpacity.Visible;
     @observable isSimplePolygon: boolean = true;
-    @observable activeFrame!: FrameStore;
+    @observable activeFrame: FrameStore;
     @observable lineRegionSampleWidth: number = 3;
     @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
