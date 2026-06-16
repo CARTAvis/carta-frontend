@@ -51,7 +51,6 @@ export class ContourStore {
         this.progress = progress;
 
         if (!numVertices) {
-            this.progress = progress;
             return;
         }
 
