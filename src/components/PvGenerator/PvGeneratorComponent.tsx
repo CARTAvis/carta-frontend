@@ -108,7 +108,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         // Find byte per image pixel
         const bitPixEntry = frame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.match("BITPIX"));
-        if (!bitPixEntry?.numericValue) {
+        if (bitPixEntry?.numericValue == null) {
             return undefined;
         }
         const bytePix = Math.abs(bitPixEntry.numericValue) / 8;
