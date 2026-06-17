@@ -250,6 +250,7 @@ export class FileBrowserStore {
                     directoryInfo.type = fileInfo.type;
                     directoryInfo.size = fileInfo.size;
                     directoryInfo.HDUList = fileInfo.HDUList;
+                    directoryInfo.sizeIsUpperBound = fileInfo.sizeIsUpperBound;
                 }
             }
 

@@ -22,6 +22,7 @@ interface FileEntry extends ISelectedFile {
     isFile?: boolean;
     itemCount?: number;
     size?: number;
+    sizeIsUpperBound?: boolean;
     date?: number;
     fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     hdu?: string;
@@ -82,17 +83,18 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return FileListTableComponent.CatalogFileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
-    private static getFileSizeDisplay(sizeInBytes: number): string {
+    private static getFileSizeDisplay(sizeInBytes: number, isSizeUpperBound?: boolean): string {
+        const upperBoundPrefix = isSizeUpperBound ? "<" : "";
         if (sizeInBytes >= 1e12) {
-            return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
+            return `${upperBoundPrefix}${toFixed(sizeInBytes / 1e12, 2)} TB`;
         } else if (sizeInBytes >= 1e9) {
-            return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
+            return `${upperBoundPrefix}${toFixed(sizeInBytes / 1e9, 1)} GB`;
         } else if (sizeInBytes >= 1e6) {
-            return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
+            return `${upperBoundPrefix}${toFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
+            return `${upperBoundPrefix}${toFixed(sizeInBytes / 1e3, 1)} kB`;
         } else {
-            return `${sizeInBytes} B`;
+            return `${upperBoundPrefix}${sizeInBytes} B`;
         }
     }
 
@@ -167,10 +169,11 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: directory.name || "",
                         typeInfo: FileListTableComponent.getFileTypeDisplay(directory.type),
                         size: directory.size as number,
+                        sizeIsUpperBound: directory.sizeIsUpperBound ?? undefined,
                         date: directory.date as number,
                         isDirectory: true,
                         isFile: true,
-                        fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
+                        fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date, sizeIsUpperBound: directory.sizeIsUpperBound}
                     });
                 } else {
                     entries.push({
@@ -222,6 +225,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                                 filename,
                                 typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                                 size: file.size as number,
+                                sizeIsUpperBound: file.sizeIsUpperBound ?? undefined,
                                 date: file.date as number,
                                 fileInfo: file,
                                 hdu,
@@ -236,6 +240,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                         size: file.size as number,
+                        sizeIsUpperBound: file.sizeIsUpperBound ?? undefined,
                         date: file.date as number,
                         fileInfo: file,
                         isFile: true
@@ -378,7 +383,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size)}
+                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size, entry.sizeIsUpperBound)}
                         {!entry.isFile && entry.itemCount !== undefined && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>

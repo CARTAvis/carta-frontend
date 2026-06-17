@@ -58,4 +58,26 @@ describe("FileListTableComponent", () => {
             }
         ]);
     });
+
+    test("preserves upper-bound file size flag for image files", () => {
+        const component = new FileListTableComponent({
+            ...defaultProps,
+            fileList: {
+                ...defaultProps.fileList,
+                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, sizeIsUpperBound: true, date: 0, HDUList: ["0"]}]
+            }
+        });
+
+        expect(component.tableEntries).toMatchObject([
+            {
+                filename: "cube.zarr",
+                size: 1024,
+                sizeIsUpperBound: true
+            }
+        ]);
+    });
+
+    test("prefixes upper-bound file sizes with less-than sign", () => {
+        expect((FileListTableComponent as any).getFileSizeDisplay(1024, true)).toBe("<1.0 kB");
+    });
 });
