@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom";
 import "jest-canvas-mock";
 
+// Polyfill TextEncoder and TextDecoder for jsdom environment
+if (typeof global.TextEncoder === "undefined") {
+    const {textEncoder, textDecoder} = require("util");
+    global.TextEncoder = textEncoder;
+    global.TextDecoder = textDecoder;
+}
+
 // Set up global mocks
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
