@@ -53,6 +53,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
                         onCustomColorSelect={renderConfig.setCustomHexEnd}
+                        onCustomColorStartSelect={renderConfig.setCustomHexStart}
                         selectedCustomColor={renderConfig.customColormapHexEnd}
                         customColorStart={renderConfig.customColormapHexStart}
                     />
@@ -102,11 +103,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </Collapse>
                 <FormGroup inline={true} label="NaN color" className="nan-color-button">
                     <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
+                        color={tinycolor(preference.nanColorHex).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
+                            const colorStr = color.hex === "transparent" ? "rgba(0, 0, 0, 0)" : tinycolor(color.rgb).toRgbString();
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, colorStr);
                         }}
                         disableAlpha={false}
                         darkTheme={appStore.isDarkTheme}
