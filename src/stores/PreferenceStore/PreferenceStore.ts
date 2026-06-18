@@ -6,6 +6,8 @@ import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilt
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 
+const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
+
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
@@ -44,7 +46,6 @@ const DEFAULTS = {
         scalingAlpha: 1000,
         scalingGamma: 1,
         nanColorHex: "#137CBD",
-        nanAlpha: 1,
         useSmoothedBiasContrast: true
     },
     CONTOUR_CONFIG: {
@@ -159,6 +160,20 @@ export class PreferenceStore {
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
 
     /**
+     * Get the minimum constraint from the schema for a preference key
+     */
+    public getMinConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.minimum;
+    }
+
+    /**
+     * Get the maximum constraint from the schema for a preference key
+     */
+    public getMaxConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.maximum;
+    }
+
+    /**
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable isPreferenceReady: boolean = false;
@@ -262,10 +277,6 @@ export class PreferenceStore {
 
     @computed get nanColorHex(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
-    }
-
-    @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
     }
 
     @computed get shouldUseSmoothedBiasContrast(): boolean {
@@ -724,7 +735,6 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
-            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
             PreferenceKeys.RENDER_CONFIG_SCALING,
@@ -840,8 +850,7 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
             PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
             PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT
         ]);
     };
 

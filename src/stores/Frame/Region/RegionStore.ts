@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CoordinateMode, RegionOpacity} from "enums";
+import {CoordinateMode, PreferenceKeys, RegionOpacity} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
 import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
@@ -67,9 +67,17 @@ export class RegionStore {
     @observable lineRegionSampleWidth: number = 3;
     @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
-    public static readonly MIN_LINE_WIDTH = 0.5;
-    public static readonly MAX_LINE_WIDTH = 10;
-    public static readonly MAX_DASH_LENGTH = 50;
+    /* eslint-disable @typescript-eslint/naming-convention */
+    public static get MIN_LINE_WIDTH(): number {
+        return PreferenceStore.Instance.getMinConstraint(PreferenceKeys.REGION_LINE_WIDTH) ?? 0.5;
+    }
+    public static get MAX_LINE_WIDTH(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_LINE_WIDTH) ?? 10;
+    }
+    public static get MAX_DASH_LENGTH(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_DASH_LENGTH) ?? 50;
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
     public static readonly TARGET_VERTEX_COUNT = 200;
     public static readonly MIN_LABEL_OFFSET = -50;
     public static readonly MAX_LABEL_OFFSET = 50;
