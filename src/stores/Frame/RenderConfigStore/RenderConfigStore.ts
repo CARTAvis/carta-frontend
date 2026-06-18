@@ -2,7 +2,7 @@ import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import type {WorkspaceRenderConfig} from "models";
 
-import {FrameScaling} from "enums";
+import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
@@ -23,10 +23,20 @@ export class RenderConfigStore {
 
     public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    public static readonly GAMMA_MIN = 0.1;
-    public static readonly GAMMA_MAX = 2;
-    public static readonly ALPHA_MIN = 0.1;
-    public static readonly ALPHA_MAX = 1000000;
+    /* eslint-disable @typescript-eslint/naming-convention */
+    public static get GAMMA_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 0.1;
+    }
+    public static get GAMMA_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 2;
+    }
+    public static get ALPHA_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? 0.1;
+    }
+    public static get ALPHA_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? 1000000;
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
     public static readonly BIAS_MIN = -1;
     public static readonly BIAS_MAX = 1;
     public static readonly CONTRAST_MIN = 0;
