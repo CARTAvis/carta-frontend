@@ -1,6 +1,7 @@
 import Ajv from "ajv";
 import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
+import tinycolor from "tinycolor2";
 
 import {AppToaster} from "components/Shared";
 import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
@@ -239,7 +240,7 @@ export class ApiService {
             }
 
             // This is to ensure consistency in the unit used for the preview cube size limit
-            const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+            const cubeSizeUnitKey = "pvPreviewCubeSizeLimitUnit";
             const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
             const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
@@ -258,6 +259,17 @@ export class ApiService {
 
             preferences["version"] = 2;
             this.setPreference("version", 2);
+        }
+
+        // Migrate nanAlpha to nanColorHex if present
+        if ("nanAlpha" in preferences) {
+            const nanColorHex = preferences["nanColorHex"] || "#137CBD";
+            const nanAlpha = preferences["nanAlpha"];
+            const combinedColor = tinycolor(nanColorHex).setAlpha(nanAlpha).toRgbString();
+            preferences["nanColorHex"] = combinedColor;
+            this.setPreference("nanColorHex", combinedColor);
+            delete preferences["nanAlpha"];
+            this.clearPreferences(["nanAlpha"]);
         }
     };
 

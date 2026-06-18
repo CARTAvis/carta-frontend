@@ -25,7 +25,6 @@ export enum PreferenceKeys {
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
-    RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
     RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
     CONTOUR_CONFIG_GENERATOR_TYPE = "contourGeneratorType",
@@ -93,7 +92,6 @@ export enum PreferenceKeys {
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
     PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
-    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
     LOG_EVENT = "logEventList",
 
