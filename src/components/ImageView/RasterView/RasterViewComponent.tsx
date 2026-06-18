@@ -250,7 +250,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * appStore.pixelRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, renderHeight * appStore.pixelRatio);
 
-            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
+            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex);
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
@@ -524,7 +524,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     inverted: frame.renderConfig.isInverted,
                     visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
-                    nanAlpha: appStore.preferenceStore.nanAlpha,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };
