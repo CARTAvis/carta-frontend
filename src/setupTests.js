@@ -2,11 +2,13 @@ import "@testing-library/jest-dom";
 import "jest-canvas-mock";
 
 // Polyfill TextEncoder and TextDecoder for jsdom environment
+/* eslint-disable @typescript-eslint/naming-convention */
 if (typeof global.TextEncoder === "undefined") {
-    const {textEncoder, textDecoder} = require("util");
-    global.TextEncoder = textEncoder;
-    global.TextDecoder = textDecoder;
+    const {TextEncoder, TextDecoder} = require("util");
+    global.TextEncoder = TextEncoder;
+    global.TextDecoder = TextDecoder;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 // Set up global mocks
 window.URL.createObjectURL = () => {};
