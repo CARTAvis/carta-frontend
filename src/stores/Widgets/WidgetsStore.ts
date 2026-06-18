@@ -708,12 +708,7 @@ export class WidgetsStore {
 
         // Wrap popped-out tabs with Blueprint providers so overlays render in the popout window
         if (node.isPoppedOut()) {
-            let popoutWindow: Window | undefined;
-            const layoutId = node.getWindowId();
-            if (layoutId) {
-                const layout = LayoutStore.Instance.layoutModel?.getLayouts().get(layoutId);
-                popoutWindow = layout?.getWindow();
-            }
+            const popoutWindow = node.getLayout().getWindow();
             if (popoutWindow) {
                 const popoutBody = popoutWindow.document.body;
                 // Apply theme classes to popout body so CSS selectors match

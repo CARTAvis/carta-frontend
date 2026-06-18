@@ -2012,6 +2012,9 @@ export class AppStore {
 
                         if (this.layoutStore?.layoutModel) {
                             for (const [, layoutConfig] of this.layoutStore.layoutModel.getLayouts()) {
+                                if (layoutConfig.isMainLayout()) {
+                                    continue;
+                                }
                                 const win = layoutConfig.getWindow();
                                 if (win && !win.closed) {
                                     win.close();
