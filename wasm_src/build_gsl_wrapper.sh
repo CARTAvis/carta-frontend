@@ -15,7 +15,8 @@ printf "Checking for GSL wrapper WASM..."
 if [[ $(find build/gsl_wrapper.js -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
     # copy WASM module to public folder for serving
-    cp build/gsl_wrapper.wasm ../../public/
+    mkdir -p ../../public/static/js
+    cp build/gsl_wrapper.wasm ../../public/static/js/
     # link wrapper to node modules
     mv build/gsl_wrapper.js build/index.js
     cd ../../node_modules

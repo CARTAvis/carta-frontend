@@ -167,7 +167,7 @@ src/**/*.css
 wasm_libs/ast/*
 wasm_libs/ast-*.tar.gz
 wasm_src/ast_wrapper/build/*
-public/ast_wrapper.wasm
+public/static/js/ast_wrapper.wasm
 # ZFP
 wasm_libs/zfp/*
 wasm_libs/zfp-*.tar.gz
@@ -179,12 +179,12 @@ wasm_libs/zstd/*
 wasm_libs/zstd-1.4.4.tar.gz
 wasm_src/carta_computation/build/*
 wasm_src/carta_computation/post.js
-public/carta_computation.wasm
+public/static/js/carta_computation.wasm
 # GSL
 wasm_libs/gsl/*
 wasm_libs/gsl-*.tar.gz
 wasm_src/gsl_wrapper/build/*
-public/gsl_wrapper.wasm
+public/static/js/gsl_wrapper.wasm
 
 # Protocol buffers
 protobuf/build/*

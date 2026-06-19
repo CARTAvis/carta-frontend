@@ -20,7 +20,8 @@ printf "Checking for CARTA computation WASM..."
 if [[ $(find build/carta_computation.js -type f -size +10000c 2>/dev/null) ]]; then
   echo "Found"
   # copy WASM module to public folder for serving
-  cp build/carta_computation.wasm ../../public/
+  mkdir -p ../../public/static/js
+  cp build/carta_computation.wasm ../../public/static/js/
   # link wrapper to node modules
   mv build/carta_computation.js build/index.js
   cd ../../node_modules

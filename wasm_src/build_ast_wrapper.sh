@@ -14,7 +14,8 @@ printf "Checking for AST wrapper WASM..."
 if [[ $(find build/ast_wrapper.js -type f -size +1000c 2>/dev/null) ]]; then
     echo "Found"
     # copy WASM module to public folder for serving
-    cp build/ast_wrapper.wasm ../../public/
+    mkdir -p ../../public/static/js
+    cp build/ast_wrapper.wasm ../../public/static/js/
     # link wrapper to node modules
     mv build/ast_wrapper.js build/index.js
     # copy typings into build folder
