@@ -41,11 +41,11 @@ describe("getPanelSvg", () => {
             colorbarLabelCustomText: "Jy/beam",
             hasVisibleBeam: false,
             beamProperties: null,
-            overlayBeamSettings: {visible: false},
+            overlayBeamSettings: {isVisible: false},
             contourConfig: {
-                visible: true,
+                isVisible: true,
                 color: {r: 255, g: 255, b: 0, a: 1},
-                colormapEnabled: false,
+                isColormapEnabled: false,
                 colormap: "viridis",
                 colormapBias: 0,
                 colormapContrast: 1,
@@ -54,13 +54,13 @@ describe("getPanelSvg", () => {
             },
             contourStores: new Map([[1, {exportVertexData: [new Float32Array([10, 10, 0, 0, 0, 0, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0])], exportIndexOffsets: [new Int32Array([2])]}]]),
             vectorOverlayConfig: {
-                visible: true,
+                isVisible: true,
                 thickness: 2,
                 rotationOffset: 0,
                 angularSource: VectorOverlaySource.Current,
                 intensitySource: VectorOverlaySource.Current,
                 color: {r: 255, g: 0, b: 0, a: 1},
-                colormapEnabled: false,
+                isColormapEnabled: false,
                 colormap: "viridis",
                 colormapBias: 0,
                 colormapContrast: 1,
@@ -79,9 +79,9 @@ describe("getPanelSvg", () => {
 
         const mockAppStore = {
             pixelRatio: 1,
-            channelMapStore: {channelMapEnabled: false},
+            channelMapStore: {isChannelMapEnabled: false},
             overlaySettings: {
-                colorbar: {visible: false, position: "right"},
+                colorbar: {isVisible: false, position: "right"},
                 colorbarHoverInfoHeight: 0
             },
             contourFrames: new Map([[frame, [frame]]]),
