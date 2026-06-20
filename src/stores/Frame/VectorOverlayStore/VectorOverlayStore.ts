@@ -8,6 +8,7 @@ import {createTextureFromArray, equalIfBothFinite} from "utilities";
 export interface VectorOverlayTile {
     texture: WebGLTexture | null;
     numVertices: number;
+    vertexData: Float32Array;
 }
 
 export class VectorOverlayStore {
@@ -132,7 +133,8 @@ export class VectorOverlayStore {
             }
             this.tiles.push({
                 texture,
-                numVertices
+                numVertices,
+                vertexData
             });
         }
 
