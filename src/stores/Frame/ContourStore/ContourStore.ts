@@ -27,6 +27,14 @@ export class ContourStore {
         return this.vertexData.length > 0;
     }
 
+    get exportIndexOffsets() {
+        return this.indexOffsets;
+    }
+
+    get exportVertexData() {
+        return this.vertexData;
+    }
+
     @computed get isComplete() {
         return this.progress >= 1.0;
     }
@@ -64,8 +72,10 @@ export class ContourStore {
             this.numGeneratedVertices = [];
         }
 
+        // Slice to copy: GenerateVertexData returns a view into reusable WASM heap
+        // memory that gets overwritten by subsequent calls
         const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
-        this.vertexData.push(vertexData);
+        this.vertexData.push(vertexData.slice());
         this.indexOffsets.push(indexOffsets);
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
@@ -92,9 +102,6 @@ export class ContourStore {
             this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
             this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
         }
-
-        // Clear CPU memory after copying to GPU
-        this.vertexData[index] = null;
     }
 
     @action clearData = () => {
