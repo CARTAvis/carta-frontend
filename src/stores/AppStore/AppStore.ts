@@ -9,7 +9,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, getImageViewSvg, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     AnimationMode,
@@ -78,6 +78,7 @@ import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStor
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
 import * as Utils from "utilities";
+import {downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -3629,6 +3630,30 @@ export class AppStore {
                                 link.dispatchEvent(new MouseEvent("click"));
                             }
                         }, "image/png");
+                    }
+                }
+                this.setIsExportingImage(false);
+            });
+        }
+    };
+
+    exportSvgImage = () => {
+        if (this.activeFrame) {
+            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
+            if (index === -1) {
+                return;
+            }
+
+            this.setIsExportingImage(true);
+            this.setImageRatio(1);
+            this.waitForImageData().then(() => {
+                const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                if (this.activeFrame) {
+                    const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+                    if (svgDoc) {
+                        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+                        const filename = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.svg`;
+                        downloadSvg(svgDoc, filename);
                     }
                 }
                 this.setIsExportingImage(false);
