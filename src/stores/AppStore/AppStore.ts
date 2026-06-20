@@ -3689,7 +3689,7 @@ export class AppStore {
             this.setIsExportingImage(true);
             this.setImageRatio(1);
             this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
                 if (this.activeFrame) {
                     const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                     if (svgDoc) {
