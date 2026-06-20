@@ -119,24 +119,24 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
                     format = "d.*";
                 }
 
-                if (overlaySettings.labels.customText) {
+                if (overlaySettings.labels.hasCustomText) {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
                 }
             }
 
-            if (overlaySettings.labels.customText) {
+            if (overlaySettings.labels.hasCustomText) {
                 AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
             }
 
             let currentStyleString = overlayStore.styleString(frame);
 
-            if (!frame.validWcs) {
+            if (!frame.isValidWcs) {
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
-            if (!overlaySettings.title.customText) {
+            if (!overlaySettings.title.hasCustomText) {
                 currentStyleString += `, Title="${image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "\u201C")}"`;
             } else if (image?.store?.titleCustomText?.length) {
                 currentStyleString += `, Title="${image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "\u201C")}"`;

@@ -1,6 +1,5 @@
 import * as React from "react";
 import {Colors, NonIdealState, Spinner} from "@blueprintjs/core";
-import $ from "jquery";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -218,8 +217,8 @@ export function getImageViewSvg(padding: Padding, colorbarPosition: string, back
         }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
-        const viewHeight = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
+        const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
         const panelSvg = getPanelSvg(column, row, viewWidth, viewHeight, padding, colorbarPosition, image, backgroundColor);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
@@ -303,7 +302,7 @@ function getContourDashLength(destinationFrame: FrameStore, dashMode: ContourDas
 
 function getContourStrokeColor(frame: FrameStore, level: number, levels: number[]): string {
     const fallbackColor = rgbColorToCss(frame.contourConfig.color);
-    if (!frame.contourConfig.colormapEnabled) {
+    if (!frame.contourConfig.isColormapEnabled) {
         return fallbackColor;
     }
 
@@ -342,7 +341,7 @@ function getVectorLineLengthInImageSpace(frame: FrameStore, intensity: number, p
 
 function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
     const fallbackColor = rgbColorToCss(frame.vectorOverlayConfig.color);
-    if (!frame.vectorOverlayConfig.colormapEnabled) {
+    if (!frame.vectorOverlayConfig.isColormapEnabled) {
         return fallbackColor;
     }
 
@@ -412,7 +411,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
 
     for (let frameIndex = contourFrames.length - 1; frameIndex >= 0; --frameIndex) {
         const contourFrame = contourFrames[frameIndex];
-        if (!contourFrame.contourConfig.visible || !contourFrame.contourStores.size) {
+        if (!contourFrame.contourConfig.isVisible || !contourFrame.contourStores.size) {
             continue;
         }
 
@@ -448,7 +447,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 
     for (let frameIndex = vectorOverlayFrames.length - 1; frameIndex >= 0; --frameIndex) {
         const vectorFrame = vectorOverlayFrames[frameIndex];
-        if (!vectorFrame.vectorOverlayConfig.visible || !vectorFrame.vectorOverlayStore.tiles?.length) {
+        if (!vectorFrame.vectorOverlayConfig.isVisible || !vectorFrame.vectorOverlayStore.tiles?.length) {
             continue;
         }
 
@@ -568,8 +567,8 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
 }
 
 export function getPanelSvg(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, image: ImageViewItem, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGGElement | null {
-    const panelElement = $(`#image-panel-${column}-${row}`)?.first();
-    if (!panelElement?.length) {
+    const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
+    if (!panelElement) {
         return null;
     }
 
@@ -583,7 +582,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     const panelGroup = svgGroupFromLayer(`panel-${column}-${row}`);
 
     // 1. Raster — embed as PNG <image>
-    const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
+    const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
     if (rasterCanvas) {
         const rasterImage = embedRasterAsSvgImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio, rasterCanvas.width, rasterCanvas.height);
         panelGroup.appendChild(rasterImage);
@@ -603,7 +602,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
 
     // 4. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
-    if (colorbarSettings.visible && frame.renderConfig?.colorscaleArray?.length) {
+    if (colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
         const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, colorbarPosition, viewWidth, viewHeight, padding, pixelRatio);
         if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
@@ -617,7 +616,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     }
 
     // 6. AST overlay — vector SVG via svgcanvas
-    const overlayStore = appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore : frame.overlayStore;
+    const overlayStore = appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore : frame.overlayStore;
     const astSvg = renderAstOverlayToSvg(overlayStore, image, appStore.overlaySettings, pixelRatio);
     if (astSvg) {
         panelGroup.appendChild(astSvg);
@@ -630,7 +629,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     }
 
     // 8. Channel map labels — SVG text
-    const channelMapLabelArray = panelElement.find(".channel-map-label-span") as JQuery<HTMLSpanElement>;
+    const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
     if (channelMapLabelArray?.length) {
         const labelGroup = buildChannelMapLabelsSvg(channelMapLabelArray, pixelRatio);
         panelGroup.appendChild(labelGroup);
@@ -716,7 +715,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
 }
 
 function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: Point2D): {position: Point2D; a: number; b: number; theta: number; color: string; axisColor: string; strokeWidth: number; isFilled: boolean} | null {
-    if (!frame.hasVisibleBeam || !frame.beamProperties || !frame.overlayBeamSettings?.visible) {
+    if (!frame.hasVisibleBeam || !frame.beamProperties || !frame.overlayBeamSettings?.isVisible) {
         return null;
     }
 
@@ -800,7 +799,7 @@ function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number):
     return group;
 }
 
-function buildChannelMapLabelsSvg(channelMapLabelArray: JQuery<HTMLSpanElement>, pixelRatio: number): SVGGElement {
+function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanElement>, pixelRatio: number): SVGGElement {
     const group = svgGroupFromLayer("channel-map-labels");
 
     for (const channelMapLabel of channelMapLabelArray) {
