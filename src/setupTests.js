@@ -1,5 +1,15 @@
+import {TextDecoder, TextEncoder} from "util";
+
 import "@testing-library/jest-dom";
 import "jest-canvas-mock";
+
+// jsdom doesn't expose TextEncoder/TextDecoder; provide Node's implementation for code that decodes binary/UTF-8.
+if (typeof global.TextDecoder === "undefined") {
+    global.TextDecoder = TextDecoder;
+}
+if (typeof global.TextEncoder === "undefined") {
+    global.TextEncoder = TextEncoder;
+}
 
 // Set up global mocks
 window.URL.createObjectURL = () => {};

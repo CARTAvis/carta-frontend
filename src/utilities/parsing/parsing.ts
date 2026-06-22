@@ -3,6 +3,10 @@ import * as _ from "lodash";
 
 import {ComparisonOperator} from "enums";
 
+const SNIPPET_NAME_PARAM = "snippet";
+const SNIPPET_ARGS_PARAM = "snippetArgs";
+const SNIPPET_ARG_PREFIX = "snippet_";
+
 export function parseBoolean(value: string, isDefault: boolean): boolean {
     if (value === "true") {
         return true;
@@ -19,6 +23,85 @@ export function parseNumber(val: number | undefined, initVal: number | undefined
     } else {
         return initVal;
     }
+}
+
+// Shared between parseSnippetParameters and stripSnippetParameters so the key names stay in sync
+function isSnippetParameterKey(key: string): boolean {
+    return key === SNIPPET_NAME_PARAM || key === SNIPPET_ARGS_PARAM || key.startsWith(SNIPPET_ARG_PREFIX);
+}
+
+// Coerce a URL param string to a JS value via JSON ("5" -> 5, "true" -> true), keeping the raw string when not valid JSON
+export function parseSnippetArgValue(value: string): any {
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+}
+
+// Decode a base64 / base64url string to UTF-8 text. Tolerates base64url (-_) and missing padding.
+function decodeBase64(value: string): string {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+
+// Parse the snippetArgs blob into an object. Accepts plain JSON and, as a fallback,
+// base64/base64url-encoded JSON for share-safe links.
+// If either approach produces a parsable JSON object (not an array) it returns that object.
+function parseSnippetArgsObject(value: string): {[key: string]: any} | undefined {
+    const candidates: any[] = [];
+    try {
+        candidates.push(JSON.parse(value));
+    } catch {
+        // not plain JSON; try base64 below
+    }
+    try {
+        candidates.push(JSON.parse(decodeBase64(value)));
+    } catch {
+        // not base64-encoded JSON either
+    }
+    return candidates.find(parsed => parsed && typeof parsed === "object" && !Array.isArray(parsed));
+}
+
+// Parse a snippet auto-run request from URL params: "snippet" (name), "snippetArgs" (JSON object) and "snippet_<name>"
+// args, the latter overriding the former. Returns undefined if there is no "snippet" param.
+export function parseSnippetParameters(searchParams: URLSearchParams): {name: string; parameters: {[key: string]: any}} | undefined {
+    const name = searchParams.get(SNIPPET_NAME_PARAM);
+    if (!name) {
+        return undefined;
+    }
+
+    const parameters: {[key: string]: any} = {};
+
+    const snippetArgs = searchParams.get(SNIPPET_ARGS_PARAM);
+    if (snippetArgs) {
+        const parsed = parseSnippetArgsObject(snippetArgs);
+        if (parsed) {
+            Object.assign(parameters, parsed);
+        } else {
+            console.error("snippetArgs URL parameter must be a JSON object (plain, URL-encoded, or base64-encoded)");
+        }
+    }
+
+    // Individual snippet_<name> args override the JSON object
+    searchParams.forEach((value, key) => {
+        if (key.startsWith(SNIPPET_ARG_PREFIX) && key.length > SNIPPET_ARG_PREFIX.length) {
+            const argName = key.slice(SNIPPET_ARG_PREFIX.length);
+            parameters[argName] = parseSnippetArgValue(value);
+        }
+    });
+
+    return {name, parameters};
+}
+
+// Remove the snippet auto-run params from searchParams in place; returns true if any were removed
+export function stripSnippetParameters(searchParams: URLSearchParams): boolean {
+    const snippetKeys = [...searchParams.keys()].filter(isSnippetParameterKey);
+    snippetKeys.forEach(key => searchParams.delete(key));
+    return snippetKeys.length > 0;
 }
 
 export function trimFitsComment(val: string | null | undefined): string {

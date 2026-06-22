@@ -7,6 +7,9 @@ import {AlertStore} from "stores";
 
 import {EXAMPLE_SNIPPETS} from "./ExampleSnippets";
 
+// AsyncFunction is not a global; get its constructor from an async function expression (per MDN), once
+const AsyncFunction = async function () {}.constructor as FunctionConstructor;
+
 export class SnippetStore {
     private static staticInstance: SnippetStore;
 
@@ -88,20 +91,22 @@ export class SnippetStore {
         return this.functionToExecute !== undefined;
     }
 
+    // Compile snippet source to an async function; the "parameters" arg exposes URL-supplied args to the snippet body
+    private compileSnippet = (code: string | undefined): Function | undefined => {
+        if (code === undefined || code === null) {
+            return undefined;
+        }
+        try {
+            return new AsyncFunction("parameters", code);
+        } catch (e) {
+            console.error(e);
+            return undefined;
+        }
+    };
+
     @computed
     private get functionToExecute() {
-        const asyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-        if (this.activeSnippet && asyncFunction) {
-            let f;
-            try {
-                f = new asyncFunction(this.activeSnippet.code);
-            } catch (e) {
-                f = undefined;
-                console.error(e);
-            }
-            return f;
-        }
-        return undefined;
+        return this.compileSnippet(this.activeSnippet?.code);
     }
 
     @action setActiveSnippet = (snippet: Snippet, name: string | undefined) => {
@@ -184,30 +189,50 @@ export class SnippetStore {
     };
 
     @flow.bound *executeCurrentSnippet() {
-        if (this.functionToExecute && !this.isExecuting) {
-            this.setSnippetExecuting(true);
-            try {
-                yield this.functionToExecute();
-                this.setSnippetExecuting(false);
-
-                // Save current snippet as previous
-                const snippet: Snippet = {
-                    snippetVersion: 1,
-                    frontendVersion: "v2.0.0",
-                    tags: ["previous"],
-                    categories: ["hidden"],
-                    requires: [],
-                    code: this.activeSnippet?.code
-                };
-                yield this.saveSnippet("_previous", snippet, true);
-                return true;
-            } catch (err) {
-                this.setSnippetExecuting(false);
-                console.warn(err);
-                return false;
-            }
-        } else {
+        // Empty parameters so snippets reading "parameters" don't throw when run from the editor
+        const isSuccess = yield this.executeSnippet(this.activeSnippet, {});
+        if (!isSuccess) {
             return false;
         }
+
+        // Save current snippet as previous
+        const snippet: Snippet = {
+            snippetVersion: 1,
+            frontendVersion: "v2.0.0",
+            tags: ["previous"],
+            categories: ["hidden"],
+            requires: [],
+            code: this.activeSnippet?.code
+        };
+        yield this.saveSnippet("_previous", snippet, true);
+        return true;
+    }
+
+    // Execute any snippet with the given parameters (used by the URL auto-run)
+    @flow.bound *executeSnippet(snippet: Snippet, parameters?: {[key: string]: any}) {
+        const functionToExecute = this.compileSnippet(snippet?.code);
+        if (!functionToExecute || this.isExecuting) {
+            return false;
+        }
+        this.setSnippetExecuting(true);
+        try {
+            yield functionToExecute(parameters ?? {});
+            this.setSnippetExecuting(false);
+            return true;
+        } catch (err) {
+            this.setSnippetExecuting(false);
+            console.warn(err);
+            return false;
+        }
+    }
+
+    // Look up a snippet by name and execute it with the given parameters
+    @flow.bound *executeSnippetByName(name: string, parameters?: {[key: string]: any}) {
+        const snippet = this.snippets.get(name);
+        if (!snippet) {
+            AlertStore.Instance.showAlert(`Code snippet "${name}" was not found.`);
+            return false;
+        }
+        return yield this.executeSnippet(snippet, parameters);
     }
 }

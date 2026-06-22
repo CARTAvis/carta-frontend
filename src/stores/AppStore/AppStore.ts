@@ -5,7 +5,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
+import {action, autorun, computed, flow, flowResult, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
@@ -76,7 +76,21 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
+import {
+    Distinct,
+    exportScreenshot,
+    getColorForTheme,
+    getPasteRegionOffset,
+    GetRequiredTiles,
+    getTimestamp,
+    mapToObject,
+    offsetPointsToAvoidCollision,
+    parseSnippetParameters,
+    ProtobufProcessing,
+    type RegionClipboardData,
+    type RegionClipboardItem,
+    stripSnippetParameters
+} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -311,6 +325,45 @@ export class AppStore {
             console.error(err);
         }
     }
+
+    // Auto-run the snippet named by the "snippet" URL param (with "snippetArgs"/"snippet_<name>" args), after files load
+    private runSnippetFromUrl = async () => {
+        const url = new URL(window.location.href);
+        const snippetToRun = parseSnippetParameters(url.searchParams);
+        if (!snippetToRun) {
+            return;
+        }
+
+        // Strip the params so a reload or shared link doesn't silently re-run the snippet
+        this.clearSnippetUrlParameters(url);
+
+        // When the feature is disabled, confirm before running code requested by a URL rather than running it silently
+        if (!this.preferenceStore.isCodeSnippetsEnabled) {
+            const hasParameters = Object.keys(snippetToRun.parameters).length > 0;
+            const confirmationMessage = `The page URL is requesting to run the code snippet "${snippetToRun.name}"${hasParameters ? ` with parameters ${JSON.stringify(snippetToRun.parameters)}` : ""}. Do you want to run it?`;
+            const isConfirmed = await this.alertStore.showInteractiveAlert(confirmationMessage);
+            if (!isConfirmed) {
+                return;
+            }
+        }
+
+        try {
+            await flowResult(this.snippetStore.executeSnippetByName(snippetToRun.name, snippetToRun.parameters));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    // Remove the consumed snippet params from the URL without reloading
+    private clearSnippetUrlParameters = (url: URL) => {
+        try {
+            if (stripSnippetParameters(url.searchParams)) {
+                window.history.replaceState(window.history.state, "", url.toString());
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     @action handleThemeChange = (isDarkMode: boolean) => {
         this.systemTheme = isDarkMode ? "dark" : "light";
@@ -1872,6 +1925,7 @@ export class AppStore {
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
                 await this.loadDefaultFiles();
+                await this.runSnippetFromUrl();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
                 this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
