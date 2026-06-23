@@ -36,13 +36,7 @@ export default [
                     trailingUnderscore: "forbid"
                 },
                 {
-                    selector: [
-                        "enumMember",
-                        "objectLiteralProperty",
-                        "typeProperty",
-                        "objectLiteralMethod",
-                        "typeMethod"
-                    ],
+                    selector: ["enumMember", "objectLiteralProperty", "typeProperty", "objectLiteralMethod", "typeMethod"],
                     format: null
                 },
                 {
@@ -52,50 +46,50 @@ export default [
                 {
                     selector: "classProperty",
                     modifiers: ["public", "static", "readonly"],
-                    format: ["UPPER_CASE"],
+                    format: ["UPPER_CASE"]
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["private", "static", "readonly"],
-                    format: ["PascalCase"],
+                    format: ["PascalCase"]
                 },
                 {
                     selector: "classProperty",
                     modifiers: ["protected"],
-                    format: ["camelCase"],
+                    format: ["camelCase"]
                 },
                 {
                     selector: "variable",
                     modifiers: ["const", "global"],
-                    format: ["UPPER_CASE"],
+                    format: ["UPPER_CASE"]
                 },
                 {
                     selector: "variable",
                     types: ["function"],
                     modifiers: ["const", "global"],
-                    format: ["PascalCase"],
+                    format: ["PascalCase"]
                 },
                 {
                     selector: ["function", "variable", "classProperty", "classMethod", "classicAccessor", "autoAccessor"],
                     format: ["camelCase"],
-                    leadingUnderscore: "allow",
+                    leadingUnderscore: "allow"
                 },
                 {
                     selector: ["parameter"],
                     format: ["camelCase", "PascalCase"],
-                    leadingUnderscore: "allow",
+                    leadingUnderscore: "allow"
                 },
                 {
                     selector: ["classicAccessor"],
                     modifiers: ["public", "static"],
-                    format: ["PascalCase"],
+                    format: ["PascalCase"]
                 },
                 {
                     selector: ["variable", "parameter", "classProperty", "classicAccessor", "autoAccessor"],
                     types: ["boolean"],
                     format: ["PascalCase"],
                     prefix: ["is", "are", "should", "has", "have", "can", "did", "will"],
-                    leadingUnderscore: "allow",
+                    leadingUnderscore: "allow"
                 },
                 // exceptions for certain patterns and don't follow the above conventions
                 // list of exception for legacy code (try not to add another exception):
@@ -112,8 +106,8 @@ export default [
                         regex: "^(N|M|p|UIn8|Iz|Jys|SN)$|^(CARTA|HDU|WCS)",
                         match: true
                     },
-                    format: null,
-                },
+                    format: null
+                }
             ],
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
@@ -138,28 +132,12 @@ export default [
                 "error",
                 {
                     groups: [
-                        [
-                            "^react",
-                            "^@?\\w"
-                        ],
-                        [
-                            "^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"
-                        ],
-                        [
-                            "^\\u0000"
-                        ],
-                        [
-                            "^\\.\\.(?!/?$)",
-                            "^\\.\\./?$"
-                        ],
-                        [
-                            "^\\./(?=.*/)(?!/?$)",
-                            "^\\.(?!/?$)",
-                            "^\\./?$"
-                        ],
-                        [
-                            "^.+\\.?(css)$"
-                        ]
+                        ["^react", "^@?\\w"],
+                        ["^(components|enums|icons|models|scripting|services|stores|utilities)(/.*|$)"],
+                        ["^\\u0000"],
+                        ["^\\.\\.(?!/?$)", "^\\.\\./?$"],
+                        ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
+                        ["^.+\\.?(css)$"]
                     ]
                 }
             ],
@@ -170,6 +148,17 @@ export default [
             "prefer-const": "error",
             "@blueprintjs/classes-constants": "error",
             "@blueprintjs/html-components": "error"
+        }
+    },
+    {
+        // Snippet-driven custom UI integrates react-jsonschema-form (RJSF) and react-plotly.
+        // These are functional widget/field/template components whose names (PascalCase
+        // components) and destructured props (RJSF's `disabled`/`readonly`/`required`/
+        // `displayLabel`, plus the theme/validator/form consts) follow RJSF conventions
+        // rather than CARTA's class-component naming rules. Relax naming-convention here.
+        files: ["src/components/CustomUI/**/*.ts", "src/components/CustomUI/**/*.tsx"],
+        rules: {
+            "@typescript-eslint/naming-convention": "off"
         }
     }
 ];

@@ -5,7 +5,7 @@ import {action, autorun, computed, flow, type IReactionDisposer, makeObservable,
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {SplatalogueService} from "services";
-import {AppStore, type ControlHeader} from "stores";
+import {AppStore, type ControlHeader, HookStore} from "stores";
 import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
@@ -263,6 +263,7 @@ export class SpectralLineQueryWidgetStore {
                 this.updateFilterResult(this.fullRowIndexes);
                 this.isDataFiltered = false;
                 this.filterNum = 0;
+                HookStore.Instance.trigger("spectralLineQueryCompleted", {results: ack});
             } else {
                 this.resetQueryContents();
             }

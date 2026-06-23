@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import type {WorkspaceRenderConfig} from "models";
 
 import {FrameScaling} from "enums";
-import {AppStore, type PreferenceStore} from "stores";
+import {AppStore, HookStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
@@ -261,6 +261,7 @@ export class RenderConfigStore {
             if (this.histogramMax !== undefined) {
                 this.scaleMax[this.stokesIndex] = this.histogramMax;
             }
+            HookStore.Instance.trigger("renderRangeChanged", {fileId: this.frame?.frameInfo?.fileId, range: {min: this.scaleMinVal, max: this.scaleMaxVal}});
             this.updateSiblings();
             return true;
         }
@@ -274,6 +275,7 @@ export class RenderConfigStore {
         if (percentiles.length === 2) {
             this.scaleMin[this.stokesIndex] = percentiles[0];
             this.scaleMax[this.stokesIndex] = percentiles[1];
+            HookStore.Instance.trigger("renderRangeChanged", {fileId: this.frame?.frameInfo?.fileId, range: {min: this.scaleMinVal, max: this.scaleMaxVal}});
             this.updateSiblings();
             return true;
         } else {
@@ -305,7 +307,7 @@ export class RenderConfigStore {
     @action setCustomScale = (minVal: number, maxVal: number) => {
         this.scaleMin[this.stokesIndex] = minVal;
         this.scaleMax[this.stokesIndex] = maxVal;
-
+        HookStore.Instance.trigger("renderRangeChanged", {fileId: this.frame?.frameInfo?.fileId, range: {min: this.scaleMinVal, max: this.scaleMaxVal}});
         this.selectedPercentile[this.stokesIndex] = -1;
         this.updateSiblings();
     };
@@ -332,6 +334,7 @@ export class RenderConfigStore {
         } else if (index >= 0 && index < COLOR_MAPS_ALL.length) {
             this.setColorMapIndex(index);
         }
+        HookStore.Instance.trigger("colorMapChanged", {fileId: this.frame?.frameInfo?.fileId, colorMap: colormap});
     };
 
     /**
@@ -366,6 +369,7 @@ export class RenderConfigStore {
     @action setScaling = (newScaling: FrameScaling) => {
         if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
+            HookStore.Instance.trigger("scalingChanged", {fileId: this.frame?.frameInfo?.fileId, scaling: newScaling});
             this.updateSiblings();
         }
     };
@@ -397,6 +401,7 @@ export class RenderConfigStore {
      */
     @action setBias = (bias: number) => {
         this.bias = bias;
+        HookStore.Instance.trigger("biasContrastChanged", {fileId: this.frame?.frameInfo?.fileId, bias: this.bias, contrast: this.contrast});
         this.updateSiblings();
     };
 
@@ -415,6 +420,7 @@ export class RenderConfigStore {
      */
     @action setContrast = (contrast: number) => {
         this.contrast = contrast;
+        HookStore.Instance.trigger("biasContrastChanged", {fileId: this.frame?.frameInfo?.fileId, bias: this.bias, contrast: this.contrast});
         this.updateSiblings();
     };
 

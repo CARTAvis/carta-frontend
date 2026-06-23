@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable, runInAction} from "mobx";
 import {RegionMode, RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
-import {FileBrowserStore, type PreferenceStore} from "stores";
+import {FileBrowserStore, HookStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {getNextRegionOpacity, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
@@ -139,6 +139,7 @@ export class RegionSetStore {
         this.setFocusedRegion(region);
         this.selectionPivotRegionId = region.regionId;
         this.resetKeyboardRangeState();
+        HookStore.Instance.trigger("regionSelected", {fileId: this.frame.frameInfo.fileId, region});
     };
 
     @action replaceRegionId = (previousRegionId: number, regionId: number) => {
@@ -598,6 +599,10 @@ export class RegionSetStore {
             this.requestSetRegion(this.frame.frameInfo.fileId, region);
         }
 
+        if (region.regionId !== CURSOR_REGION_ID) {
+            HookStore.Instance.trigger("regionCreated", {fileId: this.frame.frameInfo.fileId, region});
+        }
+
         return region;
     };
 
@@ -738,6 +743,7 @@ export class RegionSetStore {
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
             }
+            HookStore.Instance.trigger("regionRemoved", {fileId: this.frame.frameInfo.fileId, regionId: region.regionId});
         }
     };
 

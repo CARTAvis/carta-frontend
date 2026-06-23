@@ -16,6 +16,11 @@ jest.mock("stores", () => ({
             updateExportRegionIndexes: jest.fn()
         }
     },
+    HookStore: {
+        Instance: {
+            trigger: jest.fn()
+        }
+    },
     PreferenceStore: {
         Instance: {
             lowBandwidthMode: false

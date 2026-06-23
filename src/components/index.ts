@@ -5,6 +5,8 @@ export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/Catalog
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./ChannelMapControl/ChannelMapControlComponent";
 export * from "./CursorInfo/CursorInfoComponent";
+export * from "./CustomUI/CustomDialogComponent";
+export * from "./CustomUI/CustomWidgetComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";

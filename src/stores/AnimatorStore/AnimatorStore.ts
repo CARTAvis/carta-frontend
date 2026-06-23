@@ -58,6 +58,7 @@ export class AnimatorStore {
                 this.animateHandle = undefined;
             }
             this.isAnimationActive = true;
+            appStore.hooks.trigger("animationStarted", {});
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -121,6 +122,7 @@ export class AnimatorStore {
         try {
             yield appStore.backendService.startAnimation(animationMessage);
             appStore.tileService.setAnimationEnabled(true);
+            appStore.hooks.trigger("animationStarted", {});
             console.log("Animation started successfully");
         } catch (err) {
             console.error(err);
@@ -147,6 +149,7 @@ export class AnimatorStore {
         }
 
         this.isAnimationActive = false;
+        appStore.hooks.trigger("animationStopped", {});
         appStore.tileService.setAnimationEnabled(false);
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {

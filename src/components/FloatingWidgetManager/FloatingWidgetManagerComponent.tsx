@@ -8,6 +8,7 @@ import {
     CatalogPlotComponent,
     ChannelMapControlComponent,
     CursorInfoComponent,
+    CustomWidgetComponent,
     FloatingWidgetComponent,
     HistogramComponent,
     HistogramSettingsPanelComponent,
@@ -124,7 +125,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [StokesAnalysisComponent.WidgetConfig.type, RenderDocklessWidget(StokesAnalysisComponent)],
                 [CursorInfoComponent.WidgetConfig.type, RenderDocklessWidget(CursorInfoComponent)],
                 [CatalogPlotComponent.WidgetConfig.type, RenderDocklessWidget(CatalogPlotComponent)],
-                [PvGeneratorComponent.WidgetConfig.type, RenderDocklessWidget(PvGeneratorComponent)]
+                [PvGeneratorComponent.WidgetConfig.type, RenderDocklessWidget(PvGeneratorComponent)],
+                [CustomWidgetComponent.WidgetConfig.type, RenderDocklessWidget(CustomWidgetComponent)]
             ]);
         }
 
