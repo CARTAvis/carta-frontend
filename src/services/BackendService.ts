@@ -62,7 +62,7 @@ export class BackendService {
 
     public animationId: number;
     public sessionId: number;
-    public serverFeatureFlags: number;
+    @observable serverFeatureFlags: number = 0;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -557,9 +557,9 @@ export class BackendService {
     }
 
     @action("remove region")
-    removeRegion(regionId: number) {
+    removeRegion(fileId: number, regionId: number) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.RemoveRegion.create({regionId});
+            const message = CARTA.RemoveRegion.create({fileId, regionId});
             this.logEvent(CARTA.EventType.REMOVE_REGION, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
                 return true;
@@ -966,7 +966,9 @@ export class BackendService {
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
-        this.serverFeatureFlags = ack.serverFeatureFlags;
+        runInAction(() => {
+            this.serverFeatureFlags = ack.serverFeatureFlags;
+        });
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);

@@ -736,7 +736,7 @@ export class RegionSetStore {
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
             if (!region.isTemporary) {
-                this.backendService.removeRegion(region.regionId);
+                this.backendService.removeRegion(this.frame.frameInfo.fileId, region.regionId);
             }
         }
     };

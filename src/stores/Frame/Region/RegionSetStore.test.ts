@@ -300,6 +300,23 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(regionSet.focusedRegion).toBe(third);
     });
 
+    test("deleteRegion sends removeRegion with the frame's fileId and the region id", () => {
+        const {regionSet, second} = MakeRegionSet();
+
+        regionSet.deleteRegion(second);
+
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(1, second.regionId);
+    });
+
+    test("deleteRegion does not call removeRegion for a temporary region", () => {
+        const {regionSet} = MakeRegionSet();
+        const temporary = regionSet.addRectangularRegion({x: 5, y: 5}, 2, 2, true);
+
+        regionSet.deleteRegion(temporary);
+
+        expect(BACKEND_SERVICE.removeRegion).not.toHaveBeenCalled();
+    });
+
     test("translateRegionDrag moves selected unlocked regions only", () => {
         const {regionSet, first, second, third} = MakeRegionSet();
         second.setLocked(true);

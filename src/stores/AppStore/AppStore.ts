@@ -409,6 +409,10 @@ export class AppStore {
         return this.isOpenFileDisabled || !this.activeFrame;
     }
 
+    @computed get isSingleTenantBackend(): boolean {
+        return this.backendService?.serverHasFeature(CARTA.ServerFeatureFlags.SINGLE_TENANT_BACKEND) ?? false;
+    }
+
     // Frame actions
     @computed get activeFrameFileId(): number | undefined {
         return this.activeFrame?.frameInfo.fileId;
