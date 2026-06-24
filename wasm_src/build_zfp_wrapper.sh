@@ -8,6 +8,7 @@ npx tsc pre.ts --outFile build/pre.js
 npx tsc post.ts --outFile build/post.js
 emcc -o build/zfp_wrapper.js zfp_wrapper.c --pre-js build/pre.js --post-js build/post.js -I ../../wasm_libs/built/include \
     -L../../wasm_libs/built/lib -lm -lzfp -g0 -O2 -msimd128 \
+    -s ENVIRONMENT='web,worker' \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_zfpDecompress", "_malloc", "_free"]' \
     -s EXPORTED_RUNTIME_METHODS='["cwrap", "HEAPU8"]'

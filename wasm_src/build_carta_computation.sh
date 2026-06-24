@@ -13,6 +13,7 @@ cp typings.d.ts build/index.d.ts
 
 emcc -o build/carta_computation.js carta_computation.cc Point2D.cc ../../wasm_libs/zstd/build/standalone_zstd.a \
   --pre-js build/pre.js --post-js build/post.js -std=c++11 -g0 -O3 -msimd128 \
+  -s ENVIRONMENT='web,worker' \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_ZSTD_decompress", "_decodeArray", "_generateVertexData", "_calculateCatalogMap", "_convertInt64Array", "_convertUint64Array","_malloc", "_free"]' \
   -s EXPORTED_RUNTIME_METHODS='["cwrap", "HEAPU8", "HEAPF32", "HEAPF64"]'

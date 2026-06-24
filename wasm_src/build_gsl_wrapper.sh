@@ -8,6 +8,7 @@ npx tsc pre.ts --outFile build/pre.js
 npx tsc post.ts --outFile build/post.js
 emcc -o build/gsl_wrapper.js gsl_wrapper.cc --pre-js build/pre.js --post-js build/post.js -I ../../wasm_libs/built/include \
     -L../../wasm_libs/built/lib -lm -lgsl -lm -lgslcblas -g0 -O2 -msimd128 -std=c++11 \
+    -s ENVIRONMENT='web,worker' \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_filterGaussian", "_malloc", "_free", "_linearRegression"]' \
     -s EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "HEAPU8", "HEAP32", "HEAPU32", "HEAPF64"]'
