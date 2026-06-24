@@ -4,6 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {FittingContinuum, FittingFunction} from "enums";
 import {type Point2D} from "models";
+import {HookStore} from "stores/Hook/HookStore";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
@@ -358,6 +359,7 @@ export class ProfileFittingStore {
         this.setResultLog(log);
         this.setResultResidual(fittingResult.residual);
         this.setHasResult(true);
+        HookStore.Instance.trigger("profileFitCompleted", {results: fittingResult});
     };
 
     constructor(widgetStore: SpectralProfileWidgetStore) {

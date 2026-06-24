@@ -7,6 +7,7 @@ import {
     CatalogPlotComponent,
     ChannelMapControlComponent,
     CursorInfoComponent,
+    CustomWidgetComponent,
     HistogramComponent,
     HistogramSettingsPanelComponent,
     ImageViewComponent,
@@ -78,7 +79,8 @@ const CreateWidgetMap = () =>
         [SpectralLineQueryComponent.WidgetConfig.type, {config: SpectralLineQueryComponent.WidgetConfig, component: SpectralLineQueryComponent}],
         [CursorInfoComponent.WidgetConfig.type, {config: CursorInfoComponent.WidgetConfig, component: CursorInfoComponent}],
         [PvGeneratorComponent.WidgetConfig.type, {config: PvGeneratorComponent.WidgetConfig, settingsConfig: PvPreviewComponent.WidgetConfig, component: PvGeneratorComponent}],
-        [PvPreviewComponent.WidgetConfig.type, {config: PvPreviewComponent.WidgetConfig, component: PvPreviewComponent}]
+        [PvPreviewComponent.WidgetConfig.type, {config: PvPreviewComponent.WidgetConfig, component: PvPreviewComponent}],
+        [CustomWidgetComponent.WidgetConfig.type, {config: CustomWidgetComponent.WidgetConfig, component: CustomWidgetComponent}]
     ]);
 
 let widgetMap: Map<string, WidgetRegistration> | undefined;

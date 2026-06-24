@@ -34,7 +34,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
+import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, HookStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
 import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
@@ -2751,8 +2751,17 @@ export class FrameStore {
             this.renderConfig.updateCubeHistogram(null, 0);
         }
 
+        const didChannelChange = this.requiredChannel !== sanitizedChannel;
+        const didStokesChange = this.requiredStokes !== stokes;
         this.requiredChannel = sanitizedChannel;
         this.requiredStokes = stokes;
+
+        if (didChannelChange) {
+            HookStore.Instance.trigger("channelChanged", {fileId: this.frameInfo.fileId, channel: sanitizedChannel, stokes});
+        }
+        if (didStokesChange) {
+            HookStore.Instance.trigger("stokesChanged", {fileId: this.frameInfo.fileId, stokes});
+        }
 
         if (isRecursive) {
             this.spectralSiblings.forEach(frame => {
@@ -2793,6 +2802,7 @@ export class FrameStore {
             this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
+            HookStore.Instance.trigger("zoomChanged", {fileId: this.frameInfo.fileId, zoom});
             this.replaceZoomTimeoutHandler();
             this.isZooming = true;
         }
@@ -2853,6 +2863,7 @@ export class FrameStore {
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
+            HookStore.Instance.trigger("panChanged", {fileId: this.frameInfo.fileId, center: {x, y}});
             for (const frame of this.secondarySpatialImages) {
                 if (frame.spatialTransform) {
                     const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
@@ -2895,6 +2906,12 @@ export class FrameStore {
                 const posSecondaryImage = transformPoint(frame.spatialTransformAST, posImageSpace, false);
                 frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
             }
+            HookStore.Instance.trigger("cursorMoved", {
+                fileId: this.frameInfo.fileId,
+                posImage: this.cursorInfo?.posImageSpace,
+                posWCS: this.cursorInfo?.infoWCS,
+                value: this.cursorValue?.value
+            });
         }
         this.isCursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
@@ -3019,6 +3036,7 @@ export class FrameStore {
             contourChunkSize: preferenceStore.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
+        HookStore.Instance.trigger("contourConfigApplied", {fileId: this.frameInfo.fileId, levels: this.contourConfig.levels});
     };
 
     @action clearContours = (shouldUpdateBackend: boolean = true) => {
@@ -3066,6 +3084,7 @@ export class FrameStore {
             compressionQuality: preferenceStore.contourCompressionLevel
         };
         this.backendService.setVectorOverlayParameters(parameters);
+        HookStore.Instance.trigger("vectorOverlayApplied", {fileId: this.frameInfo.fileId});
     };
 
     @action clearVectorOverlay = (shouldUpdateBackend: boolean = true) => {

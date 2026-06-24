@@ -158,6 +158,7 @@ export class CatalogApiService {
             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
             appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
             appStore.dialogStore.hideDialog(DialogId.OnlineDataQuery);
+            appStore.hooks.trigger("onlineCatalogQueryCompleted", {results: catalogProfileStore});
         }
     };
 

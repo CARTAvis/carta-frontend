@@ -9,7 +9,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, PvGeneratorComponent} from "components";
+import {CustomWidgetComponent, getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     AnimationMode,
@@ -72,9 +72,12 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    WidgetConfig,
     WidgetsStore
 } from "stores";
+import {CustomUIStore} from "stores/CustomUI/CustomUIStore";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {HookStore} from "stores/Hook/HookStore";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
 import * as Utils from "utilities";
@@ -134,6 +137,8 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
     readonly channelMapStore: ChannelMapStore;
+    readonly customUIStore: CustomUIStore;
+    readonly hooks: HookStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -257,6 +262,7 @@ export class AppStore {
             const ack = await this.backendService.connect(wsURL);
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
+            this.hooks.trigger("sessionConnected", {sessionId: ack.sessionId});
         } catch (err) {
             console.error(err);
         }
@@ -653,6 +659,7 @@ export class AppStore {
             this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
         }
 
+        this.hooks.trigger("fileLoaded", {frame: newFrame, fileId: newFrame.frameInfo.fileId, isAppend: !shouldSetAsActive});
         return true;
     };
 
@@ -760,8 +767,12 @@ export class AppStore {
             if (!ack.success || !ack.openFileAck) {
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
-            if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
-                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+            if (ack.openFileAck) {
+                if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
+                    AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+                } else {
+                    this.hooks.trigger("remoteFileLoaded", {frame: this.activeFrame, fileId: ack.openFileAck?.fileId});
+                }
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -863,6 +874,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq, shouldOverwrite);
             AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            this.hooks.trigger("fileSaved", {fileId, path: `${directory}/${filename}`});
             this.fileBrowserStore.hideFileBrowser();
             this.endFileSaving();
             return ack.fileId;
@@ -1001,6 +1013,7 @@ export class AppStore {
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
+                this.hooks.trigger("fileClosed", {fileId});
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
@@ -1085,6 +1098,7 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
+            this.hooks.trigger("allFilesClosed", {});
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
@@ -1176,6 +1190,7 @@ export class AppStore {
                     this.fileBrowserStore.hideFileBrowser();
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                    this.hooks.trigger("catalogLoaded", {catalogId: fileId});
                     return fileId;
                 } else {
                     throw new Error("No catalog widget ID");
@@ -1304,6 +1319,7 @@ export class AppStore {
                 this.fileBrowserStore.setImportingRegions(false);
                 this.fileBrowserStore.resetLoadingStates();
                 this.fileBrowserStore.hideFileBrowser();
+                this.hooks.trigger("regionsImported", {fileId: frame.frameInfo.fileId, count: regions.length});
             }
         } catch (err) {
             console.error(err);
@@ -1391,6 +1407,7 @@ export class AppStore {
             yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, shouldOverwrite);
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
+            this.hooks.trigger("regionsExported", {fileId: frame.frameInfo.fileId, count: exportRegions.length});
         } catch (err) {
             throw err;
         }
@@ -1400,8 +1417,12 @@ export class AppStore {
      * Deletes all regions including annotations.
      */
     @action deleteAllRegions = () => {
+        const fileId = this.activeFrame?.frameInfo?.fileId;
         this.deleteAllMatchingRegions(() => true);
         AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
+        if (fileId !== undefined) {
+            this.hooks.trigger("allRegionsDeleted", {fileId});
+        }
     };
 
     /**
@@ -1483,6 +1504,7 @@ export class AppStore {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
                 }
+                this.hooks.trigger("momentGenerated", {fileId: frame.frameInfo.fileId, momentImageIds: ack.openFileAcks.map(a => a.fileId)});
             }
             frame.resetMomentRequestState();
             this.endFileLoading();
@@ -1529,6 +1551,7 @@ export class AppStore {
                 } else {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
+                this.hooks.trigger("pvGenerated", {fileId: frame.frameInfo.fileId, pvImageId: ack.openFileAck.fileId});
             }
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
@@ -1566,6 +1589,7 @@ export class AppStore {
                         pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
                     }
                 }
+                this.hooks.trigger("pvPreviewUpdated", {fileId: message.fileId});
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
             }
@@ -1653,6 +1677,7 @@ export class AppStore {
                         AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
                     }
                 }
+                this.hooks.trigger("imageFitCompleted", {fileId: message.fileId, results: ack});
             }
             if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length) {
                 AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
@@ -1712,6 +1737,7 @@ export class AppStore {
 
     @action toggleCursorFrozen = () => {
         this.isCursorFrozen = !this.isCursorFrozen;
+        this.hooks.trigger("cursorFrozenToggled", {frozen: this.isCursorFrozen});
     };
 
     @action setCursorFrozen = (isFrozen: boolean) => {
@@ -1929,6 +1955,54 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
+        this.hooks = HookStore.Instance;
+        this.customUIStore = CustomUIStore.Instance;
+        this.customUIStore.setHostHandlers({
+            floatWidget: (id, def) => {
+                const config = new WidgetConfig(id, {
+                    ...CustomWidgetComponent.WidgetConfig,
+                    id,
+                    type: CustomWidgetComponent.WidgetConfig.type,
+                    title: def.title ?? "Custom",
+                    defaultWidth: def.width ?? CustomWidgetComponent.WidgetConfig.defaultWidth,
+                    defaultHeight: def.height ?? CustomWidgetComponent.WidgetConfig.defaultHeight
+                });
+                this.widgetsStore.addFloatingWidget(config);
+            },
+            closeWidget: id => this.widgetsStore.removeFloatingWidget(id),
+            openDialog: id => this.dialogStore.showDialog(id),
+            closeDialog: id => this.dialogStore.hideDialog(id)
+        });
+
+        // Detect when a custom widget/dialog is actually closed (user action or programmatic) so
+        // the CustomUIStore can fire the snippet's onClose handle callback. Custom widgets leave
+        // the floating-widget list; custom dialogs flip to hidden in the dialog-visibility map.
+        reaction(
+            () => {
+                const openWidgetIds = this.widgetsStore.floatingWidgets.filter(w => w.type === CustomWidgetComponent.WidgetConfig.type).map(w => w.id);
+                const openDialogIds = Array.from(this.customUIStore.definitions.values())
+                    .filter(def => def.surface === "dialog" && this.dialogStore.dialogVisible.get(def.id))
+                    .map(def => def.id);
+                return [...openWidgetIds, ...openDialogIds];
+            },
+            (currentOpen, previousOpen) => {
+                const currentSet = new Set(currentOpen);
+                for (const id of previousOpen ?? []) {
+                    if (!currentSet.has(id)) {
+                        this.customUIStore.notifyClosed(id);
+                    }
+                }
+            }
+        );
+
+        reaction(
+            () => this.backendService.connectionStatus,
+            status => this.hooks.trigger("connectionStatusChanged", {status})
+        );
+        reaction(
+            () => this.isDarkTheme,
+            isDark => this.hooks.trigger("themeChanged", {isDark})
+        );
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
@@ -2215,6 +2289,7 @@ export class AppStore {
 
     // region Subscription handlers
     @action handleSpatialProfileStream = (spatialProfileData: CARTA.ISpatialProfileData) => {
+        this.hooks.trigger("spatialProfileUpdated", {fileId: spatialProfileData.fileId, profile: spatialProfileData});
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -2232,6 +2307,7 @@ export class AppStore {
     };
 
     @action handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
+        this.hooks.trigger("spectralProfileUpdated", {fileId: spectralProfileData.fileId, regionId: spectralProfileData.regionId, profile: spectralProfileData});
         const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
         if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
@@ -2262,6 +2338,7 @@ export class AppStore {
         if (!regionHistogramData) {
             return;
         }
+        this.hooks.trigger("histogramUpdated", {fileId: regionHistogramData.fileId, regionId: regionHistogramData.regionId, histogram: regionHistogramData});
 
         let frameHistogramMap = this.regionHistograms.get(regionHistogramData.fileId);
         if (!frameHistogramMap) {
@@ -2361,6 +2438,7 @@ export class AppStore {
         if (!regionStatsData) {
             return;
         }
+        this.hooks.trigger("statsUpdated", {fileId: regionStatsData.fileId, regionId: regionStatsData.regionId, stats: regionStatsData});
 
         let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
         if (!frameStatsMap) {
@@ -2837,6 +2915,7 @@ export class AppStore {
 
             this.isLoadingWorkspace = false;
             this.activeWorkspace = workspace;
+            this.hooks.trigger("workspaceLoaded", {name});
             return true;
         } catch (err) {
             console.error(err);
@@ -2964,6 +3043,7 @@ export class AppStore {
         const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
         if (savedWorkspace) {
             this.activeWorkspace = savedWorkspace;
+            this.hooks.trigger("workspaceSaved", {name});
             return true;
         }
         return false;
@@ -3088,6 +3168,7 @@ export class AppStore {
      */
     @action setActiveImage = (activeImage: ImageItem | null) => {
         this.activeImage = activeImage;
+        this.hooks.trigger("activeImageChanged", {frame: activeImage?.store ?? null, fileId: (activeImage?.store as {frameInfo?: {fileId: number}})?.frameInfo?.fileId});
     };
 
     /** The index of the active image in the image list. */
@@ -3344,6 +3425,8 @@ export class AppStore {
         if (oldRef?.secondarySpatialImages.length) {
             oldRef.secondarySpatialImages = [];
         }
+
+        this.hooks.trigger("spatialMatchChanged", {referenceFrame: frame, matchedFileIds: frame?.spatialSiblings?.map(f => f.frameInfo.fileId) ?? []});
     }
 
     @action clearSpatialReference = () => {
@@ -3459,6 +3542,8 @@ export class AppStore {
         if (oldRef?.secondarySpectralImages.length) {
             oldRef.secondarySpectralImages = [];
         }
+
+        this.hooks.trigger("spectralMatchChanged", {referenceFrame: frame, matchedFileIds: frame?.spectralSiblings?.map(f => f.frameInfo.fileId) ?? []});
     };
 
     @action clearSpectralReference = () => {
@@ -3536,6 +3621,8 @@ export class AppStore {
         if (oldRef?.secondaryRasterScalingImages.length) {
             oldRef.secondaryRasterScalingImages = [];
         }
+
+        this.hooks.trigger("rasterScalingMatchChanged", {referenceFrame: frame, matchedFileIds: this.frames.filter(f => f.rasterScalingReference === frame).map(f => f.frameInfo.fileId)});
     };
 
     @flow.bound *setAllReferences(frame: FrameStore) {
@@ -3627,6 +3714,7 @@ export class AppStore {
                                 link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
                                 link.href = URL.createObjectURL(blob);
                                 link.dispatchEvent(new MouseEvent("click"));
+                                this.hooks.trigger("imageExported", {fileId: this.activeFrame?.frameInfo?.fileId});
                             }
                         }, "image/png");
                     }
@@ -3846,4 +3934,27 @@ export class AppStore {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
         });
     };
+
+    /** Snippet-facing custom UI facade, exposed as `app.ui` / `carta.ui`. */
+    get ui() {
+        const store = this.customUIStore;
+        return {
+            registerWidget: store.registerWidget,
+            registerDialog: store.registerDialog,
+            open: store.open,
+            close: store.close,
+            update: store.update,
+            getData: store.getData,
+            unregister: store.unregister,
+            clear: store.clear,
+            plot: (id: string, plot: {data: any; layout?: any; config?: any}) => {
+                store.registerWidget(id, {
+                    title: "Plot",
+                    schema: {type: "object", properties: {plot: {type: "object"}}},
+                    uiSchema: {plot: {"ui:field": "plot"}},
+                    formData: {plot}
+                });
+            }
+        };
+    }
 }

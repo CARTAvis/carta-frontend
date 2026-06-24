@@ -8,7 +8,7 @@ import {CoordinateMode, RegionOpacity} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
 import {IsValidWcsPoint, type Point2D} from "models";
 import {type BackendService} from "services";
-import {AppStore, PreferenceStore, WidgetsStore} from "stores";
+import {AppStore, HookStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {
     add2D,
@@ -903,6 +903,9 @@ export class RegionStore {
                     AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
                     await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
+                    if (!isRequestingPreview) {
+                        HookStore.Instance.trigger("regionChanged", {fileId: this.fileId, region: this});
+                    }
                 } catch (err) {
                     console.error(err);
                 }

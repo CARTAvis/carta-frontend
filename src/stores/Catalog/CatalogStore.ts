@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, ObservableMap} from "mobx"
 
 import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, HookStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {type CatalogWidgetStore} from "stores/Widgets";
 import {minMaxArray, setAstSystem} from "utilities";
@@ -126,6 +126,7 @@ export class CatalogStore {
                 }
             });
         }
+        HookStore.Instance.trigger("catalogClosed", {catalogId: fileId});
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {

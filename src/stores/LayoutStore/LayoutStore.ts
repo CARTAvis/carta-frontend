@@ -132,6 +132,7 @@ export class LayoutStore {
 
         appStore.widgetsStore.updateImageWidgetTitle();
         this.currentLayoutName = layoutName;
+        appStore.hooks.trigger("layoutChanged", {name: layoutName});
 
         return true;
     };
