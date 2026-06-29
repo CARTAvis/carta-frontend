@@ -43,11 +43,6 @@ git add .
 git commit -m "a short description of the change"
 ```
 
-Please note that Husky hooks run automatically during `commit` and `push`.
-
-- If the hook checks fail, fix the reported issues and retry.
-- If hooks are not available in your local clone, run `npm install` (or `npm run prepare` if install scripts were skipped).
-
 To push the branch to the remote repository:
 
 ```
