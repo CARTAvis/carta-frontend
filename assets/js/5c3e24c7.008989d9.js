@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcarta_frontend_docs=globalThis.webpackChunkcarta_frontend_docs||[]).push([[4083],{3044(a){a.exports=JSON.parse('{"metadata":{"permalink":"/carta-frontend/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":0,"blogDescription":"Blog","blogTitle":"Blog"}}')}}]);
