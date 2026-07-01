@@ -4,10 +4,11 @@ import * as AST from "ast_wrapper";
 import type Konva from "konva";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
+import {getInterpolatedPathAtDistance, pointDistance, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -19,8 +20,9 @@ interface CompassRulerAnnotationProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    isFocused: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -33,9 +35,12 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
     const mousePoint = React.useRef({x: 0, y: 0});
+    const anchorDragImagePoint = React.useRef<Point2D | null>(null);
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        if (event.evt.button === 0) {
+            props.onSelect?.(region, event.evt);
+        }
     };
 
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -44,14 +49,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
-            props.region.beginEditing();
+            props.frame.regionSet.beginRegionDrag(props.region);
             mousePoint.current = konvaEvent.currentTarget.position();
         }
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.region.endEditing();
+        props.frame.regionSet.endRegionDrag(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -61,8 +65,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
-            const newPoints = region.controlPoints.map((p, i) => (i === 0 ? add2D(p, deltaPosition) : p));
-            region.setControlPoints(newPoints, false, false);
+            props.frame.regionSet.translateRegionDrag(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -89,11 +92,34 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         }
     };
 
+    const selectPointFromAnchorNode = (node: Konva.Node) => {
+        if (node.id() === "northTip" || node.id() === "eastTip") {
+            props.region.selectPoint(0);
+        }
+    };
+
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            props.onSelect?.(props.region);
-            props.region.beginEditing();
+            const anchor = konvaEvent.target;
+            props.onSelect?.(props.region, konvaEvent.evt);
+            if (anchor.id() === "origin") {
+                props.frame.regionSet.beginRegionDrag(props.region);
+                const anchorPos = adjustPosToUnityStage(anchor.position(), props.stageRef.current);
+                let positionImageSpace = canvasToTransformedImagePos(anchorPos.x, anchorPos.y, frame, props.layerWidth, props.layerHeight);
+                if (frame.spatialReference && frame.spatialTransformAST) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
+                anchorDragImagePoint.current = positionImageSpace;
+            } else {
+                props.region.beginEditing();
+                selectPointFromAnchorNode(anchor);
+            }
         }
+    };
+
+    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        props.onSelect?.(props.region, konvaEvent.evt);
+        selectPointFromAnchorNode(konvaEvent.target);
     };
 
     const handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -111,9 +137,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             }
 
             if (anchor.id() === "origin") {
-                region.setControlPoint(0, positionImageSpace);
+                const previousPosition = anchorDragImagePoint.current;
+                if (previousPosition) {
+                    props.frame.regionSet.translateRegionDrag(region, subtract2D(positionImageSpace, previousPosition));
+                }
+                anchorDragImagePoint.current = positionImageSpace;
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                if (!frame.validWcs) {
+                if (!frame.isValidWcs) {
                     region.setLength((distance * frame.zoomLevel) / imageRatio);
                 } else {
                     region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
@@ -122,13 +152,18 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         }
     };
 
-    const handleAnchorDragEnd = () => {
-        region.endEditing();
+    const handleAnchorDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target?.id() === "origin") {
+            props.frame.regionSet.endRegionDrag(props.region);
+            anchorDragImagePoint.current = null;
+        } else {
+            region.endEditing();
+        }
     };
 
     const imageRatio = AppStore.Instance.imageRatio;
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const wcsInfo = frame?.isValidWcs ? frame.wcsInfoForTransformation : 0;
     const approxPoints = region.getCompassApproximation(wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST || undefined);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -136,38 +171,33 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const eastPointArray: number[] = [];
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const targetStageLength = (region.length * imageRatio) / zoomLevel;
 
-    if (!frame.validWcs) {
+    const getCompassPointArray = (approxPoints: number[]) => {
+        const canvasPoints: Point2D[] = [];
+
+        for (let i = 0; i < approxPoints.length; i += 2) {
+            canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current));
+        }
+
+        return getInterpolatedPathAtDistance(originPoints, canvasPoints, targetStageLength).flatMap(point => [point.x - mousePoint.current.x, point.y - mousePoint.current.y]);
+    };
+
+    if (!frame.isValidWcs) {
         const originX = originPoints.x - mousePoint.current.x;
         const originY = originPoints.y - mousePoint.current.y;
-        const compassStageLength = (region.length * imageRatio) / zoomLevel;
 
-        northPointArray.push(originX, originY, originX, originY - compassStageLength);
-        eastPointArray.push(originX, originY, originX - compassStageLength, originY);
+        northPointArray.push(originX, originY, originX, originY - targetStageLength);
+        eastPointArray.push(originX, originY, originX - targetStageLength, originY);
     } else {
-        for (let i = 0; i < northApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            northPointArray[i] = point.x - mousePoint.current.x;
-            northPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
-
-        for (let i = 0; i < eastApproxPoints.length; i += 2) {
-            const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            eastPointArray[i] = point.x - mousePoint.current.x;
-            eastPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
+        northPointArray.push(...getCompassPointArray(northApproxPoints));
+        eastPointArray.push(...getCompassPointArray(eastApproxPoints));
     }
 
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.darkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -211,17 +241,17 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         updateOffset();
     }, []);
 
-    const generateProps = (north: boolean) => {
+    const generateProps = (isNorth: boolean) => {
         return {
             stroke: region.color,
             fill: region.color,
             strokeWidth: region.lineWidth,
             strokeScaleEnabled: false,
-            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            opacity: region.visualOpacity,
             dash: [region.dashLength],
             closed: false,
             perfectDrawEnabled: false,
-            points: north ? northPointArray : eastPointArray,
+            points: isNorth ? northPointArray : eastPointArray,
             pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
             pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
             hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
@@ -233,27 +263,33 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         fill: region.color,
         strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
         strokeScaleEnabled: false,
-        opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+        opacity: region.visualOpacity,
         fontSize: (region.fontSize * imageRatio) / zoomLevel,
         fontFamily: region.font,
         fontStyle: region.fontStyle
     };
 
+    const areAnchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
+    const anchorOpacity = areAnchorsInteractive ? region.visualOpacity : 0;
     const anchorCommonProps = {
         rotation: 0,
         isRotator: false,
+        interactive: areAnchorsInteractive && props.isFocused,
+        opacity: anchorOpacity,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
         onDragEnd: handleAnchorDragEnd,
-        onDragMove: handleAnchorDrag
+        onDragMove: handleAnchorDrag,
+        onClick: handleAnchorClick
     };
+    const isLengthSelected = region.hasSelectedPoint;
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
-                {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
-                {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
+            <Group ref={shapeRef} listening={!region.isLocked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+                {region.hasEastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
+                {region.hasNorthArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
                     ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}
@@ -276,9 +312,23 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             <Group>
                 {props.selected && (
                     <>
-                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} {...anchorCommonProps} />
-                        <Anchor anchor={"northTip"} x={northPointArray[northPointArray.length - 2] + mousePoint.current.x} y={northPointArray[northPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
-                        <Anchor anchor={"eastTip"} x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x} y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
+                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary} {...anchorCommonProps} />
+                        <Anchor
+                            anchor={"northTip"}
+                            x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
+                            y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
+                            isSelected={isLengthSelected}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                            {...anchorCommonProps}
+                        />
+                        <Anchor
+                            anchor={"eastTip"}
+                            x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
+                            y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
+                            isSelected={isLengthSelected}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                            {...anchorCommonProps}
+                        />
                     </>
                 )}
             </Group>
@@ -297,20 +347,21 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const region = props.region as RulerAnnotationStore;
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(region);
+        if (event.evt.button === 0) {
+            props.onSelect?.(region, event.evt);
+        }
     };
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onDoubleClick?.(region);
     };
 
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.onSelect?.(props.region);
-        props.region.beginEditing();
+        props.frame.regionSet.beginRegionDrag(props.region);
         mousePoint.current = konvaEvent.target.position();
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        props.region.endEditing();
+        props.frame.regionSet.endRegionDrag(props.region);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -322,8 +373,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const transformedImagePosition = frame.spatialReference && frame.spatialTransform ? frame.spatialTransform.transformCoordinate(imagePosition) : imagePosition;
             const deltaPosition = subtract2D(transformedImagePosition, transformedOldImagePosition);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            region.setControlPoints(newPoints, false, false);
+            props.frame.regionSet.translateRegionDrag(region, deltaPosition);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -344,10 +394,26 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         }
     };
 
+    const selectPointFromAnchorNode = (node: Konva.Node) => {
+        const anchorName = node.id();
+        if (anchorName === "start") {
+            region.selectPoint(0);
+        } else if (anchorName === "finish") {
+            region.selectPoint(1);
+        }
+    };
+
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
+            props.onSelect?.(props.region);
             region.beginEditing();
+            selectPointFromAnchorNode(konvaEvent.target);
         }
+    };
+
+    const handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        props.onSelect?.(props.region);
+        selectPointFromAnchorNode(konvaEvent.target);
     };
 
     const handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -405,7 +471,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
@@ -435,7 +501,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     }
 
     let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
-    if (region.auxiliaryTextVisible) {
+    if (region.isAuxiliaryTextVisible) {
         const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
         xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
         xDistanceText = getDistanceText(wcsInfo, secondaryImagePointStart, cornerPoint);
@@ -452,7 +518,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     // Dummy variables for triggering re-render
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-    const darktheme = AppStore.Instance.darkTheme;
+    const isDarkTheme = AppStore.Instance.isDarkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -460,20 +526,22 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const [textOffsetX, setTextOffsetX] = React.useState(0);
     const [xTextOffsetX, setXTextOffsetX] = React.useState(0);
     const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
+    const areAnchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
+    const anchorOpacity = areAnchorsInteractive ? region.visualOpacity : 0;
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
-        if (region.auxiliaryTextVisible) {
+        if (region.isAuxiliaryTextVisible) {
             setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + (xTextRef?.current?.textWidth ?? 0) / 2);
             setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + (yTextRef?.current?.textWidth ?? 0) / 2);
         }
-    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.isAuxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
             <Group
                 ref={shapeRef}
-                listening={!region.locked}
+                listening={!region.isLocked}
                 draggable
                 onClick={handleClick}
                 onDblClick={handleDoubleClick}
@@ -487,7 +555,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.visualOpacity}
                     dash={[region.dashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -500,7 +568,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? region.visualOpacity : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -513,7 +581,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    opacity={region.isAuxiliaryLineVisible ? region.visualOpacity : 0}
                     dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
@@ -532,12 +600,12 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.visualOpacity}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
-                {region.auxiliaryTextVisible && (
+                {region.isAuxiliaryTextVisible && (
                     <>
                         <Text
                             ref={xTextRef}
@@ -550,7 +618,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? region.visualOpacity : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -566,7 +634,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             fill={region.color}
                             strokeWidth={(0.5 * imageRatio) / zoomLevel}
                             strokeScaleEnabled={false}
-                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            opacity={region.isAuxiliaryTextVisible ? region.visualOpacity : 0}
                             fontSize={(region.fontSize * imageRatio) / zoomLevel}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
@@ -574,7 +642,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     </>
                 )}
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
+                {region.isAuxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>
             <Group>
                 {props.selected && (
@@ -585,11 +653,16 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosStart.y}
                             rotation={0}
                             isRotator={false}
+                            interactive={areAnchorsInteractive && props.isFocused}
+                            opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
                             onDragEnd={handleAnchorDragEnd}
                             onDragMove={handleAnchorDrag}
+                            onClick={handleAnchorClick}
+                            isSelected={region.selectedPointIndex === 0}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                         />
                         <Anchor
                             anchor={"finish"}
@@ -597,11 +670,16 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             y={canvasPosFinish.y}
                             rotation={0}
                             isRotator={false}
+                            interactive={areAnchorsInteractive && props.isFocused}
+                            opacity={anchorOpacity}
                             onMouseEnter={handleAnchorMouseEnter}
                             onMouseOut={handleAnchorMouseOut}
                             onDragStart={handleAnchorDragStart}
                             onDragEnd={handleAnchorDragEnd}
                             onDragMove={handleAnchorDrag}
+                            onClick={handleAnchorClick}
+                            isSelected={region.selectedPointIndex === 1}
+                            selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
                         />
                     </>
                 )}

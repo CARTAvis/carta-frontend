@@ -19,7 +19,7 @@ export class FileInfoDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "app-header",
@@ -39,7 +39,7 @@ export class FileInfoDialogComponent extends React.Component {
                 defaultHeight={FileInfoDialogComponent.DefaultHeight}
                 minWidth={FileInfoDialogComponent.MinWidth}
                 minHeight={FileInfoDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.FileInfo}
             >
                 <div className={Classes.DIALOG_BODY}>

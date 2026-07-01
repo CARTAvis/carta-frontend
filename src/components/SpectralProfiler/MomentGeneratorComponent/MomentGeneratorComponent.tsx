@@ -14,6 +14,7 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer
@@ -60,12 +61,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ? MomentSelectingMode.NONE : MomentSelectingMode.MASK);
     };
 
-    private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
+    private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, isExactMatch) => {
         const momentContent = MOMENT_TEXT.get(moment);
         const normalizedMoment = momentContent?.tag.toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
-        if (exactMatch) {
+        if (isExactMatch) {
             return normalizedMoment === normalizedQuery;
         } else {
             return momentContent?.tag.indexOf(normalizedQuery) === 0;
@@ -83,23 +84,28 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     };
 
     private renderRestFreqInput = (frame: FrameStore) => {
-        const disableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
+        const shouldDisableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
         const restFreqStore = frame?.restFreqStore;
         return (
             <div className="freq-input">
                 <ClearableNumericInputComponent
                     label="Rest frequency"
                     value={restFreqStore?.customRestFreq.value ?? NaN}
-                    disabled={disableCoordinateSetting}
+                    disabled={shouldDisableCoordinateSetting}
                     placeholder="Rest frequency"
                     selectAllOnFocus={true}
                     onValueChanged={restFreqStore?.setCustomVal}
                     onValueCleared={restFreqStore?.restoreDefaults}
-                    resetDisabled={restFreqStore?.resetDisable}
+                    resetDisabled={restFreqStore?.isResetDisabled}
                     tooltipContent={restFreqStore?.defaultInfo}
                     tooltipPlacement={"bottom"}
                 />
-                <HTMLSelect disabled={disableCoordinateSetting} options={Object.values(FrequencyUnit)} value={restFreqStore?.customRestFreq.unit} onChange={ev => restFreqStore?.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+                <HTMLSelect
+                    disabled={shouldDisableCoordinateSetting}
+                    options={Object.values(FrequencyUnit)}
+                    value={restFreqStore?.customRestFreq.unit}
+                    onChange={ev => restFreqStore?.setCustomUnit(ev.currentTarget.value as FrequencyUnit)}
+                />
             </div>
         );
     };
@@ -231,7 +237,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
         const hint = (
             <span>
                 <br />
@@ -281,7 +287,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             widgetStore.setKeep(e.checked);
                         }}
                     />
-                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
+                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.shouldMatchMoment} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
                     <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>

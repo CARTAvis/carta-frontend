@@ -9,7 +9,7 @@ import {AppStore, type FrameStore} from "stores";
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ChannelMapStore.staticInstance) {
             ChannelMapStore.staticInstance = new ChannelMapStore();
         }
@@ -17,14 +17,14 @@ export class ChannelMapStore {
     }
 
     /** The default color used for rendering the channel map label. */
-    static readonly DefaultLabelColor = "auto-light_gray";
+    public static readonly DEFAULT_LABEL_COLOR = "auto-light_gray";
 
     constructor() {
         makeObservable(this);
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            if (this.displayedFrame?.requiredFrameView && this.channelMapEnabled) {
+            if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const startChannel = this.startChannel;
                 const numColumns = this.numColumns;
@@ -45,7 +45,7 @@ export class ChannelMapStore {
             () => this.channelArray,
             channelArray => {
                 const channel = this.displayedFrame?.channel;
-                if (this.channelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
+                if (this.isChannelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
                     this.debouncedSetActiveChannel(channelArray[0]);
                 }
             }
@@ -72,25 +72,25 @@ export class ChannelMapStore {
     /** The number of rows in the image view. */
     @observable numRows: number = 2;
     /** Indicates whether the channel map mode is enabled. */
-    @observable channelMapEnabled: boolean = false;
+    @observable isChannelMapEnabled: boolean = false;
     /** Indicates whether to show the channel string. */
-    @observable showChannelString: boolean = false;
+    @observable shouldShowChannelString: boolean = false;
     /** Indicates whether to show the frequency string. */
-    @observable showFrequencyString: boolean = false;
+    @observable shouldShowFrequencyString: boolean = false;
     /** Indicates whether to show the velocity string. */
-    @observable showVelocityString: boolean = false;
+    @observable shouldShowVelocityString: boolean = false;
     /** Indicates whether to show the unit of the frequency string. */
-    @observable showFrequencyStringUnit: boolean = true;
+    @observable shouldShowFrequencyStringUnit: boolean = true;
     /** Indicates whether to show the unit of the velocity string. */
-    @observable showVelocityStringUnit: boolean = true;
+    @observable shouldShowVelocityStringUnit: boolean = true;
     /** Font index used for rendering the channel map label. */
     @observable font: number = 0;
     /** Font size in pixels used for rendering the channel map label. */
     @observable fontSize: number = 12;
     /** Indicates whether to use a custom color for rendering the channel map label. */
-    @observable customColor: boolean = false;
+    @observable hasCustomColor: boolean = false;
     /** The custom color used for rendering the channel map label. */
-    @observable color: string = ChannelMapStore.DefaultLabelColor;
+    @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
     private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
@@ -101,20 +101,20 @@ export class ChannelMapStore {
      */
     handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
-    private requestChannels = (frame: FrameStore, polarizationChanged: boolean = false) => {
+    private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, polarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
     };
 
     /**
      * Enables or disables the channel map mode.
-     * @param enabled - Whether to enable the channel map mode.
+     * @param isEnabled - Whether to enable the channel map mode.
      */
-    @action setChannelMapEnabled = (enabled: boolean) => {
-        this.channelMapEnabled = enabled;
+    @action setChannelMapEnabled = (isEnabled: boolean) => {
+        this.isChannelMapEnabled = isEnabled;
     };
 
     /**
@@ -189,42 +189,42 @@ export class ChannelMapStore {
 
     /**
      * Show or hide the channel string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
-    @action setShowChannelString = (show: boolean) => {
-        this.showChannelString = show;
+    @action setShowChannelString = (shouldShow: boolean) => {
+        this.shouldShowChannelString = shouldShow;
     };
 
     /**
      * Show or hide the frequency string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
-    @action setShowFrequencyString = (show: boolean) => {
-        this.showFrequencyString = show;
+    @action setShowFrequencyString = (shouldShow: boolean) => {
+        this.shouldShowFrequencyString = shouldShow;
     };
 
     /**
      * Show or hide the velocity string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
-    @action setShowVelocityString = (show: boolean) => {
-        this.showVelocityString = show;
+    @action setShowVelocityString = (shouldShow: boolean) => {
+        this.shouldShowVelocityString = shouldShow;
     };
 
     /**
      * Show or hide the unit of the frequency string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
-    @action setShowFrequencyStringUnit = (show: boolean) => {
-        this.showFrequencyStringUnit = show;
+    @action setShowFrequencyStringUnit = (shouldShow: boolean) => {
+        this.shouldShowFrequencyStringUnit = shouldShow;
     };
 
     /**
      * Show or hide the unit of the velocity string.
-     * @param show - True to show, false to hide.
+     * @param shouldShow - True to show, false to hide.
      */
-    @action setShowVelocityStringUnit = (show: boolean) => {
-        this.showVelocityStringUnit = show;
+    @action setShowVelocityStringUnit = (shouldShow: boolean) => {
+        this.shouldShowVelocityStringUnit = shouldShow;
     };
 
     /**
@@ -245,10 +245,10 @@ export class ChannelMapStore {
 
     /**
      * Sets whether to use a custom color for rendering the channel map label.
-     * @param customColor - True to use a custom color, false to use the default color.
+     * @param hasCustomColor - True to use a custom color, false to use the default color.
      */
-    @action setCustomColor = (customColor: boolean) => {
-        this.customColor = customColor;
+    @action setCustomColor = (hasCustomColor: boolean) => {
+        this.hasCustomColor = hasCustomColor;
     };
 
     /**

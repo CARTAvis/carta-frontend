@@ -62,18 +62,18 @@ export class StokesDialogComponent extends React.Component {
         return files;
     }
 
-    @computed get stokesDialogVisible(): boolean {
+    @computed get isStokesDialogVisible(): boolean {
         return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes) ?? false;
     }
 
-    @computed get noneType(): boolean {
-        let load = true;
+    @computed get isNoneType(): boolean {
+        let shouldLoad = true;
         this.stokes.forEach(file => {
             if (file.polarizationType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-                load = false;
+                shouldLoad = false;
             }
         });
-        return load;
+        return shouldLoad;
     }
 
     constructor(props) {
@@ -82,9 +82,9 @@ export class StokesDialogComponent extends React.Component {
 
         this.disposers.push(
             reaction(
-                () => this.stokesDialogVisible,
-                stokesDialogVisible => {
-                    if (stokesDialogVisible) {
+                () => this.isStokesDialogVisible,
+                isStokesDialogVisible => {
+                    if (isStokesDialogVisible) {
                         const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                         this.stokes = new Map();
                         fileBrowserStore.selectedFiles.forEach(async file => {
@@ -109,7 +109,7 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.isDarkTheme});
         const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
@@ -181,7 +181,7 @@ export class StokesDialogComponent extends React.Component {
                 minHeight={StokesDialogComponent.MinHeight}
                 defaultWidth={StokesDialogComponent.DefaultWidth}
                 defaultHeight={StokesDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Stokes}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -206,7 +206,7 @@ export class StokesDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !this.isNoneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
                             data-testid="load-hypercube-button"
@@ -225,7 +225,7 @@ export class StokesDialogComponent extends React.Component {
             stokesFiles.push(file);
         });
 
-        if (PreferenceStore.Instance.dynamicLayoutEnable) {
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled) {
             const hyperCubeCtype = HyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
             dynamicLayoutStore.matchLayoutMapping(hyperCubeCtype);
             if (dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
@@ -254,7 +254,7 @@ export class StokesDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (fileBrowserStore.fileList?.directory) {
-                if (!fileBrowserStore.appendingFrame || !frames.length) {
+                if (!fileBrowserStore.isAppendingFrame || !frames.length) {
                     await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
                 } else {
                     await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);

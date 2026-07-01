@@ -27,9 +27,10 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
-export function IsSpectralMatchingTypeValid(type: SpectralType) {
+
+export const IsSpectralMatchingTypeValid = (type: SpectralType) => {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
-}
+};
 
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return Object.values(SpectralUnit).includes(unit as SpectralUnit);
@@ -122,7 +123,7 @@ enum Kelvin {
 }
 
 const Jys = Object.values(Jansky);
-const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
+const INTENSITY_OPTIONS_MAP = new Map<IntensityUnitType, string[]>([
     [IntensityUnitType.Kelvin, Object.values(Kelvin)],
     [IntensityUnitType.JyBeam, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
     [IntensityUnitType.JySr, Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
@@ -131,19 +132,19 @@ const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
 ]);
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
-    const lowercaseJyBeam = IntensityOptionsMap.get(IntensityUnitType.JyBeam)?.map(unit => {
+    const lowercaseJyBeam = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyBeam)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJySr = IntensityOptionsMap.get(IntensityUnitType.JySr)?.map(unit => {
+    const lowercaseJySr = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JySr)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyArcsec2 = IntensityOptionsMap.get(IntensityUnitType.JyArcsec2)?.map(unit => {
+    const lowercaseJyArcsec2 = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyArcsec2)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyPixel = IntensityOptionsMap.get(IntensityUnitType.JyPixel)?.map(unit => {
+    const lowercaseJyPixel = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyPixel)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseKelvins = IntensityOptionsMap.get(IntensityUnitType.Kelvin)?.map(unit => {
+    const lowercaseKelvins = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.Kelvin)?.map(unit => {
         return unit.toLowerCase();
     });
     const lowercaseUnitStr = unitStr?.toLowerCase();
@@ -215,7 +216,7 @@ export const GetIntensityOptions = (config: IntensityConfig): string[] => {
     const convertibleTypes = FindConvertibleIntensityTypes(config);
     const supportedOptions: string[] = [];
     convertibleTypes?.forEach(type => {
-        supportedOptions.push(...(IntensityOptionsMap.get(type) ?? []));
+        supportedOptions.push(...(INTENSITY_OPTIONS_MAP.get(type) ?? []));
     });
     return supportedOptions;
 };
@@ -229,26 +230,26 @@ export const GetCommonIntensityOptions = (intensityConfigs: IntensityConfig[]): 
     }
 };
 
-const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, isForward: boolean = true): number => {
     const coefficient = (1.222 * 1e6) / (freqGHz * freqGHz * bmaj * bmin);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
-const JyBeamToJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToJySr = (bmaj: number, bmin: number, isForward: boolean = true): number => {
     const bmajRad = (bmaj * Math.PI) / 648000;
     const bminRad = (bmin * Math.PI) / 648000;
     const omega = (Math.PI * bmajRad * bminRad) / (4 * Math.LN2);
-    return forward ? 1 / omega : omega;
+    return isForward ? 1 / omega : omega;
 };
 
-const JySrToJyArcsec2 = (forward: boolean = true): number => {
+const JySrToJyArcsec2 = (isForward: boolean = true): number => {
     const constant = 2.350443 * 1e-11;
-    return forward ? constant : 1 / constant;
+    return isForward ? constant : 1 / constant;
 };
 
-const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, forward: boolean = true): number => {
+const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
     const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
 export type IntensityConversion = (values: Float32Array | Float64Array) => Float32Array | Float64Array;

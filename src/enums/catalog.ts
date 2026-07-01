@@ -9,6 +9,16 @@ export enum CatalogDatabase {
     VIZIER = "VizieR"
 }
 
+export enum DataType {
+    CHAR = "CHAR",
+    SHORT = "SHORT",
+    FLOAT = "FLOAT",
+    LONG = "LONG",
+    INT = "INT",
+    DOUBLE = "DOUBLE",
+    UNSIGNEDBYTE = "UNSIGNEDBYTE"
+}
+
 export enum CatalogSystemType {
     Ecliptic = "ECLIPTIC",
     FK4 = "FK4",
@@ -42,6 +52,15 @@ export enum CatalogTextureType {
     Orientation,
     SelectedSource,
     SizeMinor
+}
+
+// defined to be consistent with the enum in carta_computation.cc
+export enum CatalogMapType {
+    SIZE_DIAMETER = 0,
+    SIZE_AREA = 1,
+    COLOR = 2,
+    ORIENTATION = 3,
+    SIZE_DIAMETER_ANGULAR = 4
 }
 
 export enum CatalogUpdateMode {

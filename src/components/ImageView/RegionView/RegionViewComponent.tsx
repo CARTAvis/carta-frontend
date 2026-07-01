@@ -1,22 +1,24 @@
 import * as React from "react";
-import {Layer, Line, Stage} from "react-konva";
+import {Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
 import * as _ from "lodash";
-import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {isRegionInSelectionRect} from "./regionSelectionCanvasGeometry";
 import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
@@ -37,11 +39,27 @@ const LINE_HEIGHT = 15;
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
 const KEYCODE_ESC = 27;
+const POINTER_DRAG_THRESHOLD = 4;
+const REGION_SELECTION_BOX_FILL = "rgba(98, 171, 221, 0.36)";
+
+interface RegionSelectionBox {
+    start: Point2D;
+    end: Point2D;
+}
+
+interface MiddleClickPanState {
+    dragNode: Konva.Node;
+    start: Point2D;
+    started: boolean;
+}
+
+type SuppressedClickButton = number | "all";
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore | null = null;
     @observable currentCursorPos: Point2D = {x: 0, y: 0};
+    @observable private regionSelectionBox: RegionSelectionBox | null = null;
     @observable private frame: FrameStore;
 
     private readonly disposers: IReactionDisposer[] = [];
@@ -50,12 +68,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
-    private dragPanning: boolean;
+    private isDragPanning: boolean;
     private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+    private suppressedClickButton: SuppressedClickButton | null = null;
+    private shouldSuppressNextRegionClickSelection = false;
+    private didRegionSelectionStartOnRegion = false;
+    private regionSelectionDragNode: Konva.Node | null = null;
+    private middleClickPan: MiddleClickPanState | null = null;
     private layerRef = React.createRef<any>();
+    private popoutDragCleanup: (() => void) | null = null;
 
     constructor(props: any) {
         super(props);
@@ -107,11 +131,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame) {
             this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
+        this.setupPopoutDragListeners();
     }
 
     componentWillUnmount() {
+        this.restoreRegionSelectionDragNode();
+        this.restoreMiddleClickPan();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.cleanupPopoutDragListeners();
     }
 
     @action componentDidUpdate(prevProps) {
@@ -147,6 +175,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     }, 100);
 
+    private setupPopoutDragListeners() {
+        this.cleanupPopoutDragListeners();
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef.current);
+    }
+
+    private cleanupPopoutDragListeners() {
+        if (this.popoutDragCleanup) {
+            this.popoutDragCleanup();
+            this.popoutDragCleanup = null;
+        }
+    }
+
     private getCursorPosImageSpace = (offsetX: number, offsetY: number): Point2D => {
         const frame = this.frame;
         let cursorPosImageSpace = canvasToTransformedImagePos(offsetX, offsetY, frame, this.props.width, this.props.height);
@@ -161,6 +201,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
         const frame = this.frame;
+        if (frame.isPreview) {
+            return;
+        }
         const regionType = frame.regionSet.newRegionType;
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
@@ -269,23 +312,26 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 return;
         }
 
+        const isCreatingPolygonalRegion = this.creatingRegion.isPolygonalRegion;
+
         // Handle region completion
         if (
             this.creatingRegion.isValid &&
-            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE && regionType !== CARTA.RegionType.ANNPOLYGON && regionType !== CARTA.RegionType.ANNPOLYLINE) ||
-                this.creatingRegion.controlPoints.length > 2) &&
+            (!isCreatingPolygonalRegion || this.creatingRegion.controlPoints.length > 2) &&
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
-            frame.regionSet.selectRegion(this.creatingRegion);
+            frame.regionSet.selectSingleRegion(this.creatingRegion);
         } else {
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
 
-        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
+        if (isCreatingPolygonalRegion) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
-                this.creatingRegion = null;
+                runInAction(() => {
+                    this.creatingRegion = null;
+                });
             }, 1);
         } else {
             this.creatingRegion = null;
@@ -315,7 +361,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.polygonRegionCreating(mouseEvent);
     };
 
-    private RegionCreating(mouseEvent: MouseEvent) {
+    private regionCreating(mouseEvent: MouseEvent) {
         if (!this.creatingRegion) {
             return;
         }
@@ -390,10 +436,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragStart = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
-                this.dragPanning = true;
+                this.isDragPanning = true;
                 if (this.frame) {
                     const frame = this.frame.spatialReference || this.frame;
                     const stage = konvaEvent.target.getStage();
@@ -409,6 +459,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragMove = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             let isPanDrag = true;
@@ -438,9 +492,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleDragEnd = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+        if (this.regionSelectionBox) {
+            return;
+        }
+
+        this.finishMiddleClickPan();
+
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            this.dragPanning = false;
+            this.isDragPanning = false;
             const frame = this.frame;
 
             if (frame) {
@@ -495,14 +555,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt;
         const frame = this.frame;
 
+        if (this.shouldSuppressClick(mouseEvent)) {
+            return;
+        }
+
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
         // Record click position and distance
         this.mouseClickDistance = pointDistanceSquared(mouseEvent, this.mousePreviousClick);
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
-        // Ignore clicks that aren't on the stage, unless it's a secondary click
-        if (konvaEvent.target !== konvaEvent.currentTarget && !isSecondaryClick) {
+        // Ignore clicks that aren't on the stage. Allow middle-click to pass through for panning,
+        // but block modifier-clicks on regions so they don't pan/center when clicking a region.
+        const isMiddleClick = mouseEvent.button === 1;
+        if (konvaEvent.target !== konvaEvent.currentTarget && !isMiddleClick) {
             return;
         }
 
@@ -511,9 +577,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        // Deselect selected region if in drag-to-pan mode and user clicks on the stage
-        if (this.props.dragPanningEnabled && !isSecondaryClick) {
-            frame.regionSet.deselectRegion();
+        // Clicking on empty stage in drag-to-pan mode should clear selection and highlight cursor region.
+        if (this.props.dragPanningEnabled && !isSecondaryClick && mouseEvent.button === 0) {
+            frame.regionSet.clearSelection();
         }
 
         if (frame.wcsInfo && this.props.onClickToCenter && (!this.props.dragPanningEnabled || isSecondaryClick)) {
@@ -571,6 +637,123 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private shouldStartRegionSelection = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): boolean => {
+        const mouseEvent = konvaEvent.evt;
+        const targetId = konvaEvent.target?.id?.();
+        return mouseEvent.button === 0 && mouseEvent.shiftKey && !targetId && !this.frame.regionSet.isLocked;
+    };
+
+    private getRegionSelectionCanvasPoint = (mouseEvent: MouseEvent): Point2D => {
+        return adjustPosToMutatedStage({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, this.stageRef.current);
+    };
+
+    private disableDraggableNode = (node: Konva.Node): Konva.Node => {
+        node.draggable(false);
+        return node;
+    };
+
+    private restoreDraggableNode = (node: Konva.Node | null): void => {
+        if (node) {
+            node.draggable(true);
+        }
+    };
+
+    private restoreRegionSelectionDragNode = (): void => {
+        this.restoreDraggableNode(this.regionSelectionDragNode);
+        this.regionSelectionDragNode = null;
+    };
+
+    private restoreMiddleClickPan = (): void => {
+        if (this.middleClickPan) {
+            this.restoreDraggableNode(this.middleClickPan.dragNode);
+        }
+        this.middleClickPan = null;
+    };
+
+    private suppressNextClick = (button: SuppressedClickButton = "all"): void => {
+        this.suppressedClickButton = button;
+    };
+
+    private clearSuppressedClick = (button?: number): void => {
+        if (this.suppressedClickButton && (button === undefined || this.suppressedClickButton === "all" || this.suppressedClickButton === button)) {
+            this.suppressedClickButton = null;
+        }
+    };
+
+    private shouldSuppressClick = (mouseEvent: MouseEvent): boolean => {
+        if (!this.suppressedClickButton) {
+            return false;
+        }
+
+        if (this.suppressedClickButton === "all" || this.suppressedClickButton === mouseEvent.button) {
+            this.suppressedClickButton = null;
+            return true;
+        }
+
+        return false;
+    };
+
+    private finishMiddleClickPan = (): void => {
+        const shouldSuppressClick = this.middleClickPan?.started;
+        this.restoreMiddleClickPan();
+        if (shouldSuppressClick) {
+            this.suppressNextClick(1);
+        }
+    };
+
+    private getRegionSelectionDragNode = (konvaEvent: Konva.KonvaEventObject<MouseEvent>): Konva.Node | null => {
+        let node: Konva.Node | null = konvaEvent.target;
+        while (node && node !== konvaEvent.currentTarget) {
+            if (node.draggable()) {
+                return node;
+            }
+            node = node.getParent();
+        }
+        return null;
+    };
+
+    private shouldSuppressRegionSelection = (evt?: MouseEvent): boolean => {
+        if (evt?.button === 0 && this.shouldSuppressNextRegionClickSelection) {
+            this.shouldSuppressNextRegionClickSelection = false;
+            return true;
+        }
+        return false;
+    };
+
+    @action private handleStageMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (this.frame.regionSet.mode === RegionMode.CREATING) {
+            this.handleMouseDown(konvaEvent);
+            return;
+        }
+
+        const mouseEvent = konvaEvent.evt;
+        if (mouseEvent.button === 1) {
+            this.clearSuppressedClick(1);
+        }
+        if (this.props.dragPanningEnabled && mouseEvent.button === 1 && konvaEvent.target !== konvaEvent.currentTarget) {
+            const dragNode = this.getRegionSelectionDragNode(konvaEvent);
+            if (dragNode) {
+                this.middleClickPan = {
+                    dragNode: this.disableDraggableNode(dragNode),
+                    start: {x: mouseEvent.x, y: mouseEvent.y},
+                    started: false
+                };
+            }
+            return;
+        }
+
+        if (this.shouldStartRegionSelection(konvaEvent)) {
+            const start = this.getRegionSelectionCanvasPoint(mouseEvent);
+            this.regionSelectionBox = {start, end: start};
+            this.didRegionSelectionStartOnRegion = konvaEvent.target !== konvaEvent.currentTarget;
+            const dragNode = this.didRegionSelectionStartOnRegion ? this.getRegionSelectionDragNode(konvaEvent) : null;
+            if (dragNode) {
+                this.regionSelectionDragNode = this.disableDraggableNode(dragNode);
+            }
+            this.suppressNextClick();
+        }
+    };
+
     private handleMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -595,8 +778,21 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    @action private handleStageMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        this.finishMiddleClickPan();
+
+        if (this.regionSelectionBox) {
+            this.finishRegionSelection();
+            return;
+        }
+
+        if (this.frame.regionSet.mode === RegionMode.CREATING) {
+            this.handleMouseUp(konvaEvent);
+        }
+    };
+
     private handleMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        this.dragPanning = false;
+        this.isDragPanning = false;
         switch (this.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
@@ -624,9 +820,28 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (this.props.dragPanningEnabled && this.dragPanning) {
+        if (this.regionSelectionBox) {
+            this.regionSelectionBox.end = this.getRegionSelectionCanvasPoint(mouseEvent);
+            return;
+        }
+
+        if (this.middleClickPan && !this.middleClickPan.started) {
+            if (mouseEvent.buttons & 4) {
+                const dragDistance = pointDistanceSquared(mouseEvent, this.middleClickPan.start);
+                if (dragDistance < POINTER_DRAG_THRESHOLD * POINTER_DRAG_THRESHOLD) {
+                    return;
+                }
+                this.middleClickPan.started = true;
+                this.stageRef.current?.startDrag();
+            } else {
+                this.restoreMiddleClickPan();
+            }
+            return;
+        }
+
+        if (this.props.dragPanningEnabled && this.isDragPanning) {
             return;
         }
 
@@ -642,7 +857,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNTEXT:
                 case CARTA.RegionType.ANNRULER:
-                    this.RegionCreating(mouseEvent);
+                    this.regionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.ANNPOLYGON:
@@ -654,7 +869,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
             }
         } else {
-            if (!AppStore.Instance.cursorFrozen) {
+            if (!AppStore.Instance.isCursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
                 if (this.frame !== AppStore.Instance.hoveredFrame) {
                     AppStore.Instance.setHoveredFrame(this.frame);
@@ -663,17 +878,50 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private getRegionSelectionRect = (): Rect2D | undefined => {
+        if (!this.regionSelectionBox) {
+            return undefined;
+        }
+        const {start, end} = this.regionSelectionBox;
+        return getRectFromPoints(start, end);
+    };
+
+    private isSelectionRectLargeEnough = (rect: Rect2D): boolean => {
+        return rect.width >= POINTER_DRAG_THRESHOLD && rect.height >= POINTER_DRAG_THRESHOLD;
+    };
+
+    @action private finishRegionSelection = () => {
+        const selectionRect = this.getRegionSelectionRect();
+        const isLargeEnough = !!selectionRect && this.isSelectionRectLargeEnough(selectionRect);
+        this.shouldSuppressNextRegionClickSelection = this.didRegionSelectionStartOnRegion && isLargeEnough;
+        this.didRegionSelectionStartOnRegion = false;
+        this.regionSelectionBox = null;
+        this.restoreRegionSelectionDragNode();
+        this.clearSuppressedClick();
+
+        if (!selectionRect || !isLargeEnough) {
+            return;
+        }
+
+        const selectionGeometryContext = {
+            frame: this.frame,
+            layerWidth: this.props.width,
+            layerHeight: this.props.height,
+            stage: this.stageRef.current
+        };
+        const selectedIds = this.frame.regionSet.regionsAndAnnotationsForRender
+            .filter(region => region.isVisible && !region.isLocked && isRegionInSelectionRect(region, selectionRect, selectionGeometryContext))
+            .map(region => region.regionId);
+
+        this.frame.regionSet.applyRegionBoxSelection(selectedIds);
+    };
+
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (
-            this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
-            this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
-            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
-            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE
-        ) {
+        if (this.creatingRegion?.isPolygonalRegion) {
             this.regionCreationEnd();
         }
     };
@@ -696,14 +944,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
         let creatingLine: JSX.Element | null = null;
-        if (
-            this.currentCursorPos &&
-            (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
-                this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
-                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
-                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) &&
-            this.creatingRegion.isValid
-        ) {
+        const selectionRect = this.getRegionSelectionRect();
+        const selectionBox =
+            selectionRect && this.isSelectionRectLargeEnough(selectionRect) ? (
+                <Rect x={selectionRect.x} y={selectionRect.y} width={selectionRect.width} height={selectionRect.height} fill={REGION_SELECTION_BOX_FILL} listening={false} />
+            ) : null;
+        if (this.currentCursorPos && this.creatingRegion?.isPolygonalRegion && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
@@ -726,11 +972,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string = "default";
-        if (regionSet.mode === RegionMode.CREATING) {
+        if (this.props.frame?.isPreview && AppStore.Instance.activeFrame?.regionSet.mode === RegionMode.CREATING) {
+            cursor = "not-allowed";
+        } else if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
-        } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
+        } else if (regionSet.focusedRegion && regionSet.focusedRegion.isEditing) {
             cursor = "move";
-        } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
+        } else if (regionSet.focusedRegion === regionSet.regions[0] || !regionSet.focusedRegion) {
             cursor = "default";
         }
 
@@ -746,19 +994,27 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     onWheel={this.handleWheel}
                     onMouseMove={this.handleMove}
                     onDblClick={this.handleStageDoubleClick}
-                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : undefined}
-                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : undefined}
-                    draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
+                    onMouseDown={this.handleStageMouseDown}
+                    onMouseUp={this.handleStageMouseUp}
+                    draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled && !this.regionSelectionBox}
                     onDragStart={this.handleDragStart}
                     onDragMove={this.handleDragMove}
                     onDragEnd={this.handleDragEnd}
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
-                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                    <Layer ref={this.layerRef} opacity={regionSet.isLocked ? 0.7 : 1} listening={!regionSet.isLocked}>
+                        <RegionComponents
+                            frame={frame}
+                            regions={frame?.regionSet?.regionsAndAnnotationsForRender}
+                            width={this.props.width}
+                            height={this.props.height}
+                            stageRef={this.stageRef}
+                            shouldSuppressSelect={this.shouldSuppressRegionSelection}
+                        />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
+                        {selectionBox}
                     </Layer>
                 </Stage>
             </div>
@@ -766,14 +1022,35 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
+interface RegionComponentsProps {
+    frame: FrameStore;
+    regions: RegionStore[];
+    width: number;
+    height: number;
+    stageRef: any;
+    shouldSuppressSelect?: (evt?: MouseEvent) => boolean;
+}
+
 @observer
-class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageRef: any}> {
+class RegionComponents extends React.Component<RegionComponentsProps> {
+    private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
+        if (this.props.shouldSuppressSelect?.(evt)) {
+            return;
+        }
+
+        this.props.frame.regionSet.selectRegionFromList(region, this.props.regions, {toggle: !!(evt?.ctrlKey || evt?.metaKey)});
+    };
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
-                frame.regionSet.selectRegion(region);
+                const isMultiSelected = frame.regionSet.selectedRegionCount > 1 && frame.regionSet.selectedRegionIds.has(region.regionId);
+                if (!isMultiSelected) {
+                    frame.regionSet.selectSingleRegion(region);
+                } else {
+                    frame.regionSet.setFocusedRegion(region);
+                }
                 appStore.dialogStore.showDialog(DialogId.Region);
             }
         }
@@ -785,14 +1062,16 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
+                const isFocused = r === regionSet.focusedRegion;
                 const commonProps = {
                     region: r,
                     frame: this.props.frame,
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageRef: this.props.stageRef,
-                    selected: r === regionSet.selectedRegion,
-                    onSelect: regionSet.selectRegion,
+                    selected: regionSet.selectedRegionIds.has(r.regionId),
+                    isFocused,
+                    onSelect: this.handleSelect,
                     onDoubleClick: this.handleRegionDoubleClicked
                 };
 
@@ -808,17 +1087,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         listening: regionSet.mode !== RegionMode.CREATING,
                         isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
                     };
-                    return r.regionType === CARTA.RegionType.POLYGON ||
-                        r.regionType === CARTA.RegionType.LINE ||
-                        r.regionType === CARTA.RegionType.POLYLINE ||
-                        r.regionType === CARTA.RegionType.ANNPOLYGON ||
-                        r.regionType === CARTA.RegionType.ANNLINE ||
-                        r.regionType === CARTA.RegionType.ANNVECTOR ||
-                        r.regionType === CARTA.RegionType.ANNPOLYLINE ? (
-                        <LineSegmentRegionComponent {...allProps} key={r.regionId} />
-                    ) : (
-                        <SimpleShapeRegionComponent {...allProps} key={r.regionId} />
-                    );
+                    return r.isPolygonalRegion || r.isLineLikeRegion ? <LineSegmentRegionComponent {...allProps} key={r.regionId} /> : <SimpleShapeRegionComponent {...allProps} key={r.regionId} />;
                 }
             });
         }

@@ -13,6 +13,7 @@ export * from "./Histogram/HistogramComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 export * from "./ImageView/ImageViewComponent";
 export * from "./ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
+export * from "./ImageView/OffsetCoordinateControls/OffsetCoordinateControlsComponent";
 export * from "./LayerList/LayerListComponent";
 export * from "./LayerList/LayerListSettingsPanelComponent/LayerListSettingsPanelComponent";
 export * from "./Log/LogComponent";

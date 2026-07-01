@@ -27,18 +27,18 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         }
     };
 
-    private handleValueChange = (WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
+    private handleValueChange = (WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, isFinished?: boolean, isPixel?: boolean) => {
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
         const appStore = AppStore.Instance;
-        if (pixel) {
+        if (isPixel) {
             return (value: number): boolean => {
                 if (!isFinite(value)) {
                     return false;
                 }
-                if (isX && finish) {
+                if (isX && isFinished) {
                     region?.setControlPoint(1, {x: value, y: region?.controlPoints[1].y});
-                } else if (finish) {
+                } else if (isFinished) {
                     region?.setControlPoint(1, {x: region?.controlPoints[1].x, y: value});
                 } else if (isX) {
                     region?.setControlPoint(0, {x: value, y: region?.controlPoints[0].y});
@@ -53,7 +53,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     return false;
                 }
                 if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
-                    if (finish) {
+                    if (isFinished) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                         if (finishPixelFromWCS) {
                             region?.setControlPoint(1, finishPixelFromWCS);
@@ -66,7 +66,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     }
                     return true;
                 } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
-                    if (finish) {
+                    if (isFinished) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                         if (finishPixelFromWCS) {
                             region?.setControlPoint(1, finishPixelFromWCS);
@@ -84,27 +84,27 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         }
     };
 
-    private coordinateInput = (WCSStart, WCSFinish, finish: boolean) => {
+    private coordinateInput = (WCSStart, WCSFinish, isFinished: boolean) => {
         const region = this.props.region;
         return (
             <>
                 <CoordNumericInput
                     coord={region.coordinate}
                     inputType={InputType.XCoord}
-                    value={finish ? region?.controlPoints[1].x : region?.controlPoints[0].x}
-                    onChange={this.handleValueChange(WCSStart, WCSFinish, true, finish, true) as (val: number) => boolean}
-                    valueWcs={finish ? WCSFinish?.x : WCSStart?.x}
-                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, true, finish, false) as (val: string) => boolean}
-                    wcsDisabled={!this.props.wcsInfo || !(finish ? WCSFinish : WCSStart)}
+                    value={isFinished ? region?.controlPoints[1].x : region?.controlPoints[0].x}
+                    onChange={this.handleValueChange(WCSStart, WCSFinish, true, isFinished, true) as (val: number) => boolean}
+                    valueWcs={isFinished ? WCSFinish?.x : WCSStart?.x}
+                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, true, isFinished, false) as (val: string) => boolean}
+                    wcsDisabled={!this.props.wcsInfo || !(isFinished ? WCSFinish : WCSStart)}
                 />
                 <CoordNumericInput
                     coord={region.coordinate}
                     inputType={InputType.YCoord}
-                    value={finish ? region?.controlPoints[1].y : region?.controlPoints[0].y}
-                    onChange={this.handleValueChange(WCSStart, WCSFinish, false, finish, true) as (val: number) => boolean}
-                    valueWcs={finish ? WCSFinish?.y : WCSStart?.y}
-                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, false, finish, false) as (val: string) => boolean}
-                    wcsDisabled={!this.props.wcsInfo || !(finish ? WCSFinish : WCSStart)}
+                    value={isFinished ? region?.controlPoints[1].y : region?.controlPoints[0].y}
+                    onChange={this.handleValueChange(WCSStart, WCSFinish, false, isFinished, true) as (val: number) => boolean}
+                    valueWcs={isFinished ? WCSFinish?.y : WCSStart?.y}
+                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, false, isFinished, false) as (val: string) => boolean}
+                    wcsDisabled={!this.props.wcsInfo || !(isFinished ? WCSFinish : WCSStart)}
                 />
             </>
         );
@@ -153,7 +153,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                     {this.coordinateInput(WCSStart, WCSFinish, false)}
                     {wcsInfo ? (
-                        <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSStart ? WCSPoint2D.ToString(WCSStart) : ""}`}</span>
+                        <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.toString(region?.controlPoints[0], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSStart ? WCSPoint2D.toString(WCSStart) : ""}`}</span>
                     ) : (
                         ""
                     )}
@@ -162,7 +162,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                         {this.coordinateInput(WCSStart, WCSFinish, true)}
                         {wcsInfo ? (
-                            <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSFinish ? WCSPoint2D.ToString(WCSFinish) : ""}`}</span>
+                            <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.toString(region?.controlPoints[1], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSFinish ? WCSPoint2D.toString(WCSFinish) : ""}`}</span>
                         ) : (
                             ""
                         )}

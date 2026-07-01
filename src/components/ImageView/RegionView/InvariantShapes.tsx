@@ -2,6 +2,7 @@ import {Group, Shape} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import type Konva from "konva";
 
+import {SelectionType} from "enums";
 import {AppStore} from "stores";
 
 const SQUARE_ANCHOR_WIDTH = 7;
@@ -13,6 +14,15 @@ const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
 const DEFAULT_POINT_WIDTH = 6;
 const POINT_HOVER_DIST = 7;
+
+const ACTIVE_SELECTION_STROKE_COLOR = "#ffffff";
+const SECONDARY_SELECTION_STROKE_COLOR = "#8a9ba8";
+const SELECTED_ANCHOR_FILL_COLOR = "#007cbb";
+const SELECTED_ANCHOR_STROKE_COLOR = "#ffffff";
+const ACTIVE_ANCHOR_FILL_COLOR = "white";
+const ACTIVE_ANCHOR_STROKE_COLOR = "black";
+const SECONDARY_ANCHOR_FILL_COLOR = "#b5b5b5";
+const SECONDARY_ANCHOR_STROKE_COLOR = "#8a9ba8";
 
 const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: CARTA.PointAnnotationShape) => {
     const stage = shape.getStage();
@@ -66,6 +76,7 @@ interface PointProps {
     color: string;
     opacity: number;
     selectionOpacity: number;
+    selectionType: SelectionType;
     listening: boolean;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
@@ -91,13 +102,13 @@ export const Point = (props: PointProps) => {
     return (
         <Group>
             <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={fill} stroke={props.color} strokeScaleEnabled={false} sceneFunc={handlePointDraw} />
-            {!AppStore.Instance.activeFrame?.regionSet.locked && (
+            {!AppStore.Instance.activeFrame?.regionSet.isLocked && (
                 <Shape
                     x={props.x}
                     y={props.y}
                     rotation={props.rotation}
                     sceneFunc={handlePointBoundDraw}
-                    stroke={"white"}
+                    stroke={props.selectionType === SelectionType.Secondary ? SECONDARY_SELECTION_STROKE_COLOR : ACTIVE_SELECTION_STROKE_COLOR}
                     strokeWidth={1}
                     strokeScaleEnabled={false}
                     opacity={props.selectionOpacity}
@@ -120,11 +131,16 @@ interface AnchorProps {
     y: number;
     rotation: number;
     isRotator: boolean;
+    isSelected?: boolean;
+    interactive: boolean;
+    opacity: number;
+    selectionType: SelectionType;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
+    onClick: (ev) => void;
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
 }
@@ -148,16 +164,28 @@ export const Anchor = (props: AnchorProps) => {
         ctx.fillStrokeShape(shape);
     };
 
+    // Colors:
+    // - Selected point: blue fill, white stroke
+    // - Active region anchors: white fill, black stroke
+    // - Secondary-selected anchors: gray fill/stroke
+    const isSecondary = props.selectionType === SelectionType.Secondary;
+    // Secondary anchors use a slightly darker gray fill for visibility
+    const fillColor = props.isSelected ? SELECTED_ANCHOR_FILL_COLOR : isSecondary ? SECONDARY_ANCHOR_FILL_COLOR : ACTIVE_ANCHOR_FILL_COLOR;
+    const strokeColor = props.isSelected ? SELECTED_ANCHOR_STROKE_COLOR : isSecondary ? SECONDARY_ANCHOR_STROKE_COLOR : ACTIVE_ANCHOR_STROKE_COLOR;
+    const strokeWidth = props.isSelected ? 2 : 1;
+
     return (
         <Shape
             x={props.x}
             y={props.y}
             rotation={props.rotation}
-            fill={"white"}
-            strokeWidth={1}
-            stroke={"black"}
+            fill={fillColor}
+            strokeWidth={strokeWidth}
+            stroke={strokeColor}
             strokeScaleEnabled={false}
-            draggable={true}
+            opacity={props.opacity}
+            draggable={props.interactive}
+            listening={props.interactive}
             key={props.anchor}
             id={props.anchor}
             onMouseEnter={props.onMouseEnter}
@@ -165,6 +193,7 @@ export const Anchor = (props: AnchorProps) => {
             onDragStart={props.onDragStart}
             onDragEnd={props.onDragEnd}
             onDragMove={props.onDragMove}
+            onClick={props.onClick}
             onDblClick={props.onDblClick}
             sceneFunc={props.isRotator ? handleCircleDraw : handleRectDraw}
         />

@@ -2,10 +2,11 @@ import * as React from "react";
 import type Konva from "konva";
 import {observer} from "mobx-react";
 
+import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stores/Frame";
-import {transformPoint} from "utilities";
+import {subtract2D, transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -16,8 +17,9 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    isFocused: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -33,18 +35,17 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            this.props.onSelect?.(this.props.region);
+        if (mouseEvent.button === 0) {
+            this.props.onSelect?.(this.props.region, mouseEvent);
         }
     };
 
     private handleDragStart = () => {
-        this.props.onSelect?.(this.props.region);
-        this.props.region.beginEditing();
+        this.props.frame.regionSet.beginRegionDrag(this.props.region);
     };
 
     private handleDragEnd = () => {
-        this.props.region.endEditing();
+        this.props.frame.regionSet.endRegionDrag(this.props.region);
     };
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -55,7 +56,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            this.props.region.setCenter(positionImageSpace);
+            this.props.frame.regionSet.translateRegionDrag(this.props.region, subtract2D(positionImageSpace, this.props.region.center));
         }
     };
 
@@ -87,9 +88,9 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 y={centerPixelSpace.y}
                 rotation={rotation}
                 color={region.color}
-                opacity={region.locked ? 0.7 : 1}
-                selectionOpacity={region.locked ? 0 : this.props.selected ? 1 : 0}
-                listening={!region.locked}
+                opacity={region.visualOpacity}
+                selectionOpacity={region.isLocked ? 0 : this.props.selected ? region.visualOpacity : 0}
+                listening={!region.isLocked}
                 onDragStart={this.handleDragStart}
                 onDragEnd={this.handleDragEnd}
                 onDragMove={this.handleDrag}
@@ -97,6 +98,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 onDblClick={this.handleDoubleClick}
                 pointShape={region.pointShape}
                 pointWidth={region.pointWidth}
+                selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
             />
         );
     }

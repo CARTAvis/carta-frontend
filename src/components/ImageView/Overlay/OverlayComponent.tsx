@@ -4,27 +4,39 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {ImageType} from "enums";
+import {ImageType, SkyRefIs} from "enums";
 import {type ImageItem, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
+
+interface OffsetCoordAxisSetting {
+    unit: string;
+    format: string;
+}
+
+interface OffsetCoordAxisSettings {
+    axis1: OffsetCoordAxisSetting;
+    axis2: OffsetCoordAxisSetting;
+}
 
 export class OverlayComponentProps {
     overlaySettings: OverlaySettings;
     overlayStore: OverlayStore;
     image: ImageItem;
-    docked: boolean;
+    isDocked: boolean;
     top?: number;
     left?: number;
-    unscaled?: boolean;
+    isUnscaled?: boolean;
     channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
+    private static readonly OffsetCoordUnitSwitchFactor = 2;
 
     componentDidMount() {
         this.updateImage();
@@ -36,7 +48,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        if (PreferenceStore.Instance.limitOverlayRedraw) {
+        if (PreferenceStore.Instance.shouldLimitOverlayRedraw) {
             this.throttledRenderCanvas();
         } else {
             requestAnimationFrame(this.renderCanvas);
@@ -48,6 +60,53 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.canvas.width = this.props.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
             this.canvas.height = this.props.overlayStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
+    }
+
+    private getLatReferenceSize(frame: FrameStore, viewSizeArcsec: number): number {
+        if (frame.skyRefIs !== SkyRefIs.Pole || !frame.wcsInfoOffset) {
+            return viewSizeArcsec;
+        }
+
+        const wcsInfoOffsetSky = AST.copy(frame.wcsInfoOffset);
+        if (!wcsInfoOffsetSky) {
+            return viewSizeArcsec;
+        }
+
+        let centerWcs: {x: number; y: number} | undefined;
+        try {
+            AST.setI(wcsInfoOffsetSky, "Current", 2);
+            centerWcs = AST.transformPoint(wcsInfoOffsetSky, frame.center.x, frame.center.y, true);
+        } finally {
+            AST.deleteObject(wcsInfoOffsetSky);
+        }
+
+        if (!centerWcs || !isFinite(centerWcs.y)) {
+            return viewSizeArcsec;
+        }
+
+        const latValueArcsec = (Math.abs(centerWcs.y) * (3600 * 180)) / Math.PI;
+        return Math.max(viewSizeArcsec, latValueArcsec);
+    }
+
+    private getOffsetCoordAxisSetting(referenceSizeArcsec: number): OffsetCoordAxisSetting {
+        if (referenceSizeArcsec < 60 * OverlayComponent.OffsetCoordUnitSwitchFactor) {
+            return {unit: "arcsec", format: "s.*"};
+        }
+        if (referenceSizeArcsec < 3600 * OverlayComponent.OffsetCoordUnitSwitchFactor) {
+            return {unit: "arcmin", format: "m.*"};
+        }
+        return {unit: "deg", format: "d.*"};
+    }
+
+    private getOffsetCoordAxisSettings(frame: FrameStore, viewSizeArcsec: number): OffsetCoordAxisSettings {
+        const axis2ReferenceSize = this.getLatReferenceSize(frame, viewSizeArcsec);
+        const axis2Setting = this.getOffsetCoordAxisSetting(axis2ReferenceSize);
+        // Pole-mode axis 1 is offset longitude (0-360 deg), so keep degree formatting regardless of view size.
+        const axis1Setting = frame.skyRefIs === SkyRefIs.Pole ? {unit: "deg", format: "d.*"} : axis2Setting;
+        return {
+            axis1: axis1Setting,
+            axis2: axis2Setting
+        };
     }
 
     renderCanvas = () => {
@@ -62,7 +121,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = this.props.unscaled
+        const frameView = this.props.isUnscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
@@ -91,33 +150,33 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
-            if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
-                const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
-                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
-                const factor = 2; // jump factor
-                let unit;
-                let format;
+            // move the ast setting here to ensure ast is updated before plotting
+            if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
+                const formatStringX = settings.numbers.formatStringX;
+                const formatStringY = settings.numbers.formatStringY;
+                const explicitSystem = settings.global.explicitSystem;
+                const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
 
-                if (viewSize < 60 * factor) {
-                    unit = "arcsec";
-                    format = "s.*";
-                } else if (viewSize < 3600 * factor) {
-                    unit = "arcmin";
-                    format = "m.*";
-                } else {
-                    unit = "deg";
-                    format = "d.*";
-                }
-
-                // disable unit labels when custom labels on
-                if (settings.labels.customText) {
-                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
-                } else {
-                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                if (formatStringX !== undefined && formatStringY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.isValidWcs) {
+                    AST.set(tempWcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStringY},` + dirAxesSetting);
+                    setAstSystem(tempWcsInfo, explicitSystem, settings.global);
                 }
             }
 
-            if (settings.labels.customText) {
+            if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
+                const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
+                const viewSizeArcsec = Math.min(fovSizeInArcsec.x, fovSizeInArcsec.y);
+                const {axis1, axis2} = this.getOffsetCoordAxisSettings(frame, viewSizeArcsec);
+
+                // disable unit labels when custom labels on
+                if (settings.labels.hasCustomText) {
+                    AST.set(tempWcsInfo, `Format(1)=${axis1.format}, Format(2)=${axis2.format}, Unit(1)="", Unit(2)=""`);
+                } else {
+                    AST.set(tempWcsInfo, `Format(1)=${axis1.format}, Format(2)=${axis2.format}, Unit(1)=${axis1.unit}, Unit(2)=${axis2.unit}`);
+                }
+            }
+
+            if (settings.labels.hasCustomText) {
                 // Disable the PV image labels when custom labels are set
                 AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
             }
@@ -142,17 +201,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             let currentStyleString = this.props.overlayStore.styleString(frame);
 
             // Override the AST tolerance during motion
-            if (frame.moving) {
+            if (frame.isMoving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!frame.validWcs) {
+            if (!frame.isValidWcs) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
-            if (!settings.title.customText) {
+            if (!settings.title.hasCustomText) {
                 currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
                 currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
@@ -203,7 +262,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlayStore.padding;
-        const moving = frame.moving;
+        const isMoving = frame.isMoving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
@@ -213,10 +272,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesColor = this.props.overlaySettings.axes.color;
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
-        const darktheme = AppStore.Instance.darkTheme;
-        const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        const title = this.props.overlaySettings.title.hasCustomText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
-        const raDecReference = this.props.overlaySettings.labels.raDecReference;
+        const isRaDecReference = this.props.overlaySettings.labels.hasRaDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;
@@ -228,7 +287,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumColumns = AppStore.Instance.channelMapStore.numColumns;
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
-        const offsetCoord = frame.isOffsetCoord;
+        const isOffsetCoord = frame.isOffsetCoord;
+        const skyRefIs = frame.skyRefIs;
         const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
@@ -243,21 +303,22 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
             `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
         const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+
         if (frame.isPVImage && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting);
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
         } else {
+            // Keep dummy variable reads for MobX dependency tracking
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
+            const formatStringY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
-                setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
-            }
+            const isWcsCoordinates = OverlaySettings.Instance.isWcsCoordinates;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
         }
 
-        const className = classNames("overlay-canvas", {docked: this.props.docked});
+        const className = classNames("overlay-canvas", {docked: this.props.isDocked});
 
         return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />;
     }
