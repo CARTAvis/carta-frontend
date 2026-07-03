@@ -1148,14 +1148,10 @@ export class AppStore {
 
     // Open catalog file
     @flow.bound
-    *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
+    *appendCatalog(directory: string, file: string, previewDataSize: number) {
         if (!this.activeFrame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
-        }
-        if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show(ErrorToast("Catalog type not supported"));
-            throw new Error("Catalog type not supported");
         }
         this.startFileLoading();
 
