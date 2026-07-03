@@ -41,7 +41,7 @@ describe("ProtobufProcessing", () => {
         test("should convert the rawValuesFp64 Uint8Array to actual float64 coordinates", () => {
             const rawValuesFp64 = new Uint8Array([254, 200, 105, 252, 224, 108, 150, 63, 116, 209, 69, 71, 156, 152, 146, 63, 250, 90, 61, 131, 156, 74, 162, 63, 80, 42, 76, 112, 43, 3, 147, 63, 195, 196, 251, 25, 238, 78, 149, 63]);
 
-            const profile: CARTA.ISpectralProfile = {
+            const profile: CARTA.SpectralProfile.$Properties = {
                 coordinate: "z",
                 statsType: 4,
                 rawValuesFp64
@@ -66,7 +66,7 @@ describe("ProtobufProcessing", () => {
             const float32Values = new Float32Array([1.5, 2.5, 3.5, 4.5]);
             const rawValuesFp32 = new Uint8Array(float32Values.buffer);
 
-            const profile: CARTA.ISpectralProfile = {
+            const profile: CARTA.SpectralProfile.$Properties = {
                 coordinate: "x",
                 statsType: 2,
                 rawValuesFp32
@@ -87,7 +87,7 @@ describe("ProtobufProcessing", () => {
 
         test("should return values as null and progress as 0 for invalid inputs", () => {
             // Missing rawValues
-            const profileEmpty: CARTA.ISpectralProfile = {
+            const profileEmpty: CARTA.SpectralProfile.$Properties = {
                 coordinate: "z",
                 statsType: 4
             };
@@ -96,7 +96,7 @@ describe("ProtobufProcessing", () => {
             expect(resultEmpty.progress).toBe(0);
 
             // Invalid rawValuesFp64 length
-            const profileInvalidFp64: CARTA.ISpectralProfile = {
+            const profileInvalidFp64: CARTA.SpectralProfile.$Properties = {
                 coordinate: "z",
                 statsType: 4,
                 rawValuesFp64: new Uint8Array([1, 2, 3])
@@ -106,7 +106,7 @@ describe("ProtobufProcessing", () => {
             expect(resultInvalidFp64.progress).toBe(0);
 
             // Invalid rawValuesFp32 length
-            const profileInvalidFp32: CARTA.ISpectralProfile = {
+            const profileInvalidFp32: CARTA.SpectralProfile.$Properties = {
                 coordinate: "z",
                 statsType: 4,
                 rawValuesFp32: new Uint8Array([1, 2, 3])
@@ -125,7 +125,7 @@ describe("ProtobufProcessing", () => {
                 axisType: 1
             };
 
-            const profile: CARTA.ISpatialProfile = {
+            const profile: CARTA.SpatialProfile.$Properties = {
                 coordinate: "x",
                 start: 0,
                 end: 2,
@@ -149,7 +149,7 @@ describe("ProtobufProcessing", () => {
         });
 
         test("should return values as null when rawValuesFp32 is invalid or missing", () => {
-            const profileEmpty: CARTA.ISpatialProfile = {
+            const profileEmpty: CARTA.SpatialProfile.$Properties = {
                 coordinate: "x",
                 start: 0,
                 end: 2,
@@ -160,7 +160,7 @@ describe("ProtobufProcessing", () => {
             const resultEmpty = ProtobufProcessing.processSpatialProfile(profileEmpty);
             expect(resultEmpty.values).toBeNull();
 
-            const profileInvalid: CARTA.ISpatialProfile = {
+            const profileInvalid: CARTA.SpatialProfile.$Properties = {
                 coordinate: "x",
                 start: 0,
                 end: 2,
@@ -187,7 +187,7 @@ describe("ProtobufProcessing", () => {
 
             const expectedVertices = [9.75, 9.5, 9.5, 9.75, 9.25, 10.5, 9.5, 11.25, 9.75, 11.5, 10.5, 11.75, 11.25, 11.5, 11.5, 11.25, 11.75, 10.5, 11.5, 9.75, 11.25, 9.5, 10.5, 9.25, 9.75, 9.5];
 
-            const mockContourSet: CARTA.IContourSet = {
+            const mockContourSet: CARTA.ContourSet.$Properties = {
                 level: 0.6,
                 decimationFactor: 4,
                 uncompressedCoordinatesSize: 104,
@@ -214,7 +214,7 @@ describe("ProtobufProcessing", () => {
 
             const expectedVertices = [10.0, 9.5, 9.5, 10.0, 9.25, 10.5, 9.5, 11.0, 10.0, 11.5, 10.5, 11.75, 11.0, 11.5, 11.5, 11.0, 11.75, 10.5, 11.5, 10.0, 11.0, 9.5, 10.5, 9.25, 10.0, 9.5];
 
-            const mockContourSet: CARTA.IContourSet = {
+            const mockContourSet: CARTA.ContourSet.$Properties = {
                 level: 0.85,
                 decimationFactor: 4,
                 uncompressedCoordinatesSize: 104,
