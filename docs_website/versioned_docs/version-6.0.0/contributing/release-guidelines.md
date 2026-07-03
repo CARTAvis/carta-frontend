@@ -71,4 +71,4 @@ This process should be followed if important bug fixes have to be released after
 
 ### After point release
 
--   `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Replace version `123.0.0` with `123.0.1`.
+- `dev` branch: update the documentation website ([guidelines](./documentation-guidelines/#versioning)). Replace version `123.0.0` with `123.0.1`.
