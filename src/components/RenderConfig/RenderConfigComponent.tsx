@@ -22,7 +22,6 @@ import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConf
 
 import "./RenderConfigComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const COLORSCALE_LENGTH = 2048;
 
 @observer
@@ -44,7 +43,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.IHistogram;
+    private cachedHistogram: CARTA.Histogram.$Properties;
     private widgetId: string;
 
     @observable width: number = 650;
@@ -165,7 +164,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     handleScaleMinChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -177,7 +176,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScaleMaxChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -445,12 +444,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (shouldDisplayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
+                <Button size="small" key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankButtons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
+                <Button size="small" key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
                     Custom
                 </Button>
             );

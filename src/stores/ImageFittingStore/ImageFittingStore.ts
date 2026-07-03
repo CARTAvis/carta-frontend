@@ -260,7 +260,7 @@ export class ImageFittingStore {
         }
         this.setIsFitting(true);
         this.setIsCancelling(false);
-        const initialValues: CARTA.IGaussianComponent[] = [];
+        const initialValues: CARTA.GaussianComponent.$Properties[] = [];
         const fixedParams: boolean[] = [];
         for (const c of this.components) {
             initialValues.push({
@@ -273,14 +273,14 @@ export class ImageFittingStore {
         }
         fixedParams.push(this.isBackgroundOffsetFixed);
 
-        let fovInfo: CARTA.IRegionInfo | null = null;
+        let fovInfo: CARTA.RegionInfo.$Properties | null = null;
         let regionId = this.selectedRegionId;
         if (regionId === FOV_REGION_ID) {
             fovInfo = this.getFovInfo();
             regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
         }
 
-        const message: CARTA.IFittingRequest = {
+        const message: CARTA.FittingRequest.$Properties = {
             fileId: this.effectiveFrame?.frameInfo.fileId,
             initialValues,
             fixedParams,
@@ -317,10 +317,10 @@ export class ImageFittingStore {
      */
     setResultString = (
         regionId: number,
-        fovInfo: CARTA.IRegionInfo,
+        fovInfo: CARTA.RegionInfo.$Properties,
         fixedParams: boolean[],
-        values: CARTA.IGaussianComponent[],
-        errors: CARTA.IGaussianComponent[],
+        values: CARTA.GaussianComponent.$Properties[],
+        errors: CARTA.GaussianComponent.$Properties[],
         offsetValue: number,
         offsetError: number,
         integratedFluxValues: number[],
@@ -477,7 +477,7 @@ export class ImageFittingStore {
         }
     };
 
-    private getFovInfo = (): CARTA.IRegionInfo | null => {
+    private getFovInfo = (): CARTA.RegionInfo.$Properties | null => {
         const frame = this.effectiveFrame;
         if (!frame) {
             return null;
@@ -535,7 +535,7 @@ export class ImageFittingStore {
         return regionInfo;
     };
 
-    private getRegionInfoLog = (regionId: number, fovInfo: CARTA.IRegionInfo): string => {
+    private getRegionInfoLog = (regionId: number, fovInfo: CARTA.RegionInfo.$Properties): string => {
         let log = "";
         switch (regionId) {
             case IMAGE_REGION_ID:
@@ -560,7 +560,7 @@ export class ImageFittingStore {
         return log;
     };
 
-    private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
+    private getRegionParams = (values: CARTA.GaussianComponent.$Properties[]): {points: Point2D[]; rotation: number}[] => {
         return values
             .map(value => {
                 if (

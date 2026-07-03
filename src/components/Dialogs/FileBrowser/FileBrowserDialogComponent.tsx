@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, type BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, type DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, type TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, type BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, type DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, PopoverNext, type TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -459,9 +459,9 @@ export class FileBrowserDialogComponent extends React.Component {
                         );
                         return (
                             <div>
-                                <Popover content={loadMenuItems} placement="right-end">
+                                <PopoverNext content={loadMenuItems} placement="right-end" shouldReturnFocusOnClose={false}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} text="Append as" />
-                                </Popover>
+                                </PopoverNext>
                             </div>
                         );
                     } else {
@@ -539,9 +539,9 @@ export class FileBrowserDialogComponent extends React.Component {
 
                         return (
                             <div>
-                                <Popover content={loadMenuItems} placement="right-end">
+                                <PopoverNext content={loadMenuItems} placement="right-end" shouldReturnFocusOnClose={false}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} text="Load as" />
-                                </Popover>
+                                </PopoverNext>
                             </div>
                         );
                     } else {
@@ -644,37 +644,41 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
 
         const coordinateTypeMenu = (
-            <Popover
-                minimal={true}
+            <PopoverNext
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
                 content={
                     <Menu>
                         <MenuItem text="World coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)} />
                         <MenuItem text="Pixel coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)} />
                     </Menu>
                 }
-                position={Position.BOTTOM_RIGHT}
+                placement="bottom-end"
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button variant="minimal" endIcon="caret-down">
                     {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         const fileTypeMenu = (
-            <Popover
-                minimal={true}
+            <PopoverNext
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
                 content={
                     <Menu>
                         <MenuItem text="CRTF region file" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)} />
                         <MenuItem text="DS9 region file" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)} />
                     </Menu>
                 }
-                position={Position.BOTTOM_RIGHT}
+                placement="bottom-end"
             >
-                <Button minimal={true} rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
+                <Button variant="minimal" endIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         const sideMenu = (
@@ -690,20 +694,22 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
 
         const fileTypeMenu = (
-            <Popover
-                minimal={true}
+            <PopoverNext
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
                 content={
                     <Menu>
                         <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)} />
                         <MenuItem text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)} />
                     </Menu>
                 }
-                position={Position.BOTTOM_RIGHT}
+                placement="bottom-end"
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button variant="minimal" endIcon="caret-down">
                     {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename || ""} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu} />;
@@ -733,8 +739,10 @@ export class FileBrowserDialogComponent extends React.Component {
         }
 
         const filterTypeMenu = (
-            <Popover
-                minimal={true}
+            <PopoverNext
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
                 content={
                     <Menu>
                         <MenuItem text="Fuzzy search" onClick={() => this.setFilterType(FileFilteringType.Fuzzy)} />
@@ -744,16 +752,18 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 placement="bottom-end"
             >
-                <Button minimal={true} icon="filter" rightIcon="caret-down">
+                <Button variant="minimal" icon="filter" endIcon="caret-down">
                     {filterName}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         if (browserMode === BrowserMode.File) {
             const inputTypeMenu = (
-                <Popover
-                    minimal={true}
+                <PopoverNext
+                    animation="minimal"
+                    arrow={false}
+                    shouldReturnFocusOnClose={false}
                     content={
                         <Menu>
                             <MenuItem text="List filtering" onClick={() => this.setEnableImageArithmetic(false)} />
@@ -762,10 +772,10 @@ export class FileBrowserDialogComponent extends React.Component {
                     }
                     placement="bottom-start"
                 >
-                    <Button minimal={true} icon={this.isImageArithmeticEnabled ? "calculator" : "search"} rightIcon="caret-down">
+                    <Button variant="minimal" icon={this.isImageArithmeticEnabled ? "calculator" : "search"} endIcon="caret-down">
                         {this.isImageArithmeticEnabled ? "Image arithmetic" : "Filter"}
                     </Button>
-                </Popover>
+                </PopoverNext>
             );
             if (this.isImageArithmeticEnabled) {
                 return (
@@ -898,11 +908,11 @@ export class FileBrowserDialogComponent extends React.Component {
                                                 fileBrowserStore.selectFolder(fileList.directory, true);
                                             }
                                         }}
-                                        minimal={true}
+                                        variant="minimal"
                                     />
                                 </Tooltip>
                                 <Tooltip content={"Input directory path"} disabled={this.isEditPathEnabled}>
-                                    <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={this.switchEditPathMode} />
+                                    <AnchorButton className="edit-path-button" icon="edit" variant="minimal" onClick={this.switchEditPathMode} />
                                 </Tooltip>
                             </ButtonGroup>
                             {this.isEditPathEnabled ? (
@@ -1059,7 +1069,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private submitInputPath = (keyEvent?) => {
-        if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
+        if (keyEvent && keyEvent.key === "Enter" && this.inputPathString !== "") {
             this.handleBreadcrumbClicked(this.inputPathString);
             this.switchEditPathMode();
         }

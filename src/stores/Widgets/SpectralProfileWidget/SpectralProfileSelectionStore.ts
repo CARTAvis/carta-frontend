@@ -17,7 +17,7 @@ interface ProfileConfig {
     label: {image: string | undefined; plot: string};
 }
 
-interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
+interface SpectralConfig extends CARTA.SetSpectralRequirements.SpectralConfig.$Properties {
     fileId: number | undefined;
     regionId: number | null;
 }

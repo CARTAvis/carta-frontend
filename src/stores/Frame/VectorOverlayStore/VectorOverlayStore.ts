@@ -43,12 +43,12 @@ export class VectorOverlayStore {
         this.intensityMax = undefined;
     };
 
-    @action setData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
+    @action setData = (intensityTiles: CARTA.TileData.$Properties[], angleTiles: CARTA.TileData.$Properties[], progress: number) => {
         this.clearData();
         this.addData(intensityTiles, angleTiles, progress);
     };
 
-    @action addData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
+    @action addData = (intensityTiles: CARTA.TileData.$Properties[], angleTiles: CARTA.TileData.$Properties[], progress: number) => {
         this.progress = progress;
 
         let localMin = Number.MAX_VALUE;
@@ -57,8 +57,8 @@ export class VectorOverlayStore {
         const numTiles = Math.max(intensityTiles.length, angleTiles.length);
 
         for (let i = 0; i < numTiles; i++) {
-            let intensityTile: CARTA.ITileData | null = intensityTiles?.[i];
-            let angleTile: CARTA.ITileData | null = angleTiles?.[i];
+            let intensityTile: CARTA.TileData.$Properties | null = intensityTiles?.[i];
+            let angleTile: CARTA.TileData.$Properties | null = angleTiles?.[i];
             if (!intensityTile?.imageData?.length) {
                 intensityTile = null;
             }

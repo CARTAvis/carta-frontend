@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, Popover, Pre, Slider, Switch, Text, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, PopoverNext, Pre, Slider, Switch, Text, Tooltip} from "@blueprintjs/core";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -436,9 +436,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                         <div className="profile-fitting-footer">
                             <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.reset} disabled={isDisabled} data-testid="profile-fitting-reset-button" />
                             <AnchorButton text="Fit" intent={Intent.PRIMARY} onClick={this.fitData} disabled={!fittingStore.isReadyToFit || isDisabled} data-testid="profile-fitting-fit-button" />
-                            <Popover
+                            <PopoverNext
                                 isOpen={this.isShowingLog}
                                 onClose={this.handleLogClose}
+                                shouldReturnFocusOnClose={false}
                                 content={
                                     <div className="fitting-popover">
                                         <div className="fitting-log">
@@ -453,7 +454,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 }
                             >
                                 <AnchorButton text="View log" onClick={this.showLog} intent={Intent.PRIMARY} disabled={!fittingStore.hasResult || isDisabled} />
-                            </Popover>
+                            </PopoverNext>
                             <div className="switch-wrapper">
                                 <Switch label="Residual" checked={fittingStore.isResidualEnabled} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={isDisabled} />
                             </div>

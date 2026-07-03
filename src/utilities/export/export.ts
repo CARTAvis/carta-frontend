@@ -66,15 +66,9 @@ export async function exportScreenshot(isImageOnly = true, maxWidth = 512, forma
 }
 
 export async function copyToClipboard(value: string) {
-    if (navigator.clipboard) {
-        await navigator.clipboard.writeText(value);
-    } else {
-        const copyText = document.createElement("textarea");
-        copyText.value = value;
-        document.body.appendChild(copyText);
-        copyText.focus();
-        copyText.select();
-        document.execCommand("copy");
-        document.body.removeChild(copyText);
+    if (!navigator.clipboard?.writeText) {
+        return false;
     }
+    await navigator.clipboard.writeText(value);
+    return true;
 }
