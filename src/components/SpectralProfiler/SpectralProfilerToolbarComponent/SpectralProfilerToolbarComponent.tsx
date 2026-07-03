@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -23,7 +23,7 @@ class ProfileSelectionButtonComponentProps {
     isDisabled: boolean;
     isOptionsDisabled?: boolean;
     isSelectingSpecificItem?: boolean;
-    categoryTooltip: JSX.Element;
+    categoryTooltip: React.JSX.Element;
     dropdownTooltip: {nonActive: string; active: string; disabled: string};
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
@@ -62,7 +62,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
                     <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.isDisabled} />
                 </Tooltip>
-                <Popover
+                <PopoverNext
                     content={
                         <Menu className="spectral-profiler-dropdown">
                             {this.props.itemOptions?.map((item, index) => (
@@ -79,8 +79,10 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                             ))}
                         </Menu>
                     }
-                    minimal={true}
-                    placement={Position.BOTTOM}
+                    animation="minimal"
+                    arrow={false}
+                    placement="bottom"
+                    shouldReturnFocusOnClose={false}
                     disabled={this.props.isDisabled || this.props.isOptionsDisabled}
                 >
                     <Tooltip disabled={!dropdownHelpText} content={dropdownHelpText} position={Position.TOP}>
@@ -91,12 +93,12 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 </span>
                             }
                             className="dropdown-button"
-                            rightIcon={"caret-down"}
+                            endIcon={"caret-down"}
                             disabled={this.props.isDisabled || this.props.isOptionsDisabled}
                             data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown"}
                         />
                     </Tooltip>
-                </Popover>
+                </PopoverNext>
             </div>
         );
     }

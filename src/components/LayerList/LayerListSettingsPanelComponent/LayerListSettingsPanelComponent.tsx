@@ -109,7 +109,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
         const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
         const frameOptions = this.widgetStore.restFreqFrameOptions;
-        let restFreqPanel: JSX.Element | null = null;
+        let restFreqPanel: React.JSX.Element | null = null;
         if (appStore.frameNum > 10) {
             const fileText = frameOptions.find(option => option.frameIndex === selectedFrameIndex)?.label;
             const inputFrame = frameOptions.find(option => option.frameIndex === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
@@ -124,7 +124,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             itemRenderer={this.renderFrameOptions}
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
+                            <Button text={fileText} endIcon="double-caret-vertical" alignText={Alignment.START} />
                         </Select>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {type ColorResult, SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, PopoverNext} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -53,13 +53,14 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    <Popover
-                        position={PopoverPosition.BOTTOM_RIGHT}
+                    <PopoverNext
+                        placement="bottom-end"
+                        shouldReturnFocusOnClose={false}
                         popoverClassName={popoverClassName}
                         content={<SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
                     >
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
-                    </Popover>
+                    </PopoverNext>
                 </div>
             );
         } else {
@@ -85,7 +86,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 itemRenderer={this.renderColorSelectItem}
                 disabled={this.props.disabled}
             >
-                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical" disabled={this.props.disabled} />
+                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} endIcon="double-caret-vertical" disabled={this.props.disabled} />
             </ColorSelect>
         );
     }

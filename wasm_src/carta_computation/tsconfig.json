@@ -2,11 +2,20 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6",
+        "outDir": "build",
+        "noImplicitAny": false,
         "sourceMap": true,
+        "types": [
+            "node"
+        ],
         "lib": [
             "es6"
         ]
     },
+    "include": [
+        "pre.ts",
+        "post.ts"
+    ],
     "exclude": [
         "node_modules"
     ]

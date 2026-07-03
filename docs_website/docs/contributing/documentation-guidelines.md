@@ -80,8 +80,22 @@ npm run check-eslint
 To tag a new version, run (from the `docs_website/` folder):
 
 ```
+npm run versioning 1.2.3
+```
+
+It runs a script that including the following steps:
+
+```
 npm run docusaurus docs:version 1.2.3
 npm run docusaurus api:version 1.2.3
 ```
 
 This will append the new version to `versions.json` and create files in the `versioned_docs/` and `versioned_sidebars/` folders. To modify the content or add new pages for a specific version, edit the files in these folders.
+
+To remove a version, run (from the `docs_website/` folder):
+
+```
+npm run unversioning 1.2.3
+```
+
+This will remove the version from `versions.json` and delete the corresponding files in the `versioned_docs/` and `versioned_sidebars/` folders.

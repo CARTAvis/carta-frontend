@@ -905,7 +905,7 @@ export class OverlaySettings {
 
     /**
      * Hide or show the overlay.
-     * @param visible - Visibility of the overlay.
+     * @param isVisible - Visibility of the overlay.
      */
     @action setVisible(isVisible: boolean) {
         this.isVisible = isVisible;
