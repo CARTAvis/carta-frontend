@@ -1235,7 +1235,7 @@ export class WidgetsStore {
         const firstTabSet = layoutModel.getFirstTabSet();
         this.floatingOriginPopouts.set(id, widgetConfig);
         this.beingUnpinned.add(id);
-        layoutModel.doAction(Actions.addNode(tabJson, firstTabSet.getId(), DockLocation.CENTER, -1, false));
+        layoutModel.doAction(Actions.addTab(tabJson, firstTabSet.getId(), DockLocation.CENTER, -1, false));
         layoutModel.doAction(Actions.popoutTab(id));
         this.removeFloatingWidget(id, true);
         this.beingUnpinned.delete(id);

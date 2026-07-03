@@ -274,7 +274,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             tagProps: {
                                 minimal: true
                             },
-                            rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear} data-testid="moment-generator-clear-select-button" />
+                            rightElement: <Button icon="cross" variant="minimal" onClick={this.handleMomentsClear} data-testid="moment-generator-clear-select-button" />
                         }}
                     />
                 </FormGroup>

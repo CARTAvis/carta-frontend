@@ -8,8 +8,6 @@ import {AlertStore, AppStore, SnippetStore} from "stores";
 
 import "./SaveSnippetDialogComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 interface SaveSnippetDialogProps {
     onSaveClicked: (layoutName: string, categories: string[]) => void;
     onCancelClicked: () => void;
@@ -47,7 +45,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
     };
 
     private handleKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && SnippetStore.Instance.activeSnippetName?.length) {
+        if (ev.key === "Enter" && SnippetStore.Instance.activeSnippetName?.length) {
             this.saveSnippet();
         }
     };

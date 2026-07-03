@@ -1,6 +1,6 @@
 import * as React from "react";
 import {type ColorResult, type RGBColor, SketchPicker} from "react-color";
-import {Button, Classes, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Button, Classes, PopoverNext} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
@@ -47,17 +47,18 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         const buttonColor = tinycolor(this.props.color).toString();
 
         return (
-            <Popover
+            <PopoverNext
                 isOpen={this.shouldDisplayColorPicker}
                 onClose={this.handleColorClose}
-                position={PopoverPosition.RIGHT}
+                placement="right"
+                shouldReturnFocusOnClose={false}
                 popoverClassName={popoverClassName}
                 content={<SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
             >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                     <div style={{backgroundColor: buttonColor}} />
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
     }
 }

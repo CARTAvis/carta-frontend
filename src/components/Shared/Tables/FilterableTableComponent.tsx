@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Checkbox, Classes, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
-import {Cell, Column, ColumnHeaderCell, type Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import type {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -16,18 +16,16 @@ import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
 
-const KEYCODE_ENTER = 13;
-
 export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
-    columnHeaders: Array<CARTA.ICatalogHeader>;
+    columnHeaders: Array<CARTA.CatalogHeader.$Properties>;
     numVisibleRows: number;
     columnWidths?: Array<number>;
     isLoadingCell?: boolean;
     selectedDataIndex?: number[];
     shouldShowSelectedData?: boolean;
-    updateTableRef?: (ref: Table2) => void;
+    updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
@@ -36,7 +34,7 @@ export class FilterableTableComponentProps {
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType | null};
     shouldDisableSort?: boolean;
-    tableHeaders?: Array<CARTA.ICatalogHeader>;
+    tableHeaders?: Array<CARTA.CatalogHeader.$Properties>;
     sortedIndexMap?: Array<number>;
     sortedIndices?: Array<number>;
     onCompleteRender?: () => void;
@@ -98,7 +96,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.ICatalogHeader, columnData: any, selectionType: RowSelectionType) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader.$Properties, columnData: any, selectionType: RowSelectionType) => {
         const controlHeader = columnHeader.name ? this.props.filter?.get(columnHeader.name) : undefined;
         const filterSyntax = columnHeader.dataType ? this.getFilterSyntax(columnHeader.dataType) : null;
         return (
@@ -126,7 +124,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
-                            small={true}
+                            size="small"
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => columnHeader.name && this.props.updateColumnFilter?.(ev.currentTarget.value, columnHeader.name)}
@@ -145,7 +143,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCheckboxColumn = (columnHeader: CARTA.ICatalogHeader, columnData: any) => {
+    private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: any) => {
         let selectedCount = 0;
         columnData?.forEach(isSelected => (selectedCount += isSelected ? 1 : 0));
         const selectionType = selectedCount === 0 ? RowSelectionType.None : selectedCount === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate;
@@ -160,7 +158,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: ArrayLike<any>) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: ArrayLike<any>) => {
         return (
             <Column
                 key={columnHeader.name ?? "data"}
@@ -171,7 +169,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.ICatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.CatalogHeader.$Properties) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
@@ -222,7 +220,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return null;
     };
 
-    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.ICatalogHeader) => {
+    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader.$Properties) => {
         if (!isFinite(columnIndex) || !column || !column.name) {
             return null;
         }
@@ -265,7 +263,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
-                            small={true}
+                            size="small"
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => column.name && this.props.updateColumnFilter?.(ev.currentTarget.value, column.name)}
@@ -279,7 +277,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode === KEYCODE_ENTER && this.props.applyFilterWithEnter) {
+        if (ev.type === "keydown" && ev.key === "Enter" && this.props.applyFilterWithEnter) {
             this.props.applyFilterWithEnter();
         }
     };
@@ -329,7 +327,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     render() {
         const table = this.props;
-        const tableColumns: JSX.Element[] = [];
+        const tableColumns: React.JSX.Element[] = [];
         const tableData = table.dataset;
         let lineSelectionIndex: number | undefined;
         table.columnHeaders?.forEach(header => {
@@ -349,7 +347,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
-            <Table2
+            <Table
                 className={className}
                 ref={table.updateTableRef ?? null}
                 numRows={table.numVisibleRows}
@@ -368,7 +366,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 getCellClipboardData={undefined}
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 }

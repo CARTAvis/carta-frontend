@@ -54,7 +54,7 @@ export function getColorForTheme(color: string): string {
         return Colors.WHITE;
     }
 
-    const requiredColor = color.substr(5).toUpperCase();
+    const requiredColor = color.slice(5).toUpperCase();
     return Colors[`${requiredColor}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 

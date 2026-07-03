@@ -42,7 +42,7 @@ export class ContourDialogComponent extends React.Component {
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore | null;
-    private cachedHistogram: CARTA.IHistogram;
+    private cachedHistogram: CARTA.Histogram.$Properties;
     private readonly disposers: IReactionDisposer[] = [];
 
     constructor(props: {appStore: AppStore}) {
@@ -457,7 +457,7 @@ export class ContourDialogComponent extends React.Component {
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button text={dataSource.renderConfig.isUsingCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={dataSource.renderConfig.isUsingCubeHistogramContours ? "Per-cube" : "Per-channel"} endIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
@@ -539,10 +539,10 @@ export class ContourDialogComponent extends React.Component {
                                 disabled={appStore.animatorStore.isAnimationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
+                                <Button text={dataSource.filename} endIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
                             <Tooltip content={appStore.isFrameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                                <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
+                                <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} variant="minimal" onClick={appStore.toggleFrameContourLock} />
                             </Tooltip>
                         </FormGroup>
                         <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>

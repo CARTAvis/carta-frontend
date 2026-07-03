@@ -2,7 +2,7 @@ import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import type {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
@@ -20,7 +20,7 @@ import "./CatalogOverlayComponent.scss";
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable private catalogTableRef: Table2 | undefined = undefined;
+    @observable private catalogTableRef: Table | undefined = undefined;
     @observable private height: number = 600;
     @observable private width: number = 720;
 
@@ -29,7 +29,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
     private readonly disposers: IReactionDisposer[] = [];
-    private catalogHeaderTableRef: Table2 | undefined = undefined;
+    private catalogHeaderTableRef: Table | undefined = undefined;
     private catalogFileNames: Map<number, string>;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -555,7 +555,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <Table2
+            <Table
                 ref={ref => this.onControlHeaderTableRef(ref)}
                 numRows={numResultsRows}
                 enableRowReordering={false}
@@ -572,7 +572,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 cellRendererDependencies={[headerDisplays, profileStore.isLoadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 
@@ -1014,7 +1014,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 itemRenderer={this.renderFileIdPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
+                                <Button text={this.catalogFileId} endIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                             </Select>
                         </FormGroup>
                         <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
@@ -1027,7 +1027,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 disabled={!isImageOverlay}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
+                                <Button text={activeSystem} disabled={!isImageOverlay} endIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                             </Select>
                         </FormGroup>
                         <FormGroup inline={true} label="Show header">
@@ -1074,7 +1074,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemRenderer={this.renderPlotTypePopOver}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                 >
-                                    <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
+                                    <Button className="bp3" text={catalogWidgetStore.catalogPlotType} endIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
                                 <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
@@ -1091,7 +1091,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={isOverlayDisabled} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={isOverlayDisabled} endIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                     </Select>
                                 </FormGroup>
 
@@ -1109,13 +1109,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                         itemPredicate={this.filterColumn}
                                         resetOnSelect={true}
                                     >
-                                        <Button
-                                            className="catalog-axis-button"
-                                            text={catalogWidgetStore.yAxis}
-                                            disabled={isHistogram || isOverlayDisabled}
-                                            rightIcon="double-caret-vertical"
-                                            data-testid="catalog-rendering-column-y-dropdown"
-                                        />
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || isOverlayDisabled} endIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
                                     </Select>
                                 </FormGroup>
 

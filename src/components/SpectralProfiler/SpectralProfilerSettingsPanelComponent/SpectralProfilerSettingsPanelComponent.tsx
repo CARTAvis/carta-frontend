@@ -14,8 +14,6 @@ import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFitting
 
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
@@ -90,7 +88,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -109,7 +107,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -128,7 +126,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -147,7 +145,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -165,7 +163,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 

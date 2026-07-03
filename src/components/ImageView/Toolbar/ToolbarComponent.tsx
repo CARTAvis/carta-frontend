@@ -1,6 +1,6 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, PopoverInteractionKind, PopoverNext, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -294,7 +294,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     />
                                 </Tooltip>
                                 {frame.regionSet.mode === RegionMode.CREATING && (
-                                    <Popover popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                                    <PopoverNext popoverClassName="region-menu" content={regionMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
                                         <Tooltip
                                             position={tooltipPosition}
                                             content={
@@ -316,7 +316,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
                                             />
                                         </Tooltip>
-                                    </Popover>
+                                    </PopoverNext>
                                 )}
                                 {frame.regionSet.mode === RegionMode.MOVING && (
                                     <Tooltip
@@ -387,7 +387,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         </Tooltip>
                         {!frame.isPreview && (
                             <>
-                                <Popover content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
+                                <PopoverNext content={wcsMatchingMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
                                     <Tooltip
                                         position={tooltipPosition}
                                         content={
@@ -403,8 +403,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             {wcsButtonSuperscript}
                                         </AnchorButton>
                                     </Tooltip>
-                                </Popover>
-                                <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
+                                </PopoverNext>
+                                <PopoverNext content={coordinateSystemMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
                                     <Tooltip
                                         position={tooltipPosition}
                                         content={
@@ -418,7 +418,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     >
                                         <AnchorButton disabled={!frame.isValidWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
                                     </Tooltip>
-                                </Popover>
+                                </PopoverNext>
                             </>
                         )}
                         <Tooltip position={tooltipPosition} content="Toggle grid">
@@ -429,7 +429,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <Tooltip position={tooltipPosition} content="Toggle labels">
                                     <AnchorButton icon="numerical" active={!overlay.isLabelsHidden} onClick={overlay.toggleLabels} data-testid="toggle-labels-button" />
                                 </Tooltip>
-                                <Popover content={exportImageMenu} position={Position.TOP} minimal={true}>
+                                <PopoverNext content={exportImageMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
                                     <Tooltip
                                         position={tooltipPosition}
                                         content={
@@ -441,7 +441,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     >
                                         <AnchorButton disabled={appStore.isExportingImage} icon="floppy-disk" data-testid="export-image-view-button" />
                                     </Tooltip>
-                                </Popover>
+                                </PopoverNext>
                             </>
                         )}
                     </React.Fragment>

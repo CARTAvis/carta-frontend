@@ -9,7 +9,7 @@ import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, 
 
 export interface CatalogInfo {
     fileId: number;
-    fileInfo: CARTA.ICatalogFileInfo;
+    fileInfo: CARTA.CatalogFileInfo.$Properties;
     dataSize: number;
     directory: string;
 }
@@ -36,7 +36,7 @@ export abstract class AbstractCatalogProfileStore {
 
     @observable isLoadingData: boolean = false;
     @observable catalogType: CatalogType = CatalogType.SIMBAD;
-    @observable catalogFilterRequest: CARTA.ICatalogFilterRequest = {};
+    @observable catalogFilterRequest: CARTA.CatalogFilterRequest.$Properties = {};
     @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined} = {
         system: CatalogSystemType.ICRS,
         equinox: null,
@@ -114,7 +114,11 @@ export abstract class AbstractCatalogProfileStore {
         return catalogSystem;
     }
 
-    public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.ICatalogHeader; yHeaderInfo: CARTA.ICatalogHeader} {
+    public get2DPlotData(
+        xColumnName: string,
+        yColumnName: string,
+        columnsData: Map<number, ProcessedColumnData>
+    ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(xColumnName);
         const yHeader = controlHeader.get(yColumnName);
@@ -133,7 +137,7 @@ export abstract class AbstractCatalogProfileStore {
         }
     }
 
-    public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.ICatalogHeader} {
+    public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.CatalogHeader.$Properties} {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
