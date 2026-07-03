@@ -89,7 +89,7 @@ export class LayoutStore {
             return false;
         }
         const currentModelJson = this.layoutModel.toJson();
-        return !!((currentModelJson.subLayouts && Object.values(currentModelJson.subLayouts).length > 0) || (currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0));
+        return !!(currentModelJson.subLayouts && Object.values(currentModelJson.subLayouts).length > 0);
     }
 
     private clearCurrentLayout = () => {

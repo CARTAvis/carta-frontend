@@ -169,7 +169,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.ICatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.CatalogHeader.$Properties) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
