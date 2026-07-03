@@ -14,8 +14,6 @@ import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatVali
 
 import "./CatalogOnlineQueryComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
@@ -97,7 +95,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.catalogDB} disabled={isDisabled} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.catalogDB} disabled={isDisabled} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 {isVizier ? (
@@ -134,7 +132,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.radiusUnits} disabled={isDisabled} rightIcon="double-caret-vertical" />
+                        <Button text={configStore.radiusUnits} disabled={isDisabled} endIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()}>
@@ -153,7 +151,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} rightIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} endIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
@@ -210,7 +208,7 @@ export class CatalogQueryComponent extends React.Component {
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
-                                rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
+                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
                                 tagProps: {minimal: true}
                             }}
                         />
@@ -366,7 +364,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleRadiusChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const val = parseFloat(ev.currentTarget.value);
@@ -379,7 +377,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleCenterWcsXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -409,7 +407,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleCenterWcsYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 

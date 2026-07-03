@@ -1,13 +1,22 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es5",
+        "target": "es2015",
+        "outDir": "build",
+        "noImplicitAny": false,
         "sourceMap": true,
+        "types": [
+            "node"
+        ],
         "lib": [
-            "es5",
+            "es2015",
             "webworker"
         ]
     },
+    "include": [
+        "pre.ts",
+        "post.ts"
+    ],
     "exclude": [
         "node_modules"
     ]

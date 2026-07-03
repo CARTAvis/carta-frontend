@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, PopoverNext, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -13,7 +13,6 @@ import {SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
 const PLOT_LINES_LIMIT = 1000;
 
@@ -24,8 +23,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
     private widgetId: string;
     private readonly cachedWidgetStore: SpectralLineQueryWidgetStore;
-    private headerTableRef: Table2 | undefined;
-    private resultTableRef: Table2 | undefined;
+    private headerTableRef: Table | undefined;
+    private resultTableRef: Table | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -97,7 +96,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     };
 
     private handleRedshiftChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -175,7 +174,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnDescription);
 
         return (
-            <Table2
+            <Table
                 ref={ref => (this.headerTableRef = ref ?? undefined)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
@@ -192,7 +191,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 cellRendererDependencies={[this.widgetStore.displayedColumnHeaders]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 
@@ -352,7 +351,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
-            <Popover
+            <PopoverNext
                 content={
                     <Menu>
                         {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => (
@@ -369,13 +368,15 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         ))}
                     </Menu>
                 }
-                position={Position.BOTTOM}
-                minimal={true}
+                placement="bottom"
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
             >
-                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
+                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} endIcon="caret-down">
                     {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         const queryResultTableProps: FilterableTableComponentProps = {

@@ -34,7 +34,7 @@ export interface SwappedZWcsSettings {
     dirYLabel: string;
 }
 
-export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.IHeaderEntry[], wcsPrecision: number): SwappedDirAxisInfo {
+export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.HeaderEntry.$Properties[], wcsPrecision: number): SwappedDirAxisInfo {
     const dirAxis = dirX < dirY ? dirX : dirY;
     const dirAxisSize = dirAxis === 1 ? width : height;
     const axisName = headerEntries.find(entry => entry.name?.includes(`CTYPE${dirAxis}`));
@@ -104,7 +104,7 @@ export function isWCSStringFormatValid(wcsString: string | null, format: NumberF
     return decimalRegExp.test(wcsString);
 }
 
-export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefined): number {
+export function getHeaderNumericValue(headerEntry: CARTA.HeaderEntry.$Properties | undefined): number {
     if (!headerEntry) {
         return NaN;
     }

@@ -14,17 +14,17 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
-type DirectoryInfo = CARTA.IFileInfo & Omit<CARTA.IDirectoryInfo, keyof CARTA.IFileInfo>;
+type DirectoryInfo = CARTA.FileInfo.$Properties & Omit<CARTA.DirectoryInfo.$Properties, keyof CARTA.FileInfo.$Properties>;
 
 export interface BrowserFileList {
     directory: string | null | undefined;
     parent: string | null | undefined;
-    files: CARTA.IFileInfo[] | CARTA.ICatalogFileInfo[] | null | undefined;
+    files: CARTA.FileInfo.$Properties[] | CARTA.CatalogFileInfo.$Properties[] | null | undefined;
     subdirectories: DirectoryInfo[] | null | undefined;
 }
 
 export interface ISelectedFile {
-    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    fileInfo?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
     hdu?: string;
     isFile?: boolean;
 }
@@ -43,10 +43,10 @@ export class FileBrowserStore {
 
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable isAppendingFrame: boolean = false;
-    @observable fileList: CARTA.IFileListResponse | null = null;
-    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined = undefined;
+    @observable fileList: CARTA.FileListResponse.$Properties | null = null;
+    @observable selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | null | undefined = undefined;
     @observable selectedHDU: string | null = null;
-    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.FileInfoExtended.$Properties} | null = null;
     @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable isLoadingList: boolean = false;
@@ -64,9 +64,9 @@ export class FileBrowserStore {
     @observable selectedFilesCtypes: {ctype: string[]; rank: number[]} = {ctype: [], rank: []};
 
     @observable catalogFileList: BrowserFileList | null = null;
-    @observable selectedCatalogFile: CARTA.ICatalogFileInfo = undefined as any;
-    @observable catalogFileInfo: CARTA.ICatalogFileInfo | null = null;
-    @observable catalogHeaders: Array<CARTA.ICatalogHeader> = [];
+    @observable selectedCatalogFile: CARTA.CatalogFileInfo.$Properties = undefined as any;
+    @observable catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null = null;
+    @observable catalogHeaders: Array<CARTA.CatalogHeader.$Properties> = [];
 
     // Save image
     @observable saveFilename: string | null | undefined = "";
@@ -156,11 +156,11 @@ export class FileBrowserStore {
         DialogStore.Instance.hideDialog(DialogId.FileBrowser);
     };
 
-    @action setFileList = (fileListResponse: CARTA.IFileListResponse) => {
+    @action setFileList = (fileListResponse: CARTA.FileListResponse.$Properties) => {
         this.fileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
-    @action setCatalogFileList = (fileListResponse: CARTA.ICatalogListResponse) => {
+    @action setCatalogFileList = (fileListResponse: CARTA.CatalogListResponse.$Properties) => {
         this.catalogFileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
@@ -238,7 +238,7 @@ export class FileBrowserStore {
     }
 
     /** In all files mode, updates the folder info in the file list with file info and updates the selected file info. */
-    private updateFolderInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+    private updateFolderInfoInFileList = (fileInfo: CARTA.FileInfo.$Properties) => {
         if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
             const fileListDirectories = this.getfileListByMode?.subdirectories;
 
@@ -345,7 +345,7 @@ export class FileBrowserStore {
     }
 
     /** In all files mode, updates the file info in the file list if the file type is unknown. */
-    private updateFileInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+    private updateFileInfoInFileList = (fileInfo: CARTA.FileInfo.$Properties) => {
         if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
             const fileListFiles = this.getfileListByMode?.files;
 
@@ -376,10 +376,10 @@ export class FileBrowserStore {
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
      * @returns A promise resolving to the Stokes file information.
      */
-    getStokesFile = async (directory: string, file: string, hdu: string): Promise<CARTA.IStokesFile | undefined> => {
+    getStokesFile = async (directory: string, file: string, hdu: string): Promise<CARTA.StokesFile.$Properties | undefined> => {
         try {
             const response = await this.getConcatFilesHeader(directory, file, hdu);
-            // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+            // In fileInfoExtended: { [k: string]: CARTA.FileInfoExtended.$Properties }, sometimes k is " "
             const k = Object.keys(response.info ?? {})[0];
             return {
                 directory,
@@ -401,7 +401,7 @@ export class FileBrowserStore {
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
      * @returns A promise resolving to the header information.
      */
-    private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string | null | undefined; info: CARTA.IFileInfoExtended | null | undefined}> => {
+    private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string | null | undefined; info: CARTA.FileInfoExtended.$Properties | null | undefined}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo?.name, info: res.fileInfoExtended};
     };
@@ -413,7 +413,7 @@ export class FileBrowserStore {
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
      */
-    private static getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
+    private static getStokesType = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined, file: string | null | undefined): CARTA.PolarizationType => {
         let type = FileBrowserStore.getTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
             type = FileBrowserStore.getTypeFromName(file);
@@ -421,7 +421,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    private static getTypeFromHeader = (headers: CARTA.IHeaderEntry[] | null | undefined): CARTA.PolarizationType => {
+    private static getTypeFromHeader = (headers: CARTA.HeaderEntry.$Properties[] | null | undefined): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
 
         const ctype = headers?.find(obj => obj.value?.toUpperCase() === "STOKES");
@@ -775,7 +775,7 @@ export class FileBrowserStore {
             : null;
     }
 
-    @computed get fileInfoExtended(): CARTA.IFileInfoExtended | null {
+    @computed get fileInfoExtended(): CARTA.FileInfoExtended.$Properties | null {
         return this.HDUfileInfoExtended && this.selectedHDU !== null && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
     }
 

@@ -51,7 +51,7 @@ export function fontSelect(isVisible: boolean, currentFontId: number, fontSetter
 
     return (
         <FontSelect activeItem={currentFont} itemRenderer={RenderFont} items={AstFonts} disabled={!isVisible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
-            <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!isVisible} rightIcon="double-caret-vertical" />
+            <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!isVisible} endIcon="double-caret-vertical" />
         </FontSelect>
     );
 }

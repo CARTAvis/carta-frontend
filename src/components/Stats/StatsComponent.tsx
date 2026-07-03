@@ -260,12 +260,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let formContent;
-        let exportDataComponent: JSX.Element | null = null;
+        let exportDataComponent: React.JSX.Element | null = null;
         if (this.statsData) {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
-            const rows: JSX.Element[] = [];
+            const rows: React.JSX.Element[] = [];
             StatsComponent.StatsNameMap.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);

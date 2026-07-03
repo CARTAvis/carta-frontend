@@ -10,8 +10,6 @@ import {parseNumber} from "utilities";
 
 import "./RenderConfigSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
     private cachedWidgetStore: RenderConfigWidgetStore | undefined;
@@ -52,7 +50,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -71,7 +69,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -90,7 +88,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -109,7 +107,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 

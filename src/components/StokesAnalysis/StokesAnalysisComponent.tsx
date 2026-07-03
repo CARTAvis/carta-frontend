@@ -1004,16 +1004,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
 
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-                let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
-                if (appStore.isDarkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;
-                    }
-                    if (!this.widgetStore.secondaryLineColor.fixed) {
-                        ulinePlotColor = Colors.ORANGE4;
-                    }
-                }
+                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
                 piLinePlotProps.lineColor = primaryLineColor;
                 paLinePlotProps.lineColor = primaryLineColor;
 

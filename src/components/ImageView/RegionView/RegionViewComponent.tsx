@@ -38,7 +38,6 @@ export interface RegionViewComponentProps {
 const LINE_HEIGHT = 15;
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
-const KEYCODE_ESC = 27;
 const POINTER_DRAG_THRESHOLD = 4;
 const REGION_SELECTION_BOX_FILL = "rgba(98, 171, 221, 0.36)";
 
@@ -928,7 +927,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     @action onKeyDown = (ev: React.KeyboardEvent) => {
         const frame = this.frame;
-        if (frame && frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && ev.keyCode === KEYCODE_ESC) {
+        if (frame && frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && ev.key === "Escape") {
             frame.regionSet.deleteRegion(this.creatingRegion);
             this.creatingRegion = null;
             frame.regionSet.setMode(RegionMode.MOVING);
@@ -943,7 +942,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
-        let creatingLine: JSX.Element | null = null;
+        let creatingLine: React.JSX.Element | null = null;
         const selectionRect = this.getRegionSelectionRect();
         const selectionBox =
             selectionRect && this.isSelectionRectLargeEnough(selectionRect) ? (
