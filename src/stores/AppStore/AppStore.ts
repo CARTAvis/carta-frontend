@@ -557,11 +557,11 @@ export class AppStore {
      *
      * @param ack - The ack message received after opening a file.
      * @param directory - The path to the parent directory of the file.
-     * @param lelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
+     * @param isLelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
-     * @param generated - Whether the frame is a generated in-memory image. Used for the telemetry message.
-     * @param setAsActive - Whether the frame should be set as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isGenerated - Whether the frame is a generated in-memory image. Used for the telemetry message.
+     * @param shouldSetAsActive - Whether the frame should be set as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns Whether the frame was successfully added.
      */
     @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, isLelExpr: boolean, hdu: string, isGenerated: boolean = false, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true): boolean => {
@@ -695,9 +695,9 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to load, or of the file itself.
      * @param filename - The filename of the file to load.
      * @param hdu - The Header Data Unit (HDU) to load. If left blank, the first image HDU will be loaded.
-     * @param imageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
-     * @param setAsActive - Whether the loaded frame should be set as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
+     * @param shouldSetAsActive - Whether the loaded frame should be set as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns The added frame.
      *
      * @throws If there is an error loading the file.
@@ -816,9 +816,9 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to open, or of the file itself.
      * @param filename - The filename of the file to open.
      * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
-     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
-     * @param setAsActive - Whether to set the appended file as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param shouldSetAsActive - Whether to set the appended file as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns A promise that resolves to the FrameStore of the opened file.
      *
      * @example
@@ -838,8 +838,8 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to open, or of the file itself.
      * @param filename - The filename of the file to open.
      * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
-     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns A promise that resolves to the FrameStore of the opened file.
      *
      * @example
@@ -875,7 +875,7 @@ export class AppStore {
     /**
      * Closes a loaded image or a color blended image.
      * @param image - The image item to close.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     closeImage = (image: ImageViewItem, shouldConfirmClose: boolean = true) => {
         if (image?.type === ImageType.COLOR_BLENDING) {
@@ -888,7 +888,7 @@ export class AppStore {
     /**
      * Closes a loaded image.
      * @param frame - The loaded image.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @flow.bound *closeFile(frame: FrameStore, shouldConfirmClose: boolean = true) {
         if (!frame) {
@@ -917,7 +917,7 @@ export class AppStore {
 
     /**
      * Closes the currently active image if the active image is not a PV preview.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (shouldConfirmClose: boolean = false) => {
         if (this.activeImage && !this.isAppendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
@@ -940,7 +940,7 @@ export class AppStore {
     /**
      * Closes all the loaded image except the provided one.
      * @param frame - A loaded image.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeOtherFiles = (frame: FrameStore, shouldConfirmClose: boolean = true) => {
         const otherFiles = this.frames.filter(f => f !== frame);
@@ -1346,7 +1346,7 @@ export class AppStore {
      * @param coordType - The coordinate system used in the exported region file.
      * @param fileType - The type of the exported region file.
      * @param exportRegions - The indices of the regions to be exported.
-     * @param overwrite - Whether to allow overwriting existing files.
+     * @param shouldOverwrite - Whether to allow overwriting existing files.
      * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
      */
     @flow.bound
@@ -2011,8 +2011,11 @@ export class AppStore {
                             .then(this.onReconnectAlertClosed);
 
                         if (this.layoutStore?.layoutModel) {
-                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
-                                const win = layoutWindow.window;
+                            for (const [, layoutConfig] of this.layoutStore.layoutModel.getLayouts()) {
+                                if (layoutConfig.isMainLayout()) {
+                                    continue;
+                                }
+                                const win = layoutConfig.getWindow();
                                 if (win && !win.closed) {
                                     win.close();
                                 }
@@ -3310,7 +3313,7 @@ export class AppStore {
     /**
      * Sets the spatial reference frame.
      * @param frame - The frame to set as the spatial reference.
-     * @param showColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
+     * @param shouldShowColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
      */
     @flow.bound *setSpatialReference(frame: FrameStore, shouldShowColorBlendingAlert = true) {
         const oldRef = this.spatialReference;
@@ -3356,7 +3359,7 @@ export class AppStore {
     /**
      * Sets the spatial matching for a frame.
      * @param frame - The frame for which to set spatial matching.
-     * @param val - Whether to enable or disable spatial matching.
+     * @param isEnabled - Whether to enable or disable spatial matching.
      */
     @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, isEnabled: boolean) {
         if (!frame || frame === this.spatialReference) {

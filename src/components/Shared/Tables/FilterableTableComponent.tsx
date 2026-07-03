@@ -160,7 +160,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: ArrayLike<any>) => {
         return (
             <Column
                 key={columnHeader.name ?? "data"}
@@ -171,7 +171,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.ICatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.ICatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
