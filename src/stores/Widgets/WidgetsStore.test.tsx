@@ -1,4 +1,5 @@
 import type React from "react";
+import {Actions} from "flexlayout-react";
 
 import {AppStore} from "stores/AppStore/AppStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -91,7 +92,7 @@ describe("WidgetsStore PV preview test ids", () => {
             getComponent: () => "stats"
         });
 
-        const result = widgetsStore.onAction({type: "FlexLayout_PopoutTab", data: {node: "stats-0"}});
+        const result = widgetsStore.onAction({type: Actions.POPOUT_TAB, data: {node: "stats-0"}});
 
         expect(result).toBeUndefined();
     });
@@ -103,7 +104,7 @@ describe("WidgetsStore PV preview test ids", () => {
             getChildren: () => [{getComponent: () => "image-view"}, {getComponent: () => "stats"}]
         });
 
-        const result = widgetsStore.onAction({type: "FlexLayout_PopoutTabset", data: {node: "tabset-1"}});
+        const result = widgetsStore.onAction({type: Actions.POPOUT_TABSET, data: {node: "tabset-1"}});
 
         expect(result).toBeUndefined();
     });

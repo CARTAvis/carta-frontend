@@ -708,7 +708,7 @@ export class WidgetsStore {
 
         // Wrap popped-out tabs with Blueprint providers so overlays render in the popout window
         if (node.isPoppedOut()) {
-            const popoutWindow = node.getWindow();
+            const popoutWindow = node.getLayout().getWindow();
             if (popoutWindow) {
                 const popoutBody = popoutWindow.document.body;
                 // Apply theme classes to popout body so CSS selectors match
@@ -867,7 +867,7 @@ export class WidgetsStore {
             return action;
         }
 
-        if (action.type === "FlexLayout_PopoutTab") {
+        if (action.type === Actions.POPOUT_TAB) {
             const nodeId = action.data?.node;
             if (nodeId) {
                 const node = layoutModel.getNodeById(nodeId);
@@ -884,7 +884,7 @@ export class WidgetsStore {
             }
         }
 
-        if (action.type === "FlexLayout_PopoutTabset") {
+        if (action.type === Actions.POPOUT_TABSET) {
             const nodeId = action.data?.node;
             if (nodeId) {
                 const node = layoutModel.getNodeById(nodeId);
@@ -901,10 +901,10 @@ export class WidgetsStore {
             }
         }
 
-        if (action.type === "FlexLayout_CloseWindow") {
-            const windowId = action.data?.windowId;
-            const windowsMap = layoutModel.getwindowsMap();
-            const closingWindow = windowsMap.get(windowId);
+        if (action.type === Actions.CLOSE_POPOUT) {
+            const layoutId = action.data?.layoutId;
+            const layoutsMap = layoutModel.getLayouts();
+            const closingWindow = layoutsMap.get(layoutId);
             if (closingWindow) {
                 const tabNodes: TabNode[] = [];
                 closingWindow.visitNodes((node, _level) => {
@@ -1014,7 +1014,7 @@ export class WidgetsStore {
                         }
 
                         // Fallback: move to root
-                        const root = layoutModel.getRoot();
+                        const root = layoutModel.getRootRow();
                         if (root) {
                             layoutModel.doAction(Actions.moveNode(tabId, root.getId(), DockLocation.CENTER, -1));
                             if (!savedPos.wasAlone) {
@@ -1056,7 +1056,7 @@ export class WidgetsStore {
             }
         }
 
-        if (action.type === "FlexLayout_DeleteTab") {
+        if (action.type === Actions.DELETE_TAB) {
             const nodeId = action.data?.node;
             if (nodeId) {
                 this.popoutPositions.delete(nodeId);
