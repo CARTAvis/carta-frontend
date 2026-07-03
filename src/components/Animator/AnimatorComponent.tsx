@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, Popover, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -336,7 +336,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.isDarkTheme});
 
         const playbackModeButton = (
-            <Popover
+            <PopoverNext
                 className={playbackModeClass}
                 content={
                     <Menu>
@@ -346,7 +346,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)} />
                     </Menu>
                 }
-                position={Position.TOP}
+                placement="top"
+                shouldReturnFocusOnClose={false}
                 disabled={appStore.channelMapStore.isChannelMapEnabled}
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
@@ -354,7 +355,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         {!isIconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
-            </Popover>
+            </PopoverNext>
         );
 
         const playbackButtons = (

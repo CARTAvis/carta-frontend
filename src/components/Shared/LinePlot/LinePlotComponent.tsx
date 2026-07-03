@@ -821,7 +821,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
-        let lineSegments: JSX.Element[] = [];
+        let lineSegments: React.JSX.Element[] = [];
         // TODO: sort out hover marker, marker with width, draggable marker
         if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1))) {
             return undefined;
@@ -869,7 +869,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
 
-        let lineSegments: JSX.Element[] = [];
+        let lineSegments: React.JSX.Element[] = [];
         // TODO: sort out hover marker, marker with width, draggable marker
         if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1))) {
             return undefined;
@@ -930,7 +930,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
 
-        const lines: JSX.Element[] = [];
+        const lines: React.JSX.Element[] = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
             // TODO: refactoring to pull out this logic from horizontal lines
             const chartAreaWidth = Math.abs(chartArea.right - chartArea.left);
@@ -973,7 +973,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private genSelectionRect = () => {
-        let selectionRect: JSX.Element[] | null = null;
+        let selectionRect: React.JSX.Element[] | null = null;
         const chartArea = this.chartArea;
         const start = this.selectionBoxStart;
         const end = this.selectionBoxEnd;
@@ -1036,9 +1036,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return border;
     };
 
-    private genBorderRect = (): JSX.Element | null => {
+    private genBorderRect = (): React.JSX.Element | null => {
         const chartArea = this.chartArea;
-        let borderRect: JSX.Element | null = null;
+        let borderRect: React.JSX.Element | null = null;
         const devicePixelRatio = window.devicePixelRatio || 1;
         if (chartArea) {
             borderRect = (
@@ -1059,7 +1059,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideBoxes = () => {
         const chartArea = this.chartArea;
-        const insideBoxes: JSX.Element[] = [];
+        const insideBoxes: React.JSX.Element[] = [];
         if (this.props.insideBoxes && chartArea) {
             for (let i = 0; i < this.props.insideBoxes.length; i++) {
                 const box = this.props.insideBoxes[i];
@@ -1086,7 +1086,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideTexts = () => {
         const chartArea = this.chartArea;
-        const insideTexts: JSX.Element[] = [];
+        const insideTexts: React.JSX.Element[] = [];
         if (this.props.insideTexts && chartArea) {
             for (let i = 0; i < this.props.insideTexts.length; i++) {
                 const insideText = this.props.insideTexts[i];

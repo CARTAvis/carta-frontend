@@ -169,9 +169,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
     };
 
-    private genBorderRect = (): JSX.Element | null => {
+    private genBorderRect = (): React.JSX.Element | null => {
         const chartArea = this.chartArea;
-        let borderRect: JSX.Element | null = null;
+        let borderRect: React.JSX.Element | null = null;
         const devicePixelRatio = window.devicePixelRatio || 1;
         if (this.chartArea) {
             borderRect = (
@@ -220,7 +220,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genXline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
         const chartArea = this.chartArea;
-        const lineSegments: JSX.Element[] = [];
+        const lineSegments: React.JSX.Element[] = [];
         if (chartArea) {
             lineSegments.push(<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
@@ -233,7 +233,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genYline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
         const chartArea = this.chartArea;
-        const lineSegments: JSX.Element[] = [];
+        const lineSegments: React.JSX.Element[] = [];
         if (chartArea) {
             lineSegments.push(<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
@@ -260,7 +260,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genIndicator = () => {
         const chartArea = this.chartArea;
-        const indicator: JSX.Element[] = [];
+        const indicator: React.JSX.Element[] = [];
         const channel = this.props.indicatorInteractionChannel;
         const markerOpacity = this.markerOpacity;
         if (
@@ -583,8 +583,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
     }
 
-    private genSelectionRect = (): JSX.Element[] | null => {
-        let selectionRect: JSX.Element[] | null = null;
+    private genSelectionRect = (): React.JSX.Element[] | null => {
+        let selectionRect: React.JSX.Element[] | null = null;
         const chartArea = this.chartArea;
         const start = this.selectionBoxStart;
         const end = this.selectionBoxEnd;

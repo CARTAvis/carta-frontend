@@ -70,7 +70,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get histogramData(): CARTA.IHistogram | null {
+    @computed get histogramData(): CARTA.Histogram.$Properties | null {
         const regionHistogramData = this.getRegionHistogramData();
         return regionHistogramData?.histograms ?? null;
     }
@@ -238,7 +238,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    private getRegionHistogramData = (): CARTA.IRegionHistogramData | null => {
+    private getRegionHistogramData = (): CARTA.RegionHistogramData.$Properties | null => {
         if (!this.widgetStore.effectiveFrame) {
             return null;
         }

@@ -17,8 +17,6 @@ import {ThemeProvider} from "./ThemeProvider";
 
 import "./CodeSnippetDialogComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class CodeSnippetDialogComponent extends React.Component {
     @observable isSaveDialogOpen: boolean = false;
@@ -104,7 +102,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     };
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         // Ctrl/Cmd + Enter executes current code

@@ -96,7 +96,7 @@ export class AboutDialogComponent extends React.Component {
                             </a>
                         </li>
                     </ul>
-                    <Button minimal={true} icon="link" rightIcon={this.isExtendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendUsefulLinks}>
+                    <Button variant="minimal" icon="link" endIcon={this.isExtendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.toggleExtendUsefulLinks}>
                         <H6 className="extend-button-title">Useful links</H6>
                     </Button>
                     <Collapse isOpen={this.isExtendUsefulLinks}>
@@ -132,7 +132,7 @@ export class AboutDialogComponent extends React.Component {
                             </li>
                         </ul>
                     </Collapse>
-                    <Button minimal={true} icon="database" rightIcon={this.isExtendExternalServices ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendExternalServices}>
+                    <Button variant="minimal" icon="database" endIcon={this.isExtendExternalServices ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.toggleExtendExternalServices}>
                         <H6 className="extend-button-title">External services</H6>
                     </Button>
                     <Collapse isOpen={this.isExtendExternalServices}>

@@ -476,7 +476,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                                 disabled={appStore.animatorStore.isAnimationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
+                                <Button text={dataSource.filename} endIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
                         </FormGroup>
                         <Tabs defaultSelectedTabId={VectorOverlayDialogTabs.Configuration} renderActiveTabPanelOnly={false}>
