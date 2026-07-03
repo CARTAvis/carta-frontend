@@ -106,7 +106,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
             itemRenderer={renderScalingSelectItem}
             disabled={props.disabled}
         >
-            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
+            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} endIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
         </ScalingSelect>
     );
 };

@@ -195,7 +195,7 @@ const file = await app.openFile("my_image.fits");
 // Regions on a specific image are accessible via "RegionSetStore" under each image.
 // Each region is represented by a "RegionStore" object.
 console.log(file.regionSet.regions); // View all regions
-console.log(file.regionSet.selectedRegion); // View the selected region
+console.log(file.regionSet.focusedRegion); // View the focused region
 
 // create regions on a specific image
 const regionSet = file.regionSet;

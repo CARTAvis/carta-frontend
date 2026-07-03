@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Button, Classes, type DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
 import {type ItemRendererProps, Select} from "@blueprintjs/select";
-import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
@@ -21,8 +21,8 @@ export class StokesDialogComponent extends React.Component {
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 250;
 
-    @observable stokes: Map<string, CARTA.IStokesFile> = new Map();
-    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
+    @observable stokes: Map<string, CARTA.StokesFile.$Properties> = new Map();
+    @observable stokesHeader: Map<string, CARTA.FileInfoExtended.$Properties> = new Map();
     private readonly disposers: IReactionDisposer[] = [];
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
@@ -36,7 +36,7 @@ export class StokesDialogComponent extends React.Component {
                     }
                 }
             });
-            const stokes: CARTA.IStokesFile = {
+            const stokes: CARTA.StokesFile.$Properties = {
                 directory: currentStoke.directory,
                 file: currentStoke.file,
                 hdu: currentStoke.hdu,
@@ -46,11 +46,11 @@ export class StokesDialogComponent extends React.Component {
         }
     };
 
-    @action setStokes = (fileName: string, stokes: CARTA.IStokesFile) => {
+    @action setStokes = (fileName: string, stokes: CARTA.StokesFile.$Properties) => {
         this.stokes.set(fileName, stokes);
     };
 
-    @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.IFileInfoExtended) => {
+    @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.FileInfoExtended.$Properties) => {
         this.stokesHeader.set(fileName, fileInfoExtended);
     };
 
@@ -150,7 +150,7 @@ export class StokesDialogComponent extends React.Component {
                                 <Button
                                     className={classNames(Classes.MINIMAL, "catalog-represent-as-select-button")}
                                     text={this.getLabelFromValue(stokes.polarizationType ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE)}
-                                    rightIcon="double-caret-vertical"
+                                    endIcon="double-caret-vertical"
                                     data-testid={"stokes-table-dropdown-" + rowIndex}
                                 />
                             </Select>
@@ -185,7 +185,7 @@ export class StokesDialogComponent extends React.Component {
                 dialogId={DialogId.Stokes}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <Table2
+                    <Table
                         className={"file-table"}
                         numRows={this.stokes.size}
                         enableRowHeader={false}
@@ -200,7 +200,7 @@ export class StokesDialogComponent extends React.Component {
                         getCellClipboardData={undefined}
                     >
                         {[fileName, stokesDropDown]}
-                    </Table2>
+                    </Table>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
@@ -220,7 +220,7 @@ export class StokesDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
-        const stokesFiles: CARTA.IStokesFile[] = [];
+        const stokesFiles: CARTA.StokesFile.$Properties[] = [];
         this.stokes.forEach(file => {
             stokesFiles.push(file);
         });

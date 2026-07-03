@@ -225,12 +225,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
             if (channelIndex1 !== undefined && channelIndex2 !== undefined && isFinite(channelIndex1) && isFinite(channelIndex2)) {
-                const channelIndexRange: CARTA.IIntBounds = {
+                const channelIndexRange: CARTA.IntBounds.$Properties = {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
                 };
-                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
-                const requestMessage: CARTA.IMomentRequest = {
+                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.focusedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
+                const requestMessage: CARTA.MomentRequest.$Properties = {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
                     axis: CARTA.MomentAxis.SPECTRAL,
@@ -351,7 +351,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     /**
      * Keep previous moment maps.
      *
-     * @param bool - A boolean. Set true to keep previous moment maps.
+     * @param shouldKeep - A boolean. Set true to keep previous moment maps.
      */
     @action setKeep = (shouldKeep: boolean) => {
         this.shouldKeep = shouldKeep;
@@ -652,7 +652,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (this.momentRegionId === RegionId.IMAGE) {
                 return true;
             } else if (this.momentRegionId === RegionId.ACTIVE) {
-                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                const region = this.effectiveFrame.regionSet?.focusedRegion;
                 return !region || region?.regionId === RegionId.CURSOR ? true : region?.isClosedRegion;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);
@@ -667,7 +667,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (this.momentRegionId === RegionId.IMAGE) {
                 return "Image";
             } else if (this.momentRegionId === RegionId.ACTIVE) {
-                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                const region = this.effectiveFrame.regionSet?.focusedRegion;
                 return !region || region.regionId === RegionId.CURSOR ? "Image" : region.nameString;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);

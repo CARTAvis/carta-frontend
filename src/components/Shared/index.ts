@@ -15,6 +15,7 @@ export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
 export * from "./PointShapeSelectComponent/PointShapeSelectComponent";
 export * from "./PopoverSettings/PopoverSettingsComponent";
 export * from "./ProfilerInfo/ProfilerInfoComponent";
+export * from "./regionIcon";
 export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./ResizeDetector/ResizeDetector";
 export * from "./SafeNumericInput/SafeNumericInput";

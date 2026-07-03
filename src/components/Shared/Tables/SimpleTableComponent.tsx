@@ -1,6 +1,6 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
-import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -14,7 +14,7 @@ export class SimpleTableComponentProps {
     areGhostCellsEnabled?: boolean;
     isIndexZero?: boolean;
     boldIndex?: number[];
-    updateTableRef?: (ref: Table2) => void;
+    updateTableRef?: (ref: Table) => void;
     tooltipIndex?: number;
     cellRendererDependencies?: React.DependencyList;
 }
@@ -64,7 +64,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         });
 
         return (
-            <Table2
+            <Table
                 ref={table.updateTableRef ? ref => ref && table.updateTableRef?.(ref) : undefined}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
@@ -80,7 +80,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 getCellClipboardData={undefined}
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 }

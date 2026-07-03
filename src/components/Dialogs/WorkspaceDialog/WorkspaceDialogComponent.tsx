@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
 import {AnchorButton, Classes, type DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, type Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, type Region, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {WorkspaceListItem} from "models";
@@ -235,7 +235,7 @@ export const WorkspaceDialogComponent = observer(() => {
         tableContent = <NonIdealState icon="search" title="No results" description="There are no workspaces available" />;
     } else {
         tableContent = (
-            <Table2
+            <Table
                 className={classNames("workspace-table", {[Classes.DARK]: appStore.isDarkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
@@ -253,7 +253,7 @@ export const WorkspaceDialogComponent = observer(() => {
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
                 <Column name="Last modified" cellRenderer={renderDates} />
-            </Table2>
+            </Table>
         );
     }
 

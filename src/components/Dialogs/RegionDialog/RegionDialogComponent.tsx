@@ -6,11 +6,11 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, RegionDialogTabs} from "enums";
+import {getRegionIconOpacity, ScrollShadow} from "components/Shared";
+import {DialogId, HelpType, RegionDialogTabs, RegionOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {type RegionStore} from "stores/Frame";
+import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -43,24 +43,46 @@ export class RegionDialogComponent extends React.Component {
     private static readonly MinWidth = 450;
     private static readonly MinHeight = 300;
 
+    private applyToSelected = (handler: (region: RegionStore) => void) => {
+        const selectedRegions = AppStore.Instance.activeFrame?.regionSet.selectedRegionsList ?? [];
+        selectedRegions.forEach(handler);
+    };
+
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideDialog(DialogId.Region);
-        if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
-            appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
-        }
+        appStore.deleteSelectedRegions();
     };
 
     private handleFocusClicked = () => {
         const regionSet = AppStore.Instance.activeFrame?.regionSet;
-        if (regionSet?.selectedRegion) {
-            regionSet.selectedRegion.focusCenter();
+        if (regionSet?.focusedRegion) {
+            regionSet.focusedRegion.focusCenter();
+        }
+    };
+
+    private handleExportClicked = () => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if ((regionSet?.selectedRegionCount ?? 0) > 1) {
+            AppStore.Instance.fileBrowserStore.showExportSelectedRegions();
+            return;
+        }
+
+        const region = regionSet?.focusedRegion;
+        if (region) {
+            AppStore.Instance.fileBrowserStore.showExportRegions(region.regionId);
         }
     };
 
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("region-dialog", {[Classes.DARK]: appStore.isDarkTheme});
+        const activeFrame = appStore.activeFrame;
+        const regionSet = activeFrame?.regionSet;
+        const selectedRegions = regionSet?.selectedRegionsList ?? [];
+        const selectedRegionsOpacity = regionSet?.selectedRegionsOpacity ?? RegionOpacity.Invisible;
+        const selectedRegionCount = regionSet?.selectedRegionCount ?? 0;
+        const isMultiRegion = selectedRegionCount > 1;
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -75,54 +97,49 @@ export class RegionDialogComponent extends React.Component {
 
         let bodyContent, configurationPanel;
         let region: RegionStore | null = null;
-        let isEditableRegion = false;
-        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
+        if (!activeFrame || !regionSet?.focusedRegion || regionSet.focusedRegion.regionId === CURSOR_REGION_ID) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
-        } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
-            bodyContent = RegionDialogComponent.InvalidRegionNode;
+        } else if (isMultiRegion) {
+            region = regionSet.focusedRegion;
+            dialogProps.title = `Editing ${selectedRegionCount} Regions (${activeFrame.filename})`;
+            bodyContent = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} applyToTargets={this.applyToSelected} visibleControls={AppearanceForm.getCommonControls(selectedRegions)} />;
         } else {
-            region = appStore.activeFrame.regionSet.selectedRegion;
-            const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+            region = regionSet.focusedRegion;
+            const frame = activeFrame.spatialReference ?? activeFrame;
             dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
                     configurationPanel = <PointRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
                     configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
                     configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                     configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
                     configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
-                    isEditableRegion = true;
                     break;
                 default:
                     bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
-            if (isEditableRegion) {
+            if (configurationPanel) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
@@ -133,13 +150,39 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
-        const tooltips = region && region.regionId !== 0 && (
+        const isLockDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegionsOpacity === RegionOpacity.Invisible : !!region && (regionSet?.isLocked || region.opacity === RegionOpacity.Invisible);
+        const shouldShowLockedIcon = isMultiRegion ? isLockDisabled || (regionSet?.areAllSelectedRegionsLocked ?? false) : isLockDisabled || !!region?.isLocked;
+        const isRegionVisible = isMultiRegion ? selectedRegionsOpacity !== RegionOpacity.Invisible : !!region && region.opacity !== RegionOpacity.Invisible;
+        const isDeleteDisabled = isMultiRegion ? !!regionSet?.isLocked || selectedRegions.every(candidate => candidate.isLocked) : !!region && (!!regionSet?.isLocked || region.isLocked);
+        const tooltips = region && region.regionId !== CURSOR_REGION_ID && (
             <React.Fragment>
-                <Tooltip content={`Region is ${region.isLocked ? "locked" : "unlocked"}`}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.isLocked ? "lock" : "unlock"} onClick={region.toggleLock} />
+                <Tooltip content={isMultiRegion ? (shouldShowLockedIcon ? "Unlock selected regions" : "Lock selected regions") : shouldShowLockedIcon ? "Unlock region" : "Lock region"}>
+                    <AnchorButton
+                        intent={Intent.WARNING}
+                        variant="minimal"
+                        icon={shouldShowLockedIcon ? "lock" : "unlock"}
+                        onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock}
+                        disabled={isLockDisabled}
+                        data-testid="region-dialog-lock-button"
+                    />
                 </Tooltip>
-                <Tooltip content={"Focus"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
+                <Tooltip content={isMultiRegion ? (isRegionVisible ? "Hide selected regions" : "Show selected regions") : isRegionVisible ? "Hide region" : "Show region"}>
+                    <AnchorButton
+                        intent={Intent.WARNING}
+                        variant="minimal"
+                        icon={isRegionVisible ? "eye-open" : "eye-off"}
+                        onClick={() => regionSet?.toggleSelectedRegionsVisibility()}
+                        style={{opacity: getRegionIconOpacity(isMultiRegion ? selectedRegionsOpacity : region.opacity)}}
+                        data-testid="region-dialog-visibility-button"
+                    />
+                </Tooltip>
+                {!isMultiRegion && (
+                    <Tooltip content="Focus">
+                        <AnchorButton intent={Intent.WARNING} variant="minimal" icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} data-testid="region-dialog-focus-button" />
+                    </Tooltip>
+                )}
+                <Tooltip content={isMultiRegion ? "Export selected regions" : "Export region"}>
+                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon="cloud-upload" onClick={this.handleExportClicked} data-testid="region-dialog-export-button" />
                 </Tooltip>
             </React.Fragment>
         );
@@ -161,7 +204,9 @@ export class RegionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
-                        {isEditableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} />}
+                        {(configurationPanel || isMultiRegion) && (
+                            <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked} disabled={isDeleteDisabled} style={{userSelect: "none"}} data-testid="region-dialog-delete-button" />
+                        )}
                     </div>
                 </div>
             </DraggableDialogComponent>
