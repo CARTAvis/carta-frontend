@@ -351,7 +351,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     /**
      * Keep previous moment maps.
      *
-     * @param bool - A boolean. Set true to keep previous moment maps.
+     * @param shouldKeep - A boolean. Set true to keep previous moment maps.
      */
     @action setKeep = (shouldKeep: boolean) => {
         this.shouldKeep = shouldKeep;

@@ -19,6 +19,8 @@ $pt-dark-app-background-color: #252a31;
 
         --color-tabset-divider-line: white;
         --color-icon: #{$dark-gray4};
+        --splitter-size: 4px;
+        --splitter-active-size: 4px;
 
         // Remove browser focus outlines (e.g. canvas click, button click)
         *:focus {
@@ -153,6 +155,7 @@ $pt-dark-app-background-color: #252a31;
         .flexlayout__tabset_tabbar_outer {
             padding-left: 4px;
             height: 20px;
+            min-height: 0px;
         }
 
         .flexlayout__tabset_tabbar_inner_tab_container {
@@ -184,6 +187,7 @@ $pt-dark-app-background-color: #252a31;
         }
 
         .flexlayout__tab_button {
+            height: 18px;
             color: $gray3;
             background-color: $dark-gray3;
 
