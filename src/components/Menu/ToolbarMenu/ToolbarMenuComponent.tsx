@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Classes, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Menu, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -120,7 +120,7 @@ export class ToolbarMenuComponent extends React.Component {
                         );
                     })}
 
-                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={isRegionButtonsDisabled}>
+                    <PopoverNext content={annotationMenu} placement="bottom-start" animation="minimal" arrow={false} shouldReturnFocusOnClose={false} disabled={isRegionButtonsDisabled}>
                         <Tooltip
                             content={
                                 <span>
@@ -136,7 +136,7 @@ export class ToolbarMenuComponent extends React.Component {
                                 data-testid="annotation-shortcut-dropdown"
                             />
                         </Tooltip>
-                    </Popover>
+                    </PopoverNext>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {

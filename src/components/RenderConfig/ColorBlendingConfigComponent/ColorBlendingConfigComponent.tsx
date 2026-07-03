@@ -1,5 +1,5 @@
 import {AlphaPicker} from "react-color";
-import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, PopoverNext, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -121,18 +121,18 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
-                    <Popover minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
+                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={<Menu>{newFrameOptions}</Menu>}>
                         <Tooltip content={addLayerTooltip}>
                             <Button icon="add" endIcon="caret-down" disabled={!newFrameOptions.length}>
                                 {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
                         </Tooltip>
-                    </Popover>
-                    <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
+                    </PopoverNext>
+                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={<Menu>{colormapSetOptions}</Menu>}>
                         <Button icon="color-fill" endIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>
-                    </Popover>
+                    </PopoverNext>
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>

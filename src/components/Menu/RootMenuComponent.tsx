@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, PopoverNext, Position, Switch, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -447,33 +447,33 @@ export class RootMenuComponent extends React.Component {
 
         return (
             <div className="root-menu">
-                <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={fileMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="File" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={viewMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="View" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.genWidgetsMenu()} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Widgets" />
                     </Menu>
-                </Popover>
+                </PopoverNext>
                 {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
-                    <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
+                    <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.snippetsMenu} placement="bottom-start">
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
                         </Menu>
-                    </Popover>
+                    </PopoverNext>
                 )}
-                <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={helpMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Help" />
                     </Menu>
-                </Popover>
+                </PopoverNext>
                 <ToolbarMenuComponent />
                 <Alert
                     className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
@@ -486,11 +486,11 @@ export class RootMenuComponent extends React.Component {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {appStore.shouldShowNewRelease && (
-                    <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
+                    <PopoverNext content={newReleaseMessage} placement="bottom-end" shouldReturnFocusOnClose={false}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
                             <Button icon={"envelope"} intent={"warning"} variant="minimal" />
                         </Tooltip>
-                    </Popover>
+                    </PopoverNext>
                 )}
                 {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && !appStore.layoutStore?.hasPopoutWidget && (
                     <Tooltip

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {List} from "react-window";
-import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, PopoverInteractionKind, PopoverNext, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
@@ -411,13 +411,14 @@ export class FileInfoComponent extends React.Component<{
 
         return !this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended && this.props.selectedTab === FileInfoType.IMAGE_HEADER ? (
             <ButtonGroup className="header-search-button" style={{opacity: this.isMouseEntered || this.isSearchOpened ? 1 : 0}}>
-                <Popover
-                    position={Position.LEFT}
+                <PopoverNext
+                    placement="left"
+                    shouldReturnFocusOnClose={false}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     usePortal={false}
-                    modifiers={{
-                        arrow: {enabled: false},
-                        offset: {enabled: true, options: {offset: [0, searchBarPopperDistance]}}
+                    arrow={false}
+                    middleware={{
+                        offset: {mainAxis: searchBarPopperDistance}
                     }}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
@@ -434,7 +435,7 @@ export class FileInfoComponent extends React.Component<{
                     }
                 >
                     <Button icon="search-text"></Button>
-                </Popover>
+                </PopoverNext>
                 <Button icon="th" onClick={this.exportHeader}></Button>
             </ButtonGroup>
         ) : null;
