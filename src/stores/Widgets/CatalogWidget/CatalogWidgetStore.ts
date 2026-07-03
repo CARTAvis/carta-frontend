@@ -378,7 +378,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the colormap direction
-     * @param val - true for inverted colormap, false for normal colormap
+     * @param isInvertedColorMap - true for inverted colormap, false for normal colormap
      */
     @action setColorMapDirection(isInvertedColorMap: boolean) {
         this.isInvertedColorMap = isInvertedColorMap;
@@ -542,7 +542,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the size mapping depending on the area or diameter
-     * @param val - true for area, false for diameter
+     * @param isSizeAreaMode - true for area, false for diameter
      */
     @action setSizeArea(isSizeAreaMode: boolean) {
         this.isSizeAreaMode = isSizeAreaMode;
@@ -681,7 +681,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minor axis mapping depending on the area or diameter
-     * @param val - true for area, false for diameter
+     * @param isSizeMinorAreaMode - true for area, false for diameter
      */
     @action setSizeMinorArea(isSizeMinorAreaMode: boolean) {
         this.isSizeMinorAreaMode = isSizeMinorAreaMode;
