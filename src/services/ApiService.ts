@@ -198,7 +198,6 @@ export class ApiService {
 
         if (preferences) {
             await this.upgradePreferences(preferences);
-            console.log(preferences);
             const isValid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
             if (!isValid) {
@@ -226,24 +225,18 @@ export class ApiService {
     private upgradePreferences = async (preferences: any) => {
         // Upgrade to V2 if required
         if (preferences["version"] === 1) {
-            let hasChanged = false;
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
             if (astColorKey in preferences) {
                 const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
-                const newAstColor = `auto-${color}`;
-                if (preferences[astColorKey] !== newAstColor) {
-                    preferences[astColorKey] = newAstColor;
-                    hasChanged = true;
-                }
+                preferences[astColorKey] = `auto-${color}`;
             }
 
             // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
             const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
             if (preferences[key] && /[A-Z]/.test(preferences[key])) {
                 preferences[key] = preferences[key].toLowerCase();
-                hasChanged = true;
             }
 
             // This is to ensure consistency in the unit used for the preview cube size limit
@@ -263,15 +256,10 @@ export class ApiService {
                 }
                 delete preferences[cubeSizeUnitKey];
                 await this.clearPreferences([cubeSizeUnitKey]);
-                hasChanged = true;
             }
 
             preferences["version"] = 2;
-            hasChanged = true;
-
-            if (hasChanged) {
-                await this.setPreferences(preferences);
-            }
+            await this.setPreferences(preferences);
         }
     };
 
