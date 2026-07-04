@@ -123,7 +123,7 @@ export class SnippetStore {
         this.activeSnippet = {
             code: "",
             frontendVersion: Snippet.FRONTEND_VERSION,
-            snippetVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.SNIPPET_VERSION,
             categories: []
         };
         this.activeSnippetName = "";

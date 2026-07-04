@@ -31,13 +31,14 @@ class CursorOverlayProps {
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
     render() {
         const cursorInfo = this.props.cursorInfo;
+        const posImageSpace = cursorInfo?.posImageSpace;
         const infoStrings: string[] = [];
         if (cursorInfo) {
             if (cursorInfo.infoWCS) {
                 infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
             }
-            if (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE) {
-                infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
+            if (posImageSpace && (posImageSpace.x !== -Number.MAX_VALUE || posImageSpace.y !== -Number.MAX_VALUE)) {
+                infoStrings.push(`Image: (${toFixed(posImageSpace.x)}, ${toFixed(posImageSpace.y)})`);
             }
         }
         if (this.props.cursorValue !== undefined) {
