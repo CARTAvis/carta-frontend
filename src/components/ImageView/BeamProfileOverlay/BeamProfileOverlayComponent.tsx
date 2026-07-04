@@ -90,7 +90,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
     };
 
-    private plotBeam(plotProps: BeamPlotProps | null): JSX.Element | null {
+    private plotBeam(plotProps: BeamPlotProps | null): React.JSX.Element | null {
         if (!plotProps) {
             return null;
         }
@@ -130,7 +130,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             baseBeamPlotProps = this.getPlotProps(baseFrame);
         }
 
-        const contourBeams: JSX.Element[] = [];
+        const contourBeams: React.JSX.Element[] = [];
         contourFrames?.forEach(contourFrame => {
             const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps?.position);
             if (plotProps) {

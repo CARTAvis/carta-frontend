@@ -220,7 +220,7 @@ export class HipsQueryStore {
             return;
         }
 
-        const message: CARTA.IRemoteFileRequest = {
+        const message: CARTA.RemoteFileRequest.$Properties = {
             hips: this.hipsSurvey,
             width: this.size.x,
             height: this.size.y,
@@ -245,7 +245,7 @@ export class HipsQueryStore {
             return;
         }
 
-        const message: CARTA.IRemoteFileRequest = {
+        const message: CARTA.RemoteFileRequest.$Properties = {
             hips: this.hipsSurvey,
             width: this.size.x,
             height: this.size.y,

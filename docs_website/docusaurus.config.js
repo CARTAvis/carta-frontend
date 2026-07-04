@@ -8,16 +8,15 @@ const packageJson = require("../package.json");
 
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-const devVersion = packageJson.version;
 
 const apiOnClick = `
     const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
     const currentVersion = versionLink?.textContent;
     let version = '';
     if (currentVersion) {
-        if (currentVersion === 'Next' || currentVersion === '${devVersion}') {
+        if (currentVersion === 'Next') {
             version = '/next';
-        } else if (currentVersion !== '${versions?.[0]}') {
+        } else if (currentVersion !== '${versions[0]}') {
             version = '/' + currentVersion;
         }
     }
@@ -48,11 +47,11 @@ const config = {
     projectName: "carta-frontend", // Usually your repo name.
     trailingSlash: false,
 
-    onBrokenLinks: "warn",
+    onBrokenLinks: "ignore",
 
     markdown: {
         hooks: {
-            onBrokenMarkdownLinks: "warn"
+            onBrokenMarkdownLinks: "throw"
         }
     },
 
@@ -73,9 +72,9 @@ const config = {
                 docs: {
                     versions: {
                         current: {
-                            label: devVersion
+                            label: "Next"
                         },
-                        "5.0.0": {
+                        [versions[0]]: {
                             banner: "none"
                         }
                     },
@@ -160,7 +159,29 @@ const config = {
                 tsconfigName: "tsconfig.json"
             }
         ],
-        require.resolve("docusaurus-lunr-search")
+        require.resolve("docusaurus-lunr-search"),
+        // Custom plugin to deduplicate @docusaurus packages.
+        // The typedoc-api plugin has its own copies of @docusaurus/* in node_modules,
+        // which causes React context failures during SSR (DocsVersionProvider, TitleFormatterProvider)
+        // because each package's React context gets two separate instances in the webpack bundle.
+        // We fix this by telling webpack to resolve all modules from docs_website's node_modules first.
+        function deduplicateDocusaurusPackages() {
+            return {
+                name: "deduplicate-docusaurus-packages",
+                configureWebpack() {
+                    return {
+                        mergeStrategy: {
+                            "resolve.modules": "replace"
+                        },
+                        resolve: {
+                            // Prepend docs_website's node_modules to ensure all packages
+                            // resolve here first, preventing duplicates from plugin's own copies.
+                            modules: [path.resolve(__dirname, "node_modules"), "node_modules"]
+                        }
+                    };
+                }
+            };
+        }
     ]
 };
 

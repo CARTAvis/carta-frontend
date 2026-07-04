@@ -27,8 +27,8 @@ function findElementInAllDocuments(id: string): HTMLElement | null {
     }
     const model = LayoutStore.Instance.layoutModel;
     if (model) {
-        for (const [, layoutWindow] of model.getwindowsMap()) {
-            const win = layoutWindow.window;
+        for (const [, layoutConfig] of model.getLayouts()) {
+            const win = layoutConfig.getWindow();
             if (win && !win.closed) {
                 const found = win.document.getElementById(id);
                 if (found) {

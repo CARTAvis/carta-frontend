@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -23,7 +23,7 @@ interface FileEntry extends ISelectedFile {
     itemCount?: number;
     size?: number;
     date?: number;
-    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    fileInfo?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
     hdu?: string;
 }
 
@@ -33,7 +33,7 @@ export interface FileListTableComponentProps {
     extendedLoading?: boolean;
     fileProgress?: {total: number; checked: number};
     fileList: BrowserFileList | null;
-    selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
+    selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | null | undefined;
     selectedHDU: string;
     filterType: FileFilteringType;
     filterString?: string;
@@ -53,7 +53,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;
-    private tableRef: Table2 | null = null;
+    private tableRef: Table | null = null;
     private cachedFilterString: string | undefined;
     private cachedSortingString: string | undefined;
     private cachedFileList: BrowserFileList | null;
@@ -202,7 +202,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             }
 
             if (fileBrowserMode === BrowserMode.Catalog) {
-                for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
+                for (const file of filteredFiles as CARTA.CatalogFileInfo.$Properties[]) {
                     entries.push({
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getCatalogFileTypeDisplay(file.type) : undefined,
@@ -213,7 +213,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     });
                 }
             } else if (fileBrowserMode === BrowserMode.File) {
-                for (const file of filteredFiles as CARTA.IFileInfo[]) {
+                for (const file of filteredFiles as CARTA.FileInfo.$Properties[]) {
                     if (file.HDUList) {
                         for (const hdu of file.HDUList) {
                             const filename = file.HDUList.length > 1 ? `${file.name || ""}: HDU ${hdu}` : file.name || "";
@@ -230,7 +230,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     }
                 }
             } else {
-                for (const file of filteredFiles as CARTA.IFileInfo[]) {
+                for (const file of filteredFiles as CARTA.FileInfo.$Properties[]) {
                     entries.push({
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
@@ -499,7 +499,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const table = (
-            <Table2
+            <Table
                 ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
                 enableRowReordering={false}
@@ -523,7 +523,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
                 <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
-            </Table2>
+            </Table>
         );
 
         return (

@@ -11,8 +11,6 @@ import {AppStore} from "stores";
 import {type CompassAnnotationStore, type RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
@@ -20,7 +18,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     };
 
     private handleLengthValueChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         } else {
             (this.props.region as CompassAnnotationStore).setLength(Number(ev.target.value));
