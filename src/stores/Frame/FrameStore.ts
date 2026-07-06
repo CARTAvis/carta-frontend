@@ -168,6 +168,9 @@ export class FrameStore {
     @observable cursorValue: {position: Point2D; channel: number; value: number} | undefined = undefined;
     @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
+    @observable pvPixelAspectRatio: number = 1;
+    @observable pvRasterScale: Point2D = {x: 1, y: 1};
+    @observable pvRasterOffset: Point2D = {x: 0, y: 0};
     @observable stokes: number = 0;
     @observable channel: number = 0;
     @observable requiredStokes: number = 0;
@@ -225,6 +228,10 @@ export class FrameStore {
 
     @computed get centerMovement(): Point2D {
         return subtract2D(this.initialCenter, this.center);
+    }
+
+    @computed get rasterPixelAspectRatio(): number {
+        return this.aspectRatio;
     }
 
     @computed get regionSet(): RegionSetStore {
@@ -2804,6 +2811,27 @@ export class FrameStore {
         }
     };
 
+    @action scalePvRaster = (axis: "x" | "y", scale: number, anchorPoint?: Point2D) => {
+        if (this.spatialReference && this.spatialTransform) {
+            const referenceAnchorPoint = anchorPoint && this.spatialTransformAST ? transformPoint(this.spatialTransformAST, anchorPoint, true) : undefined;
+            this.spatialReference.scalePvRaster(axis, scale, referenceAnchorPoint);
+        } else {
+            const oldFrameView = this.requiredFrameView;
+            const oldScale = this.pvRasterScale[axis];
+            this.pvRasterScale = {...this.pvRasterScale, [axis]: oldScale * scale};
+            this.pvPixelAspectRatio = this.pvRasterScale.x / this.pvRasterScale.y;
+
+            if (anchorPoint && isFinite(anchorPoint[axis])) {
+                const viewMin = axis === "x" ? oldFrameView.xMin : oldFrameView.yMin;
+                const anchorOffset = (anchorPoint[axis] - viewMin - 0.5) * this.zoomLevel;
+                this.pvRasterOffset = {
+                    ...this.pvRasterOffset,
+                    [axis]: this.pvRasterOffset[axis] + anchorOffset * (oldScale - this.pvRasterScale[axis])
+                };
+            }
+        }
+    };
+
     @action zoomToSizeX = (x: number): boolean => {
         if (x > 0 && isFinite(x)) {
             this.setZoom((this.renderWidth * AppStore.Instance.pixelRatio) / this.aspectRatio / x);
@@ -2973,9 +3001,15 @@ export class FrameStore {
             const zoomY = (this.spatialReference.renderHeight * AppStore.Instance.pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
             this.spatialReference.setZoom(zoom, true);
+            this.spatialReference.pvPixelAspectRatio = 1;
+            this.spatialReference.pvRasterScale = {x: 1, y: 1};
+            this.spatialReference.pvRasterOffset = {x: 0, y: 0};
             return zoom;
         } else {
             this.zoomLevel = this.zoomLevelForFit;
+            this.pvPixelAspectRatio = 1;
+            this.pvRasterScale = {x: 1, y: 1};
+            this.pvRasterOffset = {x: 0, y: 0};
             this.initCenter();
             for (const frame of this.secondarySpatialImages) {
                 if (frame.spatialTransform) {
@@ -3185,6 +3219,9 @@ export class FrameStore {
             this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
+            this.pvPixelAspectRatio = this.spatialReference.pvPixelAspectRatio;
+            this.pvRasterScale = {...this.spatialReference.pvRasterScale};
+            this.pvRasterOffset = {...this.spatialReference.pvRasterOffset};
             this.spatialReference.removeSecondarySpatialImage(this);
             this.spatialReference = null;
         }

@@ -626,8 +626,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
+            const scale = delta > 0 ? zoomSpeed : 1.0 / zoomSpeed;
+            if (frame.isPVImage && mouseEvent.shiftKey !== mouseEvent.altKey) {
+                frame.scalePvRaster(mouseEvent.shiftKey ? "y" : "x", scale, cursorPosImageSpace);
+                return;
+            }
+
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * scale;
             frame.zoomToPoint(cursorPosImageSpace.x, cursorPosImageSpace.y, newZoom, true);
 
             // Zoom stage

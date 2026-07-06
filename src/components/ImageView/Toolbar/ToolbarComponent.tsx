@@ -130,11 +130,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const className = classNames("image-toolbar", {docked: this.props.isDocked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const pixelAspectFrame = frame.spatialReference && frame.spatialTransform ? frame.spatialReference : frame;
         const currentZoomSpan = (
             <span>
                 <br />
                 <i>
                     <small>Current: {toFixed(zoomLevel, 2)}x</small>
+                    {frame.isPVImage && pixelAspectFrame.pvPixelAspectRatio !== 1 && (
+                        <small>
+                            <br />
+                            Pixel aspect: {toFixed(pixelAspectFrame.pvPixelAspectRatio, 2)}x
+                        </small>
+                    )}
                 </i>
             </span>
         );

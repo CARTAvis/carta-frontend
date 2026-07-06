@@ -458,7 +458,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
         let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
-        const tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
+        const rasterScale = spatialRef.isPVImage ? spatialRef.pvRasterScale : {x: 1, y: 1};
+        const tileScaling = {x: mip * spatialRef.zoomLevel * rasterScale.x, y: mip * spatialRef.zoomLevel * rasterScale.y};
 
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
@@ -484,7 +485,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             zoomFactor = frame.spatialTransform.scale;
             zoom = (frame.spatialReference.zoomLevel / appStore.pixelRatio) * zoomFactor;
         } else {
-            aspectRatio = frame.aspectRatio;
+            aspectRatio = frame.rasterPixelAspectRatio;
             zoom = frame.zoomLevel / appStore.pixelRatio;
         }
 
@@ -502,6 +503,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1f(shaderUniforms.PixelAspectRatio, aspectRatio);
         // take zoom level into account to convert from image space to canvas space
         bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
+        if (spatialRef.isPVImage) {
+            bottomLeft = {
+                x: bottomLeft.x * rasterScale.x + spatialRef.pvRasterOffset.x,
+                y: bottomLeft.y * rasterScale.y + spatialRef.pvRasterOffset.y
+            };
+        }
         this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width ?? 0, rasterTile.height ?? 0);
         this.gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         this.gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
@@ -540,7 +547,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
-                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor),
+                    pixelAspectRatio: frame.rasterPixelAspectRatio,
+                    pvRasterScaleX: frame.pvRasterScale.x,
+                    pvRasterScaleY: frame.pvRasterScale.y,
+                    pvRasterOffsetX: frame.pvRasterOffset.x,
+                    pvRasterOffsetY: frame.pvRasterOffset.y
                 };
                 const ratio = appStore.imageRatio;
             }
