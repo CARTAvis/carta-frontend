@@ -168,9 +168,7 @@ export class FrameStore {
     @observable cursorValue: {position: Point2D; channel: number; value: number} | undefined = undefined;
     @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
-    @observable pvPixelAspectRatio: number = 1;
-    @observable pvRasterScale: Point2D = {x: 1, y: 1};
-    @observable pvRasterOffset: Point2D = {x: 0, y: 0};
+    @observable pvZoomLevel: Point2D = {x: 1, y: 1};
     @observable stokes: number = 0;
     @observable channel: number = 0;
     @observable requiredStokes: number = 0;
@@ -228,6 +226,10 @@ export class FrameStore {
 
     @computed get centerMovement(): Point2D {
         return subtract2D(this.initialCenter, this.center);
+    }
+
+    @computed get effectiveZoomLevel(): Point2D {
+        return this.isPVImage ? this.pvZoomLevel : {x: this.zoomLevel, y: this.zoomLevel};
     }
 
     @computed get regionSet(): RegionSetStore {
@@ -323,7 +325,7 @@ export class FrameStore {
             };
         } else {
             // If there isn't a valid zoom, return a dummy view
-            if (this.zoomLevel <= 0 || !this.isRenderable) {
+            if (this.effectiveZoomLevel.x <= 0 || this.effectiveZoomLevel.y <= 0 || !this.isRenderable) {
                 return {
                     xMin: 0,
                     xMax: 1,
@@ -334,11 +336,11 @@ export class FrameStore {
             }
 
             // Required image dimensions
-            const imageWidth = (AppStore.Instance.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
-            const imageHeight = (AppStore.Instance.pixelRatio * this.renderHeight) / this.zoomLevel;
+            const imageWidth = (AppStore.Instance.pixelRatio * this.renderWidth) / this.effectiveZoomLevel.x / this.aspectRatio;
+            const imageHeight = (AppStore.Instance.pixelRatio * this.renderHeight) / this.effectiveZoomLevel.y;
 
             const mipAdjustment = PreferenceStore.Instance.isLowBandwidthMode ? 2.0 : 1.0;
-            const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
+            const mipExact = Math.max(1.0, mipAdjustment / Math.max(this.effectiveZoomLevel.x, this.effectiveZoomLevel.y));
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
@@ -1424,7 +1426,9 @@ export class FrameStore {
         this.restFreqStore = new RestFreqStore(headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
-        this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        const initialZoom = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        this.zoomLevel = initialZoom;
+        this.pvZoomLevel = {x: initialZoom, y: initialZoom};
         const pixelSizesArcsec = getPixelSizes(this, 6);
         this.pixelUnitSizeArcsec = this.isNormalImage && isFinite(pixelSizesArcsec.x) && isFinite(pixelSizesArcsec.y) ? pixelSizesArcsec : null;
 
@@ -1503,7 +1507,7 @@ export class FrameStore {
         this.disposers.push(
             autorun(() => {
                 // update zoomLevel when image viewer is available for drawing
-                if (this.isRenderable && this.zoomLevel <= 0) {
+                if (this.isRenderable && (this.zoomLevel <= 0 || this.effectiveZoomLevel.x <= 0 || this.effectiveZoomLevel.y <= 0)) {
                     this.setZoom(this.zoomLevelForFit);
                 }
             })
@@ -2802,33 +2806,42 @@ export class FrameStore {
             this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
+            this.pvZoomLevel = {x: zoom, y: zoom};
             this.replaceZoomTimeoutHandler();
             this.isZooming = true;
         }
     };
 
-    @action scalePvRaster = (axis: "x" | "y", scale: number, anchorPoint?: Point2D) => {
-        if (!isFinite(scale) || scale <= 0) {
+    @action setPvZoom = (zoomX: number, zoomY: number) => {
+        this.pvZoomLevel = {x: zoomX, y: zoomY};
+        this.zoomLevel = Math.max(zoomX, zoomY);
+        this.replaceZoomTimeoutHandler();
+        this.isZooming = true;
+    };
+
+    @action zoomToPointXY = (x: number, y: number, zoomX: number, zoomY: number) => {
+        if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
+            this.setCenter(x + (this.effectiveZoomLevel.x / zoomX) * (this.center.x - x), y + (this.effectiveZoomLevel.y / zoomY) * (this.center.y - y));
+        }
+        this.setPvZoom(zoomX, zoomY);
+    };
+
+    @action zoomToPointAxis = (axis: "x" | "y", point: Point2D, zoom: number) => {
+        if (!isFinite(zoom) || zoom <= 0) {
             return;
         }
         if (this.spatialReference && this.spatialTransform) {
-            const referenceAnchorPoint = anchorPoint && this.spatialTransformAST ? transformPoint(this.spatialTransformAST, anchorPoint, true) : undefined;
-            this.spatialReference.scalePvRaster(axis, scale, referenceAnchorPoint);
+            const referenceAnchorPoint = this.spatialTransformAST ? transformPoint(this.spatialTransformAST, point, true) : point;
+            this.spatialReference.zoomToPointAxis(axis, referenceAnchorPoint, zoom);
         } else {
-            const oldFrameView = this.requiredFrameView;
-            const oldScale = this.pvRasterScale[axis];
-            const newScale = clamp(oldScale * scale, 1e-5, 1e5);
-            this.pvRasterScale = {...this.pvRasterScale, [axis]: newScale};
-            this.pvPixelAspectRatio = this.pvRasterScale.x / this.pvRasterScale.y;
-
-            if (anchorPoint && isFinite(anchorPoint[axis])) {
-                const viewMin = axis === "x" ? oldFrameView.xMin : oldFrameView.yMin;
-                const anchorOffset = (anchorPoint[axis] - viewMin - 0.5) * this.zoomLevel;
-                this.pvRasterOffset = {
-                    ...this.pvRasterOffset,
-                    [axis]: this.pvRasterOffset[axis] + anchorOffset * (oldScale - this.pvRasterScale[axis])
-                };
+            const safeZoom = clamp(zoom, 1e-5, 1e5);
+            if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR && point && isFinite(point[axis])) {
+                this.setCenter(
+                    axis === "x" ? point.x + (this.effectiveZoomLevel.x / safeZoom) * (this.center.x - point.x) : this.center.x,
+                    axis === "y" ? point.y + (this.effectiveZoomLevel.y / safeZoom) * (this.center.y - point.y) : this.center.y
+                );
             }
+            this.setPvZoom(axis === "x" ? safeZoom : this.effectiveZoomLevel.x, axis === "y" ? safeZoom : this.effectiveZoomLevel.y);
         }
     };
 
@@ -2974,6 +2987,11 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
+            if (this.isPVImage) {
+                const scale = zoom / this.zoomLevel;
+                this.zoomToPointXY(x, y, this.effectiveZoomLevel.x * scale, this.effectiveZoomLevel.y * scale);
+                return;
+            }
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
                 this.setCenter(x + (this.zoomLevel / zoom) * (this.center.x - x), y + (this.zoomLevel / zoom) * (this.center.y - y));
             }
@@ -3001,15 +3019,11 @@ export class FrameStore {
             const zoomY = (this.spatialReference.renderHeight * AppStore.Instance.pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
             this.spatialReference.setZoom(zoom, true);
-            this.spatialReference.pvPixelAspectRatio = 1;
-            this.spatialReference.pvRasterScale = {x: 1, y: 1};
-            this.spatialReference.pvRasterOffset = {x: 0, y: 0};
+            this.spatialReference.pvZoomLevel = {x: zoom, y: zoom};
             return zoom;
         } else {
             this.zoomLevel = this.zoomLevelForFit;
-            this.pvPixelAspectRatio = 1;
-            this.pvRasterScale = {x: 1, y: 1};
-            this.pvRasterOffset = {x: 0, y: 0};
+            this.pvZoomLevel = {x: this.zoomLevel, y: this.zoomLevel};
             this.initCenter();
             for (const frame of this.secondarySpatialImages) {
                 if (frame.spatialTransform) {
@@ -3219,9 +3233,7 @@ export class FrameStore {
             this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
-            this.pvPixelAspectRatio = this.spatialReference.pvPixelAspectRatio;
-            this.pvRasterScale = {...this.spatialReference.pvRasterScale};
-            this.pvRasterOffset = {...this.spatialReference.pvRasterOffset};
+            this.pvZoomLevel = {...this.spatialReference.pvZoomLevel};
             this.spatialReference.removeSecondarySpatialImage(this);
             this.spatialReference = null;
         }

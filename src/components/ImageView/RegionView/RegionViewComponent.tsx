@@ -628,7 +628,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
             const scale = delta > 0 ? zoomSpeed : 1.0 / zoomSpeed;
             if (frame.isPVImage && mouseEvent.shiftKey !== mouseEvent.altKey) {
-                frame.scalePvRaster(mouseEvent.shiftKey ? "y" : "x", scale, cursorPosImageSpace);
+                const axis = mouseEvent.shiftKey ? "y" : "x";
+                const zoomFrame = frame.spatialReference ?? frame;
+                frame.zoomToPointAxis(axis, cursorPosImageSpace, zoomFrame.effectiveZoomLevel[axis] * scale);
                 return;
             }
 
