@@ -136,7 +136,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>Current: {toFixed(zoomLevel, 2)}x</small>
-                    {frame.isPVImage && pixelAspectFrame.pvPixelAspectRatio !== 1 && (
+                    {frame.isPVImage && Math.abs(pixelAspectFrame.pvPixelAspectRatio - 1) > 1e-4 && (
                         <small>
                             <br />
                             Pixel aspect: {toFixed(pixelAspectFrame.pvPixelAspectRatio, 2)}x

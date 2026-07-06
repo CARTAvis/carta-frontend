@@ -230,10 +230,6 @@ export class FrameStore {
         return subtract2D(this.initialCenter, this.center);
     }
 
-    @computed get rasterPixelAspectRatio(): number {
-        return this.aspectRatio;
-    }
-
     @computed get regionSet(): RegionSetStore {
         if (this.spatialReference) {
             return this.spatialReference.regionSet;
@@ -2812,13 +2808,17 @@ export class FrameStore {
     };
 
     @action scalePvRaster = (axis: "x" | "y", scale: number, anchorPoint?: Point2D) => {
+        if (!isFinite(scale) || scale <= 0) {
+            return;
+        }
         if (this.spatialReference && this.spatialTransform) {
             const referenceAnchorPoint = anchorPoint && this.spatialTransformAST ? transformPoint(this.spatialTransformAST, anchorPoint, true) : undefined;
             this.spatialReference.scalePvRaster(axis, scale, referenceAnchorPoint);
         } else {
             const oldFrameView = this.requiredFrameView;
             const oldScale = this.pvRasterScale[axis];
-            this.pvRasterScale = {...this.pvRasterScale, [axis]: oldScale * scale};
+            const newScale = clamp(oldScale * scale, 1e-5, 1e5);
+            this.pvRasterScale = {...this.pvRasterScale, [axis]: newScale};
             this.pvPixelAspectRatio = this.pvRasterScale.x / this.pvRasterScale.y;
 
             if (anchorPoint && isFinite(anchorPoint[axis])) {

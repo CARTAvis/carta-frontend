@@ -485,7 +485,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             zoomFactor = frame.spatialTransform.scale;
             zoom = (frame.spatialReference.zoomLevel / appStore.pixelRatio) * zoomFactor;
         } else {
-            aspectRatio = frame.rasterPixelAspectRatio;
+            aspectRatio = frame.aspectRatio;
             zoom = frame.zoomLevel / appStore.pixelRatio;
         }
 
@@ -548,7 +548,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor),
-                    pixelAspectRatio: frame.rasterPixelAspectRatio,
+                    pixelAspectRatio: frame.aspectRatio,
                     pvRasterScaleX: frame.pvRasterScale.x,
                     pvRasterScaleY: frame.pvRasterScale.y,
                     pvRasterOffsetX: frame.pvRasterOffset.x,
