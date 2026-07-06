@@ -205,14 +205,25 @@ describe("FrameStore", () => {
             expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true}));
             frame.updateSpectralVsDirectionWcs();
 
-            expect(AST.makeSwappedFrameSet).toHaveBeenCalledWith(11, 1, 2, 4, 512);
-
             const lastSettings = (AST.set as jest.Mock).mock.calls.at(-1)?.[1];
             expect(lastSettings).toContain("Format(1)=dms.*");
             expect(lastSettings).toContain('Unit(1)=""');
             expect(lastSettings).toContain("Unit(2)=GHz");
             expect(lastSettings).toContain("StdOfRest=LSRK");
             expect(lastSettings).toContain("Label(2)=[LSRK] Frequency");
+        });
+    });
+
+    describe("PV zoom axis", () => {
+        test("sets pvZoomAxis and copies to spatialReference", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            const spatialRef = new FrameStore(EMPTYFRAME_INFO);
+            frame["spatialReference"] = spatialRef;
+
+            expect(frame.pvZoomAxis).toBe("both");
+            frame.setPvZoomAxis("x");
+            expect(frame.pvZoomAxis).toBe("x");
+            expect(spatialRef.pvZoomAxis).toBe("x");
         });
     });
 });

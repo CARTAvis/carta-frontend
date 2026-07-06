@@ -169,6 +169,7 @@ export class FrameStore {
     @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable pvZoomLevel: Point2D = {x: 1, y: 1};
+    @observable pvZoomAxis: "both" | "x" | "y" = "both";
     @observable stokes: number = 0;
     @observable channel: number = 0;
     @observable requiredStokes: number = 0;
@@ -2817,6 +2818,13 @@ export class FrameStore {
         this.zoomLevel = Math.max(zoomX, zoomY);
         this.replaceZoomTimeoutHandler();
         this.isZooming = true;
+    };
+
+    @action setPvZoomAxis = (axis: "both" | "x" | "y") => {
+        this.pvZoomAxis = axis;
+        if (this.spatialReference) {
+            this.spatialReference.pvZoomAxis = axis;
+        }
     };
 
     @action zoomToPointXY = (x: number, y: number, zoomX: number, zoomY: number) => {
