@@ -4,6 +4,7 @@ import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, 
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
 import {ImageViewComponent, OffsetCoordinateControlsComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
@@ -21,7 +22,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number) => void;
+    onRegionViewZoom: (zoom: number | Point2D) => void;
     onZoomToFit: () => void;
 }
 
@@ -58,7 +59,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             const zoomX = frame.pvZoomAxis === "x" ? frame.effectiveZoomLevel.x * 2.0 : frame.effectiveZoomLevel.x;
             const zoomY = frame.pvZoomAxis === "y" ? frame.effectiveZoomLevel.y * 2.0 : frame.effectiveZoomLevel.y;
             frame.setPvZoom(zoomX, zoomY);
-            this.props.onRegionViewZoom(Math.max(zoomX, zoomY));
+            this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
             const zoom = frame.zoomLevel * 2.0;
             frame.setZoom(zoom, true);
@@ -72,7 +73,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             const zoomX = frame.pvZoomAxis === "x" ? frame.effectiveZoomLevel.x / 2.0 : frame.effectiveZoomLevel.x;
             const zoomY = frame.pvZoomAxis === "y" ? frame.effectiveZoomLevel.y / 2.0 : frame.effectiveZoomLevel.y;
             frame.setPvZoom(zoomX, zoomY);
-            this.props.onRegionViewZoom(Math.max(zoomX, zoomY));
+            this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
             const zoom = frame.zoomLevel / 2.0;
             frame.setZoom(zoom, true);
@@ -150,7 +151,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>Current: {toFixed(zoomLevel, 2)}x</small>
-                    {frame.isPVImage && Math.abs(zoomFrame.effectiveZoomLevel.x - zoomFrame.effectiveZoomLevel.y) > 1e-4 && (
+                    {(frame.isPVImage || frame.isPreview) && Math.abs(zoomFrame.effectiveZoomLevel.x - zoomFrame.effectiveZoomLevel.y) > 1e-4 && (
                         <small>
                             <br />
                             X: {toFixed(zoomFrame.effectiveZoomLevel.x, 2)}x, Y: {toFixed(zoomFrame.effectiveZoomLevel.y, 2)}x

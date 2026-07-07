@@ -225,5 +225,13 @@ describe("FrameStore", () => {
             expect(frame.pvZoomAxis).toBe("x");
             expect(spatialRef.pvZoomAxis).toBe("x");
         });
+
+        test("uses independent zoom levels for preview frames", () => {
+            const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
+
+            frame.setPvZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
     });
 });

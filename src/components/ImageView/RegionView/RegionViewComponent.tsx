@@ -95,7 +95,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 () => this.frame?.spatialReference,
                 spatialReference => {
                     if (spatialReference) {
-                        this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
+                        this.syncStage(spatialReference.centerMovement, spatialReference.effectiveZoomLevel);
                     }
                 }
             )
@@ -108,16 +108,23 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     if (frame) {
                         if (frame.spatialReference) {
                             // Update stage when spatial reference move/zoom(frame is sibling),
-                            // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
-                            return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                            // tracking spatial reference's centerMovement/effectiveZoomLevel to move/zoom stage.
+                            return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.effectiveZoomLevel};
                         }
-                        return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
+                        return {centerMovement: frame.centerMovement, zoom: frame.effectiveZoomLevel};
                     }
                     return undefined;
                 },
                 (reference, prevReference) => {
                     const frame = this.frame;
-                    if (reference && (reference.centerMovement.x !== prevReference?.centerMovement?.x || reference.centerMovement.y !== prevReference?.centerMovement?.y || reference.zoom !== prevReference?.zoom) && frame) {
+                    if (
+                        reference &&
+                        (reference.centerMovement.x !== prevReference?.centerMovement?.x ||
+                            reference.centerMovement.y !== prevReference?.centerMovement?.y ||
+                            reference.zoom.x !== prevReference?.zoom?.x ||
+                            reference.zoom.y !== prevReference?.zoom?.y) &&
+                        frame
+                    ) {
                         this.syncStage(reference.centerMovement, reference.zoom);
                     }
                 }
@@ -128,7 +135,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     componentDidMount() {
         const frame = this.frame?.spatialReference ?? this.frame;
         if (frame) {
-            this.syncStage(frame.centerMovement, frame.zoomLevel);
+            this.syncStage(frame.centerMovement, frame.effectiveZoomLevel);
         }
         this.setupPopoutDragListeners();
     }
@@ -154,13 +161,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const stage = this.stageRef.current;
             if (stage) {
                 const offset = {x: ((this.props.width - prevProps.width) / 2) * this.frame.aspectRatio, y: (this.props.height - prevProps.height) / 2};
-                const zoom = stage.scaleX();
-                const mutatedOffset = scale2D(offset, (1 - zoom) / zoom);
+                const zoom = {x: stage.scaleX(), y: stage.scaleY()};
+                const mutatedOffset = {x: (offset.x * (1 - zoom.x)) / zoom.x, y: (offset.y * (1 - zoom.y)) / zoom.y};
                 this.stageResizeOffset = add2D(this.stageResizeOffset, mutatedOffset);
 
                 const frame = this.frame?.spatialReference ?? this.frame;
                 if (frame) {
-                    this.syncStage(frame.centerMovement, frame.zoomLevel);
+                    this.syncStage(frame.centerMovement, frame.effectiveZoomLevel);
                 }
             }
         }
@@ -587,33 +594,34 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private syncStage = (refCenterMovement: Point2D, refFrameZoom: number) => {
+    private syncStage = (refCenterMovement: Point2D, refFrameZoom: Point2D) => {
         const stage = this.stageRef.current;
-        if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
-            stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
-            const origin = {x: (this.props.width * (1 - refFrameZoom * this.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom)) / 2};
-            const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom * this.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom / devicePixelRatio)};
+        if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom.x) && isFinite(refFrameZoom.y)) {
+            stage.scale({x: refFrameZoom.x / AppStore.Instance.imageRatio, y: refFrameZoom.y / AppStore.Instance.imageRatio});
+            const origin = {x: (this.props.width * (1 - refFrameZoom.x * this.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom.y)) / 2};
+            const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom.x * this.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom.y / devicePixelRatio)};
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
-            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
+            const correctedOrigin = subtract2D(newOrigin, {x: this.stageResizeOffset.x * refFrameZoom.x, y: this.stageResizeOffset.y * refFrameZoom.y});
             stage.position(correctedOrigin);
         }
     };
 
-    public stageZoomToPoint = (x: number, y: number, zoom: number) => {
+    public stageZoomToPoint = (x: number, y: number, zoom: number | Point2D) => {
         const stage = this.stageRef.current;
         if (stage) {
-            const oldScale = stage.scaleX();
+            const newZoom = typeof zoom === "number" ? {x: zoom, y: zoom} : zoom;
+            const oldScale = {x: stage.scaleX(), y: stage.scaleY()};
             const origin = stage.getPosition();
             const cursorPointTo = {
-                x: (x - origin.x) / oldScale,
-                y: (y - origin.y) / oldScale
+                x: (x - origin.x) / oldScale.x,
+                y: (y - origin.y) / oldScale.y
             };
             const newOrigin = {
-                x: x - cursorPointTo.x * zoom,
-                y: y - cursorPointTo.y * zoom
+                x: x - cursorPointTo.x * newZoom.x,
+                y: y - cursorPointTo.y * newZoom.y
             };
-            stage.scale({x: zoom, y: zoom});
+            stage.scale(newZoom);
             stage.position(newOrigin);
         }
     };

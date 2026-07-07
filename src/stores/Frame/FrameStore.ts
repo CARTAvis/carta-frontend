@@ -230,7 +230,7 @@ export class FrameStore {
     }
 
     @computed get effectiveZoomLevel(): Point2D {
-        return this.isPVImage ? this.pvZoomLevel : {x: this.zoomLevel, y: this.zoomLevel};
+        return this.isPVImage || this.isPreview ? this.pvZoomLevel : {x: this.zoomLevel, y: this.zoomLevel};
     }
 
     @computed get regionSet(): RegionSetStore {
