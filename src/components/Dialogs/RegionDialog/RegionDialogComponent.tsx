@@ -159,7 +159,7 @@ export class RegionDialogComponent extends React.Component {
                 <Tooltip content={isMultiRegion ? (shouldShowLockedIcon ? "Unlock selected regions" : "Lock selected regions") : shouldShowLockedIcon ? "Unlock region" : "Lock region"}>
                     <AnchorButton
                         intent={Intent.WARNING}
-                        minimal={true}
+                        variant="minimal"
                         icon={shouldShowLockedIcon ? "lock" : "unlock"}
                         onClick={isMultiRegion ? () => regionSet?.toggleSelectedRegionsLocked() : region.toggleLock}
                         disabled={isLockDisabled}
@@ -169,7 +169,7 @@ export class RegionDialogComponent extends React.Component {
                 <Tooltip content={isMultiRegion ? (isRegionVisible ? "Hide selected regions" : "Show selected regions") : isRegionVisible ? "Hide region" : "Show region"}>
                     <AnchorButton
                         intent={Intent.WARNING}
-                        minimal={true}
+                        variant="minimal"
                         icon={isRegionVisible ? "eye-open" : "eye-off"}
                         onClick={() => regionSet?.toggleSelectedRegionsVisibility()}
                         style={{opacity: getRegionIconOpacity(isMultiRegion ? selectedRegionsOpacity : region.opacity)}}
@@ -178,11 +178,11 @@ export class RegionDialogComponent extends React.Component {
                 </Tooltip>
                 {!isMultiRegion && (
                     <Tooltip content="Focus">
-                        <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} data-testid="region-dialog-focus-button" />
+                        <AnchorButton intent={Intent.WARNING} variant="minimal" icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} data-testid="region-dialog-focus-button" />
                     </Tooltip>
                 )}
                 <Tooltip content={isMultiRegion ? "Export selected regions" : "Export region"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon="cloud-upload" onClick={this.handleExportClicked} data-testid="region-dialog-export-button" />
+                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon="cloud-upload" onClick={this.handleExportClicked} data-testid="region-dialog-export-button" />
                 </Tooltip>
             </React.Fragment>
         );

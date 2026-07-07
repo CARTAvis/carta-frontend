@@ -60,7 +60,7 @@ export class CatalogApiProcessing {
         return headers;
     }
 
-    public static processSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
+    public static processSimbadData(data: [], headers: CARTA.CatalogHeader.$Properties[]): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;

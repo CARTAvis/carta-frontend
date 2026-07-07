@@ -998,7 +998,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemRenderer={this.renderFilePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
-                    <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
+                    <Button text={this.catalogFileId} endIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
@@ -1017,7 +1017,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" data-testid="catalog-plot-widget-x-dropdown" />
+                    <Button text={widgetStore.xColumnName} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-x-dropdown" />
                 </Select>
             </FormGroup>
         );
@@ -1042,7 +1042,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical" />
+                    <Button text={widgetStore.yColumnName} endIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
@@ -1061,7 +1061,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" data-testid="catalog-plot-widget-stat-dropdown" />
+                    <Button text={widgetStore.statisticColumnName} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-stat-dropdown" />
                 </Select>
             </FormGroup>
         );

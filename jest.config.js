@@ -23,6 +23,7 @@ module.exports = {
                 module: 'esnext',
                 verbatimModuleSyntax: false,
                 typeRoots: ['node_modules/@types', 'src/types'],
+                types: ['node'],
                 strictNullChecks: false,
                 strict: false
             }

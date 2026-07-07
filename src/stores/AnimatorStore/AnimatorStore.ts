@@ -84,7 +84,7 @@ export class AnimatorStore {
         };
         const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
         const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
-        const requiredTiles: CARTA.IAddRequiredTiles = {
+        const requiredTiles: CARTA.AddRequiredTiles.$Properties = {
             fileId: activeFrame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
@@ -92,7 +92,7 @@ export class AnimatorStore {
         };
 
         // Calculate matched frames for the animation range
-        const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
+        const matchedFrames = new Map<number, CARTA.MatchedFrameList.$Properties>();
         for (const sibling of activeFrame.spectralSiblings) {
             const firstChannel = animationFrames.firstFrame.channel ?? 0;
             const lastChannel = animationFrames.lastFrame.channel ?? 0;
@@ -100,7 +100,7 @@ export class AnimatorStore {
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
-        const animationMessage: CARTA.IStartAnimation = {
+        const animationMessage: CARTA.StartAnimation.$Properties = {
             fileId: activeFrame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
             firstFrame: animationFrames.firstFrame,
@@ -154,12 +154,12 @@ export class AnimatorStore {
                 this.animateHandle = undefined;
             }
         } else {
-            const endFrame: CARTA.IAnimationFrame = {
+            const endFrame: CARTA.AnimationFrame.$Properties = {
                 channel: frame.channel,
                 stokes: frame.stokes
             };
 
-            const stopMessage: CARTA.IStopAnimation = {
+            const stopMessage: CARTA.StopAnimation.$Properties = {
                 fileId: frame.frameInfo.fileId,
                 endFrame
             };
@@ -225,23 +225,23 @@ export class AnimatorStore {
         frame: FrameStore
     ):
         | {
-              startFrame: CARTA.IAnimationFrame;
-              firstFrame: CARTA.IAnimationFrame;
-              lastFrame: CARTA.IAnimationFrame;
-              deltaFrame: CARTA.IAnimationFrame;
+              startFrame: CARTA.AnimationFrame.$Properties;
+              firstFrame: CARTA.AnimationFrame.$Properties;
+              lastFrame: CARTA.AnimationFrame.$Properties;
+              deltaFrame: CARTA.AnimationFrame.$Properties;
           }
         | undefined => {
         if (!frame) {
             return undefined;
         }
 
-        const startFrame: CARTA.IAnimationFrame = {
+        const startFrame: CARTA.AnimationFrame.$Properties = {
             channel: frame.channel,
             stokes: frame.requiredPolarizationIndex
         };
-        let firstFrame: CARTA.IAnimationFrame | undefined;
-        let lastFrame: CARTA.IAnimationFrame | undefined;
-        let deltaFrame: CARTA.IAnimationFrame | undefined;
+        let firstFrame: CARTA.AnimationFrame.$Properties | undefined;
+        let lastFrame: CARTA.AnimationFrame.$Properties | undefined;
+        let deltaFrame: CARTA.AnimationFrame.$Properties | undefined;
 
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {

@@ -24,7 +24,7 @@ export class SpatialProfileStore {
         return this.profiles?.get(coordinate);
     };
 
-    @action updateFromStream(spatialProfileData: CARTA.ISpatialProfileData) {
+    @action updateFromStream(spatialProfileData: CARTA.SpatialProfileData.$Properties) {
         if (spatialProfileData) {
             this.channel = spatialProfileData.channel;
             this.value = spatialProfileData.value;

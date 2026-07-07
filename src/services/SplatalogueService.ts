@@ -4,8 +4,8 @@ import {CARTA} from "carta-protobuf";
 import {SpectralLineHeaders} from "enums";
 
 export interface SpectralLineResponse {
-    headers: CARTA.ICatalogHeader[];
-    spectralLineData: {[key: string]: CARTA.IColumnData};
+    headers: CARTA.CatalogHeader.$Properties[];
+    spectralLineData: {[key: string]: CARTA.ColumnData.$Properties};
     dataSize: number;
 }
 
@@ -87,14 +87,14 @@ export class SplatalogueService {
 
         const numDataRows = data.length;
         const responseData: SpectralLineResponse = {
-            headers: new Array<CARTA.ICatalogHeader>(),
+            headers: new Array<CARTA.CatalogHeader.$Properties>(),
             spectralLineData: {},
             dataSize: numDataRows
         };
 
         let columnIndex = 0;
         SplatalogueService.splatalogueHeaderTypeMap.forEach((value, key) => {
-            const header: CARTA.ICatalogHeader = {
+            const header: CARTA.CatalogHeader.$Properties = {
                 dataType: value,
                 name: key,
                 columnIndex: columnIndex

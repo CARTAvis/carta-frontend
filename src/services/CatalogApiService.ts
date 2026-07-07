@@ -125,9 +125,9 @@ export class CatalogApiService {
             const fileId = appStore.catalogNextFileId;
             const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
-            const coosy: CARTA.ICoosys = {system: element.coosys.system};
+            const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
             const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
-            const catalogFileInfo: CARTA.ICatalogFileInfo = {
+            const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                 name: fileName,
                 type: CARTA.CatalogFileType.VOTable,
                 description: "Online VizieR Catalog",
@@ -187,10 +187,10 @@ export class CatalogApiService {
                 const configStore = CatalogOnlineQueryConfigStore.Instance;
                 const headers = CatalogApiProcessing.processSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.processSimbadData(response.data?.data, headers);
-                const coosys: CARTA.ICoosys = {system: configStore.coordsType};
+                const coosys: CARTA.Coosys.$Properties = {system: configStore.coordsType};
                 const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
-                const catalogFileInfo: CARTA.ICatalogFileInfo = {
+                const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                     name: fileName,
                     type: CARTA.CatalogFileType.VOTable,
                     description: "Online Simbad Catalog",

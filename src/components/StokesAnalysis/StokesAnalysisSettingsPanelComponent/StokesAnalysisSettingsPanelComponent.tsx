@@ -88,7 +88,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore?.setInvertedColorMap(changeEvent.target.checked);
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
