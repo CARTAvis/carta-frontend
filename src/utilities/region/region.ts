@@ -49,6 +49,7 @@ export interface RegionTransformSource {
     regionType: CARTA.RegionType;
     center: Point2D;
     size: Point2D;
+    innerSize?: Point2D;
     controlPoints: Point2D[];
     rotation: number;
 }
@@ -103,6 +104,11 @@ export function getRegionPixelProperties(regionType: CARTA.RegionType, controlPo
             const size = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
             return `ellipse[[${center}], [${size}], ${toFixed(rotation, 6)}deg]`;
         }
+        case CARTA.RegionType.ANNULUS: {
+            const outerSize = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
+            const innerSize = controlPoints.length >= 3 ? getSizePixelString(controlPoints[2]) : outerSize;
+            return `annulus[[${center}], [${innerSize}], [${outerSize}], ${toFixed(rotation, 6)}deg]`;
+        }
         case CARTA.RegionType.POLYGON:
             let polygonProperties = "poly[";
             controlPoints.forEach((point, index) => {
@@ -151,6 +157,18 @@ export function getTransformedRegionProperties(region: RegionTransformSource, sp
             const transform = new Transform2D(spatialTransformAST, center);
             return {
                 controlPoints: [center, scale2D(region.size, 1.0 / transform.scale)],
+                rotation: region.rotation - (transform.rotation * 180) / Math.PI
+            };
+        }
+        case CARTA.RegionType.ANNULUS: {
+            const center = transformPoint(spatialTransformAST, region.center, false);
+            if (isAstBadPoint(center)) {
+                return {controlPoints: [center, region.size, region.innerSize || region.size], rotation: region.rotation};
+            }
+
+            const transform = new Transform2D(spatialTransformAST, center);
+            return {
+                controlPoints: [center, scale2D(region.size, 1.0 / transform.scale), scale2D(region.innerSize || region.size, 1.0 / transform.scale)],
                 rotation: region.rotation - (transform.rotation * 180) / Math.PI
             };
         }
@@ -292,7 +310,7 @@ export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     }
 
     const rotation = (region.rotation * Math.PI) / 180.0;
-    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE) {
+    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE || region.regionType === CARTA.RegionType.ANNULUS) {
         // Ellipse size stores semi-major in y and semi-minor in x.
         return getRotatedBoxPoints(region.center, region.size.y, region.size.x, rotation);
     }
@@ -366,7 +384,7 @@ export function getRegionSelectionSegments(region: RegionStore, points: Point2D[
         return getPathSegments(points, isClosed);
     }
 
-    if (region.isSimpleShapeRegion) {
+    if (region.isSimpleShapeRegion || region.regionType === CARTA.RegionType.ANNULUS) {
         return getPathSegments(points, true);
     }
 
@@ -466,6 +484,7 @@ export function translateRegionPoints(points: Point2D[], regionType: CARTA.Regio
         case CARTA.RegionType.ANNRECTANGLE:
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE:
+        case CARTA.RegionType.ANNULUS:
         case CARTA.RegionType.ANNTEXT:
         case CARTA.RegionType.ANNCOMPASS:
             return points.map((point, index) => (index === CENTER_POINT_INDEX ? add2D(point, delta) : {...point}));

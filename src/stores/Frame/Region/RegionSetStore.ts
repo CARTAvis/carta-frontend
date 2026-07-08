@@ -478,6 +478,10 @@ export class RegionSetStore {
         return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ELLIPSE, isTemporary);
     };
 
+    @action addAnnulusRegion = (center: Point2D, outerSemiMajor: number, outerSemiMinor: number, innerSemiMajor: number, innerSemiMinor: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: outerSemiMinor, y: outerSemiMajor}, {x: innerSemiMinor, y: innerSemiMajor}], 0, CARTA.RegionType.ANNULUS, isTemporary);
+    };
+
     @action addPolygonalRegion = (points: Point2D[], isTemporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, isTemporary);
     };
@@ -785,6 +789,7 @@ export class RegionSetStore {
                     case CARTA.RegionType.RECTANGLE:
                     case CARTA.RegionType.ANNRECTANGLE:
                     case CARTA.RegionType.ELLIPSE:
+                    case CARTA.RegionType.ANNULUS:
                         switch (region.regionType) {
                             case CARTA.RegionType.ANNTEXT:
                                 annotationStyles = (region as TextAnnotationStore).getAnnotationStyles();
@@ -799,7 +804,12 @@ export class RegionSetStore {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
                             const size = scale2D(region.size, isForward ? transform.scale : 1.0 / transform.scale);
                             rotation = region.rotation + ((isForward ? 1 : -1) * transform.rotation * 180) / Math.PI;
-                            newControlPoints = [centerNewFrame, size];
+                            if (region.regionType === CARTA.RegionType.ANNULUS) {
+                                const innerSize = scale2D(region.innerSize, isForward ? transform.scale : 1.0 / transform.scale);
+                                newControlPoints = [centerNewFrame, size, innerSize];
+                            } else {
+                                newControlPoints = [centerNewFrame, size];
+                            }
                         }
                         break;
                     case CARTA.RegionType.POINT:
