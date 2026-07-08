@@ -157,6 +157,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint,
             textScale: AppStore.Instance.imageRatio / zoomLevel
         });
+        if (region.regionType === CARTA.RegionType.ANNULUS) {
+            const ratio = region.size.y > 0 ? region.innerSize.y / region.size.y : 0.5;
+            const newInnerY = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(edit.size.y * 0.99, edit.size.y * ratio));
+            const aspect = edit.size.y > 0 ? edit.size.x / edit.size.y : 1;
+            region.setControlPoints([edit.center, edit.size, {x: newInnerY * aspect, y: newInnerY}]);
+            return;
+        }
         region.setControlPoints([edit.center, edit.size]);
     };
 

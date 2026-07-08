@@ -355,7 +355,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.ANNULUS:
-                return this.controlPoints.length === 3 && this.size.x > 0 && this.size.y > 0 && !!this.innerSize && this.innerSize.x > 0 && this.innerSize.y > 0;
+                return this.controlPoints.length === 3 && this.size.x > 0 && this.size.y > 0 && this.innerSize.x > 0 && this.innerSize.y > 0 && this.innerSize.x < this.size.x && this.innerSize.y < this.size.y;
             case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints.length === 2;
             case CARTA.RegionType.POLYGON:

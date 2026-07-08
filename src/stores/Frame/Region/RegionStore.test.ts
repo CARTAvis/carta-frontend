@@ -314,4 +314,27 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(annulus.innerSize.y).toBe(16);
         expect(annulus.innerSize.x).toBe(8); // aspect ratio 0.5, so 16 * 0.5 = 8
     });
+
+    test("annulus region is invalid when inner axes are not contained by outer axes", () => {
+        const validAnnulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+        expect(validAnnulus.isValid).toBe(true);
+
+        const invalidMajorAxis = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 10, y: 10}
+        ]);
+        expect(invalidMajorAxis.isValid).toBe(false);
+
+        const invalidMinorAxis = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 20}
+        ]);
+        expect(invalidMinorAxis.isValid).toBe(false);
+    });
 });
