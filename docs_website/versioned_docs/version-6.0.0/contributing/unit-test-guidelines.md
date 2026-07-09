@@ -43,7 +43,7 @@ Guidelines for running and writing unit tests.
 
 ### Structures
 
--   Directory structure: colocate the test file in the same directory and name with `.test.ts/tsx` suffix. For example,
+- Directory structure: colocate the test file in the same directory and name with `.test.ts/tsx` suffix. For example,
     ```
     .
     └── src
@@ -57,7 +57,7 @@ Guidelines for running and writing unit tests.
                 ├── math.ts
                 └── math.test.ts
     ```
--   Test code structure: use `describe` to structure the tests. For example,
+- Test code structure: use `describe` to structure the tests. For example,
 
     ```javascript
     describe("[unit]", () => {
@@ -69,11 +69,11 @@ Guidelines for running and writing unit tests.
     });
     ```
 
--   Make sure to implement low-level tests that focus on a certain class or function. Mock imported classes and functions with Jest when necessary.
--   TypeScript enum: import TypeScript enum without index files to avoid compile failure.
+- Make sure to implement low-level tests that focus on a certain class or function. Mock imported classes and functions with Jest when necessary.
+- TypeScript enum: import TypeScript enum without index files to avoid compile failure.
 
 ### Testing React components
 
--   Avoid mocking blueprint.js objects to prevent having complex setups.
--   Avoid testing snapshots to prevent having large files in the codebase.
--   Follow [the order of priority](https://testing-library.com/docs/queries/about/#priority) suggested by React Testing Library when querying elements.
+- Avoid mocking blueprint.js objects to prevent having complex setups.
+- Avoid testing snapshots to prevent having large files in the codebase.
+- Follow [the order of priority](https://testing-library.com/docs/queries/about/#priority) suggested by React Testing Library when querying elements.
