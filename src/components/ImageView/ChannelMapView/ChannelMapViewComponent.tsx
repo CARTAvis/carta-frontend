@@ -160,7 +160,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             />
             <CursorOverlayComponent
                 cursorInfo={frame.cursorInfo}
-                cursorValue={frame.cursorInfo.isInsideImage ? (frame.cursorValue.value ?? 0) : 0}
+                cursorValue={frame.cursorInfo?.isInsideImage ? (frame.cursorValue?.value ?? 0) : 0}
                 isValueCurrent={frame.isCursorValueCurrent}
                 spectralInfo={frame.spectralInfo}
                 width={outerViewWidth}

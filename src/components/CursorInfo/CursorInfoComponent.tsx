@@ -91,7 +91,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     private genImageCoordContent = (frame: FrameStore): React.ReactNode => {
         const x = frame?.cursorInfo?.posImageSpace?.x;
         const y = frame?.cursorInfo?.posImageSpace?.y;
-        if (!isFinite(x) || !isFinite(y) || (x === -Number.MAX_VALUE && y === -Number.MAX_VALUE)) {
+        if (x === undefined || y === undefined || !isFinite(x) || !isFinite(y) || (x === -Number.MAX_VALUE && y === -Number.MAX_VALUE)) {
             return "-";
         }
 

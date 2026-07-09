@@ -43,7 +43,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.Histogram.$Properties;
+    private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private widgetId: string;
     private readonly cachedWidgetStore: RenderConfigWidgetStore;
 
