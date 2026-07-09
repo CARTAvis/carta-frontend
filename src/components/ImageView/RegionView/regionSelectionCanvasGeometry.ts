@@ -60,7 +60,7 @@ function getCompassSelectionCanvasPoints(region: CompassAnnotationStore, context
 function getRulerSelectionCanvasPaths(region: RulerAnnotationStore, context: RegionSelectionGeometryContext): Point2D[][] {
     const {frame, layerWidth, layerHeight, stage} = context;
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo;
+    const wcsInfo = (frame.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo) ?? frame.wcsInfo;
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
     const toCanvasPath = (points: number[]): Point2D[] => {
         const canvasPoints: Point2D[] = [];

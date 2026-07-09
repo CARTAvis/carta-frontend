@@ -8,7 +8,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
@@ -19,6 +19,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
     private widgetId: string;
+    private readonly cachedWidgetStore: PvGeneratorWidgetStore;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -34,16 +35,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get widgetStore(): PvGeneratorWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.pvGeneratorWidgets) {
-            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new PvGeneratorWidgetStore();
+    get widgetStore(): PvGeneratorWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @computed get isLineIntersectedWithImage(): boolean {
@@ -156,10 +149,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             }
         } else {
             if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.widgetId)) {
-                console.log(`can't find store for widget with id=${this.widgetId}`);
                 appStore.widgetsStore.pvGeneratorWidgets.set(this.widgetId, new PvGeneratorWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.pvGeneratorWidgets.get(this.widgetId) ?? new PvGeneratorWidgetStore();
         makeObservable(this);
     }
 

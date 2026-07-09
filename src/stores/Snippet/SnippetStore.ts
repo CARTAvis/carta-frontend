@@ -22,8 +22,8 @@ export class SnippetStore {
     @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
     @observable activeSnippet: Snippet = {
         code: "",
-        frontendVersion: undefined as any,
-        snippetVersion: undefined as any,
+        frontendVersion: Snippet.FRONTEND_VERSION,
+        snippetVersion: Snippet.SNIPPET_VERSION,
         categories: []
     };
     @observable activeSnippetName: string | undefined = "";
@@ -123,7 +123,7 @@ export class SnippetStore {
         this.activeSnippet = {
             code: "",
             frontendVersion: Snippet.FRONTEND_VERSION,
-            snippetVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.SNIPPET_VERSION,
             categories: []
         };
         this.activeSnippetName = "";

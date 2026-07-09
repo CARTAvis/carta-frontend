@@ -9,7 +9,7 @@ import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {HelpType, Polarizations} from "enums";
 import {FULL_POLARIZATIONS} from "models";
-import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
@@ -18,6 +18,7 @@ import "./StatsComponent.scss";
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly cachedWidgetStore: StatsWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -38,16 +39,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @observable height: number = 325;
     @observable isMouseEntered = false;
 
-    @computed get widgetStore(): StatsWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.statsWidgets) {
-            const widgetStore = widgetsStore.statsWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new StatsWidgetStore();
+    get widgetStore(): StatsWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @computed get statsData(): CARTA.RegionStatsData | null {
@@ -118,10 +111,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
         } else {
             if (!appStore.widgetsStore.statsWidgets.has(this.widgetId)) {
-                console.log(`can't find store for widget with id=${this.widgetId}`);
                 appStore.widgetsStore.statsWidgets.set(this.widgetId, new StatsWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.statsWidgets.get(this.widgetId) ?? new StatsWidgetStore();
         // Update widget title when region or coordinate changes
         this.disposers.push(
             autorun(() => {
