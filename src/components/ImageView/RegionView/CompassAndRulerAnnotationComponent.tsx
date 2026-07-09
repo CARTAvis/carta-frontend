@@ -471,7 +471,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-    const wcsInfo = frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = (frame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo) ?? frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
 
     const xApproxPoints = approxPoints.xApproximatePoints;

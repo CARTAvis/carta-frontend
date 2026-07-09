@@ -1,7 +1,7 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -155,7 +155,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             </span>
                         }
                     >
-                        <AnchorButton minimal={true} small={true} active={isRasterVisible} intent={isRasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
+                        <AnchorButton variant="minimal" size="small" active={isRasterVisible} intent={isRasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
                             R
                         </AnchorButton>
                     </Tooltip>
@@ -172,7 +172,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={isContourVisible} intent={isContourVisible ? "success" : "none"} onClick={toggleContourVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isContourVisible} intent={isContourVisible ? "success" : "none"} onClick={toggleContourVisible}>
                                 C
                             </AnchorButton>
                         </Tooltip>
@@ -190,7 +190,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={isVectorOverlayVisible} intent={isVectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isVectorOverlayVisible} intent={isVectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
                                 V
                             </AnchorButton>
                         </Tooltip>
@@ -234,8 +234,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isSpatialReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spatialReference}
                         intent={frame.spatialReference ? "success" : "none"}
                         onClick={() => (isSpatialReference ? appStore.matchAllSpatial() : appStore.toggleSpatialMatching(frame))}
@@ -271,8 +271,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isSpectralReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
@@ -308,8 +308,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 >
                     <AnchorButton
                         className={classNames({outlined: isRasterScalingReference})}
-                        minimal={true}
-                        small={true}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.rasterScalingReference}
                         intent={frame.rasterScalingReference ? "success" : "none"}
                         onClick={() => (isRasterScalingReference ? appStore.matchAllRasterScaling() : appStore.toggleRasterScalingMatching(frame))}
@@ -377,7 +377,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private contextMenuRenderer = (context: MenuContext): JSX.Element => {
+    private contextMenuRenderer = (context: MenuContext): React.JSX.Element => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
         if (!rows || !rows.length) {
@@ -471,7 +471,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <ResizeDetector onResize={this.onResize}>
                 <div className="layer-list-widget">
                     {this.width > 0 && (
-                        <Table2
+                        <Table
                             numRows={imageNum}
                             rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                             enableRowHeader={true}
@@ -492,7 +492,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                        </Table2>
+                        </Table>
                     )}
                 </div>
             </ResizeDetector>

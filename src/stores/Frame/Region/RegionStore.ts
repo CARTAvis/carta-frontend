@@ -63,7 +63,7 @@ export class RegionStore {
     @observable isLocked: boolean = false;
     @observable opacity: RegionOpacity = RegionOpacity.Visible;
     @observable isSimplePolygon: boolean = true;
-    @observable activeFrame: FrameStore = undefined as any;
+    @observable activeFrame: FrameStore;
     @observable lineRegionSampleWidth: number = 3;
     @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
@@ -553,7 +553,7 @@ export class RegionStore {
      *
      * @param p - Specifies the x and y size components.
      *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
-     * @param skipUpdate - Whether to update the changes with the backend.
+     * @param shouldSkipUpdate - Whether to update the changes with the backend.
      */
     @action setSize = (p: Point2D, shouldSkipUpdate = false) => {
         if (this.isLineLikeRegion) {

@@ -1,19 +1,18 @@
 import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, PopoverNext, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
 import {HeaderTableColumnName, HelpType, RedshiftType, type SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
+import {SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
 const PLOT_LINES_LIMIT = 1000;
 
@@ -23,8 +22,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable height: number = 600;
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
     private widgetId: string;
-    private headerTableRef: Table2 | undefined;
-    private resultTableRef: Table2 | undefined;
+    private readonly cachedWidgetStore: SpectralLineQueryWidgetStore;
+    private headerTableRef: Table | undefined;
+    private resultTableRef: Table | undefined;
     private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -45,6 +45,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
         this.widgetId = props.id;
+        let widgetStore = WidgetsStore.Instance.spectralLineQueryWidgets.get(this.widgetId);
+        if (!widgetStore) {
+            widgetStore = new SpectralLineQueryWidgetStore();
+            WidgetsStore.Instance.spectralLineQueryWidgets.set(this.widgetId, widgetStore);
+        }
+        this.cachedWidgetStore = widgetStore;
     }
 
     componentWillUnmount() {
@@ -52,16 +58,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.scrollToTopHandle = undefined;
     }
 
-    @computed get widgetStore(): SpectralLineQueryWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        throw new Error("Widget store not found");
+    get widgetStore(): SpectralLineQueryWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @action onResize = (width: number, height: number) => {
@@ -98,7 +96,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     };
 
     private handleRedshiftChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -176,7 +174,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnDescription);
 
         return (
-            <Table2
+            <Table
                 ref={ref => (this.headerTableRef = ref ?? undefined)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
@@ -193,7 +191,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 cellRendererDependencies={[this.widgetStore.displayedColumnHeaders]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 
@@ -353,7 +351,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
-            <Popover
+            <PopoverNext
                 content={
                     <Menu>
                         {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => (
@@ -370,13 +368,15 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         ))}
                     </Menu>
                 }
-                position={Position.BOTTOM}
-                minimal={true}
+                placement="bottom"
+                animation="minimal"
+                arrow={false}
+                shouldReturnFocusOnClose={false}
             >
-                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
+                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} endIcon="caret-down">
                     {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
-            </Popover>
+            </PopoverNext>
         );
 
         const queryResultTableProps: FilterableTableComponentProps = {

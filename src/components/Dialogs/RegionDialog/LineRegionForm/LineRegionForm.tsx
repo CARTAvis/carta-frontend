@@ -299,7 +299,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={startPoint?.x}
                 onChange={this.handleStartXChange}
-                valueWcs={startWCSPoint?.x || null}
+                valueWcs={startWCSPoint?.x ?? null}
                 onChangeWcs={this.handleStartXWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
@@ -310,7 +310,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={startPoint?.y}
                 onChange={this.handleStartYChange}
-                valueWcs={startWCSPoint?.y || null}
+                valueWcs={startWCSPoint?.y ?? null}
                 onChangeWcs={this.handleStartYWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
@@ -326,7 +326,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={endPoint?.x}
                 onChange={this.handleEndXChange}
-                valueWcs={endWCSPoint?.x || null}
+                valueWcs={endWCSPoint?.x ?? null}
                 onChangeWcs={this.handleEndXWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
@@ -337,7 +337,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={endPoint?.y}
                 onChange={this.handleEndYChange}
-                valueWcs={endWCSPoint?.y || null}
+                valueWcs={endWCSPoint?.y ?? null}
                 onChangeWcs={this.handleEndYWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
@@ -353,7 +353,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x || null}
+                valueWcs={centerWCSPoint?.x ?? null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -364,7 +364,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y || null}
+                valueWcs={centerWCSPoint?.y ?? null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />

@@ -31,7 +31,7 @@ export class ExecutionEntry {
         return executionEntry;
     }
 
-    public static fromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
+    public static fromScriptingRequest(requestMessage: CARTA.ScriptingRequest.$Properties): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         executionEntry.isAsync = requestMessage.async;
         executionEntry.target = requestMessage.target;
@@ -146,7 +146,7 @@ export class ScriptingService {
         });
     }
 
-    handleScriptingRequest = async (requestMessage: CARTA.IScriptingRequest): Promise<CARTA.IScriptingResponse> => {
+    handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {
         const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
         if (!entry.isValid) {
             return {

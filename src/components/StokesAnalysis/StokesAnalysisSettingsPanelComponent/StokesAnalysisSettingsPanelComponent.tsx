@@ -23,6 +23,7 @@ import "./StokesAnalysisSettingsPanelComponent.scss";
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: StokesAnalysisWidgetStore | null = null;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -42,15 +43,10 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     }
 
     get widgetStore(): StokesAnalysisWidgetStore | null {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.stokesAnalysisWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
@@ -88,7 +84,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore?.setInvertedColorMap(changeEvent.target.checked);
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+    handleSelectedTabChanged = (newTabId: string | number) => {
         this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 

@@ -83,7 +83,7 @@ export interface FrameInfo {
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
-    beamTable: CARTA.IBeam[];
+    beamTable: CARTA.Beam.$Properties[];
     generated: boolean;
     preview?: boolean;
     previewSourceFileId?: number;
@@ -118,13 +118,13 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoOffset: AST.FrameSet = undefined as any;
+    @observable public wcsInfoOffset: AST.FrameSet | undefined = undefined;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly isValidWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
     public readonly defaultWcsEquinox: string;
     public readonly defaultWcsEpoch: string;
-    @observable public frameInfo: FrameInfo = undefined as any;
+    @observable public frameInfo: FrameInfo;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
@@ -147,7 +147,7 @@ export class FrameStore {
     public pointShapeCache: CARTA.PointAnnotationShape;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
-    @observable private readonly frameRegionSet: RegionSetStore = undefined as any;
+    @observable private readonly frameRegionSet: RegionSetStore;
 
     @observable spectralType: SpectralType | null = null;
     @observable spectralUnit: SpectralUnit | null = null;
@@ -163,9 +163,9 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D = undefined as any;
-    @observable cursorInfo: CursorInfo = undefined as any;
-    @observable cursorValue: {position: Point2D; channel: number; value: number} = undefined as any;
+    @observable offsetCenter: Point2D | undefined = undefined;
+    @observable cursorInfo: CursorInfo | undefined = undefined;
+    @observable cursorValue: {position: Point2D; channel: number; value: number} | undefined = undefined;
     @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
@@ -415,7 +415,7 @@ export class FrameStore {
             if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
                 this.createWcsInfoOffset();
             }
-            const wcsInfo = this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo;
+            const wcsInfo = (this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo) ?? this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
@@ -497,7 +497,7 @@ export class FrameStore {
         return null;
     }
 
-    @computed get beamAllChannels(): CARTA.IBeam[] {
+    @computed get beamAllChannels(): CARTA.Beam.$Properties[] {
         const channelNum = this.channelInfo?.indexes?.length;
         if (!channelNum) {
             return [];
@@ -507,8 +507,8 @@ export class FrameStore {
         return beams.filter(beam => beam !== undefined);
     }
 
-    private getBeam = (channel: number, stokes: number): CARTA.IBeam | undefined => {
-        let beam: CARTA.IBeam | undefined;
+    private getBeam = (channel: number, stokes: number): CARTA.Beam.$Properties | undefined => {
+        let beam: CARTA.Beam.$Properties | undefined;
         if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
             beam = this.frameInfo.beamTable[0];
         } else {
@@ -601,7 +601,7 @@ export class FrameStore {
 
         if (this.isSwappedZ) {
             // re-assign spectral channel index along x- or y-axis
-            spectralInfo.channel = this.spectral === 1 ? this.cursorValue.position.x : this.cursorValue.position.y;
+            spectralInfo.channel = this.spectral === 1 ? (this.cursorValue?.position.x ?? this.channel) : (this.cursorValue?.position.y ?? this.channel);
         }
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
@@ -1227,6 +1227,9 @@ export class FrameStore {
             return null;
         }
 
+        if (!this.cursorInfo) {
+            return null;
+        }
         const cursorPosImage = this.cursorInfo.posImageSpace;
         const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
@@ -1611,7 +1614,7 @@ export class FrameStore {
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
-    private static shiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+    private static shiftASTCoords = (entry: CARTA.HeaderEntry.$Properties, currentValue: string) => {
         if (entry.name?.match(/CRPIX\d+/)) {
             const numericValue = parseFloat(entry.value ?? "");
             if (isFinite(numericValue)) {
@@ -2405,7 +2408,7 @@ export class FrameStore {
 
         if (this.wcsInfoOffset) {
             AST.deleteObject(this.wcsInfoOffset);
-            this.wcsInfoOffset = undefined as any;
+            this.wcsInfoOffset = undefined;
         }
 
         const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
@@ -2415,7 +2418,7 @@ export class FrameStore {
 
         this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y, this.skyRefIs);
         for (const frame of this.secondarySpatialImages) {
-            const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
+            const frameCenterInRad = frame.offsetCenter ? getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter) : undefined;
             if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
                 if (frame.wcsInfoOffset) {
                     AST.deleteObject(frame.wcsInfoOffset);
@@ -2445,6 +2448,9 @@ export class FrameStore {
         if (!this.wcsInfoOffset) {
             return {x: "NaN", y: "NaN"};
         }
+        if (!this.offsetCenter) {
+            return {x: "NaN", y: "NaN"};
+        }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
     }
 
@@ -2453,7 +2459,7 @@ export class FrameStore {
      *
      * @param x - x-axis value in the pixel coordinates.
      * @param y - y-axis value in the pixel coordinates.
-     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @param shouldEnableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
     @action setOffsetCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {
@@ -2679,7 +2685,7 @@ export class FrameStore {
         });
     }
 
-    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
+    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.VectorOverlayTileData.$Properties) {
         if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
             if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
                 this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
@@ -2692,7 +2698,7 @@ export class FrameStore {
     /**
      * Sets the channel of the frame.
      * @param channel - The channel index to set.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setChannel = (channel: number, isRecursive: boolean = true) => {
         this.setChannels(channel, this.requiredStokes, isRecursive);
@@ -2702,7 +2708,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame. Required for carta-python.
      * If the provided `polarization` value is not found in the frame, the function will return without making any changes.
      * @param polarization - The polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokes = (polarization: Polarizations, isRecursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
@@ -2716,7 +2722,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame by the index.
      * If the provided `polarizationIndex` is not a valid index or exceeds the range, the function will return without making any changes.
      * @param polarizationIndex - The index of the polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokesByIndex = (polarizationIndex: number, isRecursive: boolean = false) => {
         if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
@@ -2733,7 +2739,7 @@ export class FrameStore {
      * Sets the channel and the Stokes parameter of the frame.
      * @param channel - The channel index to set.
      * @param stokes - The Stokes parameter to set. Standard polarization requires the polarization index (eg. "I": 0). Computed polarization requires the polarization value (eg. "Pangle": 17).
-     * @param recursive - Whether to update channels of spectrally matched frames.
+     * @param isRecursive - Whether to update channels of spectrally matched frames.
      */
     @action setChannels = (channel: number, stokes: number, isRecursive: boolean) => {
         if (stokes < 0) {
@@ -2837,7 +2843,7 @@ export class FrameStore {
      *
      * @param x - x-axis value in the pixel coordinates.
      * @param y - y-axis value in the pixel coordinates.
-     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @param shouldEnableSpatialTransform - enable spatial coordinates transform.
      * @returns - true if offset center is setted succesfully
      */
     @action setCenter = (x: number, y: number, shouldEnableSpatialTransform: boolean = true): boolean => {
@@ -3002,7 +3008,7 @@ export class FrameStore {
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
-        const contourParameters: CARTA.ISetContourParameters = {
+        const contourParameters: CARTA.SetContourParameters.$Properties = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
             smoothingMode: this.contourConfig.smoothingMode,
@@ -3027,7 +3033,7 @@ export class FrameStore {
         this.contourStores.clear();
         if (shouldUpdateBackend) {
             // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
-            const contourParameters: CARTA.ISetContourParameters = {
+            const contourParameters: CARTA.SetContourParameters.$Properties = {
                 fileId: this.frameInfo.fileId,
                 referenceFileId: this.frameInfo.fileId
             };
@@ -3045,7 +3051,7 @@ export class FrameStore {
         const preferenceStore = PreferenceStore.Instance;
         config.setEnabled(true);
 
-        const parameters: CARTA.ISetVectorOverlayParameters = {
+        const parameters: CARTA.SetVectorOverlayParameters.$Properties = {
             fileId: this.frameInfo.fileId,
             imageBounds: {
                 xMin: 0,
@@ -3074,7 +3080,7 @@ export class FrameStore {
 
         if (shouldUpdateBackend) {
             // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
-            const parameters: CARTA.ISetVectorOverlayParameters = {
+            const parameters: CARTA.SetVectorOverlayParameters.$Properties = {
                 fileId: this.frameInfo.fileId,
                 stokesAngle: -1,
                 stokesIntensity: -1

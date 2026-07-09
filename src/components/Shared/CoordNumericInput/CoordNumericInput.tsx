@@ -6,8 +6,6 @@ import {NUMBER_FORMAT_LABEL} from "utilities";
 
 import {SafeNumericInput} from "..";
 
-const KEYCODE_ENTER = 13;
-
 type WcsCoordNumericInputProps = {
     inputType: InputType;
     valueWcs: string | null;
@@ -18,7 +16,7 @@ type WcsCoordNumericInputProps = {
 
 const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled: isDisabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const wcsString = ev.currentTarget.value;
@@ -83,7 +81,7 @@ interface ImageCoordNumericInputProps {
 
 export const ImageCoordNumericInput = ({inputType, value, onChange, disabled: isDisabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const valueString = ev.currentTarget.value;

@@ -18,7 +18,7 @@ export interface RasterTile {
 }
 
 export interface CompressedTile {
-    tile: CARTA.ITileData;
+    tile: CARTA.TileData.$Properties;
     channel: number | null | undefined;
     compressionQuality: number | null | undefined;
 }
@@ -537,7 +537,7 @@ export class TileService {
         this.textureCoordinateQueue.push(tile.textureCoordinate);
     };
 
-    private handleStreamSync = (syncMessage: CARTA.IRasterTileSync) => {
+    private handleStreamSync = (syncMessage: CARTA.RasterTileSync.$Properties) => {
         const key = `${syncMessage.fileId}_${syncMessage.stokes}_${syncMessage.channel}`;
         if (this.isAnimationEnabled && syncMessage.animationId !== this.backendService.animationId) {
             return;
@@ -568,7 +568,7 @@ export class TileService {
             this.syncIdMap.set(syncMessage.syncId, true);
 
             // Flow control
-            const flowControlMessage: CARTA.IChannelMapFlowControl = {
+            const flowControlMessage: CARTA.ChannelMapFlowControl.$Properties = {
                 fileId: syncMessage.fileId,
                 receivedChannel: syncMessage.channel
             };
@@ -577,7 +577,7 @@ export class TileService {
         }
     };
 
-    private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
+    private handleStreamedTiles = (tileMessage: CARTA.RasterTileData.$Properties) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
 
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
@@ -646,7 +646,7 @@ export class TileService {
         fileId: number,
         channel: number | null | undefined,
         stokes: number | null | undefined,
-        tile: CARTA.ITileData,
+        tile: CARTA.TileData.$Properties,
         precision: number | null | undefined,
         tileCoordinate: number,
         syncId?: number | null | undefined

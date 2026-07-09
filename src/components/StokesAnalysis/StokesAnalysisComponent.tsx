@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, type ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {HelpType, PlotType, SmoothingType, SpectralColorMap, SpectralType, StokesCoordinate, TickType} from "enums";
 import {type Point2D} from "models";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, type SpectralProfileStore, type WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type SpectralProfileStore, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
@@ -26,6 +26,7 @@ type Point3D = {x: number; y: number; z?: number};
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly cachedWidgetStore: StokesAnalysisWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
     private pointDefaultColor = Colors.GRAY2;
     private opacityOutRange = 0.1;
@@ -55,16 +56,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable width: number = 520;
     @observable height: number = 650;
 
-    @computed get widgetStore(): StokesAnalysisWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore();
+    get widgetStore(): StokesAnalysisWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @computed get profileStore(): SpectralProfileStore | null {
@@ -111,10 +104,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         } else {
             if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.widgetId)) {
-                console.log(`can't find store for widget with id=${this.widgetId}`);
                 appStore.widgetsStore.stokesAnalysisWidgets.set(this.widgetId, new StokesAnalysisWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.stokesAnalysisWidgets.get(this.widgetId) ?? new StokesAnalysisWidgetStore();
 
         this.disposers.push(
             autorun(() => {
@@ -1011,16 +1004,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
 
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-                let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
-                if (appStore.isDarkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;
-                    }
-                    if (!this.widgetStore.secondaryLineColor.fixed) {
-                        ulinePlotColor = Colors.ORANGE4;
-                    }
-                }
+                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
                 piLinePlotProps.lineColor = primaryLineColor;
                 paLinePlotProps.lineColor = primaryLineColor;
 

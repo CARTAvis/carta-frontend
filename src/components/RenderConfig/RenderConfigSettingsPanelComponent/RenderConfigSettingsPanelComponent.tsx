@@ -10,10 +10,10 @@ import {parseNumber} from "utilities";
 
 import "./RenderConfigSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
+    private cachedWidgetStore: RenderConfigWidgetStore | undefined;
+
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
@@ -31,15 +31,10 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     }
 
     get widgetStore(): RenderConfigWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.renderConfigWidgets.get(this.props.id);
         }
-        console.log("can't find store for widget");
-        return new RenderConfigWidgetStore();
+        return this.cachedWidgetStore ?? new RenderConfigWidgetStore();
     }
 
     handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +50,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -74,7 +69,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -93,7 +88,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -112,7 +107,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
