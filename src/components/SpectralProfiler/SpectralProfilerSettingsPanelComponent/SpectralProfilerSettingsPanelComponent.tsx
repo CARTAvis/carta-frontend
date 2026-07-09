@@ -18,6 +18,7 @@ import "./SpectralProfilerSettingsPanelComponent.scss";
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: SpectralProfileWidgetStore | null = null;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WidgetConfig(): DefaultWidgetConfig {
@@ -43,15 +44,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     }
 
     get widgetStore(): SpectralProfileWidgetStore | null {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.spectralProfileWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
