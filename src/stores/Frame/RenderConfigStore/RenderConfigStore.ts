@@ -47,7 +47,7 @@ export class RenderConfigStore {
     @observable alphaSinh: number;
     @observable alphaAsinh: number;
     @observable isInverted: boolean = false;
-    @observable channelHistogram: CARTA.Histogram.$Properties = undefined as any;
+    @observable channelHistogram: CARTA.Histogram.$Properties | undefined = undefined;
     @observable cubeHistogram: CARTA.Histogram.$Properties | null = null;
     @observable isUsingCubeHistogram: boolean = false;
     @observable isUsingCubeHistogramContours: boolean = false;
@@ -300,6 +300,9 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
+        if (!this.histogram) {
+            return false;
+        }
         const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
             this.scaleMin[this.stokesIndex] = percentiles[0];

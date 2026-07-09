@@ -345,7 +345,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x || null}
+                valueWcs={centerWCSPoint?.x ?? null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -356,7 +356,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y || null}
+                valueWcs={centerWCSPoint?.y ?? null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -373,7 +373,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.XCoord}
                 value={bottomLeftPoint?.x}
                 onChange={(value: number) => this.handleLeftChange(value, isTextAnnotation)}
-                valueWcs={bottomLeftWCSPoint?.x || null}
+                valueWcs={bottomLeftWCSPoint?.x ?? null}
                 onChangeWcs={this.handleLeftWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
@@ -385,7 +385,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.YCoord}
                 value={bottomLeftPoint?.y}
                 onChange={(value: number) => this.handleBottomChange(value, isTextAnnotation)}
-                valueWcs={bottomLeftWCSPoint?.y || null}
+                valueWcs={bottomLeftWCSPoint?.y ?? null}
                 onChangeWcs={this.handleBottomWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
@@ -403,7 +403,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.XCoord}
                 value={topRightPoint?.x}
                 onChange={(value: number) => this.handleRightChange(value, isTextAnnotation)}
-                valueWcs={topRightWCSPoint?.x || null}
+                valueWcs={topRightWCSPoint?.x ?? null}
                 onChangeWcs={this.handleRightWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
@@ -415,7 +415,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.YCoord}
                 value={topRightPoint?.y}
                 onChange={(value: number) => this.handleTopChange(value, isTextAnnotation)}
-                valueWcs={topRightWCSPoint?.y || null}
+                valueWcs={topRightWCSPoint?.y ?? null}
                 onChangeWcs={this.handleTopWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
@@ -432,7 +432,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.Size}
                 value={size.x}
                 onChange={(value: number) => this.handleWidthChange(value, isTextAnnotation)}
-                valueWcs={sizeWCS?.x || null}
+                valueWcs={sizeWCS?.x ?? null}
                 onChangeWcs={(wcsValue: string) => this.handleWidthWCSChange(wcsValue, isTextAnnotation)}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Width"
@@ -444,7 +444,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 inputType={InputType.Size}
                 value={size.y}
                 onChange={(value: number) => this.handleHeightChange(value, isTextAnnotation)}
-                valueWcs={sizeWCS?.y || null}
+                valueWcs={sizeWCS?.y ?? null}
                 onChangeWcs={(wcsValue: string) => this.handleHeightWCSChange(wcsValue, isTextAnnotation)}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Height"

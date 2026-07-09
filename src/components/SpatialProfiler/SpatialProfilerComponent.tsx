@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {HelpType, PlotType, Polarizations, RegionId, SmoothingType, TickType} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {SpatialProfileWidgetStore} from "stores/Widgets";
 import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
@@ -40,6 +40,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private cachedFormattedCoordinates: string[];
     private widgetId: string;
+    private readonly cachedWidgetStore: SpatialProfileWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     @observable width: number = 650;
@@ -49,16 +50,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable autoScaleHorizontalMin: number = 0;
     @observable autoScaleHorizontalMax: number = 1;
 
-    @computed get widgetStore(): SpatialProfileWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new SpatialProfileWidgetStore();
+    get widgetStore(): SpatialProfileWidgetStore {
+        return this.cachedWidgetStore;
     }
 
     @computed get profileStore(): SpatialProfileStore | undefined {
@@ -347,10 +340,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
         } else {
             if (!appStore.widgetsStore.spatialProfileWidgets.has(this.widgetId)) {
-                console.log(`can't find store for widget with id=${this.widgetId}`);
                 appStore.widgetsStore.spatialProfileWidgets.set(this.widgetId, new SpatialProfileWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.spatialProfileWidgets.get(this.widgetId) ?? new SpatialProfileWidgetStore();
         // Update widget title when region or coordinate changes
         this.disposers.push(
             autorun(() => {

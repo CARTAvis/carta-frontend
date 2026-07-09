@@ -12,6 +12,8 @@ import "./RenderConfigSettingsPanelComponent.scss";
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
+    private cachedWidgetStore: RenderConfigWidgetStore | undefined;
+
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
@@ -29,15 +31,10 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     }
 
     get widgetStore(): RenderConfigWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.renderConfigWidgets.get(this.props.id);
         }
-        console.log("can't find store for widget");
-        return new RenderConfigWidgetStore();
+        return this.cachedWidgetStore ?? new RenderConfigWidgetStore();
     }
 
     handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
