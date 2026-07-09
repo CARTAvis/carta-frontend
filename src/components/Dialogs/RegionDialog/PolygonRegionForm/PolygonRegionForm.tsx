@@ -85,7 +85,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     inputType={InputType.XCoord}
                     value={point.x}
                     onChange={this.handlePointChange(index, true)}
-                    valueWcs={pointWCS?.x || null}
+                    valueWcs={pointWCS?.x ?? null}
                     onChangeWcs={this.handleWCSPointChange(index, true)}
                     wcsDisabled={!this.props.wcsInfo || !pointWCS}
                 />
@@ -96,7 +96,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     inputType={InputType.YCoord}
                     value={point.y}
                     onChange={this.handlePointChange(index, false)}
-                    valueWcs={pointWCS?.y || null}
+                    valueWcs={pointWCS?.y ?? null}
                     onChangeWcs={this.handleWCSPointChange(index, false)}
                     wcsDisabled={!this.props.wcsInfo || !pointWCS}
                 />

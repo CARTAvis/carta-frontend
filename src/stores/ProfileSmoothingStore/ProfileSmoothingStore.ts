@@ -131,7 +131,7 @@ export class ProfileSmoothingStore {
         return (this.gaussianKernel - 1) / (2 * this.gaussianSigma);
     }
 
-    private getLocalStartEndIndexes(fullLength: number, xMinIndex: number | undefined, xMaxIndex: number, kernelSize: number) {
+    private getLocalStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, kernelSize: number) {
         let h: number, j: number;
         if (kernelSize % 2 === 1) {
             h = (kernelSize - 1) / 2;
@@ -140,15 +140,15 @@ export class ProfileSmoothingStore {
             h = kernelSize / 2 - 1;
             j = kernelSize / 2;
         }
-        const startSmoothing = (xMinIndex ?? NaN) < h ? 0 : (xMinIndex ?? NaN) - h;
+        const startSmoothing = xMinIndex < h ? 0 : xMinIndex - h;
         const endSmoothing = xMaxIndex + j > fullLength - 1 ? fullLength - 1 : xMaxIndex + j;
-        const smoothedStart = (xMinIndex ?? NaN) < h ? xMinIndex : h;
-        const smoothedEnd = (smoothedStart ?? NaN) + xMaxIndex - (xMinIndex ?? NaN);
+        const smoothedStart = xMinIndex < h ? xMinIndex : h;
+        const smoothedEnd = smoothedStart + xMaxIndex - xMinIndex;
         return {startSmoothing, endSmoothing, smoothedStart, smoothedEnd};
     }
 
-    private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number | undefined, xMaxIndex: number, width: number) {
-        const firstGroupStartIndex = (xMinIndex ?? NaN) % width === 0 ? xMinIndex : (xMinIndex ?? NaN) - ((xMinIndex ?? NaN) % width);
+    private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, width: number) {
+        const firstGroupStartIndex = xMinIndex % width === 0 ? xMinIndex : xMinIndex - (xMinIndex % width);
         let lastGroupEndIndex = xMaxIndex % width === width - 1 ? xMaxIndex : xMaxIndex - (xMaxIndex % width) + (width - 1);
         if (lastGroupEndIndex > fullLength - 1) {
             lastGroupEndIndex = fullLength - 1;
@@ -159,8 +159,9 @@ export class ProfileSmoothingStore {
     getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): {x: number[]; y: Float32Array | Float64Array | undefined} {
         let smoothingYs: Float32Array | Float64Array | undefined;
         let smoothingXs = x;
+        const hasValidLocalRangeIndexes = xMinIndex !== undefined && xMaxIndex !== undefined && xMinIndex >= 0 && xMaxIndex >= xMinIndex && xMaxIndex < x.length;
         if (this.type === SmoothingType.BOXCAR) {
-            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            if (hasValidLocalRangeIndexes) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.boxcarSize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
                 smoothingYs = GSL.boxcarSmooth(localYs, this.boxcarSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
@@ -170,7 +171,7 @@ export class ProfileSmoothingStore {
             }
         } else if (this.type === SmoothingType.GAUSSIAN) {
             if (this.gaussianSigma && this.gaussianSigma >= 1) {
-                if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                if (hasValidLocalRangeIndexes) {
                     const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.gaussianKernel);
                     const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
                     smoothingYs = GSL.gaussianSmooth(localYs, this.gaussianKernel, this.gaussianAlpha).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
@@ -180,7 +181,7 @@ export class ProfileSmoothingStore {
                 }
             }
         } else if (this.type === SmoothingType.HANNING) {
-            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            if (hasValidLocalRangeIndexes) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.hanningSize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
                 smoothingYs = GSL.hanningSmooth(localYs, this.hanningSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
@@ -189,7 +190,7 @@ export class ProfileSmoothingStore {
                 smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
             }
         } else if (this.type === SmoothingType.DECIMATION) {
-            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            if (hasValidLocalRangeIndexes) {
                 const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.decimationWidth);
                 const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
                 const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
@@ -202,7 +203,7 @@ export class ProfileSmoothingStore {
                 smoothingYs = decimatedValues.y;
             }
         } else if (this.type === SmoothingType.BINNING) {
-            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            if (hasValidLocalRangeIndexes) {
                 const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.binWidth);
                 const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
                 const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
@@ -213,7 +214,7 @@ export class ProfileSmoothingStore {
                 smoothingYs = GSL.binning(y, this.binWidth);
             }
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
-            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            if (hasValidLocalRangeIndexes) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.savitzkyGolaySize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
                 smoothingYs = GSL.savitzkyGolaySmooth(x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
@@ -247,7 +248,8 @@ export class ProfileSmoothingStore {
             return [];
         }
         let decimatedValues;
-        if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+        const hasValidLocalRangeIndexes = xMinIndex !== undefined && xMaxIndex !== undefined && xMinIndex >= 0 && xMaxIndex >= xMinIndex && xMaxIndex < x.length;
+        if (hasValidLocalRangeIndexes) {
             const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, decimationWidth);
             const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
             const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);

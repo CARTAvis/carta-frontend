@@ -101,10 +101,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         // Find byte per image pixel
         const bitPixEntry = frame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.match("BITPIX"));
-        if (!bitPixEntry?.numericValue) {
+        const bitPixValue = bitPixEntry?.numericValue;
+        if (bitPixValue == null || !Number.isFinite(bitPixValue) || bitPixValue === 0) {
             return undefined;
         }
-        const bytePix = Math.abs(bitPixEntry.numericValue) / 8;
+        const bytePix = Math.abs(bitPixValue) / 8;
 
         // Get rectangular region if exists
         const region = frame.getRegion(this.widgetStore.effectivePreviewRegionId);

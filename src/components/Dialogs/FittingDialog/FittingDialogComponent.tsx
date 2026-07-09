@@ -75,7 +75,7 @@ export class FittingDialogComponent extends React.Component {
         return (
             <span className="info-string">
                 {this.coord === CoordinateMode.Image
-                    ? `WCS: ${!isImgCoordinates && (pointWcs?.x || pointWcs?.y) ? WCSPoint2D.toString(pointWcs) : "-"}`
+                    ? `WCS: ${!isImgCoordinates && (pointWcs?.x !== undefined || pointWcs?.y !== undefined) ? WCSPoint2D.toString(pointWcs) : "-"}`
                     : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.toString(point, "px", 3) : "-"}`}
             </span>
         );
@@ -238,9 +238,9 @@ export class FittingDialogComponent extends React.Component {
                                         </FormGroup>
                                         <Divider />
                                         <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
-                                            {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x || "", component?.setCenterXWcs)}
+                                            {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x ?? "", component?.setCenterXWcs)}
                                             {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
-                                            {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y || "", component?.setCenterYWcs)}
+                                            {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y ?? "", component?.setCenterYWcs)}
                                             {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
                                             {this.renderInfoString(component?.center, component?.centerWcs)}
                                         </FormGroup>
@@ -249,9 +249,9 @@ export class FittingDialogComponent extends React.Component {
                                             {this.renderLockButton(component?.isAmplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
                                         </FormGroup>
                                         <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x || "", component?.setFwhmXWcs)}
+                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x ?? "", component?.setFwhmXWcs)}
                                             {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
-                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y || "", component?.setFwhmYWcs)}
+                                            {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y ?? "", component?.setFwhmYWcs)}
                                             {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
                                             {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
                                         </FormGroup>
