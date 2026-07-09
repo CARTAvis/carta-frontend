@@ -44,10 +44,13 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
+            // Keep this for future use if we want to allow users to select the start color of the custom colormap
+            /*
             const handleStartColorChange = _.throttle((color: any) => {
                 props.onCustomColorStartSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
+            */
 
             const handleEndColorChange = _.throttle((color: any) => {
                 props.onCustomColorSelect?.(color.hex);
@@ -55,12 +58,9 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             }, changeDelay);
 
             return (
-                <div key={"custom-color"} className={"raster-custom-color"} style={{display: "flex", justifyContent: "space-between", padding: "0 10px"}}>
-                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.customColorStart} onChange={handleStartColorChange} disableAlpha={shouldDisableAlpha} />}>
-                        <Button text={"Start"} className="raster-color-swatch-button" style={{width: "60px"}} />
-                    </PopoverNext>
+                <div key={"custom-color"} className={"raster-custom-color"}>
                     <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}>
-                        <Button text={"End"} className="raster-color-swatch-button" style={{width: "60px"}} />
+                        <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </PopoverNext>
                 </div>
             );
