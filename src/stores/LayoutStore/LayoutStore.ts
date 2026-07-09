@@ -1,4 +1,4 @@
-import {DockLocation, type DropInfo, type Layout, Model, type Node} from "flexlayout-react";
+import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -29,7 +29,7 @@ export class LayoutStore {
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     // Reference to the FlexLayout Layout component (set from App.tsx)
-    public layoutRef: React.RefObject<Layout> = {current: null};
+    public layoutRef: React.RefObject<ILayoutApi> = {current: null};
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
@@ -89,7 +89,7 @@ export class LayoutStore {
             return false;
         }
         const currentModelJson = this.layoutModel.toJson();
-        return !!(currentModelJson.popouts && Object.values(currentModelJson.popouts).length > 0);
+        return !!(currentModelJson.subLayouts && Object.values(currentModelJson.subLayouts).length > 0);
     }
 
     private clearCurrentLayout = () => {

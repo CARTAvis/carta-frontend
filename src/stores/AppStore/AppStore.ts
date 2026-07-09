@@ -156,7 +156,7 @@ export class AppStore {
     @observable spatialProfiles: Map<string, SpatialProfileStore> = new Map();
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>> = new Map();
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>> = new Map();
-    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>> = new Map();
+    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionHistogramData.$Properties>>> = new Map();
     @observable regionClipboard: RegionClipboardData | null = null;
 
     // Reference images
@@ -557,14 +557,14 @@ export class AppStore {
      *
      * @param ack - The ack message received after opening a file.
      * @param directory - The path to the parent directory of the file.
-     * @param lelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
+     * @param isLelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
-     * @param generated - Whether the frame is a generated in-memory image. Used for the telemetry message.
-     * @param setAsActive - Whether the frame should be set as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isGenerated - Whether the frame is a generated in-memory image. Used for the telemetry message.
+     * @param shouldSetAsActive - Whether the frame should be set as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns Whether the frame was successfully added.
      */
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, isLelExpr: boolean, hdu: string, isGenerated: boolean = false, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true): boolean => {
+    @action addFrame = (ack: CARTA.OpenFileAck.$Properties, directory: string, isLelExpr: boolean, hdu: string, isGenerated: boolean = false, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -695,9 +695,9 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to load, or of the file itself.
      * @param filename - The filename of the file to load.
      * @param hdu - The Header Data Unit (HDU) to load. If left blank, the first image HDU will be loaded.
-     * @param imageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
-     * @param setAsActive - Whether the loaded frame should be set as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
+     * @param shouldSetAsActive - Whether the loaded frame should be set as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns The added frame.
      *
      * @throws If there is an error loading the file.
@@ -752,11 +752,11 @@ export class AppStore {
      * @returns The added frame.
      * @throws If there is an error loading the file.
      */
-    @flow.bound *loadRemoteFile(remoteRequest: CARTA.IRemoteFileRequest) {
+    @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest.$Properties) {
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
-            const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
+            const ack: CARTA.RemoteFileResponse.$Properties = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
@@ -776,7 +776,7 @@ export class AppStore {
         }
     }
 
-    loadConcatStokes = async (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+    loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         this.startFileLoading();
         try {
             const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
@@ -799,13 +799,13 @@ export class AppStore {
         }
     };
 
-    @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+    @action appendConcatFile = (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
-    @action openConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+    @action openConcatFile = (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         this.removeAllFrames();
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
@@ -816,9 +816,9 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to open, or of the file itself.
      * @param filename - The filename of the file to open.
      * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
-     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
-     * @param setAsActive - Whether to set the appended file as the active frame.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param shouldSetAsActive - Whether to set the appended file as the active frame.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns A promise that resolves to the FrameStore of the opened file.
      *
      * @example
@@ -838,8 +838,8 @@ export class AppStore {
      * @param path - The path to the parent directory of the file to open, or of the file itself.
      * @param filename - The filename of the file to open.
      * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
-     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
-     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @param isImageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param shouldUpdateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns A promise that resolves to the FrameStore of the opened file.
      *
      * @example
@@ -875,7 +875,7 @@ export class AppStore {
     /**
      * Closes a loaded image or a color blended image.
      * @param image - The image item to close.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     closeImage = (image: ImageViewItem, shouldConfirmClose: boolean = true) => {
         if (image?.type === ImageType.COLOR_BLENDING) {
@@ -888,7 +888,7 @@ export class AppStore {
     /**
      * Closes a loaded image.
      * @param frame - The loaded image.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @flow.bound *closeFile(frame: FrameStore, shouldConfirmClose: boolean = true) {
         if (!frame) {
@@ -917,7 +917,7 @@ export class AppStore {
 
     /**
      * Closes the currently active image if the active image is not a PV preview.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (shouldConfirmClose: boolean = false) => {
         if (this.activeImage && !this.isAppendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
@@ -940,7 +940,7 @@ export class AppStore {
     /**
      * Closes all the loaded image except the provided one.
      * @param frame - A loaded image.
-     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     * @param shouldConfirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeOtherFiles = (frame: FrameStore, shouldConfirmClose: boolean = true) => {
         const otherFiles = this.frames.filter(f => f !== frame);
@@ -1148,14 +1148,10 @@ export class AppStore {
 
     // Open catalog file
     @flow.bound
-    *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
+    *appendCatalog(directory: string, file: string, previewDataSize: number) {
         if (!this.activeFrame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
-        }
-        if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show(ErrorToast("Catalog type not supported"));
-            throw new Error("Catalog type not supported");
         }
         this.startFileLoading();
 
@@ -1242,7 +1238,7 @@ export class AppStore {
         }
     }
 
-    @action sendCatalogFilter(catalogFilter: CARTA.ICatalogFilterRequest) {
+    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties) {
         if (!this.activeFrame) {
             return;
         }
@@ -1293,8 +1289,8 @@ export class AppStore {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
                 this.fileBrowserStore.setHasReceivedImportRegionAck(true);
-                const regions = Object.entries(ack.regions) as [string, CARTA.IRegionInfo][];
-                const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
+                const regions = Object.entries(ack.regions) as [string, CARTA.RegionInfo.$Properties][];
+                const regionStyleMap = new Map<string, CARTA.RegionStyle.$Properties>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
                 while (startIndex < regions.length) {
                     this.addRegionsInBatch(frame, regions, regionStyleMap, startIndex, IMPORT_REGION_BATCH_SIZE);
@@ -1313,7 +1309,7 @@ export class AppStore {
         }
     }
 
-    @action addRegionsInBatch = (frame: FrameStore, regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, startIndex: number, count: number) => {
+    @action addRegionsInBatch = (frame: FrameStore, regions: [string, CARTA.RegionInfo.$Properties][], regionStyleMap: Map<string, CARTA.RegionStyle.$Properties>, startIndex: number, count: number) => {
         if (!frame || !regions || !regionStyleMap || !isFinite(startIndex)) {
             return;
         }
@@ -1346,7 +1342,7 @@ export class AppStore {
      * @param coordType - The coordinate system used in the exported region file.
      * @param fileType - The type of the exported region file.
      * @param exportRegions - The indices of the regions to be exported.
-     * @param overwrite - Whether to allow overwriting existing files.
+     * @param shouldOverwrite - Whether to allow overwriting existing files.
      * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
      */
     @flow.bound
@@ -1357,9 +1353,9 @@ export class AppStore {
             return;
         }
 
-        const regionStyles = new Map<number, CARTA.IRegionStyle>();
+        const regionStyles = new Map<number, CARTA.RegionStyle.$Properties>();
         for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
-            let annotationStyle: CARTA.IAnnotationStyle = {};
+            let annotationStyle: CARTA.AnnotationStyle.$Properties = {};
 
             switch (region.regionType) {
                 case CARTA.RegionType.ANNPOINT:
@@ -1448,7 +1444,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *requestMoment(message: CARTA.IMomentRequest, frame: FrameStore) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore) {
         if (!message || !frame) {
             return;
         }
@@ -1501,7 +1497,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *requestPV(message: CARTA.IPvRequest, frame: FrameStore, shouldKeepExisting: boolean) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean) {
         if (!message || !frame) {
             return;
         }
@@ -1542,7 +1538,7 @@ export class AppStore {
         }
     }
 
-    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
+    @flow.bound *requestPreviewPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, id: string) {
         if (!message || !frame) {
             return;
         }
@@ -1592,7 +1588,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *requestFitting(message: CARTA.IFittingRequest) {
+    *requestFitting(message: CARTA.FittingRequest.$Properties) {
         if (!message) {
             return;
         }
@@ -1777,7 +1773,7 @@ export class AppStore {
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>;
     private histogramRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>;
-    private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
+    private pendingChannelHistograms: Map<string, CARTA.RegionHistogramData.$Properties>;
 
     @action updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
@@ -1933,8 +1929,8 @@ export class AppStore {
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
-        this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
-        this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
+        this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionHistogramData.$Properties>>>();
+        this.pendingChannelHistograms = new Map<string, CARTA.RegionHistogramData.$Properties>();
         this.initRequirements();
         this.shouldMatchMoment = true;
 
@@ -1967,13 +1963,7 @@ export class AppStore {
         // Watch for system theme preference changes
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
         if (mediaQuery) {
-            if (mediaQuery.addEventListener) {
-                mediaQuery.addEventListener("change", changeEvent => this.handleThemeChange(changeEvent.matches));
-            } else if (mediaQuery.addListener) {
-                // Workaround for Safari
-                // @ts-ignore
-                mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
-            }
+            mediaQuery.addEventListener("change", changeEvent => this.handleThemeChange(changeEvent.matches));
         }
         this.handleThemeChange(mediaQuery.matches);
 
@@ -2011,8 +2001,11 @@ export class AppStore {
                             .then(this.onReconnectAlertClosed);
 
                         if (this.layoutStore?.layoutModel) {
-                            for (const [, layoutWindow] of this.layoutStore.layoutModel.getwindowsMap()) {
-                                const win = layoutWindow.window;
+                            for (const [, layoutConfig] of this.layoutStore.layoutModel.getLayouts()) {
+                                if (layoutConfig.isMainLayout()) {
+                                    continue;
+                                }
+                                const win = layoutConfig.getWindow();
                                 if (win && !win.closed) {
                                     win.close();
                                 }
@@ -2214,7 +2207,7 @@ export class AppStore {
     }
 
     // region Subscription handlers
-    @action handleSpatialProfileStream = (spatialProfileData: CARTA.ISpatialProfileData) => {
+    @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData.$Properties) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -2265,14 +2258,14 @@ export class AppStore {
 
         let frameHistogramMap = this.regionHistograms.get(regionHistogramData.fileId);
         if (!frameHistogramMap) {
-            frameHistogramMap = new ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
+            frameHistogramMap = new ObservableMap<number, ObservableMap<number, CARTA.RegionHistogramData.$Properties>>();
             this.regionHistograms.set(regionHistogramData.fileId, frameHistogramMap);
         }
 
         let regionHistogramMap = frameHistogramMap.get(regionHistogramData.regionId);
 
         if (!regionHistogramMap) {
-            regionHistogramMap = new ObservableMap<number, CARTA.IRegionHistogramData>();
+            regionHistogramMap = new ObservableMap<number, CARTA.RegionHistogramData.$Properties>();
             frameHistogramMap.set(regionHistogramData.regionId, regionHistogramMap);
         }
 
@@ -2312,7 +2305,7 @@ export class AppStore {
             const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame?.polarizations.indexOf(stokes) : stokes;
 
             // Flow control
-            const flowControlMessage: CARTA.IAnimationFlowControl = {
+            const flowControlMessage: CARTA.AnimationFlowControl.$Properties = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
@@ -2498,7 +2491,7 @@ export class AppStore {
         }
     };
 
-    handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
+    handleScriptingRequest = (request: CARTA.ScriptingRequest.$Properties) => {
         this.scriptingService.handleScriptingRequest(request).then(this.backendService.sendScriptingResponse);
     };
 
@@ -2529,13 +2522,13 @@ export class AppStore {
         const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);
         inMemoryImages.forEach(frame => this.removeFrame(frame));
 
-        const images: CARTA.IImageProperties[] = this.frames.map(frame => {
+        const images: CARTA.ImageProperties.$Properties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
 
-            let regions = new Map<string, CARTA.IRegionInfo>();
+            let regions = new Map<string, CARTA.RegionInfo.$Properties>();
             // Spatially matched images don't have their own regions
             if (!frame.spatialReference) {
-                regions = new Map<string, CARTA.IRegionInfo>();
+                regions = new Map<string, CARTA.RegionInfo.$Properties>();
 
                 for (const region of frame.regionSet.regions) {
                     regions.set(region.regionId.toFixed(), {
@@ -2546,7 +2539,7 @@ export class AppStore {
                 }
             }
 
-            let contourSettings: CARTA.ISetContourParameters = {};
+            let contourSettings: CARTA.SetContourParameters.$Properties = {};
             if (frame.contourConfig.isEnabled) {
                 contourSettings = {
                     fileId: frame.frameInfo.fileId,
@@ -2559,7 +2552,7 @@ export class AppStore {
                 };
             }
 
-            let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters = {};
+            let vectorOverlaySettings: CARTA.SetVectorOverlayParameters.$Properties = {};
             if (frame.vectorOverlayConfig.isEnabled) {
                 vectorOverlaySettings = {
                     fileId: frame.frameInfo.fileId,
@@ -2600,7 +2593,7 @@ export class AppStore {
             };
         });
 
-        const catalogFiles: CARTA.IOpenCatalogFile[] = [];
+        const catalogFiles: CARTA.OpenCatalogFile.$Properties[] = [];
 
         this.catalogStore.catalogProfileStores.forEach(profileStore => {
             const catalogInfo = profileStore.catalogInfo;
@@ -3310,7 +3303,7 @@ export class AppStore {
     /**
      * Sets the spatial reference frame.
      * @param frame - The frame to set as the spatial reference.
-     * @param showColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
+     * @param shouldShowColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
      */
     @flow.bound *setSpatialReference(frame: FrameStore, shouldShowColorBlendingAlert = true) {
         const oldRef = this.spatialReference;
@@ -3356,7 +3349,7 @@ export class AppStore {
     /**
      * Sets the spatial matching for a frame.
      * @param frame - The frame for which to set spatial matching.
-     * @param val - Whether to enable or disable spatial matching.
+     * @param isEnabled - Whether to enable or disable spatial matching.
      */
     @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, isEnabled: boolean) {
         if (!frame || frame === this.spatialReference) {

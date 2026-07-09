@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Alert, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
-import {Layout} from "flexlayout-react";
+import {type ILayoutApi, Layout} from "flexlayout-react";
 import {observer} from "mobx-react";
 
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
@@ -18,7 +18,7 @@ import "./App.scss";
 
 @observer
 export class App extends React.Component {
-    private layoutRef = React.createRef<Layout>();
+    private layoutRef = React.createRef<ILayoutApi>();
 
     componentDidMount() {
         LayoutStore.Instance.layoutRef = this.layoutRef;

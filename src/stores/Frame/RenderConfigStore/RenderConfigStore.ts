@@ -49,8 +49,8 @@ export class RenderConfigStore {
     @observable gamma: number;
     @observable alpha: number;
     @observable isInverted: boolean = false;
-    @observable channelHistogram: CARTA.IHistogram = undefined as any;
-    @observable cubeHistogram: CARTA.IHistogram | null = null;
+    @observable channelHistogram: CARTA.Histogram.$Properties | undefined = undefined;
+    @observable cubeHistogram: CARTA.Histogram.$Properties | null = null;
     @observable isUsingCubeHistogram: boolean = false;
     @observable isUsingCubeHistogramContours: boolean = false;
     @observable cubeHistogramProgress: number = 0;
@@ -221,7 +221,7 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the histogram.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogram - True for using the cube data.
      */
     @action setUseCubeHistogram = (isUsingCubeHistogram: boolean) => {
         if (isUsingCubeHistogram !== this.isUsingCubeHistogram) {
@@ -235,7 +235,7 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the contour.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogramContours - True for using the cube data.
      */
     @action setUseCubeHistogramContours = (isUsingCubeHistogramContours: boolean) => {
         this.isUsingCubeHistogramContours = isUsingCubeHistogramContours;
@@ -280,6 +280,9 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
+        if (!this.histogram) {
+            return false;
+        }
         const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
             this.scaleMin[this.stokesIndex] = percentiles[0];
@@ -291,14 +294,14 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateChannelHistogram = (histogram: CARTA.IHistogram) => {
+    @action updateChannelHistogram = (histogram: CARTA.Histogram.$Properties) => {
         this.channelHistogram = histogram;
         if (this.selectedPercentile[this.stokesIndex] > 0 && !this.isUsingCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.IHistogram | null, progress: number) => {
+    @action updateCubeHistogram = (histogram: CARTA.Histogram.$Properties | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
         if (this.selectedPercentile[this.stokesIndex] > 0 && this.isUsingCubeHistogram) {
@@ -439,7 +442,7 @@ export class RenderConfigStore {
     /**
      * Invert the colormap.
      *
-     * @param inverted - True for inverting colormap.
+     * @param isInverted - True for inverting colormap.
      */
     @action setInverted = (isInverted: boolean) => {
         this.isInverted = isInverted;

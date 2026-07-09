@@ -10,12 +10,12 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
+import {AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, copyToClipboardWithToast, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
-import {copyToClipboard, SWATCH_COLORS} from "utilities";
+import {SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -146,8 +146,7 @@ export class PreferenceDialogComponent extends React.Component {
     private handleUserIdCopied = async () => {
         const appStore = AppStore.Instance;
         try {
-            await copyToClipboard(appStore.telemetryService.decodedUserId);
-            AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
+            await copyToClipboardWithToast(appStore.telemetryService.decodedUserId, "Copied user ID to clipboard.");
         } catch (err) {
             console.error(err);
         }
@@ -256,7 +255,7 @@ export class PreferenceDialogComponent extends React.Component {
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
                 {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
@@ -533,7 +532,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        const regionTypes: JSX.Element[] = [];
+        const regionTypes: React.JSX.Element[] = [];
         RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
@@ -635,7 +634,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        const annotationTypes: JSX.Element[] = [];
+        const annotationTypes: React.JSX.Element[] = [];
         RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
             annotationTypes.push(
                 <option key={annotationType} value={annotationType}>
@@ -927,7 +926,7 @@ export class PreferenceDialogComponent extends React.Component {
                         {preference.telemetryUuid && (
                             <div className="telemetry-id-text">
                                 <p>Anonymous user ID: {appStore.telemetryService.decodedUserId}</p>
-                                <Button minimal={true} intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
+                                <Button variant="minimal" intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
                             </div>
                         )}
                     </Callout>

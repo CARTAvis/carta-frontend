@@ -24,6 +24,8 @@ export const AppToaster = {
     }
 };
 
+const CLIPBOARD_COPY_FAILED_MESSAGE = "Failed to copy to clipboard.";
+
 export const SuccessToast = (icon: IconName, message: string, timeout?: number): ToastProps => {
     return {
         icon: icon,
@@ -33,6 +35,21 @@ export const SuccessToast = (icon: IconName, message: string, timeout?: number):
     };
 };
 
+export async function copyToClipboardWithToast(value: string, successMessage?: string) {
+    try {
+        const didCopy = await copyToClipboard(value);
+        if (!didCopy) {
+            AppToaster.show(WarningToast(CLIPBOARD_COPY_FAILED_MESSAGE));
+        } else if (successMessage) {
+            AppToaster.show(SuccessToast("clipboard", successMessage));
+        }
+        return didCopy;
+    } catch (err) {
+        console.error(err);
+    }
+    return false;
+}
+
 export const ErrorToast = (message: string): ToastProps => {
     return {
         icon: "error",
@@ -40,7 +57,7 @@ export const ErrorToast = (message: string): ToastProps => {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => copyToClipboard(message),
+            onClick: () => copyToClipboardWithToast(message),
             icon: "clipboard"
         }
     };
@@ -53,7 +70,7 @@ export const WarningToast = (message: string): ToastProps => {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => copyToClipboard(message),
+            onClick: () => copyToClipboardWithToast(message),
             icon: "clipboard"
         }
     };

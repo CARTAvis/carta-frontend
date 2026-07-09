@@ -15,7 +15,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
     const [isFetchingWorkspace, setIsFetchingWorkspace] = useState(false);
     const [workspace, setWorkspace] = useState<Workspace>();
     const [errorMessage, setErrorMessage] = useState("");
-    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.IFileInfoResponse>();
+    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.FileInfoResponse.$Properties>();
 
     const fetchFileInfo = useCallback(
         async (workspace: Workspace) => {

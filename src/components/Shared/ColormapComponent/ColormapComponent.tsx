@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -56,12 +56,22 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"} style={{display: "flex", justifyContent: "space-between", padding: "0 10px"}}>
-                    <Popover position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={props.customColorStart} onChange={handleStartColorChange} disableAlpha={shouldDisableAlpha} />}>
+                    <PopoverNext
+                        placement={PopoverPosition.LEFT}
+                        shouldReturnFocusOnClose={false}
+                        popoverClassName={popoverClassName}
+                        content={<SketchPicker color={props.customColorStart} onChange={handleStartColorChange} disableAlpha={shouldDisableAlpha} />}
+                    >
                         <Button text={"Start"} className="raster-color-swatch-button" style={{width: "60px"}} />
-                    </Popover>
-                    <Popover position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}>
+                    </PopoverNext>
+                    <PopoverNext
+                        placement={PopoverPosition.LEFT}
+                        shouldReturnFocusOnClose={false}
+                        popoverClassName={popoverClassName}
+                        content={<SketchPicker color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}
+                    >
                         <Button text={"End"} className="raster-color-swatch-button" style={{width: "60px"}} />
-                    </Popover>
+                    </PopoverNext>
                 </div>
             );
         } else {
@@ -73,7 +83,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
         <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
-            <Button disabled={props.disabled} text={colormapBlock} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
+            <Button disabled={props.disabled} text={colormapBlock} endIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
 };

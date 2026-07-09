@@ -9,7 +9,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
@@ -22,7 +22,6 @@ import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConf
 
 import "./RenderConfigComponent.scss";
 
-const KEYCODE_ENTER = 13;
 const COLORSCALE_LENGTH = 2048;
 
 @observer
@@ -44,22 +43,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.IHistogram;
+    private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private widgetId: string;
+    private readonly cachedWidgetStore: RenderConfigWidgetStore;
 
     @observable width: number = 650;
     @observable height: number = 225;
 
     get widgetStore(): RenderConfigWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new RenderConfigWidgetStore();
+        return this.cachedWidgetStore;
     }
 
     get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
@@ -125,10 +117,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
         } else {
             if (!appStore.widgetsStore.renderConfigWidgets.has(this.widgetId)) {
-                console.log(`can't find store for widget with id=${this.widgetId}`);
                 appStore.widgetsStore.renderConfigWidgets.set(this.widgetId, new RenderConfigWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.renderConfigWidgets.get(this.widgetId) ?? new RenderConfigWidgetStore();
 
         this.disposers.push(
             autorun(() => {
@@ -165,7 +157,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     handleScaleMinChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -177,7 +169,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScaleMaxChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -445,12 +437,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (shouldDisplayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
+                <Button size="small" key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankButtons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
+                <Button size="small" key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
                     Custom
                 </Button>
             );

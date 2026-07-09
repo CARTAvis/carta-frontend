@@ -14,7 +14,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number = 3;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
     @observable shouldKeep: boolean = false;
-    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+    @observable range: CARTA.IntBounds.$Properties = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
     @observable xyRebin: number = 1;
     @observable zRebin: number = 1;
     @observable previewRegionId: number = RegionId.NONE;
@@ -98,7 +98,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             channelIndexMin = channelIndexMax - 1;
         }
         if (frame && this.effectiveRegion) {
-            const requestMessage: CARTA.IPvRequest = {
+            const requestMessage: CARTA.PvRequest.$Properties = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
@@ -112,8 +112,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                               regionId: this.effectivePreviewRegionId,
                               rebinXy: this.xyRebin,
                               rebinZ: this.zRebin,
-                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality ?? 11,
+                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality ?? 9,
                               compressionType: CARTA.CompressionType.ZFP
                           }
                         : undefined
@@ -161,7 +161,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.shouldKeep = shouldKeep;
     };
 
-    @action setSpectralRange = (range: CARTA.IIntBounds) => {
+    @action setSpectralRange = (range: CARTA.IntBounds.$Properties) => {
         if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
             this.range = range;
         }

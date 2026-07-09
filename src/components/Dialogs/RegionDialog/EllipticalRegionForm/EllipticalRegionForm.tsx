@@ -165,7 +165,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x || null}
+                valueWcs={centerWCSPoint?.x ?? null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -176,7 +176,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y || null}
+                valueWcs={centerWCSPoint?.y ?? null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -191,7 +191,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.Size}
                 value={size.x}
                 onChange={this.handleMajorAxisChange}
-                valueWcs={sizeWCS?.x || null}
+                valueWcs={sizeWCS?.x ?? null}
                 onChangeWcs={this.handleMajorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Semi-major"
@@ -203,7 +203,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.Size}
                 value={size.y}
                 onChange={this.handleMinorAxisChange}
-                valueWcs={sizeWCS?.y || null}
+                valueWcs={sizeWCS?.y ?? null}
                 onChangeWcs={this.handleMinorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Semi-minor"

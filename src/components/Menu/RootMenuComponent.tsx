@@ -1,18 +1,18 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, PopoverNext, Position, Switch, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
+import {copyToClipboardWithToast, ExportImageMenuComponent} from "components/Shared";
 import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
 import {ApiService} from "services";
 import {AppStore, SnippetStore, WidgetsStore} from "stores";
-import {copyToClipboard, toFixed} from "utilities";
+import {toFixed} from "utilities";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
@@ -141,7 +141,7 @@ export class RootMenuComponent extends React.Component {
             }
 
             const labelElement = (
-                <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
+                <Button className="snippet-run-button" size="small" variant="minimal" icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
             const menuItem = <MenuItem key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {snippet: snippet, name: name, newSnippet: false})} />;
@@ -197,8 +197,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await copyToClipboard(appStore.backendService.sessionId.toString());
-                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                        await copyToClipboardWithToast(appStore.backendService.sessionId.toString(), "Session ID copied!");
                     } catch (err) {
                         console.error(err);
                     }
@@ -217,11 +216,10 @@ export class RootMenuComponent extends React.Component {
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl?.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            await copyToClipboard(finalUrl);
+                            await copyToClipboardWithToast(finalUrl, "Session URL copied!");
                         } else {
-                            await copyToClipboard(document.URL);
+                            await copyToClipboardWithToast(document.URL, "Session URL copied!");
                         }
-                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.error(err);
                     }
@@ -449,33 +447,33 @@ export class RootMenuComponent extends React.Component {
 
         return (
             <div className="root-menu">
-                <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={fileMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="File" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={viewMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="View" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.genWidgetsMenu()} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Widgets" />
                     </Menu>
-                </Popover>
+                </PopoverNext>
                 {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
-                    <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
+                    <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.snippetsMenu} placement="bottom-start">
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
                         </Menu>
-                    </Popover>
+                    </PopoverNext>
                 )}
-                <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={helpMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Help" />
                     </Menu>
-                </Popover>
+                </PopoverNext>
                 <ToolbarMenuComponent />
                 <Alert
                     className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
@@ -488,11 +486,11 @@ export class RootMenuComponent extends React.Component {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {appStore.shouldShowNewRelease && (
-                    <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
+                    <PopoverNext content={newReleaseMessage} placement="bottom-end" shouldReturnFocusOnClose={false}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
-                            <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                            <Button icon={"envelope"} intent={"warning"} variant="minimal" />
                         </Tooltip>
-                    </Popover>
+                    </PopoverNext>
                 )}
                 {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && !appStore.layoutStore?.hasPopoutWidget && (
                     <Tooltip
@@ -506,7 +504,7 @@ export class RootMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
+                        <AnchorButton icon="share" variant="minimal" onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
                 {shouldShowLoadingIndicator && loadingIndicator}

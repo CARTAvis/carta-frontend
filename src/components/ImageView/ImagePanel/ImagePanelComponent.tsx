@@ -172,7 +172,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {this.isCursorInfoRequired && frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
-                            cursorValue={frame.cursorInfo.isInsideImage ? ((frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue.value) ?? 0) : 0}
+                            cursorValue={frame.cursorInfo.isInsideImage ? ((frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue?.value) ?? 0) : 0}
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
                             width={frame.overlayStore.viewWidth}

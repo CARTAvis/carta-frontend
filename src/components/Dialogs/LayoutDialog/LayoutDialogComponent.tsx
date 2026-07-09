@@ -13,7 +13,6 @@ import {AppStore, type FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "s
 
 import "./LayoutDialogComponent.scss";
 
-const KEYCODE_ENTER = 13;
 @observer
 export class LayoutDialogComponent extends React.Component {
     private static readonly DefaultWidth = 425;
@@ -80,13 +79,13 @@ export class LayoutDialogComponent extends React.Component {
     };
 
     private handleKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && !this.isEmpty && this.isValidName) {
+        if (ev.key === "Enter" && !this.isEmpty && this.isValidName) {
             this.saveLayout();
         }
     };
 
     private handleRenameKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && !this.isRenameEmpty && this.isValidRename) {
+        if (ev.key === "Enter" && !this.isRenameEmpty && this.isValidRename) {
             this.renameLayout();
         }
     };

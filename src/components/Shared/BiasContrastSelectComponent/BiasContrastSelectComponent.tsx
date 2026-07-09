@@ -64,7 +64,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     };
 
     private resetButton = handleClick => {
-        return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
+        return <Button icon={"refresh"} variant="minimal" size="small" onClick={handleClick} />;
     };
 
     componentDidUpdate() {

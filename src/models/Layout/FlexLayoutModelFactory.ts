@@ -8,11 +8,8 @@ const FLEXLAYOUT_GLOBAL_CONFIG = {
     tabEnableRename: false,
     tabSetEnableMaximize: true,
     tabSetEnableTabStrip: true,
-    splitterSize: 4,
-    splitterExtra: 4,
     tabEnablePopout: false,
     tabEnablePopoutIcon: false,
-    tabSetEnableClose: false,
     tabSetEnableDeleteWhenEmpty: true,
     tabEnableRenderOnDemand: true
 };
