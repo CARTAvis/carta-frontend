@@ -36,11 +36,19 @@ export class RenderConfigStore {
     public static get ALPHA_MAX(): number {
         return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? 1000000;
     }
+    public static get BIAS_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
+    }
+    public static get BIAS_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? 1;
+    }
+    public static get CONTRAST_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 0;
+    }
+    public static get CONTRAST_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 2;
+    }
     /* eslint-enable @typescript-eslint/naming-convention */
-    public static readonly BIAS_MIN = -1;
-    public static readonly BIAS_MAX = 1;
-    public static readonly CONTRAST_MIN = 0;
-    public static readonly CONTRAST_MAX = 2;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number = 0;
