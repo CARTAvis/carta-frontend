@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* Added beam area, number of beams, and pixels in beam to the Statistics widget ([#1509](https://github.com/CARTAvis/carta-frontend/issues/1509)).
+
 ## [6.0.0]
 
 ### Added
