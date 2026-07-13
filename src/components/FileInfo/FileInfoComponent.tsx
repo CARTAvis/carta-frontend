@@ -1,7 +1,7 @@
 import * as React from "react";
 import {List} from "react-window";
 import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, PopoverInteractionKind, PopoverNext, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
-import {type CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -219,11 +219,13 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHDUList = () => {
-        return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
+        const HDUOptions = this.props.HDUOptions;
+        const HDUList = HDUOptions?.HDUList ?? [];
+        return HDUOptions && (HDUList.length > 1 || (this.props.selectedFile?.type === CARTA.FileType.ZARR && HDUList.length > 0)) ? (
             <ControlGroup vertical={false}>
                 <Divider />
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
+                    <HTMLSelect options={HDUList} onChange={ev => HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)} />
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
