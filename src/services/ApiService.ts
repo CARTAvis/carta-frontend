@@ -269,9 +269,12 @@ export class ApiService {
             const nanAlpha = preferences["nanAlpha"];
             const combinedColor = tinycolor(nanColorHex).setAlpha(nanAlpha).toRgbString();
             preferences["nanColorHex"] = combinedColor;
-            this.setPreference("nanColorHex", combinedColor);
+
+            if (await this.setPreference("nanColorHex", combinedColor)) {
+                await this.clearPreferences(["nanAlpha"]);
+            }
+
             delete preferences["nanAlpha"];
-            this.clearPreferences(["nanAlpha"]);
         }
     };
 
