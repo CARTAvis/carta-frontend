@@ -77,10 +77,15 @@ export class RegionStore {
     public static get MAX_DASH_LENGTH(): number {
         return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_DASH_LENGTH) ?? 50;
     }
+    public static get MIN_LABEL_OFFSET(): number {
+        return PreferenceStore.Instance.getMinConstraint(PreferenceKeys.REGION_LABEL_OFFSET) ?? -50;
+    }
+    public static get MAX_LABEL_OFFSET(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_LABEL_OFFSET) ?? 50;
+    }
     /* eslint-enable @typescript-eslint/naming-convention */
-    public static readonly TARGET_VERTEX_COUNT = 200;
-    public static readonly MIN_LABEL_OFFSET = -50;
-    public static readonly MAX_LABEL_OFFSET = 50;
+
+    private static readonly TargetVertexCount = 200;
 
     private readonly backendService: BackendService;
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
@@ -442,7 +447,7 @@ export class RegionStore {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TargetVertexCount);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
                 const halfWidth = this.size.x / 2;
                 const halfHeight = this.size.y / 2;
@@ -453,11 +458,11 @@ export class RegionStore {
                     add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
-                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TargetVertexCount);
             } else if (this.regionType === CARTA.RegionType.POLYGON) {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.isCreating);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TargetVertexCount, !this.isCreating);
             } else {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, false);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TargetVertexCount, false);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }

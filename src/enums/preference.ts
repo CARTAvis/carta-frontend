@@ -24,6 +24,8 @@ export enum PreferenceKeys {
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
+    RENDER_CONFIG_BIAS = "renderConfigBias",
+    RENDER_CONFIG_CONTRAST = "renderConfigContrast",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
     RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
@@ -67,6 +69,7 @@ export enum PreferenceKeys {
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
     REGION_DASH_LENGTH = "regionDashLength",
+    REGION_LABEL_OFFSET = "regionLabelOffset",
     REGION_TYPE = "regionType",
     REGION_CREATION_MODE = "regionCreationMode",
     REGION_SIZE = "regionSize",
