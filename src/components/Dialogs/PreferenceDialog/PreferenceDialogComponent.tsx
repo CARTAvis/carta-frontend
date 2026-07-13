@@ -15,7 +15,7 @@ import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, Dialo
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -614,7 +614,7 @@ export class PreferenceDialogComponent extends React.Component {
                         value={preference.regionSize}
                         stepSize={1}
                         onValueChange={(value: number) =>
-                            preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10, Math.min(preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100, value)))
+                            preference.setPreference(PreferenceKeys.REGION_SIZE, clamp(value, preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10, preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100))
                         }
                     />
                 </FormGroup>
@@ -661,7 +661,7 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_LINE_WIDTH}
                         value={preference.annotationLineWidth}
                         stepSize={0.5}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, clamp(value, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dash length" labelInfo="(px)">
@@ -671,7 +671,7 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_DASH_LENGTH}
                         value={preference.annotationDashLength}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, clamp(value, 0, RegionStore.MAX_DASH_LENGTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Point shape">
@@ -687,7 +687,7 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) =>
                             preference.setPreference(
                                 PreferenceKeys.POINT_ANNOTATION_WIDTH,
-                                Math.max(preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1, Math.min(preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100, value))
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1, preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100)
                             )
                         }
                     />
@@ -702,7 +702,7 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) =>
                             preference.setPreference(
                                 PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH,
-                                Math.max(preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5, Math.min(preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10, value))
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5, preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10)
                             )
                         }
                     />
