@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {clamp, SWATCH_COLORS} from "utilities";
+import {clamp, getDiscreteSliderTicks, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
 
@@ -87,10 +87,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        const numLabels = 5;
-        const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
-        const channelTickPre = numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
-        const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
+        const {values: channelTick} = getDiscreteSliderTicks(numChannels);
 
         const isChannelMapLabelVisible = channelMapSettings.shouldShowChannelString || channelMapSettings.shouldShowFrequencyString || channelMapSettings.shouldShowVelocityString;
 
