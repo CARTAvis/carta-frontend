@@ -7,6 +7,8 @@ import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 
+import {getNextPlaybackState, type PlaybackDirection} from "./animationPlayback";
+
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
 
@@ -57,6 +59,7 @@ export class AnimatorStore {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
             }
+            this.animationDirection = 1;
             this.isAnimationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
@@ -178,12 +181,16 @@ export class AnimatorStore {
 
     @action animate = () => {
         if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
-            AppStore.Instance.nextImage();
+            const appStore = AppStore.Instance;
+            const nextState = getNextPlaybackState(appStore.activeImageIndex, appStore.imageViewConfigStore.imageNum, this.step, this.playMode, this.animationDirection);
+            this.animationDirection = nextState.direction;
+            appStore.setActiveImageByIndex(nextState.index);
         }
     };
 
     private animateHandle: ReturnType<typeof setInterval> | undefined;
     private stopHandle: ReturnType<typeof setTimeout> | undefined;
+    private animationDirection: PlaybackDirection = 1;
 
     constructor() {
         makeObservable(this);
