@@ -24,5 +24,6 @@ export * from "./ProfileSmoothingStore/ProfileSmoothingStore";
 export * from "./Snippet/SnippetStore";
 export * from "./SpatialProfileStore/SpatialProfileStore";
 export * from "./SpectralProfileStore/SpectralProfileStore";
+export * from "./TimeSeriesStore/TimeSeriesStore";
 export * from "./Widgets";
 export * from "./Widgets/WidgetsStore";

@@ -72,6 +72,7 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    TimeSeriesStore,
     WidgetsStore
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
@@ -134,6 +135,8 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
     readonly channelMapStore: ChannelMapStore;
+    /** Management of the virtual time-series axis. */
+    readonly timeSeriesStore: TimeSeriesStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -1255,6 +1258,11 @@ export class AppStore {
         this.imageViewConfigStore.reorderImage(oldIndex, newIndex, length);
     };
 
+    /** Sorts the image list by ascending observation time; images without a valid time keep their relative order at the end. */
+    @action sortFramesByTime = () => {
+        this.imageViewConfigStore.sortImagesByTime();
+    };
+
     // Region file actions
 
     /**
@@ -1925,6 +1933,7 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
+        this.timeSeriesStore = TimeSeriesStore.Instance;
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
