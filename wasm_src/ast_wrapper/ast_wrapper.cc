@@ -687,6 +687,100 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE double parseDateToMJD(const char* dateString, const char* timeScale)
+{
+    if (!dateString || !strlen(dateString))
+    {
+        return NAN;
+    }
+
+    astBegin;
+    AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
+    if (timeScale && strlen(timeScale))
+    {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", timeScale);
+        astSet(timeFrame, buffer);
+    }
+
+    double mjd = AST__BAD;
+    int charsRead = astUnformat(timeFrame, 1, dateString, &mjd);
+    astEnd;
+
+    // Reject partial parses so that malformed date strings are not silently truncated
+    if (!astOK || charsRead != (int) strlen(dateString) || mjd == AST__BAD)
+    {
+        astClearStatus;
+        return NAN;
+    }
+    return mjd;
+}
+
+EMSCRIPTEN_KEEPALIVE double convertMJD(double mjd, const char* scaleIn, const char* scaleOut)
+{
+    astBegin;
+    char buffer[64];
+    AstTimeFrame* frameIn = astTimeFrame("System=MJD");
+    if (scaleIn && strlen(scaleIn))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", scaleIn);
+        astSet(frameIn, buffer);
+    }
+    AstTimeFrame* frameOut = static_cast<AstTimeFrame*> astCopy(frameIn);
+    if (scaleOut && strlen(scaleOut))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", scaleOut);
+        astSet(frameOut, buffer);
+    }
+
+    double result = AST__BAD;
+    AstFrameSet* cvt = static_cast<AstFrameSet*> astConvert(frameIn, frameOut, "");
+    if (cvt)
+    {
+        astTran1(cvt, 1, &mjd, 1, &result);
+    }
+    astEnd;
+
+    if (!astOK || result == AST__BAD)
+    {
+        astClearStatus;
+        return NAN;
+    }
+    return result;
+}
+
+EMSCRIPTEN_KEEPALIVE const char* formatMJDToDate(double mjd, const char* timeScale, int digits)
+{
+    astBegin;
+    AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
+    char buffer[64];
+    if (timeScale && strlen(timeScale))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", timeScale);
+        astSet(timeFrame, buffer);
+    }
+    if (digits < 0)
+    {
+        digits = 0;
+    }
+    else if (digits > 9)
+    {
+        digits = 9;
+    }
+    snprintf(buffer, sizeof(buffer), "Format(1)=iso.%dT", digits);
+    astSet(timeFrame, buffer);
+
+    const char* formattedVal = astFormat(timeFrame, 1, mjd);
+    astEnd;
+
+    if (!astOK)
+    {
+        astClearStatus;
+        return nullptr;
+    }
+    return formattedVal;
+}
+
 EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
 {
     astDelete(src);

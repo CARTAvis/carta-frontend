@@ -16,6 +16,7 @@ export * from "./sorting/sorting";
 export * from "./table/table";
 export * from "./templates/templates";
 export * from "./tiling/tiling";
+export * from "./time/time";
 export * from "./units/units";
 export * from "./wcs/wcs";
 export * from "./webgl/webgl";
