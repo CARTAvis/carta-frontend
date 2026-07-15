@@ -2,12 +2,10 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AnimationMode, PlayMode} from "enums";
-import {type FrameView, type Point2D} from "models";
+import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-
-import {getNextPlaybackState, type PlaybackDirection} from "./animationPlayback";
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;

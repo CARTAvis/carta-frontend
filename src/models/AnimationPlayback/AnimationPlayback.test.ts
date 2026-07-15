@@ -1,6 +1,6 @@
 import {PlayMode} from "enums";
 
-import {getNextPlaybackState} from "./animationPlayback";
+import {getNextPlaybackState} from "./AnimationPlayback";
 
 describe("getNextPlaybackState", () => {
     test("moves forward and backward by the configured step with wrapping", () => {
