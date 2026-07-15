@@ -3,7 +3,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AnimationMode, PlayMode} from "enums";
 import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore, TimeSeriesStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 
@@ -32,6 +32,14 @@ export class AnimatorStore {
         if (this.isAnimationActive) {
             return;
         }
+
+        if (val === AnimationMode.TIME) {
+            const timeSeriesStore = TimeSeriesStore.Instance;
+            if (timeSeriesStore.elements.length < 2) {
+                return;
+            }
+            timeSeriesStore.ensureActiveElement();
+        }
         this.animationMode = val;
     };
 
@@ -52,7 +60,7 @@ export class AnimatorStore {
         const preferenceStore = PreferenceStore.Instance;
         const activeFrame = appStore.activeFrame;
 
-        if (this.animationMode === AnimationMode.FRAME) {
+        if (this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
@@ -149,7 +157,7 @@ export class AnimatorStore {
 
         this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
-        if (this.animationMode === AnimationMode.FRAME) {
+        if (this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
@@ -178,11 +186,19 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
+        if (!this.isAnimationActive) {
+            return;
+        }
+        if (this.animationMode === AnimationMode.FRAME) {
             const appStore = AppStore.Instance;
             const nextState = getNextPlaybackState(appStore.activeImageIndex, appStore.imageViewConfigStore.imageNum, this.step, this.playMode, this.animationDirection);
             this.animationDirection = nextState.direction;
             appStore.setActiveImageByIndex(nextState.index);
+        } else if (this.animationMode === AnimationMode.TIME) {
+            const timeSeriesStore = TimeSeriesStore.Instance;
+            const nextState = getNextPlaybackState(timeSeriesStore.currentIndex, timeSeriesStore.elements.length, this.step, this.playMode, this.animationDirection);
+            this.animationDirection = nextState.direction;
+            timeSeriesStore.setIndex(nextState.index);
         }
     };
 
@@ -201,7 +217,7 @@ export class AnimatorStore {
     }
 
     @computed get isServerAnimationActive() {
-        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME;
+        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME && this.animationMode !== AnimationMode.TIME;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
@@ -221,6 +237,13 @@ export class AnimatorStore {
 
         if (this.animationMode === AnimationMode.STOKES && frame.frameInfo.fileInfoExtended.stokes <= 1) {
             return true;
+        }
+
+        if (this.animationMode === AnimationMode.TIME) {
+            const timeSeriesStore = TimeSeriesStore.Instance;
+            if (timeSeriesStore.elements.length < 2) {
+                return true;
+            }
         }
 
         return false;
