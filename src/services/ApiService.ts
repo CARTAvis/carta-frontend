@@ -10,6 +10,7 @@ import {AppStore} from "stores";
 /* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
+const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export interface RuntimeConfig {
@@ -49,7 +50,8 @@ export class ApiService {
     }
 
     private static preferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
-    private static snippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
+    private static snippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile<Snippet>(snippetSchema);
+    private static workspaceValidator = new Ajv({strictTypes: false, allErrors: true}).compile<Workspace>(workspaceSchema);
 
     @observable private _accessToken: string | undefined = "";
     @observable private _tokenLifetime: number = 0;
@@ -195,8 +197,7 @@ export class ApiService {
         }
 
         if (preferences) {
-            this.upgradePreferences(preferences);
-            console.log(preferences);
+            await this.upgradePreferences(preferences);
             const isValid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
             if (!isValid) {
@@ -221,43 +222,44 @@ export class ApiService {
         return preferences;
     };
 
-    private upgradePreferences = (preferences: any) => {
+    private upgradePreferences = async (preferences: any) => {
         // Upgrade to V2 if required
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
-            preferences[astColorKey] = `auto-${color}`;
-            this.setPreference(astColorKey, preferences[astColorKey]);
+            if (astColorKey in preferences) {
+                const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
+                preferences[astColorKey] = `auto-${color}`;
+            }
 
             // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
             const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-            if (/[A-Z]/.test(preferences[key])) {
+            if (preferences[key] && /[A-Z]/.test(preferences[key])) {
                 preferences[key] = preferences[key].toLowerCase();
-                this.setPreference(key, preferences[key]);
             }
 
             // This is to ensure consistency in the unit used for the preview cube size limit
             const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
             const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
-            const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
-            if (typeof conversionFactor === "number") {
-                const gbSize = preferences[cubeSizeKey] * conversionFactor;
-                if (gbSize !== preferences[cubeSizeKey]) {
-                    preferences[cubeSizeKey] = gbSize;
-                    this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            if (cubeSizeUnitKey in preferences) {
+                const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+                if (typeof conversionFactor === "number") {
+                    const gbSize = preferences[cubeSizeKey] * conversionFactor;
+                    if (gbSize !== preferences[cubeSizeKey]) {
+                        preferences[cubeSizeKey] = gbSize;
+                    }
+                } else {
+                    // set an invalid value to cubeSizeKey to be removed by the validator
+                    preferences[cubeSizeKey] = -1;
                 }
-            } else if (cubeSizeUnitKey in preferences) {
-                // set an invalid value to cubeSizeKey to be removed by the validator
-                preferences[cubeSizeKey] = -1;
+                delete preferences[cubeSizeUnitKey];
+                await this.clearPreferences([cubeSizeUnitKey]);
             }
-            delete preferences[cubeSizeUnitKey];
-            this.clearPreferences([cubeSizeUnitKey]);
 
             preferences["version"] = 2;
-            this.setPreference("version", 2);
+            await this.setPreferences(preferences);
         }
     };
 
@@ -268,6 +270,32 @@ export class ApiService {
     };
 
     public setPreferences = async (preferences: any) => {
+        const obj = {version: 2};
+        if (typeof window !== "undefined") {
+            const currentPrefs = AppStore.Instance?.preferenceStore?.preferences;
+            if (currentPrefs && currentPrefs.size > 0) {
+                for (const [k, v] of currentPrefs.entries()) {
+                    obj[k] = v;
+                }
+            } else {
+                try {
+                    const localPrefs = JSON.parse(localStorage.getItem("preferences") ?? "{}");
+                    Object.assign(obj, localPrefs);
+                } catch {
+                    // Ignore
+                }
+            }
+        }
+        for (const key of Object.keys(preferences)) {
+            obj[key] = preferences[key];
+        }
+
+        const isValid = ApiService.preferenceValidator(obj);
+        if (!isValid) {
+            console.error("Preferences validation failed:", ApiService.preferenceValidator.errors);
+            return false;
+        }
+
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
@@ -279,16 +307,6 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("preferences") ?? "{}");
-                for (const key of Object.keys(preferences)) {
-                    obj[key] = preferences[key];
-                }
-
-                const isValid = ApiService.preferenceValidator(obj);
-                if (!isValid) {
-                    console.log(ApiService.preferenceValidator.errors);
-                }
-
                 localStorage.setItem("preferences", JSON.stringify(obj));
                 return true;
             } catch (err) {
@@ -365,6 +383,11 @@ export class ApiService {
     };
 
     public setLayout = async (layoutName: string, layout: any): Promise<boolean> => {
+        const isValid = LayoutConfig.layoutValidator(layout);
+        if (!isValid) {
+            console.error("Layout validation failed:", LayoutConfig.layoutValidator.errors);
+            return false;
+        }
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/layout`;
@@ -451,6 +474,11 @@ export class ApiService {
     };
 
     public setSnippet = async (snippetName: string, snippet: Snippet) => {
+        const isValid = ApiService.snippetValidator(snippet);
+        if (!isValid) {
+            console.error("Snippet validation failed:", ApiService.snippetValidator.errors);
+            return false;
+        }
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/snippet`;
@@ -517,10 +545,10 @@ export class ApiService {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
                         const workspace = existingWorkspaces[workspaceName];
-                        if (!workspace) {
-                            // TODO: handle validation errors
-                        } else {
+                        if (workspace && ApiService.workspaceValidator(workspace)) {
                             validWorkspaces.push({name: workspaceName, date: workspace?.date ?? Date.now() / 1000});
+                        } else {
+                            console.error(`Workspace ${workspaceName} validation failed:`, ApiService.workspaceValidator.errors);
                         }
                     }
                     return validWorkspaces;
@@ -540,7 +568,13 @@ export class ApiService {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
-                    return response.data.workspace;
+                    const workspace = response.data.workspace;
+                    const isValid = ApiService.workspaceValidator(workspace);
+                    if (!isValid) {
+                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
+                        return undefined;
+                    }
+                    return workspace;
                 }
             } catch (err) {
                 console.error(err);
@@ -550,11 +584,11 @@ export class ApiService {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
-                    const isValid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                    const isValid = ApiService.workspaceValidator(workspace);
                     if (isValid) {
                         return workspace;
                     } else {
-                        //console.log(ApiService.WorkspaceValidator.errors);
+                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
                     }
                 }
             } catch (err) {
@@ -565,6 +599,11 @@ export class ApiService {
     };
 
     public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
+        const isValid = ApiService.workspaceValidator(workspace);
+        if (!isValid) {
+            console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
+            return undefined;
+        }
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;

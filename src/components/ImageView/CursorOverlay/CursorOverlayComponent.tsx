@@ -9,7 +9,7 @@ import {formattedExponential, toFixed} from "utilities";
 import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {
-    cursorInfo: CursorInfo;
+    cursorInfo?: CursorInfo;
     cursorValue: number;
     isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
@@ -31,12 +31,15 @@ class CursorOverlayProps {
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
     render() {
         const cursorInfo = this.props.cursorInfo;
+        const posImageSpace = cursorInfo?.posImageSpace;
         const infoStrings: string[] = [];
-        if (cursorInfo.infoWCS) {
-            infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
-        }
-        if (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE) {
-            infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
+        if (cursorInfo) {
+            if (cursorInfo.infoWCS) {
+                infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
+            }
+            if (posImageSpace && (posImageSpace.x !== -Number.MAX_VALUE || posImageSpace.y !== -Number.MAX_VALUE)) {
+                infoStrings.push(`Image: (${toFixed(posImageSpace.x)}, ${toFixed(posImageSpace.y)})`);
+            }
         }
         if (this.props.cursorValue !== undefined) {
             let valueString = `Value: ${this.props.hasCursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;

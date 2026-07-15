@@ -64,7 +64,7 @@ export class FileBrowserStore {
     @observable selectedFilesCtypes: {ctype: string[]; rank: number[]} = {ctype: [], rank: []};
 
     @observable catalogFileList: BrowserFileList | null = null;
-    @observable selectedCatalogFile: CARTA.CatalogFileInfo.$Properties = undefined as any;
+    @observable selectedCatalogFile: CARTA.CatalogFileInfo.$Properties | undefined = undefined;
     @observable catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null = null;
     @observable catalogHeaders: Array<CARTA.CatalogHeader.$Properties> = [];
 
