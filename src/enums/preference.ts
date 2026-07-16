@@ -22,6 +22,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
     RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
     RENDER_CONFIG_PERCENTILE = "percentile",
+    RENDER_CONFIG_SCALING_ALPHA_LEGACY = "scalingAlpha",
     RENDER_CONFIG_SCALING_ALPHA_LOG = "scalingAlphaLog",
     RENDER_CONFIG_SCALING_ALPHA_POWER = "scalingAlphaPower",
     RENDER_CONFIG_SCALING_ALPHA_SINH = "scalingAlphaSinh",

@@ -7,20 +7,17 @@ import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
-import {
-    RENDER_CONFIG_ALPHA_MAX,
-    RENDER_CONFIG_ALPHA_MIN,
-    RENDER_CONFIG_BIAS_MAX,
-    RENDER_CONFIG_BIAS_MIN,
-    RENDER_CONFIG_CONTRAST_MAX,
-    RENDER_CONFIG_CONTRAST_MIN,
-    RENDER_CONFIG_GAMMA_MAX,
-    RENDER_CONFIG_GAMMA_MIN,
-    RENDER_CONFIG_SCALING_TYPES
-} from "./RenderConfigConstants";
-
 export class RenderConfigStore {
-    public static readonly SCALING_TYPES = RENDER_CONFIG_SCALING_TYPES;
+    public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
+        [FrameScaling.LINEAR, "Linear"],
+        [FrameScaling.LOG, "Log"],
+        [FrameScaling.SQRT, "Square root"],
+        [FrameScaling.SQUARE, "Squared"],
+        [FrameScaling.GAMMA, "Gamma"],
+        [FrameScaling.POWER, "Power"],
+        [FrameScaling.SINH, "Sinh"],
+        [FrameScaling.ASINH, "Asinh"]
+    ]);
 
     public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     public static readonly COLOR_MAPS_CUSTOM = "custom";
@@ -30,22 +27,22 @@ export class RenderConfigStore {
 
     /* eslint-disable @typescript-eslint/naming-convention */
     public static get GAMMA_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? RENDER_CONFIG_GAMMA_MIN;
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 0.1;
     }
     public static get GAMMA_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? RENDER_CONFIG_GAMMA_MAX;
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 2;
     }
     public static get BIAS_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? RENDER_CONFIG_BIAS_MIN;
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
     }
     public static get BIAS_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? RENDER_CONFIG_BIAS_MAX;
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? 1;
     }
     public static get CONTRAST_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? RENDER_CONFIG_CONTRAST_MIN;
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 0;
     }
     public static get CONTRAST_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? RENDER_CONFIG_CONTRAST_MAX;
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 2;
     }
     /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -66,12 +63,12 @@ export class RenderConfigStore {
 
     public static getAlphaMin(scaling: FrameScaling): number {
         const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        return (key && AppStore.Instance.preferenceStore.getMinConstraint(key)) ?? RENDER_CONFIG_ALPHA_MIN;
+        return (key && AppStore.Instance.preferenceStore.getMinConstraint(key)) ?? 0.000001;
     }
 
     public static getAlphaMax(scaling: FrameScaling): number {
         const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        return (key && AppStore.Instance.preferenceStore.getMaxConstraint(key)) ?? RENDER_CONFIG_ALPHA_MAX;
+        return (key && AppStore.Instance.preferenceStore.getMaxConstraint(key)) ?? 1000000;
     }
 
     @observable scaling: FrameScaling;
@@ -130,10 +127,6 @@ export class RenderConfigStore {
 
     public static isGammaValid(gamma: number): boolean {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
-    }
-
-    private static clampAlpha(alpha: number, scaling: FrameScaling): number {
-        return clamp(alpha, RenderConfigStore.getAlphaMin(scaling), RenderConfigStore.getAlphaMax(scaling));
     }
 
     public static isColormapValid(colormap: string): boolean {
@@ -593,20 +586,20 @@ export class RenderConfigStore {
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling === undefined ? this.scaling : RenderConfigStore.isScalingValid(config.scaling) ? config.scaling : FrameScaling.LINEAR;
+        this.scaling = config.scaling ?? this.scaling;
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }
         if (config.customColormapHexEnd) {
             this.setCustomHexEnd(config.customColormapHexEnd);
         }
-        this.bias = clamp(config.bias ?? this.bias, RenderConfigStore.BIAS_MIN, RenderConfigStore.BIAS_MAX);
-        this.contrast = clamp(config.contrast ?? this.contrast, RenderConfigStore.CONTRAST_MIN, RenderConfigStore.CONTRAST_MAX);
-        this.gamma = clamp(config.gamma ?? this.gamma, RenderConfigStore.GAMMA_MIN, RenderConfigStore.GAMMA_MAX);
-        this.alphaLog = RenderConfigStore.clampAlpha(config.alphaLog ?? config.alpha ?? this.alphaLog, FrameScaling.LOG);
-        this.alphaPower = RenderConfigStore.clampAlpha(config.alphaPower ?? config.alpha ?? this.alphaPower, FrameScaling.POWER);
-        this.alphaSinh = RenderConfigStore.clampAlpha(config.alphaSinh ?? this.alphaSinh, FrameScaling.SINH);
-        this.alphaAsinh = RenderConfigStore.clampAlpha(config.alphaAsinh ?? this.alphaAsinh, FrameScaling.ASINH);
+        this.bias = config.bias ?? this.bias;
+        this.contrast = config.contrast ?? this.contrast;
+        this.gamma = config.gamma ?? this.gamma;
+        this.alphaLog = config.alphaLog ?? config.alpha ?? this.alphaLog;
+        this.alphaPower = config.alphaPower ?? config.alpha ?? this.alphaPower;
+        this.alphaSinh = config.alphaSinh ?? this.alphaSinh;
+        this.alphaAsinh = config.alphaAsinh ?? this.alphaAsinh;
         this.isInverted = config.inverted ?? this.isInverted;
         this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
