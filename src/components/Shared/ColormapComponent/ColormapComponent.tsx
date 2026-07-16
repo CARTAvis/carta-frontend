@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, PopoverNext, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -19,6 +19,7 @@ interface ColormapComponentProps {
     disabled?: boolean;
     onColormapSelect: (selected: string) => void;
     onCustomColorSelect?: (selected: string) => void;
+    onCustomColorStartSelect?: (selected: string) => void;
     enableAdditionalColor?: boolean;
     selectedCustomColor?: string;
     customColorStart?: string;
@@ -43,7 +44,15 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
-            const handleColorChange = _.throttle((color: any) => {
+            // Keep this for future use if we want to allow users to select the start color of the custom colormap
+            /*
+            const handleStartColorChange = _.throttle((color: any) => {
+                props.onCustomColorStartSelect?.(color.hex);
+                props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
+            }, changeDelay);
+            */
+
+            const handleEndColorChange = _.throttle((color: any) => {
                 props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
@@ -51,10 +60,10 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
                     <PopoverNext
-                        placement="left"
+                        placement={PopoverPosition.LEFT}
                         shouldReturnFocusOnClose={false}
                         popoverClassName={popoverClassName}
-                        content={<SketchPicker color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}
+                        content={<SketchPicker color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}
                     >
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </PopoverNext>

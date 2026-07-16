@@ -2,7 +2,7 @@ import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import type {WorkspaceRenderConfig} from "models";
 
-import {FrameScaling} from "enums";
+import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
@@ -28,14 +28,51 @@ export class RenderConfigStore {
 
     public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    public static readonly GAMMA_MIN = RENDER_CONFIG_GAMMA_MIN;
-    public static readonly GAMMA_MAX = RENDER_CONFIG_GAMMA_MAX;
-    public static readonly ALPHA_MIN = RENDER_CONFIG_ALPHA_MIN;
-    public static readonly ALPHA_MAX = RENDER_CONFIG_ALPHA_MAX;
-    public static readonly BIAS_MIN = RENDER_CONFIG_BIAS_MIN;
-    public static readonly BIAS_MAX = RENDER_CONFIG_BIAS_MAX;
-    public static readonly CONTRAST_MIN = RENDER_CONFIG_CONTRAST_MIN;
-    public static readonly CONTRAST_MAX = RENDER_CONFIG_CONTRAST_MAX;
+    /* eslint-disable @typescript-eslint/naming-convention */
+    public static get GAMMA_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? RENDER_CONFIG_GAMMA_MIN;
+    }
+    public static get GAMMA_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? RENDER_CONFIG_GAMMA_MAX;
+    }
+    public static get BIAS_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? RENDER_CONFIG_BIAS_MIN;
+    }
+    public static get BIAS_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? RENDER_CONFIG_BIAS_MAX;
+    }
+    public static get CONTRAST_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? RENDER_CONFIG_CONTRAST_MIN;
+    }
+    public static get CONTRAST_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? RENDER_CONFIG_CONTRAST_MAX;
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    private static getAlphaPreferenceKey(scaling: FrameScaling): PreferenceKeys | undefined {
+        switch (scaling) {
+            case FrameScaling.LOG:
+                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
+            case FrameScaling.POWER:
+                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
+            case FrameScaling.SINH:
+                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH;
+            case FrameScaling.ASINH:
+                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH;
+            default:
+                return undefined;
+        }
+    }
+
+    public static getAlphaMin(scaling: FrameScaling): number {
+        const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
+        return (key && AppStore.Instance.preferenceStore.getMinConstraint(key)) ?? RENDER_CONFIG_ALPHA_MIN;
+    }
+
+    public static getAlphaMax(scaling: FrameScaling): number {
+        const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
+        return (key && AppStore.Instance.preferenceStore.getMaxConstraint(key)) ?? RENDER_CONFIG_ALPHA_MAX;
+    }
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number = 0;
@@ -95,8 +132,8 @@ export class RenderConfigStore {
         return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
     }
 
-    private static clampAlpha(alpha: number): number {
-        return clamp(alpha, RenderConfigStore.ALPHA_MIN, RenderConfigStore.ALPHA_MAX);
+    private static clampAlpha(alpha: number, scaling: FrameScaling): number {
+        return clamp(alpha, RenderConfigStore.getAlphaMin(scaling), RenderConfigStore.getAlphaMax(scaling));
     }
 
     public static isColormapValid(colormap: string): boolean {
@@ -120,6 +157,14 @@ export class RenderConfigStore {
             default:
                 return this.alphaLog;
         }
+    }
+
+    @computed get alphaMin(): number {
+        return RenderConfigStore.getAlphaMin(this.scaling);
+    }
+
+    @computed get alphaMax(): number {
+        return RenderConfigStore.getAlphaMax(this.scaling);
     }
 
     @computed get colorMap() {
@@ -558,10 +603,10 @@ export class RenderConfigStore {
         this.bias = clamp(config.bias ?? this.bias, RenderConfigStore.BIAS_MIN, RenderConfigStore.BIAS_MAX);
         this.contrast = clamp(config.contrast ?? this.contrast, RenderConfigStore.CONTRAST_MIN, RenderConfigStore.CONTRAST_MAX);
         this.gamma = clamp(config.gamma ?? this.gamma, RenderConfigStore.GAMMA_MIN, RenderConfigStore.GAMMA_MAX);
-        this.alphaLog = RenderConfigStore.clampAlpha(config.alphaLog ?? config.alpha ?? this.alphaLog);
-        this.alphaPower = RenderConfigStore.clampAlpha(config.alphaPower ?? config.alpha ?? this.alphaPower);
-        this.alphaSinh = RenderConfigStore.clampAlpha(config.alphaSinh ?? this.alphaSinh);
-        this.alphaAsinh = RenderConfigStore.clampAlpha(config.alphaAsinh ?? this.alphaAsinh);
+        this.alphaLog = RenderConfigStore.clampAlpha(config.alphaLog ?? config.alpha ?? this.alphaLog, FrameScaling.LOG);
+        this.alphaPower = RenderConfigStore.clampAlpha(config.alphaPower ?? config.alpha ?? this.alphaPower, FrameScaling.POWER);
+        this.alphaSinh = RenderConfigStore.clampAlpha(config.alphaSinh ?? this.alphaSinh, FrameScaling.SINH);
+        this.alphaAsinh = RenderConfigStore.clampAlpha(config.alphaAsinh ?? this.alphaAsinh, FrameScaling.ASINH);
         this.isInverted = config.inverted ?? this.isInverted;
         this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
