@@ -263,6 +263,33 @@ export class ApiService {
             await this.setPreferences(preferences);
         }
 
+        // Migrate scalingAlpha to the separate Log and Power preferences if present
+        const alphaKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY;
+        const logKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
+        const powerKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
+        if (alphaKey in preferences) {
+            const alpha = preferences[alphaKey];
+            const isValid = typeof alpha === "number" && Number.isFinite(alpha) && alpha > 0;
+            const updates = {};
+
+            if (isValid) {
+                if (!(logKey in preferences)) {
+                    preferences[logKey] = alpha;
+                    updates[logKey] = alpha;
+                }
+                if (!(powerKey in preferences)) {
+                    preferences[powerKey] = alpha;
+                    updates[powerKey] = alpha;
+                }
+            }
+
+            if (!isValid || Object.keys(updates).length === 0 || (await this.setPreferences(updates))) {
+                await this.clearPreferences([alphaKey]);
+            }
+
+            delete preferences[alphaKey];
+        }
+
         // Migrate nanAlpha to nanColorHex if present
         if ("nanAlpha" in preferences) {
             const nanColorHex = preferences["nanColorHex"] || "#137CBD";
