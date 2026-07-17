@@ -55,6 +55,17 @@ interface TileMessageArgs {
     syncId?: number | null;
 }
 
+interface ChannelMapRequest {
+    fileId: number;
+    channel: number;
+    stokes: number;
+    requiredTiles: CARTA.AddRequiredTiles.$Properties;
+}
+
+interface ActiveChannelMapRequest extends ChannelMapRequest {
+    requestId: number;
+}
+
 export class TileService {
     private static staticInstance: TileService;
 
@@ -84,8 +95,8 @@ export class TileService {
     private readonly gl: WebGL2RenderingContext | null;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
-    private currentlyStreamingChannelRange: {min: number; max: number};
-    private currentlyStreamingTileRange: number[];
+    private readonly channelMapRequestQueues: Map<number, ChannelMapRequest[]>;
+    private readonly activeChannelMapRequests: Map<number, ActiveChannelMapRequest>;
 
     @observable remainingTiles: number = 0;
     @observable workersReady: boolean[] | undefined;
@@ -158,6 +169,8 @@ export class TileService {
         this.pendingSynchronisedTiles = new Map<string, Set<number>>();
         this.syncIdMap = new Map<number, boolean>();
         this.syncIdTileCountMap = new Map<number, number>();
+        this.channelMapRequestQueues = new Map<number, ChannelMapRequest[]>();
+        this.activeChannelMapRequests = new Map<number, ActiveChannelMapRequest>();
 
         this.compressionRequestCounter = 0;
         this.isAnimationEnabled = false;
@@ -165,6 +178,7 @@ export class TileService {
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
+        this.backendService.channelMapFlowControlStream.subscribe(event => this.handleChannelMapFlowControl(event.eventId, event.flowControl));
         this.workers = new Array<Worker>(clamp(Math.ceil((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE), MIN_TILE_WORKERS, MAX_TILE_WORKERS));
         this.workersReady = new Array<boolean>(this.workers.length);
 
@@ -222,7 +236,7 @@ export class TileService {
         return this.cachedTiles.get(gpuCacheCoordinate);
     }
 
-    private getRequiredRequestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number) {
+    private getRequiredRequestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, shouldTrackPending: boolean = true) {
         const newRequests = new Array<TileCoordinate>();
         const key = `${fileId}_${stokes}_${channel}`;
         for (const tile of tiles) {
@@ -252,18 +266,25 @@ export class TileService {
             }
         }
 
-        const pendingRequestsMap = this.pendingRequests?.get(key);
-
-        if (!pendingRequestsMap) {
-            this.pendingRequests.set(key, new Map<number, boolean>());
+        if (shouldTrackPending) {
+            this.trackPendingRequests(
+                fileId,
+                channel,
+                stokes,
+                newRequests.map(tile => tile.encode())
+            );
         }
-        for (const tile of newRequests) {
-            const encodedCoordinate = tile.encode();
-            this.pendingRequests.get(key)?.set(encodedCoordinate, true);
-        }
-        this.updateRemainingTileCount();
 
         return newRequests;
+    }
+
+    private trackPendingRequests(fileId: number, channel: number, stokes: number, tiles: number[]) {
+        const key = `${fileId}_${stokes}_${channel}`;
+        if (!this.pendingRequests.has(key)) {
+            this.pendingRequests.set(key, new Map<number, boolean>());
+        }
+        tiles.forEach(tile => this.pendingRequests.get(key)?.set(tile, true));
+        this.updateRemainingTileCount();
     }
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, areChannelsChanged: boolean = false) {
@@ -301,34 +322,12 @@ export class TileService {
         }
     }
 
-    groupChannels(channelToTilesArray: {channel: number; tiles: number[]}[]): {range: {min: number; max: number}; tiles: number[]}[] {
-        const result: {range: {min: number; max: number}; tiles: number[]}[] = [];
-        let previousTileString = "";
-        let currentRange: {min: number; max: number} | null = null;
-
-        for (const {channel, tiles} of channelToTilesArray) {
-            const tileString = JSON.stringify(tiles); // Convert TileCoordinate to a string
-
-            if (tileString === previousTileString && currentRange && channel === currentRange.max + 1) {
-                currentRange.max = channel;
-            } else {
-                currentRange = {min: channel, max: channel};
-                result.push({range: currentRange, tiles});
-            }
-
-            previousTileString = tileString;
-        }
-
-        return result;
-    }
-
     requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, isPolarizationChanged: boolean = false) {
         if (!frame) {
             return;
         }
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
-        const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
         if (isPolarizationChanged) {
@@ -341,22 +340,11 @@ export class TileService {
             this.clearCompressedCache(fileId);
         }
 
-        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) {
-            this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingTileRange);
-        }
+        this.clearQueueForChannelMap(fileId, stokes, fullChannelRange, currentTiles);
 
-        const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
-
-        if (fullChannelRange) {
-            // Loop through range of channel
-            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                const newRequests = this.getRequiredRequestTiles(tiles, fileId, i, stokes);
-                channelToTilesArray.push({channel: i, tiles: newRequests});
-            }
-        }
-
-        const sortedChannelToTilesArray = channelToTilesArray.map(({channel, tiles}) => {
-            const sortedTiles = tiles
+        const requests: ChannelMapRequest[] = [];
+        for (let channel = fullChannelRange.min; channel <= fullChannelRange.max; channel++) {
+            const sortedTiles = this.getRequiredRequestTiles(tiles, fileId, channel, stokes, false)
                 .sort((a, b) => {
                     const aX = focusPoint.x - a.x;
                     const aY = focusPoint.y - a.y;
@@ -365,34 +353,78 @@ export class TileService {
                     return aX * aX + aY * aY - (bX * bX + bY * bY);
                 })
                 .map(tile => tile.encode());
-            return {channel, tiles: sortedTiles};
-        });
-
-        // Groups channels that require the same tiles
-        const channelsToTilesArray = this.groupChannels(sortedChannelToTilesArray);
-
-        for (const {range, tiles} of channelsToTilesArray) {
-            if (tiles.length) {
-                const isRequestSentSuccessfully = this.backendService.setChannels(
-                    fileId,
-                    requiredChannel,
-                    stokes,
-                    {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles},
-                    true,
-                    range,
-                    fullChannelRange
-                );
-                if (isRequestSentSuccessfully) {
-                    this.currentlyStreamingChannelRange = fullChannelRange;
-                    this.currentlyStreamingTileRange = currentTiles;
-                }
+            if (sortedTiles.length) {
+                requests.push({fileId, channel, stokes, requiredTiles: {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedTiles}});
             }
         }
+
+        const activeRequest = this.activeChannelMapRequests.get(fileId);
+        if (requests.length || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
+            const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
+            if (activeChannelIndex >= 0) {
+                requests.push(requests.splice(activeChannelIndex, 1)[0]);
+            } else {
+                requests.push({fileId, channel: frame.channel, stokes, requiredTiles: {}});
+            }
+        }
+        this.queueChannelMapRequests(fileId, requests);
     }
 
     updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
         this.channelMap.set(fileId, {channel, stokes});
-        this.backendService.setChannels(fileId, channel, stokes, {}, true);
+        this.queueChannelMapRequests(fileId, [{fileId, channel, stokes, requiredTiles: {}}]);
+    }
+
+    private queueChannelMapRequests(fileId: number, requests: ChannelMapRequest[]) {
+        this.channelMapRequestQueues.set(fileId, requests);
+        if (!this.activeChannelMapRequests.has(fileId)) {
+            this.sendNextChannelMapRequest(fileId);
+        }
+    }
+
+    private sendNextChannelMapRequest(fileId: number) {
+        const request = this.channelMapRequestQueues.get(fileId)?.shift();
+        if (!request) {
+            this.channelMapRequestQueues.delete(fileId);
+            return;
+        }
+
+        const tiles = request.requiredTiles.tiles ?? [];
+        this.trackPendingRequests(request.fileId, request.channel, request.stokes, tiles);
+        const requestId = this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true);
+        if (requestId !== null) {
+            this.activeChannelMapRequests.set(fileId, {...request, requestId});
+        } else {
+            const key = `${request.fileId}_${request.stokes}_${request.channel}`;
+            tiles.forEach(tile => this.pendingRequests.get(key)?.delete(tile));
+            this.updateRemainingTileCount();
+            this.channelMapRequestQueues.delete(fileId);
+        }
+    }
+
+    private handleChannelMapFlowControl(eventId: number, message: CARTA.ChannelMapFlowControl.$Properties) {
+        const fileId = message.fileId;
+        if (fileId === null || fileId === undefined) {
+            return;
+        }
+        const activeRequest = this.activeChannelMapRequests.get(fileId);
+        if (!activeRequest || activeRequest.requestId !== eventId || activeRequest.channel !== message.receivedChannel) {
+            return;
+        }
+        this.activeChannelMapRequests.delete(fileId);
+        this.sendNextChannelMapRequest(fileId);
+    }
+
+    cancelChannelMapRequests(fileId?: number) {
+        const fileIds = fileId === undefined ? new Set([...this.channelMapRequestQueues.keys(), ...this.activeChannelMapRequests.keys()]) : [fileId];
+        fileIds.forEach(id => this.clearRequestQueue(id));
+        if (fileId === undefined) {
+            this.channelMapRequestQueues.clear();
+            this.activeChannelMapRequests.clear();
+        } else {
+            this.channelMapRequestQueues.delete(fileId);
+            this.activeChannelMapRequests.delete(fileId);
+        }
     }
 
     updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
@@ -450,27 +482,24 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}, currentTileRange: number[], previousTileRange: number[]) {
-        pendingRequests.forEach((value, key) => {
+    clearQueueForChannelMap(fileId: number, stokes: number, currentChannelRange: {min: number; max: number}, currentTiles: number[]) {
+        const currentTileSet = new Set(currentTiles);
+        this.pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
             }
-            for (const tile of currentTileRange) {
-                if (!previousTileRange.includes(tile)) {
-                    pendingRequests.delete(key);
-                    return;
-                }
-            }
-            const splitKey = key?.split("_");
-            if (splitKey.length <= 0) {
+            const [keyFileId, keyStokes, channel] = key.split("_").map(Number);
+            if (keyFileId !== fileId) {
                 return;
             }
-            const keyFileId = parseInt(splitKey[0]);
-            const channel = parseInt(splitKey[splitKey.length - 1]);
-            if (keyFileId === fileId && isFinite(channel) && channel >= 0) {
-                if (channel < currentChannelRange.min || channel > currentChannelRange.max) {
-                    pendingRequests.delete(key);
-                }
+            if (keyStokes !== stokes || channel < currentChannelRange.min || channel > currentChannelRange.max) {
+                this.pendingRequests.delete(key);
+            } else {
+                value.forEach((_isPending, tile) => {
+                    if (!currentTileSet.has(tile)) {
+                        value.delete(tile);
+                    }
+                });
             }
         });
 
@@ -478,6 +507,7 @@ export class TileService {
     }
 
     handleFileClosed(fileId: number) {
+        this.cancelChannelMapRequests(fileId);
         this.clearCompressedCache(fileId);
         this.clearGPUCache(fileId);
         this.channelMap.delete(fileId);
@@ -566,14 +596,6 @@ export class TileService {
             // mark the channel as complete
             this.completedChannels.set(key, true);
             this.syncIdMap.set(syncMessage.syncId, true);
-
-            // Flow control
-            const flowControlMessage: CARTA.ChannelMapFlowControl.$Properties = {
-                fileId: syncMessage.fileId,
-                receivedChannel: syncMessage.channel
-            };
-
-            this.backendService.sendChannelMapFlowControl(flowControlMessage);
         }
     };
 

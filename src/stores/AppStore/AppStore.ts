@@ -2165,6 +2165,7 @@ export class AppStore {
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
                 setTimeout(this.hideSplashScreen, 500);
             } else {
+                this.tileService.cancelChannelMapRequests();
                 this.showSplashScreen();
             }
         });
@@ -2208,7 +2209,8 @@ export class AppStore {
 
     // region Subscription handlers
     @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData.$Properties) => {
-        if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
+        const frame = this.getFrame(spatialProfileData.fileId ?? -1);
+        if (frame && (!this.channelMapStore.isChannelMapEnabled || (frame.channel === spatialProfileData.channel && frame.stokes === spatialProfileData.stokes))) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
             if (!profileStore) {
@@ -2219,7 +2221,7 @@ export class AppStore {
 
             // Update cursor value from profile if it is the cursor data
             if (spatialProfileData.regionId === CURSOR_REGION_ID) {
-                this.getFrame(spatialProfileData.fileId ?? -1)?.setCursorValue({x: spatialProfileData.x ?? 0, y: spatialProfileData.y ?? 0}, spatialProfileData.channel ?? 0, spatialProfileData.value ?? 0);
+                frame.setCursorValue({x: spatialProfileData.x ?? 0, y: spatialProfileData.y ?? 0}, spatialProfileData.channel ?? 0, spatialProfileData.value ?? 0);
             }
         }
     };
@@ -2253,6 +2255,11 @@ export class AppStore {
 
     @action handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
         if (!regionHistogramData) {
+            return;
+        }
+        const frame = this.getFrame(regionHistogramData.fileId);
+        const isCubeHistogram = regionHistogramData.regionId === -2;
+        if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && (!frame || frame.channel !== regionHistogramData.channel || frame.stokes !== regionHistogramData.stokes)) {
             return;
         }
 
@@ -2337,13 +2344,19 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
+                if (this.channelMapStore.isChannelMapEnabled && (updatedFrame.channel !== channel || updatedFrame.stokes !== stokes)) {
+                    this.pendingChannelHistograms.delete(key);
+                    return;
+                }
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = channel;
-                updatedFrame.stokes = stokes;
+                if (!this.channelMapStore.isChannelMapEnabled) {
+                    updatedFrame.channel = channel;
+                    updatedFrame.stokes = stokes;
+                }
             }
 
             this.pendingChannelHistograms.delete(key);
@@ -2352,6 +2365,10 @@ export class AppStore {
 
     @action handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
         if (!regionStatsData) {
+            return;
+        }
+        const frame = this.getFrame(regionStatsData.fileId);
+        if (this.channelMapStore.isChannelMapEnabled && (!frame || frame.channel !== regionStatsData.channel || frame.stokes !== regionStatsData.stokes)) {
             return;
         }
 

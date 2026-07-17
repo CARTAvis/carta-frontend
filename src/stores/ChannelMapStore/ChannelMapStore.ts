@@ -115,6 +115,9 @@ export class ChannelMapStore {
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
         this.isChannelMapEnabled = isEnabled;
+        if (!isEnabled) {
+            TileService.Instance.cancelChannelMapRequests();
+        }
     };
 
     /**
