@@ -1,5 +1,6 @@
 export * from "./AbstractCatalogProfile/AbstractCatalogProfile";
 export * from "./AngularSize/AngularSize";
+export * from "./AnimationPlayback/AnimationPlayback";
 export * from "./CARTAInfo/CARTAInfo";
 export * from "./ChannelInfo/ChannelInfo";
 export * from "./CompressionQuality/CompressionQuality";
