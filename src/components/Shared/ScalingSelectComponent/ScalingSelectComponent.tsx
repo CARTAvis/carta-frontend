@@ -79,7 +79,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
                 onFocus={handleFocus}
                 onMouseEnter={() => handleScalingHover(scaling)}
                 text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : RenderConfigStore.SCALING_TYPES.get(scaling)}
-                style={{width: "320px"}}
+                style={{width: "270px"}}
             />
         );
     };
