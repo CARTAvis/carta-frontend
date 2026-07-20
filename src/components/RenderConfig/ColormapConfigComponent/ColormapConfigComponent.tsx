@@ -105,7 +105,16 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER || renderConfig.scaling === FrameScaling.SINH || renderConfig.scaling === FrameScaling.ASINH) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput min={renderConfig.alphaMin} max={renderConfig.alphaMax} buttonPosition={"none"} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
+                        <SafeNumericInput
+                            className={"step-input"}
+                            min={renderConfig.alphaMin}
+                            max={renderConfig.alphaMax}
+                            stepSize={renderConfig.alpha * 0.1}
+                            minorStepSize={renderConfig.alpha * 0.01}
+                            majorStepSize={renderConfig.alpha * 0.5}
+                            value={renderConfig.alpha}
+                            onValueChange={renderConfig.setAlpha}
+                        />
                     </FormGroup>
                 )}
                 {renderConfig.scaling === FrameScaling.GAMMA && (

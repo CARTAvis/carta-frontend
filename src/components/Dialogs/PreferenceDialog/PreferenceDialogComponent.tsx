@@ -182,7 +182,9 @@ export class PreferenceDialogComponent extends React.Component {
                 <SafeNumericInput
                     min={RenderConfigStore.getAlphaMin(preference.scaling)}
                     max={RenderConfigStore.getAlphaMax(preference.scaling)}
-                    buttonPosition={"none"}
+                    stepSize={value * 0.1}
+                    minorStepSize={value * 0.01}
+                    majorStepSize={value * 0.5}
                     value={value}
                     onValueChange={newValue => preference.setPreference(preferenceKey, newValue)}
                 />
