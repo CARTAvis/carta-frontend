@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingAlphaControlComponent, ScalingSelectComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingParameterControlComponent, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {type FrameStore, PreferenceStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
@@ -96,7 +96,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             case FrameScaling.ASINH:
                 return (
                     <FormGroup label="Alpha" inline={true}>
-                        <ScalingAlphaControlComponent
+                        <ScalingParameterControlComponent
                             scaling={this.scalingType}
                             min={RenderConfigStore.getAlphaMin(this.scalingType)}
                             max={RenderConfigStore.getAlphaMax(this.scalingType)}
@@ -108,7 +108,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             case FrameScaling.GAMMA:
                 return (
                     <FormGroup label="Gamma" inline={true}>
-                        <SafeNumericInput min={RenderConfigStore.GAMMA_MIN} max={RenderConfigStore.GAMMA_MAX} stepSize={0.1} minorStepSize={0.01} majorStepSize={0.5} value={this.scalingGamma} onValueChange={this.setScalingGamma} />
+                        <ScalingParameterControlComponent scaling={this.scalingType} min={RenderConfigStore.GAMMA_MIN} max={RenderConfigStore.GAMMA_MAX} value={this.scalingGamma} onValueChange={this.setScalingGamma} />
                     </FormGroup>
                 );
             default:

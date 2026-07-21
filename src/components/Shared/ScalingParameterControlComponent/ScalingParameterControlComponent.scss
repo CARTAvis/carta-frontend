@@ -1,6 +1,6 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
-.scaling-alpha-control {
+.scaling-parameter-control {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -12,7 +12,7 @@
         width: 100%;
     }
 
-    .scaling-alpha-slider-row {
+    .scaling-parameter-slider-row {
         position: relative;
         display: flex;
         align-items: center;
@@ -21,7 +21,7 @@
         margin: 10px 0 2px !important;
     }
 
-    .scaling-alpha-reset {
+    .scaling-parameter-reset {
         position: absolute;
         top: 50%;
         right: calc(100% + 12px);
@@ -34,7 +34,7 @@
         margin-left: 0 !important;
     }
 
-    .scaling-alpha-slider {
+    .scaling-parameter-slider {
         align-self: flex-start;
         min-width: 100%;
         width: 100%;

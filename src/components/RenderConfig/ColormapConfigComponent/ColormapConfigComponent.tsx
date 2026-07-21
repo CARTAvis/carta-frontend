@@ -5,7 +5,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingAlphaControlComponent, ScalingSelectComponent} from "components/Shared";
+import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, ScalingParameterControlComponent, ScalingSelectComponent} from "components/Shared";
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
@@ -110,21 +110,12 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER || renderConfig.scaling === FrameScaling.SINH || renderConfig.scaling === FrameScaling.ASINH) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <ScalingAlphaControlComponent scaling={renderConfig.scaling} min={renderConfig.alphaMin} max={renderConfig.alphaMax} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
+                        <ScalingParameterControlComponent scaling={renderConfig.scaling} min={renderConfig.alphaMin} max={renderConfig.alphaMax} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
                     </FormGroup>
                 )}
                 {renderConfig.scaling === FrameScaling.GAMMA && (
                     <FormGroup label={"Gamma"} inline={true}>
-                        <SafeNumericInput
-                            className={"step-input"}
-                            min={RenderConfigStore.GAMMA_MIN}
-                            max={RenderConfigStore.GAMMA_MAX}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={renderConfig.gamma}
-                            onValueChange={renderConfig.setGamma}
-                        />
+                        <ScalingParameterControlComponent scaling={renderConfig.scaling} min={RenderConfigStore.GAMMA_MIN} max={RenderConfigStore.GAMMA_MAX} value={renderConfig.gamma} onValueChange={renderConfig.setGamma} />
                     </FormGroup>
                 )}
                 <FormGroup inline={true}>
