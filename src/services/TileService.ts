@@ -294,7 +294,7 @@ export class TileService {
             this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
-            this.channelMap.set(fileId, {channel, stokes});
+            this.setCurrentChannel(fileId, channel, stokes);
             this.clearCompressedCache(fileId);
         }
 
@@ -332,6 +332,7 @@ export class TileService {
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
         const currentTiles = tiles.map(tile => tile.encode());
+        this.setCurrentChannel(fileId, frame.channel, stokes);
 
         if (isPolarizationChanged) {
             for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
@@ -340,7 +341,6 @@ export class TileService {
                 this.receivedSynchronisedTiles.delete(key);
             }
             this.clearRequestQueue(fileId);
-            this.clearCompressedCache(fileId);
         }
 
         this.clearQueueForChannelMap(fileId, stokes, fullChannelRange, currentTiles);
@@ -362,7 +362,7 @@ export class TileService {
         }
 
         const activeRequest = this.activeChannelMapRequests.get(fileId);
-        if (requests.length || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
+        if (requests.length || isPolarizationChanged || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
             const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
             if (activeChannelIndex >= 0) {
                 requests.push(requests.splice(activeChannelIndex, 1)[0]);
@@ -374,8 +374,17 @@ export class TileService {
     }
 
     updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
-        this.channelMap.set(fileId, {channel, stokes});
+        this.setCurrentChannel(fileId, channel, stokes);
         this.queueChannelMapRequests(fileId, [{fileId, channel, stokes, requiredTiles: {}}]);
+    }
+
+    private setCurrentChannel(fileId: number, channel: number | null | undefined, stokes: number | null | undefined) {
+        const currentChannel = this.channelMap.get(fileId);
+        if (currentChannel && currentChannel.stokes !== stokes) {
+            this.clearCompressedCache(fileId);
+            this.clearGPUCache(fileId);
+        }
+        this.channelMap.set(fileId, {channel, stokes});
     }
 
     private queueChannelMapRequests(fileId: number, requests: ChannelMapRequest[]) {
@@ -617,7 +626,7 @@ export class TileService {
             return;
         }
 
-        if (appStore.channelMapStore.isChannelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+        if (appStore.channelMapStore.isChannelMapEnabled && (!appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN) || currentChannels?.stokes !== tileMessage.stokes)) {
             console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }
@@ -637,7 +646,7 @@ export class TileService {
             return;
         }
         if (this.isAnimationEnabled && tileMessage.fileId !== null && tileMessage.fileId !== undefined) {
-            this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
+            this.setCurrentChannel(tileMessage.fileId, tileMessage.channel, tileMessage.stokes);
         }
 
         for (const tile of tileMessage.tiles ?? []) {
@@ -724,6 +733,19 @@ export class TileService {
         syncId: number | null | undefined
     ) {
         const key = `${fileId}_${stokes}_${channel}`;
+        const currentChannels = this.channelMap.get(fileId ?? NaN);
+        const isStaleStokesTile = currentChannels?.stokes !== stokes;
+        if (isStaleStokesTile) {
+            const staleSyncId = syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID;
+            this.pendingDecompressions.get(key)?.delete(staleSyncId);
+            this.pendingSynchronisedTiles.delete(key);
+            this.receivedSynchronisedTiles.delete(key);
+            if (syncId) {
+                this.syncIdMap.delete(syncId);
+                this.syncIdTileCountMap.delete(syncId);
+            }
+            return;
+        }
         const pendingCompressionMap = this.pendingDecompressions.get(key)?.get(syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID);
         if (!pendingCompressionMap) {
             console.warn(`Problem decompressing tile. Missing pending decompression map ${key}!`);

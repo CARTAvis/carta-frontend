@@ -6,7 +6,7 @@ import {type Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
 import {ImageType} from "enums";
-import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
+import {COMPUTED_POLARIZATIONS, type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -175,23 +175,22 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
-                if (
-                    (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
-                    (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
-                ) {
+                const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
+                const canRender = (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) && frameStokesIndex === histStokesIndex;
+                if (canRender) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
                     if (channel && isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame);
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
-                }
 
-                if (image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = image?.store?.alpha[index];
-                }
+                    if (image?.type === ImageType.COLOR_BLENDING) {
+                        ctx.globalAlpha = image?.store?.alpha[index];
+                    }
 
-                ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                    ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                }
             }
         });
     };
