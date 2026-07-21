@@ -97,6 +97,7 @@ export const ScalingParameterControlComponent: React.FC<ScalingParameterControlP
                 value={value}
                 selectAllOnFocus={true}
                 buttonPosition="none"
+                clampValueOnBlur={true}
                 onValueChange={onValueChange}
             />
             <div className="scaling-parameter-slider-row">
