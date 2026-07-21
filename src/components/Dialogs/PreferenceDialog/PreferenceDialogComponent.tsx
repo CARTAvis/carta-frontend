@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
-import {AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, copyToClipboardWithToast, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
+import {AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, copyToClipboardWithToast, PointShapeSelectComponent, SafeNumericInput, ScalingAlphaControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
@@ -179,12 +179,10 @@ export class PreferenceDialogComponent extends React.Component {
 
         return (
             <FormGroup label={"Alpha"} inline={true}>
-                <SafeNumericInput
+                <ScalingAlphaControlComponent
+                    scaling={preference.scaling}
                     min={RenderConfigStore.getAlphaMin(preference.scaling)}
                     max={RenderConfigStore.getAlphaMax(preference.scaling)}
-                    stepSize={value * 0.1}
-                    minorStepSize={value * 0.01}
-                    majorStepSize={value * 0.5}
                     value={value}
                     onValueChange={newValue => preference.setPreference(preferenceKey, newValue)}
                 />

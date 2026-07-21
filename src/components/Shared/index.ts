@@ -19,6 +19,7 @@ export * from "./regionIcon";
 export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./ResizeDetector/ResizeDetector";
 export * from "./SafeNumericInput/SafeNumericInput";
+export * from "./ScalingAlphaControlComponent/ScalingAlphaControlComponent";
 export * from "./ScalingSelectComponent/ScalingSelectComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
 export * from "./ScatterPlot/ScatterPlotComponent";

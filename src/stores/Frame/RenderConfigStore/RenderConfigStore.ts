@@ -8,6 +8,13 @@ import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
 export class RenderConfigStore {
+    private static readonly AlphaSliderBounds = new Map<FrameScaling, {min: number; max: number}>([
+        [FrameScaling.LOG, {min: 0.1, max: 10_000}],
+        [FrameScaling.POWER, {min: 0.001, max: 1_000}],
+        [FrameScaling.SINH, {min: 0.1, max: 3}],
+        [FrameScaling.ASINH, {min: 0.01, max: 3}]
+    ]);
+
     public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
         [FrameScaling.LINEAR, "Linear"],
         [FrameScaling.LOG, "Log"],
@@ -62,13 +69,19 @@ export class RenderConfigStore {
     }
 
     public static getAlphaMin(scaling: FrameScaling): number {
-        const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        return (key && AppStore.Instance.preferenceStore.getMinConstraint(key)) ?? 0.000001;
+        const preferenceKey = RenderConfigStore.getAlphaPreferenceKey(scaling);
+        const schemaMin = preferenceKey ? AppStore.Instance.preferenceStore.getMinConstraint(preferenceKey) : undefined;
+        const sliderMin = RenderConfigStore.AlphaSliderBounds.get(scaling)?.min ?? 0.000001;
+
+        return schemaMin === undefined ? sliderMin : Math.max(schemaMin, sliderMin);
     }
 
     public static getAlphaMax(scaling: FrameScaling): number {
-        const key = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        return (key && AppStore.Instance.preferenceStore.getMaxConstraint(key)) ?? 1000000;
+        const preferenceKey = RenderConfigStore.getAlphaPreferenceKey(scaling);
+        const schemaMax = preferenceKey ? AppStore.Instance.preferenceStore.getMaxConstraint(preferenceKey) : undefined;
+        const sliderMax = RenderConfigStore.AlphaSliderBounds.get(scaling)?.max ?? 1000000;
+
+        return schemaMax === undefined ? sliderMax : Math.min(schemaMax, sliderMax);
     }
 
     @observable scaling: FrameScaling;
