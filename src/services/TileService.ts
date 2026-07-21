@@ -317,6 +317,9 @@ export class TileService {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
             }
         } else {
+            if (areChannelsChanged) {
+                this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: []});
+            }
             this.completedChannels.set(key, true);
             this.tileStream.next({tileCount: 0, fileId, channel, stokes, flush: false});
         }

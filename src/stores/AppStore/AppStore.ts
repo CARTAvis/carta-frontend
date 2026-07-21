@@ -2295,8 +2295,8 @@ export class AppStore {
             }
         }
 
-        // update the render config widget histogram for channel map view mode
-        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+        const isCurrentChannel = frame?.channel === regionHistogramData.channel && frame.stokes === regionHistogramData.stokes;
+        if (regionHistogramData.regionId === RegionIdType.IMAGE && ((this.channelMapStore.isChannelMapEnabled && regionHistogramData.stokes === this.activeFrame?.stokes) || (!this.channelMapStore.isChannelMapEnabled && isCurrentChannel))) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };

@@ -204,6 +204,16 @@ describe("AppStore.updateHistogram", () => {
         expect(frame.renderConfig.setHistChannel).toHaveBeenCalledWith(0);
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
     });
+
+    test("applies the current normal-view histogram without waiting for new tiles", () => {
+        const frame = {channel: 1, stokes: 0};
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        const updateHistogram = jest.spyOn(appStore, "updateHistogram").mockImplementation();
+
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+
+        expect(updateHistogram).toHaveBeenCalledWith(1, 0, 1);
+    });
 });
 
 describe("AppStore channel-map data streams", () => {
