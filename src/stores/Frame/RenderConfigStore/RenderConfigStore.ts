@@ -5,16 +5,9 @@ import type {WorkspaceRenderConfig} from "models";
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, getScalingParameterConfig, sanitizeScalingParameter, scaleValueInverse} from "utilities";
 
 export class RenderConfigStore {
-    private static readonly AlphaSliderBounds = new Map<FrameScaling, {min: number; max: number}>([
-        [FrameScaling.LOG, {min: 0.1, max: 10_000}],
-        [FrameScaling.POWER, {min: 0.001, max: 1_000}],
-        [FrameScaling.SINH, {min: 0.1, max: 3}],
-        [FrameScaling.ASINH, {min: 0.01, max: 3}]
-    ]);
-
     public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
         [FrameScaling.LINEAR, "Linear"],
         [FrameScaling.LOG, "Log"],
@@ -34,10 +27,10 @@ export class RenderConfigStore {
 
     /* eslint-disable @typescript-eslint/naming-convention */
     public static get GAMMA_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 0.1;
+        return getScalingParameterConfig(FrameScaling.GAMMA)?.min ?? 1;
     }
     public static get GAMMA_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 2;
+        return getScalingParameterConfig(FrameScaling.GAMMA)?.max ?? 1;
     }
     public static get BIAS_MIN(): number {
         return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
@@ -53,35 +46,12 @@ export class RenderConfigStore {
     }
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    private static getAlphaPreferenceKey(scaling: FrameScaling): PreferenceKeys | undefined {
-        switch (scaling) {
-            case FrameScaling.LOG:
-                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
-            case FrameScaling.POWER:
-                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
-            case FrameScaling.SINH:
-                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH;
-            case FrameScaling.ASINH:
-                return PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH;
-            default:
-                return undefined;
-        }
-    }
-
     public static getAlphaMin(scaling: FrameScaling): number {
-        const preferenceKey = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        const schemaMin = preferenceKey ? AppStore.Instance.preferenceStore.getMinConstraint(preferenceKey) : undefined;
-        const sliderMin = RenderConfigStore.AlphaSliderBounds.get(scaling)?.min ?? 0.000001;
-
-        return schemaMin === undefined ? sliderMin : Math.max(schemaMin, sliderMin);
+        return getScalingParameterConfig(scaling)?.min ?? 1;
     }
 
     public static getAlphaMax(scaling: FrameScaling): number {
-        const preferenceKey = RenderConfigStore.getAlphaPreferenceKey(scaling);
-        const schemaMax = preferenceKey ? AppStore.Instance.preferenceStore.getMaxConstraint(preferenceKey) : undefined;
-        const sliderMax = RenderConfigStore.AlphaSliderBounds.get(scaling)?.max ?? 1000000;
-
-        return schemaMax === undefined ? sliderMax : Math.min(schemaMax, sliderMax);
+        return getScalingParameterConfig(scaling)?.max ?? 1;
     }
 
     @observable scaling: FrameScaling;
@@ -120,11 +90,11 @@ export class RenderConfigStore {
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.alphaLog = preference.scalingAlphaLog;
-        this.alphaPower = preference.scalingAlphaPower;
-        this.alphaSinh = preference.scalingAlphaSinh;
-        this.alphaAsinh = preference.scalingAlphaAsinh;
-        this.gamma = preference.scalingGamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, preference.scalingAlphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, preference.scalingAlphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, preference.scalingAlphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, preference.scalingAlphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, preference.scalingGamma);
         this.scaling = preference.scaling;
         this.setColorMap(preference.colormap);
         this.scaleMin = new Array<number>(stokesLength).fill(0);
@@ -460,7 +430,11 @@ export class RenderConfigStore {
      * @param gamma - The gamma value of the scaling type Gamma.
      */
     @action setGamma = (gamma: number) => {
-        this.gamma = gamma;
+        if (!Number.isFinite(gamma)) {
+            return;
+        }
+
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, gamma);
         this.updateSiblings();
     };
 
@@ -470,19 +444,26 @@ export class RenderConfigStore {
      * @param alpha - The alpha value.
      */
     @action setAlpha = (alpha: number) => {
+        if (!Number.isFinite(alpha)) {
+            return;
+        }
+
+        const sanitizedAlpha = sanitizeScalingParameter(this.scaling, alpha);
         switch (this.scaling) {
             case FrameScaling.LOG:
-                this.alphaLog = alpha;
+                this.alphaLog = sanitizedAlpha;
                 break;
             case FrameScaling.POWER:
-                this.alphaPower = alpha;
+                this.alphaPower = sanitizedAlpha;
                 break;
             case FrameScaling.SINH:
-                this.alphaSinh = alpha;
+                this.alphaSinh = sanitizedAlpha;
                 break;
             case FrameScaling.ASINH:
-                this.alphaAsinh = alpha;
+                this.alphaAsinh = sanitizedAlpha;
                 break;
+            default:
+                return;
         }
         this.updateSiblings();
     };
@@ -582,11 +563,11 @@ export class RenderConfigStore {
 
     @action updateFrom = (other: RenderConfigStore) => {
         this.scaling = other.scaling;
-        this.alphaLog = other.alphaLog;
-        this.alphaPower = other.alphaPower;
-        this.alphaSinh = other.alphaSinh;
-        this.alphaAsinh = other.alphaAsinh;
-        this.gamma = other.gamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, other.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, other.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, other.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, other.alphaAsinh, this.alphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, other.gamma, this.gamma);
         this.bias = other.bias;
         this.contrast = other.contrast;
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
@@ -608,11 +589,11 @@ export class RenderConfigStore {
         }
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
-        this.gamma = config.gamma ?? this.gamma;
-        this.alphaLog = config.alphaLog ?? config.alpha ?? this.alphaLog;
-        this.alphaPower = config.alphaPower ?? config.alpha ?? this.alphaPower;
-        this.alphaSinh = config.alphaSinh ?? this.alphaSinh;
-        this.alphaAsinh = config.alphaAsinh ?? this.alphaAsinh;
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, config.gamma ?? this.gamma, this.gamma);
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, config.alphaLog ?? this.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, config.alphaPower ?? this.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, config.alphaSinh ?? this.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, config.alphaAsinh ?? this.alphaAsinh, this.alphaAsinh);
         this.isInverted = config.inverted ?? this.isInverted;
         this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;

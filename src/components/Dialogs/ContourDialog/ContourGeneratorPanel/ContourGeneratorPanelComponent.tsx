@@ -4,11 +4,11 @@ import {Select} from "@blueprintjs/select";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, getDefaultAlpha, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingAlphaControlComponent, ScalingSelectComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingAlphaControlComponent, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {type FrameStore, PreferenceStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
-import {getPercentiles, scaleValue} from "utilities";
+import {getDefaultScalingParameter, getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
@@ -56,7 +56,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable private scalingGamma: number = PreferenceStore.Instance.scalingGamma;
 
     private get scalingAlpha(): number {
-        return this.scalingAlphas.get(this.scalingType) ?? getDefaultAlpha(this.scalingType);
+        return this.scalingAlphas.get(this.scalingType) ?? getDefaultScalingParameter(this.scalingType);
     }
 
     get minValue(): number {

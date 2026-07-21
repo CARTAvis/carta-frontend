@@ -4,6 +4,7 @@ import classNames from "classnames";
 
 import {FrameScaling} from "enums";
 import {clamp} from "utilities/math/math";
+import {getDefaultScalingParameter} from "utilities/scaling/scaling";
 
 import {SafeNumericInput} from "../SafeNumericInput/SafeNumericInput";
 
@@ -20,20 +21,6 @@ interface ScalingAlphaControlProps {
     max: number;
     onValueChange: (value: number) => void;
     className?: string;
-}
-
-export function getDefaultAlpha(scaling: FrameScaling): number {
-    switch (scaling) {
-        case FrameScaling.LOG:
-        case FrameScaling.POWER:
-            return 1000;
-        case FrameScaling.SINH:
-            return 1 / 3;
-        case FrameScaling.ASINH:
-            return 0.1;
-        default:
-            return 1;
-    }
 }
 
 /** Convert an alpha value to a logarithmic strength slider position. */
@@ -77,7 +64,7 @@ export const ScalingAlphaControlComponent: React.FC<ScalingAlphaControlProps> = 
         onValueChange(sliderValueToAlpha(scaling, newSliderValue, min, max));
     };
     const handleReset = () => {
-        onValueChange(clamp(getDefaultAlpha(scaling), min, max));
+        onValueChange(clamp(getDefaultScalingParameter(scaling), min, max));
     };
 
     return (

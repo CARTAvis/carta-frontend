@@ -1,12 +1,12 @@
 import type {RGBColor} from "react-color";
 import {type CARTA} from "carta-protobuf";
 
-import {type ContourDashMode, type FrameScaling, type VectorOverlaySource} from "enums";
+import {type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
 import {type ContourConfigStore, type RenderConfigStore, type VectorOverlayConfigStore} from "stores/Frame";
+import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
 
-// don't apply naming convention here to backward-compatible deserialization for legacy workspace keys
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
@@ -15,7 +15,6 @@ export interface WorkspaceRenderConfig {
     bias?: number;
     contrast?: number;
     gamma?: number;
-    alpha?: number;
     alphaLog?: number;
     alphaPower?: number;
     alphaSinh?: number;
@@ -137,7 +136,40 @@ export interface WorkspaceListItem {
     date: number;
 }
 
+interface LegacyWorkspaceRenderConfig extends WorkspaceRenderConfig {
+    alpha?: unknown;
+}
+
 export class WorkspaceConfig {
+    /** Upgrade legacy fields on a runtime copy without modifying or persisting the stored workspace. */
+    public static upgradeForRuntime(workspace: Workspace): Workspace {
+        if (!Array.isArray(workspace.files)) {
+            return {...workspace};
+        }
+
+        return {
+            ...workspace,
+            files: workspace.files.map(file => {
+                if (!file || typeof file !== "object" || Array.isArray(file)) {
+                    return file;
+                }
+
+                const storedRenderConfig = file.renderConfig;
+                if (!storedRenderConfig || typeof storedRenderConfig !== "object" || Array.isArray(storedRenderConfig) || !("alpha" in storedRenderConfig)) {
+                    return file;
+                }
+
+                const {alpha, ...renderConfig} = storedRenderConfig as LegacyWorkspaceRenderConfig;
+                if (typeof alpha === "number" && Number.isFinite(alpha) && alpha > 0) {
+                    renderConfig.alphaLog ??= sanitizeScalingParameter(FrameScaling.LOG, alpha);
+                    renderConfig.alphaPower ??= sanitizeScalingParameter(FrameScaling.POWER, alpha);
+                }
+
+                return {...file, renderConfig};
+            })
+        };
+    }
+
     public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {
         const {scaling, colorMap, bias, contrast, gamma, alphaLog, alphaPower, alphaSinh, alphaAsinh, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
 

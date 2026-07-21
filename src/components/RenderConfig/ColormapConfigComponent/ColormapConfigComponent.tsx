@@ -15,11 +15,15 @@ interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
 }
 
+interface ScalingPreviewSession {
+    renderConfig: RenderConfigStore;
+    baseScaling: FrameScaling;
+}
+
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
     @observable isExtendBiasContrast: boolean = false;
-    private previewBaseScaling: FrameScaling | null = null;
-    private isPreviewCommitted: boolean = false;
+    private scalingPreviewSession: ScalingPreviewSession | null = null;
 
     @action switchExtendBiasContrast = () => {
         this.isExtendBiasContrast = !this.isExtendBiasContrast;
@@ -34,23 +38,20 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
 
-    private resetScalingPreviewSession = () => {
-        this.previewBaseScaling = null;
-        this.isPreviewCommitted = false;
-    };
-
     private revertScalingPreview = () => {
-        const renderConfig = this.props.renderConfig;
-        if (!this.isPreviewCommitted && this.previewBaseScaling !== null && renderConfig.scaling !== this.previewBaseScaling) {
-            renderConfig.setScaling(this.previewBaseScaling);
+        const session = this.scalingPreviewSession;
+        this.scalingPreviewSession = null;
+
+        if (session && session.renderConfig.scaling !== session.baseScaling) {
+            session.renderConfig.setScaling(session.baseScaling);
         }
-        this.resetScalingPreviewSession();
     };
 
     private handleScalingHovered = (scaling: FrameScaling) => {
         const renderConfig = this.props.renderConfig;
-        if (this.previewBaseScaling === null) {
-            this.previewBaseScaling = renderConfig.scaling;
+        if (this.scalingPreviewSession?.renderConfig !== renderConfig) {
+            this.revertScalingPreview();
+            this.scalingPreviewSession = {renderConfig, baseScaling: renderConfig.scaling};
         }
         if (renderConfig.scaling !== scaling) {
             renderConfig.setScaling(scaling);
@@ -58,17 +59,21 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
     };
 
     private handleScalingSelected = (scaling: FrameScaling) => {
-        this.isPreviewCommitted = true;
+        this.scalingPreviewSession = null;
         this.props.renderConfig.setScaling(scaling);
     };
 
     private handleScalingDropdownOpenChange = (isOpen: boolean) => {
-        if (isOpen) {
-            this.resetScalingPreviewSession();
-        } else {
+        if (!isOpen) {
             this.revertScalingPreview();
         }
     };
+
+    componentDidUpdate(prevProps: ColormapConfigProps): void {
+        if (prevProps.renderConfig !== this.props.renderConfig) {
+            this.revertScalingPreview();
+        }
+    }
 
     componentWillUnmount(): void {
         this.revertScalingPreview();

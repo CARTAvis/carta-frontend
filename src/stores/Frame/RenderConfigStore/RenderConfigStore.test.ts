@@ -1,0 +1,82 @@
+jest.mock("components/Shared", () => ({
+    AppToaster: {show: jest.fn()}
+}));
+
+import {FrameScaling} from "enums";
+import {type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+
+import {RenderConfigStore} from "./RenderConfigStore";
+
+interface RenderConfigPreferenceOverrides {
+    scalingAlphaLog: number;
+    scalingAlphaPower: number;
+    scalingAlphaSinh: number;
+    scalingAlphaAsinh: number;
+    scalingGamma: number;
+}
+
+function createRenderConfig(overrides: Partial<RenderConfigPreferenceOverrides> = {}): RenderConfigStore {
+    const preference = {
+        percentile: 99.9,
+        scalingAlphaLog: 1_000,
+        scalingAlphaPower: 1_000,
+        scalingAlphaSinh: 1 / 3,
+        scalingAlphaAsinh: 0.1,
+        scalingGamma: 1,
+        scaling: FrameScaling.LINEAR,
+        colormap: "inferno",
+        colormapHex: "#FFFFFF",
+        colormapHexStart: "#000000",
+        ...overrides
+    } as PreferenceStore;
+    const frame = {polarizations: []} as unknown as FrameStore;
+    return new RenderConfigStore(preference, frame);
+}
+
+describe("RenderConfigStore alpha validation", () => {
+    test("sanitizes alpha values loaded from preferences", () => {
+        const renderConfig = createRenderConfig({
+            scalingAlphaLog: 1e300,
+            scalingAlphaPower: 1e-300,
+            scalingAlphaSinh: Number.POSITIVE_INFINITY,
+            scalingAlphaAsinh: Number.NaN,
+            scalingGamma: Number.POSITIVE_INFINITY
+        });
+
+        expect(renderConfig.alphaLog).toBe(10_000);
+        expect(renderConfig.alphaPower).toBe(0.001);
+        expect(renderConfig.alphaSinh).toBeCloseTo(1 / 3);
+        expect(renderConfig.alphaAsinh).toBe(0.1);
+        expect(renderConfig.gamma).toBe(1);
+    });
+
+    test("clamps finite setter values and rejects non-finite values", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.setScaling(FrameScaling.LOG);
+
+        renderConfig.setAlpha(1e300);
+        expect(renderConfig.alphaLog).toBe(10_000);
+
+        renderConfig.setAlpha(Number.NaN);
+        expect(renderConfig.alphaLog).toBe(10_000);
+
+        renderConfig.setGamma(1e300);
+        expect(renderConfig.gamma).toBe(2);
+
+        renderConfig.setGamma(Number.NaN);
+        expect(renderConfig.gamma).toBe(2);
+    });
+
+    test("sanitizes current workspace alpha values", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.updateFromWorkspace({alphaLog: 1e300, alphaPower: 1e300, alphaSinh: 1e-300, alphaAsinh: Number.POSITIVE_INFINITY, gamma: 1e300});
+
+        expect(renderConfig.alphaLog).toBe(10_000);
+        expect(renderConfig.alphaPower).toBe(1_000);
+        expect(renderConfig.alphaSinh).toBe(0.1);
+        expect(renderConfig.alphaAsinh).toBe(0.1);
+        expect(renderConfig.gamma).toBe(2);
+    });
+});

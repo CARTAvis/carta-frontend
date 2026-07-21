@@ -1,6 +1,6 @@
 import {FrameScaling} from "enums";
 
-import {scaleValue, scaleValueInverse} from "./math";
+import {getScalingParameterConfig, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
 const POWER_SCALING = FrameScaling.POWER;
@@ -223,3 +223,76 @@ describe("power scaling", () => {
         }
     });
 });
+
+describe("scaling parameter configuration", () => {
+    test.each([
+        {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000},
+        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 1},
+        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 1_000},
+        {scaling: FrameScaling.SINH, min: 0.1, max: 3, defaultValue: 1 / 3},
+        {scaling: FrameScaling.ASINH, min: 0.01, max: 3, defaultValue: 0.1}
+    ])("defines supported bounds for scaling $scaling", ({scaling, min, max, defaultValue}) => {
+        expect(getScalingParameterConfig(scaling)).toEqual({min, max, defaultValue});
+    });
+
+    test("clamps finite values and replaces non-finite values", () => {
+        expect(sanitizeScalingParameter(FrameScaling.LOG, 1e-300)).toBe(0.1);
+        expect(sanitizeScalingParameter(FrameScaling.LOG, 1e300)).toBe(10_000);
+        expect(sanitizeScalingParameter(FrameScaling.SINH, Number.POSITIVE_INFINITY)).toBeCloseTo(1 / 3);
+        expect(sanitizeScalingParameter(FrameScaling.ASINH, Number.NaN, 0.2)).toBe(0.2);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e-300)).toBe(0.1);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e300)).toBe(2);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.POSITIVE_INFINITY)).toBe(1);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.NaN, 1.5)).toBe(1.5);
+    });
+
+    test.each([
+        {scaling: FrameScaling.LOG, alpha: 0.1},
+        {scaling: FrameScaling.SINH, alpha: 3},
+        {scaling: FrameScaling.ASINH, alpha: 3}
+    ])("keeps the shader-equivalent float32 transform accurate at the supported bound for scaling $scaling", ({scaling, alpha}) => {
+        let previous = -Infinity;
+        for (const x of TEST_SAMPLES) {
+            const shaderValue = shaderScaleValue(x, scaling, alpha);
+            const expected = scaleValue(x, scaling, alpha);
+            expect(Number.isFinite(shaderValue)).toBe(true);
+            expect(shaderValue).toBeGreaterThanOrEqual(previous);
+            expect(shaderValue).toBeCloseTo(expected, 5);
+            previous = shaderValue;
+        }
+    });
+
+    test.each([0.1, 2])("keeps the shader-equivalent float32 Gamma transform accurate at gamma %s", gamma => {
+        for (const x of TEST_SAMPLES) {
+            expect(shaderScaleValue(x, FrameScaling.GAMMA, gamma)).toBeCloseTo(scaleValue(x, FrameScaling.GAMMA, 1, gamma), 6);
+        }
+    });
+});
+
+function shaderScaleValue(value: number, scaling: FrameScaling, alpha: number): number {
+    const f32 = Math.fround;
+    const add = (a: number, b: number) => f32(a + b);
+    const subtract = (a: number, b: number) => f32(a - b);
+    const multiply = (a: number, b: number) => f32(a * b);
+    const divide = (a: number, b: number) => f32(a / b);
+    const log = (x: number) => f32(Math.log(x));
+    const exp = (x: number) => f32(Math.exp(x));
+    const sqrt = (x: number) => f32(Math.sqrt(x));
+    const asinh = (x: number) => log(add(x, sqrt(add(multiply(x, x), 1))));
+    const sinh = (x: number) => divide(subtract(exp(x), exp(-x)), 2);
+    const shaderValue = f32(value);
+    const shaderAlpha = f32(alpha);
+
+    switch (scaling) {
+        case FrameScaling.LOG:
+            return divide(log(add(multiply(shaderAlpha, shaderValue), 1)), log(add(shaderAlpha, 1)));
+        case FrameScaling.SINH:
+            return divide(sinh(divide(shaderValue, shaderAlpha)), sinh(divide(1, shaderAlpha)));
+        case FrameScaling.ASINH:
+            return divide(asinh(divide(shaderValue, shaderAlpha)), asinh(divide(1, shaderAlpha)));
+        case FrameScaling.GAMMA:
+            return f32(Math.pow(shaderValue, shaderAlpha));
+        default:
+            return shaderValue;
+    }
+}

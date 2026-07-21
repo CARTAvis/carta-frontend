@@ -1,17 +1,8 @@
 import {FrameScaling} from "enums";
 
-import {alphaToSliderValue, getDefaultAlpha, sliderValueToAlpha} from "./ScalingAlphaControlComponent";
+import {alphaToSliderValue, sliderValueToAlpha} from "./ScalingAlphaControlComponent";
 
 describe("ScalingAlphaControlComponent", () => {
-    test.each([
-        [FrameScaling.LOG, 1_000],
-        [FrameScaling.POWER, 1_000],
-        [FrameScaling.SINH, 1 / 3],
-        [FrameScaling.ASINH, 0.1]
-    ])("returns the default alpha for scaling %s", (scaling, expected) => {
-        expect(getDefaultAlpha(scaling)).toBeCloseTo(expected);
-    });
-
     test.each([
         [FrameScaling.LOG, 0.1, 0.1, 10_000],
         [FrameScaling.SINH, 3, 0.1, 3],

@@ -5,8 +5,17 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
+import {getDefaultScalingParameter, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
+
+const SCALING_PARAMETER_PREFERENCES = new Map<PreferenceKeys, FrameScaling>([
+    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, FrameScaling.LOG],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, FrameScaling.POWER],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, FrameScaling.SINH],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, FrameScaling.ASINH],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, FrameScaling.GAMMA]
+]);
 
 const DEFAULTS = {
     SILENT: {
@@ -43,11 +52,11 @@ const DEFAULTS = {
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
-        scalingAlphaLog: 1000,
-        scalingAlphaPower: 1000,
-        scalingAlphaSinh: 1 / 3,
-        scalingAlphaAsinh: 0.1,
-        scalingGamma: 1,
+        scalingAlphaLog: getDefaultScalingParameter(FrameScaling.LOG),
+        scalingAlphaPower: getDefaultScalingParameter(FrameScaling.POWER),
+        scalingAlphaSinh: getDefaultScalingParameter(FrameScaling.SINH),
+        scalingAlphaAsinh: getDefaultScalingParameter(FrameScaling.ASINH),
+        scalingGamma: getDefaultScalingParameter(FrameScaling.GAMMA),
         nanColorHex: "#137CBD",
         useSmoothedBiasContrast: true
     },
@@ -668,6 +677,14 @@ export class PreferenceStore {
     @flow.bound *setPreference(key: PreferenceKeys, value: any) {
         if (!key) {
             return false;
+        }
+
+        const scaling = SCALING_PARAMETER_PREFERENCES.get(key);
+        if (scaling !== undefined) {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
+                return false;
+            }
+            value = sanitizeScalingParameter(scaling, value);
         }
 
         // set preference in variable
