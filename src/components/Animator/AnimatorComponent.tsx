@@ -5,11 +5,50 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, HelpType, NumericInputType, PlayMode} from "enums";
+import {AnimationMode, HelpType, IsoTimePrecision, NumericInputType, PlayMode, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {formatIsoUtcTickLabels, getDiscreteSliderTicks, toFixed} from "utilities";
+import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, type TimeLabelSettings, toFixed} from "utilities";
 
 import "./AnimatorComponent.scss";
+
+const DEFAULT_TIME_LABEL_SETTINGS: TimeLabelSettings = {
+    timeLabelFormat: TimeLabelFormat.AUTO,
+    timeZoneMode: TimeZoneMode.UTC,
+    ianaTimeZone: "UTC",
+    timeScale: TimeScale.UTC,
+    isoTimePrecision: IsoTimePrecision.AUTO,
+    numericTimePrecision: null,
+    relativeTimeReference: RelativeTimeReference.FIRST,
+    relativeReferenceMjdUtc: null,
+    relativeTimeUnit: RelativeTimeUnit.AUTO
+};
+
+function getTimeLabelFormatName(settings: TimeLabelSettings): string {
+    switch (settings.timeLabelFormat) {
+        case TimeLabelFormat.ISO:
+            if (settings.timeZoneMode === TimeZoneMode.LOCAL) {
+                return "ISO 8601 (local)";
+            }
+            if (settings.timeZoneMode === TimeZoneMode.IANA) {
+                return `ISO 8601 (${settings.ianaTimeZone ?? "UTC"})`;
+            }
+            return "ISO 8601 (UTC)";
+        case TimeLabelFormat.MJD:
+            return `MJD (${settings.timeScale ?? TimeScale.UTC})`;
+        case TimeLabelFormat.JD:
+            return `JD (${settings.timeScale ?? TimeScale.UTC})`;
+        case TimeLabelFormat.RELATIVE: {
+            const scale = settings.timeScale ?? TimeScale.UTC;
+            if (settings.relativeTimeReference === RelativeTimeReference.IMAGE) {
+                return `Relative to selected image (${scale})`;
+            }
+            return `${settings.relativeTimeReference === RelativeTimeReference.CUSTOM ? "Relative to custom epoch" : "Relative to first observation"} (${scale})`;
+        }
+        case TimeLabelFormat.AUTO:
+        default:
+            return "Auto (UTC)";
+    }
+}
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
@@ -354,11 +393,14 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         // Time series control
         const timeSeriesStore = appStore.timeSeriesStore;
+        const animatorWidgetStore = appStore.widgetsStore.animatorWidgets.get(this.props.id);
+        const timeLabelSettings = animatorWidgetStore ?? DEFAULT_TIME_LABEL_SETTINGS;
         const numTimes = timeSeriesStore.elements.length;
         if (numTimes > 1) {
             const currentTimeIndex = timeSeriesStore.currentIndex;
             const {values: timeTick} = getDiscreteSliderTicks(numTimes, currentTimeIndex);
-            const timeTickLabels = formatIsoUtcTickLabels(timeSeriesStore.elements.map(element => element.isoUtc));
+            const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesStore.elements, timeLabelSettings);
+            const timeLabelFormatName = getTimeLabelFormatName(timeLabelSettings);
             const renderTimeTickLabel = (index: number) => {
                 const element = timeSeriesStore.elements[index];
                 if (!element) {
@@ -372,6 +414,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             <dd>{element.isoUtc}</dd>
                             <dt>MJD (UTC)</dt>
                             <dd>{toFixed(element.mjdUtc, 6)}</dd>
+                            <dt>{timeLabelFormatName}</dt>
+                            <dd>{timeTickLabels[index]}</dd>
                         </dl>
                     </div>
                 );
@@ -382,14 +426,14 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 );
             };
             timeSlider = (
-                <div className="animator-slider time-slider angled-labels" data-testid="animator-time-slider">
+                <div className={classNames("animator-slider", "time-slider", "angled-labels", {"long-time-labels": timeLabelSettings.timeLabelFormat === TimeLabelFormat.ISO})} data-testid="animator-time-slider">
                     <Radio
                         value={AnimationMode.TIME}
                         disabled={appStore.animatorStore.isAnimationActive}
                         checked={appStore.animatorStore.animationMode === AnimationMode.TIME}
                         onChange={this.onAnimationModeChanged}
                         labelElement={
-                            <Tooltip content={`${numTimes} spatially matched images sorted by observation time (UTC)`} position={Position.TOP}>
+                            <Tooltip content={`${numTimes} spatially matched images sorted by observation time (UTC). Tick labels: ${timeLabelFormatName}.`} position={Position.TOP}>
                                 <span>Time</span>
                             </Tooltip>
                         }

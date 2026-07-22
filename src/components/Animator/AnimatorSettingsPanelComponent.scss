@@ -1,0 +1,90 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.animator-settings-panel {
+    width: 422px;
+    margin: 14px;
+    user-select: none;
+
+    .animator-time-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .animator-settings-section {
+        margin: 0;
+        padding: 12px 12px 0;
+        border: 1px solid $light-gray1;
+        border-radius: 4px;
+        background: rgba($light-gray3, 0.28);
+    }
+
+    .animator-settings-section-title {
+        margin: 0 0 10px;
+        color: $gray1;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 16px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .#{$ns}-form-group {
+        &:first-of-type {
+            margin-left: 0;
+        }
+
+        .#{$ns}-label {
+            min-width: 11em;
+            width: 11em;
+            text-align: right;
+        }
+
+        .#{$ns}-form-content {
+            flex: 1 1 auto;
+        }
+    }
+
+    .#{$ns}-html-select {
+        display: block;
+        width: 210px;
+
+        select {
+            width: 100%;
+        }
+    }
+
+    .#{$ns}-input-group,
+    .#{$ns}-numeric-input {
+        width: 210px;
+    }
+
+    .time-label-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin: 0 0 12px;
+        font-size: 12px;
+        line-height: 16px;
+    }
+}
+
+.#{$ns}-dark .animator-settings-panel {
+    .animator-settings-section {
+        border-color: $dark-gray1;
+        background: rgba($dark-gray3, 0.32);
+    }
+
+    .animator-settings-section-title {
+        color: $light-gray2;
+    }
+}
+
+.iana-time-zone-select {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
+            max-height: 300px;
+            overflow: auto;
+        }
+    }
+}

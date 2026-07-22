@@ -46,7 +46,7 @@ export class TimeSeriesStore {
         const elements: TimeSeriesElement[] = [];
         for (const frame of this.matchedFrames) {
             if (frame.obsTimeMjdUtc !== undefined) {
-                elements.push({frame, mjdUtc: frame.obsTimeMjdUtc, isoUtc: formatMjdUtcAsIso(frame.obsTimeMjdUtc)});
+                elements.push({frame, mjdUtc: frame.obsTimeMjdUtc, isoUtc: formatMjdUtcAsIso(frame.obsTimeMjdUtc, 6)});
             }
         }
         return elements.sort((a, b) => a.mjdUtc - b.mjdUtc || a.frame.id - b.frame.id);

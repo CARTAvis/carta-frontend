@@ -1,5 +1,7 @@
 import * as AST from "ast_wrapper";
 
+import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+
 interface AstTimeScale {
     scale: string;
     // Additive offset (in days) applied to the raw value before interpreting it in `scale`,
@@ -8,6 +10,30 @@ interface AstTimeScale {
 }
 
 const SECONDS_PER_DAY = 86400;
+const DAYS_PER_JULIAN_YEAR = 365.25;
+const JD_MJD_OFFSET = 2400000.5;
+
+export interface TimeLabelValue {
+    mjdUtc: number;
+    isoUtc: string;
+}
+
+export interface TimeLabelSettings {
+    timeLabelFormat: TimeLabelFormat;
+    timeZoneMode: TimeZoneMode;
+    ianaTimeZone?: string;
+    timeScale?: TimeScale;
+    isoTimePrecision?: IsoTimePrecision;
+    numericTimePrecision?: number | null;
+    relativeTimeReference?: RelativeTimeReference;
+    relativeReferenceMjdUtc?: number | null;
+    relativeTimeUnit: RelativeTimeUnit;
+}
+
+export interface TimeLabelResult {
+    labels: string[];
+    hasCollisions: boolean;
+}
 
 /**
  * Maps a FITS TIMESYS header value to an AST TimeScale attribute value.
@@ -18,7 +44,6 @@ export function mapTimeSysToAstScale(timesys: string | undefined): AstTimeScale 
     switch ((timesys ?? "UTC").trim().toUpperCase()) {
         case "":
         case "UTC":
-        // GMT is a deprecated FITS synonym for UTC
         case "GMT":
             return {scale: "UTC", offsetDays: 0};
         case "TAI":
@@ -34,8 +59,6 @@ export function mapTimeSysToAstScale(timesys: string | undefined): AstTimeScale 
             return {scale: "TCB", offsetDays: 0};
         case "TCG":
             return {scale: "TCG", offsetDays: 0};
-        // DUT1 (< 0.9 s) is unknown from headers alone; treating UT/UT1 exactly is
-        // beyond the accuracy needed for sorting and labelling epochs
         case "UT":
         case "UT1":
             return {scale: "UT1", offsetDays: 0};
@@ -76,6 +99,15 @@ export function parseObsDateToMjdUtc(dateObs: string, timesys?: string): number 
         return NaN;
     }
     return AST.convertMJD(mjd + timeScale.offsetDays, timeScale.scale, "UTC");
+}
+
+/** Parses a complete ISO-8601 UTC date-time and returns the corresponding MJD in UTC. */
+export function parseIsoUtcToMjdUtc(isoUtc: string): number {
+    const trimmed = isoUtc?.trim() ?? "";
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?$/.test(trimmed)) {
+        return NaN;
+    }
+    return parseObsDateToMjdUtc(trimmed.replace(/Z$/, ""), "UTC");
 }
 
 /** Converts an MJD expressed in the given TIMESYS scale to MJD in UTC. */
@@ -124,7 +156,7 @@ function parseIsoUtcParts(isoUtc: string): IsoUtcParts | null {
     };
 }
 
-function areUnique(values: string[]): boolean {
+function areUnique(values: readonly string[]): boolean {
     return new Set(values).size === values.length;
 }
 
@@ -165,4 +197,317 @@ export function formatIsoUtcTickLabels(isoUtcValues: string[]): string[] {
 
     const secondDateTimes = validParts.map((value, index) => `${compactDates[index]} ${value.second}`);
     return areUnique(secondDateTimes) ? secondDateTimes : validParts.map((value, index) => `${compactDates[index]} ${value.fullTime}`);
+}
+
+function getMinimumPositiveDifference(values: readonly number[]): number | undefined {
+    const sorted = [...values].filter(isFinite).sort((a, b) => a - b);
+    let minimum: number | undefined;
+    for (let i = 1; i < sorted.length; i++) {
+        const difference = sorted[i] - sorted[i - 1];
+        if (difference > 0 && (minimum === undefined || difference < minimum)) {
+            minimum = difference;
+        }
+    }
+    return minimum;
+}
+
+function getAutoDecimalPlaces(values: readonly number[]): number {
+    if (values.every(value => Math.abs(value - Math.round(value)) < 1e-9)) {
+        return 0;
+    }
+    const minimumDifference = getMinimumPositiveDifference(values);
+    if (minimumDifference === undefined) {
+        return 0;
+    }
+    return Math.max(0, Math.min(9, Math.ceil(-Math.log10(minimumDifference)) + 1));
+}
+
+function parseIsoUtc(isoUtc: string): Date | null {
+    const hasTimeZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoUtc);
+    const date = new Date(hasTimeZone ? isoUtc : `${isoUtc}Z`);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function pad(value: number, length: number = 2): string {
+    return value.toString().padStart(length, "0");
+}
+
+export function isValidIanaTimeZone(timeZone: string): boolean {
+    if (!timeZone.trim()) {
+        return false;
+    }
+    try {
+        new Intl.DateTimeFormat("en-US", {timeZone}).format();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function getIsoFractionDigits(isoUtc: string, digits: number): string {
+    const fraction = isoUtc.match(/\.(\d+)/)?.[1] ?? "";
+    return fraction.padEnd(digits, "0").slice(0, digits);
+}
+
+const AUTO_ISO_PRECISIONS = [IsoTimePrecision.DAY, IsoTimePrecision.HOUR, IsoTimePrecision.MINUTE, IsoTimePrecision.SECOND, IsoTimePrecision.MILLISECOND, IsoTimePrecision.MICROSECOND] as const;
+
+function getAutoIsoPrecision(values: readonly TimeLabelValue[], timeZoneMode: TimeZoneMode, ianaTimeZone: string): IsoTimePrecision {
+    const numericValues = values.map(value => value.mjdUtc);
+    for (const precision of AUTO_ISO_PRECISIONS) {
+        const labels = values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+        if (!hasDistinctValueLabelCollisions(numericValues, labels)) {
+            return precision;
+        }
+    }
+    return IsoTimePrecision.MICROSECOND;
+}
+
+interface ZonedDateParts {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+    offsetMinutes: number;
+    useUtcSuffix: boolean;
+}
+
+function getZonedDateParts(date: Date, timeZoneMode: TimeZoneMode, ianaTimeZone: string): ZonedDateParts {
+    if (timeZoneMode === TimeZoneMode.UTC) {
+        return {
+            year: date.getUTCFullYear(),
+            month: date.getUTCMonth() + 1,
+            day: date.getUTCDate(),
+            hour: date.getUTCHours(),
+            minute: date.getUTCMinutes(),
+            second: date.getUTCSeconds(),
+            offsetMinutes: 0,
+            useUtcSuffix: true
+        };
+    }
+
+    if (timeZoneMode === TimeZoneMode.LOCAL) {
+        return {
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            hour: date.getHours(),
+            minute: date.getMinutes(),
+            second: date.getSeconds(),
+            offsetMinutes: -date.getTimezoneOffset(),
+            useUtcSuffix: false
+        };
+    }
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: ianaTimeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+    });
+    const partValues = new Map(formatter.formatToParts(date).map(part => [part.type, part.value]));
+    const year = Number(partValues.get("year"));
+    const month = Number(partValues.get("month"));
+    const day = Number(partValues.get("day"));
+    const hour = Number(partValues.get("hour"));
+    const minute = Number(partValues.get("minute"));
+    const second = Number(partValues.get("second"));
+    const zonedTimestampAsUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+    const instantWithoutMilliseconds = date.getTime() - date.getUTCMilliseconds();
+
+    return {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        offsetMinutes: Math.round((zonedTimestampAsUtc - instantWithoutMilliseconds) / 60000),
+        useUtcSuffix: false
+    };
+}
+
+function formatIsoLabel(value: TimeLabelValue, timeZoneMode: TimeZoneMode, ianaTimeZone: string, precision: IsoTimePrecision): string {
+    const date = parseIsoUtc(value.isoUtc);
+    if (!date) {
+        return value.isoUtc;
+    }
+
+    const parts = getZonedDateParts(date, timeZoneMode, ianaTimeZone);
+    let label = pad(parts.year, 4);
+    if (precision !== IsoTimePrecision.YEAR) {
+        label += `-${pad(parts.month)}`;
+    }
+    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH) {
+        label += `-${pad(parts.day)}`;
+    }
+    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY) {
+        label += `T${pad(parts.hour)}`;
+    }
+    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY && precision !== IsoTimePrecision.HOUR) {
+        label += `:${pad(parts.minute)}`;
+    }
+    if (precision === IsoTimePrecision.SECOND || precision === IsoTimePrecision.MILLISECOND || precision === IsoTimePrecision.MICROSECOND) {
+        label += `:${pad(parts.second)}`;
+    }
+    if (precision === IsoTimePrecision.MICROSECOND) {
+        label += `.${getIsoFractionDigits(value.isoUtc, 6)}`;
+    } else if (precision === IsoTimePrecision.MILLISECOND) {
+        label += `.${getIsoFractionDigits(value.isoUtc, 3)}`;
+    }
+    const hasTime = precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY;
+    if (!hasTime) {
+        return label;
+    }
+    if (parts.useUtcSuffix) {
+        return `${label}Z`;
+    }
+    const offsetSign = parts.offsetMinutes >= 0 ? "+" : "-";
+    const absoluteOffset = Math.abs(parts.offsetMinutes);
+    return `${label}${offsetSign}${pad(Math.floor(absoluteOffset / 60))}:${pad(absoluteOffset % 60)}`;
+}
+
+function hasDistinctValueLabelCollisions(values: readonly number[], labels: readonly string[]): boolean {
+    const labelledValues = new Map<string, number>();
+    return labels.some((label, index) => {
+        const existingValue = labelledValues.get(label);
+        if (existingValue !== undefined && existingValue !== values[index]) {
+            return true;
+        }
+        labelledValues.set(label, values[index]);
+        return false;
+    });
+}
+
+function resolveNumericPrecision(values: readonly number[], configuredPrecision: number | null | undefined): number {
+    if (configuredPrecision !== null && configuredPrecision !== undefined && Number.isInteger(configuredPrecision) && configuredPrecision >= 0 && configuredPrecision <= 9) {
+        return configuredPrecision;
+    }
+    let precision = getAutoDecimalPlaces(values);
+    while (
+        precision < 9 &&
+        hasDistinctValueLabelCollisions(
+            values,
+            values.map(value => value.toFixed(precision))
+        )
+    ) {
+        precision++;
+    }
+    return precision;
+}
+
+function convertMjdUtcToScale(mjdUtc: number, scale: TimeScale): number {
+    if (scale === TimeScale.UTC) {
+        return mjdUtc;
+    }
+    const converted = AST.convertMJD(mjdUtc, TimeScale.UTC, scale);
+    return isFinite(converted) ? converted : mjdUtc;
+}
+
+function resolveRelativeTimeUnit(values: readonly number[], configuredUnit: RelativeTimeUnit): RelativeTimeUnit {
+    if (configuredUnit !== RelativeTimeUnit.AUTO) {
+        return configuredUnit;
+    }
+    const maximumSeconds = Math.max(...values.map(Math.abs)) * SECONDS_PER_DAY;
+    if (maximumSeconds >= 2 * DAYS_PER_JULIAN_YEAR * SECONDS_PER_DAY) {
+        return RelativeTimeUnit.YEAR;
+    }
+    if (maximumSeconds >= 2 * SECONDS_PER_DAY) {
+        return RelativeTimeUnit.DAY;
+    }
+    if (maximumSeconds >= 2 * 3600) {
+        return RelativeTimeUnit.HOUR;
+    }
+    if (maximumSeconds >= 2 * 60) {
+        return RelativeTimeUnit.MINUTE;
+    }
+    return RelativeTimeUnit.SECOND;
+}
+
+function getRelativeUnitInfo(unit: RelativeTimeUnit): {seconds: number; suffix: string} {
+    switch (unit) {
+        case RelativeTimeUnit.YEAR:
+            return {seconds: DAYS_PER_JULIAN_YEAR * SECONDS_PER_DAY, suffix: "yr"};
+        case RelativeTimeUnit.DAY:
+            return {seconds: SECONDS_PER_DAY, suffix: "d"};
+        case RelativeTimeUnit.HOUR:
+            return {seconds: 3600, suffix: "h"};
+        case RelativeTimeUnit.MINUTE:
+            return {seconds: 60, suffix: "min"};
+        case RelativeTimeUnit.SECOND:
+        case RelativeTimeUnit.AUTO:
+        default:
+            return {seconds: 1, suffix: "s"};
+    }
+}
+
+/** Formats time-series slider labels and reports collisions without changing canonical MJD UTC values. */
+export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], settings: TimeLabelSettings): TimeLabelResult {
+    if (values.length === 0) {
+        return {labels: [], hasCollisions: false};
+    }
+
+    let labels: string[];
+    switch (settings.timeLabelFormat) {
+        case TimeLabelFormat.ISO: {
+            const ianaTimeZone = settings.ianaTimeZone ?? "UTC";
+            const timeZoneMode = settings.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(ianaTimeZone) ? TimeZoneMode.UTC : settings.timeZoneMode;
+            const configuredPrecision = settings.isoTimePrecision ?? IsoTimePrecision.AUTO;
+            const precision = configuredPrecision === IsoTimePrecision.AUTO ? getAutoIsoPrecision(values, timeZoneMode, ianaTimeZone) : configuredPrecision;
+            labels = values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+            break;
+        }
+        case TimeLabelFormat.MJD:
+        case TimeLabelFormat.JD: {
+            const offset = settings.timeLabelFormat === TimeLabelFormat.JD ? JD_MJD_OFFSET : 0;
+            const scale = settings.timeScale ?? TimeScale.UTC;
+            const numericValues = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) + offset);
+            const decimalPlaces = resolveNumericPrecision(numericValues, settings.numericTimePrecision);
+            labels = numericValues.map(value => value.toFixed(decimalPlaces));
+            break;
+        }
+        case TimeLabelFormat.RELATIVE: {
+            const configuredReferenceMjd = settings.relativeReferenceMjdUtc;
+            const hasExplicitReference =
+                typeof configuredReferenceMjd === "number" &&
+                isFinite(configuredReferenceMjd) &&
+                (settings.relativeTimeReference === RelativeTimeReference.CUSTOM || (settings.relativeTimeReference === RelativeTimeReference.IMAGE && values.some(value => value.mjdUtc === configuredReferenceMjd)));
+            const referenceMjd = hasExplicitReference ? configuredReferenceMjd : values[0].mjdUtc;
+            const scale = settings.timeScale ?? TimeScale.UTC;
+            const referenceMjdInScale = convertMjdUtcToScale(referenceMjd, scale);
+            const relativeDays = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) - referenceMjdInScale);
+            const unit = resolveRelativeTimeUnit(relativeDays, settings.relativeTimeUnit);
+            const unitInfo = getRelativeUnitInfo(unit);
+            const relativeValues = relativeDays.map(value => (value * SECONDS_PER_DAY) / unitInfo.seconds);
+            const decimalPlaces = resolveNumericPrecision(relativeValues, settings.numericTimePrecision);
+            labels = relativeValues.map(value => {
+                const rounded = Number(value.toFixed(decimalPlaces));
+                const prefix = rounded > 0 ? "+" : "";
+                return `${prefix}${rounded.toFixed(decimalPlaces)} ${unitInfo.suffix}`;
+            });
+            break;
+        }
+        case TimeLabelFormat.AUTO:
+        default:
+            labels = formatIsoUtcTickLabels(values.map(value => value.isoUtc));
+            break;
+    }
+
+    return {
+        labels,
+        hasCollisions: hasDistinctValueLabelCollisions(
+            values.map(value => value.mjdUtc),
+            labels
+        )
+    };
+}
+
+/** Formats time-series slider labels without changing their canonical MJD UTC values. */
+export function formatTimeSeriesTickLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {
+    return getTimeSeriesTickLabelResult(values, settings).labels;
 }
