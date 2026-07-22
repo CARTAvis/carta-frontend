@@ -5,11 +5,11 @@ import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, HelpType} from "enums";
+import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
-import {getColorForTheme, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
+import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -147,6 +147,19 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogStore.Instance.catalogProfiles?.set(this.widgetId, fileId);
     };
 
+    private renderScalingParameter(scaling: FrameScaling, value: number, onValueChange: (value: number) => void, isDisabled: boolean): React.ReactNode {
+        const config = getScalingParameterConfig(scaling);
+        if (!config) {
+            return null;
+        }
+
+        return (
+            <FormGroup label={scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha"} inline={true} disabled={isDisabled}>
+                <ScalingParameterControlComponent scaling={scaling} min={config.min} max={config.max} value={value} onValueChange={onValueChange} />
+            </FormGroup>
+        );
+    }
+
     public render() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const isDarkTheme = AppStore.Instance.isDarkTheme;
@@ -200,6 +213,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMap}>
                         <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={shouldDisableSizeMap} />
                     </FormGroup>
+                    {this.renderScalingParameter(widgetStore.sizeScalingType, widgetStore.sizeScalingParameter, value => widgetStore.setSizeScalingParameter(value), shouldDisableSizeMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMap}>
                         <ButtonGroup>
                             <AnchorButton disabled={shouldDisableSizeMap} text={"Diameter"} active={!widgetStore.isSizeAreaMode} onClick={() => widgetStore.setSizeArea(false)} />
@@ -330,6 +344,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMinorMap}>
                         <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={shouldDisableSizeMinorMap} />
                     </FormGroup>
+                    {this.renderScalingParameter(widgetStore.sizeMinorScalingType, widgetStore.sizeMinorScalingParameter, value => widgetStore.setSizeMinorScalingParameter(value), shouldDisableSizeMinorMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMinorMap}>
                         <ButtonGroup>
                             <AnchorButton disabled={shouldDisableSizeMinorMap} text={"Diameter"} active={!widgetStore.isSizeMinorAreaMode} onClick={() => widgetStore.setSizeMinorArea(false)} />
@@ -604,6 +619,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableColorMap}>
                         <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={shouldDisableColorMap} />
                     </FormGroup>
+                    {this.renderScalingParameter(widgetStore.colorScalingType, widgetStore.colorScalingParameter, value => widgetStore.setColorScalingParameter(value), shouldDisableColorMap)}
                     <FormGroup inline={true} label="Colormap" disabled={shouldDisableColorMap}>
                         <ColormapComponent inverted={false} selectedColormap={widgetStore.colorMap} onColormapSelect={selected => widgetStore.setColorMap(selected)} disabled={shouldDisableColorMap} />
                     </FormGroup>
@@ -661,6 +677,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableOrientationMap}>
                         <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={shouldDisableOrientationMap} />
                     </FormGroup>
+                    {this.renderScalingParameter(widgetStore.orientationScalingType, widgetStore.orientationScalingParameter, value => widgetStore.setOrientationScalingParameter(value), shouldDisableOrientationMap)}
                     <FormGroup inline={true} label="Orientation" labelInfo="(degree)" disabled={shouldDisableOrientationMap}>
                         <div className="parameter-container">
                             <FormGroup inline={true} label="Min">

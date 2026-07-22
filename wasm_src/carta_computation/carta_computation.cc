@@ -268,9 +268,9 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
         case SQRT:
             return sqrt(x);
         case LOG:
-            return clamp(log(alpha * x + 1.0) / log(alpha), 0.0, 1.0);
+            return log(alpha * x + 1.0) / log(alpha + 1.0);
         case POWER:
-            return (pow(alpha, x) - 1.0) / alpha;
+            return abs(alpha - 1.0) < 1.0e-6 ? x : (pow(alpha, x) - 1.0) / (alpha - 1.0);
         case GAMMA:
             return pow(x, gamma);
         case SINH:
@@ -282,16 +282,22 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
     }
 }
 
+float scaleCatalogValue(float value, float dataMin, float dataMax, int scaling, float alpha, float gamma) {
+    const float dataRange = dataMax - dataMin;
+    value = dataRange == 0.0 ? 0.0 : clamp((value - dataMin) / dataRange, 0.0, 1.0);
+    return scaleValue(value, scaling, alpha, gamma);
+}
+
 void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, float clipMin, float clipMax, int scaling, float alpha, float gamma, float pixelSizeFactor, bool invert) {
-    float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
-    float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
+    float columnMin = scaleCatalogValue(dataMin, dataMin, dataMax, scaling, alpha, gamma);
+    float columnMax = scaleCatalogValue(dataMax, dataMin, dataMax, scaling, alpha, gamma);
     float range = columnMax - columnMin;
 
     switch (mapType) {
         case SIZE_DIAMETER:
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
-                float value = scaleValue(v, scaling, alpha, gamma);
+                float value = scaleCatalogValue(v, dataMin, dataMax, scaling, alpha, gamma);
                 data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * pixelSizeFactor;
             }
             break;
@@ -303,14 +309,14 @@ void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, floa
         case SIZE_AREA:
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
-                float value = scaleValue(v, scaling, alpha, gamma);
+                float value = scaleCatalogValue(v, dataMin, dataMax, scaling, alpha, gamma);
                 data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * pixelSizeFactor;
             }
             break;
         case COLOR:
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
-                float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
+                float value = (scaleCatalogValue(v, dataMin, dataMax, scaling, alpha, gamma) - columnMin) / range;
                 if (invert) {
                     value = 1 - value;
                 }
@@ -320,7 +326,7 @@ void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, floa
         case ORIENTATION:
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
-                float value = scaleValue(v, scaling, alpha, gamma);
+                float value = scaleCatalogValue(v, dataMin, dataMax, scaling, alpha, gamma);
                 data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin);
             }
             break;
