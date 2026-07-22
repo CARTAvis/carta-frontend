@@ -41,7 +41,7 @@ const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
-    const [activeItem, setActiveItem] = React.useState(props.selectedItem);
+    const [activeItem, setActiveItem] = React.useState<FrameScaling>(props.selectedItem);
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
     React.useEffect(() => {
@@ -51,34 +51,37 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
     }, [isDropdownOpen, props.selectedItem]);
 
     const handleActiveItemChange = (activeItem: FrameScaling | null) => {
-        if (activeItem !== null) {
-            setActiveItem(activeItem);
-            props.onItemHover?.(activeItem);
+        if (activeItem === null) {
+            return;
         }
+        setActiveItem(activeItem);
+        props.onItemHover?.(activeItem);
     };
 
     const handleScalingHover = (scaling: FrameScaling) => {
-        if (activeItem !== scaling) {
-            setActiveItem(scaling);
-            props.onItemHover?.(scaling);
+        if (activeItem === scaling) {
+            return;
         }
+        setActiveItem(scaling);
+        props.onItemHover?.(scaling);
     };
 
     const renderScalingSelectItem: ItemRenderer<FrameScaling> = (scaling, {handleClick, handleFocus, modifiers}) => {
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
+        const scalingName = RenderConfigStore.SCALING_TYPES.get(scaling);
         const equationImage = EQUATION_PNG_MAP.get(scaling);
         return (
             <MenuItem
                 active={modifiers.active}
                 disabled={modifiers.disabled}
-                label={RenderConfigStore.SCALING_TYPES.get(scaling)}
+                label={scalingName}
                 key={scaling}
                 onClick={handleClick}
                 onFocus={handleFocus}
                 onMouseEnter={() => handleScalingHover(scaling)}
-                text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : RenderConfigStore.SCALING_TYPES.get(scaling)}
+                text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : scalingName}
                 style={{width: "270px"}}
             />
         );

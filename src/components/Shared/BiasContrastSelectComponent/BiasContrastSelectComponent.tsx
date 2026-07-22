@@ -34,21 +34,34 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     private stageRef: Konva.Stage | null = null;
     private popoutDragCleanup: (() => void) | null = null;
 
-    private setValuesFromPoint = (x: number, y: number) => {
+    private setValuesFromPoint = (x: number, y: number): void => {
         const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
         const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
         this.props.setBiasContrast(bias, contrast);
     };
 
-    private scheduleClickValues = (x: number, y: number) => {
+    private cancelClickUpdate = (): void => {
         clearTimeout(this.updateValuesTimer);
         this.updateValuesTimer = undefined;
+    };
+
+    private cancelDragUpdate = (): void => {
+        if (this.updateValuesFrame !== undefined) {
+            cancelAnimationFrame(this.updateValuesFrame);
+            this.updateValuesFrame = undefined;
+        }
+        this.pendingValuesPoint = undefined;
+    };
+
+    private scheduleClickValues = (x: number, y: number): void => {
+        this.cancelClickUpdate();
         this.updateValuesTimer = setTimeout(() => {
+            this.updateValuesTimer = undefined;
             this.setValuesFromPoint(x, y);
         }, DOUBLE_CLICK_THRESHOLD);
     };
 
-    private scheduleDragValues = (x: number, y: number) => {
+    private scheduleDragValues = (x: number, y: number): void => {
         this.pendingValuesPoint = {x, y};
         if (this.updateValuesFrame !== undefined) {
             return;
@@ -64,13 +77,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     };
 
     private handleDoubleClick = () => {
-        clearTimeout(this.updateValuesTimer);
-        this.updateValuesTimer = undefined;
-        if (this.updateValuesFrame !== undefined) {
-            cancelAnimationFrame(this.updateValuesFrame);
-            this.updateValuesFrame = undefined;
-        }
-        this.pendingValuesPoint = undefined;
+        this.cancelClickUpdate();
+        this.cancelDragUpdate();
         this.props.resetBias();
         this.props.resetContrast();
     };
@@ -97,13 +105,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     }
 
     componentWillUnmount() {
-        clearTimeout(this.updateValuesTimer);
-        this.updateValuesTimer = undefined;
-        if (this.updateValuesFrame !== undefined) {
-            cancelAnimationFrame(this.updateValuesFrame);
-            this.updateValuesFrame = undefined;
-        }
-        this.pendingValuesPoint = undefined;
+        this.cancelClickUpdate();
+        this.cancelDragUpdate();
         this.cleanupPopoutDragListeners();
     }
 

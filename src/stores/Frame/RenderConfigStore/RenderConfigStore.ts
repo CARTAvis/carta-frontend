@@ -5,7 +5,7 @@ import type {WorkspaceRenderConfig} from "models";
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, getScalingParameterConfig, sanitizeScalingParameter, scaleValueInverse} from "utilities";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, sanitizeScalingParameter, scaleValueInverse} from "utilities";
 
 export class RenderConfigStore {
     public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
@@ -26,12 +26,6 @@ export class RenderConfigStore {
     public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
     /* eslint-disable @typescript-eslint/naming-convention */
-    public static get GAMMA_MIN(): number {
-        return getScalingParameterConfig(FrameScaling.GAMMA)?.min ?? 1;
-    }
-    public static get GAMMA_MAX(): number {
-        return getScalingParameterConfig(FrameScaling.GAMMA)?.max ?? 1;
-    }
     public static get BIAS_MIN(): number {
         return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
     }
@@ -45,14 +39,6 @@ export class RenderConfigStore {
         return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 2;
     }
     /* eslint-enable @typescript-eslint/naming-convention */
-
-    public static getAlphaMin(scaling: FrameScaling): number {
-        return getScalingParameterConfig(scaling)?.min ?? 1;
-    }
-
-    public static getAlphaMax(scaling: FrameScaling): number {
-        return getScalingParameterConfig(scaling)?.max ?? 1;
-    }
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number = 0;
@@ -108,10 +94,6 @@ export class RenderConfigStore {
         return RenderConfigStore.SCALING_TYPES.has(scaling);
     }
 
-    public static isGammaValid(gamma: number): boolean {
-        return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
-    }
-
     public static isColormapValid(colormap: string): boolean {
         return COLOR_MAPS_SELECTED.includes(colormap);
     }
@@ -133,14 +115,6 @@ export class RenderConfigStore {
             default:
                 return this.alphaLog;
         }
-    }
-
-    @computed get alphaMin(): number {
-        return RenderConfigStore.getAlphaMin(this.scaling);
-    }
-
-    @computed get alphaMax(): number {
-        return RenderConfigStore.getAlphaMax(this.scaling);
     }
 
     @computed get colorMap() {

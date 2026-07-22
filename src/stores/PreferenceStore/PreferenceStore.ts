@@ -17,6 +17,10 @@ const SCALING_PARAMETER_PREFERENCES = new Map<PreferenceKeys, FrameScaling>([
     [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, FrameScaling.GAMMA]
 ]);
 
+function getScalingAlphaPreference(preferences: Map<PreferenceKeys, any>, key: PreferenceKeys, defaultValue: number): number {
+    return preferences.get(key) ?? preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY) ?? defaultValue;
+}
+
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
@@ -280,11 +284,11 @@ export class PreferenceStore {
     }
 
     @computed get scalingAlphaLog(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG) ?? this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaLog;
+        return getScalingAlphaPreference(this.preferences, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, DEFAULTS.RENDER_CONFIG.scalingAlphaLog);
     }
 
     @computed get scalingAlphaPower(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER) ?? this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaPower;
+        return getScalingAlphaPreference(this.preferences, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, DEFAULTS.RENDER_CONFIG.scalingAlphaPower);
     }
 
     @computed get scalingAlphaSinh(): number {

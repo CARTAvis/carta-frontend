@@ -25,7 +25,7 @@ import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, Dialo
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
-import {clamp, SWATCH_COLORS} from "utilities";
+import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -162,7 +162,7 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
-    private renderScalingAlphaInput(preference: PreferenceStore): React.ReactNode {
+    private renderScalingParameterInput(preference: PreferenceStore): React.ReactNode {
         let value: number;
         let preferenceKey: PreferenceKeys;
 
@@ -183,19 +183,23 @@ export class PreferenceDialogComponent extends React.Component {
                 value = preference.scalingAlphaAsinh;
                 preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH;
                 break;
+            case FrameScaling.GAMMA:
+                value = preference.scalingGamma;
+                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA;
+                break;
             default:
                 return null;
         }
 
+        const parameterConfig = getScalingParameterConfig(preference.scaling);
+        if (!parameterConfig) {
+            return null;
+        }
+        const parameterName = preference.scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha";
+
         return (
-            <FormGroup label={"Alpha"} inline={true}>
-                <ScalingParameterControlComponent
-                    scaling={preference.scaling}
-                    min={RenderConfigStore.getAlphaMin(preference.scaling)}
-                    max={RenderConfigStore.getAlphaMax(preference.scaling)}
-                    value={value}
-                    onValueChange={newValue => preference.setPreference(preferenceKey, newValue)}
-                />
+            <FormGroup label={parameterName} inline={true}>
+                <ScalingParameterControlComponent scaling={preference.scaling} min={parameterConfig.min} max={parameterConfig.max} value={value} onValueChange={newValue => preference.setPreference(preferenceKey, newValue)} />
             </FormGroup>
         );
     }
@@ -306,18 +310,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {this.renderScalingAlphaInput(preference)}
-                {preference.scaling === FrameScaling.GAMMA && (
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <ScalingParameterControlComponent
-                            scaling={preference.scaling}
-                            min={RenderConfigStore.GAMMA_MIN}
-                            max={RenderConfigStore.GAMMA_MAX}
-                            value={preference.scalingGamma}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
-                        />
-                    </FormGroup>
-                )}
+                {this.renderScalingParameterInput(preference)}
                 <FormGroup inline={true} label="NaN color">
                     <ColorPickerComponent
                         color={tinycolor(preference.nanColorHex).toRgb()}

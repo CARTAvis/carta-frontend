@@ -266,23 +266,22 @@ export class ApiService {
 
         // Migrate scalingAlpha to the separate Log and Power preferences if present
         const alphaKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY;
-        const logKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
-        const powerKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
+        const legacyAlphaTargets = [
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, scaling: FrameScaling.LOG},
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, scaling: FrameScaling.POWER}
+        ];
         if (alphaKey in preferences) {
             const alpha = preferences[alphaKey];
             const isValid = typeof alpha === "number" && Number.isFinite(alpha) && alpha > 0;
-            const updates = {};
+            const updates: Record<string, number> = {};
 
             if (isValid) {
-                if (!(logKey in preferences)) {
-                    const logAlpha = sanitizeScalingParameter(FrameScaling.LOG, alpha);
-                    preferences[logKey] = logAlpha;
-                    updates[logKey] = logAlpha;
-                }
-                if (!(powerKey in preferences)) {
-                    const powerAlpha = sanitizeScalingParameter(FrameScaling.POWER, alpha);
-                    preferences[powerKey] = powerAlpha;
-                    updates[powerKey] = powerAlpha;
+                for (const {key, scaling} of legacyAlphaTargets) {
+                    if (!(key in preferences)) {
+                        const sanitizedAlpha = sanitizeScalingParameter(scaling, alpha);
+                        preferences[key] = sanitizedAlpha;
+                        updates[key] = sanitizedAlpha;
+                    }
                 }
             }
 

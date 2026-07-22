@@ -7,8 +7,7 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingParameterControlComponent, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {type FrameStore, PreferenceStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
-import {getDefaultScalingParameter, getPercentiles, scaleValue} from "utilities";
+import {getDefaultScalingParameter, getPercentiles, getScalingParameterConfig, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
@@ -16,7 +15,7 @@ import "./ContourGeneratorPanelComponent.scss";
 const GeneratorSelect = Select<ContourGeneratorType>;
 
 export function generateMinMaxLevels(minValue: number, maxValue: number, numLevels: number, scaling: FrameScaling, alpha: number, gamma: number): number[] {
-    if (!isFinite(minValue) || !isFinite(maxValue) || !isFinite(numLevels)) {
+    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue) || !Number.isFinite(numLevels)) {
         return [];
     }
     if (numLevels <= 1) {
@@ -89,31 +88,23 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     };
 
     private renderScalingParameterInput(): React.ReactNode {
-        switch (this.scalingType) {
-            case FrameScaling.LOG:
-            case FrameScaling.POWER:
-            case FrameScaling.SINH:
-            case FrameScaling.ASINH:
-                return (
-                    <FormGroup label="Alpha" inline={true}>
-                        <ScalingParameterControlComponent
-                            scaling={this.scalingType}
-                            min={RenderConfigStore.getAlphaMin(this.scalingType)}
-                            max={RenderConfigStore.getAlphaMax(this.scalingType)}
-                            value={this.scalingAlpha}
-                            onValueChange={this.setScalingAlpha}
-                        />
-                    </FormGroup>
-                );
-            case FrameScaling.GAMMA:
-                return (
-                    <FormGroup label="Gamma" inline={true}>
-                        <ScalingParameterControlComponent scaling={this.scalingType} min={RenderConfigStore.GAMMA_MIN} max={RenderConfigStore.GAMMA_MAX} value={this.scalingGamma} onValueChange={this.setScalingGamma} />
-                    </FormGroup>
-                );
-            default:
-                return null;
+        const parameterConfig = getScalingParameterConfig(this.scalingType);
+        if (!parameterConfig) {
+            return null;
         }
+
+        const isGamma = this.scalingType === FrameScaling.GAMMA;
+        return (
+            <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={this.scalingType}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={isGamma ? this.scalingGamma : this.scalingAlpha}
+                    onValueChange={isGamma ? this.setScalingGamma : this.setScalingAlpha}
+                />
+            </FormGroup>
+        );
     }
 
     private renderMinMaxParameterRow() {

@@ -9,7 +9,7 @@ import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, Sc
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
@@ -37,6 +37,26 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
     handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = evt => {
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
+
+    private renderScalingParameter(renderConfig: RenderConfigStore): React.ReactNode {
+        const parameterConfig = getScalingParameterConfig(renderConfig.scaling);
+        if (!parameterConfig) {
+            return null;
+        }
+
+        const isGamma = renderConfig.scaling === FrameScaling.GAMMA;
+        return (
+            <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={renderConfig.scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={isGamma ? renderConfig.gamma : renderConfig.alpha}
+                    onValueChange={isGamma ? renderConfig.setGamma : renderConfig.setAlpha}
+                />
+            </FormGroup>
+        );
+    }
 
     private revertScalingPreview = () => {
         const session = this.scalingPreviewSession;
@@ -108,16 +128,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Invert colormap"} inline={true}>
                     <Switch checked={renderConfig.isInverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
-                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER || renderConfig.scaling === FrameScaling.SINH || renderConfig.scaling === FrameScaling.ASINH) && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <ScalingParameterControlComponent scaling={renderConfig.scaling} min={renderConfig.alphaMin} max={renderConfig.alphaMax} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
-                    </FormGroup>
-                )}
-                {renderConfig.scaling === FrameScaling.GAMMA && (
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <ScalingParameterControlComponent scaling={renderConfig.scaling} min={RenderConfigStore.GAMMA_MIN} max={RenderConfigStore.GAMMA_MAX} value={renderConfig.gamma} onValueChange={renderConfig.setGamma} />
-                    </FormGroup>
-                )}
+                {this.renderScalingParameter(renderConfig)}
                 <FormGroup inline={true}>
                     <Button variant="minimal" className={"bias-contrast-button"} endIcon={this.isExtendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.switchExtendBiasContrast}>
                         {"Bias / Contrast"}
