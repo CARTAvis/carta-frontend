@@ -10,16 +10,16 @@ const AJV = new Ajv({strictTypes: false});
 
 describe("scaling parameter schemas", () => {
     const scalingProperties = [
-        {scaling: FrameScaling.LOG, preferenceKey: "scalingAlphaLog", workspaceKey: "alphaLog"},
-        {scaling: FrameScaling.POWER, preferenceKey: "scalingAlphaPower", workspaceKey: "alphaPower"},
-        {scaling: FrameScaling.SINH, preferenceKey: "scalingAlphaSinh", workspaceKey: "alphaSinh"},
-        {scaling: FrameScaling.ASINH, preferenceKey: "scalingAlphaAsinh", workspaceKey: "alphaAsinh"},
-        {scaling: FrameScaling.GAMMA, preferenceKey: "scalingGamma", workspaceKey: "gamma"}
+        {scaling: FrameScaling.LOG, workspaceKey: "alphaLog"},
+        {scaling: FrameScaling.POWER, workspaceKey: "alphaPower"},
+        {scaling: FrameScaling.SINH, workspaceKey: "alphaSinh"},
+        {scaling: FrameScaling.ASINH, workspaceKey: "alphaAsinh"},
+        {scaling: FrameScaling.GAMMA, workspaceKey: "gamma"}
     ];
 
-    test.each(scalingProperties)("matches runtime bounds for scaling $scaling", ({scaling, preferenceKey, workspaceKey}) => {
+    test.each(scalingProperties)("matches runtime bounds for scaling $scaling", ({scaling, workspaceKey}) => {
         const config = getScalingParameterConfig(scaling)!;
-        const preferenceProperty = PREFERENCE_SCHEMA.properties[preferenceKey];
+        const preferenceProperty = PREFERENCE_SCHEMA.properties[config.preferenceKey];
         const workspaceProperty = WORKSPACE_SCHEMA.definitions["render-config"].properties[workspaceKey];
 
         expect(preferenceProperty).toMatchObject({minimum: config.min, maximum: config.max});

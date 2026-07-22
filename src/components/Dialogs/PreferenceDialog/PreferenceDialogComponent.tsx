@@ -163,34 +163,6 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     private renderScalingParameterInput(preference: PreferenceStore): React.ReactNode {
-        let value: number;
-        let preferenceKey: PreferenceKeys;
-
-        switch (preference.scaling) {
-            case FrameScaling.LOG:
-                value = preference.scalingAlphaLog;
-                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG;
-                break;
-            case FrameScaling.POWER:
-                value = preference.scalingAlphaPower;
-                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER;
-                break;
-            case FrameScaling.SINH:
-                value = preference.scalingAlphaSinh;
-                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH;
-                break;
-            case FrameScaling.ASINH:
-                value = preference.scalingAlphaAsinh;
-                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH;
-                break;
-            case FrameScaling.GAMMA:
-                value = preference.scalingGamma;
-                preferenceKey = PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA;
-                break;
-            default:
-                return null;
-        }
-
         const parameterConfig = getScalingParameterConfig(preference.scaling);
         if (!parameterConfig) {
             return null;
@@ -199,7 +171,13 @@ export class PreferenceDialogComponent extends React.Component {
 
         return (
             <FormGroup label={parameterName} inline={true}>
-                <ScalingParameterControlComponent scaling={preference.scaling} min={parameterConfig.min} max={parameterConfig.max} value={value} onValueChange={newValue => preference.setPreference(preferenceKey, newValue)} />
+                <ScalingParameterControlComponent
+                    scaling={preference.scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={preference.getScalingParameter(preference.scaling)}
+                    onValueChange={newValue => preference.setPreference(parameterConfig.preferenceKey, newValue)}
+                />
             </FormGroup>
         );
     }

@@ -5,21 +5,9 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
-import {getDefaultScalingParameter, sanitizeScalingParameter} from "utilities/scaling/scaling";
+import {getScalingForParameterPreference, getScalingParameterConfig, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
-
-const SCALING_PARAMETER_PREFERENCES = new Map<PreferenceKeys, FrameScaling>([
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, FrameScaling.LOG],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, FrameScaling.POWER],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, FrameScaling.SINH],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, FrameScaling.ASINH],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, FrameScaling.GAMMA]
-]);
-
-function getScalingAlphaPreference(preferences: Map<PreferenceKeys, any>, key: PreferenceKeys, defaultValue: number): number {
-    return preferences.get(key) ?? preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY) ?? defaultValue;
-}
 
 const DEFAULTS = {
     SILENT: {
@@ -56,11 +44,6 @@ const DEFAULTS = {
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
-        scalingAlphaLog: getDefaultScalingParameter(FrameScaling.LOG),
-        scalingAlphaPower: getDefaultScalingParameter(FrameScaling.POWER),
-        scalingAlphaSinh: getDefaultScalingParameter(FrameScaling.SINH),
-        scalingAlphaAsinh: getDefaultScalingParameter(FrameScaling.ASINH),
-        scalingGamma: getDefaultScalingParameter(FrameScaling.GAMMA),
         nanColorHex: "#137CBD",
         useSmoothedBiasContrast: true
     },
@@ -284,23 +267,39 @@ export class PreferenceStore {
     }
 
     @computed get scalingAlphaLog(): number {
-        return getScalingAlphaPreference(this.preferences, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, DEFAULTS.RENDER_CONFIG.scalingAlphaLog);
+        return this.getScalingParameter(FrameScaling.LOG);
     }
 
     @computed get scalingAlphaPower(): number {
-        return getScalingAlphaPreference(this.preferences, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, DEFAULTS.RENDER_CONFIG.scalingAlphaPower);
+        return this.getScalingParameter(FrameScaling.POWER);
     }
 
     @computed get scalingAlphaSinh(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaSinh;
+        return this.getScalingParameter(FrameScaling.SINH);
     }
 
     @computed get scalingAlphaAsinh(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaAsinh;
+        return this.getScalingParameter(FrameScaling.ASINH);
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+        return this.getScalingParameter(FrameScaling.GAMMA);
+    }
+
+    public getScalingParameter(scaling: FrameScaling): number {
+        const config = getScalingParameterConfig(scaling);
+        if (!config) {
+            return 1;
+        }
+
+        const storedValue = this.preferences.get(config.preferenceKey);
+        if (storedValue !== undefined) {
+            return storedValue;
+        }
+
+        const legacyAlpha = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY);
+        const isLegacyAlphaSupported = scaling === FrameScaling.LOG || scaling === FrameScaling.POWER;
+        return isLegacyAlphaSupported && legacyAlpha !== undefined ? legacyAlpha : config.defaultValue;
     }
 
     @computed get nanColorHex(): string {
@@ -683,7 +682,7 @@ export class PreferenceStore {
             return false;
         }
 
-        const scaling = SCALING_PARAMETER_PREFERENCES.get(key);
+        const scaling = getScalingForParameterPreference(key);
         if (scaling !== undefined) {
             if (typeof value !== "number" || !Number.isFinite(value)) {
                 return false;

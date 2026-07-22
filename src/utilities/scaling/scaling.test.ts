@@ -1,6 +1,6 @@
-import {FrameScaling} from "enums";
+import {FrameScaling, PreferenceKeys} from "enums";
 
-import {getScalingParameterConfig, POWER_ALPHA_EPSILON, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
+import {getScalingForParameterPreference, getScalingParameterConfig, POWER_ALPHA_EPSILON, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
 const POWER_SCALING = FrameScaling.POWER;
@@ -235,13 +235,14 @@ describe("power scaling", () => {
 
 describe("scaling parameter configuration", () => {
     test.each([
-        {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000},
-        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 1},
-        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 1_000},
-        {scaling: FrameScaling.SINH, min: 0.1, max: 3, defaultValue: 1 / 3},
-        {scaling: FrameScaling.ASINH, min: 0.01, max: 3, defaultValue: 0.1}
-    ])("defines supported bounds for scaling $scaling", ({scaling, min, max, defaultValue}) => {
-        expect(getScalingParameterConfig(scaling)).toEqual({min, max, defaultValue});
+        {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG},
+        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
+        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER},
+        {scaling: FrameScaling.SINH, min: 0.1, max: 3, defaultValue: 1 / 3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH},
+        {scaling: FrameScaling.ASINH, min: 0.01, max: 3, defaultValue: 0.1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH}
+    ])("defines supported bounds for scaling $scaling", ({scaling, min, max, defaultValue, preferenceKey}) => {
+        expect(getScalingParameterConfig(scaling)).toEqual({min, max, defaultValue, preferenceKey});
+        expect(getScalingForParameterPreference(preferenceKey)).toBe(scaling);
     });
 
     test("clamps finite values and replaces non-finite values", () => {

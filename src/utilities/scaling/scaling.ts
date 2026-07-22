@@ -8,6 +8,7 @@ export interface ScalingParameterConfig {
     readonly min: number;
     readonly max: number;
     readonly defaultValue: number;
+    readonly preferenceKey: PreferenceKeys;
 }
 
 export const POWER_ALPHA_EPSILON = 1e-6;
@@ -17,7 +18,8 @@ function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin
     return {
         min: typeof property?.minimum === "number" ? property.minimum : fallbackMin,
         max: typeof property?.maximum === "number" ? property.maximum : fallbackMax,
-        defaultValue
+        defaultValue,
+        preferenceKey
     };
 }
 
@@ -37,6 +39,15 @@ export function getDefaultScalingParameter(scaling: FrameScaling): number {
     return getScalingParameterConfig(scaling)?.defaultValue ?? 1;
 }
 
+export function getScalingForParameterPreference(preferenceKey: PreferenceKeys): FrameScaling | undefined {
+    for (const [scaling, config] of SCALING_PARAMETER_CONFIGS) {
+        if (config.preferenceKey === preferenceKey) {
+            return scaling;
+        }
+    }
+    return undefined;
+}
+
 export function sanitizeScalingParameter(scaling: FrameScaling, value: number, fallback: number = getDefaultScalingParameter(scaling)): number {
     const config = getScalingParameterConfig(scaling);
     if (!config) {
@@ -50,16 +61,16 @@ export function sanitizeScalingParameter(scaling: FrameScaling, value: number, f
     return clamp(sanitizedValue, config.min, config.max);
 }
 
-function errorFunction(x: number, c: number, x0: number) {
+function errorFunction(x: number, c: number, x0: number): number {
     const y = Math.exp(c * (x - x0));
     return y / (y + 1);
 }
 
-function errorFunctionInverse(x: number, c: number, x0: number) {
+function errorFunctionInverse(x: number, c: number, x0: number): number {
     return Math.log(x / (1 - x)) / c + x0;
 }
 
-function getSmoothedValue(bias: number, contrast: number) {
+function getSmoothedValue(bias: number, contrast: number): {bias: number; contrast: number; offset: number; denominator: number} {
     const smoothedBias = bias / 2 + 0.5; // [-1, 1] map to [0, 1]
     let smoothedContrast = contrast < 1 ? 0 : contrast - 1; // [1, 2] map to [0, 1]
 
@@ -69,7 +80,7 @@ function getSmoothedValue(bias: number, contrast: number) {
     if (denominator <= 0) {
         denominator = 0.1;
     }
-    return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
+    return {bias: smoothedBias, contrast: smoothedContrast, offset, denominator};
 }
 
 function normalizedSinhScale(x: number, alpha: number): number {
@@ -94,7 +105,7 @@ function normalizedSinhScaleInverse(x: number, alpha: number): number {
     return clamp(alpha * Math.asinh(x * Math.sinh(invAlpha)), 0, 1);
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true): number {
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
@@ -137,7 +148,7 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true): number {
     let scaleValue;
     if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
