@@ -1,4 +1,4 @@
-jest.mock("models", () => ({TileCoordinate: {addFileIdAndChannel: jest.fn(() => 1)}}));
+jest.mock("models", () => ({TileCoordinate: {}}));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
 jest.mock("stores", () => ({AppStore: {Instance: {}}, PREVIEW_PV_FILEID: -1}));
 jest.mock("utilities", () => ({clamp: jest.fn(), copyToFP32Texture: jest.fn(), createFP32Texture: jest.fn(), GL2: {}}));
@@ -153,7 +153,8 @@ describe("TileService channel map request queue", () => {
         service.getCompressedCache = jest.fn(() => new Map());
         const tile = {layer: 0, encode: () => 4};
 
-        expect(service.getRequiredRequestTiles([tile], 1, 2, 0, false)).toEqual([]);
+        expect(service.getRequiredRequestTiles([tile], 1, 32768, 0, false)).toEqual([]);
+        expect(service.cachedTiles.has).toHaveBeenCalledWith("1_32768_4");
     });
 
     test("updates the backend channel when all normal-view tiles are cached", () => {
