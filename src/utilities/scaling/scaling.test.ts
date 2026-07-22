@@ -1,6 +1,6 @@
 import {FrameScaling} from "enums";
 
-import {getScalingParameterConfig, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
+import {getScalingParameterConfig, POWER_ALPHA_EPSILON, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
 const POWER_SCALING = FrameScaling.POWER;
@@ -222,6 +222,15 @@ describe("power scaling", () => {
             expect(scaleValueInverse(x, POWER_SCALING, 1)).toBeCloseTo(x, 12);
         }
     });
+
+    test("uses the linear limit within the alpha epsilon", () => {
+        for (const alpha of [1 - POWER_ALPHA_EPSILON / 2, 1, 1 + POWER_ALPHA_EPSILON / 2]) {
+            for (const x of TEST_SAMPLES) {
+                expect(scaleValue(x, POWER_SCALING, alpha, 1.5, 0, 1, false)).toBeCloseTo(x, 12);
+                expect(scaleValueInverse(x, POWER_SCALING, alpha, 1.5, 0, 1, false)).toBeCloseTo(x, 12);
+            }
+        }
+    });
 });
 
 describe("scaling parameter configuration", () => {
@@ -267,6 +276,12 @@ describe("scaling parameter configuration", () => {
             expect(shaderScaleValue(x, FrameScaling.GAMMA, gamma)).toBeCloseTo(scaleValue(x, FrameScaling.GAMMA, 1, gamma), 6);
         }
     });
+
+    test.each([0.1, 1.1, 10, 1000])("keeps the shader-equivalent float32 Power transform accurate at alpha %s", alpha => {
+        for (const x of TEST_SAMPLES) {
+            expect(shaderScaleValue(x, POWER_SCALING, alpha)).toBeCloseTo(scaleValue(x, POWER_SCALING, alpha), 5);
+        }
+    });
 });
 
 function shaderScaleValue(value: number, scaling: FrameScaling, alpha: number): number {
@@ -277,6 +292,7 @@ function shaderScaleValue(value: number, scaling: FrameScaling, alpha: number): 
     const divide = (a: number, b: number) => f32(a / b);
     const log = (x: number) => f32(Math.log(x));
     const exp = (x: number) => f32(Math.exp(x));
+    const pow = (base: number, exponent: number) => f32(Math.pow(base, exponent));
     const sqrt = (x: number) => f32(Math.sqrt(x));
     const asinh = (x: number) => log(add(x, sqrt(add(multiply(x, x), 1))));
     const sinh = (x: number) => divide(subtract(exp(x), exp(-x)), 2);
@@ -286,6 +302,11 @@ function shaderScaleValue(value: number, scaling: FrameScaling, alpha: number): 
     switch (scaling) {
         case FrameScaling.LOG:
             return divide(log(add(multiply(shaderAlpha, shaderValue), 1)), log(add(shaderAlpha, 1)));
+        case FrameScaling.POWER:
+            if (Math.abs(shaderAlpha - 1) < POWER_ALPHA_EPSILON) {
+                return shaderValue;
+            }
+            return divide(subtract(pow(shaderAlpha, shaderValue), 1), subtract(shaderAlpha, 1));
         case FrameScaling.SINH:
             return divide(sinh(divide(shaderValue, shaderAlpha)), sinh(divide(1, shaderAlpha)));
         case FrameScaling.ASINH:

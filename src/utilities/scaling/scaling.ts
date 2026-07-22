@@ -10,6 +10,8 @@ export interface ScalingParameterConfig {
     readonly defaultValue: number;
 }
 
+export const POWER_ALPHA_EPSILON = 1e-6;
+
 function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin: number, fallbackMax: number, defaultValue: number): ScalingParameterConfig {
     const property = PREFERENCES_SCHEMA.properties[preferenceKey];
     return {
@@ -105,7 +107,7 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             scaleValue = Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
             break;
         case FrameScaling.POWER:
-            scaleValue = Math.abs(alpha - 1.0) < 1e-12 ? x : (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            scaleValue = Math.abs(alpha - 1.0) < POWER_ALPHA_EPSILON ? x : (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
             break;
         case FrameScaling.GAMMA:
             scaleValue = Math.pow(x, gamma);
@@ -162,7 +164,7 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
         case FrameScaling.LOG:
             return (Math.pow(alpha + 1, scaleValue) - 1.0) / alpha;
         case FrameScaling.POWER:
-            return Math.abs(alpha - 1.0) < 1e-12 ? scaleValue : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
+            return Math.abs(alpha - 1.0) < POWER_ALPHA_EPSILON ? scaleValue : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
         case FrameScaling.GAMMA:
             return Math.pow(scaleValue, 1.0 / gamma);
         case FrameScaling.SINH:
