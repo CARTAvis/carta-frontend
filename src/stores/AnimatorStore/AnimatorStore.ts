@@ -27,6 +27,10 @@ export class AnimatorStore {
     @observable isAnimationActive: boolean = false;
     @observable playMode: PlayMode = PlayMode.FORWARD;
 
+    private get isFrontendAnimationMode(): boolean {
+        return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME;
+    }
+
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
         if (this.isAnimationActive) {
@@ -60,7 +64,7 @@ export class AnimatorStore {
         const preferenceStore = PreferenceStore.Instance;
         const activeFrame = appStore.activeFrame;
 
-        if (this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME) {
+        if (this.isFrontendAnimationMode) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
@@ -157,7 +161,7 @@ export class AnimatorStore {
 
         this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
-        if (this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME) {
+        if (this.isFrontendAnimationMode) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
@@ -217,7 +221,7 @@ export class AnimatorStore {
     }
 
     @computed get isServerAnimationActive() {
-        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME && this.animationMode !== AnimationMode.TIME;
+        return this.isAnimationActive && !this.isFrontendAnimationMode;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
@@ -239,11 +243,8 @@ export class AnimatorStore {
             return true;
         }
 
-        if (this.animationMode === AnimationMode.TIME) {
-            const timeSeriesStore = TimeSeriesStore.Instance;
-            if (timeSeriesStore.elements.length < 2) {
-                return true;
-            }
+        if (this.animationMode === AnimationMode.TIME && TimeSeriesStore.Instance.elements.length <= 1) {
+            return true;
         }
 
         return false;

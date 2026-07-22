@@ -22,7 +22,7 @@ export interface TimeSeriesElement {
 export class TimeSeriesStore {
     private static staticInstance: TimeSeriesStore;
 
-    public static get Instance() {
+    public static get Instance(): TimeSeriesStore {
         if (!TimeSeriesStore.staticInstance) {
             TimeSeriesStore.staticInstance = new TimeSeriesStore();
         }
@@ -35,7 +35,7 @@ export class TimeSeriesStore {
         if (!spatialReference) {
             return [];
         }
-        return [spatialReference, ...spatialReference.secondarySpatialImages].filter(frame => frame && !frame.isPreview);
+        return [spatialReference, ...spatialReference.secondarySpatialImages].filter(frame => !frame.isPreview);
     }
 
     /**

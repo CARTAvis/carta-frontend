@@ -6,9 +6,9 @@ export function getDiscreteSliderTicks(count: number, includedIndex?: number): {
     const lastIndex = count - 1;
     const step = count > MAX_DENSE_TICK_COUNT ? Math.floor(lastIndex / (TARGET_TICK_COUNT - 1)) : 1;
     const finalRegularTick = (TARGET_TICK_COUNT - 1) * step;
-    const fifthTick = lastIndex - finalRegularTick < step / 2 ? lastIndex : finalRegularTick;
-    const values = count > MAX_DENSE_TICK_COUNT ? [0, step, 2 * step, 3 * step, fifthTick] : Array.from({length: count}, (_, index) => index);
-    if (count > MAX_DENSE_TICK_COUNT && fifthTick !== lastIndex) {
+    const lastRegularTick = lastIndex - finalRegularTick < step / 2 ? lastIndex : finalRegularTick;
+    const values = count > MAX_DENSE_TICK_COUNT ? [0, step, 2 * step, 3 * step, lastRegularTick] : Array.from({length: count}, (_, index) => index);
+    if (count > MAX_DENSE_TICK_COUNT && lastRegularTick !== lastIndex) {
         values.push(lastIndex);
     }
 

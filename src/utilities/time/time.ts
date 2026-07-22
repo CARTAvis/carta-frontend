@@ -446,6 +446,48 @@ function getRelativeUnitInfo(unit: RelativeTimeUnit): {seconds: number; suffix: 
     }
 }
 
+function getIsoLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {
+    const ianaTimeZone = settings.ianaTimeZone ?? "UTC";
+    const timeZoneMode = settings.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(ianaTimeZone) ? TimeZoneMode.UTC : settings.timeZoneMode;
+    const configuredPrecision = settings.isoTimePrecision ?? IsoTimePrecision.AUTO;
+    const precision = configuredPrecision === IsoTimePrecision.AUTO ? getAutoIsoPrecision(values, timeZoneMode, ianaTimeZone) : configuredPrecision;
+    return values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+}
+
+function getJulianDateLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {
+    const offset = settings.timeLabelFormat === TimeLabelFormat.JD ? JD_MJD_OFFSET : 0;
+    const scale = settings.timeScale ?? TimeScale.UTC;
+    const numericValues = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) + offset);
+    const decimalPlaces = resolveNumericPrecision(numericValues, settings.numericTimePrecision);
+    return numericValues.map(value => value.toFixed(decimalPlaces));
+}
+
+function getRelativeReferenceMjd(values: readonly TimeLabelValue[], settings: TimeLabelSettings): number {
+    const configuredReference = settings.relativeReferenceMjdUtc;
+    if (typeof configuredReference !== "number" || !isFinite(configuredReference)) {
+        return values[0].mjdUtc;
+    }
+
+    const isCustomReference = settings.relativeTimeReference === RelativeTimeReference.CUSTOM;
+    const isExistingImage = settings.relativeTimeReference === RelativeTimeReference.IMAGE && values.some(value => value.mjdUtc === configuredReference);
+    return isCustomReference || isExistingImage ? configuredReference : values[0].mjdUtc;
+}
+
+function getRelativeLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {
+    const scale = settings.timeScale ?? TimeScale.UTC;
+    const referenceMjd = convertMjdUtcToScale(getRelativeReferenceMjd(values, settings), scale);
+    const relativeDays = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) - referenceMjd);
+    const {seconds, suffix} = getRelativeUnitInfo(resolveRelativeTimeUnit(relativeDays, settings.relativeTimeUnit));
+    const relativeValues = relativeDays.map(value => (value * SECONDS_PER_DAY) / seconds);
+    const decimalPlaces = resolveNumericPrecision(relativeValues, settings.numericTimePrecision);
+
+    return relativeValues.map(value => {
+        const roundedValue = Number(value.toFixed(decimalPlaces));
+        const prefix = roundedValue > 0 ? "+" : "";
+        return `${prefix}${roundedValue.toFixed(decimalPlaces)} ${suffix}`;
+    });
+}
+
 /** Formats time-series slider labels and reports collisions without changing canonical MJD UTC values. */
 export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], settings: TimeLabelSettings): TimeLabelResult {
     if (values.length === 0) {
@@ -454,44 +496,16 @@ export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], 
 
     let labels: string[];
     switch (settings.timeLabelFormat) {
-        case TimeLabelFormat.ISO: {
-            const ianaTimeZone = settings.ianaTimeZone ?? "UTC";
-            const timeZoneMode = settings.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(ianaTimeZone) ? TimeZoneMode.UTC : settings.timeZoneMode;
-            const configuredPrecision = settings.isoTimePrecision ?? IsoTimePrecision.AUTO;
-            const precision = configuredPrecision === IsoTimePrecision.AUTO ? getAutoIsoPrecision(values, timeZoneMode, ianaTimeZone) : configuredPrecision;
-            labels = values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+        case TimeLabelFormat.ISO:
+            labels = getIsoLabels(values, settings);
             break;
-        }
         case TimeLabelFormat.MJD:
-        case TimeLabelFormat.JD: {
-            const offset = settings.timeLabelFormat === TimeLabelFormat.JD ? JD_MJD_OFFSET : 0;
-            const scale = settings.timeScale ?? TimeScale.UTC;
-            const numericValues = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) + offset);
-            const decimalPlaces = resolveNumericPrecision(numericValues, settings.numericTimePrecision);
-            labels = numericValues.map(value => value.toFixed(decimalPlaces));
+        case TimeLabelFormat.JD:
+            labels = getJulianDateLabels(values, settings);
             break;
-        }
-        case TimeLabelFormat.RELATIVE: {
-            const configuredReferenceMjd = settings.relativeReferenceMjdUtc;
-            const hasExplicitReference =
-                typeof configuredReferenceMjd === "number" &&
-                isFinite(configuredReferenceMjd) &&
-                (settings.relativeTimeReference === RelativeTimeReference.CUSTOM || (settings.relativeTimeReference === RelativeTimeReference.IMAGE && values.some(value => value.mjdUtc === configuredReferenceMjd)));
-            const referenceMjd = hasExplicitReference ? configuredReferenceMjd : values[0].mjdUtc;
-            const scale = settings.timeScale ?? TimeScale.UTC;
-            const referenceMjdInScale = convertMjdUtcToScale(referenceMjd, scale);
-            const relativeDays = values.map(value => convertMjdUtcToScale(value.mjdUtc, scale) - referenceMjdInScale);
-            const unit = resolveRelativeTimeUnit(relativeDays, settings.relativeTimeUnit);
-            const unitInfo = getRelativeUnitInfo(unit);
-            const relativeValues = relativeDays.map(value => (value * SECONDS_PER_DAY) / unitInfo.seconds);
-            const decimalPlaces = resolveNumericPrecision(relativeValues, settings.numericTimePrecision);
-            labels = relativeValues.map(value => {
-                const rounded = Number(value.toFixed(decimalPlaces));
-                const prefix = rounded > 0 ? "+" : "";
-                return `${prefix}${rounded.toFixed(decimalPlaces)} ${unitInfo.suffix}`;
-            });
+        case TimeLabelFormat.RELATIVE:
+            labels = getRelativeLabels(values, settings);
             break;
-        }
         case TimeLabelFormat.AUTO:
         default:
             labels = formatIsoUtcTickLabels(values.map(value => value.isoUtc));

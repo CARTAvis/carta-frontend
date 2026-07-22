@@ -14,22 +14,42 @@ export interface AnimatorWidgetConfig {
     relativeTimeUnit: RelativeTimeUnit;
 }
 
+export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
+    timeLabelFormat: TimeLabelFormat.AUTO,
+    timeZoneMode: TimeZoneMode.UTC,
+    ianaTimeZone: "UTC",
+    timeScale: TimeScale.UTC,
+    isoTimePrecision: IsoTimePrecision.AUTO,
+    numericTimePrecision: null,
+    relativeTimeReference: RelativeTimeReference.FIRST,
+    relativeReferenceMjdUtc: null,
+    relativeTimeUnit: RelativeTimeUnit.AUTO
+};
+
 export type PersistedAnimatorWidgetConfig = Partial<Record<keyof AnimatorWidgetConfig, unknown>>;
 
 function isEnumValue<T extends string>(enumeration: Record<string, T>, value: unknown): value is T {
     return typeof value === "string" && Object.values(enumeration).includes(value as T);
 }
 
+function isNumericPrecision(value: unknown): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 9;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === "number" && isFinite(value);
+}
+
 export class AnimatorWidgetStore implements AnimatorWidgetConfig {
-    @observable timeLabelFormat: TimeLabelFormat = TimeLabelFormat.AUTO;
-    @observable timeZoneMode: TimeZoneMode = TimeZoneMode.UTC;
-    @observable ianaTimeZone: string = "UTC";
-    @observable timeScale: TimeScale = TimeScale.UTC;
-    @observable isoTimePrecision: IsoTimePrecision = IsoTimePrecision.AUTO;
-    @observable numericTimePrecision: number | null = null;
-    @observable relativeTimeReference: RelativeTimeReference = RelativeTimeReference.FIRST;
-    @observable relativeReferenceMjdUtc: number | null = null;
-    @observable relativeTimeUnit: RelativeTimeUnit = RelativeTimeUnit.AUTO;
+    @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
+    @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
+    @observable ianaTimeZone: string = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
+    @observable timeScale: TimeScale = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeScale;
+    @observable isoTimePrecision: IsoTimePrecision = DEFAULT_ANIMATOR_WIDGET_CONFIG.isoTimePrecision;
+    @observable numericTimePrecision: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.numericTimePrecision;
+    @observable relativeTimeReference: RelativeTimeReference = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeReference;
+    @observable relativeReferenceMjdUtc: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeReferenceMjdUtc;
+    @observable relativeTimeUnit: RelativeTimeUnit = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeUnit;
 
     @action setTimeLabelFormat = (format: TimeLabelFormat) => {
         this.timeLabelFormat = format;
@@ -86,7 +106,7 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
         const numericTimePrecision = config.numericTimePrecision;
         if (numericTimePrecision === null) {
             this.numericTimePrecision = null;
-        } else if (typeof numericTimePrecision === "number" && Number.isInteger(numericTimePrecision) && numericTimePrecision >= 0 && numericTimePrecision <= 9) {
+        } else if (isNumericPrecision(numericTimePrecision)) {
             this.numericTimePrecision = numericTimePrecision;
         }
         if (isEnumValue(RelativeTimeReference, config.relativeTimeReference)) {
@@ -95,7 +115,7 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
         const relativeReferenceMjdUtc = config.relativeReferenceMjdUtc;
         if (relativeReferenceMjdUtc === null) {
             this.relativeReferenceMjdUtc = null;
-        } else if (typeof relativeReferenceMjdUtc === "number" && isFinite(relativeReferenceMjdUtc)) {
+        } else if (isFiniteNumber(relativeReferenceMjdUtc)) {
             this.relativeReferenceMjdUtc = relativeReferenceMjdUtc;
         }
         if (isEnumValue(RelativeTimeUnit, config.relativeTimeUnit)) {

@@ -5,23 +5,11 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, HelpType, IsoTimePrecision, NumericInputType, PlayMode, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {AnimationMode, HelpType, NumericInputType, PlayMode, RelativeTimeReference, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, type TimeLabelSettings, toFixed} from "utilities";
 
 import "./AnimatorComponent.scss";
-
-const DEFAULT_TIME_LABEL_SETTINGS: TimeLabelSettings = {
-    timeLabelFormat: TimeLabelFormat.AUTO,
-    timeZoneMode: TimeZoneMode.UTC,
-    ianaTimeZone: "UTC",
-    timeScale: TimeScale.UTC,
-    isoTimePrecision: IsoTimePrecision.AUTO,
-    numericTimePrecision: null,
-    relativeTimeReference: RelativeTimeReference.FIRST,
-    relativeReferenceMjdUtc: null,
-    relativeTimeUnit: RelativeTimeUnit.AUTO
-};
 
 function getTimeLabelFormatName(settings: TimeLabelSettings): string {
     switch (settings.timeLabelFormat) {
@@ -42,7 +30,10 @@ function getTimeLabelFormatName(settings: TimeLabelSettings): string {
             if (settings.relativeTimeReference === RelativeTimeReference.IMAGE) {
                 return `Relative to selected image (${scale})`;
             }
-            return `${settings.relativeTimeReference === RelativeTimeReference.CUSTOM ? "Relative to custom epoch" : "Relative to first observation"} (${scale})`;
+            if (settings.relativeTimeReference === RelativeTimeReference.CUSTOM) {
+                return `Relative to custom epoch (${scale})`;
+            }
+            return `Relative to first observation (${scale})`;
         }
         case TimeLabelFormat.AUTO:
         default:
@@ -394,15 +385,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Time series control
         const timeSeriesStore = appStore.timeSeriesStore;
         const animatorWidgetStore = appStore.widgetsStore.animatorWidgets.get(this.props.id);
-        const timeLabelSettings = animatorWidgetStore ?? DEFAULT_TIME_LABEL_SETTINGS;
-        const numTimes = timeSeriesStore.elements.length;
+        const timeLabelSettings = animatorWidgetStore ?? DEFAULT_ANIMATOR_WIDGET_CONFIG;
+        const timeSeriesElements = timeSeriesStore.elements;
+        const numTimes = timeSeriesElements.length;
         if (numTimes > 1) {
             const currentTimeIndex = timeSeriesStore.currentIndex;
             const {values: timeTick} = getDiscreteSliderTicks(numTimes, currentTimeIndex);
-            const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesStore.elements, timeLabelSettings);
+            const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, timeLabelSettings);
             const timeLabelFormatName = getTimeLabelFormatName(timeLabelSettings);
             const renderTimeTickLabel = (index: number) => {
-                const element = timeSeriesStore.elements[index];
+                const element = timeSeriesElements[index];
                 if (!element) {
                     return "";
                 }

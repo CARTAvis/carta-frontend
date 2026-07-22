@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
-import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type AnimatorWidgetStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {formatMjdUtcAsIso, getTimeSeriesTickLabelResult, isValidIanaTimeZone, parseIsoUtcToMjdUtc} from "utilities";
 
 import "./AnimatorSettingsPanelComponent.scss";
@@ -109,6 +109,10 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
     private activeIanaTimeZone: string | null = null;
 
+    private get widgetStore(): AnimatorWidgetStore | undefined {
+        return WidgetsStore.Instance.animatorWidgets.get(this.props.id);
+    }
+
     state: AnimatorSettingsPanelState = {
         relativeReferenceIsoDraft: null,
         relativeReferenceIsoInvalid: false
@@ -119,7 +123,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
     }
 
     private setDefaultCustomIanaTimeZone = () => {
-        const widgetStore = WidgetsStore.Instance.animatorWidgets.get(this.props.id);
+        const widgetStore = this.widgetStore;
         if (widgetStore?.timeZoneMode === TimeZoneMode.IANA && widgetStore.ianaTimeZone === "UTC") {
             widgetStore.setIanaTimeZone(DEFAULT_CUSTOM_IANA_TIME_ZONE);
         }
@@ -131,8 +135,13 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
     private handleIanaTimeZoneKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Tab" && this.activeIanaTimeZone) {
-            WidgetsStore.Instance.animatorWidgets.get(this.props.id)?.setIanaTimeZone(this.activeIanaTimeZone);
+            this.widgetStore?.setIanaTimeZone(this.activeIanaTimeZone);
         }
+    };
+
+    private handleTimeZoneModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        this.widgetStore?.setTimeZoneMode(event.currentTarget.value as TimeZoneMode);
+        this.setDefaultCustomIanaTimeZone();
     };
 
     private resetRelativeReferenceIso = () => {
@@ -147,7 +156,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
         const mjdUtc = parseIsoUtcToMjdUtc(draft);
         if (isFinite(mjdUtc)) {
-            WidgetsStore.Instance.animatorWidgets.get(this.props.id)?.setRelativeReferenceMjdUtc(mjdUtc);
+            this.widgetStore?.setRelativeReferenceMjdUtc(mjdUtc);
             this.resetRelativeReferenceIso();
         } else {
             this.setState({relativeReferenceIsoInvalid: true});
@@ -164,8 +173,44 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         }
     };
 
+    private handleRelativeReferenceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        this.resetRelativeReferenceIso();
+
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
+        const elements = AppStore.Instance.timeSeriesStore.elements;
+        const firstElement = elements[0];
+        const reference = event.currentTarget.value as RelativeTimeReference;
+        widgetStore.setRelativeTimeReference(reference);
+        const shouldSetImageReference = reference === RelativeTimeReference.IMAGE && !elements.some(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
+        const shouldSetCustomReference = reference === RelativeTimeReference.CUSTOM && widgetStore.relativeReferenceMjdUtc === null;
+        if (firstElement && (shouldSetImageReference || shouldSetCustomReference)) {
+            widgetStore.setRelativeReferenceMjdUtc(firstElement.mjdUtc);
+        }
+    };
+
+    private handleReferenceImageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const element = AppStore.Instance.timeSeriesStore.elements[Number(event.currentTarget.value)];
+        if (element) {
+            this.widgetStore?.setRelativeReferenceMjdUtc(element.mjdUtc);
+        }
+    };
+
+    private handleReferenceMjdChange = (value: number) => {
+        this.resetRelativeReferenceIso();
+        this.widgetStore?.setRelativeReferenceMjdUtc(value);
+    };
+
+    private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.currentTarget.value;
+        this.widgetStore?.setNumericTimePrecision(value === "auto" ? null : Number(value));
+    };
+
     render() {
-        const widgetStore = WidgetsStore.Instance.animatorWidgets.get(this.props.id);
+        const widgetStore = this.widgetStore;
         if (!widgetStore) {
             return null;
         }
@@ -176,10 +221,10 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
         const referenceIsoUtc = effectiveReferenceMjdUtc === undefined ? "" : formatMjdUtcAsIso(effectiveReferenceMjdUtc, 6);
         const hasInvalidIanaTimeZone = widgetStore.timeLabelFormat === TimeLabelFormat.ISO && widgetStore.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(widgetStore.ianaTimeZone);
-
-        const setNumericPrecision = (value: string) => {
-            widgetStore.setNumericTimePrecision(value === "auto" ? null : Number(value));
-        };
+        const referenceImageOptions = elements.map((element, index) => ({value: index.toString(), label: `${element.frame.filename} — ${element.isoUtc} UTC — MJD ${element.mjdUtc.toFixed(6)} UTC`}));
+        if (referenceImageOptions.length === 0) {
+            referenceImageOptions.push({value: "", label: "No time-series images"});
+        }
 
         const ianaTimeZoneInputProps = {
             placeholder: `e.g. ${DEFAULT_CUSTOM_IANA_TIME_ZONE}`,
@@ -221,16 +266,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                     {widgetStore.timeLabelFormat === TimeLabelFormat.ISO && (
                         <React.Fragment>
                             <FormGroup inline={true} label="Time zone">
-                                <HTMLSelect
-                                    options={TIME_ZONE_OPTIONS}
-                                    value={widgetStore.timeZoneMode}
-                                    onChange={event => {
-                                        const mode = event.currentTarget.value as TimeZoneMode;
-                                        widgetStore.setTimeZoneMode(mode);
-                                        this.setDefaultCustomIanaTimeZone();
-                                    }}
-                                    data-testid="animator-time-zone"
-                                />
+                                <HTMLSelect options={TIME_ZONE_OPTIONS} value={widgetStore.timeZoneMode} onChange={this.handleTimeZoneModeChange} data-testid="animator-time-zone" />
                             </FormGroup>
                             {widgetStore.timeZoneMode === TimeZoneMode.LOCAL && (
                                 <FormGroup inline={true} label="IANA zone">
@@ -266,38 +302,15 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                     {widgetStore.timeLabelFormat === TimeLabelFormat.RELATIVE && (
                         <React.Fragment>
                             <FormGroup inline={true} label="Reference">
-                                <HTMLSelect
-                                    options={RELATIVE_REFERENCE_OPTIONS}
-                                    value={widgetStore.relativeTimeReference}
-                                    onChange={event => {
-                                        this.resetRelativeReferenceIso();
-                                        const reference = event.currentTarget.value as RelativeTimeReference;
-                                        widgetStore.setRelativeTimeReference(reference);
-                                        if (reference === RelativeTimeReference.IMAGE && selectedReferenceImageIndex < 0 && elements[0]) {
-                                            widgetStore.setRelativeReferenceMjdUtc(elements[0].mjdUtc);
-                                        } else if (reference === RelativeTimeReference.CUSTOM && widgetStore.relativeReferenceMjdUtc === null && elements[0]) {
-                                            widgetStore.setRelativeReferenceMjdUtc(elements[0].mjdUtc);
-                                        }
-                                    }}
-                                    data-testid="animator-relative-reference"
-                                />
+                                <HTMLSelect options={RELATIVE_REFERENCE_OPTIONS} value={widgetStore.relativeTimeReference} onChange={this.handleRelativeReferenceChange} data-testid="animator-relative-reference" />
                             </FormGroup>
                             {widgetStore.relativeTimeReference === RelativeTimeReference.IMAGE && (
                                 <FormGroup inline={true} label="Reference image">
                                     <HTMLSelect
                                         className="reference-image-select"
-                                        options={
-                                            elements.length > 0
-                                                ? elements.map((element, index) => ({value: index.toString(), label: `${element.frame.filename} — ${element.isoUtc} UTC — MJD ${element.mjdUtc.toFixed(6)} UTC`}))
-                                                : [{value: "", label: "No time-series images"}]
-                                        }
+                                        options={referenceImageOptions}
                                         value={elements.length > 0 ? Math.max(selectedReferenceImageIndex, 0).toString() : ""}
-                                        onChange={event => {
-                                            const element = elements[Number(event.currentTarget.value)];
-                                            if (element) {
-                                                widgetStore.setRelativeReferenceMjdUtc(element.mjdUtc);
-                                            }
-                                        }}
+                                        onChange={this.handleReferenceImageChange}
                                         disabled={elements.length === 0}
                                         data-testid="animator-relative-reference-image"
                                     />
@@ -328,10 +341,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                                             buttonPosition="none"
                                             value={effectiveReferenceMjdUtc}
                                             placeholder="MJD in UTC"
-                                            onValueChange={value => {
-                                                this.resetRelativeReferenceIso();
-                                                widgetStore.setRelativeReferenceMjdUtc(value);
-                                            }}
+                                            onValueChange={this.handleReferenceMjdChange}
                                             data-testid="animator-relative-reference-mjd"
                                         />
                                     </FormGroup>
@@ -380,12 +390,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
                     {(widgetStore.timeLabelFormat === TimeLabelFormat.MJD || widgetStore.timeLabelFormat === TimeLabelFormat.JD || widgetStore.timeLabelFormat === TimeLabelFormat.RELATIVE) && (
                         <FormGroup inline={true} label="Decimal places">
-                            <HTMLSelect
-                                options={NUMERIC_PRECISION_OPTIONS}
-                                value={widgetStore.numericTimePrecision?.toString() ?? "auto"}
-                                onChange={event => setNumericPrecision(event.currentTarget.value)}
-                                data-testid="animator-numeric-time-precision"
-                            />
+                            <HTMLSelect options={NUMERIC_PRECISION_OPTIONS} value={widgetStore.numericTimePrecision?.toString() ?? "auto"} onChange={this.handleNumericPrecisionChange} data-testid="animator-numeric-time-precision" />
                         </FormGroup>
                     )}
 
