@@ -3,13 +3,13 @@ import {Alert, AnchorButton, Breadcrumb, type BreadcrumbProps, Breadcrumbs, Butt
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
+import {action, computed, flow, flowResult, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
-import {BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {AnimationMode, BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -83,6 +83,32 @@ export class FileBrowserDialogComponent extends React.Component {
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
             colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? ColormapSet.RGB : ColormapSet.Rainbow);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    private loadAsTimeSeries = async () => {
+        try {
+            await this.loadSelectedFiles();
+
+            const appStore = AppStore.Instance;
+            for (const frame of appStore.frames) {
+                await flowResult(appStore.setSpatialMatchingEnabled(frame, true));
+            }
+
+            if (appStore.timeSeriesStore.elements.length < 2) {
+                AppToaster.show({
+                    icon: "warning-sign",
+                    message: "A time series requires at least two spatially matched images with valid observation times.",
+                    intent: Intent.WARNING,
+                    timeout: 5000
+                });
+                return;
+            }
+
+            appStore.animatorStore.setAnimationMode(AnimationMode.TIME);
+            appStore.timeSeriesStore.first();
         } catch (err) {
             console.error(err);
         }
@@ -553,6 +579,11 @@ export class FileBrowserDialogComponent extends React.Component {
                                 {!this.isImageArithmeticEnabled && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip content={"Close any existing images and load this image"}>
                                         <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
+                                    </Tooltip>
+                                )}
+                                {!this.isImageArithmeticEnabled && fileBrowserStore.selectedFiles?.length > 1 && (
+                                    <Tooltip content={"Load the selected images, match them spatially, and order them by observation time"}>
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} onClick={this.loadAsTimeSeries} text="Load as time series" />
                                     </Tooltip>
                                 )}
                                 {fileBrowserStore.selectedFiles?.length > 1 && (
