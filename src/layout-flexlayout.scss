@@ -20,7 +20,7 @@ $pt-dark-app-background-color: #252a31;
         --color-tabset-divider-line: white;
         --color-icon: #{$dark-gray4};
         --splitter-size: 4px;
-        --splitter-active-size: 4px;
+        --splitter-active-size: 4px !important;
 
         // Remove browser focus outlines (e.g. canvas click, button click)
         *:focus {
@@ -136,6 +136,7 @@ $pt-dark-app-background-color: #252a31;
     // --- Splitter bars ---
     .flexlayout__splitter {
         background-color: white;
+        --splitter-active-size: 4px !important;
 
         &:hover {
             background-color: $blue3;
@@ -246,6 +247,7 @@ $pt-dark-app-background-color: #252a31;
 
         .flexlayout__splitter {
             background-color: $dark-gray4;
+            --splitter-active-size: 4px !important;
 
             &:hover {
                 background-color: $blue4;
