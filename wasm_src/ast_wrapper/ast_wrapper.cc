@@ -1,6 +1,7 @@
 #include <string.h>
 #include <emscripten.h>
 #include <cmath>
+#include <string>
 
 extern "C" {
 #include "ast.h"
@@ -751,6 +752,9 @@ EMSCRIPTEN_KEEPALIVE double convertMJD(double mjd, const char* scaleIn, const ch
 
 EMSCRIPTEN_KEEPALIVE const char* formatMJDToDate(double mjd, const char* timeScale, int digits)
 {
+    static std::string formattedValue;
+    formattedValue.clear();
+
     astBegin;
     AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
     char buffer[64];
@@ -771,14 +775,20 @@ EMSCRIPTEN_KEEPALIVE const char* formatMJDToDate(double mjd, const char* timeSca
     astSet(timeFrame, buffer);
 
     const char* formattedVal = astFormat(timeFrame, 1, mjd);
+    const bool formatSucceeded = astOK && formattedVal;
+    if (formatSucceeded)
+    {
+        // astFormat may return storage owned by timeFrame, which is released by astEnd.
+        formattedValue = formattedVal;
+    }
     astEnd;
 
-    if (!astOK)
+    if (!astOK || !formatSucceeded)
     {
         astClearStatus;
         return nullptr;
     }
-    return formattedVal;
+    return formattedValue.c_str();
 }
 
 EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
