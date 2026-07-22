@@ -10,7 +10,7 @@ import {TileService} from "./TileService";
 
 type TestTileService = {
     activeChannelMapRequests: Map<number, unknown>;
-    backendService: {setChannelMapChannel: jest.Mock; setChannels: jest.Mock};
+    backendService: {setChannels: jest.Mock};
     cachedTiles: {has: jest.Mock};
     channelMapRequestQueues: Map<number, unknown[]>;
     channelMap: Map<number, {channel: number; stokes: number}>;
@@ -30,13 +30,14 @@ type TestTileService = {
     requestTiles: TileService["requestTiles"];
     cancelChannelMapRequests: TileService["cancelChannelMapRequests"];
     tileStream: {next: jest.Mock};
+    updateChannelMapActiveChannel: TileService["updateChannelMapActiveChannel"];
     updateRemainingTileCount: jest.Mock;
 };
 
 const CreateService = () => {
     const service = Object.create(TileService.prototype) as TestTileService;
     let requestId = 0;
-    service.backendService = {setChannelMapChannel: jest.fn(() => ++requestId), setChannels: jest.fn(() => ++requestId)};
+    service.backendService = {setChannels: jest.fn(() => ++requestId)};
     service.channelMapRequestQueues = new Map();
     service.activeChannelMapRequests = new Map();
     service.channelMap = new Map();
@@ -64,18 +65,18 @@ describe("TileService channel map request queue", () => {
         const service = CreateService();
         service.queueChannelMapRequests(1, [MakeRequest(2), MakeRequest(3)]);
 
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(1);
-        expect(service.backendService.setChannelMapChannel).toHaveBeenLastCalledWith(1, 2, 0, {tiles: []});
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 2, 0, {tiles: []}, true);
 
         service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 9});
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
 
         service.handleChannelMapFlowControl(99, {fileId: 1, receivedChannel: 2});
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
 
         service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 2});
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(2);
-        expect(service.backendService.setChannelMapChannel).toHaveBeenLastCalledWith(1, 3, 0, {tiles: []});
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 3, 0, {tiles: []}, true);
     });
 
     test("replaces unsent channels while allowing the active request to finish", () => {
@@ -85,8 +86,8 @@ describe("TileService channel map request queue", () => {
 
         service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 1});
 
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(2);
-        expect(service.backendService.setChannelMapChannel).toHaveBeenLastCalledWith(1, 7, 0, {tiles: []});
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 7, 0, {tiles: []}, true);
     });
 
     test("does not request channels whose tiles are already cached", () => {
@@ -95,22 +96,22 @@ describe("TileService channel map request queue", () => {
         service.getRequiredRequestTiles = jest.fn(() => []);
         const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
 
-        expect(service.backendService.setChannelMapChannel).not.toHaveBeenCalled();
+        expect(service.backendService.setChannels).not.toHaveBeenCalled();
     });
 
     test("requests only uncached channels and restores the selected channel", () => {
         const service = CreateService();
         service.clearQueueForChannelMap = jest.fn();
         const tile = {x: 0, y: 0, encode: () => 4};
-        service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 3 ? [tile] : []));
+        service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 2 ? [tile] : []));
         const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [1, 3, 5]);
-        service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 3});
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 2});
 
-        expect(service.backendService.setChannelMapChannel.mock.calls.map(call => call[1])).toEqual([3, 1]);
+        expect(service.backendService.setChannels.mock.calls.map(call => call[1])).toEqual([2, 1]);
     });
 
     test("tracks the requested channel-map Stokes", () => {
@@ -126,6 +127,24 @@ describe("TileService channel map request queue", () => {
         expect(service.clearGPUCache).toHaveBeenCalledWith(1);
         expect(service.channelMap.get(1)).toEqual({channel: 1, stokes: 1});
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 1, {}, true);
+    });
+
+    test("switches Stokes before requesting channel-map tiles while another request is active", () => {
+        const service = CreateService();
+        service.clearQueueForChannelMap = jest.fn();
+        const tile = {x: 0, y: 0, encode: () => 4};
+        service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 2 ? [tile] : []));
+        const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
+
+        service.queueChannelMapRequests(1, [MakeRequest(0, [4])]);
+        service.updateChannelMapActiveChannel(1, 1, 1);
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
+        service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 0});
+
+        expect(service.backendService.setChannels).toHaveBeenNthCalledWith(2, 1, 1, 1, {}, true);
+
+        service.handleChannelMapFlowControl(2, {fileId: 1, receivedChannel: 1});
+        expect(service.backendService.setChannels).toHaveBeenNthCalledWith(3, 1, 2, 1, {fileId: 1, compressionQuality: 11, compressionType: CARTA.CompressionType.ZFP, tiles: [4]}, true);
     });
 
     test("treats GPU-cached tiles as satisfied", () => {
@@ -174,18 +193,29 @@ describe("TileService channel map request queue", () => {
         service.cancelChannelMapRequests(1);
         service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 1});
 
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
+    });
+
+    test("cancels pending tiles only for the exact file ID", () => {
+        const service = CreateService();
+        service.pendingRequests.set("1_0_1", new Map([[4, true]]));
+        service.pendingRequests.set("10_0_1", new Map([[5, true]]));
+
+        service.cancelChannelMapRequests(1);
+
+        expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
+        expect(service.pendingRequests.get("10_0_1")?.size).toBe(1);
     });
 
     test("abandons the sequence when sending fails", () => {
         const service = CreateService();
-        service.backendService.setChannelMapChannel.mockReturnValue(null);
+        service.backendService.setChannels.mockReturnValue(null);
 
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
         service.handleChannelMapFlowControl(1, {fileId: 1, receivedChannel: 1});
 
-        expect(service.backendService.setChannelMapChannel).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
     });
 });
