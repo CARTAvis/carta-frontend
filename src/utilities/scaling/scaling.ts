@@ -1,4 +1,6 @@
-import {FrameScaling} from "enums";
+import PREFERENCES_SCHEMA from "carta-schemas/preferences_schema_2.json";
+
+import {FrameScaling, PreferenceKeys} from "enums";
 
 import {clamp} from "../math/math";
 
@@ -8,12 +10,21 @@ export interface ScalingParameterConfig {
     readonly defaultValue: number;
 }
 
+function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin: number, fallbackMax: number, defaultValue: number): ScalingParameterConfig {
+    const property = PREFERENCES_SCHEMA.properties[preferenceKey];
+    return {
+        min: typeof property?.minimum === "number" ? property.minimum : fallbackMin,
+        max: typeof property?.maximum === "number" ? property.maximum : fallbackMax,
+        defaultValue
+    };
+}
+
 const SCALING_PARAMETER_CONFIGS = new Map<FrameScaling, ScalingParameterConfig>([
-    [FrameScaling.LOG, {min: 0.1, max: 10_000, defaultValue: 1_000}],
-    [FrameScaling.GAMMA, {min: 0.1, max: 2, defaultValue: 1}],
-    [FrameScaling.POWER, {min: 0.001, max: 1_000, defaultValue: 1_000}],
-    [FrameScaling.SINH, {min: 0.1, max: 3, defaultValue: 1 / 3}],
-    [FrameScaling.ASINH, {min: 0.01, max: 3, defaultValue: 0.1}]
+    [FrameScaling.LOG, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, 0.1, 10_000, 1_000)],
+    [FrameScaling.GAMMA, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, 0.1, 2, 1)],
+    [FrameScaling.POWER, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, 0.001, 1_000, 1_000)],
+    [FrameScaling.SINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, 0.1, 3, 1 / 3)],
+    [FrameScaling.ASINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, 0.01, 3, 0.1)]
 ]);
 
 export function getScalingParameterConfig(scaling: FrameScaling): ScalingParameterConfig | undefined {
