@@ -8,15 +8,22 @@ interface TestableColormapConfigComponent {
     handleScalingHovered: (scaling: FrameScaling) => void;
     handleScalingSelected: (scaling: FrameScaling) => void;
     handleScalingDropdownOpenChange: (isOpen: boolean) => void;
+    handleColormapHovered: (colormap: string) => void;
+    handleColormapSelected: (colormap: string) => void;
+    handleColormapDropdownOpenChange: (isOpen: boolean) => void;
     componentDidUpdate: (prevProps: {renderConfig: RenderConfigStore}) => void;
     componentWillUnmount: () => void;
 }
 
-function createRenderConfig(scaling: FrameScaling): RenderConfigStore {
+function createRenderConfig(scaling: FrameScaling, colorMap: string = "inferno"): RenderConfigStore {
     const renderConfig = {
         scaling,
+        colorMap,
         setScaling: jest.fn((newScaling: FrameScaling) => {
             renderConfig.scaling = newScaling;
+        }),
+        setColorMap: jest.fn((newColorMap: string) => {
+            renderConfig.colorMap = newColorMap;
         })
     };
     return renderConfig as unknown as RenderConfigStore;
@@ -62,5 +69,30 @@ describe("ColormapConfigComponent scaling preview", () => {
         component.componentWillUnmount();
 
         expect(renderConfig.scaling).toBe(FrameScaling.LINEAR);
+    });
+});
+
+describe("ColormapConfigComponent colormap preview", () => {
+    test("reverts the preview when the dropdown closes", () => {
+        const renderConfig = createRenderConfig(FrameScaling.LINEAR, "inferno");
+        const component = createComponent(renderConfig);
+
+        component.handleColormapHovered("viridis");
+        expect(renderConfig.colorMap).toBe("viridis");
+
+        component.handleColormapDropdownOpenChange(false);
+
+        expect(renderConfig.colorMap).toBe("inferno");
+    });
+
+    test("does not revert a committed selection", () => {
+        const renderConfig = createRenderConfig(FrameScaling.LINEAR, "inferno");
+        const component = createComponent(renderConfig);
+
+        component.handleColormapHovered("viridis");
+        component.handleColormapSelected("viridis");
+        component.handleColormapDropdownOpenChange(false);
+
+        expect(renderConfig.colorMap).toBe("viridis");
     });
 });

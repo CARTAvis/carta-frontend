@@ -20,10 +20,16 @@ interface ScalingPreviewSession {
     baseScaling: FrameScaling;
 }
 
+interface ColormapPreviewSession {
+    renderConfig: RenderConfigStore;
+    baseColormap: string;
+}
+
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
     @observable isExtendBiasContrast: boolean = false;
     @observable.ref private scalingPreviewSession: ScalingPreviewSession | null = null;
+    @observable.ref private colormapPreviewSession: ColormapPreviewSession | null = null;
 
     @action switchExtendBiasContrast = () => {
         this.isExtendBiasContrast = !this.isExtendBiasContrast;
@@ -99,14 +105,47 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
     };
 
+    @action private revertColormapPreview = () => {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+
+        if (session && session.renderConfig.colorMap !== session.baseColormap) {
+            session.renderConfig.setColorMap(session.baseColormap);
+        }
+    };
+
+    @action private handleColormapHovered = (colormap: string) => {
+        const renderConfig = this.props.renderConfig;
+        if (this.colormapPreviewSession?.renderConfig !== renderConfig) {
+            this.revertColormapPreview();
+            this.colormapPreviewSession = {renderConfig, baseColormap: renderConfig.colorMap};
+        }
+        if (renderConfig.colorMap !== colormap) {
+            renderConfig.setColorMap(colormap);
+        }
+    };
+
+    @action private handleColormapSelected = (colormap: string) => {
+        this.colormapPreviewSession = null;
+        this.props.renderConfig.setColorMap(colormap);
+    };
+
+    private handleColormapDropdownOpenChange = (isOpen: boolean) => {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    };
+
     componentDidUpdate(prevProps: ColormapConfigProps): void {
         if (prevProps.renderConfig !== this.props.renderConfig) {
             this.revertScalingPreview();
+            this.revertColormapPreview();
         }
     }
 
     componentWillUnmount(): void {
         this.revertScalingPreview();
+        this.revertColormapPreview();
     }
 
     render() {
@@ -127,7 +166,9 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     <ColormapComponent
                         inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
-                        onColormapSelect={renderConfig.setColorMap}
+                        onColormapSelect={this.handleColormapSelected}
+                        onColormapHover={this.handleColormapHovered}
+                        onDropdownOpenChange={this.handleColormapDropdownOpenChange}
                         enableAdditionalColor={true}
                         onCustomColorSelect={renderConfig.setCustomHexEnd}
                         onCustomColorStartSelect={renderConfig.setCustomHexStart}

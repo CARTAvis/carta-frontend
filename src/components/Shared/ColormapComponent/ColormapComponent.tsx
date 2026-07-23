@@ -18,6 +18,8 @@ interface ColormapComponentProps {
     inverted: boolean;
     disabled?: boolean;
     onColormapSelect: (selected: string) => void;
+    onColormapHover?: (colormap: string) => void;
+    onDropdownOpenChange?: (isOpen: boolean) => void;
     onCustomColorSelect?: (selected: string) => void;
     onCustomColorStartSelect?: (selected: string) => void;
     enableAdditionalColor?: boolean;
@@ -31,7 +33,33 @@ const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: 
 const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
+    const [activeItem, setActiveItem] = React.useState(props.selectedColormap);
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
     const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : COLOR_MAPS_SELECTED;
+
+    React.useEffect(() => {
+        if (!isDropdownOpen) {
+            setActiveItem(props.selectedColormap);
+        }
+    }, [isDropdownOpen, props.selectedColormap]);
+
+    const handleActiveItemChange = (colormap: string | null) => {
+        if (colormap === null) {
+            return;
+        }
+        setActiveItem(colormap);
+        if (colormap !== RenderConfigStore.COLOR_MAPS_PANEL) {
+            props.onColormapHover?.(colormap);
+        }
+    };
+
+    const handleColormapHover = (colormap: string) => {
+        if (activeItem === colormap) {
+            return;
+        }
+        setActiveItem(colormap);
+        props.onColormapHover?.(colormap);
+    };
 
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
         const shouldDisableAlpha = true;
@@ -71,13 +99,33 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             );
         } else {
             const colormapBlock = <ColormapBlock colormap={colormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text="" icon={colormapBlock} />;
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} onMouseEnter={() => handleColormapHover(colormap)} text="" icon={colormapBlock} />;
+        }
+    };
+
+    const popoverProps = {
+        ...COLORMAP_POPOVER_PROPS,
+        onInteraction: (isOpen: boolean) => {
+            setIsDropdownOpen(isOpen);
+            if (isOpen) {
+                setActiveItem(props.selectedColormap);
+            }
+            props.onDropdownOpenChange?.(isOpen);
         }
     };
 
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
-        <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
+        <ColorMapSelect
+            disabled={props.disabled}
+            activeItem={activeItem}
+            onActiveItemChange={handleActiveItemChange}
+            popoverProps={popoverProps}
+            filterable={false}
+            items={items}
+            onItemSelect={props.onColormapSelect}
+            itemRenderer={renderColormapSelectItem}
+        >
             <Button disabled={props.disabled} text={colormapBlock} endIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
