@@ -388,7 +388,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const timeLabelSettings = animatorWidgetStore ?? DEFAULT_ANIMATOR_WIDGET_CONFIG;
         const timeSeriesElements = timeSeriesStore.elements;
         const numTimes = timeSeriesElements.length;
-        if (numTimes > 1) {
+        if (numTimes > 1 && timeLabelSettings.isTimeSliderVisible) {
             const currentTimeIndex = timeSeriesStore.currentIndex;
             const {values: timeTick} = getDiscreteSliderTicks(numTimes, currentTimeIndex);
             const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, timeLabelSettings);

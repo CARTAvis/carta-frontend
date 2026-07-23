@@ -5,6 +5,7 @@ import {AnimatorWidgetStore} from "./AnimatorWidgetStore";
 describe("AnimatorWidgetStore", () => {
     test("uses backward-compatible time label defaults", () => {
         expect(new AnimatorWidgetStore().toConfig()).toEqual({
+            isTimeSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
             ianaTimeZone: "UTC",
@@ -20,6 +21,7 @@ describe("AnimatorWidgetStore", () => {
     test("restores valid settings from a layout config", () => {
         const store = new AnimatorWidgetStore();
         store.init({
+            isTimeSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Asia/Taipei",
@@ -32,6 +34,7 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
+            isTimeSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Asia/Taipei",
@@ -47,6 +50,7 @@ describe("AnimatorWidgetStore", () => {
     test("ignores invalid persisted values", () => {
         const store = new AnimatorWidgetStore();
         store.init({
+            isTimeSliderVisible: "invalid",
             timeLabelFormat: "invalid",
             timeZoneMode: "invalid",
             timeScale: "invalid",
@@ -58,6 +62,7 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
+            isTimeSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
             ianaTimeZone: "UTC",

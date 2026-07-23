@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, H3, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, H3, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
@@ -98,7 +98,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             minWidth: 360,
             minHeight: 180,
             defaultWidth: 452,
-            defaultHeight: 360,
+            defaultHeight: 460,
             title: "animator-settings",
             isCloseable: true,
             parentId: "animator",
@@ -216,6 +216,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         }
 
         const elements = AppStore.Instance.timeSeriesStore.elements;
+        const isTimeSliderAvailable = elements.length > 1;
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
@@ -232,12 +233,28 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             onKeyDown: this.handleIanaTimeZoneKeyDown,
             "data-testid": "animator-iana-time-zone"
         };
+        const displaySectionTitleId = `${this.props.id}-display-section-title`;
         const timeFormatSectionTitleId = `${this.props.id}-time-format-section-title`;
         const timeScaleSectionTitleId = `${this.props.id}-time-scale-section-title`;
         const precisionSectionTitleId = `${this.props.id}-precision-section-title`;
 
         const content = (
             <div className="animator-time-settings">
+                <section className="animator-settings-section" aria-labelledby={displaySectionTitleId} data-testid="animator-time-slider-display-section">
+                    <H3 id={displaySectionTitleId} className="animator-settings-section-title">
+                        Display
+                    </H3>
+                    <FormGroup inline={true} label="Show time slider" disabled={!isTimeSliderAvailable}>
+                        <Switch
+                            checked={isTimeSliderAvailable && widgetStore.isTimeSliderVisible}
+                            disabled={!isTimeSliderAvailable}
+                            onChange={event => widgetStore.setTimeSliderVisible(event.currentTarget.checked)}
+                            title={isTimeSliderAvailable ? undefined : "Requires at least two time-series images"}
+                            data-testid="animator-time-slider-toggle"
+                        />
+                    </FormGroup>
+                </section>
+
                 <section className="animator-settings-section" aria-labelledby={timeFormatSectionTitleId} data-testid="animator-time-format-section">
                     <H3 id={timeFormatSectionTitleId} className="animator-settings-section-title">
                         Time format

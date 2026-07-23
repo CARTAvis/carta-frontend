@@ -3,6 +3,7 @@ import {action, makeObservable, observable} from "mobx";
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 
 export interface AnimatorWidgetConfig {
+    isTimeSliderVisible: boolean;
     timeLabelFormat: TimeLabelFormat;
     timeZoneMode: TimeZoneMode;
     ianaTimeZone: string;
@@ -15,6 +16,7 @@ export interface AnimatorWidgetConfig {
 }
 
 export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
+    isTimeSliderVisible: true,
     timeLabelFormat: TimeLabelFormat.AUTO,
     timeZoneMode: TimeZoneMode.UTC,
     ianaTimeZone: "UTC",
@@ -41,6 +43,7 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 export class AnimatorWidgetStore implements AnimatorWidgetConfig {
+    @observable isTimeSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isTimeSliderVisible;
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
     @observable ianaTimeZone: string = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
@@ -50,6 +53,10 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     @observable relativeTimeReference: RelativeTimeReference = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeReference;
     @observable relativeReferenceMjdUtc: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeReferenceMjdUtc;
     @observable relativeTimeUnit: RelativeTimeUnit = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeUnit;
+
+    @action setTimeSliderVisible = (isVisible: boolean) => {
+        this.isTimeSliderVisible = isVisible;
+    };
 
     @action setTimeLabelFormat = (format: TimeLabelFormat) => {
         this.timeLabelFormat = format;
@@ -88,6 +95,9 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     @action init = (config: PersistedAnimatorWidgetConfig) => {
+        if (typeof config.isTimeSliderVisible === "boolean") {
+            this.isTimeSliderVisible = config.isTimeSliderVisible;
+        }
         if (isEnumValue(TimeLabelFormat, config.timeLabelFormat)) {
             this.timeLabelFormat = config.timeLabelFormat;
         }
@@ -124,6 +134,7 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     toConfig = (): AnimatorWidgetConfig => ({
+        isTimeSliderVisible: this.isTimeSliderVisible,
         timeLabelFormat: this.timeLabelFormat,
         timeZoneMode: this.timeZoneMode,
         ianaTimeZone: this.ianaTimeZone,
