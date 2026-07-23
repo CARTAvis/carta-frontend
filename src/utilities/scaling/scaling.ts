@@ -25,8 +25,8 @@ function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin
 
 const SCALING_PARAMETER_CONFIGS = new Map<FrameScaling, ScalingParameterConfig>([
     [FrameScaling.LOG, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, 0.1, 10_000, 1_000)],
-    [FrameScaling.GAMMA, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, 0.1, 2, 1)],
-    [FrameScaling.POWER, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, 0.001, 1_000, 1_000)],
+    [FrameScaling.GAMMA, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, 0.1, 2, 0.3)],
+    [FrameScaling.POWER, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, 0.001, 1_000, 0.01)],
     [FrameScaling.SINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, 0.1, 3, 1 / 3)],
     [FrameScaling.ASINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, 0.01, 3, 0.1)]
 ]);
