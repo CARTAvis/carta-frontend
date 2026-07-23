@@ -116,4 +116,15 @@ describe("RenderConfigStore alpha validation", () => {
         expect(renderConfig.alphaAsinh).toBe(0.1);
         expect(renderConfig.gamma).toBe(2);
     });
+
+    test("ignores unsupported workspace scaling values", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.setScaling(FrameScaling.LOG);
+
+        renderConfig.updateFromWorkspace({scaling: FrameScaling.EXP});
+        expect(renderConfig.scaling).toBe(FrameScaling.LOG);
+
+        renderConfig.updateFromWorkspace({scaling: FrameScaling.ASINH});
+        expect(renderConfig.scaling).toBe(FrameScaling.ASINH);
+    });
 });

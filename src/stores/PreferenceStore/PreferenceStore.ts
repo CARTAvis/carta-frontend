@@ -5,7 +5,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
-import {getScalingForParameterPreference, getScalingParameterConfig, sanitizeScalingParameter} from "utilities/scaling/scaling";
+import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
 
@@ -247,7 +247,8 @@ export class PreferenceStore {
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+        const scaling = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        return isSupportedFrameScaling(scaling) ? scaling : DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
@@ -682,6 +683,10 @@ export class PreferenceStore {
             return false;
         }
 
+        if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(value)) {
+            return false;
+        }
+
         const scaling = getScalingForParameterPreference(key);
         if (scaling !== undefined) {
             if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -941,6 +946,9 @@ export class PreferenceStore {
             const keys = Object.keys(preferences);
             for (const key of keys) {
                 const val = preferences[key];
+                if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(val)) {
+                    continue;
+                }
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }

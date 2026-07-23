@@ -13,6 +13,21 @@ export interface ScalingParameterConfig {
 
 export const POWER_ALPHA_EPSILON = 1e-6;
 
+export const SUPPORTED_SCALING_TYPES: ReadonlyMap<FrameScaling, string> = new Map([
+    [FrameScaling.LINEAR, "Linear"],
+    [FrameScaling.LOG, "Log"],
+    [FrameScaling.SQRT, "Square root"],
+    [FrameScaling.SQUARE, "Squared"],
+    [FrameScaling.GAMMA, "Gamma"],
+    [FrameScaling.POWER, "Power"],
+    [FrameScaling.SINH, "Sinh"],
+    [FrameScaling.ASINH, "Asinh"]
+]);
+
+export function isSupportedFrameScaling(value: unknown): value is FrameScaling {
+    return typeof value === "number" && Number.isInteger(value) && SUPPORTED_SCALING_TYPES.has(value as FrameScaling);
+}
+
 function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin: number, fallbackMax: number, defaultValue: number): ScalingParameterConfig {
     const property = PREFERENCES_SCHEMA.properties[preferenceKey];
     return {

@@ -5,19 +5,10 @@ import type {WorkspaceRenderConfig} from "models";
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, sanitizeScalingParameter, scaleValueInverse} from "utilities";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, isSupportedFrameScaling, sanitizeScalingParameter, scaleValueInverse, SUPPORTED_SCALING_TYPES} from "utilities";
 
 export class RenderConfigStore {
-    public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"],
-        [FrameScaling.SINH, "Sinh"],
-        [FrameScaling.ASINH, "Asinh"]
-    ]);
+    public static readonly SCALING_TYPES = SUPPORTED_SCALING_TYPES;
 
     public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     public static readonly COLOR_MAPS_CUSTOM = "custom";
@@ -91,7 +82,7 @@ export class RenderConfigStore {
     }
 
     public static isScalingValid(scaling: FrameScaling): boolean {
-        return RenderConfigStore.SCALING_TYPES.has(scaling);
+        return isSupportedFrameScaling(scaling);
     }
 
     public static isColormapValid(colormap: string): boolean {
@@ -194,7 +185,7 @@ export class RenderConfigStore {
     }
 
     @computed get scalingName() {
-        const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);
+        const scalingType = SUPPORTED_SCALING_TYPES.get(this.scaling);
         if (scalingType) {
             return scalingType;
         } else {
@@ -404,10 +395,10 @@ export class RenderConfigStore {
     /**
      * Set the colormap scaling type.
      *
-     * @param newScaling - The colormap scaling type {@link RenderConfigStore.SCALING_TYPES}.
+     * @param newScaling - The colormap scaling type in {@link SUPPORTED_SCALING_TYPES}.
      */
     @action setScaling = (newScaling: FrameScaling) => {
-        if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
+        if (SUPPORTED_SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
             this.updateSiblings();
         }
@@ -571,7 +562,9 @@ export class RenderConfigStore {
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling ?? this.scaling;
+        if (isSupportedFrameScaling(config.scaling)) {
+            this.scaling = config.scaling;
+        }
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }

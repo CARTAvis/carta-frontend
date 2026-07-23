@@ -12,7 +12,7 @@ import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 
 import {FrameScaling} from "enums";
-import {RenderConfigStore} from "stores/Frame";
+import {SUPPORTED_SCALING_TYPES} from "utilities/scaling/scaling";
 
 import "./ScalingSelectComponent.scss";
 
@@ -37,7 +37,7 @@ const EQUATION_PNG_MAP = new Map([
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const ScalingSelect = Select<FrameScaling>;
-const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
+const SCALING_KEYS = Array.from(SUPPORTED_SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
@@ -67,10 +67,10 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
     };
 
     const renderScalingSelectItem: ItemRenderer<FrameScaling> = (scaling, {handleClick, handleFocus, modifiers}) => {
-        if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
+        if (!modifiers.matchesPredicate || !SUPPORTED_SCALING_TYPES.has(scaling)) {
             return null;
         }
-        const scalingName = RenderConfigStore.SCALING_TYPES.get(scaling);
+        const scalingName = SUPPORTED_SCALING_TYPES.get(scaling);
         const equationImage = EQUATION_PNG_MAP.get(scaling);
         return (
             <MenuItem
@@ -109,7 +109,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
             itemRenderer={renderScalingSelectItem}
             disabled={props.disabled}
         >
-            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} endIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
+            <Button text={SUPPORTED_SCALING_TYPES.get(props.selectedItem)} endIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
         </ScalingSelect>
     );
 };

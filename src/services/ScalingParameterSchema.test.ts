@@ -39,4 +39,12 @@ describe("scaling parameter schemas", () => {
     test("excludes the legacy workspace alpha field", () => {
         expect(WORKSPACE_SCHEMA.definitions["render-config"].properties).not.toHaveProperty("alpha");
     });
+
+    test("leaves supported scaling validation to the frontend", () => {
+        const scalingProperties = [PREFERENCE_SCHEMA.properties.scaling, WORKSPACE_SCHEMA.definitions["render-config"].properties.scaling];
+        for (const property of scalingProperties) {
+            expect(property).toMatchObject({type: "integer", minimum: 0});
+            expect(property).not.toHaveProperty("maximum");
+        }
+    });
 });

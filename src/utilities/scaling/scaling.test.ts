@@ -1,6 +1,6 @@
 import {FrameScaling, PreferenceKeys} from "enums";
 
-import {getScalingForParameterPreference, getScalingParameterConfig, POWER_ALPHA_EPSILON, sanitizeScalingParameter, scaleValue, scaleValueInverse} from "./scaling";
+import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, POWER_ALPHA_EPSILON, sanitizeScalingParameter, scaleValue, scaleValueInverse, SUPPORTED_SCALING_TYPES} from "./scaling";
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
 const POWER_SCALING = FrameScaling.POWER;
@@ -234,6 +234,15 @@ describe("power scaling", () => {
 });
 
 describe("scaling parameter configuration", () => {
+    test("accepts only scaling functions supported by the frontend", () => {
+        for (const scaling of SUPPORTED_SCALING_TYPES.keys()) {
+            expect(isSupportedFrameScaling(scaling)).toBe(true);
+        }
+        for (const scaling of [FrameScaling.EXP, FrameScaling.CUSTOM, -1, 10, 1.5, "1", null]) {
+            expect(isSupportedFrameScaling(scaling)).toBe(false);
+        }
+    });
+
     test.each([
         {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG},
         {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 0.3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
