@@ -117,6 +117,21 @@ export class RenderConfigStore {
         }
     }
 
+    getScalingParameter(scaling: FrameScaling): number {
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                return this.gamma;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
+    }
+
     @computed get colorMap() {
         if (this.colorMapIndex >= 0 && this.colorMapIndex < COLOR_MAPS_ALL.length) {
             return COLOR_MAPS_ALL[this.colorMapIndex];
@@ -404,12 +419,7 @@ export class RenderConfigStore {
      * @param gamma - The gamma value of the scaling type Gamma.
      */
     @action setGamma = (gamma: number) => {
-        if (!Number.isFinite(gamma)) {
-            return;
-        }
-
-        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, gamma);
-        this.updateSiblings();
+        this.setScalingParameter(FrameScaling.GAMMA, gamma);
     };
 
     /**
@@ -418,23 +428,30 @@ export class RenderConfigStore {
      * @param alpha - The alpha value.
      */
     @action setAlpha = (alpha: number) => {
-        if (!Number.isFinite(alpha)) {
+        this.setScalingParameter(this.scaling, alpha);
+    };
+
+    @action setScalingParameter = (scaling: FrameScaling, value: number) => {
+        if (!Number.isFinite(value)) {
             return;
         }
 
-        const sanitizedAlpha = sanitizeScalingParameter(this.scaling, alpha);
-        switch (this.scaling) {
+        const sanitizedValue = sanitizeScalingParameter(scaling, value);
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                this.gamma = sanitizedValue;
+                break;
             case FrameScaling.LOG:
-                this.alphaLog = sanitizedAlpha;
+                this.alphaLog = sanitizedValue;
                 break;
             case FrameScaling.POWER:
-                this.alphaPower = sanitizedAlpha;
+                this.alphaPower = sanitizedValue;
                 break;
             case FrameScaling.SINH:
-                this.alphaSinh = sanitizedAlpha;
+                this.alphaSinh = sanitizedValue;
                 break;
             case FrameScaling.ASINH:
-                this.alphaAsinh = sanitizedAlpha;
+                this.alphaAsinh = sanitizedValue;
                 break;
             default:
                 return;

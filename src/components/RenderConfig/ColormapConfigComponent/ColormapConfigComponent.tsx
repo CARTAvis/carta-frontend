@@ -39,31 +39,31 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
     };
 
     private renderScalingParameter(renderConfig: RenderConfigStore): React.ReactNode {
-        const scaling = this.scalingPreviewSession?.renderConfig === renderConfig ? this.scalingPreviewSession.baseScaling : renderConfig.scaling;
-        const parameterConfig = getScalingParameterConfig(scaling);
-        if (!parameterConfig) {
+        const previewSession = this.scalingPreviewSession?.renderConfig === renderConfig ? this.scalingPreviewSession : null;
+        const currentScaling = renderConfig.scaling;
+        const currentParameterConfig = getScalingParameterConfig(currentScaling);
+        if (!previewSession && !currentParameterConfig) {
             return null;
         }
 
-        const isGamma = scaling === FrameScaling.GAMMA;
-        let value = renderConfig.alphaLog;
-        switch (scaling) {
-            case FrameScaling.GAMMA:
-                value = renderConfig.gamma;
-                break;
-            case FrameScaling.POWER:
-                value = renderConfig.alphaPower;
-                break;
-            case FrameScaling.SINH:
-                value = renderConfig.alphaSinh;
-                break;
-            case FrameScaling.ASINH:
-                value = renderConfig.alphaAsinh;
-                break;
+        const baseParameterConfig = previewSession ? getScalingParameterConfig(previewSession.baseScaling) : undefined;
+        if (previewSession && !baseParameterConfig) {
+            return null;
         }
+
+        const isPlaceholder = !currentParameterConfig;
+        const scaling = isPlaceholder ? previewSession!.baseScaling : currentScaling;
+        const parameterConfig = currentParameterConfig ?? baseParameterConfig!;
+        const isGamma = scaling === FrameScaling.GAMMA;
         return (
-            <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true}>
-                <ScalingParameterControlComponent scaling={scaling} min={parameterConfig.min} max={parameterConfig.max} value={value} onValueChange={isGamma ? renderConfig.setGamma : renderConfig.setAlpha} />
+            <FormGroup className={isPlaceholder ? "scaling-parameter-placeholder" : undefined} label={isGamma ? "Gamma" : "Alpha"} inline={true} aria-hidden={isPlaceholder || undefined}>
+                <ScalingParameterControlComponent
+                    scaling={scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={renderConfig.getScalingParameter(scaling)}
+                    onValueChange={value => renderConfig.setScalingParameter(scaling, value)}
+                />
             </FormGroup>
         );
     }

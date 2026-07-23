@@ -68,6 +68,43 @@ describe("RenderConfigStore alpha validation", () => {
         expect(renderConfig.gamma).toBe(2);
     });
 
+    test("updates Log without changing Gamma while Gamma preview is active", () => {
+        const renderConfig = createRenderConfig({scalingAlphaLog: 5});
+        renderConfig.setGamma(1.5);
+        renderConfig.setScaling(FrameScaling.GAMMA);
+
+        renderConfig.setScalingParameter(FrameScaling.LOG, 1_000);
+
+        expect(renderConfig.alphaLog).toBe(1_000);
+        expect(renderConfig.gamma).toBe(1.5);
+    });
+
+    test.each([
+        [FrameScaling.LOG, "alphaLog", 25],
+        [FrameScaling.POWER, "alphaPower", 0.5],
+        [FrameScaling.SINH, "alphaSinh", 0.6],
+        [FrameScaling.ASINH, "alphaAsinh", 0.2],
+        [FrameScaling.GAMMA, "gamma", 1.5]
+    ] as const)("updates only the parameter for scaling %s", (scaling, property, value) => {
+        const renderConfig = createRenderConfig();
+        const originalValues = {
+            alphaLog: renderConfig.alphaLog,
+            alphaPower: renderConfig.alphaPower,
+            alphaSinh: renderConfig.alphaSinh,
+            alphaAsinh: renderConfig.alphaAsinh,
+            gamma: renderConfig.gamma
+        };
+
+        renderConfig.setScalingParameter(scaling, value);
+
+        expect(renderConfig[property]).toBe(value);
+        for (const [otherProperty, originalValue] of Object.entries(originalValues)) {
+            if (otherProperty !== property) {
+                expect(renderConfig[otherProperty]).toBe(originalValue);
+            }
+        }
+    });
+
     test("sanitizes current workspace alpha values", () => {
         const renderConfig = createRenderConfig();
 
