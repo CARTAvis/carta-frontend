@@ -1,7 +1,7 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
 import {Button, Classes, MenuItem, PopoverNext, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {type ItemRenderer, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
 // Static assets
@@ -54,14 +54,10 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     };
 
     const handleColormapHover = (colormap: string) => {
-        if (activeItem === colormap) {
-            return;
-        }
-        setActiveItem(colormap);
         props.onColormapHover?.(colormap);
     };
 
-    const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
+    const renderColormapSelectItem: ItemRenderer<string> = (colormap, {handleClick, handleFocus, modifiers, ref}) => {
         const shouldDisableAlpha = true;
         const changeDelay = 100;
 
@@ -99,7 +95,20 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             );
         } else {
             const colormapBlock = <ColormapBlock colormap={colormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} onMouseEnter={() => handleColormapHover(colormap)} text="" icon={colormapBlock} />;
+            return (
+                <MenuItem
+                    ref={ref}
+                    active={modifiers.active}
+                    disabled={modifiers.disabled}
+                    label={colormap}
+                    key={colormap}
+                    onClick={handleClick}
+                    onFocus={handleFocus}
+                    onMouseEnter={() => handleColormapHover(colormap)}
+                    text=""
+                    icon={colormapBlock}
+                />
+            );
         }
     };
 
