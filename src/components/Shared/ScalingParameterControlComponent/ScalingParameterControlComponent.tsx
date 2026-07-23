@@ -77,6 +77,7 @@ export const ScalingParameterControlComponent: React.FC<ScalingParameterControlP
     return (
         <div className={classNames("scaling-parameter-control", className)}>
             <SafeNumericInput
+                key={`scaling-parameter-input-${scaling}`}
                 min={min}
                 max={max}
                 stepSize={stepSize}
@@ -91,6 +92,7 @@ export const ScalingParameterControlComponent: React.FC<ScalingParameterControlP
             <div className="scaling-parameter-slider-row">
                 <Button className="scaling-parameter-reset" icon="refresh" variant="minimal" size="small" aria-label={`Reset ${parameterName} to default`} title={`Reset ${parameterName} to default`} onClick={handleReset} />
                 <Slider
+                    key={`scaling-parameter-slider-${scaling}`}
                     className="scaling-parameter-slider"
                     min={SLIDER_MIN}
                     max={SLIDER_MAX}
