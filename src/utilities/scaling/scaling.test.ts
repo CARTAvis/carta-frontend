@@ -236,8 +236,8 @@ describe("power scaling", () => {
 describe("scaling parameter configuration", () => {
     test.each([
         {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG},
-        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
-        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER},
+        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 0.3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
+        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 0.01, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER},
         {scaling: FrameScaling.SINH, min: 0.1, max: 3, defaultValue: 1 / 3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH},
         {scaling: FrameScaling.ASINH, min: 0.01, max: 3, defaultValue: 0.1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH}
     ])("defines supported bounds for scaling $scaling", ({scaling, min, max, defaultValue, preferenceKey}) => {
@@ -252,7 +252,7 @@ describe("scaling parameter configuration", () => {
         expect(sanitizeScalingParameter(FrameScaling.ASINH, Number.NaN, 0.2)).toBe(0.2);
         expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e-300)).toBe(0.1);
         expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e300)).toBe(2);
-        expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.POSITIVE_INFINITY)).toBe(1);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.POSITIVE_INFINITY)).toBe(0.3);
         expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.NaN, 1.5)).toBe(1.5);
     });
 

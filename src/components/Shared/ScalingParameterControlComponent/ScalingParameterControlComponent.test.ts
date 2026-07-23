@@ -37,13 +37,13 @@ describe("ScalingParameterControlComponent", () => {
         expect(sliderValueToScalingParameter(scaling, sliderValue, min, max)).toBeCloseTo(alpha);
     });
 
-    test("places the Gamma linear value at the midpoint", () => {
+    test("places the Gamma default value at the midpoint", () => {
         expect(scalingParameterToSliderValue(FrameScaling.GAMMA, 0.1, 0.1, 2)).toBeCloseTo(0);
-        expect(scalingParameterToSliderValue(FrameScaling.GAMMA, 1, 0.1, 2)).toBeCloseTo(50);
+        expect(scalingParameterToSliderValue(FrameScaling.GAMMA, 0.3, 0.1, 2)).toBeCloseTo(50);
         expect(scalingParameterToSliderValue(FrameScaling.GAMMA, 2, 0.1, 2)).toBeCloseTo(100);
     });
 
-    test.each([0.1, 0.4, 1, 1.5, 2])("round-trips Gamma value %s", gamma => {
+    test.each([0.1, 0.3, 0.4, 1, 1.5, 2])("round-trips Gamma value %s", gamma => {
         const sliderValue = scalingParameterToSliderValue(FrameScaling.GAMMA, gamma, 0.1, 2);
         expect(sliderValueToScalingParameter(FrameScaling.GAMMA, sliderValue, 0.1, 2)).toBeCloseTo(gamma);
     });

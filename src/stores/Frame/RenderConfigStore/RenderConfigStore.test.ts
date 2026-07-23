@@ -48,7 +48,7 @@ describe("RenderConfigStore alpha validation", () => {
         expect(renderConfig.alphaPower).toBe(0.001);
         expect(renderConfig.alphaSinh).toBeCloseTo(1 / 3);
         expect(renderConfig.alphaAsinh).toBe(0.1);
-        expect(renderConfig.gamma).toBe(1);
+        expect(renderConfig.gamma).toBe(0.3);
     });
 
     test("clamps finite setter values and rejects non-finite values", () => {
