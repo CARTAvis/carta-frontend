@@ -1,4 +1,5 @@
 export enum AnimationMode {
+    NONE = -1,
     CHANNEL = 0,
     STOKES = 1,
     FRAME = 2,

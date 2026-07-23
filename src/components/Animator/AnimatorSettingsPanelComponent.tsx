@@ -4,7 +4,7 @@ import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/selec
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
-import {HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {AnimationMode, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {type AnimatorWidgetStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {convertMjdToUtc, convertMjdUtcToScale, formatMjdUtcAsIsoInScale, getTimeSeriesTickLabelResult, isValidIanaTimeZone, parseIsoInScaleToMjdUtc} from "utilities";
 
@@ -221,6 +221,25 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         this.widgetStore?.setTimeScale(event.currentTarget.value as TimeScale);
     };
 
+    private handleTimeSliderVisibilityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
+        const isVisible = event.currentTarget.checked;
+        const animatorStore = AppStore.Instance.animatorStore;
+        if (animatorStore.isAnimationActive) {
+            return;
+        }
+        if (!isVisible && animatorStore.animationMode === AnimationMode.TIME) {
+            animatorStore.selectFirstAvailableAnimationMode(AnimationMode.TIME);
+        } else if (isVisible && animatorStore.animationMode === AnimationMode.NONE) {
+            animatorStore.setAnimationMode(AnimationMode.TIME);
+        }
+        widgetStore.setTimeSliderVisible(isVisible);
+    };
+
     private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const value = event.currentTarget.value;
         this.widgetStore?.setNumericTimePrecision(value === "auto" ? null : Number(value));
@@ -234,6 +253,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
         const elements = AppStore.Instance.timeSeriesStore.elements;
         const isTimeSliderAvailable = elements.length > 1;
+        const isTimeSliderToggleDisabled = !isTimeSliderAvailable || AppStore.Instance.animatorStore.isAnimationActive;
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
@@ -266,12 +286,12 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                     <H3 id={displaySectionTitleId} className="animator-settings-section-title">
                         Display
                     </H3>
-                    <FormGroup inline={true} label="Show time slider" disabled={!isTimeSliderAvailable}>
+                    <FormGroup inline={true} label="Show time slider" disabled={isTimeSliderToggleDisabled}>
                         <Switch
                             checked={isTimeSliderAvailable && widgetStore.isTimeSliderVisible}
-                            disabled={!isTimeSliderAvailable}
-                            onChange={event => widgetStore.setTimeSliderVisible(event.currentTarget.checked)}
-                            title={isTimeSliderAvailable ? undefined : "Requires at least two time-series images"}
+                            disabled={isTimeSliderToggleDisabled}
+                            onChange={this.handleTimeSliderVisibilityChange}
+                            title={!isTimeSliderAvailable ? "Requires at least two time-series images" : AppStore.Instance.animatorStore.isAnimationActive ? "Stop playback before changing this setting" : undefined}
                             data-testid="animator-time-slider-toggle"
                         />
                     </FormGroup>

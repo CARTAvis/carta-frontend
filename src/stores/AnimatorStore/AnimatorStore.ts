@@ -47,6 +47,31 @@ export class AnimatorStore {
         this.animationMode = val;
     };
 
+    /** Selects the first available Animator control, following the order shown in the widget. */
+    @action selectFirstAvailableAnimationMode = (excludedMode?: AnimationMode): boolean => {
+        if (this.isAnimationActive) {
+            return false;
+        }
+
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const fileInfo = frame?.frameInfo.fileInfoExtended;
+        const candidates = [
+            {mode: AnimationMode.FRAME, isAvailable: appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1},
+            {mode: AnimationMode.CHANNEL, isAvailable: (fileInfo?.depth ?? 0) > 1},
+            {mode: AnimationMode.STOKES, isAvailable: (fileInfo?.stokes ?? 0) > 1},
+            {mode: AnimationMode.TIME, isAvailable: TimeSeriesStore.Instance.elements.length > 1}
+        ];
+        const candidate = candidates.find(({mode, isAvailable}) => isAvailable && mode !== excludedMode);
+        if (!candidate) {
+            this.animationMode = AnimationMode.NONE;
+            return false;
+        }
+
+        this.setAnimationMode(candidate.mode);
+        return this.animationMode === candidate.mode;
+    };
+
     @action setFrameRate = (val: number) => {
         this.frameRate = val;
     };
@@ -227,11 +252,11 @@ export class AnimatorStore {
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
     @computed get shouldStartAnimationDisable() {
         const frame = AppStore.Instance.activeFrame;
-        if (!frame) {
+        if (!frame || this.animationMode === AnimationMode.NONE) {
             return true;
         }
 
-        if (this.animationMode === AnimationMode.FRAME && frame.isPreview) {
+        if (this.animationMode === AnimationMode.FRAME && (frame.isPreview || AppStore.Instance.imageViewConfigStore.imageNum <= 1)) {
             return true;
         }
 

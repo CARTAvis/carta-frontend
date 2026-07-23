@@ -461,6 +461,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const hasAnimationControls = Boolean(imageSlider || channelSlider || stokesSlider || timeSlider);
+
         const playbackClass = classNames("animator-playback", {wrap: shouldHideSliders});
         const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.isDarkTheme});
 
@@ -477,10 +479,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 }
                 placement="top"
                 shouldReturnFocusOnClose={false}
-                disabled={appStore.channelMapStore.isChannelMapEnabled}
+                disabled={!hasAnimationControls || appStore.channelMapStore.isChannelMapEnabled}
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-playback-mode-button">
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-playback-mode-button">
                         {!isIconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
@@ -489,10 +491,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} data-testid="animator-first-button">
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} disabled={!hasAnimationControls} data-testid="animator-first-button">
                     {!isIconOnly && "First"}
                 </Button>
-                <Button icon={"step-backward"} onClick={this.onPrevClicked} data-testid="animator-previous-button">
+                <Button icon={"step-backward"} onClick={this.onPrevClicked} disabled={!hasAnimationControls} data-testid="animator-previous-button">
                     {!isIconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.isAnimationActive && (
@@ -501,14 +503,19 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     </Button>
                 )}
                 {!appStore.animatorStore.isAnimationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.animatorStore.shouldStartAnimationDisable || appStore.channelMapStore.isChannelMapEnabled} data-testid="animator-play-stop-button">
+                    <Button
+                        icon={"play"}
+                        onClick={appStore.animatorStore.startAnimation}
+                        disabled={!hasAnimationControls || appStore.animatorStore.shouldStartAnimationDisable || appStore.channelMapStore.isChannelMapEnabled}
+                        data-testid="animator-play-stop-button"
+                    >
                         {!isIconOnly && "Play"}
                     </Button>
                 )}
-                <Button icon={"step-forward"} onClick={this.onNextClicked} data-testid="animator-next-button">
+                <Button icon={"step-forward"} onClick={this.onNextClicked} disabled={!hasAnimationControls} data-testid="animator-next-button">
                     {!isIconOnly && "Next"}
                 </Button>
-                <Button icon={"chevron-forward"} onClick={this.onLastClicked} data-testid="animator-last-button">
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked} disabled={!hasAnimationControls} data-testid="animator-last-button">
                     {!isIconOnly && "Last"}
                 </Button>
             </ButtonGroup>
@@ -517,7 +524,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
-                    disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
+                    disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
                     onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
@@ -530,7 +537,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
-                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
+                        disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 ) : (
@@ -542,7 +549,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
-                        disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
+                        disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 )}

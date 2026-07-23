@@ -1,4 +1,5 @@
 const MOCK_APP_STORE = {
+    activeFrame: null as {frameInfo: {fileInfoExtended: {depth: number; stokes: number}}} | null,
     activeImageIndex: 3,
     imageViewConfigStore: {imageNum: 5},
     setActiveImageByIndex: jest.fn()
@@ -38,6 +39,9 @@ describe("AnimatorStore animation mode", () => {
 
     beforeEach(() => {
         store = new AnimatorStore();
+        MOCK_APP_STORE.activeFrame = null;
+        MOCK_APP_STORE.activeImageIndex = 3;
+        MOCK_APP_STORE.imageViewConfigStore.imageNum = 5;
         MOCK_TIME_SERIES_STORE.elements = [];
         MOCK_TIME_SERIES_STORE.ensureActiveElement.mockClear();
     });
@@ -68,5 +72,40 @@ describe("AnimatorStore animation mode", () => {
 
         expect(store.animationMode).toBe(AnimationMode.CHANNEL);
         expect(MOCK_TIME_SERIES_STORE.ensureActiveElement).not.toHaveBeenCalled();
+    });
+
+    test("selects the first available non-excluded mode", () => {
+        store.animationMode = AnimationMode.TIME;
+        MOCK_TIME_SERIES_STORE.elements = [{}, {}];
+
+        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(true);
+        expect(store.animationMode).toBe(AnimationMode.FRAME);
+    });
+
+    test("falls back to channel mode when the image control is unavailable", () => {
+        store.animationMode = AnimationMode.TIME;
+        MOCK_APP_STORE.imageViewConfigStore.imageNum = 1;
+        MOCK_APP_STORE.activeFrame = {frameInfo: {fileInfoExtended: {depth: 4, stokes: 1}}};
+
+        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(true);
+        expect(store.animationMode).toBe(AnimationMode.CHANNEL);
+    });
+
+    test("clears the current mode when no fallback control is available", () => {
+        store.animationMode = AnimationMode.TIME;
+        MOCK_APP_STORE.imageViewConfigStore.imageNum = 1;
+        MOCK_APP_STORE.activeFrame = {frameInfo: {fileInfoExtended: {depth: 1, stokes: 1}}};
+
+        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(false);
+        expect(store.animationMode).toBe(AnimationMode.NONE);
+        expect(store.shouldStartAnimationDisable).toBe(true);
+    });
+
+    test("does not select a fallback mode during playback", () => {
+        store.animationMode = AnimationMode.TIME;
+        store.isAnimationActive = true;
+
+        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(false);
+        expect(store.animationMode).toBe(AnimationMode.TIME);
     });
 });
