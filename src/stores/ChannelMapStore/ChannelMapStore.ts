@@ -92,6 +92,11 @@ export class ChannelMapStore {
     /** The custom color used for rendering the channel map label. */
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
+    /** The increment between displayed channels, shared with the animator. */
+    get channelStep(): number {
+        return AppStore.Instance.animatorStore.step;
+    }
+
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
     private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
@@ -109,7 +114,7 @@ export class ChannelMapStore {
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray, isPolarizationChanged);
     };
 
     requestTilesAfterSessionResume = () => {
@@ -150,17 +155,17 @@ export class ChannelMapStore {
 
     /** Sets the first channel at the top-left corner to the previous channel. */
     @action setPrevChannel() {
-        this.setStartChannel(this.startChannel - 1);
+        this.setStartChannel(this.startChannel - this.channelStep);
     }
 
     /** Sets the first channel at the top-left corner to the next channel. */
     @action setNextChannel() {
-        this.setStartChannel(this.startChannel + 1);
+        this.setStartChannel(this.startChannel + this.channelStep);
     }
 
     /** Moves to the previous page of channels. */
     @action setPrevPage() {
-        const newStart = this.startChannel - this.numChannels;
+        const newStart = this.startChannel - this.numChannels * this.channelStep;
 
         if (newStart >= 0) {
             this.setStartChannel(newStart);
@@ -169,10 +174,17 @@ export class ChannelMapStore {
 
     /** Moves to the next page of channels. */
     @action setNextPage() {
-        const newStart = this.startChannel + this.numChannels;
+        const newStart = this.startChannel + this.numChannels * this.channelStep;
 
         if (newStart >= 0) {
             this.setStartChannel(newStart);
+        }
+    }
+
+    /** Sets the increment between displayed channels. */
+    @action setChannelStep(channelStep: number) {
+        if (Number.isInteger(channelStep) && channelStep > 0 && channelStep <= this.totalChannelNum && channelStep <= AppStore.Instance.animatorStore.maxStep) {
+            AppStore.Instance.animatorStore.setStep(channelStep);
         }
     }
 
@@ -312,11 +324,13 @@ export class ChannelMapStore {
 
     /** The last channel in the image view. */
     @computed get endChannel(): number {
-        return Math.min(this.startChannel + this.numChannels - 1, this.totalChannelNum - 1);
+        const availableChannels = Math.max(0, this.totalChannelNum - this.startChannel);
+        const displayedChannelCount = Math.min(this.numChannels, Math.ceil(availableChannels / this.channelStep));
+        return this.startChannel + Math.max(0, displayedChannelCount - 1) * this.channelStep;
     }
 
     /** The displayed channels in the image view. */
     @computed get channelArray(): number[] {
-        return Array.from({length: this.endChannel - this.startChannel + 1}, (_, i) => this.startChannel + i);
+        return Array.from({length: this.endChannel >= this.startChannel ? Math.floor((this.endChannel - this.startChannel) / this.channelStep) + 1 : 0}, (_, i) => this.startChannel + i * this.channelStep);
     }
 }

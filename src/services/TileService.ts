@@ -350,7 +350,7 @@ export class TileService {
         }
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, isPolarizationChanged: boolean = false) {
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, requestedChannels: number[], isPolarizationChanged: boolean = false) {
         if (!frame) {
             return;
         }
@@ -365,18 +365,18 @@ export class TileService {
         this.setCurrentChannel(fileId, frame.channel, stokes);
 
         if (isPolarizationChanged) {
-            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                const key = getTileRequestKey(fileId, stokes, i);
+            for (const channel of requestedChannels) {
+                const key = getTileRequestKey(fileId, stokes, channel);
                 this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
                 this.receivedSynchronisedTiles.delete(key);
             }
             this.clearRequestQueue(fileId);
         }
 
-        this.clearQueueForChannelMap(fileId, stokes, fullChannelRange, currentTiles);
+        this.clearQueueForChannelMap(fileId, stokes, requestedChannels, currentTiles);
 
         const requests: ChannelMapRequest[] = [];
-        for (let channel = fullChannelRange.min; channel <= fullChannelRange.max; channel++) {
+        for (const channel of requestedChannels) {
             const sortedTiles = this.getRequiredRequestTiles(tiles, fileId, channel, stokes, false)
                 .sort((a, b) => {
                     const aX = focusPoint.x - a.x;
@@ -636,8 +636,9 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(fileId: number, stokes: number, currentChannelRange: {min: number; max: number}, currentTiles: number[]) {
+    clearQueueForChannelMap(fileId: number, stokes: number, requestedChannels: number[], currentTiles: number[]) {
         const currentTileSet = new Set(currentTiles);
+        const requestedChannelSet = new Set(requestedChannels);
         this.pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
@@ -646,7 +647,7 @@ export class TileService {
             if (keyFileId !== fileId) {
                 return;
             }
-            if (keyStokes !== stokes || channel < currentChannelRange.min || channel > currentChannelRange.max) {
+            if (keyStokes !== stokes || !requestedChannelSet.has(channel)) {
                 this.pendingRequests.delete(key);
             } else {
                 value.forEach((_isPending, tile) => {

@@ -12,10 +12,18 @@ jest.mock("services", () => ({
 }));
 
 jest.mock("stores", () => {
-    const {observable} = jest.requireActual("mobx");
+    const {makeAutoObservable, observable} = jest.requireActual("mobx");
+    const animatorStore = makeAutoObservable({
+        step: 1,
+        maxStep: 50,
+        setStep(step: number) {
+            this.step = step;
+        }
+    });
     return {
         AppStore: {
             Instance: {
+                animatorStore,
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
@@ -168,6 +176,34 @@ describe("ChannelMapStore", () => {
 
             store.setStartChannel(100);
             expect(store.startChannel).toBe(1);
+        });
+    });
+
+    describe("setChannelStep", () => {
+        it("shares the channel step with the animator and requests sparse channels", () => {
+            store.setStartChannel(1);
+            store.setChannelStep(2);
+
+            expect(store.channelStep).toBe(2);
+            expect(store.endChannel).toBe(7);
+            expect(store.channelArray).toEqual([1, 3, 5, 7]);
+
+            store.setChannelStep(3);
+            expect(store.channelArray).toEqual([1, 4, 7, 10]);
+
+            store.setChannelStep(1);
+            store.setStartChannel(0);
+        });
+
+        it("rejects invalid channel steps", () => {
+            store.setChannelStep(0);
+            expect(store.channelStep).toBe(1);
+
+            store.setChannelStep(1.5);
+            expect(store.channelStep).toBe(1);
+
+            store.setChannelStep(13);
+            expect(store.channelStep).toBe(1);
         });
     });
 

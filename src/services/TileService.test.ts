@@ -132,7 +132,7 @@ describe("TileService channel map request queue", () => {
         service.getRequiredRequestTiles = jest.fn(() => []);
         const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
 
         expect(service.backendService.setChannels).not.toHaveBeenCalled();
     });
@@ -144,7 +144,7 @@ describe("TileService channel map request queue", () => {
         service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 2 ? [tile] : []));
         const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
         service.handleChannelMapFlowControl(1, Complete(1));
         service.handleChannelMapFlowControl(2, Complete(2));
 
@@ -158,7 +158,7 @@ describe("TileService channel map request queue", () => {
         service.getRequiredRequestTiles = jest.fn(() => [tile]);
         const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
         service.handleChannelMapFlowControl(1, Complete(1));
         service.handleChannelMapFlowControl(2, Complete(1));
         service.handleChannelMapFlowControl(3, Complete(0));
@@ -175,7 +175,7 @@ describe("TileService channel map request queue", () => {
         const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
         service.channelMap.set(1, {channel: 1, stokes: 0});
 
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2], true);
 
         expect(service.clearCompressedCache).toHaveBeenCalledWith(1);
         expect(service.clearGPUCache).toHaveBeenCalledWith(1);
@@ -192,8 +192,8 @@ describe("TileService channel map request queue", () => {
         service.channelMap.set(1, {channel: 0, stokes: 0});
 
         service.queueChannelMapRequests(1, [MakeRequest(0, [4])]);
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
-        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2], true);
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
         service.handleChannelMapFlowControl(1, Complete(0));
 
         expect(service.backendService.setChannels).toHaveBeenNthCalledWith(2, 1, 1, 1, {}, true);
