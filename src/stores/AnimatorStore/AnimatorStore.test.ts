@@ -78,7 +78,7 @@ describe("AnimatorStore animation mode", () => {
         store.animationMode = AnimationMode.TIME;
         MOCK_TIME_SERIES_STORE.elements = [{}, {}];
 
-        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(true);
+        expect(store.selectFirstAvailableAnimationMode([AnimationMode.TIME])).toBe(true);
         expect(store.animationMode).toBe(AnimationMode.FRAME);
     });
 
@@ -87,7 +87,15 @@ describe("AnimatorStore animation mode", () => {
         MOCK_APP_STORE.imageViewConfigStore.imageNum = 1;
         MOCK_APP_STORE.activeFrame = {frameInfo: {fileInfoExtended: {depth: 4, stokes: 1}}};
 
-        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(true);
+        expect(store.selectFirstAvailableAnimationMode([AnimationMode.TIME])).toBe(true);
+        expect(store.animationMode).toBe(AnimationMode.CHANNEL);
+    });
+
+    test("skips available modes that are excluded by widget settings", () => {
+        store.animationMode = AnimationMode.TIME;
+        MOCK_APP_STORE.activeFrame = {frameInfo: {fileInfoExtended: {depth: 4, stokes: 2}}};
+
+        expect(store.selectFirstAvailableAnimationMode([AnimationMode.TIME, AnimationMode.FRAME])).toBe(true);
         expect(store.animationMode).toBe(AnimationMode.CHANNEL);
     });
 
@@ -96,7 +104,7 @@ describe("AnimatorStore animation mode", () => {
         MOCK_APP_STORE.imageViewConfigStore.imageNum = 1;
         MOCK_APP_STORE.activeFrame = {frameInfo: {fileInfoExtended: {depth: 1, stokes: 1}}};
 
-        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(false);
+        expect(store.selectFirstAvailableAnimationMode([AnimationMode.TIME])).toBe(false);
         expect(store.animationMode).toBe(AnimationMode.NONE);
         expect(store.shouldStartAnimationDisable).toBe(true);
     });
@@ -105,7 +113,7 @@ describe("AnimatorStore animation mode", () => {
         store.animationMode = AnimationMode.TIME;
         store.isAnimationActive = true;
 
-        expect(store.selectFirstAvailableAnimationMode(AnimationMode.TIME)).toBe(false);
+        expect(store.selectFirstAvailableAnimationMode([AnimationMode.TIME])).toBe(false);
         expect(store.animationMode).toBe(AnimationMode.TIME);
     });
 });

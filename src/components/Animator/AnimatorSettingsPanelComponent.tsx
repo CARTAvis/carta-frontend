@@ -221,7 +221,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         this.widgetStore?.setTimeScale(event.currentTarget.value as TimeScale);
     };
 
-    private handleTimeSliderVisibilityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    private handleSliderVisibilityChange = (mode: AnimationMode, event: React.ChangeEvent<HTMLInputElement>) => {
         const widgetStore = this.widgetStore;
         if (!widgetStore) {
             return;
@@ -232,12 +232,43 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         if (animatorStore.isAnimationActive) {
             return;
         }
-        if (!isVisible && animatorStore.animationMode === AnimationMode.TIME) {
-            animatorStore.selectFirstAvailableAnimationMode(AnimationMode.TIME);
-        } else if (isVisible && animatorStore.animationMode === AnimationMode.NONE) {
-            animatorStore.setAnimationMode(AnimationMode.TIME);
+
+        const excludedModes: AnimationMode[] = [];
+        if (!(mode === AnimationMode.FRAME ? isVisible : widgetStore.isImageSliderVisible)) {
+            excludedModes.push(AnimationMode.FRAME);
         }
-        widgetStore.setTimeSliderVisible(isVisible);
+        if (!(mode === AnimationMode.CHANNEL ? isVisible : widgetStore.isChannelSliderVisible)) {
+            excludedModes.push(AnimationMode.CHANNEL);
+        }
+        if (!(mode === AnimationMode.STOKES ? isVisible : widgetStore.isStokesSliderVisible)) {
+            excludedModes.push(AnimationMode.STOKES);
+        }
+        if (!(mode === AnimationMode.TIME ? isVisible : widgetStore.isTimeSliderVisible)) {
+            excludedModes.push(AnimationMode.TIME);
+        }
+
+        if (!isVisible && animatorStore.animationMode === mode) {
+            animatorStore.selectFirstAvailableAnimationMode(excludedModes);
+        } else if (isVisible && animatorStore.animationMode === AnimationMode.NONE) {
+            animatorStore.setAnimationMode(mode);
+        }
+
+        switch (mode) {
+            case AnimationMode.FRAME:
+                widgetStore.setImageSliderVisible(isVisible);
+                break;
+            case AnimationMode.CHANNEL:
+                widgetStore.setChannelSliderVisible(isVisible);
+                break;
+            case AnimationMode.STOKES:
+                widgetStore.setStokesSliderVisible(isVisible);
+                break;
+            case AnimationMode.TIME:
+                widgetStore.setTimeSliderVisible(isVisible);
+                break;
+            default:
+                break;
+        }
     };
 
     private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -251,9 +282,14 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             return null;
         }
 
-        const elements = AppStore.Instance.timeSeriesStore.elements;
+        const appStore = AppStore.Instance;
+        const elements = appStore.timeSeriesStore.elements;
+        const activeFrame = appStore.activeFrame;
+        const fileInfo = activeFrame?.frameInfo.fileInfoExtended;
+        const isImageSliderAvailable = appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1;
+        const isChannelSliderAvailable = (fileInfo?.depth ?? 0) > 1;
+        const isStokesSliderAvailable = (fileInfo?.stokes ?? 0) > 1;
         const isTimeSliderAvailable = elements.length > 1;
-        const isTimeSliderToggleDisabled = !isTimeSliderAvailable || AppStore.Instance.animatorStore.isAnimationActive;
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
@@ -275,27 +311,43 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             onKeyDown: this.handleIanaTimeZoneKeyDown,
             "data-testid": "animator-iana-time-zone"
         };
-        const displaySectionTitleId = `${this.props.id}-display-section-title`;
         const timeFormatSectionTitleId = `${this.props.id}-time-format-section-title`;
         const timeScaleSectionTitleId = `${this.props.id}-time-scale-section-title`;
         const precisionSectionTitleId = `${this.props.id}-precision-section-title`;
 
-        const content = (
-            <div className="animator-time-settings">
-                <section className="animator-settings-section" aria-labelledby={displaySectionTitleId} data-testid="animator-time-slider-display-section">
-                    <H3 id={displaySectionTitleId} className="animator-settings-section-title">
+        const renderSliderToggleSection = (label: string, mode: AnimationMode, isAvailable: boolean, isVisible: boolean, unavailableMessage: string, testId: string) => {
+            const sectionTitleId = `${this.props.id}-${testId}-display-section-title`;
+            const isDisabled = !isAvailable || appStore.animatorStore.isAnimationActive;
+            const title = !isAvailable ? unavailableMessage : appStore.animatorStore.isAnimationActive ? "Stop playback before changing this setting" : undefined;
+            return (
+                <section className="animator-settings-section" aria-labelledby={sectionTitleId} data-testid={`${testId}-display-section`}>
+                    <H3 id={sectionTitleId} className="animator-settings-section-title">
                         Display
                     </H3>
-                    <FormGroup inline={true} label="Show time slider" disabled={isTimeSliderToggleDisabled}>
-                        <Switch
-                            checked={isTimeSliderAvailable && widgetStore.isTimeSliderVisible}
-                            disabled={isTimeSliderToggleDisabled}
-                            onChange={this.handleTimeSliderVisibilityChange}
-                            title={!isTimeSliderAvailable ? "Requires at least two time-series images" : AppStore.Instance.animatorStore.isAnimationActive ? "Stop playback before changing this setting" : undefined}
-                            data-testid="animator-time-slider-toggle"
-                        />
+                    <FormGroup inline={true} label={`Show ${label.toLowerCase()} slider`} disabled={isDisabled}>
+                        <Switch checked={isAvailable && isVisible} disabled={isDisabled} onChange={event => this.handleSliderVisibilityChange(mode, event)} title={title} data-testid={`${testId}-toggle`} />
                     </FormGroup>
                 </section>
+            );
+        };
+
+        const imageContent = (
+            <div className="animator-slider-settings">{renderSliderToggleSection("Image", AnimationMode.FRAME, isImageSliderAvailable, widgetStore.isImageSliderVisible, "Requires at least two images", "animator-image-slider")}</div>
+        );
+        const channelContent = (
+            <div className="animator-slider-settings">
+                {renderSliderToggleSection("Channel", AnimationMode.CHANNEL, isChannelSliderAvailable, widgetStore.isChannelSliderVisible, "Requires an image with at least two channels", "animator-channel-slider")}
+            </div>
+        );
+        const stokesContent = (
+            <div className="animator-slider-settings">
+                {renderSliderToggleSection("Polarization", AnimationMode.STOKES, isStokesSliderAvailable, widgetStore.isStokesSliderVisible, "Requires an image with at least two polarizations", "animator-polarization-slider")}
+            </div>
+        );
+
+        const timeContent = (
+            <div className="animator-time-settings">
+                {renderSliderToggleSection("Time", AnimationMode.TIME, isTimeSliderAvailable, widgetStore.isTimeSliderVisible, "Requires at least two time-series images", "animator-time-slider")}
 
                 <section className="animator-settings-section" aria-labelledby={timeFormatSectionTitleId} data-testid="animator-time-format-section">
                     <H3 id={timeFormatSectionTitleId} className="animator-settings-section-title">
@@ -466,7 +518,10 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             <ScrollShadow>
                 <div className="animator-settings-panel">
                     <Tabs id="animatorSettingsTabs">
-                        <Tab id="time" title="Time" panel={content} />
+                        <Tab id="image" title="Image" panel={imageContent} />
+                        <Tab id="channel" title="Channel" panel={channelContent} />
+                        <Tab id="polarization" title="Polarization" panel={stokesContent} />
+                        <Tab id="time" title="Time" panel={timeContent} />
                     </Tabs>
                 </div>
             </ScrollShadow>

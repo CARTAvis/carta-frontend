@@ -264,11 +264,17 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const isIconOnly = this.width < 625;
         const shouldHideSliders = this.width < 450;
+        const animatorWidgetStore = appStore.widgetsStore.animatorWidgets.get(this.props.id);
+        const sliderSettings = animatorWidgetStore ?? DEFAULT_ANIMATOR_WIDGET_CONFIG;
+        const timeSeriesStore = appStore.timeSeriesStore;
+        const timeSeriesElements = timeSeriesStore.elements;
+        const numTimes = timeSeriesElements.length;
+        const shouldAddTimeSliderSpacing = !shouldHideSliders && this.width < 750 && numTimes > 1 && sliderSettings.isTimeSliderVisible;
 
         let channelSlider, channelRangeSlider, stokesSlider, imageSlider, timeSlider;
         // Image Control
         const imageIndex = appStore.activeImageIndex;
-        if (numImages > 1 && imageIndex !== -1) {
+        if (numImages > 1 && imageIndex !== -1 && sliderSettings.isImageSliderVisible) {
             const {values: imageTick} = getDiscreteSliderTicks(numImages);
             imageSlider = (
                 <div className="animator-slider">
@@ -285,7 +291,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Channel Control
-        if (numChannels > 1 && activeFrame) {
+        if (numChannels > 1 && activeFrame && sliderSettings.isChannelSliderVisible) {
             const {values: channelTick, step: channelStep} = getDiscreteSliderTicks(numChannels);
             channelSlider = (
                 <div className="animator-slider" data-testid="animator-slider">
@@ -341,9 +347,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Stokes Control
-        if (numStokes > 1 && activeFrame) {
+        if (numStokes > 1 && activeFrame && sliderSettings.isStokesSliderVisible) {
             stokesSlider = (
-                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750, "has-time-slider-below": shouldAddTimeSliderSpacing})} data-testid="animator-polarization-slider">
                     <Radio
                         value={AnimationMode.STOKES}
                         disabled={appStore.animatorStore.isAnimationActive}
@@ -383,16 +389,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Time series control
-        const timeSeriesStore = appStore.timeSeriesStore;
-        const animatorWidgetStore = appStore.widgetsStore.animatorWidgets.get(this.props.id);
-        const timeLabelSettings = animatorWidgetStore ?? DEFAULT_ANIMATOR_WIDGET_CONFIG;
-        const timeSeriesElements = timeSeriesStore.elements;
-        const numTimes = timeSeriesElements.length;
-        if (numTimes > 1 && timeLabelSettings.isTimeSliderVisible) {
+        if (numTimes > 1 && sliderSettings.isTimeSliderVisible) {
             const currentTimeIndex = timeSeriesStore.currentIndex;
             const {values: timeTick} = getDiscreteSliderTicks(numTimes, currentTimeIndex);
-            const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, timeLabelSettings);
-            const timeLabelFormatName = getTimeLabelFormatName(timeLabelSettings);
+            const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, sliderSettings);
+            const timeLabelFormatName = getTimeLabelFormatName(sliderSettings);
             const renderTimeTickLabel = (index: number) => {
                 const element = timeSeriesElements[index];
                 if (!element) {
@@ -418,7 +419,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 );
             };
             timeSlider = (
-                <div className={classNames("animator-slider", "time-slider", "angled-labels", {"long-time-labels": timeLabelSettings.timeLabelFormat === TimeLabelFormat.ISO})} data-testid="animator-time-slider">
+                <div className={classNames("animator-slider", "time-slider", "angled-labels", {"long-time-labels": sliderSettings.timeLabelFormat === TimeLabelFormat.ISO})} data-testid="animator-time-slider">
                     <Radio
                         value={AnimationMode.TIME}
                         disabled={appStore.animatorStore.isAnimationActive}

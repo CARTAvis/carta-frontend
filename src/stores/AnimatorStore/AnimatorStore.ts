@@ -48,7 +48,7 @@ export class AnimatorStore {
     };
 
     /** Selects the first available Animator control, following the order shown in the widget. */
-    @action selectFirstAvailableAnimationMode = (excludedMode?: AnimationMode): boolean => {
+    @action selectFirstAvailableAnimationMode = (excludedModes: readonly AnimationMode[] = []): boolean => {
         if (this.isAnimationActive) {
             return false;
         }
@@ -62,7 +62,7 @@ export class AnimatorStore {
             {mode: AnimationMode.STOKES, isAvailable: (fileInfo?.stokes ?? 0) > 1},
             {mode: AnimationMode.TIME, isAvailable: TimeSeriesStore.Instance.elements.length > 1}
         ];
-        const candidate = candidates.find(({mode, isAvailable}) => isAvailable && mode !== excludedMode);
+        const candidate = candidates.find(({mode, isAvailable}) => isAvailable && !excludedModes.includes(mode));
         if (!candidate) {
             this.animationMode = AnimationMode.NONE;
             return false;

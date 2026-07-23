@@ -5,6 +5,9 @@ import {AnimatorWidgetStore} from "./AnimatorWidgetStore";
 describe("AnimatorWidgetStore", () => {
     test("uses backward-compatible time label defaults", () => {
         expect(new AnimatorWidgetStore().toConfig()).toEqual({
+            isImageSliderVisible: true,
+            isChannelSliderVisible: true,
+            isStokesSliderVisible: true,
             isTimeSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
@@ -21,6 +24,9 @@ describe("AnimatorWidgetStore", () => {
     test("restores valid settings from a layout config", () => {
         const store = new AnimatorWidgetStore();
         store.init({
+            isImageSliderVisible: false,
+            isChannelSliderVisible: false,
+            isStokesSliderVisible: false,
             isTimeSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
@@ -34,6 +40,9 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
+            isImageSliderVisible: false,
+            isChannelSliderVisible: false,
+            isStokesSliderVisible: false,
             isTimeSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
@@ -50,6 +59,9 @@ describe("AnimatorWidgetStore", () => {
     test("ignores invalid persisted values", () => {
         const store = new AnimatorWidgetStore();
         store.init({
+            isImageSliderVisible: "invalid",
+            isChannelSliderVisible: "invalid",
+            isStokesSliderVisible: "invalid",
             isTimeSliderVisible: "invalid",
             timeLabelFormat: "invalid",
             timeZoneMode: "invalid",
@@ -62,6 +74,9 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
+            isImageSliderVisible: true,
+            isChannelSliderVisible: true,
+            isStokesSliderVisible: true,
             isTimeSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,

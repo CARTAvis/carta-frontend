@@ -3,6 +3,9 @@ import {action, makeObservable, observable} from "mobx";
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 
 export interface AnimatorWidgetConfig {
+    isImageSliderVisible: boolean;
+    isChannelSliderVisible: boolean;
+    isStokesSliderVisible: boolean;
     isTimeSliderVisible: boolean;
     timeLabelFormat: TimeLabelFormat;
     timeZoneMode: TimeZoneMode;
@@ -16,6 +19,9 @@ export interface AnimatorWidgetConfig {
 }
 
 export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
+    isImageSliderVisible: true,
+    isChannelSliderVisible: true,
+    isStokesSliderVisible: true,
     isTimeSliderVisible: true,
     timeLabelFormat: TimeLabelFormat.AUTO,
     timeZoneMode: TimeZoneMode.UTC,
@@ -43,6 +49,9 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 export class AnimatorWidgetStore implements AnimatorWidgetConfig {
+    @observable isImageSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isImageSliderVisible;
+    @observable isChannelSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isChannelSliderVisible;
+    @observable isStokesSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isStokesSliderVisible;
     @observable isTimeSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isTimeSliderVisible;
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
@@ -53,6 +62,18 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     @observable relativeTimeReference: RelativeTimeReference = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeReference;
     @observable relativeReferenceMjdUtc: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeReferenceMjdUtc;
     @observable relativeTimeUnit: RelativeTimeUnit = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeUnit;
+
+    @action setImageSliderVisible = (isVisible: boolean) => {
+        this.isImageSliderVisible = isVisible;
+    };
+
+    @action setChannelSliderVisible = (isVisible: boolean) => {
+        this.isChannelSliderVisible = isVisible;
+    };
+
+    @action setStokesSliderVisible = (isVisible: boolean) => {
+        this.isStokesSliderVisible = isVisible;
+    };
 
     @action setTimeSliderVisible = (isVisible: boolean) => {
         this.isTimeSliderVisible = isVisible;
@@ -95,6 +116,15 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     @action init = (config: PersistedAnimatorWidgetConfig) => {
+        if (typeof config.isImageSliderVisible === "boolean") {
+            this.isImageSliderVisible = config.isImageSliderVisible;
+        }
+        if (typeof config.isChannelSliderVisible === "boolean") {
+            this.isChannelSliderVisible = config.isChannelSliderVisible;
+        }
+        if (typeof config.isStokesSliderVisible === "boolean") {
+            this.isStokesSliderVisible = config.isStokesSliderVisible;
+        }
         if (typeof config.isTimeSliderVisible === "boolean") {
             this.isTimeSliderVisible = config.isTimeSliderVisible;
         }
@@ -134,6 +164,9 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     toConfig = (): AnimatorWidgetConfig => ({
+        isImageSliderVisible: this.isImageSliderVisible,
+        isChannelSliderVisible: this.isChannelSliderVisible,
+        isStokesSliderVisible: this.isStokesSliderVisible,
         isTimeSliderVisible: this.isTimeSliderVisible,
         timeLabelFormat: this.timeLabelFormat,
         timeZoneMode: this.timeZoneMode,
