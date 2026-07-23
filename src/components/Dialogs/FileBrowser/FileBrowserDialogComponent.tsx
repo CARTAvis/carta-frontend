@@ -109,6 +109,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
             appStore.animatorStore.setAnimationMode(AnimationMode.TIME);
             appStore.timeSeriesStore.first();
+            appStore.widgetsStore.selectDockedWidgetTab("animator");
         } catch (err) {
             console.error(err);
         }

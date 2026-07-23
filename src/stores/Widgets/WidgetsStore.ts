@@ -1130,6 +1130,39 @@ export class WidgetsStore {
         return widgetStore?.toConfig?.();
     };
 
+    /** Selects an existing docked widget tab, preferring the canonical component id when multiple instances exist. */
+    @action selectDockedWidgetTab = (componentType: string): boolean => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return false;
+        }
+
+        let canonicalTab: TabNode | undefined;
+        let firstTab: TabNode | undefined;
+        layoutModel.visitNodes(node => {
+            if (node.getType() !== "tab") {
+                return;
+            }
+            const tabNode = node as TabNode;
+            if (tabNode.getComponent() !== componentType || tabNode.isPoppedOut()) {
+                return;
+            }
+            if (!firstTab) {
+                firstTab = tabNode;
+            }
+            if (tabNode.getId() === componentType) {
+                canonicalTab = tabNode;
+            }
+        });
+
+        const tab = canonicalTab ?? firstTab;
+        if (!tab) {
+            return false;
+        }
+        layoutModel.doAction(Actions.selectTab(tab.getId()));
+        return true;
+    };
+
     @action onCogPinedClick = (node: TabNode) => {
         const parentId = node.getId();
         const parentType = node.getComponent() || "";
