@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* Added a virtual time-series axis for spatially matched images, ordered by observation time based on DATE-OBS/MJD-OBS and TIMESYS, along with a Time slider in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
+* Added a "Sort images by time" action to the Image List context menu ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 ### Fixed
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 
