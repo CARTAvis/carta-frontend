@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {type AnimatorWidgetStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {formatMjdUtcAsIso, getTimeSeriesTickLabelResult, isValidIanaTimeZone, parseIsoUtcToMjdUtc} from "utilities";
+import {convertMjdToUtc, convertMjdUtcToScale, formatMjdUtcAsIsoInScale, getTimeSeriesTickLabelResult, isValidIanaTimeZone, parseIsoInScaleToMjdUtc} from "utilities";
 
 import "./AnimatorSettingsPanelComponent.scss";
 
@@ -154,9 +154,14 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             return;
         }
 
-        const mjdUtc = parseIsoUtcToMjdUtc(draft);
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
+        const mjdUtc = parseIsoInScaleToMjdUtc(draft, widgetStore.timeScale);
         if (isFinite(mjdUtc)) {
-            this.widgetStore?.setRelativeReferenceMjdUtc(mjdUtc);
+            widgetStore.setRelativeReferenceMjdUtc(mjdUtc);
             this.resetRelativeReferenceIso();
         } else {
             this.setState({relativeReferenceIsoInvalid: true});
@@ -201,7 +206,19 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
     private handleReferenceMjdChange = (value: number) => {
         this.resetRelativeReferenceIso();
-        this.widgetStore?.setRelativeReferenceMjdUtc(value);
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+        const mjdUtc = convertMjdToUtc(value, widgetStore.timeScale);
+        if (isFinite(mjdUtc)) {
+            widgetStore.setRelativeReferenceMjdUtc(mjdUtc);
+        }
+    };
+
+    private handleTimeScaleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        this.resetRelativeReferenceIso();
+        this.widgetStore?.setTimeScale(event.currentTarget.value as TimeScale);
     };
 
     private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -220,9 +237,14 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
-        const referenceIsoUtc = effectiveReferenceMjdUtc === undefined ? "" : formatMjdUtcAsIso(effectiveReferenceMjdUtc, 6);
+        const referenceIso = effectiveReferenceMjdUtc === undefined ? "" : formatMjdUtcAsIsoInScale(effectiveReferenceMjdUtc, widgetStore.timeScale, 6);
+        const referenceMjd = effectiveReferenceMjdUtc === undefined ? undefined : convertMjdUtcToScale(effectiveReferenceMjdUtc, widgetStore.timeScale);
         const hasInvalidIanaTimeZone = widgetStore.timeLabelFormat === TimeLabelFormat.ISO && widgetStore.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(widgetStore.ianaTimeZone);
-        const referenceImageOptions = elements.map((element, index) => ({value: index.toString(), label: `${element.frame.filename} — ${element.isoUtc} UTC — MJD ${element.mjdUtc.toFixed(6)} UTC`}));
+        const referenceImageOptions = elements.map((element, index) => {
+            const scaledMjd = convertMjdUtcToScale(element.mjdUtc, widgetStore.timeScale);
+            const scaledIso = formatMjdUtcAsIsoInScale(element.mjdUtc, widgetStore.timeScale, 6);
+            return {value: index.toString(), label: `${element.frame.filename} — ${scaledIso} ${widgetStore.timeScale} — MJD ${scaledMjd.toFixed(6)} ${widgetStore.timeScale}`};
+        });
         if (referenceImageOptions.length === 0) {
             referenceImageOptions.push({value: "", label: "No time-series images"});
         }
@@ -312,7 +334,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
 
                     {(widgetStore.timeLabelFormat === TimeLabelFormat.MJD || widgetStore.timeLabelFormat === TimeLabelFormat.JD || widgetStore.timeLabelFormat === TimeLabelFormat.RELATIVE) && (
                         <FormGroup inline={true} label="Scale">
-                            <HTMLSelect options={TIME_SCALE_OPTIONS} value={widgetStore.timeScale} onChange={event => widgetStore.setTimeScale(event.currentTarget.value as TimeScale)} data-testid="animator-time-scale" />
+                            <HTMLSelect options={TIME_SCALE_OPTIONS} value={widgetStore.timeScale} onChange={this.handleTimeScaleChange} data-testid="animator-time-scale" />
                         </FormGroup>
                     )}
 
@@ -338,12 +360,12 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                                     <FormGroup
                                         inline={true}
                                         label="Reference ISO"
-                                        labelInfo="(UTC)"
+                                        labelInfo={`(${widgetStore.timeScale})`}
                                         intent={this.state.relativeReferenceIsoInvalid ? Intent.DANGER : Intent.NONE}
-                                        helperText={this.state.relativeReferenceIsoInvalid ? "Enter a UTC date-time such as 2026-07-20T12:30:00.000000" : undefined}
+                                        helperText={this.state.relativeReferenceIsoInvalid ? `Enter a ${widgetStore.timeScale} date-time such as 2026-07-20T12:30:00.000000` : undefined}
                                     >
                                         <InputGroup
-                                            value={this.state.relativeReferenceIsoDraft ?? referenceIsoUtc}
+                                            value={this.state.relativeReferenceIsoDraft ?? referenceIso}
                                             placeholder="YYYY-MM-DDTHH:mm:ss.ssssss"
                                             intent={this.state.relativeReferenceIsoInvalid ? Intent.DANGER : Intent.NONE}
                                             onChange={event => this.setState({relativeReferenceIsoDraft: event.currentTarget.value, relativeReferenceIsoInvalid: false})}
@@ -352,12 +374,12 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                                             data-testid="animator-relative-reference-iso"
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Reference MJD" labelInfo="(UTC)">
+                                    <FormGroup inline={true} label="Reference MJD" labelInfo={`(${widgetStore.timeScale})`}>
                                         <SafeNumericInput
                                             fill={true}
                                             buttonPosition="none"
-                                            value={effectiveReferenceMjdUtc}
-                                            placeholder="MJD in UTC"
+                                            value={referenceMjd}
+                                            placeholder={`MJD in ${widgetStore.timeScale}`}
                                             onValueChange={this.handleReferenceMjdChange}
                                             data-testid="animator-relative-reference-mjd"
                                         />

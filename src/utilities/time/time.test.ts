@@ -4,13 +4,16 @@ import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelForm
 
 import {
     convertMjdToUtc,
+    convertMjdUtcToScale,
     formatIsoUtcTickLabels,
     formatMjdUtcAsIso,
+    formatMjdUtcAsIsoInScale,
     formatTimeSeriesTickLabels,
     getTimeSeriesTickLabelResult,
     isValidIanaTimeZone,
     mapTimeSysToAstScale,
     normalizeDateObsString,
+    parseIsoInScaleToMjdUtc,
     parseIsoUtcToMjdUtc,
     parseObsDateToMjdUtc
 } from "./time";
@@ -117,6 +120,25 @@ describe("parseIsoUtcToMjdUtc", () => {
     });
 });
 
+describe("parseIsoInScaleToMjdUtc", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.0004);
+        (AST.convertMJD as jest.Mock).mockReturnValue(59000);
+    });
+
+    test("parses a date-time in the selected scale and converts it to UTC", () => {
+        expect(parseIsoInScaleToMjdUtc("2020-05-31T00:00:32.184000", TimeScale.TT)).toBe(59000);
+        expect(AST.parseDateToMJD).toHaveBeenCalledWith("2020-05-31T00:00:32.184000", TimeScale.TT);
+        expect(AST.convertMJD).toHaveBeenCalledWith(59000.0004, TimeScale.TT, TimeScale.UTC);
+    });
+
+    test("rejects a UTC designator for a non-UTC scale", () => {
+        expect(parseIsoInScaleToMjdUtc("2020-05-31T00:00:32.184000Z", TimeScale.TT)).toBeNaN();
+        expect(AST.parseDateToMJD).not.toHaveBeenCalled();
+    });
+});
+
 describe("convertMjdToUtc", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -148,6 +170,29 @@ describe("formatMjdUtcAsIso", () => {
 
     test("returns an empty string for invalid MJD values", () => {
         expect(formatMjdUtcAsIso(NaN)).toBe("");
+    });
+});
+
+describe("formatMjdUtcAsIsoInScale", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test("converts canonical UTC MJD before formatting in the selected scale", () => {
+        (AST.convertMJD as jest.Mock).mockReturnValue(59000.0004);
+        (AST.formatMJDToDate as jest.Mock).mockReturnValue("2020-05-31T00:00:32.184000");
+
+        expect(formatMjdUtcAsIsoInScale(59000, TimeScale.TT, 6)).toBe("2020-05-31T00:00:32.184000");
+        expect(AST.convertMJD).toHaveBeenCalledWith(59000, TimeScale.UTC, TimeScale.TT);
+        expect(AST.formatMJDToDate).toHaveBeenCalledWith(59000.0004, TimeScale.TT, 6);
+    });
+
+    test("keeps UTC values unchanged", () => {
+        (AST.formatMJDToDate as jest.Mock).mockReturnValue("2020-05-31T00:00:00.000000");
+
+        expect(formatMjdUtcAsIsoInScale(59000, TimeScale.UTC, 6)).toBe("2020-05-31T00:00:00.000000");
+        expect(convertMjdUtcToScale(59000, TimeScale.UTC)).toBe(59000);
+        expect(AST.convertMJD).not.toHaveBeenCalled();
     });
 });
 

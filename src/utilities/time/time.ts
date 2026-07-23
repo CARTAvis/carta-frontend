@@ -103,11 +103,19 @@ export function parseObsDateToMjdUtc(dateObs: string, timesys?: string): number 
 
 /** Parses a complete ISO-8601 UTC date-time and returns the corresponding MJD in UTC. */
 export function parseIsoUtcToMjdUtc(isoUtc: string): number {
-    const trimmed = isoUtc?.trim() ?? "";
+    return parseIsoInScaleToMjdUtc(isoUtc, TimeScale.UTC);
+}
+
+/** Parses a complete ISO-8601 date-time in the selected scale and returns the corresponding MJD in UTC. */
+export function parseIsoInScaleToMjdUtc(iso: string, scale: TimeScale): number {
+    const trimmed = iso?.trim() ?? "";
+    if (scale !== TimeScale.UTC && /Z$/i.test(trimmed)) {
+        return NaN;
+    }
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?$/.test(trimmed)) {
         return NaN;
     }
-    return parseObsDateToMjdUtc(trimmed.replace(/Z$/, ""), "UTC");
+    return parseObsDateToMjdUtc(trimmed.replace(/Z$/i, ""), scale);
 }
 
 /** Converts an MJD expressed in the given TIMESYS scale to MJD in UTC. */
@@ -124,10 +132,16 @@ export function convertMjdToUtc(mjd: number, timesys?: string): number {
 
 /** Formats an MJD in UTC as an ISO-8601 date-time string. */
 export function formatMjdUtcAsIso(mjd: number, digits: number = 3): string {
-    if (!isFinite(mjd)) {
+    return formatMjdUtcAsIsoInScale(mjd, TimeScale.UTC, digits);
+}
+
+/** Formats a canonical MJD UTC value as an ISO-8601 date-time in the selected scale. */
+export function formatMjdUtcAsIsoInScale(mjdUtc: number, scale: TimeScale, digits: number = 3): string {
+    if (!isFinite(mjdUtc)) {
         return "";
     }
-    return AST.formatMJDToDate(mjd, "UTC", digits) ?? "";
+    const scaledMjd = convertMjdUtcToScale(mjdUtc, scale);
+    return AST.formatMJDToDate(scaledMjd, scale, digits) ?? "";
 }
 
 interface IsoUtcParts {
@@ -401,7 +415,7 @@ function resolveNumericPrecision(values: readonly number[], configuredPrecision:
     return precision;
 }
 
-function convertMjdUtcToScale(mjdUtc: number, scale: TimeScale): number {
+export function convertMjdUtcToScale(mjdUtc: number, scale: TimeScale): number {
     if (scale === TimeScale.UTC) {
         return mjdUtc;
     }
