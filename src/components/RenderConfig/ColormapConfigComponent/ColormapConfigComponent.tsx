@@ -23,7 +23,7 @@ interface ScalingPreviewSession {
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
     @observable isExtendBiasContrast: boolean = false;
-    private scalingPreviewSession: ScalingPreviewSession | null = null;
+    @observable.ref private scalingPreviewSession: ScalingPreviewSession | null = null;
 
     @action switchExtendBiasContrast = () => {
         this.isExtendBiasContrast = !this.isExtendBiasContrast;
@@ -39,26 +39,36 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
     };
 
     private renderScalingParameter(renderConfig: RenderConfigStore): React.ReactNode {
-        const parameterConfig = getScalingParameterConfig(renderConfig.scaling);
+        const scaling = this.scalingPreviewSession?.renderConfig === renderConfig ? this.scalingPreviewSession.baseScaling : renderConfig.scaling;
+        const parameterConfig = getScalingParameterConfig(scaling);
         if (!parameterConfig) {
             return null;
         }
 
-        const isGamma = renderConfig.scaling === FrameScaling.GAMMA;
+        const isGamma = scaling === FrameScaling.GAMMA;
+        let value = renderConfig.alphaLog;
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                value = renderConfig.gamma;
+                break;
+            case FrameScaling.POWER:
+                value = renderConfig.alphaPower;
+                break;
+            case FrameScaling.SINH:
+                value = renderConfig.alphaSinh;
+                break;
+            case FrameScaling.ASINH:
+                value = renderConfig.alphaAsinh;
+                break;
+        }
         return (
             <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true}>
-                <ScalingParameterControlComponent
-                    scaling={renderConfig.scaling}
-                    min={parameterConfig.min}
-                    max={parameterConfig.max}
-                    value={isGamma ? renderConfig.gamma : renderConfig.alpha}
-                    onValueChange={isGamma ? renderConfig.setGamma : renderConfig.setAlpha}
-                />
+                <ScalingParameterControlComponent scaling={scaling} min={parameterConfig.min} max={parameterConfig.max} value={value} onValueChange={isGamma ? renderConfig.setGamma : renderConfig.setAlpha} />
             </FormGroup>
         );
     }
 
-    private revertScalingPreview = () => {
+    @action private revertScalingPreview = () => {
         const session = this.scalingPreviewSession;
         this.scalingPreviewSession = null;
 
@@ -67,7 +77,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
     };
 
-    private handleScalingHovered = (scaling: FrameScaling) => {
+    @action private handleScalingHovered = (scaling: FrameScaling) => {
         const renderConfig = this.props.renderConfig;
         if (this.scalingPreviewSession?.renderConfig !== renderConfig) {
             this.revertScalingPreview();
@@ -78,7 +88,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
     };
 
-    private handleScalingSelected = (scaling: FrameScaling) => {
+    @action private handleScalingSelected = (scaling: FrameScaling) => {
         this.scalingPreviewSession = null;
         this.props.renderConfig.setScaling(scaling);
     };
