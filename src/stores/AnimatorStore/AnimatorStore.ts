@@ -7,6 +7,13 @@ import {AppStore, PreferenceStore, TimeSeriesStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 
+type AnimationFrames = {
+    startFrame: CARTA.AnimationFrame.$Properties;
+    firstFrame: CARTA.AnimationFrame.$Properties;
+    lastFrame: CARTA.AnimationFrame.$Properties;
+    deltaFrame: CARTA.AnimationFrame.$Properties;
+};
+
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
 
@@ -275,29 +282,18 @@ export class AnimatorStore {
         return false;
     }
 
-    private genAnimationFrames = (
-        frame: FrameStore
-    ):
-        | {
-              startFrame: CARTA.AnimationFrame.$Properties;
-              firstFrame: CARTA.AnimationFrame.$Properties;
-              lastFrame: CARTA.AnimationFrame.$Properties;
-              deltaFrame: CARTA.AnimationFrame.$Properties;
-          }
-        | undefined => {
-        if (!frame) {
-            return undefined;
-        }
-
+    private genAnimationFrames = (frame: FrameStore): AnimationFrames | undefined => {
         const startFrame: CARTA.AnimationFrame.$Properties = {
             channel: frame.channel,
             stokes: frame.requiredPolarizationIndex
         };
-        let firstFrame: CARTA.AnimationFrame.$Properties | undefined;
-        let lastFrame: CARTA.AnimationFrame.$Properties | undefined;
-        let deltaFrame: CARTA.AnimationFrame.$Properties | undefined;
+        let firstFrame: CARTA.AnimationFrame.$Properties;
+        let lastFrame: CARTA.AnimationFrame.$Properties;
+        let deltaFrame: CARTA.AnimationFrame.$Properties;
+        let valueKey: "channel" | "stokes";
 
         if (this.animationMode === AnimationMode.CHANNEL) {
+            valueKey = "channel";
             firstFrame = {
                 channel: frame.animationChannelRange[0],
                 stokes: frame.requiredPolarizationIndex
@@ -311,6 +307,7 @@ export class AnimatorStore {
                 stokes: 0
             };
         } else if (this.animationMode === AnimationMode.STOKES) {
+            valueKey = "stokes";
             firstFrame = {
                 channel: frame.channel,
                 stokes: 0
@@ -324,107 +321,40 @@ export class AnimatorStore {
                 stokes: this.step
             };
         } else {
-            // fallback for other modes
             return undefined;
         }
 
-        // determine start frame & delta
+        const getFrameValue = (animationFrame: CARTA.AnimationFrame.$Properties): number | null | undefined => animationFrame[valueKey];
+        const setFrameValue = (animationFrame: CARTA.AnimationFrame.$Properties, value: number): void => {
+            animationFrame[valueKey] = value;
+        };
+        const startValue = getFrameValue(startFrame);
+        const firstValue = getFrameValue(firstFrame);
+        const lastValue = getFrameValue(lastFrame);
+        if (startValue === undefined || startValue === null || firstValue === undefined || firstValue === null || lastValue === undefined || lastValue === null) {
+            return undefined;
+        }
+
         switch (this.playMode) {
             case PlayMode.FORWARD:
             case PlayMode.BOUNCING:
             default:
-                if (
-                    this.animationMode === AnimationMode.CHANNEL &&
-                    startFrame.channel !== undefined &&
-                    startFrame.channel !== null &&
-                    firstFrame &&
-                    firstFrame.channel !== undefined &&
-                    firstFrame.channel !== null &&
-                    lastFrame &&
-                    lastFrame.channel !== undefined &&
-                    lastFrame.channel !== null
-                ) {
-                    if (startFrame.channel < firstFrame.channel || startFrame.channel > lastFrame.channel) {
-                        startFrame.channel = firstFrame.channel;
-                    }
-                } else if (
-                    this.animationMode === AnimationMode.STOKES &&
-                    startFrame.stokes !== undefined &&
-                    startFrame.stokes !== null &&
-                    firstFrame &&
-                    firstFrame.stokes !== undefined &&
-                    firstFrame.stokes !== null &&
-                    lastFrame &&
-                    lastFrame.stokes !== undefined &&
-                    lastFrame.stokes !== null
-                ) {
-                    if (startFrame.stokes < firstFrame.stokes || startFrame.stokes > lastFrame.stokes) {
-                        startFrame.stokes = firstFrame.stokes;
-                    }
+                if (startValue < firstValue || startValue > lastValue) {
+                    setFrameValue(startFrame, firstValue);
                 }
                 break;
             case PlayMode.BACKWARD:
-                if (
-                    this.animationMode === AnimationMode.CHANNEL &&
-                    startFrame.channel !== undefined &&
-                    startFrame.channel !== null &&
-                    firstFrame &&
-                    firstFrame.channel !== undefined &&
-                    firstFrame.channel !== null &&
-                    lastFrame &&
-                    lastFrame.channel !== undefined &&
-                    lastFrame.channel !== null &&
-                    deltaFrame
-                ) {
-                    if (startFrame.channel < firstFrame.channel || startFrame.channel > lastFrame.channel) {
-                        startFrame.channel = lastFrame.channel;
-                    }
-                    deltaFrame.channel = -1 * this.step;
-                } else if (
-                    this.animationMode === AnimationMode.STOKES &&
-                    startFrame.stokes !== undefined &&
-                    startFrame.stokes !== null &&
-                    firstFrame &&
-                    firstFrame.stokes !== undefined &&
-                    firstFrame.stokes !== null &&
-                    lastFrame &&
-                    lastFrame.stokes !== undefined &&
-                    lastFrame.stokes !== null &&
-                    deltaFrame
-                ) {
-                    if (startFrame.stokes < firstFrame.stokes || startFrame.stokes > lastFrame.stokes) {
-                        startFrame.stokes = lastFrame.stokes;
-                    }
-                    deltaFrame.stokes = -1 * this.step;
+                if (startValue < firstValue || startValue > lastValue) {
+                    setFrameValue(startFrame, lastValue);
                 }
+                setFrameValue(deltaFrame, -this.step);
                 break;
             case PlayMode.BLINK:
-                if (this.animationMode === AnimationMode.CHANNEL && firstFrame && firstFrame.channel !== undefined && firstFrame.channel !== null && lastFrame && lastFrame.channel !== undefined && lastFrame.channel !== null && deltaFrame) {
-                    startFrame.channel = firstFrame.channel;
-                    deltaFrame.channel = Math.abs(firstFrame.channel - lastFrame.channel);
-                } else if (
-                    this.animationMode === AnimationMode.STOKES &&
-                    firstFrame &&
-                    firstFrame.stokes !== undefined &&
-                    firstFrame.stokes !== null &&
-                    lastFrame &&
-                    lastFrame.stokes !== undefined &&
-                    lastFrame.stokes !== null &&
-                    deltaFrame
-                ) {
-                    startFrame.stokes = firstFrame.stokes;
-                    deltaFrame.stokes = Math.abs(firstFrame.stokes - lastFrame.stokes);
-                }
+                setFrameValue(startFrame, firstValue);
+                setFrameValue(deltaFrame, Math.abs(firstValue - lastValue));
                 break;
         }
-        if (firstFrame && lastFrame && deltaFrame) {
-            return {
-                startFrame: startFrame,
-                firstFrame: firstFrame,
-                lastFrame: lastFrame,
-                deltaFrame: deltaFrame
-            };
-        }
-        return undefined;
+
+        return {startFrame, firstFrame, lastFrame, deltaFrame};
     };
 }

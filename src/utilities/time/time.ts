@@ -353,20 +353,26 @@ function formatIsoLabel(value: TimeLabelValue, timeZoneMode: TimeZoneMode, ianaT
     }
 
     const parts = getZonedDateParts(date, timeZoneMode, ianaTimeZone);
+    const hasMonth = precision !== IsoTimePrecision.YEAR;
+    const hasDay = hasMonth && precision !== IsoTimePrecision.MONTH;
+    const hasHour = hasDay && precision !== IsoTimePrecision.DAY;
+    const hasMinute = hasHour && precision !== IsoTimePrecision.HOUR;
+    const hasSecond = precision === IsoTimePrecision.SECOND || precision === IsoTimePrecision.MILLISECOND || precision === IsoTimePrecision.MICROSECOND;
+
     let label = pad(parts.year, 4);
-    if (precision !== IsoTimePrecision.YEAR) {
+    if (hasMonth) {
         label += `-${pad(parts.month)}`;
     }
-    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH) {
+    if (hasDay) {
         label += `-${pad(parts.day)}`;
     }
-    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY) {
+    if (hasHour) {
         label += `T${pad(parts.hour)}`;
     }
-    if (precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY && precision !== IsoTimePrecision.HOUR) {
+    if (hasMinute) {
         label += `:${pad(parts.minute)}`;
     }
-    if (precision === IsoTimePrecision.SECOND || precision === IsoTimePrecision.MILLISECOND || precision === IsoTimePrecision.MICROSECOND) {
+    if (hasSecond) {
         label += `:${pad(parts.second)}`;
     }
     if (precision === IsoTimePrecision.MICROSECOND) {
@@ -374,8 +380,7 @@ function formatIsoLabel(value: TimeLabelValue, timeZoneMode: TimeZoneMode, ianaT
     } else if (precision === IsoTimePrecision.MILLISECOND) {
         label += `.${getIsoFractionDigits(value.isoUtc, 3)}`;
     }
-    const hasTime = precision !== IsoTimePrecision.YEAR && precision !== IsoTimePrecision.MONTH && precision !== IsoTimePrecision.DAY;
-    if (!hasTime) {
+    if (!hasHour) {
         return label;
     }
     if (parts.useUtcSuffix) {
@@ -508,6 +513,7 @@ export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], 
         return {labels: [], hasCollisions: false};
     }
 
+    const numericValues = values.map(value => value.mjdUtc);
     let labels: string[];
     switch (settings.timeLabelFormat) {
         case TimeLabelFormat.ISO:
@@ -528,10 +534,7 @@ export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], 
 
     return {
         labels,
-        hasCollisions: hasDistinctValueLabelCollisions(
-            values.map(value => value.mjdUtc),
-            labels
-        )
+        hasCollisions: hasDistinctValueLabelCollisions(numericValues, labels)
     };
 }
 

@@ -61,10 +61,20 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     @observable height: number = 200;
     @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
-    constructor(props: any) {
+    constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
     }
+
+    private wrapIndex = (value: number, count: number): number => {
+        if (value < 0) {
+            return value + count;
+        }
+        if (value >= count) {
+            return 0;
+        }
+        return value;
+    };
 
     @action onResize = (width: number, height: number) => {
         this.width = width;
@@ -79,13 +89,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
             const depth = frame.frameInfo.fileInfoExtended.depth;
-            if (val < 0) {
-                val += depth;
-            }
-            if (val >= depth) {
-                val = 0;
-            }
-            frame.setChannel(val);
+            frame.setChannel(this.wrapIndex(val, depth));
         }
     };
 
@@ -107,26 +111,14 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onImageChanged = (val: number) => {
         const appStore = AppStore.Instance;
         const imageNum = appStore.imageViewConfigStore.imageNum;
-        if (val < 0) {
-            val += imageNum;
-        }
-        if (val >= imageNum) {
-            val = 0;
-        }
-        appStore.setActiveImageByIndex(val);
+        appStore.setActiveImageByIndex(this.wrapIndex(val, imageNum));
     };
 
     onTimeChanged = (val: number) => {
         const timeSeriesStore = AppStore.Instance.timeSeriesStore;
         const count = timeSeriesStore.elements.length;
         if (count > 0) {
-            if (val < 0) {
-                val += count;
-            }
-            if (val >= count) {
-                val = 0;
-            }
-            timeSeriesStore.setIndex(val);
+            timeSeriesStore.setIndex(this.wrapIndex(val, count));
         }
     };
 

@@ -3,6 +3,10 @@ const TARGET_TICK_COUNT = 5;
 
 /** Calculates label positions for a discrete zero-based slider. */
 export function getDiscreteSliderTicks(count: number, includedIndex?: number): {values: number[]; step: number} {
+    if (count <= 0) {
+        return {values: [], step: 1};
+    }
+
     const lastIndex = count - 1;
     const step = count > MAX_DENSE_TICK_COUNT ? Math.floor(lastIndex / (TARGET_TICK_COUNT - 1)) : 1;
     const finalRegularTick = (TARGET_TICK_COUNT - 1) * step;

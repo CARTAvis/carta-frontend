@@ -1,6 +1,6 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {AnimationMode, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 
 export interface AnimatorWidgetConfig {
     isImageSliderVisible: boolean;
@@ -36,6 +36,15 @@ export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
 
 export type PersistedAnimatorWidgetConfig = Partial<Record<keyof AnimatorWidgetConfig, unknown>>;
 
+type SliderVisibilityKey = "isImageSliderVisible" | "isChannelSliderVisible" | "isStokesSliderVisible" | "isTimeSliderVisible";
+
+const SLIDER_VISIBILITY_KEYS: Partial<Record<AnimationMode, SliderVisibilityKey>> = {
+    [AnimationMode.FRAME]: "isImageSliderVisible",
+    [AnimationMode.CHANNEL]: "isChannelSliderVisible",
+    [AnimationMode.STOKES]: "isStokesSliderVisible",
+    [AnimationMode.TIME]: "isTimeSliderVisible"
+};
+
 function isEnumValue<T extends string>(enumeration: Record<string, T>, value: unknown): value is T {
     return typeof value === "string" && Object.values(enumeration).includes(value as T);
 }
@@ -63,20 +72,16 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     @observable relativeReferenceMjdUtc: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeReferenceMjdUtc;
     @observable relativeTimeUnit: RelativeTimeUnit = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeUnit;
 
-    @action setImageSliderVisible = (isVisible: boolean) => {
-        this.isImageSliderVisible = isVisible;
+    getSliderVisibility = (mode: AnimationMode): boolean => {
+        const key = SLIDER_VISIBILITY_KEYS[mode];
+        return key ? this[key] : false;
     };
 
-    @action setChannelSliderVisible = (isVisible: boolean) => {
-        this.isChannelSliderVisible = isVisible;
-    };
-
-    @action setStokesSliderVisible = (isVisible: boolean) => {
-        this.isStokesSliderVisible = isVisible;
-    };
-
-    @action setTimeSliderVisible = (isVisible: boolean) => {
-        this.isTimeSliderVisible = isVisible;
+    @action setSliderVisibility = (mode: AnimationMode, isVisible: boolean) => {
+        const key = SLIDER_VISIBILITY_KEYS[mode];
+        if (key) {
+            this[key] = isVisible;
+        }
     };
 
     @action setTimeLabelFormat = (format: TimeLabelFormat) => {

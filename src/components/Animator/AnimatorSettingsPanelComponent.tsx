@@ -84,6 +84,8 @@ const RELATIVE_UNIT_OPTIONS = [
     {value: RelativeTimeUnit.YEAR, label: "Years"}
 ];
 
+const ANIMATION_SLIDER_MODES = [AnimationMode.FRAME, AnimationMode.CHANNEL, AnimationMode.STOKES, AnimationMode.TIME] as const;
+
 interface AnimatorSettingsPanelState {
     relativeReferenceIsoDraft: string | null;
     relativeReferenceIsoInvalid: boolean;
@@ -233,19 +235,10 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             return;
         }
 
-        const excludedModes: AnimationMode[] = [];
-        if (!(mode === AnimationMode.FRAME ? isVisible : widgetStore.isImageSliderVisible)) {
-            excludedModes.push(AnimationMode.FRAME);
-        }
-        if (!(mode === AnimationMode.CHANNEL ? isVisible : widgetStore.isChannelSliderVisible)) {
-            excludedModes.push(AnimationMode.CHANNEL);
-        }
-        if (!(mode === AnimationMode.STOKES ? isVisible : widgetStore.isStokesSliderVisible)) {
-            excludedModes.push(AnimationMode.STOKES);
-        }
-        if (!(mode === AnimationMode.TIME ? isVisible : widgetStore.isTimeSliderVisible)) {
-            excludedModes.push(AnimationMode.TIME);
-        }
+        const excludedModes = ANIMATION_SLIDER_MODES.filter(sliderMode => {
+            const isSliderVisible = sliderMode === mode ? isVisible : widgetStore.getSliderVisibility(sliderMode);
+            return !isSliderVisible;
+        });
 
         if (!isVisible && animatorStore.animationMode === mode) {
             animatorStore.selectFirstAvailableAnimationMode(excludedModes);
@@ -253,22 +246,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             animatorStore.setAnimationMode(mode);
         }
 
-        switch (mode) {
-            case AnimationMode.FRAME:
-                widgetStore.setImageSliderVisible(isVisible);
-                break;
-            case AnimationMode.CHANNEL:
-                widgetStore.setChannelSliderVisible(isVisible);
-                break;
-            case AnimationMode.STOKES:
-                widgetStore.setStokesSliderVisible(isVisible);
-                break;
-            case AnimationMode.TIME:
-                widgetStore.setTimeSliderVisible(isVisible);
-                break;
-            default:
-                break;
-        }
+        widgetStore.setSliderVisibility(mode, isVisible);
     };
 
     private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

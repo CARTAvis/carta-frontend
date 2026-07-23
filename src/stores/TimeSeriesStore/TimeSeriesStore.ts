@@ -43,13 +43,12 @@ export class TimeSeriesStore {
      * images without a valid observation time are excluded.
      */
     @computed get elements(): TimeSeriesElement[] {
-        const elements: TimeSeriesElement[] = [];
-        for (const frame of this.matchedFrames) {
-            if (frame.obsTimeMjdUtc !== undefined) {
-                elements.push({frame, mjdUtc: frame.obsTimeMjdUtc, isoUtc: formatMjdUtcAsIso(frame.obsTimeMjdUtc, 6)});
-            }
-        }
-        return elements.sort((a, b) => a.mjdUtc - b.mjdUtc || a.frame.id - b.frame.id);
+        return this.matchedFrames
+            .flatMap(frame => {
+                const mjdUtc = frame.obsTimeMjdUtc;
+                return mjdUtc === undefined ? [] : [{frame, mjdUtc, isoUtc: formatMjdUtcAsIso(mjdUtc, 6)}];
+            })
+            .sort((a, b) => a.mjdUtc - b.mjdUtc || a.frame.id - b.frame.id);
     }
 
     /** The index of the active loaded image, or -1 when the active item is not in the series. */
@@ -73,7 +72,8 @@ export class TimeSeriesStore {
             return;
         }
         const appStore = AppStore.Instance;
-        if (appStore.activeImage?.type !== ImageType.FRAME || appStore.activeImage.store !== element.frame) {
+        const activeImage = appStore.activeImage;
+        if (activeImage?.type !== ImageType.FRAME || activeImage.store !== element.frame) {
             appStore.setActiveImageById(ImageType.FRAME, element.frame.id);
         }
     };
