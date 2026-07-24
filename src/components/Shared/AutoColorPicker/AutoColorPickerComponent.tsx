@@ -1,14 +1,14 @@
 import * as React from "react";
-import {type ColorResult, SketchPicker} from "react-color";
 import {Button, Classes, MenuItem, PopoverNext} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {type ColorResult, Sketch} from "@uiw/react-color";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
-import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
+import {AUTO_COLOR_OPTIONS, getColorForTheme, TRANSPARENT_COLOR} from "utilities";
 
 import "./AutoColorPickerComponent.scss";
 
@@ -34,9 +34,13 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
-            this.props.setColor(newColor.hex);
+            this.props.setColor(newColor.rgba.a === 0 ? "transparent" : newColor.hex);
         }
     }, AutoColorPickerComponent.ChangeDelay);
+
+    private get presetColors() {
+        return this.props.presetColors.map(color => (color === "transparent" ? TRANSPARENT_COLOR : color));
+    }
 
     private renderColorBlock = (color: string) => {
         const className = "dropdown-color";
@@ -57,7 +61,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                         placement="bottom-end"
                         shouldReturnFocusOnClose={false}
                         popoverClassName={popoverClassName}
-                        content={<SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
+                        content={<Sketch color={this.autoColor === "transparent" ? TRANSPARENT_COLOR : this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
                     >
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
                     </PopoverNext>

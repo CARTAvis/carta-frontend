@@ -1,16 +1,18 @@
 import * as React from "react";
-import {type ColorResult, type RGBColor, SketchPicker} from "react-color";
 import {Button, Classes, PopoverNext} from "@blueprintjs/core";
+import {type ColorResult, type RgbaColor, rgbaToHsva, Sketch} from "@uiw/react-color";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
+import {TRANSPARENT_COLOR} from "utilities";
+
 import "./ColorPickerComponent.scss";
 
 interface ColorPickerComponentProps {
-    color: string | RGBColor;
+    color: string | RgbaColor;
     presetColors: string[];
     darkTheme: boolean;
     disableAlpha: boolean;
@@ -38,9 +40,20 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
-            this.props.setColor(newColor);
+            this.props.setColor(newColor.rgba.a === 0 ? {...newColor, hex: "transparent"} : newColor);
         }
     }, ColorPickerComponent.ChangeDelay);
+
+    private get presetColors() {
+        return this.props.presetColors.map(color => (color === "transparent" ? TRANSPARENT_COLOR : color));
+    }
+
+    private get pickerColor() {
+        if (typeof this.props.color === "string") {
+            return this.props.color === "transparent" ? TRANSPARENT_COLOR : this.props.color;
+        }
+        return rgbaToHsva(this.props.color);
+    }
 
     public render() {
         const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
@@ -53,7 +66,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
                 placement="right"
                 shouldReturnFocusOnClose={false}
                 popoverClassName={popoverClassName}
-                content={<SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
+                content={<Sketch color={this.pickerColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
             >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                     <div style={{backgroundColor: buttonColor}} />

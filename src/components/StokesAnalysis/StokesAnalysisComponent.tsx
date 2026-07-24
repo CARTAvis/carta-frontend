@@ -12,7 +12,7 @@ import {type Point2D} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, type SpectralProfileStore, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed, TRANSPARENT_COLOR} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -1086,10 +1086,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let qlinePlotWithInteractionColor;
                 let ulinePlotWithInteractionColor;
                 if (smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn) {
-                    qlinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.qValues.dataset, "#00000000") : [];
-                    ulinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.uValues.dataset, "#00000000") : [];
-                    piLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.piValues.dataset, "#00000000") : [];
-                    paLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.paValues.dataset, "#00000000") : [];
+                    qlinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.qValues.dataset, TRANSPARENT_COLOR) : [];
+                    ulinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.uValues.dataset, TRANSPARENT_COLOR) : [];
+                    piLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.piValues.dataset, TRANSPARENT_COLOR) : [];
+                    paLinePlotProps.multiColorSingleLineColors = isDataLoaded ? this.fillLineColor(currentPlotData.paValues.dataset, TRANSPARENT_COLOR) : [];
                 } else {
                     qlinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
                     ulinePlotWithInteractionColor = isDataLoaded ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];

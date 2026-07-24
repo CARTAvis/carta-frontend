@@ -5,28 +5,18 @@
     top: -15px;
 
     &.#{$ns}-dark {
-        .sketch-picker {
-            background: $dark-gray5 !important;
+        .w-color-sketch {
+            --sketch-background: #{$dark-gray5} !important;
+            --sketch-box-shadow: #{$dark-gray1} 0 0 0 1px, #{$dark-gray1} 0 8px 16px !important;
+            --sketch-swatch-box-shadow: #{$dark-gray1} 0 0 0 1px inset !important;
+            --sketch-alpha-box-shadow: #{$dark-gray1} 0 0 0 1px inset, #{$dark-gray1} 0 0 4px inset !important;
+            --sketch-swatch-border-top: 1px solid #{$dark-gray3} !important;
+        }
 
-            input {
-                background: $dark-gray3 !important;
-                color: white;
-                box-shadow: $dark-gray1 0 0 0 1px inset !important;
-            }
-
-            span {
-                color: white !important;
-            }
-
-            .flexbox-fix {
-                div {
-                    span {
-                        div {
-                            box-shadow: $gray2 0 0 0 1px inset !important;
-                        }
-                    }
-                }
-            }
+        .w-color-editable-input {
+            --editable-input-label-color: #{$gray1} !important;
+            --editable-input-box-shadow: #{$dark-gray1} 0 0 0 1px inset !important;
+            --editable-input-color: white !important;
         }
     }
 }
