@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {ContourDashMode} from "enums";
-import {type FrameStore} from "stores/Frame";
+import {type ContourConfigStore, type FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
@@ -14,8 +14,58 @@ import "./ContourStylePanelComponent.scss";
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const DashModeSelect = Select<ContourDashMode>;
 
+interface ColormapPreviewSession {
+    config: ContourConfigStore;
+    baseColormap: string;
+}
+
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {
+    private colormapPreviewSession: ColormapPreviewSession | null = null;
+
+    componentDidUpdate(prevProps: {frame: FrameStore; darkTheme: boolean}) {
+        if (prevProps.frame.contourConfig !== this.props.frame.contourConfig) {
+            this.revertColormapPreview();
+        }
+    }
+
+    componentWillUnmount() {
+        this.revertColormapPreview();
+    }
+
+    private revertColormapPreview() {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+        if (session && session.config.colormap !== session.baseColormap) {
+            session.config.setColormap(session.baseColormap);
+        }
+    }
+
+    private handleColormapHovered(config: ContourConfigStore, colormap: string) {
+        if (this.colormapPreviewSession?.config !== config) {
+            this.revertColormapPreview();
+            this.colormapPreviewSession = {config, baseColormap: config.colormap};
+        }
+        if (config.colormap !== colormap) {
+            config.setColormap(colormap);
+        }
+    }
+
+    private handleColormapSelected(config: ContourConfigStore, colormap: string) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.config !== config) {
+            this.revertColormapPreview();
+        } else {
+            this.colormapPreviewSession = null;
+        }
+        config.setColormap(colormap);
+    }
+
+    private handleColormapDropdownOpenChange(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    }
+
     private renderDashModeSelectItem = (mode: ContourDashMode, {handleClick, modifiers, query}) => {
         return <MenuItem text={mode} onClick={handleClick} key={mode} />;
     };
@@ -59,7 +109,14 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.isColormapEnabled}>
-                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.isColormapEnabled} selectedColormap={frame.contourConfig.colormap} onColormapSelect={frame.contourConfig.setColormap} />
+                    <ColormapComponent
+                        inverted={false}
+                        disabled={!frame.contourConfig.isColormapEnabled}
+                        selectedColormap={frame.contourConfig.colormap}
+                        onColormapSelect={colormap => this.handleColormapSelected(frame.contourConfig, colormap)}
+                        onColormapHover={colormap => this.handleColormapHovered(frame.contourConfig, colormap)}
+                        onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput
