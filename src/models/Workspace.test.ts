@@ -25,7 +25,7 @@ describe("WorkspaceConfig.upgradeForRuntime", () => {
         expect(runtimeWorkspace).not.toBe(storedWorkspace);
         expect(runtimeWorkspace.files?.[0]).not.toBe(storedWorkspace.files?.[0]);
         expect(runtimeRenderConfig).not.toBe(storedWorkspace.files?.[0].renderConfig);
-        expect(runtimeRenderConfig).toEqual({alphaLog: 2, alphaPower: 1_000, gamma: 1});
+        expect(runtimeRenderConfig).toEqual({alphaLog: 2, alphaPower: 1_000_000, gamma: 1});
         expect(runtimeRenderConfig).not.toHaveProperty("alpha");
         expect(JSON.stringify(storedWorkspace)).toBe(originalJson);
     });
