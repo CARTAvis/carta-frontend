@@ -244,11 +244,11 @@ describe("scaling parameter configuration", () => {
     });
 
     test.each([
-        {scaling: FrameScaling.LOG, min: 0.1, max: 10_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG},
-        {scaling: FrameScaling.GAMMA, min: 0.1, max: 2, defaultValue: 0.3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
-        {scaling: FrameScaling.POWER, min: 0.001, max: 1_000, defaultValue: 0.01, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER},
-        {scaling: FrameScaling.SINH, min: 0.1, max: 3, defaultValue: 1 / 3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH},
-        {scaling: FrameScaling.ASINH, min: 0.01, max: 3, defaultValue: 0.1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH}
+        {scaling: FrameScaling.LOG, min: 0.1, max: 100_000, defaultValue: 1_000, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG},
+        {scaling: FrameScaling.GAMMA, min: 0.05, max: 10, defaultValue: 0.3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA},
+        {scaling: FrameScaling.POWER, min: 0.0001, max: 10_000, defaultValue: 0.01, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER},
+        {scaling: FrameScaling.SINH, min: 0.05, max: 3, defaultValue: 1 / 3, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH},
+        {scaling: FrameScaling.ASINH, min: 0.000001, max: 3, defaultValue: 0.1, preferenceKey: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH}
     ])("defines supported bounds for scaling $scaling", ({scaling, min, max, defaultValue, preferenceKey}) => {
         expect(getScalingParameterConfig(scaling)).toEqual({min, max, defaultValue, preferenceKey});
         expect(getScalingForParameterPreference(preferenceKey)).toBe(scaling);
@@ -256,18 +256,28 @@ describe("scaling parameter configuration", () => {
 
     test("clamps finite values and replaces non-finite values", () => {
         expect(sanitizeScalingParameter(FrameScaling.LOG, 1e-300)).toBe(0.1);
-        expect(sanitizeScalingParameter(FrameScaling.LOG, 1e300)).toBe(10_000);
+        expect(sanitizeScalingParameter(FrameScaling.LOG, 1e300)).toBe(100_000);
         expect(sanitizeScalingParameter(FrameScaling.SINH, Number.POSITIVE_INFINITY)).toBeCloseTo(1 / 3);
         expect(sanitizeScalingParameter(FrameScaling.ASINH, Number.NaN, 0.2)).toBe(0.2);
-        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e-300)).toBe(0.1);
-        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e300)).toBe(2);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e-300)).toBe(0.05);
+        expect(sanitizeScalingParameter(FrameScaling.GAMMA, 1e300)).toBe(10);
         expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.POSITIVE_INFINITY)).toBe(0.3);
         expect(sanitizeScalingParameter(FrameScaling.GAMMA, Number.NaN, 1.5)).toBe(1.5);
     });
 
+    test("normalizes Power alpha values within epsilon of the linear limit", () => {
+        expect(sanitizeScalingParameter(FrameScaling.POWER, 1 - POWER_ALPHA_EPSILON / 2)).toBe(1);
+        expect(sanitizeScalingParameter(FrameScaling.POWER, 1)).toBe(1);
+        expect(sanitizeScalingParameter(FrameScaling.POWER, 1 + POWER_ALPHA_EPSILON / 2)).toBe(1);
+        expect(sanitizeScalingParameter(FrameScaling.POWER, 1 + POWER_ALPHA_EPSILON * 2)).not.toBe(1);
+    });
+
     test.each([
         {scaling: FrameScaling.LOG, alpha: 0.1},
+        {scaling: FrameScaling.LOG, alpha: 100_000},
+        {scaling: FrameScaling.SINH, alpha: 0.05},
         {scaling: FrameScaling.SINH, alpha: 3},
+        {scaling: FrameScaling.ASINH, alpha: 0.000001},
         {scaling: FrameScaling.ASINH, alpha: 3}
     ])("keeps the shader-equivalent float32 transform accurate at the supported bound for scaling $scaling", ({scaling, alpha}) => {
         let previous = -Infinity;
@@ -281,13 +291,13 @@ describe("scaling parameter configuration", () => {
         }
     });
 
-    test.each([0.1, 2])("keeps the shader-equivalent float32 Gamma transform accurate at gamma %s", gamma => {
+    test.each([0.05, 10])("keeps the shader-equivalent float32 Gamma transform accurate at gamma %s", gamma => {
         for (const x of TEST_SAMPLES) {
             expect(shaderScaleValue(x, FrameScaling.GAMMA, gamma)).toBeCloseTo(scaleValue(x, FrameScaling.GAMMA, 1, gamma), 6);
         }
     });
 
-    test.each([0.1, 1.1, 10, 1000])("keeps the shader-equivalent float32 Power transform accurate at alpha %s", alpha => {
+    test.each([0.0001, 1.1, 10, 10_000])("keeps the shader-equivalent float32 Power transform accurate at alpha %s", alpha => {
         for (const x of TEST_SAMPLES) {
             expect(shaderScaleValue(x, POWER_SCALING, alpha)).toBeCloseTo(scaleValue(x, POWER_SCALING, alpha), 5);
         }

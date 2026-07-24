@@ -36,9 +36,9 @@ export function scalingParameterToSliderValue(scaling: FrameScaling, value: numb
     if (scaling === FrameScaling.GAMMA) {
         const defaultValue = clamp(getDefaultScalingParameter(scaling), min, max);
         if (clampedValue <= defaultValue) {
-            return defaultValue === min ? SLIDER_MIN : SLIDER_MIDPOINT * ((clampedValue - min) / (defaultValue - min));
+            return defaultValue === min ? SLIDER_MIN : SLIDER_MIDPOINT * (Math.log(clampedValue / min) / Math.log(defaultValue / min));
         }
-        return defaultValue === max ? SLIDER_MAX : SLIDER_MIDPOINT + (SLIDER_MAX - SLIDER_MIDPOINT) * ((clampedValue - defaultValue) / (max - defaultValue));
+        return defaultValue === max ? SLIDER_MAX : SLIDER_MIDPOINT + (SLIDER_MAX - SLIDER_MIDPOINT) * (Math.log(clampedValue / defaultValue) / Math.log(max / defaultValue));
     }
 
     const logRange = Math.log(max / min);
@@ -52,9 +52,9 @@ export function sliderValueToScalingParameter(scaling: FrameScaling, sliderValue
     if (scaling === FrameScaling.GAMMA) {
         const defaultValue = clamp(getDefaultScalingParameter(scaling), min, max);
         if (clampedSliderValue <= SLIDER_MIDPOINT) {
-            return min + (defaultValue - min) * (clampedSliderValue / SLIDER_MIDPOINT);
+            return min * Math.pow(defaultValue / min, clampedSliderValue / SLIDER_MIDPOINT);
         }
-        return defaultValue + (max - defaultValue) * ((clampedSliderValue - SLIDER_MIDPOINT) / (SLIDER_MAX - SLIDER_MIDPOINT));
+        return defaultValue * Math.pow(max / defaultValue, (clampedSliderValue - SLIDER_MIDPOINT) / (SLIDER_MAX - SLIDER_MIDPOINT));
     }
 
     const normalizedValue = clampedSliderValue / SLIDER_MAX;

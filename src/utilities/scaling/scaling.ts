@@ -39,11 +39,11 @@ function createScalingParameterConfig(preferenceKey: PreferenceKeys, fallbackMin
 }
 
 const SCALING_PARAMETER_CONFIGS = new Map<FrameScaling, ScalingParameterConfig>([
-    [FrameScaling.LOG, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, 0.1, 10_000, 1_000)],
-    [FrameScaling.GAMMA, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, 0.1, 2, 0.3)],
-    [FrameScaling.POWER, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, 0.001, 1_000, 0.01)],
-    [FrameScaling.SINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, 0.1, 3, 1 / 3)],
-    [FrameScaling.ASINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, 0.01, 3, 0.1)]
+    [FrameScaling.LOG, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, 0.1, 1_000_000, 1_000)],
+    [FrameScaling.GAMMA, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, 0.01, 10, 0.3)],
+    [FrameScaling.POWER, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, 0.000001, 1_000_000, 0.01)],
+    [FrameScaling.SINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH, 0.05, 3, 1 / 3)],
+    [FrameScaling.ASINH, createScalingParameterConfig(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH, 0.000001, 3, 0.1)]
 ]);
 
 export function getScalingParameterConfig(scaling: FrameScaling): ScalingParameterConfig | undefined {
@@ -73,7 +73,11 @@ export function sanitizeScalingParameter(scaling: FrameScaling, value: number, f
     if (!Number.isFinite(sanitizedValue)) {
         sanitizedValue = Number.isFinite(fallback) ? fallback : config.defaultValue;
     }
-    return clamp(sanitizedValue, config.min, config.max);
+    sanitizedValue = clamp(sanitizedValue, config.min, config.max);
+    if (scaling === FrameScaling.POWER && Math.abs(sanitizedValue - 1) < POWER_ALPHA_EPSILON) {
+        return 1;
+    }
+    return sanitizedValue;
 }
 
 function errorFunction(x: number, c: number, x0: number): number {

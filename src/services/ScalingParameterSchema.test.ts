@@ -17,22 +17,23 @@ describe("scaling parameter schemas", () => {
         {scaling: FrameScaling.GAMMA, workspaceKey: "gamma"}
     ];
 
-    test.each(scalingProperties)("matches runtime bounds for scaling $scaling", ({scaling, workspaceKey}) => {
+    test.each(scalingProperties)("allows all positive values for scaling $scaling", ({scaling, workspaceKey}) => {
         const config = getScalingParameterConfig(scaling)!;
         const preferenceProperty = PREFERENCE_SCHEMA.properties[config.preferenceKey];
         const workspaceProperty = WORKSPACE_SCHEMA.definitions["render-config"].properties[workspaceKey];
 
-        expect(preferenceProperty).toMatchObject({minimum: config.min, maximum: config.max});
-        expect(workspaceProperty).toMatchObject({minimum: config.min, maximum: config.max});
-
         for (const property of [preferenceProperty, workspaceProperty]) {
+            expect(property).toMatchObject({type: "number", exclusiveMinimum: 0});
+            expect(property).not.toHaveProperty("minimum");
+            expect(property).not.toHaveProperty("maximum");
+
             const validate = AJV.compile(property);
             expect(validate(config.min)).toBe(true);
             expect(validate(config.max)).toBe(true);
-            expect(validate(config.min / 2)).toBe(false);
-            expect(validate(config.max * 2)).toBe(false);
-            expect(validate(1e-300)).toBe(false);
-            expect(validate(1e300)).toBe(false);
+            expect(validate(1e-300)).toBe(true);
+            expect(validate(1e300)).toBe(true);
+            expect(validate(0)).toBe(false);
+            expect(validate(-1)).toBe(false);
         }
     });
 
