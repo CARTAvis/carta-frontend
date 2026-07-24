@@ -45,29 +45,20 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
     };
 
     private renderScalingParameter(renderConfig: RenderConfigStore): React.ReactNode {
-        const previewSession = this.scalingPreviewSession?.renderConfig === renderConfig ? this.scalingPreviewSession : null;
         const currentScaling = renderConfig.scaling;
         const currentParameterConfig = getScalingParameterConfig(currentScaling);
-        if (!previewSession && !currentParameterConfig) {
-            return null;
-        }
-
-        const baseParameterConfig = previewSession ? getScalingParameterConfig(previewSession.baseScaling) : undefined;
-        if (previewSession && !baseParameterConfig) {
-            return null;
-        }
-
-        const isPlaceholder = !currentParameterConfig;
-        const scaling = isPlaceholder ? previewSession!.baseScaling : currentScaling;
-        const parameterConfig = currentParameterConfig ?? baseParameterConfig!;
+        const isDisabled = !currentParameterConfig;
+        const scaling = isDisabled ? FrameScaling.GAMMA : currentScaling;
+        const parameterConfig = currentParameterConfig ?? getScalingParameterConfig(FrameScaling.GAMMA)!;
         const isGamma = scaling === FrameScaling.GAMMA;
         return (
-            <FormGroup className={isPlaceholder ? "scaling-parameter-placeholder" : undefined} label={isGamma ? "Gamma" : "Alpha"} inline={true} aria-hidden={isPlaceholder || undefined}>
+            <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true} disabled={isDisabled}>
                 <ScalingParameterControlComponent
                     scaling={scaling}
                     min={parameterConfig.min}
                     max={parameterConfig.max}
-                    value={renderConfig.getScalingParameter(scaling)}
+                    value={isDisabled ? undefined : renderConfig.getScalingParameter(scaling)}
+                    disabled={isDisabled}
                     onValueChange={value => renderConfig.setScalingParameter(scaling, value)}
                 />
             </FormGroup>

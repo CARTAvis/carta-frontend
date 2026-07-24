@@ -5,6 +5,13 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent";
 
 interface TestableColormapConfigComponent {
     props: {renderConfig: RenderConfigStore};
+    renderScalingParameter: (renderConfig: RenderConfigStore) => {
+        props: {
+            label: string;
+            disabled?: boolean;
+            children: {props: {scaling: FrameScaling; value?: number; disabled?: boolean}};
+        };
+    };
     handleScalingHovered: (scaling: FrameScaling) => void;
     handleScalingSelected: (scaling: FrameScaling) => void;
     handleScalingDropdownOpenChange: (isOpen: boolean) => void;
@@ -24,7 +31,9 @@ function createRenderConfig(scaling: FrameScaling, colorMap: string = "inferno")
         }),
         setColorMap: jest.fn((newColorMap: string) => {
             renderConfig.colorMap = newColorMap;
-        })
+        }),
+        getScalingParameter: jest.fn(() => 0.3),
+        setScalingParameter: jest.fn()
     };
     return renderConfig as unknown as RenderConfigStore;
 }
@@ -34,6 +43,15 @@ function createComponent(renderConfig: RenderConfigStore): TestableColormapConfi
 }
 
 describe("ColormapConfigComponent scaling preview", () => {
+    test("renders parameterless scalings as an empty disabled Gamma control", () => {
+        const renderConfig = createRenderConfig(FrameScaling.LINEAR);
+        const parameterRow = createComponent(renderConfig).renderScalingParameter(renderConfig);
+
+        expect(parameterRow.props.label).toBe("Gamma");
+        expect(parameterRow.props.disabled).toBe(true);
+        expect(parameterRow.props.children.props).toMatchObject({scaling: FrameScaling.GAMMA, value: undefined, disabled: true});
+    });
+
     test("reverts the original frame when renderConfig changes during a preview", () => {
         const frameA = createRenderConfig(FrameScaling.LINEAR);
         const frameB = createRenderConfig(FrameScaling.POWER);
