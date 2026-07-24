@@ -35,6 +35,8 @@
         "@typescript-eslint/eslint-plugin": "^8.61.1",
         "@typescript-eslint/parser": "^8.61.1",
         "@uiw/react-color": "^2.10.3",
+        "@uiw/react-color-alpha": "^2.10.3",  
+        "@uiw/react-color-sketch": "^2.10.3",  
         "ajv": "^8.20.0",
         "axios": "^1.18.0",
         "babel-jest": "^30.1.2",

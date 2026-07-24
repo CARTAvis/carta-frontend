@@ -8,7 +8,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {TRANSPARENT_COLOR} from "utilities";
+import {DEFAULT_COLOR, TRANSPARENT_COLOR} from "utilities";
 
 import "./ColorPickerComponent.scss";
 
@@ -50,10 +50,8 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }
 
     private get pickerColor() {
-        if (typeof this.props.color === "string") {
-            return this.props.color === "transparent" ? TRANSPARENT_COLOR : this.props.color;
-        }
-        return tinycolor(this.props.color).toHex8String();
+        const color = tinycolor(this.props.color);
+        return color.isValid() ? color.toHex8String() : DEFAULT_COLOR;
     }
 
     public render() {

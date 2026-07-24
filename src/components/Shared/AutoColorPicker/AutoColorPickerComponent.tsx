@@ -7,9 +7,10 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
+import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
-import {AUTO_COLOR_OPTIONS, getColorForTheme, TRANSPARENT_COLOR} from "utilities";
+import {AUTO_COLOR_OPTIONS, DEFAULT_COLOR, getColorForTheme, TRANSPARENT_COLOR} from "utilities";
 
 import "./AutoColorPickerComponent.scss";
 
@@ -43,6 +44,11 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
         return this.props.presetColors.map(color => (color === "transparent" ? TRANSPARENT_COLOR : color));
     }
 
+    private get pickerColor() {
+        const color = tinycolor(this.autoColor);
+        return color.isValid() ? color.toHex8String() : DEFAULT_COLOR;
+    }
+
     private renderColorBlock = (color: string) => {
         const className = "dropdown-color";
         return (
@@ -62,7 +68,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                         placement="bottom-end"
                         shouldReturnFocusOnClose={false}
                         popoverClassName={popoverClassName}
-                        content={<Sketch color={this.autoColor === "transparent" ? TRANSPARENT_COLOR : this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
+                        content={<Sketch color={this.pickerColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
                     >
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
                     </PopoverNext>
