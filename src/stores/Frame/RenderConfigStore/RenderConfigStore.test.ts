@@ -44,8 +44,8 @@ describe("RenderConfigStore alpha validation", () => {
             scalingGamma: Number.POSITIVE_INFINITY
         });
 
-        expect(renderConfig.alphaLog).toBe(100_000);
-        expect(renderConfig.alphaPower).toBe(0.0001);
+        expect(renderConfig.alphaLog).toBe(1_000_000);
+        expect(renderConfig.alphaPower).toBe(0.000001);
         expect(renderConfig.alphaSinh).toBeCloseTo(1 / 3);
         expect(renderConfig.alphaAsinh).toBe(0.1);
         expect(renderConfig.gamma).toBe(0.3);
@@ -56,10 +56,10 @@ describe("RenderConfigStore alpha validation", () => {
         renderConfig.setScaling(FrameScaling.LOG);
 
         renderConfig.setAlpha(1e300);
-        expect(renderConfig.alphaLog).toBe(100_000);
+        expect(renderConfig.alphaLog).toBe(1_000_000);
 
         renderConfig.setAlpha(Number.NaN);
-        expect(renderConfig.alphaLog).toBe(100_000);
+        expect(renderConfig.alphaLog).toBe(1_000_000);
 
         renderConfig.setGamma(1e300);
         expect(renderConfig.gamma).toBe(10);
@@ -110,8 +110,8 @@ describe("RenderConfigStore alpha validation", () => {
 
         renderConfig.updateFromWorkspace({alphaLog: 1e300, alphaPower: 1e300, alphaSinh: 1e-300, alphaAsinh: Number.POSITIVE_INFINITY, gamma: 1e300});
 
-        expect(renderConfig.alphaLog).toBe(100_000);
-        expect(renderConfig.alphaPower).toBe(10_000);
+        expect(renderConfig.alphaLog).toBe(1_000_000);
+        expect(renderConfig.alphaPower).toBe(1_000_000);
         expect(renderConfig.alphaSinh).toBe(0.05);
         expect(renderConfig.alphaAsinh).toBe(0.1);
         expect(renderConfig.gamma).toBe(10);
