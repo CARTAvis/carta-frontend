@@ -14,6 +14,7 @@ const SLIDER_MIN = 0;
 const SLIDER_MAX = 100;
 const SLIDER_MIDPOINT = (SLIDER_MIN + SLIDER_MAX) / 2;
 const SLIDER_STEP_SIZE = 0.1;
+const DISPLAY_DECIMAL_PLACES = 6;
 
 function usesDescendingLogScale(scaling: FrameScaling): boolean {
     return scaling === FrameScaling.SINH || scaling === FrameScaling.ASINH;
@@ -21,11 +22,12 @@ function usesDescendingLogScale(scaling: FrameScaling): boolean {
 
 interface ScalingParameterControlProps {
     scaling: FrameScaling;
-    value: number;
+    value?: number;
     min: number;
     max: number;
     onValueChange: (value: number) => void;
     className?: string;
+    disabled?: boolean;
 }
 
 /** Convert a scaling parameter to its slider position. */
@@ -60,13 +62,15 @@ export function sliderValueToScalingParameter(scaling: FrameScaling, sliderValue
     return usesDescendingLogScale(scaling) ? Math.exp(Math.log(max) - logRange) : Math.exp(Math.log(min) + logRange);
 }
 
-export const ScalingParameterControlComponent: React.FC<ScalingParameterControlProps> = ({scaling, value, min, max, onValueChange, className}) => {
+export const ScalingParameterControlComponent: React.FC<ScalingParameterControlProps> = ({scaling, value, min, max, onValueChange, className, disabled: isDisabled}) => {
     const isGamma = scaling === FrameScaling.GAMMA;
     const parameterName = isGamma ? "gamma" : "alpha";
-    const stepSize = isGamma ? 0.1 : value * 0.1;
-    const minorStepSize = isGamma ? 0.01 : value * 0.01;
-    const majorStepSize = isGamma ? 0.5 : value * 0.5;
-    const sliderValue = scalingParameterToSliderValue(scaling, value, min, max);
+    const effectiveValue = value ?? clamp(getDefaultScalingParameter(scaling), min, max);
+    const stepSize = isGamma ? 0.1 : effectiveValue * 0.1;
+    const minorStepSize = isGamma ? 0.01 : effectiveValue * 0.01;
+    const majorStepSize = isGamma ? 0.5 : effectiveValue * 0.5;
+    const sliderValue = scalingParameterToSliderValue(scaling, effectiveValue, min, max);
+    const displayValue = value === undefined ? "" : Number(value.toFixed(DISPLAY_DECIMAL_PLACES));
     const handleSliderChange = (newSliderValue: number) => {
         onValueChange(sliderValueToScalingParameter(scaling, newSliderValue, min, max));
     };
@@ -83,14 +87,24 @@ export const ScalingParameterControlComponent: React.FC<ScalingParameterControlP
                 stepSize={stepSize}
                 minorStepSize={minorStepSize}
                 majorStepSize={majorStepSize}
-                value={value}
+                value={displayValue}
+                disabled={isDisabled}
                 selectAllOnFocus={true}
                 buttonPosition="none"
                 clampValueOnBlur={true}
                 onValueChange={onValueChange}
             />
             <div className="scaling-parameter-slider-row">
-                <Button className="scaling-parameter-reset" icon="refresh" variant="minimal" size="small" aria-label={`Reset ${parameterName} to default`} title={`Reset ${parameterName} to default`} onClick={handleReset} />
+                <Button
+                    className="scaling-parameter-reset"
+                    icon="refresh"
+                    variant="minimal"
+                    size="small"
+                    aria-label={`Reset ${parameterName} to default`}
+                    title={`Reset ${parameterName} to default`}
+                    disabled={isDisabled}
+                    onClick={handleReset}
+                />
                 <Slider
                     key={`scaling-parameter-slider-${scaling}`}
                     className="scaling-parameter-slider"
@@ -99,6 +113,7 @@ export const ScalingParameterControlComponent: React.FC<ScalingParameterControlP
                     stepSize={SLIDER_STEP_SIZE}
                     labelRenderer={false}
                     value={sliderValue}
+                    disabled={isDisabled}
                     onChange={handleSliderChange}
                     handleHtmlProps={{"aria-label": `Scaling ${parameterName}`}}
                 />
