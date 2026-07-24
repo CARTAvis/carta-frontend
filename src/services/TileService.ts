@@ -109,6 +109,8 @@ export class TileService {
     private syncIdTileCountMap: Map<number, number>;
     private readonly channelMapRequestQueues: Map<number, ChannelMapRequest[]>;
     private readonly activeChannelMapRequests: Map<number, ActiveChannelMapRequest>;
+    private readonly desiredChannelMapStokes: Map<number, number>;
+    private readonly confirmedChannelMapStokes: Map<number, number>;
 
     @observable remainingTiles: number = 0;
     @observable workersReady: boolean[] | undefined;
@@ -183,6 +185,8 @@ export class TileService {
         this.syncIdTileCountMap = new Map<number, number>();
         this.channelMapRequestQueues = new Map<number, ChannelMapRequest[]>();
         this.activeChannelMapRequests = new Map<number, ActiveChannelMapRequest>();
+        this.desiredChannelMapStokes = new Map<number, number>();
+        this.confirmedChannelMapStokes = new Map<number, number>();
 
         this.compressionRequestCounter = 0;
         this.isAnimationEnabled = false;
@@ -344,6 +348,11 @@ export class TileService {
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
         const currentTiles = tiles.map(tile => tile.encode());
+        const previousStokes = this.channelMap.get(fileId)?.stokes;
+        if (!this.confirmedChannelMapStokes.has(fileId)) {
+            this.confirmedChannelMapStokes.set(fileId, previousStokes ?? stokes);
+        }
+        this.desiredChannelMapStokes.set(fileId, stokes);
         this.setCurrentChannel(fileId, frame.channel, stokes);
 
         if (isPolarizationChanged) {
@@ -375,7 +384,8 @@ export class TileService {
 
         const activeRequest = this.activeChannelMapRequests.get(fileId);
         const activeChannelRequest: ChannelMapRequest = {fileId, channel: frame.channel, stokes, requiredTiles: {}};
-        if (isPolarizationChanged) {
+        const isActiveRequestStokesTransition = activeRequest?.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
+        if (this.confirmedChannelMapStokes.get(fileId) !== this.desiredChannelMapStokes.get(fileId) && !isActiveRequestStokesTransition) {
             requests.unshift(activeChannelRequest);
         } else if (requests.length || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
             const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
@@ -389,6 +399,11 @@ export class TileService {
     }
 
     updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
+        const previousStokes = this.channelMap.get(fileId)?.stokes;
+        if (!this.confirmedChannelMapStokes.has(fileId)) {
+            this.confirmedChannelMapStokes.set(fileId, previousStokes ?? stokes);
+        }
+        this.desiredChannelMapStokes.set(fileId, stokes);
         this.setCurrentChannel(fileId, channel, stokes);
         this.queueChannelMapRequests(fileId, [{fileId, channel, stokes, requiredTiles: {}}]);
     }
@@ -410,13 +425,25 @@ export class TileService {
     }
 
     private sendNextChannelMapRequest(fileId: number) {
-        const request = this.channelMapRequestQueues.get(fileId)?.shift();
+        let request = this.channelMapRequestQueues.get(fileId)?.shift();
         if (!request) {
             this.channelMapRequestQueues.delete(fileId);
             return;
         }
 
-        const tiles = request.requiredTiles.tiles ?? [];
+        let tiles = request.requiredTiles.tiles ?? [];
+        const desiredStokes = this.desiredChannelMapStokes.get(fileId);
+        if (tiles.length && desiredStokes !== undefined && this.confirmedChannelMapStokes.get(fileId) !== desiredStokes) {
+            this.channelMapRequestQueues.get(fileId)?.unshift(request);
+            request = {
+                fileId,
+                channel: this.channelMap.get(fileId)?.channel ?? request.channel,
+                stokes: desiredStokes,
+                requiredTiles: {}
+            };
+            tiles = [];
+        }
+
         this.trackPendingRequests(request.fileId, request.channel, request.stokes, tiles);
         const requestId = this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true);
         if (requestId !== null) {
@@ -435,10 +462,20 @@ export class TileService {
             return;
         }
         const activeRequest = this.activeChannelMapRequests.get(fileId);
-        if (!activeRequest || activeRequest.requestId !== eventId || activeRequest.channel !== message.receivedChannel) {
+        if (!activeRequest || activeRequest.requestId !== eventId || activeRequest.channel !== message.completedChannel) {
             return;
         }
+
         this.activeChannelMapRequests.delete(fileId);
+        if (message.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
+            this.clearRequestQueue(fileId);
+            this.channelMapRequestQueues.delete(fileId);
+            return;
+        }
+
+        if (!activeRequest.requiredTiles.tiles?.length) {
+            this.confirmedChannelMapStokes.set(fileId, activeRequest.stokes);
+        }
         this.sendNextChannelMapRequest(fileId);
     }
 
@@ -448,9 +485,13 @@ export class TileService {
         if (fileId === undefined) {
             this.channelMapRequestQueues.clear();
             this.activeChannelMapRequests.clear();
+            this.desiredChannelMapStokes.clear();
+            this.confirmedChannelMapStokes.clear();
         } else {
             this.channelMapRequestQueues.delete(fileId);
             this.activeChannelMapRequests.delete(fileId);
+            this.desiredChannelMapStokes.delete(fileId);
+            this.confirmedChannelMapStokes.delete(fileId);
         }
     }
 

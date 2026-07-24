@@ -102,6 +102,9 @@ export class ChannelMapStore {
     handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
     private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
+        if (!this.isChannelMapEnabled) {
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
@@ -116,6 +119,8 @@ export class ChannelMapStore {
     @action setChannelMapEnabled = (isEnabled: boolean) => {
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {
+            this.throttledRequestChannels.cancel();
+            this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
         }
     };
