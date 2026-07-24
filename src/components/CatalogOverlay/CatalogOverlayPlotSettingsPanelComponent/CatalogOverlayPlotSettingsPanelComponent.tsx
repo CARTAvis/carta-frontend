@@ -34,12 +34,26 @@ const HEXAGON2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5
 const HEXAGON = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z" />;
 const ELLIPSE = <ellipse cx="8" cy="8" rx="4" ry="7" />;
 
+type CatalogScalingKey = "sizeScalingType" | "sizeMinorScalingType" | "colorScalingType" | "orientationScalingType";
+
+interface CatalogScalingPreviewSession {
+    widgetStore: CatalogWidgetStore;
+    baseScaling: FrameScaling;
+}
+
+interface CatalogColormapPreviewSession {
+    widgetStore: CatalogWidgetStore;
+    baseColormap: string;
+}
+
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
     private widgetId: string;
     private floatingSettingsId: string | undefined;
     private readonly disposers: IReactionDisposer[] = [];
+    private readonly scalingPreviewSessions = new Map<CatalogScalingKey, CatalogScalingPreviewSession>();
+    private colormapPreviewSession: CatalogColormapPreviewSession | null = null;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -138,9 +152,114 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         );
     }
 
+    componentDidUpdate() {
+        const widgetStore = this.widgetStore;
+        for (const [key, session] of this.scalingPreviewSessions) {
+            if (session.widgetStore !== widgetStore) {
+                this.revertScalingPreview(key);
+            }
+        }
+        if (this.colormapPreviewSession && this.colormapPreviewSession.widgetStore !== widgetStore) {
+            this.revertColormapPreview();
+        }
+    }
+
     componentWillUnmount() {
+        this.revertAllPreviews();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+    }
+
+    private setScaling(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+        switch (key) {
+            case "sizeScalingType":
+                widgetStore.setSizeScalingType(scaling);
+                break;
+            case "sizeMinorScalingType":
+                widgetStore.setSizeMinorScalingType(scaling);
+                break;
+            case "colorScalingType":
+                widgetStore.setColorScalingType(scaling);
+                break;
+            case "orientationScalingType":
+                widgetStore.setOrientationScalingType(scaling);
+                break;
+        }
+    }
+
+    private revertScalingPreview(key: CatalogScalingKey) {
+        const session = this.scalingPreviewSessions.get(key);
+        this.scalingPreviewSessions.delete(key);
+        if (session && session.widgetStore[key] !== session.baseScaling) {
+            this.setScaling(session.widgetStore, key, session.baseScaling);
+        }
+    }
+
+    private handleScalingHovered(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+        const session = this.scalingPreviewSessions.get(key);
+        if (session?.widgetStore !== widgetStore) {
+            this.revertScalingPreview(key);
+            this.scalingPreviewSessions.set(key, {widgetStore, baseScaling: widgetStore[key]});
+        }
+        if (widgetStore[key] !== scaling) {
+            this.setScaling(widgetStore, key, scaling);
+        }
+    }
+
+    private handleScalingSelected(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+        const session = this.scalingPreviewSessions.get(key);
+        if (session && session.widgetStore !== widgetStore) {
+            this.revertScalingPreview(key);
+        } else {
+            this.scalingPreviewSessions.delete(key);
+        }
+        this.setScaling(widgetStore, key, scaling);
+    }
+
+    private handleScalingDropdownOpenChange(key: CatalogScalingKey, isOpen: boolean) {
+        if (!isOpen) {
+            this.revertScalingPreview(key);
+        }
+    }
+
+    private revertColormapPreview() {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+        if (session && session.widgetStore.colorMap !== session.baseColormap) {
+            session.widgetStore.setColorMap(session.baseColormap);
+        }
+    }
+
+    private handleColormapHovered(widgetStore: CatalogWidgetStore, colormap: string) {
+        if (this.colormapPreviewSession?.widgetStore !== widgetStore) {
+            this.revertColormapPreview();
+            this.colormapPreviewSession = {widgetStore, baseColormap: widgetStore.colorMap};
+        }
+        if (widgetStore.colorMap !== colormap) {
+            widgetStore.setColorMap(colormap);
+        }
+    }
+
+    private handleColormapSelected(widgetStore: CatalogWidgetStore, colormap: string) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.widgetStore !== widgetStore) {
+            this.revertColormapPreview();
+        } else {
+            this.colormapPreviewSession = null;
+        }
+        widgetStore.setColorMap(colormap);
+    }
+
+    private handleColormapDropdownOpenChange(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    }
+
+    private revertAllPreviews() {
+        for (const key of Array.from(this.scalingPreviewSessions.keys())) {
+            this.revertScalingPreview(key);
+        }
+        this.revertColormapPreview();
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -148,14 +267,21 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private renderScalingParameter(scaling: FrameScaling, value: number, onValueChange: (value: number) => void, isDisabled: boolean): React.ReactNode {
-        const config = getScalingParameterConfig(scaling);
-        if (!config) {
-            return null;
-        }
+        const currentParameterConfig = getScalingParameterConfig(scaling);
+        const isParameterDisabled = isDisabled || !currentParameterConfig;
+        const parameterScaling = currentParameterConfig ? scaling : FrameScaling.GAMMA;
+        const parameterConfig = currentParameterConfig ?? getScalingParameterConfig(FrameScaling.GAMMA)!;
 
         return (
-            <FormGroup label={scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha"} inline={true} disabled={isDisabled}>
-                <ScalingParameterControlComponent scaling={scaling} min={config.min} max={config.max} value={value} onValueChange={onValueChange} />
+            <FormGroup label={parameterScaling === FrameScaling.GAMMA ? "Gamma" : "Alpha"} inline={true} disabled={isParameterDisabled}>
+                <ScalingParameterControlComponent
+                    scaling={parameterScaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={currentParameterConfig ? value : undefined}
+                    disabled={isParameterDisabled}
+                    onValueChange={onValueChange}
+                />
             </FormGroup>
         );
     }
@@ -211,7 +337,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMap}>
-                        <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={shouldDisableSizeMap} />
+                        <ScalingSelectComponent
+                            selectedItem={widgetStore.sizeScalingType}
+                            onItemSelect={type => this.handleScalingSelected(widgetStore, "sizeScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(widgetStore, "sizeScalingType", type)}
+                            onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("sizeScalingType", isOpen)}
+                            disabled={shouldDisableSizeMap}
+                        />
                     </FormGroup>
                     {this.renderScalingParameter(widgetStore.sizeScalingType, widgetStore.sizeScalingParameter, value => widgetStore.setSizeScalingParameter(value), shouldDisableSizeMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMap}>
@@ -342,7 +474,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMinorMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMinorMap}>
-                        <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={shouldDisableSizeMinorMap} />
+                        <ScalingSelectComponent
+                            selectedItem={widgetStore.sizeMinorScalingType}
+                            onItemSelect={type => this.handleScalingSelected(widgetStore, "sizeMinorScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(widgetStore, "sizeMinorScalingType", type)}
+                            onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("sizeMinorScalingType", isOpen)}
+                            disabled={shouldDisableSizeMinorMap}
+                        />
                     </FormGroup>
                     {this.renderScalingParameter(widgetStore.sizeMinorScalingType, widgetStore.sizeMinorScalingParameter, value => widgetStore.setSizeMinorScalingParameter(value), shouldDisableSizeMinorMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMinorMap}>
@@ -617,11 +755,24 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableColorMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableColorMap}>
-                        <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={shouldDisableColorMap} />
+                        <ScalingSelectComponent
+                            selectedItem={widgetStore.colorScalingType}
+                            onItemSelect={type => this.handleScalingSelected(widgetStore, "colorScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(widgetStore, "colorScalingType", type)}
+                            onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("colorScalingType", isOpen)}
+                            disabled={shouldDisableColorMap}
+                        />
                     </FormGroup>
                     {this.renderScalingParameter(widgetStore.colorScalingType, widgetStore.colorScalingParameter, value => widgetStore.setColorScalingParameter(value), shouldDisableColorMap)}
                     <FormGroup inline={true} label="Colormap" disabled={shouldDisableColorMap}>
-                        <ColormapComponent inverted={false} selectedColormap={widgetStore.colorMap} onColormapSelect={selected => widgetStore.setColorMap(selected)} disabled={shouldDisableColorMap} />
+                        <ColormapComponent
+                            inverted={false}
+                            selectedColormap={widgetStore.colorMap}
+                            onColormapSelect={selected => this.handleColormapSelected(widgetStore, selected)}
+                            onColormapHover={colormap => this.handleColormapHovered(widgetStore, colormap)}
+                            onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
+                            disabled={shouldDisableColorMap}
+                        />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true} disabled={shouldDisableColorMap}>
                         <Switch checked={widgetStore.isInvertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={shouldDisableColorMap} />
@@ -675,7 +826,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableOrientationMap && widgetStore.catalogDisplayMode !== CatalogDisplayMode.WORLD}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableOrientationMap}>
-                        <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={shouldDisableOrientationMap} />
+                        <ScalingSelectComponent
+                            selectedItem={widgetStore.orientationScalingType}
+                            onItemSelect={type => this.handleScalingSelected(widgetStore, "orientationScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(widgetStore, "orientationScalingType", type)}
+                            onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("orientationScalingType", isOpen)}
+                            disabled={shouldDisableOrientationMap}
+                        />
                     </FormGroup>
                     {this.renderScalingParameter(widgetStore.orientationScalingType, widgetStore.orientationScalingParameter, value => widgetStore.setOrientationScalingParameter(value), shouldDisableOrientationMap)}
                     <FormGroup inline={true} label="Orientation" labelInfo="(degree)" disabled={shouldDisableOrientationMap}>
