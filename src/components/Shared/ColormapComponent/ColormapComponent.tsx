@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {Sketch} from "@uiw/react-color";
+import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 // Static assets

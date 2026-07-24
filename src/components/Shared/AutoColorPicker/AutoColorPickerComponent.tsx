@@ -1,7 +1,8 @@
 import * as React from "react";
 import {Button, Classes, MenuItem, PopoverNext} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {type ColorResult, Sketch} from "@uiw/react-color";
+import type {ColorResult} from "@uiw/react-color";
+import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {makeObservable, observable} from "mobx";

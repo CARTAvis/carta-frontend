@@ -1,5 +1,5 @@
 import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, PopoverNext, Text, Tooltip} from "@blueprintjs/core";
-import {Alpha} from "@uiw/react-color";
+import Alpha from "@uiw/react-color-alpha";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 

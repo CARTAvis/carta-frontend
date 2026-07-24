@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Button, Classes, PopoverNext} from "@blueprintjs/core";
-import {type ColorResult, type RgbaColor, rgbaToHsva, Sketch} from "@uiw/react-color";
+import type {ColorResult, RgbaColor} from "@uiw/react-color";
+import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
@@ -52,7 +53,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         if (typeof this.props.color === "string") {
             return this.props.color === "transparent" ? TRANSPARENT_COLOR : this.props.color;
         }
-        return rgbaToHsva(this.props.color);
+        return tinycolor(this.props.color).toHex8String();
     }
 
     public render() {
