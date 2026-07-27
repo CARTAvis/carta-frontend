@@ -105,7 +105,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex);
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgba.a);
                         }}
                         disableAlpha={false}

@@ -40,7 +40,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
-            this.props.setColor(newColor.rgba.a === 0 ? {...newColor, hex: "transparent"} : newColor);
+            this.props.setColor(newColor);
         }
     }, ColorPickerComponent.ChangeDelay);
 
