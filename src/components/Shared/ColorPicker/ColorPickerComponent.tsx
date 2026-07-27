@@ -56,7 +56,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
 
     public render() {
         const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
-        const buttonColor = tinycolor(this.props.color).toString();
+        const buttonColor = tinycolor(this.props.color);
 
         return (
             <PopoverNext
@@ -68,7 +68,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
                 content={<Sketch color={this.pickerColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
             >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
-                    <div style={{backgroundColor: buttonColor}} />
+                    <div className={classNames({"transparent-color": buttonColor.getAlpha() === 0})} style={{backgroundColor: buttonColor.toString()}} />
                 </Button>
             </PopoverNext>
         );

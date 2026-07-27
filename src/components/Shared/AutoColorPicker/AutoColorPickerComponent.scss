@@ -4,6 +4,10 @@
     position: relative;
     top: -15px;
 
+    .w-color-swatch [title="#00000000"] {
+        background: conic-gradient(#ffffff 25%, #d6d6d6 0 50%, #ffffff 0 75%, #d6d6d6 0) 50% / 8px 8px !important;
+    }
+
     &.#{$ns}-dark {
         .w-color-sketch {
             --sketch-background: #{$dark-gray5} !important;
