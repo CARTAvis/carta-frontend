@@ -1,14 +1,13 @@
 import * as React from "react";
-import {Button, Classes, PopoverNext} from "@blueprintjs/core";
+import {Button} from "@blueprintjs/core";
 import type {ColorResult, RgbaColor} from "@uiw/react-color";
-import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DEFAULT_COLOR, TRANSPARENT_COLOR} from "utilities";
+import {ColorPickerPopover} from "./ColorPickerPopover";
 
 import "./ColorPickerComponent.scss";
 
@@ -45,32 +44,24 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         }
     }, ColorPickerComponent.ChangeDelay);
 
-    private get presetColors() {
-        return this.props.presetColors.map(color => (color === "transparent" ? TRANSPARENT_COLOR : color));
-    }
-
-    private get pickerColor() {
-        const color = tinycolor(this.props.color);
-        return color.isValid() ? color.toHex8String() : DEFAULT_COLOR;
-    }
-
     public render() {
-        const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
         const buttonColor = tinycolor(this.props.color);
 
         return (
-            <PopoverNext
+            <ColorPickerPopover
+                color={this.props.color}
+                presetColors={this.props.presetColors}
+                darkTheme={this.props.darkTheme}
+                disableAlpha={this.props.disableAlpha}
+                onChange={this.handleColorChange}
                 isOpen={this.shouldDisplayColorPicker}
                 onClose={this.handleColorClose}
                 placement="right"
-                shouldReturnFocusOnClose={false}
-                popoverClassName={popoverClassName}
-                content={<Sketch color={this.pickerColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
             >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                     <div className={classNames({"transparent-color": buttonColor.getAlpha() === 0})} style={{backgroundColor: buttonColor.toString()}} />
                 </Button>
-            </PopoverNext>
+            </ColorPickerPopover>
         );
     }
 }

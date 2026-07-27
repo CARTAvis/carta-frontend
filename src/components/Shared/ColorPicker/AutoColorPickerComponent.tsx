@@ -1,16 +1,14 @@
 import * as React from "react";
-import {Button, Classes, MenuItem, PopoverNext} from "@blueprintjs/core";
+import {Button, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import type {ColorResult} from "@uiw/react-color";
-import Sketch from "@uiw/react-color-sketch";
-import classNames from "classnames";
 import * as _ from "lodash";
-import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
-import {AUTO_COLOR_OPTIONS, DEFAULT_COLOR, getColorForTheme, TRANSPARENT_COLOR} from "utilities";
+import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
+
+import {ColorPickerPopover} from "./ColorPickerPopover";
 
 import "./AutoColorPickerComponent.scss";
 
@@ -28,7 +26,6 @@ const CUSTOM_COLOR_OPTION = "custom-color";
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
     private static readonly ChangeDelay = 100;
-    @observable shouldDisplayColorPicker: boolean = false;
 
     get autoColor(): string {
         return getColorForTheme(this.props.color);
@@ -39,15 +36,6 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
             this.props.setColor(newColor.rgba.a === 0 ? "transparent" : newColor.hex);
         }
     }, AutoColorPickerComponent.ChangeDelay);
-
-    private get presetColors() {
-        return this.props.presetColors.map(color => (color === "transparent" ? TRANSPARENT_COLOR : color));
-    }
-
-    private get pickerColor() {
-        const color = tinycolor(this.autoColor);
-        return color.isValid() ? color.toHex8String() : DEFAULT_COLOR;
-    }
 
     private renderColorBlock = (color: string) => {
         const className = "dropdown-color";
@@ -60,29 +48,17 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === CUSTOM_COLOR_OPTION) {
-            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
-
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    <PopoverNext
-                        placement="bottom-end"
-                        shouldReturnFocusOnClose={false}
-                        popoverClassName={popoverClassName}
-                        content={<Sketch color={this.pickerColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.presetColors} />}
-                    >
+                    <ColorPickerPopover color={this.autoColor} presetColors={this.props.presetColors} darkTheme={AppStore.Instance.isDarkTheme} disableAlpha={this.props.disableAlpha} onChange={this.handleColorChange} placement="bottom-end">
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
-                    </PopoverNext>
+                    </ColorPickerPopover>
                 </div>
             );
         } else {
             return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(getColorForTheme(colorItem))} />;
         }
     };
-
-    constructor(props: AutoColorPickerComponentProps) {
-        super(props);
-        makeObservable(this);
-    }
 
     public render() {
         const color = this.props.color;
