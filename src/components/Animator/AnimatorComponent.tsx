@@ -85,7 +85,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         appStore.setActiveImageByIndex(val);
     };
 
-    onAnimationModeChanged = (event: React.FormEvent<HTMLInputElement>) => {
+    onAnimationModeChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newMode = parseInt(event.currentTarget.value) as AnimationMode;
         AnimatorStore.Instance.setAnimationMode(newMode);
     };

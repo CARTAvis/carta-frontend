@@ -4,8 +4,8 @@ import * as _ from "lodash";
 interface ResizeDetectorProps {
     onResize: (width: number, height: number) => void;
     throttleTime?: number; // optional throttle time in milliseconds
-    targetRef?: React.RefObject<HTMLElement>; // if there is ref attached to children, the same ref must be set here
-    forceResizeRef?: React.MutableRefObject<(() => void) | null>; // assign a ref to imperatively trigger a resize measurement
+    targetRef?: React.RefObject<HTMLElement | null>; // if there is ref attached to children, the same ref must be set here
+    forceResizeRef?: React.RefObject<(() => void) | null>; // assign a ref to imperatively trigger a resize measurement
     children: React.ReactElement;
 }
 
@@ -77,5 +77,5 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, forceResizeRe
     if (targetRef) {
         return children;
     }
-    return React.cloneElement(children, {ref: internalRef});
+    return React.cloneElement(children as React.ReactElement<{ref?: React.Ref<HTMLElement>}>, {ref: internalRef});
 };

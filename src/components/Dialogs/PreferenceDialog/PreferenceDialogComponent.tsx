@@ -453,7 +453,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS format">
-                    <HTMLSelect value={preference.wcsType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
+                    <HTMLSelect value={preference.wcsType} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
                         <option value={WCSType.AUTOMATIC}>Automatic</option>
                         <option value={WCSType.DEGREES}>Degrees</option>
                         <option value={WCSType.SEXAGESIMAL}>Sexagesimal</option>
@@ -507,7 +507,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <AutoColorPickerComponent color={preference.beamColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam type">
-                    <HTMLSelect value={preference.beamType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, event.currentTarget.value as BeamType)}>
+                    <HTMLSelect value={preference.beamType} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, event.currentTarget.value as BeamType)}>
                         <option key={0} value={BeamType.Open}>
                             Open
                         </option>

@@ -53,7 +53,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     render() {
         const table = this.props;
-        const tableColumns: React.ReactElement[] = [];
+        const tableColumns: React.ReactElement<React.ComponentProps<typeof Column>>[] = [];
         const tableData = table.dataset;
 
         table.columnHeaders?.forEach(header => {
@@ -65,7 +65,15 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
         return (
             <Table
-                ref={table.updateTableRef ? ref => ref && table.updateTableRef?.(ref) : undefined}
+                ref={
+                    table.updateTableRef
+                        ? ref => {
+                              if (ref) {
+                                  table.updateTableRef?.(ref);
+                              }
+                          }
+                        : undefined
+                }
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}

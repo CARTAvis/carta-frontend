@@ -62,11 +62,11 @@ export class LayoutDialogComponent extends React.Component {
         makeObservable(this);
     }
 
-    @action private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+    @action private handleInput = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.layoutName = ev.currentTarget.value;
     };
 
-    @action private handleRenameInput = (ev: React.FormEvent<HTMLInputElement>) => {
+    @action private handleRenameInput = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.layoutRename = ev.currentTarget.value;
     };
 
