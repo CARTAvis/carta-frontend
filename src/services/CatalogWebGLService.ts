@@ -1,17 +1,9 @@
+import {CatalogTextureType} from "enums";
 import {createTextureFromArray, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
-import {catalogShaders} from "./GLSL";
-
-export enum CatalogTextureType {
-    Position,
-    Size,
-    Color,
-    Orientation,
-    SelectedSource,
-    SizeMinor
-}
+import {CATALOG_SHADERS} from "./GLSL";
 
 interface ShaderUniforms {
     LineThickness: WebGLUniformLocation | null;
@@ -68,7 +60,7 @@ export class CatalogWebGLService {
     readonly gl: WebGL2RenderingContext | null;
     shaderUniforms: ShaderUniforms;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogWebGLService.staticInstance) {
             CatalogWebGLService.staticInstance = new CatalogWebGLService();
         }
@@ -166,7 +158,7 @@ export class CatalogWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, catalogShaders.vertexShader, catalogShaders.fragmentShader);
+        const shaderProgram = getShaderProgram(this.gl, CATALOG_SHADERS.vertexShader, CATALOG_SHADERS.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         if (shaderProgram) {

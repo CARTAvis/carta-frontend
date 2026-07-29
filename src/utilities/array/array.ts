@@ -1,4 +1,4 @@
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 // Supports sorted array in incremental or decremental order
 export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {point: Point2D; index: number} | null {
@@ -7,18 +7,23 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     }
 
     const length = sortedArray.length;
-    const incremental = sortedArray[0].x <= sortedArray[length - 1].x;
-    if (incremental) {
-        if (x <= sortedArray[0].x) {
-            return {point: sortedArray[0], index: 0};
-        } else if (x >= sortedArray[length - 1].x) {
-            return {point: sortedArray[length - 1], index: length - 1};
+    const first = sortedArray[0];
+    const last = sortedArray[length - 1];
+    if (!first || !last) {
+        return null;
+    }
+    const isIncremental = first.x <= last.x;
+    if (isIncremental) {
+        if (x <= first.x) {
+            return {point: first, index: 0};
+        } else if (x >= last.x) {
+            return {point: last, index: length - 1};
         }
     } else {
-        if (x >= sortedArray[0].x) {
-            return {point: sortedArray[0], index: 0};
-        } else if (x <= sortedArray[length - 1].x) {
-            return {point: sortedArray[length - 1], index: length - 1};
+        if (x >= first.x) {
+            return {point: first, index: 0};
+        } else if (x <= last.x) {
+            return {point: last, index: length - 1};
         }
     }
 
@@ -26,18 +31,22 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     let start = 0;
     let end = length - 1;
     while (start <= end) {
-        let middle = Math.floor((start + end) / 2);
-        if (x === sortedArray[middle].x) {
-            return {point: sortedArray[middle], index: middle};
+        const middle = Math.floor((start + end) / 2);
+        const midPoint = sortedArray[middle];
+        if (!midPoint) {
+            return null;
         }
-        if (incremental) {
-            if (x < sortedArray[middle].x) {
+        if (x === midPoint.x) {
+            return {point: midPoint, index: middle};
+        }
+        if (isIncremental) {
+            if (x < midPoint.x) {
                 end = middle - 1;
             } else {
                 start = middle + 1;
             }
         } else {
-            if (x > sortedArray[middle].x) {
+            if (x > midPoint.x) {
                 end = middle - 1;
             } else {
                 start = middle + 1;
@@ -47,10 +56,15 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     if (start >= sortedArray.length || start < 0 || end >= sortedArray.length || end < 0) {
         return null;
     }
-    const closer = Math.abs(sortedArray[start].x - x) < Math.abs(x - sortedArray[end].x) ? start : end;
-    return {point: sortedArray[closer], index: closer};
+    const startPoint = sortedArray[start];
+    const endPoint = sortedArray[end];
+    if (!startPoint || !endPoint) {
+        return null;
+    }
+    const closer = Math.abs(startPoint.x - x) < Math.abs(x - endPoint.x) ? start : end;
+    return {point: sortedArray[closer]!, index: closer};
 }
 
-export const distinct = (value: any, index: number, self: Array<any>) => {
+export const Distinct = (value: any, index: number, self: Array<any>) => {
     return self.indexOf(value) === index;
 };

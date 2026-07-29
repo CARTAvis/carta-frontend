@@ -7,8 +7,9 @@ import {observer} from "mobx-react";
 
 import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
+import {type RenderConfigStore} from "stores/Frame";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const HistogramSelect = Select<boolean>;
 
 interface HistogramConfigProps {
@@ -23,7 +24,7 @@ interface HistogramConfigProps {
 
 @observer
 export class HistogramConfigComponent extends React.Component<HistogramConfigProps> {
-    @observable showCubeHistogramAlert: boolean;
+    @observable shouldShowCubeHistogramAlert: boolean = false;
 
     constructor(props: any) {
         super(props);
@@ -34,15 +35,15 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    handleHistogramChange = (value: boolean) => {
-        if (value && !this.props.renderConfig.cubeHistogram) {
+    handleHistogramChange = (shouldUseCubeHistogram: boolean) => {
+        if (shouldUseCubeHistogram && !this.props.renderConfig.cubeHistogram) {
             if (this.props.warnOnCubeHistogram) {
-                this.showCubeHistogramAlert = true;
+                this.shouldShowCubeHistogramAlert = true;
             } else {
                 this.handleAlertConfirm();
             }
         } else {
-            this.props.renderConfig.setUseCubeHistogram(value);
+            this.props.renderConfig.setUseCubeHistogram(shouldUseCubeHistogram);
         }
     };
 
@@ -57,7 +58,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                 {this.props.showHistogramSelect && (
                     <FormGroup label={"Histogram"} inline={true} disabled={this.props.disableHistogramSelect}>
                         <HistogramSelect
-                            activeItem={renderConfig.useCubeHistogram}
+                            activeItem={renderConfig.isUsingCubeHistogram}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
                             items={[true, false]}
@@ -66,8 +67,8 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             disabled={this.props.disableHistogramSelect}
                         >
                             <Button
-                                text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"}
-                                rightIcon="double-caret-vertical"
+                                text={renderConfig.isUsingCubeHistogram ? "Per-cube" : "Per-channel"}
+                                endIcon="double-caret-vertical"
                                 alignText={"right"}
                                 disabled={this.props.disableHistogramSelect}
                                 data-testid="histogram-mode-dropdown"
@@ -76,9 +77,9 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                     </FormGroup>
                 )}
                 <Alert
-                    className={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}
+                    className={classNames({[Classes.DARK]: AppStore.Instance.isDarkTheme})}
                     icon={"time"}
-                    isOpen={this.showCubeHistogramAlert}
+                    isOpen={this.shouldShowCubeHistogramAlert}
                     onCancel={this.handleAlertCancel}
                     onConfirm={this.handleAlertConfirm}
                     cancelButtonText={"Cancel"}
@@ -91,10 +92,10 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
 
     private handleAlertConfirm = () => {
         this.props.onCubeHistogramSelected();
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 }

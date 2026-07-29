@@ -1,10 +1,10 @@
-import {AlphaPicker} from "react-color";
-import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, PopoverNext, Text, Tooltip} from "@blueprintjs/core";
+import Alpha from "@uiw/react-color-alpha";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
@@ -19,7 +19,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
+    const colormapSetOptions = Array.from(ColorBlendingStore.COLORMAP_SETS, ([set, colormapSetConfig]) => (
         <MenuItem
             text=""
             icon={
@@ -44,7 +44,10 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     };
 
     const setSelectedFrame = (index: number, fileId: number) => {
-        colorBlendingStore.setSelectedFrame(index, AppStore.Instance.getFrame(fileId));
+        const frame = AppStore.Instance.getFrame(fileId);
+        if (frame) {
+            colorBlendingStore.setSelectedFrame(index, frame);
+        }
     };
 
     const getLayerSettings = (frame: FrameStore, alphaIndex: number) => {
@@ -56,7 +59,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 <Tooltip content="Raster scaling matching enabled" disabled={!frame.rasterScalingReference}>
                     <ColormapComponent
                         disabled={!!frame.rasterScalingReference}
-                        inverted={renderConfig.inverted}
+                        inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
@@ -66,12 +69,12 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                     />
                 </Tooltip>
                 <div className="alpha-settings">
-                    <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
+                    <Alpha className="alpha-slider" hsva={{h: 0, s: 0, v: 0, a: alpha}} onChange={color => setAlpha(color.a)} />
                     <Tooltip content="Alpha">
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip>
                     <Tooltip content="Remove layer" disabled={alphaIndex <= 0}>
-                        <Button icon="small-cross" minimal={true} style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
+                        <Button icon="small-cross" variant="minimal" style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
                     </Tooltip>
                 </div>
             </>
@@ -114,31 +117,35 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const buttonTextCutoff = 550;
 
     return (
-        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.darkTheme})}>
+        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.isDarkTheme})}>
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
-                    <Popover minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
+                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={<Menu>{newFrameOptions}</Menu>}>
                         <Tooltip content={addLayerTooltip}>
-                            <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
+                            <Button icon="add" endIcon="caret-down" disabled={!newFrameOptions.length}>
                                 {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
                         </Tooltip>
-                    </Popover>
-                    <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
-                        <Button icon="color-fill" rightIcon="caret-down">
+                    </PopoverNext>
+                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={<Menu>{colormapSetOptions}</Menu>}>
+                        <Button icon="color-fill" endIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>
-                    </Popover>
+                    </PopoverNext>
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
-                <Tooltip content={baseFrameTooltip}>
-                    <Text className="image-column image-text" ellipsize={true}>
-                        {colorBlendingStore.baseFrame.filename}
-                    </Text>
-                </Tooltip>
-                {getLayerSettings(colorBlendingStore.baseFrame, 0)}
+                {colorBlendingStore.baseFrame && (
+                    <>
+                        <Tooltip content={baseFrameTooltip}>
+                            <Text className="image-column image-text" ellipsize={true}>
+                                {colorBlendingStore.baseFrame.filename}
+                            </Text>
+                        </Tooltip>
+                        {getLayerSettings(colorBlendingStore.baseFrame, 0)}
+                    </>
+                )}
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>

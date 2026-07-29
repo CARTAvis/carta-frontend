@@ -1,23 +1,24 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Freq, FrequencyUnit} from "models";
+import {type FrequencyUnit} from "enums";
+import {Freq} from "models";
 
 export class RestFreqStore {
     readonly headerRestFreq: Freq;
     @observable customRestFreq: Freq;
 
     @computed get restFreqInHz(): number | undefined {
-        if (this.inValidInput) {
+        if (this.isInvalidInput) {
             return undefined;
         }
         return Freq.convertUnitToHz(this.customRestFreq);
     }
 
-    @computed get inValidInput(): boolean {
+    @computed get isInvalidInput(): boolean {
         return !isFinite(this.customRestFreq.value);
     }
 
-    @computed get resetDisable(): boolean {
+    @computed get isResetDisabled(): boolean {
         return !isFinite(this.headerRestFreq.value);
     }
 
@@ -26,10 +27,10 @@ export class RestFreqStore {
     }
 
     constructor(headerRestFreq: number) {
-        makeObservable(this);
         const defaultRestFreq = Freq.convertUnitFromHz(headerRestFreq);
         this.headerRestFreq = defaultRestFreq;
         this.customRestFreq = defaultRestFreq;
+        makeObservable(this);
     }
 
     /**

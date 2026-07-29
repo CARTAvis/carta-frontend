@@ -93,7 +93,7 @@
 
     .histogram-container {
         flex: 3 3 auto;
-        min-width: 0;
+        min-width: 150px;
         .histogram-plot {
             margin-left: 5px;
             height: calc(100% - 35px);

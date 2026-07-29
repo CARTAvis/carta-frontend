@@ -1,8 +1,9 @@
 import axios from "axios";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Point2D} from "models";
+import {HipsCoord, HipsProjection} from "enums";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
 
 /** A HiPS survey. */
@@ -11,44 +12,6 @@ export interface HipsSurvey {
     name: string;
     /** The data product type of the survey. */
     type: "Sky map" | "Planet map" | "Cube";
-}
-
-/** Coordinate systems for HiPS data queries. */
-export enum HipsCoord {
-    Icrs = "icrs",
-    Galactic = "galactic"
-}
-
-/** Projection types for HiPS data queries. */
-export enum HipsProjection {
-    AZP = "AZP",
-    SZP = "SZP",
-    TAN = "TAN",
-    STG = "STG",
-    SIN = "SIN",
-    ARC = "ARC",
-    ZPN = "ZPN",
-    ZEA = "ZEA",
-    AIR = "AIR",
-    CYP = "CYP",
-    CEA = "CEA",
-    CAR = "CAR",
-    MER = "MER",
-    COP = "COP",
-    COE = "COE",
-    COD = "COD",
-    COO = "COO",
-    SFL = "SFL",
-    PAR = "PAR",
-    MOL = "MOL",
-    AIT = "AIT",
-    BON = "BON",
-    PCO = "PCO",
-    TSC = "TSC",
-    CSC = "CSC",
-    QSC = "QSC",
-    HPX = "HPX",
-    XPH = "XPH"
 }
 
 /** Management of HiPS data queries. */
@@ -82,15 +45,15 @@ export class HipsQueryStore {
     }
 
     @computed get isDimensionValid(): boolean {
-        return this.size.x >= this.HipsConstraint.MinDimension && this.size.y >= this.HipsConstraint.MinDimension && this.size.x * this.size.y <= this.HipsConstraint.MaxDimension;
+        return this.size.x >= this.hipsConstraint.MinDimension && this.size.y >= this.hipsConstraint.MinDimension && this.size.x * this.size.y <= this.hipsConstraint.MaxDimension;
     }
 
     @computed get isFovValid(): boolean {
-        return this.fov > this.HipsConstraint.MinFov && this.fov <= this.HipsConstraint.MaxFov;
+        return this.fov > this.hipsConstraint.MinFov && this.fov <= this.hipsConstraint.MaxFov;
     }
 
     @computed get isRotAngleValid(): boolean {
-        return this.rotationAngle >= this.HipsConstraint.MinRotAngle && this.rotationAngle <= this.HipsConstraint.MaxRotAngle;
+        return this.rotationAngle >= this.hipsConstraint.MinRotAngle && this.rotationAngle <= this.hipsConstraint.MaxRotAngle;
     }
 
     @computed get pixelSize(): number {
@@ -99,7 +62,7 @@ export class HipsQueryStore {
     }
 
     /** HiPS projection types and their descriptions. */
-    static readonly ProjectionOptionMap = new Map([
+    public static readonly PROJECTION_OPTION_MAP = new Map([
         [HipsProjection.AZP, "zenithal/azimuthal perspective"],
         [HipsProjection.SZP, "slant zenithal perspective"],
         [HipsProjection.TAN, "gnomonic"],
@@ -130,7 +93,7 @@ export class HipsQueryStore {
         [HipsProjection.XPH, "HEALPix polar, aka “butterfly”"]
     ]);
 
-    readonly HipsConstraint = {
+    readonly hipsConstraint = {
         MinDimension: 5,
         MaxDimension: 5e7,
         MinFov: 0,
@@ -139,7 +102,7 @@ export class HipsQueryStore {
         MaxRotAngle: 360
     };
 
-    static get Instance() {
+    public static get Instance() {
         if (!HipsQueryStore.staticInstance) {
             HipsQueryStore.staticInstance = new HipsQueryStore();
         }
@@ -257,7 +220,7 @@ export class HipsQueryStore {
             return;
         }
 
-        const message: CARTA.IRemoteFileRequest = {
+        const message: CARTA.RemoteFileRequest.$Properties = {
             hips: this.hipsSurvey,
             width: this.size.x,
             height: this.size.y,
@@ -271,7 +234,7 @@ export class HipsQueryStore {
         try {
             await AppStore.Instance.loadRemoteFile(message);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
         this.setIsLoading(false);
     };
@@ -282,7 +245,7 @@ export class HipsQueryStore {
             return;
         }
 
-        const message: CARTA.IRemoteFileRequest = {
+        const message: CARTA.RemoteFileRequest.$Properties = {
             hips: this.hipsSurvey,
             width: this.size.x,
             height: this.size.y,
@@ -297,7 +260,7 @@ export class HipsQueryStore {
         try {
             await AppStore.Instance.loadRemoteFile(message);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
         this.setIsLoading(false);
     };

@@ -1,47 +1,35 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {FrameView, Point2D} from "models";
+import {AnimationMode, PlayMode} from "enums";
+import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-
-export enum AnimationMode {
-    CHANNEL = 0,
-    STOKES = 1,
-    FRAME = 2
-}
-
-export enum PlayMode {
-    FORWARD = 0,
-    BACKWARD = 1,
-    BOUNCING = 2,
-    BLINK = 3
-}
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!AnimatorStore.staticInstance) {
             AnimatorStore.staticInstance = new AnimatorStore();
         }
         return AnimatorStore.staticInstance;
     }
 
-    @observable frameRate: number;
-    @observable maxFrameRate: number;
-    @observable minFrameRate: number;
-    @observable step: number;
-    @observable maxStep: number;
-    @observable minStep: number;
-    @observable animationMode: AnimationMode;
-    @observable animationActive: boolean;
-    @observable playMode: PlayMode;
+    @observable frameRate: number = 5;
+    @observable maxFrameRate: number = 15;
+    @observable minFrameRate: number = 1;
+    @observable step: number = 1;
+    @observable maxStep: number = 50;
+    @observable minStep: number = 1;
+    @observable animationMode: AnimationMode = AnimationMode.CHANNEL;
+    @observable isAnimationActive: boolean = false;
+    @observable playMode: PlayMode = PlayMode.FORWARD;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
-        if (this.animationActive) {
+        if (this.isAnimationActive) {
             return;
         }
         this.animationMode = val;
@@ -56,7 +44,7 @@ export class AnimatorStore {
     };
 
     @flow.bound *startAnimation() {
-        if (this.startAnimationDisabled) {
+        if (this.shouldStartAnimationDisable) {
             return;
         }
 
@@ -67,8 +55,10 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
+                this.animateHandle = undefined;
             }
-            this.animationActive = true;
+            this.animationDirection = 1;
+            this.isAnimationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -95,7 +85,7 @@ export class AnimatorStore {
         };
         const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
         const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
-        const requiredTiles: CARTA.IAddRequiredTiles = {
+        const requiredTiles: CARTA.AddRequiredTiles.$Properties = {
             fileId: activeFrame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
@@ -103,7 +93,7 @@ export class AnimatorStore {
         };
 
         // Calculate matched frames for the animation range
-        const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
+        const matchedFrames = new Map<number, CARTA.MatchedFrameList.$Properties>();
         for (const sibling of activeFrame.spectralSiblings) {
             const firstChannel = animationFrames.firstFrame.channel ?? 0;
             const lastChannel = animationFrames.lastFrame.channel ?? 0;
@@ -111,7 +101,7 @@ export class AnimatorStore {
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
-        const animationMessage: CARTA.IStartAnimation = {
+        const animationMessage: CARTA.StartAnimation.$Properties = {
             fileId: activeFrame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
             firstFrame: animationFrames.firstFrame,
@@ -127,25 +117,27 @@ export class AnimatorStore {
             })
         };
 
-        this.animationActive = true;
+        this.isAnimationActive = true;
 
         try {
             yield appStore.backendService.startAnimation(animationMessage);
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
-            console.log(err);
+            console.error(err);
             appStore.tileService.setAnimationEnabled(false);
         }
-        if (this.stopHandle !== undefined) {
-            clearTimeout(this.stopHandle);
-        }
+        clearTimeout(this.stopHandle);
+        this.stopHandle = undefined;
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     }
 
     @action stopAnimation = () => {
+        clearTimeout(this.stopHandle);
+        this.stopHandle = undefined;
+
         // Ignore stop when not playing
-        if (!this.animationActive) {
+        if (!this.isAnimationActive) {
             return;
         }
 
@@ -155,19 +147,20 @@ export class AnimatorStore {
             return;
         }
 
-        this.animationActive = false;
+        this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
                 clearInterval(this.animateHandle);
+                this.animateHandle = undefined;
             }
         } else {
-            const endFrame: CARTA.IAnimationFrame = {
+            const endFrame: CARTA.AnimationFrame.$Properties = {
                 channel: frame.channel,
                 stokes: frame.stokes
             };
 
-            const stopMessage: CARTA.IStopAnimation = {
+            const stopMessage: CARTA.StopAnimation.$Properties = {
                 fileId: frame.frameInfo.fileId,
                 endFrame
             };
@@ -185,39 +178,34 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
-            AppStore.Instance.nextImage();
+        if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
+            const appStore = AppStore.Instance;
+            const nextState = getNextPlaybackState(appStore.activeImageIndex, appStore.imageViewConfigStore.imageNum, this.step, this.playMode, this.animationDirection);
+            this.animationDirection = nextState.direction;
+            appStore.setActiveImageByIndex(nextState.index);
         }
     };
 
     private animateHandle: ReturnType<typeof setInterval> | undefined;
     private stopHandle: ReturnType<typeof setTimeout> | undefined;
+    private animationDirection: PlaybackDirection = 1;
 
     constructor() {
         makeObservable(this);
-        this.frameRate = 5;
-        this.maxFrameRate = 15;
-        this.minFrameRate = 1;
-        this.step = 1;
-        this.maxStep = 50;
-        this.minStep = 1;
-        this.animationMode = AnimationMode.CHANNEL;
-        this.animationActive = false;
         this.animateHandle = undefined;
         this.stopHandle = undefined;
-        this.playMode = PlayMode.FORWARD;
     }
 
     @computed get frameInterval() {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 
-    @computed get serverAnimationActive() {
-        return this.animationActive && this.animationMode !== AnimationMode.FRAME;
+    @computed get isServerAnimationActive() {
+        return this.isAnimationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
-    @computed get startAnimationDisabled() {
+    @computed get shouldStartAnimationDisable() {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return true;
@@ -242,23 +230,23 @@ export class AnimatorStore {
         frame: FrameStore
     ):
         | {
-              startFrame: CARTA.IAnimationFrame;
-              firstFrame: CARTA.IAnimationFrame;
-              lastFrame: CARTA.IAnimationFrame;
-              deltaFrame: CARTA.IAnimationFrame;
+              startFrame: CARTA.AnimationFrame.$Properties;
+              firstFrame: CARTA.AnimationFrame.$Properties;
+              lastFrame: CARTA.AnimationFrame.$Properties;
+              deltaFrame: CARTA.AnimationFrame.$Properties;
           }
         | undefined => {
         if (!frame) {
             return undefined;
         }
 
-        let startFrame: CARTA.IAnimationFrame = {
+        const startFrame: CARTA.AnimationFrame.$Properties = {
             channel: frame.channel,
             stokes: frame.requiredPolarizationIndex
         };
-        let firstFrame: CARTA.IAnimationFrame | undefined;
-        let lastFrame: CARTA.IAnimationFrame | undefined;
-        let deltaFrame: CARTA.IAnimationFrame | undefined;
+        let firstFrame: CARTA.AnimationFrame.$Properties | undefined;
+        let lastFrame: CARTA.AnimationFrame.$Properties | undefined;
+        let deltaFrame: CARTA.AnimationFrame.$Properties | undefined;
 
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {

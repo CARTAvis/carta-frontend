@@ -1,4 +1,4 @@
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 import {binarySearchByX} from "./array";
 
@@ -35,9 +35,6 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
         {x: NaN, y: NaN}
     ];
 
-    expect(binarySearchByX(null, null)).toEqual(null);
-    expect(binarySearchByX(null, 10)).toEqual(null);
-    expect(binarySearchByX(incremental, null)).toEqual(null);
     expect(binarySearchByX([], 10)).toEqual(null);
     expect(binarySearchByX(incremental, NaN)).toEqual(null);
 
@@ -55,4 +52,12 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
     expect(binarySearchByX(empty, -33)).toEqual(null);
     expect(binarySearchByX(empty, 5)).toEqual(null);
     expect(binarySearchByX(empty, 0)).toEqual(null);
+});
+
+test("test binarySearchByX with sparse spatial profile arrays", () => {
+    const sparseSpatialProfile = new Array<Point2D | undefined>(4);
+    sparseSpatialProfile[2] = {x: 2, y: 1};
+
+    expect(binarySearchByX(sparseSpatialProfile as Point2D[], 2)).toEqual(null);
+    expect(binarySearchByX(sparseSpatialProfile as Point2D[], 10)).toEqual(null);
 });

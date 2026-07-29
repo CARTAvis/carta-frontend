@@ -3,12 +3,13 @@ import {AnchorButton, ButtonGroup, FormGroup, Switch, Tooltip} from "@blueprintj
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
+import {StokesAnalysisComponent} from "components";
 import {RegionSelectorComponent} from "components/Shared";
+import {StokesAnalysisSettingsTabs} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore} from "stores/Widgets";
+import {type FrameStore} from "stores/Frame";
+import {type StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisToolbarComponent.scss";
 
@@ -20,7 +21,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title, this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WidgetConfig.title ?? "", this.props.id, StokesAnalysisComponent.WidgetConfig.type);
     };
 
     private handleFrameChanged = (newFrame: FrameStore) => {
@@ -32,25 +33,25 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
     public render() {
         const widgetStore = this.props.widgetStore;
         const appStore = AppStore.Instance;
-        let enableFractionalPol = false;
+        let isFractionalPolEnabled = false;
 
         if (appStore?.activeFrame?.stokesFiles?.length) {
             appStore.activeFrame.stokesFiles.forEach(file => {
                 if (file.polarizationType === CARTA.PolarizationType.I) {
-                    enableFractionalPol = true;
+                    isFractionalPolEnabled = true;
                 }
             });
         } else {
             if (widgetStore.effectiveFrame?.regionSet) {
-                enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+                isFractionalPolEnabled = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
             }
         }
 
         return (
             <div className="stokes-analysis-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} onFrameChanged={this.handleFrameChanged} />
-                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
-                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!isFractionalPolEnabled}>
+                    <Switch checked={widgetStore.isFractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!isFractionalPolEnabled} />
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">

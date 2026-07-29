@@ -1,16 +1,18 @@
 import * as React from "react";
-import ScrollToBottom from "react-scroll-to-bottom";
-import {Button, Code, Colors, FormGroup, HTMLSelect, Intent, NonIdealState, Tag} from "@blueprintjs/core";
+import {Button, Code, Colors, FormGroup, HTMLSelect, type Intent, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {DefaultWidgetConfig, HelpType, LogStore, WidgetProps} from "stores";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig, LogStore, type WidgetProps} from "stores";
+
+import {LogEntryList} from "./LogEntryList";
 
 import "./LogComponent.scss";
 
 @observer
 export class LogComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "log",
             type: "log",
@@ -69,8 +71,8 @@ export class LogComponent extends React.Component<WidgetProps> {
         const entries = logStore.logEntries;
         const hiddenTags = logStore.hiddenTags;
 
-        let tagList = [];
-        let entryElements = [];
+        const tagList: string[] = [];
+        const entryElements: React.JSX.Element[] = [];
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
 
@@ -78,8 +80,8 @@ export class LogComponent extends React.Component<WidgetProps> {
                 continue;
             }
 
-            let entryTagSpans = [];
-            let visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
+            const entryTagSpans: React.JSX.Element[] = [];
+            const visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
             for (let j = 0; j < entry.tags.length; j++) {
                 const tag = entry.tags[j];
 
@@ -112,13 +114,7 @@ export class LogComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="log">
-                {entryElements.length ? (
-                    <ScrollToBottom initialScrollBehavior="auto" debug={false} className="log-entry-list" followButtonClassName="log-entry-follow">
-                        {entryElements}
-                    </ScrollToBottom>
-                ) : (
-                    <NonIdealState className="log-entry-list" icon="application" title="No log entries" />
-                )}
+                <div className="log-content">{entryElements.length ? <LogEntryList>{entryElements}</LogEntryList> : <NonIdealState className="log-entry-list log-entry-empty" icon="application" title="No log entries" />}</div>
 
                 <div className="log-footer">
                     <FormGroup inline={true} label="Log level:" className="log-level">
@@ -144,7 +140,7 @@ export class LogComponent extends React.Component<WidgetProps> {
                         <div>{allTagSpans.length > 0 ? allTagSpans : "None"}</div>
                     </FormGroup>
                     <div className="log-footer-right">
-                        <Button minimal={true} intent={"warning"} icon="trash" onClick={this.onClearClicked} />
+                        <Button variant="minimal" intent={"warning"} icon="trash" onClick={this.onClearClicked} />
                     </div>
                 </div>
             </div>

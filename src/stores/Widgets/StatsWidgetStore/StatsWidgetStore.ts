@@ -1,12 +1,13 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {Polarizations, RegionsType} from "enums";
+import {VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
-import {RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {RegionWidgetStore} from "stores/Widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
+    @observable coordinate: string = "z";
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -15,21 +16,20 @@ export class StatsWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @computed get effectivePolarization(): POLARIZATIONS | undefined {
+    @computed get effectivePolarization(): Polarizations | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
-            return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
+            return Polarizations[this.coordinate.substring(0, this.coordinate.length - 1)];
         }
     }
 
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        this.coordinate = "z";
     }
 
-    public static CalculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -58,7 +58,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
+                const histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!histogramConfig) {
                     regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
@@ -73,7 +73,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetStatsRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetStatsRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffStatsRequirements(originalRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>) {
+    public static diffStatsRequirements(originalRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>) {
         const diffList: CARTA.SetStatsRequirements[] = [];
 
         // Fill updated requirements with missing entries
@@ -94,13 +94,13 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

@@ -1,9 +1,10 @@
 import * as React from "react";
 import {Button, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
+import type {LineKey, LineOption} from "models";
 
-import {AutoColorPickerComponent, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
-import {LineKey, LineOption} from "models";
+import {AutoColorPickerComponent, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {LineSettings, PlotType} from "enums";
 import {DEFAULT_COLOR, SWATCH_COLORS} from "utilities";
 
 import "./LinePlotSettingsPanelComponent.scss";
@@ -15,16 +16,16 @@ export class LinePlotSettingsPanelComponentProps {
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
-    useWcsValues?: boolean;
-    showWCSAxis?: boolean;
-    disableShowWCSAxis?: boolean;
-    meanRmsVisible?: boolean;
+    shouldUseWcsValues?: boolean;
+    shouldShowWCSAxis?: boolean;
+    isShowWCSAxisDisabled?: boolean;
+    isMeanRmsVisible?: boolean;
     isAutoScaledX?: boolean;
     isAutoScaledY?: boolean;
     userSelectedCoordinate?: string;
     profileCoordinateOptions?: any;
-    logScaleY?: boolean;
-    markerTextVisible?: boolean;
+    isLogScaleY?: boolean;
+    isMarkerTextVisible?: boolean;
     xMinVal?: number;
     xMaxVal?: number;
     yMinVal?: number;
@@ -46,18 +47,9 @@ export class LinePlotSettingsPanelComponentProps {
     handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
 }
 
-export enum LineSettings {
-    MIN_WIDTH = 0.5,
-    MAX_WIDTH = 10,
-    MIN_POINT_SIZE = 0.5,
-    MAX_POINT_SIZE = 10,
-    POINT_SIZE_STEP_SIZE = 0.5,
-    LINE_WIDTH_STEP_SIZE = 0.5
-}
-
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
-    private getLineColorSelectors = (): JSX.Element => {
+    private getLineColorSelectors = (): React.JSX.Element | null => {
         const lineColorMap = this.props.lineColorMap;
         const setLineColor = this.props.setLineColor;
         if (lineColorMap && setLineColor) {
@@ -136,29 +128,29 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
-                    {typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged && (
+                    {typeof props.isLogScaleY !== "undefined" && props.handleLogScaleChanged && (
                         <FormGroup inline={true} label={"Log scale"}>
-                            <Switch checked={props.logScaleY} onChange={props.handleLogScaleChanged} />
+                            <Switch checked={props.isLogScaleY} onChange={props.handleLogScaleChanged} />
                         </FormGroup>
                     )}
-                    {typeof props.markerTextVisible !== "undefined" && props.handleMarkerTextChanged && (
+                    {typeof props.isMarkerTextVisible !== "undefined" && props.handleMarkerTextChanged && (
                         <FormGroup inline={true} label={"Show labels"}>
-                            <Switch checked={props.markerTextVisible} onChange={props.handleMarkerTextChanged} />
+                            <Switch checked={props.isMarkerTextVisible} onChange={props.handleMarkerTextChanged} />
                         </FormGroup>
                     )}
-                    {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged && (
+                    {typeof props.shouldUseWcsValues !== "undefined" && props.handleWcsValuesChanged && (
                         <FormGroup inline={true} label={"Use WCS values"}>
-                            <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged} />
+                            <Switch checked={props.shouldUseWcsValues} onChange={props.handleWcsValuesChanged} />
                         </FormGroup>
                     )}
-                    {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
-                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"Show WCS axis"}>
-                            <Switch disabled={props.disableShowWCSAxis} checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
+                    {typeof props.shouldShowWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
+                        <FormGroup disabled={props.isShowWCSAxisDisabled} inline={true} label={"Show WCS axis"}>
+                            <Switch disabled={props.isShowWCSAxisDisabled} checked={props.shouldShowWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
                     )}
-                    {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (
+                    {typeof props.isMeanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (
                         <FormGroup inline={true} label={"Show mean/RMS"} helperText={"Only visible in single profile"}>
-                            <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged} />
+                            <Switch checked={props.isMeanRmsVisible} onChange={props.handleMeanRmsChanged} />
                         </FormGroup>
                     )}
                     <FormGroup inline={true} label={"Line style"}>
@@ -220,7 +212,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     )}
                     {typeof props.isAutoScaledX !== "undefined" && typeof props.isAutoScaledY !== "undefined" && props.clearXYBounds && (
                         <FormGroup label={"Reset range"} inline={true} className="reset-range-content">
-                            <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
+                            <Button className="reset-range-button" icon={"zoom-to-fit"} size="small" disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
                                 Reset range
                             </Button>
                         </FormGroup>

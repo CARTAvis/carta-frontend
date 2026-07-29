@@ -7,26 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+* Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
+
+## [6.0.0]
+
+### Added
+* Added quick XY/Z/R matching actions to the matching icons and a "Set as all references" action to the Image List right-click menu ([#2390](https://github.com/CARTAvis/carta-frontend/issues/2390)).
+* Added support for pole-mode offset coordinates ([#2672](https://github.com/CARTAvis/carta-frontend/issues/2672)).
+* Prevent creating regions in the PV preview widget ([#2816](https://github.com/CARTAvis/carta-frontend/issues/2816)).
+* Added copy and paste region support ([#1960](https://github.com/CARTAvis/carta-frontend/issues/1960)).
+* Added keyboard-first region editing with arrow-key region movement, fine/coarse movement modifiers, zoom-aware movement steps, and context-aware deselection/cancel behavior ([#292](https://github.com/CARTAvis/carta-frontend/issues/292)).
+* Added keyboard selection and movement of region control points, including `Tab`/`Shift+Tab` point cycling and `Enter` to enter point-selection mode for supported region types.
+* Added multi-region selection workflows in the image viewer, including `Cmd/Ctrl+Click` selection toggling, `Shift+Drag` box selection, grouped dragging, grouped deletion, and selection-aware region dialog opening ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
+* Added multi-region selection workflows in the region list, including `Cmd/Ctrl+Click`, `Shift+Click`, `Shift+Arrow`, `Cmd/Ctrl+A`, selection cycling, and selection-aware context menu actions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040) and [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955)).
+* Added multi-region editing in the Region dialog for shared appearance controls, selected-region lock/unlock, hide/show, export, and delete actions [#1955](https://github.com/CARTAvis/carta-frontend/issues/1955).
+* Image viewer can be popped out into a separate window ([#2003](https://github.com/CARTAvis/carta-frontend/issues/2003)).
+### Fixed
+* Fixed the regression that vector overlays won't update when changing style ([#2750](https://github.com/CARTAvis/carta-frontend/issues/2750)).
+* Fixed a missing vertical indicator line in the spatial profile and a misplaced green box above the histogram ([#2749](https://github.com/CARTAvis/carta-frontend/issues/2749) and [#2716](https://github.com/CARTAvis/carta-frontend/issues/2716)).
+* Fixed a spectral matching case affected by the default Helio rest frame setting ([#2736](https://github.com/CARTAvis/carta-frontend/issues/2736)).
+* Fix the spatial profile chart that occasionally disappears when the line region is outside the image ([#2775](https://github.com/CARTAvis/carta-frontend/issues/2775)).
+* Fixed spectral profiler colors not updating when switching the GUI theme ([#2801](https://github.com/CARTAvis/carta-frontend/issues/2801)).
+* Fixed incorrect region properties in spectral profile TSV exports for spatially matched images with different pixel sizes ([#2804](https://github.com/CARTAvis/carta-frontend/issues/2804)).
+* Fixed incorrect spectral cursor WCS information for rotated Stokes cubes after changing Stokes ([#2795](https://github.com/CARTAvis/carta-frontend/issues/2795)).
+* Fixed the persistent streaming progress indicator when generating contours ([#2805](https://github.com/CARTAvis/carta-frontend/issues/2805)).
+### Changed
+* Changed the layout managers from GoldenLayout to FlexLayout without changing the existing layout features and behaviors ([#2729](https://github.com/CARTAvis/carta-frontend/issues/2729)).
+* Reorganized the Hotkeys dialog region sections to separate general region actions, image-viewer region actions, and region-list actions.
+
+## [6.0.0-beta.1]
+
+### Fixed
 * Disable text selection in file browser ([#2574](https://github.com/CARTAvis/carta-frontend/issues/2574)).
-* Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
 * Fixed an issue where the PV generator widget and progress bar did not appear when creating a new PV image while another PV image was already open ([#2349](https://github.com/CARTAvis/carta-frontend/issues/2349)).
 * Fixed hotkeys of the next and previous images for macOS, resolved keyboard event conflicts between the image viewer and the dropdown menu, and unified the hotkeys dialog and adjusted the layout ([#2575](https://github.com/CARTAvis/carta-frontend/issues/2575), [#758](https://github.com/CARTAvis/carta-frontend/issues/758)).
 * Fixed incorrect aspect ratio and compass size when images contained incomplete `CDELTi` and `PCi_j` information ([#2382](https://github.com/CARTAvis/carta-frontend/issues/2382), [#2399](https://github.com/CARTAvis/carta-frontend/issues/2399)).
 * Fixed the failure to switch to pixel coordinates when images had non-square pixels ([#2602](https://github.com/CARTAvis/carta-frontend/issues/2602)).
 * Made file header search bar move with the window ([#1459](https://github.com/CARTAvis/carta-frontend/issues/1459)).
 * Fixed spectral profile widget reverting to original position or size when profile is updated ([#482](https://github.com/CARTAvis/carta-frontend/issues/482)).
-* Fixed a screen freeze issue that occurred when resuming a disconnected session with unfinished tasks showing a progress bar ([#2082](https://github.com/CARTAvis/carta-frontend/issues/2082)).
 * Increased the precision of the coordinate used in the query ([#1669](https://github.com/CARTAvis/carta-frontend/issues/1669)).
-* Fixed incorrect angular sizes for catalog sources when size data was missing or zero ([#2609](https://github.com/CARTAvis/carta-frontend/issues/2609)).
-* Fixed missing data in the newly enabled catalog columns ([#2611](https://github.com/CARTAvis/carta-frontend/issues/2611)).
 * Fixed an issue that caused some images to be misaligned in partially filled panels when using the multi-panel layout ([#2620](https://github.com/CARTAvis/carta-frontend/issues/2620)).
 * Fixed cursor info bar not wrapping text properly when the image viewer panel is narrow ([#2621](https://github.com/CARTAvis/carta-frontend/issues/2621)).
 * Removed the incorrect WCS information when in image coordinate system ([#2614](https://github.com/CARTAvis/carta-frontend/issues/2614)).
 * Fixed incorrect colormap–name pairing ([#2628](https://github.com/CARTAvis/carta-frontend/issues/2628)).
 * Fixed vector overlay not updating after session resume ([#2217](https://github.com/CARTAvis/carta-frontend/issues/2217)).
+* Fixed the inconsistent input of vector overlay pixel averaging between the vector overlay dialog and preferences dialog ([#2612](https://github.com/CARTAvis/carta-frontend/issues/2612)).
+* Improved region dragging performance after toggling the spectral profile widget several times ([#2637](https://github.com/CARTAvis/carta-frontend/issues/2637)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 * Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
+* Changed offset coordinate system to use spherical geometry instead of linear geometry ([#2663](https://github.com/CARTAvis/carta-frontend/issues/2663)).
+### Added
+* Added automatic coordinate-column selection for catalog overlays using common equatorial, galactic, ecliptic, and pixel/image column aliases ([#2407](https://github.com/CARTAvis/carta-frontend/issues/2407)).
+
+## [5.1.0]
+
+### Fixed
+* Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
+* Fixed a screen freeze issue that occurred when resuming a disconnected session with unfinished tasks showing a progress bar ([#2082](https://github.com/CARTAvis/carta-frontend/issues/2082)).
+* Fixed incorrect angular sizes for catalog sources when size data was missing or zero ([#2609](https://github.com/CARTAvis/carta-frontend/issues/2609)).
+* Fixed missing data in the newly enabled catalog columns ([#2611](https://github.com/CARTAvis/carta-frontend/issues/2611)).
 
 ## [5.0.3]
 

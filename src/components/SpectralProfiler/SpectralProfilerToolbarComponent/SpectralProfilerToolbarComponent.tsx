@@ -1,14 +1,15 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {LineOption} from "models";
 
-import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
+import {SpectralProfilerComponent} from "components";
+import {MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {LineOption} from "models";
 import {AppStore} from "stores";
-import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
+import {type SpectralProfileSelectionStore, type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./SpectralProfilerToolbarComponent.scss";
 
@@ -19,10 +20,10 @@ class ProfileSelectionButtonComponentProps {
     isActiveCategory: boolean;
     itemOptions: LineOption[];
     itemSelected: MultiSelectItem[];
-    disabled: boolean;
-    disableOptions?: boolean;
+    isDisabled: boolean;
+    isOptionsDisabled?: boolean;
     isSelectingSpecificItem?: boolean;
-    categoryTooltip: JSX.Element;
+    categoryTooltip: React.JSX.Element;
     dropdownTooltip: {nonActive: string; active: string; disabled: string};
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
@@ -44,8 +45,8 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
         }
 
         let dropdownHelpText = "";
-        if (!this.props.disabled && this.props.dropdownTooltip) {
-            if (this.props.disableOptions) {
+        if (!this.props.isDisabled && this.props.dropdownTooltip) {
+            if (this.props.isOptionsDisabled) {
                 dropdownHelpText = this.props.dropdownTooltip.disabled ?? "Selection is disabled.";
             } else if (this.props.isActiveCategory) {
                 dropdownHelpText = this.props.dropdownTooltip.active ?? "Click to select multiple items.";
@@ -54,14 +55,14 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             }
         }
 
-        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         return (
             <div className={className}>
                 <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
-                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
+                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.isDisabled} />
                 </Tooltip>
-                <Popover
+                <PopoverNext
                     content={
                         <Menu className="spectral-profiler-dropdown">
                             {this.props.itemOptions?.map((item, index) => (
@@ -73,14 +74,16 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
-                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + item.label.split(" ").join("-").toLowerCase()}
+                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + (item.label || "").split(" ").join("-").toLowerCase()}
                                 />
                             ))}
                         </Menu>
                     }
-                    minimal={true}
-                    placement={Position.BOTTOM}
-                    disabled={this.props.disabled || this.props.disableOptions}
+                    animation="minimal"
+                    arrow={false}
+                    placement="bottom"
+                    shouldReturnFocusOnClose={false}
+                    disabled={this.props.isDisabled || this.props.isOptionsDisabled}
                 >
                     <Tooltip disabled={!dropdownHelpText} content={dropdownHelpText} position={Position.TOP}>
                         <AnchorButton
@@ -90,12 +93,12 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 </span>
                             }
                             className="dropdown-button"
-                            rightIcon={"caret-down"}
-                            disabled={this.props.disabled || this.props.disableOptions}
+                            endIcon={"caret-down"}
+                            disabled={this.props.isDisabled || this.props.isOptionsDisabled}
                             data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown"}
                         />
                     </Tooltip>
-                </Popover>
+                </PopoverNext>
             </div>
         );
     }
@@ -143,7 +146,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
     public render() {
         const profileSelectionStore = this.props.profileSelectionStore;
         const frame = profileSelectionStore.selectedFrame;
-        const disabled = !frame?.channelInfo;
+        const isDisabled = !frame?.channelInfo;
 
         return (
             <div className="profile-selection-panel">
@@ -152,7 +155,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE ? profileSelectionStore.selectedFileIds : [profileSelectionStore.selectedFrameWidgetFileId]}
-                    disabled={!frame}
+                    isDisabled={!frame}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE);
@@ -178,7 +181,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     dropdownTooltip={{
                         nonActive: "Click to select an image.",
                         active: "Click to select an image. Images matched by toggling both spatial(XY) and spectral(Z) matching via Image List widget are highlighted.",
-                        disabled: undefined
+                        disabled: ""
                     }}
                 />
                 <ProfileSelectionButtonComponent
@@ -186,7 +189,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.REGION}
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
-                    disabled={disabled}
+                    isDisabled={isDisabled}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE);
@@ -206,7 +209,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     dropdownTooltip={{
                         nonActive: "Click to select a region.",
                         active: "Click to select multiple regions.",
-                        disabled: undefined
+                        disabled: ""
                     }}
                 />
                 <ProfileSelectionButtonComponent
@@ -214,8 +217,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STATISTIC}
                     itemOptions={profileSelectionStore.statsTypeOptions}
                     itemSelected={profileSelectionStore.isStatsTypeSelectionAvailable ? profileSelectionStore.selectedStatsTypes : [CARTA.StatsType.Mean]}
-                    disabled={disabled}
-                    disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
+                    isDisabled={isDisabled}
+                    isOptionsDisabled={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC ? MultiProfileCategory.STATISTIC : MultiProfileCategory.NONE);
                     }}
@@ -242,8 +245,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STOKES}
                     itemOptions={profileSelectionStore.coordinateOptions}
                     itemSelected={profileSelectionStore.selectedCoordinates}
-                    disabled={disabled}
-                    disableOptions={!frame?.hasStokes}
+                    isDisabled={isDisabled}
+                    isOptionsDisabled={!frame?.hasStokes}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES ? MultiProfileCategory.STOKES : MultiProfileCategory.NONE);
                     }}
@@ -274,17 +277,17 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WidgetConfig.title ?? "", this.props.id, SpectralProfilerComponent.WidgetConfig.type);
     };
 
     public render() {

@@ -1,21 +1,21 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageItem, ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {LayerListSettingsTabs} from "stores/Widgets";
+import {HelpType, ImageType, LayerListSettingsTabs} from "enums";
+import {type ImageItem} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "layer-list",
             type: "layer-list",
@@ -29,8 +29,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 650;
+    @observable height: number = 180;
     @observable columnWidths = [132, 97, 110, 75, 95];
 
     constructor(props: any) {
@@ -124,15 +124,19 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
         const frame = isColorBlending ? image.store?.baseFrame : image?.store;
 
-        const rasterVisible = isColorBlending ? image.store.rasterVisible : frame.renderConfig.visible;
+        if (!frame) {
+            return <Cell className={classNames("row-cell", {active: rowIndex === appStore.activeImageIndex})} />;
+        }
+
+        const isRasterVisible = isColorBlending ? image.store.isRasterVisible : frame.renderConfig.isVisible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
 
-        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
-        const contourVisible = isColorBlending ? image.store.contourVisible : frame.contourConfig.visible;
+        const shouldShowContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.isEnabled).includes(true) : frame.contourConfig.isEnabled;
+        const isContourVisible = isColorBlending ? image.store.isContourVisible : frame.contourConfig.isVisible;
         const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
 
-        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.enabled).includes(true) : frame.vectorOverlayConfig.enabled;
-        const vectorOverlayVisible = isColorBlending ? image.store.vectorOverlayVisible : frame.vectorOverlayConfig.visible;
+        const shouldShowVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.isEnabled).includes(true) : frame.vectorOverlayConfig.isEnabled;
+        const isVectorOverlayVisible = isColorBlending ? image.store.isVectorOverlayVisible : frame.vectorOverlayConfig.isVisible;
         const toggleVectorOverlayVisible = isColorBlending ? image.store.toggleVectorOverlayVisible : frame.vectorOverlayConfig.toggleVisibility;
 
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
@@ -146,16 +150,16 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 Raster layer
                                 <br />
                                 <i>
-                                    <small>Click to {rasterVisible ? "hide" : "show"}</small>
+                                    <small>Click to {isRasterVisible ? "hide" : "show"}</small>
                                 </i>
                             </span>
                         }
                     >
-                        <AnchorButton minimal={true} small={true} active={rasterVisible} intent={rasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
+                        <AnchorButton variant="minimal" size="small" active={isRasterVisible} intent={isRasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
                             R
                         </AnchorButton>
                     </Tooltip>
-                    {showContourButton && (
+                    {shouldShowContourButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
@@ -163,17 +167,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                     Contour layer
                                     <br />
                                     <i>
-                                        <small>Click to {contourVisible ? "hide" : "show"}</small>
+                                        <small>Click to {isContourVisible ? "hide" : "show"}</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={contourVisible} intent={contourVisible ? "success" : "none"} onClick={toggleContourVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isContourVisible} intent={isContourVisible ? "success" : "none"} onClick={toggleContourVisible}>
                                 C
                             </AnchorButton>
                         </Tooltip>
                     )}
-                    {showVectorOverlayButton && (
+                    {shouldShowVectorOverlayButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
@@ -181,12 +185,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                     Vector overlay layer
                                     <br />
                                     <i>
-                                        <small>Click to {vectorOverlayVisible ? "hide" : "show"}</small>
+                                        <small>Click to {isVectorOverlayVisible ? "hide" : "show"}</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={vectorOverlayVisible} intent={vectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
+                            <AnchorButton variant="minimal" size="small" active={isVectorOverlayVisible} intent={isVectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
                                 V
                             </AnchorButton>
                         </Tooltip>
@@ -208,9 +212,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let spatialMatchingButton: React.ReactNode;
         if (appStore.spatialReference) {
+            const isSpatialReference = frame === appStore.spatialReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.spatialReference) {
-                tooltipSubtitle = `${frame.filename} is the current spatial reference`;
+            if (isSpatialReference) {
+                tooltipSubtitle = "Click to match or unmatch all images to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
             }
@@ -228,12 +233,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.spatialReference})}
-                        minimal={true}
-                        small={true}
+                        className={classNames({outlined: isSpatialReference})}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spatialReference}
                         intent={frame.spatialReference ? "success" : "none"}
-                        onClick={() => appStore.toggleSpatialMatching(frame)}
+                        onClick={() => (isSpatialReference ? appStore.matchAllSpatial() : appStore.toggleSpatialMatching(frame))}
                         data-testid={"image-list-" + rowIndex + "-matching-xy"}
                     >
                         XY
@@ -244,9 +249,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let spectralMatchingButton: React.ReactNode;
         if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
+            const isSpectralReference = frame === appStore.spectralReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.spectralReference) {
-                tooltipSubtitle = `${frame.filename} is the current spectral reference`;
+            if (isSpectralReference) {
+                tooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
@@ -264,12 +270,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.spectralReference})}
-                        minimal={true}
-                        small={true}
+                        className={classNames({outlined: isSpectralReference})}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
-                        onClick={() => appStore.toggleSpectralMatching(frame)}
+                        onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
                         data-testid={"image-list-" + rowIndex + "-matching-z"}
                     >
                         Z
@@ -280,9 +286,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         let renderConfigMatchingButton: React.ReactNode;
         if (appStore.rasterScalingReference) {
+            const isRasterScalingReference = frame === appStore.rasterScalingReference;
             let tooltipSubtitle: string;
-            if (frame === appStore.rasterScalingReference) {
-                tooltipSubtitle = `${frame.filename} is the current raster scaling reference`;
+            if (isRasterScalingReference) {
+                tooltipSubtitle = "Click to match or unmatch all images to this reference";
             } else {
                 tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
             }
@@ -300,12 +307,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: frame === appStore.rasterScalingReference})}
-                        minimal={true}
-                        small={true}
+                        className={classNames({outlined: isRasterScalingReference})}
+                        variant="minimal"
+                        size="small"
                         active={!!frame.rasterScalingReference}
                         intent={frame.rasterScalingReference ? "success" : "none"}
-                        onClick={() => appStore.toggleRasterScalingMatching(frame)}
+                        onClick={() => (isRasterScalingReference ? appStore.matchAllRasterScaling() : appStore.toggleRasterScalingMatching(frame))}
+                        data-testid={"image-list-" + rowIndex + "-matching-r"}
                     >
                         R
                     </AnchorButton>
@@ -326,7 +334,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private columnHeaderRenderer = (columnIndex: number) => {
-        let name: string;
+        let name: string = "";
         switch (columnIndex) {
             case 0:
                 name = "Image";
@@ -344,6 +352,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Polarization";
                 break;
             default:
+                name = "";
                 break;
         }
 
@@ -358,46 +367,55 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
         const widgetsStore = AppStore.Instance.widgetsStore;
         const layerListWidget = widgetsStore.layerListWidgets?.get(this.props.id);
-        widgetsStore.createFloatingSettingsWidget(LayerListComponent.WIDGET_CONFIG.title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
+        const title = LayerListComponent.WidgetConfig.title;
+        if (title) {
+            widgetsStore.createFloatingSettingsWidget(title, this.props.id, LayerListComponent.WidgetConfig.type);
+        }
         if (layerListWidget) {
             layerListWidget.setSettingsTabId(LayerListSettingsTabs.REST_FREQ);
             layerListWidget.setSelectedFrameIndex(selectedFrameIndex);
         }
     };
 
-    private contextMenuRenderer = (context: MenuContext) => {
+    private contextMenuRenderer = (context: MenuContext): React.JSX.Element => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
+        if (!rows || !rows.length) {
+            return <Menu />;
+        }
         const image = appStore.imageViewConfigStore?.getImage(rows[0]);
         if (rows && rows.length && image) {
             if (image.type === ImageType.COLOR_BLENDING) {
                 return (
                     <Menu>
                         <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
-                        <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
+                        <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                     </Menu>
                 );
             } else {
                 const frame = image?.store;
                 if (frame) {
+                    const canSetSpectralReference = frame.frameInfo.fileInfoExtended.depth > 1;
+                    const areAllReferencesAlreadySet = appStore.spatialReference === frame && appStore.rasterScalingReference === frame && (!canSetSpectralReference || appStore.spectralReference === frame);
                     return (
                         <Menu>
                             <MenuDivider title={frame.filename} />
+                            <MenuItem disabled={areAllReferencesAlreadySet} text="Set as all references" onClick={() => appStore.setAllReferences(frame)} />
                             <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                            <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                            <MenuItem disabled={appStore.spectralReference === frame || !canSetSpectralReference} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                             <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                             <MenuDivider />
                             <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
                             <MenuDivider />
                             <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
                             <MenuItem text="Close other images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(frame)} />
-                            <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
+                            <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                         </Menu>
                     );
                 }
             }
         }
-        return null;
+        return <Menu />;
     };
 
     render() {
@@ -419,12 +437,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeImageIndex = appStore.activeImageIndex;
-        const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
-        const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
-        const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.rasterVisible);
-        const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.contourVisible);
-        const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.vectorOverlayVisible);
+        const visibilityRaster = appStore.frames.map(f => f.renderConfig.isVisible);
+        const visibilityContour = appStore.frames.map(f => f.contourConfig.isVisible && f.contourConfig.isEnabled);
+        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.isVisible && f.vectorOverlayConfig.isEnabled);
+        const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isRasterVisible);
+        const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isContourVisible);
+        const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.isVectorOverlayVisible);
         const f1 = appStore.frames.map(f => f.spatialReference);
         const f2 = appStore.frames.map(f => f.spectralReference);
         const f3 = appStore.frames.map(f => f.rasterScalingReference);
@@ -453,7 +471,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <ResizeDetector onResize={this.onResize}>
                 <div className="layer-list-widget">
                     {this.width > 0 && (
-                        <Table2
+                        <Table
                             numRows={imageNum}
                             rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                             enableRowHeader={true}
@@ -467,14 +485,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             onColumnWidthChanged={this.onColumnWidthsChange}
                             bodyContextMenuRenderer={this.contextMenuRenderer}
                             cellRendererDependencies={cellRendererDependencies}
-                            getCellClipboardData={null}
+                            getCellClipboardData={undefined}
                         >
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
                             <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                        </Table2>
+                        </Table>
                     )}
                 </div>
             </ResizeDetector>

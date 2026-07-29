@@ -1,28 +1,27 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {HistogramWidgetStore} from "stores/Widgets";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HelpType, HistogramSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
 
 import "./HistogramSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
-export enum HistogramSettingsTabs {
-    STYLING,
-    CONFIG
-}
-
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: HistogramWidgetStore | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
             type: "floating-settings",
@@ -38,65 +37,80 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): HistogramWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): HistogramWidgetStore | undefined {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.histogramWidgets.get(this.widgetId);
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
         super(props);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                let regionString = "Unknown";
-                const regionId = this.widgetStore.effectiveRegionId;
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                if (this.widgetStore && this.widgetStore.effectiveFrame) {
+                    let regionString = "Unknown";
+                    const regionId = this.widgetStore.effectiveRegionId;
 
-                if (regionId === -1) {
-                    regionString = "Image";
-                } else if (this.widgetStore.effectiveFrame.regionSet) {
-                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                    if (region) {
-                        regionString = region.nameString;
+                    if (regionId === -1) {
+                        regionString = "Image";
+                    } else if (this.widgetStore.effectiveFrame.regionSet) {
+                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                        if (region) {
+                            regionString = region.nameString;
+                        }
+                    }
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
+                    }
+                } else {
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings`);
                     }
                 }
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setLogScale(changeEvent.target.checked);
+        this.widgetStore?.setLogScale(changeEvent.target.checked);
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    handleSelectedTabChanged = (newTabId: string | number) => {
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -105,48 +119,57 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX, widgetStore?.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore?.maxX, widgetStore?.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }
@@ -154,6 +177,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
             lineOptions: [{value: "Primary", label: "Primary"}],
@@ -167,9 +194,9 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            logScaleY: widgetStore.logScaleY,
+            isLogScaleY: widgetStore.isLogScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,

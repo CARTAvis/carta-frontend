@@ -1,16 +1,16 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Classes, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import {AnchorButton, ButtonGroup, Classes, Menu, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
 import {AnnotationMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {DialogId, ImageViewLayer, RegionMode, WidgetType} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
-import {AppStore, DialogId, WidgetsStore, WidgetType} from "stores";
-import {RegionMode, RegionStore} from "stores/Frame";
+import {AppStore, WidgetsStore} from "stores";
+import {RegionStore} from "stores/Frame";
 
 import "./ToolbarMenuComponent.scss";
 
@@ -19,22 +19,22 @@ export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
         appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
-        appStore.activeFrame.regionSet.setNewRegionType(type);
-        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        appStore.activeFrame?.regionSet.setNewRegionType(type);
+        appStore.activeFrame?.regionSet.setMode(RegionMode.CREATING);
     };
 
     regionTooltip = (type: CARTA.RegionType) => {
-        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
-        let tooltip = null;
+        const isRegionModeCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        let tooltip: React.JSX.Element | null = null;
         switch (type) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.LINE:
                 tooltip = (
                     <small>
-                        Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
+                        Click-and-drag to define a region ({isRegionModeCenter ? "center to corner" : "corner to corner"}).
                         <br />
-                        Hold Ctrl/Cmd to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
+                        Hold Ctrl/Cmd to define a region ({isRegionModeCenter ? "corner to corner" : "center to corner"}).
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
@@ -62,7 +62,7 @@ export class ToolbarMenuComponent extends React.Component {
 
         return (
             <span>
-                {RegionStore.RegionTypeString(type)}
+                {RegionStore.regionTypeString(type)}
                 <span>
                     <br />
                     <i>{tooltip}</i>
@@ -75,12 +75,12 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
-        const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
+        const isRegionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog || appStore.activeFrame.isPreview;
 
         const commonTooltip = (
             <span>
@@ -105,22 +105,22 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
                     {Array.from(RegionStore.AVAILABLE_REGION_TYPES.entries()).map(([type, typeString], index) => {
-                        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                        const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                        const regionIconString: IconName | CustomIconName = RegionStore.regionIconString(type);
+                        const regionIcon = RegionStore.isRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
                             <Tooltip content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
                                 <AnchorButton
                                     icon={regionIcon}
                                     onClick={() => this.handleRegionTypeClicked(type)}
                                     active={isRegionCreating && newRegionType === type}
-                                    disabled={regionButtonsDisabled}
+                                    disabled={isRegionButtonsDisabled}
                                     data-testid={typeString.toLowerCase() + "-region-shortcut-button"}
                                 />
                             </Tooltip>
                         );
                     })}
 
-                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
+                    <PopoverNext content={annotationMenu} placement="bottom-start" animation="minimal" arrow={false} shouldReturnFocusOnClose={false} disabled={isRegionButtonsDisabled}>
                         <Tooltip
                             content={
                                 <span>
@@ -129,13 +129,21 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} data-testid="annotation-shortcut-dropdown" />
+                            <AnchorButton
+                                icon={"annotation"}
+                                disabled={isRegionButtonsDisabled}
+                                active={isRegionCreating === true && appStore.activeFrame?.regionSet.isNewRegionAnnotation === true}
+                                data-testid="annotation-shortcut-dropdown"
+                            />
                         </Tooltip>
-                    </Popover>
+                    </PopoverNext>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                        if (!widgetConfig) {
+                            return null;
+                        }
                         const trimmedStr = widgetType?.replace(/\s+/g, "");
                         const lowerCaseStart = widgetType === WidgetType.PvGenerator ? 2 : 1;
                         const widgetTypeTooltip = widgetType?.slice(0, lowerCaseStart) + widgetType?.slice(lowerCaseStart)?.toLowerCase();
@@ -153,6 +161,8 @@ export class ToolbarMenuComponent extends React.Component {
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
+                                    draggable={true}
+                                    onDragStart={(e: React.DragEvent) => WidgetsStore.Instance.handleToolbarWidgetDragStart(e, widgetConfig.widgetConfig)}
                                 />
                             </Tooltip>
                         );
@@ -201,7 +211,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Online data query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)} active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)} data-testid={DialogId.OnlineDataQuery + "-button"} />
                     </Tooltip>
-                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                    {appStore.preferenceStore.isCodeSnippetsEnabled && (
                         <Tooltip
                             content={
                                 <span>
@@ -222,7 +232,7 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} />
+                            <AnchorButton icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} active={dialogStore.dialogVisible.get(DialogId.Snippet)} data-testid={DialogId.Snippet + "-button"} />
                         </Tooltip>
                     )}
                 </ButtonGroup>

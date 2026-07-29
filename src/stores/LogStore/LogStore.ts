@@ -11,23 +11,20 @@ export class LogEntry {
 export class LogStore {
     private static staticInstance: LogStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!LogStore.staticInstance) {
             LogStore.staticInstance = new LogStore();
         }
         return LogStore.staticInstance;
     }
 
-    @observable logEntries: LogEntry[];
-    @observable hiddenTags: string[];
-    @observable logLevel: CARTA.ErrorSeverity;
+    @observable logEntries: LogEntry[] = [];
+    @observable hiddenTags: string[] = [];
+    @observable logLevel: CARTA.ErrorSeverity = CARTA.ErrorSeverity.INFO;
     readonly logLimit = 1000;
 
     private constructor() {
         makeObservable(this);
-        this.logEntries = [];
-        this.hiddenTags = [];
-        this.logLevel = CARTA.ErrorSeverity.INFO;
     }
 
     @computed get newestMsg(): string {

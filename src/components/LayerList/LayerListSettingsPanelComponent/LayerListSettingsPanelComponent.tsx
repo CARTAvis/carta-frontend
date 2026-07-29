@@ -1,14 +1,14 @@
 import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
-import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
-import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
+import {FrequencyUnit, HelpType, LayerListSettingsTabs, type SpectralType} from "enums";
+import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";
 
@@ -16,7 +16,10 @@ const FILENAME_END_LEN = 15;
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private cachedWidgetStore: LayerListWidgetStore | null = null;
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
             type: "floating-settings",
@@ -32,25 +35,20 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): LayerListWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.layerListWidgets) {
-            const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): LayerListWidgetStore | null {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.layerListWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props) {
         super(props);
-        makeObservable(this);
+        this.widgetId = props.id;
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
-        const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
+        const option = this.widgetStore?.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -67,14 +65,15 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
                         if (AppStore.Instance.frameNum <= 10) {
-                            this.widgetStore.resetSelectedFrameIndex();
+                            this.widgetStore?.resetSelectedFrameIndex();
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}
-                    resetDisabled={restFreqStore.resetDisable}
+                    resetDisabled={restFreqStore.isResetDisabled}
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
-                    focused={frameOption.frameIndex === this.widgetStore.selectedFrameIndex}
+                    focused={frameOption.frameIndex === this.widgetStore?.selectedFrameIndex}
+                    data-testid={"rest-freq-input-" + AppStore.Instance.frameNum}
                 />
                 <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
             </div>
@@ -83,6 +82,10 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
     render() {
         const appStore = AppStore.Instance;
+
+        if (!this.widgetStore) {
+            return null;
+        }
 
         const matchingPanel = (
             <div className="panel-container">
@@ -100,7 +103,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
         const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
         const frameOptions = this.widgetStore.restFreqFrameOptions;
-        let restFreqPanel = null;
+        let restFreqPanel: React.JSX.Element | null = null;
         if (appStore.frameNum > 10) {
             const fileText = frameOptions.find(option => option.frameIndex === selectedFrameIndex)?.label;
             const inputFrame = frameOptions.find(option => option.frameIndex === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
@@ -115,7 +118,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             itemRenderer={this.renderFrameOptions}
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
+                            <Button text={fileText} endIcon="double-caret-vertical" alignText={Alignment.START} />
                         </Select>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}
@@ -125,7 +128,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             restFreqPanel = (
                 <div className="panel-container">
                     {frameOptions.slice(1).map((option, index) => {
-                        const style = classNames({disabled: option.disable}, {dark: appStore.darkTheme}, {active: option.active});
+                        const style = classNames({disabled: option.disable}, {dark: appStore.isDarkTheme}, {active: option.active});
                         return (
                             <React.Fragment key={index}>
                                 <FormGroup inline={true} label="Source" className="name-text" disabled={option.disable}>

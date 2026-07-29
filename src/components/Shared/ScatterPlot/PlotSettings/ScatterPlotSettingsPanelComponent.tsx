@@ -3,6 +3,7 @@ import {FormGroup, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
+import {ScatterSettings} from "enums";
 
 import "./ScatterPlotSettingsPanelComponent.scss";
 
@@ -10,26 +11,17 @@ export class ScatterPlotSettingsPanelComponentProps {
     colorMap: string;
     scatterPlotPointSize: number;
     pointTransparency: number;
-    equalAxes: boolean;
-    invertedColorMap: boolean;
+    areAxesEqual: boolean;
+    isColorMapInverted: boolean;
     setPointTransparency: (val: number) => void;
     setScatterPlotPointSize: (val: number) => void;
     setColormap: (val: string) => void;
     handleEqualAxesValuesChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleInvertedColorMapChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
-    showReferenceAxes: boolean;
+    shouldShowReferenceAxes: boolean;
     referenceAxesThickness: number;
     referenceAxesColor: string;
     setShowReferenceAxes: (val: boolean) => void;
-}
-
-export enum ScatterSettings {
-    MIN_POINT_SIZE = 0.5,
-    MAX_POINT_SIZE = 10,
-    MIN_TRANSPARENCY = 0.1,
-    MAX_TRANSPARENCY = 1,
-    POINT_SIZE_STEP_SIZE = 0.5,
-    TRANSPARENCY_STEP_SIZE = 0.1
 }
 
 @observer
@@ -41,7 +33,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                 <React.Fragment>
                     <FormGroup inline={true} label="Colormap">
                         <ColormapComponent
-                            inverted={props.invertedColorMap}
+                            inverted={props.isColorMapInverted}
                             selectedColormap={props.colorMap}
                             onColormapSelect={selected => {
                                 props.setColormap(selected);
@@ -49,7 +41,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true}>
-                        <Switch checked={props.invertedColorMap} onChange={props.handleInvertedColorMapChanged} />
+                        <Switch checked={props.isColorMapInverted} onChange={props.handleInvertedColorMapChanged} />
                     </FormGroup>
                     <FormGroup inline={true} label="Symbol size" labelInfo="(px)">
                         <SafeNumericInput
@@ -72,11 +64,11 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         />
                     </FormGroup>
                     <FormGroup inline={true} label={"Equal axes"}>
-                        <Switch checked={props.equalAxes} onChange={props.handleEqualAxesValuesChanged} />
+                        <Switch checked={props.areAxesEqual} onChange={props.handleEqualAxesValuesChanged} />
                     </FormGroup>
                 </React.Fragment>
                 <FormGroup inline={true} label="Reference axes">
-                    <Switch checked={props.showReferenceAxes} onChange={e => props.setShowReferenceAxes((e.target as HTMLInputElement).checked)} />
+                    <Switch checked={props.shouldShowReferenceAxes} onChange={e => props.setShowReferenceAxes((e.target as HTMLInputElement).checked)} />
                 </FormGroup>
             </div>
         );

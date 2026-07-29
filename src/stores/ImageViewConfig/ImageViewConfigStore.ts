@@ -1,7 +1,8 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImagePanelMode, ImageType, ImageViewItem} from "models";
+import {ImagePanelMode, ImageType} from "enums";
+import {type ImageViewItem} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 
@@ -9,7 +10,7 @@ import {clamp} from "utilities";
 export class ImageViewConfigStore {
     private static staticInstance: ImageViewConfigStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ImageViewConfigStore.staticInstance) {
             ImageViewConfigStore.staticInstance = new ImageViewConfigStore();
         }
@@ -17,6 +18,7 @@ export class ImageViewConfigStore {
     }
 
     @observable private imageList: ImageViewItem[] = [];
+    private nextColorBlendingId = 0;
 
     /**
      * Adds a loaded image to the image list.
@@ -55,7 +57,9 @@ export class ImageViewConfigStore {
      */
     @action createColorBlending = (): ColorBlendingStore | null => {
         if (this.frames.length > 0) {
-            const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
+            // Keep ids monotonic within a frontend session.
+            const id = this.nextColorBlendingId;
+            this.nextColorBlendingId += 1;
             const newImage = new ColorBlendingStore(id);
 
             const imageItem: ImageViewItem = {type: ImageType.COLOR_BLENDING, store: newImage};
@@ -124,6 +128,14 @@ export class ImageViewConfigStore {
         return this.imageList.map(image => image.store.filename);
     }
 
+    /** (carta-python) Serializable snapshot of the image list (type and id per entry). */
+    @computed get imageListSummary(): {type: ImageType; id: number}[] {
+        return this.imageList.map(item => ({
+            type: item.type,
+            id: item.store?.id
+        }));
+    }
+
     /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {
         return this.imageList?.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
@@ -190,7 +202,7 @@ export class ImageViewConfigStore {
 
     /** The frames visible on the current page, including the loaded images and the layers of the color blended images. */
     @computed get visibleFrames(): FrameStore[] {
-        let frames: Set<FrameStore> = new Set();
+        const frames: Set<FrameStore> = new Set();
         this.visibleImages.forEach(imageItem => {
             if (imageItem?.type === ImageType.FRAME) {
                 const frame = imageItem?.store;
@@ -211,34 +223,14 @@ export class ImageViewConfigStore {
 
     /** The number of columns in the image view widget. */
     @computed get numImageColumns() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            return 1;
-        }
-
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, PreferenceStore.Instance.imagePanelColumns);
-            default:
-                return clamp(this.imageNum, 1, PreferenceStore.Instance.imagePanelColumns);
-        }
+        return this.getImagePanelDimension(PreferenceStore.Instance.imagePanelColumns, this.imageNum);
     }
 
     /** The number of rows in the image view widget. */
     @computed get numImageRows() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            return 1;
-        }
-
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, PreferenceStore.Instance.imagePanelRows);
-            default:
-                return clamp(Math.ceil(this.imageNum / PreferenceStore.Instance.imagePanelColumns), 1, PreferenceStore.Instance.imagePanelRows);
-        }
+        const preferenceStore = PreferenceStore.Instance;
+        const dynamicRowCount = Math.ceil(this.imageNum / preferenceStore.imagePanelColumns);
+        return this.getImagePanelDimension(preferenceStore.imagePanelRows, dynamicRowCount);
     }
 
     /** The number of image panels on a page. */
@@ -249,8 +241,23 @@ export class ImageViewConfigStore {
     /** The image panel mode. */
     @computed get imagePanelMode() {
         const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+        return preferenceStore.isImageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
+
+    private getImagePanelDimension = (fixedPanelCount: number, dynamicPanelCount: number) => {
+        if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
+            return 1;
+        }
+
+        switch (this.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, fixedPanelCount);
+            default:
+                return clamp(dynamicPanelCount, 1, fixedPanelCount);
+        }
+    };
 
     private constructor() {
         makeAutoObservable(this);

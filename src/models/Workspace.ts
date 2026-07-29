@@ -1,10 +1,12 @@
-import {RGBColor} from "react-color";
-import {CARTA} from "carta-protobuf";
+import type {RgbaColor} from "@uiw/react-color";
+import {type CARTA} from "carta-protobuf";
 
-import {ContourDashMode, FrameScaling, VectorOverlaySource} from "stores/Frame";
+import {type ContourDashMode, type FrameScaling, type VectorOverlaySource} from "enums";
+import {type ContourConfigStore, type RenderConfigStore, type VectorOverlayConfigStore} from "stores/Frame";
 
-import {Point2D} from "./Point2D/Point2D";
+import {type Point2D} from "./Point2D/Point2D";
 
+// don't apply naming convention here to backward-compatible deserialization for legacy workspace keys
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
@@ -27,7 +29,7 @@ export interface WorkspaceContourConfig {
     levels: number[];
     smoothingMode: CARTA.SmoothingMode;
     smoothingFactor: number;
-    color?: RGBColor;
+    color?: RgbaColor;
     colormapEnabled: boolean;
     colormap?: string;
     colormapContrast: number;
@@ -41,7 +43,6 @@ export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
     fractionalIntensity: boolean;
-    pixelAveragingEnabled: boolean;
     pixelAveraging: number;
     thresholdEnabled: boolean;
     threshold: number;
@@ -53,7 +54,7 @@ export interface WorkspaceVectorOverlayConfig {
     visible: boolean;
     thickness: number;
     colormapEnabled: boolean;
-    color?: RGBColor;
+    color?: RgbaColor;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
@@ -130,4 +131,105 @@ export interface WorkspaceListItem {
     name: string;
     id?: string;
     date: number;
+}
+
+export class WorkspaceConfig {
+    public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {
+        const {scaling, colorMap, bias, contrast, gamma, alpha, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
+
+        return {
+            scaling,
+            colorMap,
+            bias,
+            contrast,
+            gamma,
+            alpha,
+            inverted: isInverted,
+            useCubeHistogram: isUsingCubeHistogram,
+            useCubeHistogramContours: isUsingCubeHistogramContours,
+            selectedPercentile,
+            scaleMin,
+            scaleMax,
+            visible: isVisible
+        };
+    }
+
+    public static createContourConfig(contourConfig: ContourConfigStore): WorkspaceContourConfig | undefined {
+        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
+
+        if (!isEnabled) {
+            return undefined;
+        }
+
+        return {
+            levels,
+            smoothingMode,
+            smoothingFactor,
+            color,
+            colormapEnabled: isColormapEnabled,
+            colormap,
+            colormapContrast,
+            colormapBias,
+            dashMode,
+            thickness,
+            visible: isVisible
+        };
+    }
+
+    public static createVectorOverlayConfig(vectorOverlayConfig: VectorOverlayConfigStore): WorkspaceVectorOverlayConfig | undefined {
+        const {
+            isEnabled,
+            angularSource,
+            intensitySource,
+            isFractionalIntensity,
+            pixelAveraging,
+            isThresholdEnabled,
+            threshold,
+            isDebiasing,
+            qError,
+            uError,
+            thresholdOption,
+            isVisible,
+            thickness,
+            isColormapEnabled,
+            color,
+            colormap,
+            colormapContrast,
+            colormapBias,
+            lengthMin,
+            lengthMax,
+            intensityMin,
+            intensityMax,
+            rotationOffset
+        } = vectorOverlayConfig;
+
+        if (!isEnabled) {
+            return undefined;
+        }
+
+        return {
+            angularSource,
+            intensitySource,
+            fractionalIntensity: isFractionalIntensity,
+            pixelAveraging,
+            thresholdEnabled: isThresholdEnabled,
+            threshold,
+            debiasing: isDebiasing,
+            qError,
+            uError,
+            thresholdOption,
+            visible: isVisible,
+            thickness,
+            colormapEnabled: isColormapEnabled,
+            color,
+            colormap,
+            colormapContrast,
+            colormapBias,
+            lengthMin,
+            lengthMax,
+            intensityMin,
+            intensityMax,
+            rotationOffset
+        };
+    }
 }

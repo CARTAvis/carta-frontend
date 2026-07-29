@@ -1,28 +1,26 @@
 import * as React from "react";
 import {FormGroup, Tab, Tabs} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {autorun, computed} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
+import {HelpType, RegionId, SpatialProfilerSettingsTabs} from "enums";
+import {type LineKey} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import "./SpatialProfilerSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
-export enum SpatialProfilerSettingsTabs {
-    STYLING,
-    SMOOTHING,
-    COMPUTATION
-}
-
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: SpatialProfileWidgetStore | null = null;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler-floating-settings",
             type: "floating-settings",
@@ -38,57 +36,71 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         };
     }
 
-    @computed get widgetStore(): SpatialProfileWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): SpatialProfileWidgetStore | null {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.spatialProfileWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
         super(props);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
+
         const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                if (appStore && coordinate) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.floatingSettingsId) {
+                    if (this.widgetStore) {
+                        const coordinate = this.widgetStore.coordinate;
+                        if (appStore && coordinate) {
+                            const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                            const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                            appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+                        }
+                    } else {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
+                    }
                 }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleWcsAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setWcsAxisVisible(changeEvent.target.checked);
+        this.widgetStore?.setWcsAxisVisible(changeEvent.target.checked);
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.widgetStore.setCoordinate(changeEvent.target.value);
+        this.widgetStore?.setCoordinate(changeEvent.target.value);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -97,14 +109,21 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
@@ -113,14 +132,21 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
@@ -129,14 +155,21 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {
@@ -144,13 +177,17 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    handleSelectedTabChanged = (newTabId: string | number) => {
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
-        const lineRegionSampleWidth = this.widgetStore.effectiveRegion?.lineRegionSampleWidth;
+        if (!widgetStore) {
+            return null;
+        }
+
+        const lineRegionSampleWidth = widgetStore.effectiveRegion?.lineRegionSampleWidth;
         const profileCoordinateOptions = [
             {
                 value: "x",
@@ -168,14 +205,14 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            showWCSAxis: widgetStore.wcsAxisVisible,
-            disableShowWCSAxis: this.widgetStore.effectiveRegion ? this.widgetStore.effectiveRegion.regionType !== CARTA.RegionType.POINT : false,
+            shouldShowWCSAxis: widgetStore.isWcsAxisVisible,
+            isShowWCSAxisDisabled: this.widgetStore.effectiveRegion ? this.widgetStore.effectiveRegion.regionType !== CARTA.RegionType.POINT : false,
             setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             handleWcsAxisChanged: this.handleWcsAxisChanged,
             setPlotType: widgetStore.setPlotType,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,

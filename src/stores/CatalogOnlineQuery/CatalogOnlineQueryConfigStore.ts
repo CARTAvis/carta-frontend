@@ -1,16 +1,10 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {CatalogSystemType, Point2D} from "models";
-import {CatalogDatabase} from "services";
-import {AppStore, NumberFormatType, SystemType} from "stores";
-import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, VizierResource} from "utilities";
-
-export enum RadiusUnits {
-    DEGREES = "deg",
-    ARCMINUTES = "arcmin",
-    ARCSECONDS = "arcsec"
-}
+import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
 
@@ -21,54 +15,36 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly OBJECT_SIZE = 1000;
     public static readonly QUERY_DEG_PRECISION = "10";
 
-    @observable isQuerying: boolean;
-    @observable catalogDB: CatalogDatabase;
-    @observable searchRadius: number;
-    @observable coordsType: CatalogSystemType;
-    @observable coordsFormat: NumberFormatType;
-    @observable centerPixelCoord: {x: string | undefined; y: string | undefined};
-    @observable maxObject: number;
-    @observable enablePointSelection: boolean;
-    @observable radiusUnits: RadiusUnits;
-    @observable objectName: string;
-    @observable isObjectQuerying: boolean;
+    @observable isQuerying: boolean = false;
+    @observable catalogDB: CatalogDatabase = CatalogDatabase.SIMBAD;
+    @observable searchRadius: number = 1;
+    @observable coordsType: CatalogSystemType = CatalogSystemType.ICRS;
+    @observable coordsFormat: NumberFormatType = NumberFormatType.Degrees;
+    @observable centerPixelCoord: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
+    @observable maxObject: number = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
+    @observable isPointSelectionEnabled: boolean = false;
+    @observable radiusUnits: RadiusUnits = RadiusUnits.DEGREES;
+    @observable objectName: string = "";
+    @observable isObjectQuerying: boolean = false;
     //Vizier
-    @observable vizierResource: Map<string, VizierResource>;
-    @observable vizierSelectedTableName: VizierItem[];
-    @observable vizierKeyWords: string;
+    @observable vizierResource: Map<string, VizierResource> = new Map();
+    @observable vizierSelectedTableName: VizierItem[] = [];
+    @observable vizierKeyWords: string = "";
 
     constructor() {
         makeObservable(this);
-        this.isQuerying = false;
-        this.catalogDB = CatalogDatabase.SIMBAD;
-        this.searchRadius = 1;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        this.coordsType = CatalogSystemType.ICRS;
-        this.centerPixelCoord = {x: undefined, y: undefined};
-        this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
-        this.enablePointSelection = false;
-        this.radiusUnits = RadiusUnits.DEGREES;
-        this.coordsFormat = NumberFormatType.Degrees;
-        this.objectName = "";
-        this.isObjectQuerying = false;
-        this.vizierSelectedTableName = [];
-        this.vizierResource = new Map();
-        this.vizierKeyWords = "";
-
         this.resetSearchRadius();
-
         reaction(
             () => AppStore.Instance.activeFrame,
             () => {
                 this.resetSearchRadius();
             }
         );
-
         reaction(
-            () => AppStore.Instance.cursorFrozen,
-            cursorFrozen => {
+            () => AppStore.Instance.isCursorFrozen,
+            isCursorFrozen => {
                 const frame = this.activeFrame;
-                if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
+                if (isCursorFrozen && frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterPixelCoord(frame.cursorInfo.posImageSpace);
                     this.resetObjectName();
                 }
@@ -76,7 +52,7 @@ export class CatalogOnlineQueryConfigStore {
         );
     }
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogOnlineQueryConfigStore.staticInstance) {
             CatalogOnlineQueryConfigStore.staticInstance = new CatalogOnlineQueryConfigStore();
         }
@@ -148,7 +124,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action setPointSelection() {
-        this.enablePointSelection = !this.enablePointSelection;
+        this.isPointSelectionEnabled = !this.isPointSelectionEnabled;
     }
 
     @action setRadiusUnits(units: RadiusUnits) {
@@ -255,13 +231,13 @@ export class CatalogOnlineQueryConfigStore {
         }
     }
 
-    @computed get disableObjectSearch(): boolean {
+    @computed get isObjectSearchDisabled(): boolean {
         return this.objectName === "";
     }
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
+        if (activeFrame?.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
@@ -286,7 +262,7 @@ export class CatalogOnlineQueryConfigStore {
         return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
     }
 
-    @computed get showVizierResult(): boolean {
+    @computed get shouldShowVizierResult(): boolean {
         return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
@@ -296,8 +272,8 @@ export class CatalogOnlineQueryConfigStore {
         return resources;
     }
 
-    @computed get enableLoadVizier(): boolean {
-        return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
+    @computed get canLoadVizier(): boolean {
+        return this.vizierSelectedTableName.length > 0 && this.shouldShowVizierResult;
     }
 
     @computed get vizierTable(): VizierItem[] {
@@ -320,7 +296,7 @@ export class CatalogOnlineQueryConfigStore {
             console.warn(`Invalid precision string: ${precision}. Expected '*' or a non-negative integer. Using default precision *.`);
         }
         const overlay = AppStore.Instance.overlaySettings;
-        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+        return precision ?? (overlay.numbers.hasCustomPrecision ? overlay.numbers.precision.toString() : "*");
     }
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
@@ -330,7 +306,7 @@ export class CatalogOnlineQueryConfigStore {
         if (frame && overlay) {
             const format = `${NumberFormatType.Degrees}.${this.getEffectivePrecision(precision)}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            let astString = new ASTSettingsString();
+            const astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
                 setAstSystem(wcsCopy, sys, overlay.global);
@@ -364,12 +340,12 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
+    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, isDiagonal: boolean): number {
         const max = this.convertToDeg(x);
         const min = this.convertToDeg(y);
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
-        if (diagonal) {
+        if (isDiagonal) {
             return Math.sqrt(xd * xd + yd * yd);
         } else {
             return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) : Math.abs(yd);

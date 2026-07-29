@@ -1,19 +1,19 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {CursorInfo, SpectralInfo} from "models";
 
-import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {
-    cursorInfo: CursorInfo;
+    cursorInfo?: CursorInfo;
     cursorValue: number;
     isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
-    docked: boolean;
+    isDocked: boolean;
     width: number;
     top?: number;
     bottom?: number;
@@ -22,24 +22,27 @@ class CursorOverlayProps {
     height?: number;
     unit?: string;
     currentStokes?: string;
-    cursorValueToPercentage?: boolean;
+    hasCursorValueToPercentage?: boolean;
     isPreview?: boolean;
-    visible?: boolean;
+    isVisible?: boolean;
 }
 
 @observer
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
     render() {
         const cursorInfo = this.props.cursorInfo;
-        let infoStrings: string[] = [];
-        if (cursorInfo.infoWCS) {
-            infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
-        }
-        if (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE) {
-            infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
+        const posImageSpace = cursorInfo?.posImageSpace;
+        const infoStrings: string[] = [];
+        if (cursorInfo) {
+            if (cursorInfo.infoWCS) {
+                infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
+            }
+            if (posImageSpace && (posImageSpace.x !== -Number.MAX_VALUE || posImageSpace.y !== -Number.MAX_VALUE)) {
+                infoStrings.push(`Image: (${toFixed(posImageSpace.x)}, ${toFixed(posImageSpace.y)})`);
+            }
         }
         if (this.props.cursorValue !== undefined) {
-            let valueString = `Value: ${this.props.cursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            let valueString = `Value: ${this.props.hasCursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }
@@ -67,11 +70,11 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
         const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
 
-        let styleProps: CSSProperties = {
+        const styleProps: CSSProperties = {
             lineHeight: height + "px"
         };
 
-        if (this.props.left > 0 || this.props.right > 0) {
+        if (this.props.left !== undefined && this.props.right !== undefined && (this.props.left > 0 || this.props.right > 0)) {
             styleProps.width = this.props.width - this.props.left - this.props.right;
         }
 
@@ -85,20 +88,22 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             styleProps.left = this.props.left;
         }
 
-        const className = classNames("cursor-overlay-div", {docked: this.props.docked});
+        const className = classNames("cursor-overlay-div", {docked: this.props.isDocked});
+        const infoContent =
+            infoStrings.length > 0 ? (
+                infoStrings.map((info, index) => (
+                    <span key={index} className="cursor-info-item">
+                        {info}
+                        {index < infoStrings.length - 1 && ";\u00a0"}
+                    </span>
+                ))
+            ) : (
+                <span>{"\u00a0"}</span>
+            );
 
         return (
-            <div className={className} style={{...styleProps, visibility: this.props.visible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
-                {infoStrings.length ? (
-                    infoStrings.map((info, index) => (
-                        <span key={index} className="cursor-info-item">
-                            {info}
-                            {index < infoStrings.length - 1 && ";\u00a0"}
-                        </span>
-                    ))
-                ) : (
-                    <span>\u00a0</span>
-                )}
+            <div className={className} style={{...styleProps, visibility: this.props.isVisible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
+                {infoContent}
             </div>
         );
     }

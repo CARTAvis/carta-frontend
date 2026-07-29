@@ -1,11 +1,12 @@
 import * as React from "react";
 import {Circle, Layer, Rect, Stage} from "react-konva";
 import {Button, Colors, FormGroup} from "@blueprintjs/core";
-import Konva from "konva";
+import type Konva from "konva";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
 import {clamp} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 const DRAG_MOVE_INTERVAL = 10;
 const DOUBLE_CLICK_THRESHOLD = 300;
@@ -27,10 +28,13 @@ interface BiasContrastSelectComponentProps {
 
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
-    private updateValuesTimer;
+    private updateValuesTimer: ReturnType<typeof setTimeout> | undefined;
+    private stageRef: Konva.Stage | null = null;
+    private popoutDragCleanup: (() => void) | null = null;
 
     private updateValues = (x: number, y: number, interval: number) => {
         clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
         this.updateValuesTimer = setTimeout(() => {
             const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
             const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
@@ -41,13 +45,17 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
     private handleDoubleClick = () => {
         clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
         this.props.resetBias();
         this.props.resetContrast();
     };
 
     private handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        const point = event.target.getStage().getPointerPosition();
-        this.updateValues(point.x, point.y, DOUBLE_CLICK_THRESHOLD);
+        const stage = event.target.getStage();
+        const point = stage?.getPointerPosition();
+        if (point) {
+            this.updateValues(point.x, point.y, DOUBLE_CLICK_THRESHOLD);
+        }
     };
 
     private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {
@@ -56,8 +64,30 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     };
 
     private resetButton = handleClick => {
-        return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
+        return <Button icon={"refresh"} variant="minimal" size="small" onClick={handleClick} />;
     };
+
+    componentDidUpdate() {
+        this.setupPopoutDragListeners();
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
+        this.cleanupPopoutDragListeners();
+    }
+
+    private setupPopoutDragListeners() {
+        this.cleanupPopoutDragListeners();
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef);
+    }
+
+    private cleanupPopoutDragListeners() {
+        if (this.popoutDragCleanup) {
+            this.popoutDragCleanup();
+            this.popoutDragCleanup = null;
+        }
+    }
 
     render() {
         const twoDimensionBoard = (
@@ -78,7 +108,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
         return (
             <React.Fragment>
-                <Stage className={"bias-contrast-stage"} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
+                <Stage className={"bias-contrast-stage"} ref={ref => (this.stageRef = ref)} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
                     <Layer>{twoDimensionBoard}</Layer>
                 </Stage>
                 <FormGroup label={"Bias"} inline={true}>

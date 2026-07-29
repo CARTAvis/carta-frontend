@@ -1,10 +1,12 @@
-import {HipsCoord, HipsProjection, HipsQueryStore} from "./HipsQueryStore";
+import {HipsCoord, HipsProjection} from "enums";
 
-const mockLoadRemoteFile = jest.fn();
+import {HipsQueryStore} from "./HipsQueryStore";
+
+const MockLoadRemoteFile = jest.fn();
 jest.mock("stores", () => ({
     AppStore: {
         Instance: {
-            loadRemoteFile: x => mockLoadRemoteFile(x)
+            loadRemoteFile: x => MockLoadRemoteFile(x)
         }
     }
 }));
@@ -123,7 +125,7 @@ describe("HipsQueryStore", () => {
         store.setIsLoading(false);
 
         await store.queryByObject();
-        expect(mockLoadRemoteFile).toHaveBeenCalledWith(message);
+        expect(MockLoadRemoteFile).toHaveBeenCalledWith(message);
     });
 
     it("queries by the center coordinates", async () => {
@@ -140,6 +142,6 @@ describe("HipsQueryStore", () => {
         };
 
         await store.queryByCenter();
-        expect(mockLoadRemoteFile).toHaveBeenCalledWith(message);
+        expect(MockLoadRemoteFile).toHaveBeenCalledWith(message);
     });
 });

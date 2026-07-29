@@ -1,11 +1,12 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {ResizeEnable, Rnd} from "react-rnd";
-import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
+import {type ResizeEnable, Rnd} from "react-rnd";
+import {Button, Classes, Dialog, type DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, HelpStore, HelpType} from "stores";
+import {type HelpType} from "enums";
+import {AppStore, HelpStore} from "stores";
 
 import "./DraggableDialogComponent.scss";
 
@@ -15,19 +16,33 @@ export class ResizableDialogComponentProps {
     defaultHeight: number;
     minWidth?: number;
     minHeight?: number;
-    enableResizing: boolean;
+    isResizingEnabled: boolean;
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     dialogId: string;
     children?: React.ReactNode;
 }
 
+function getViewportDimensions() {
+    const documentElement = document.documentElement;
+    const body = document.getElementsByTagName("body")[0];
+
+    return {
+        width: window.innerWidth || documentElement.clientWidth || body.clientWidth,
+        height: window.innerHeight || documentElement.clientHeight || body.clientHeight
+    };
+}
+
 @observer
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd = React.createRef<HTMLDivElement>();
-    private rnd: Rnd;
+    private rnd: Rnd | null = null;
 
     private onOpening = () => {
+        if (!this.dd.current) {
+            return;
+        }
+
         // workaround for the blue focus box suppressed to the top after blueprintjs v4 upgrade.
         const focusTrap = this.dd.current.getElementsByClassName(Classes.OVERLAY_START_FOCUS_TRAP)[0] as HTMLDivElement;
         const container = this.dd.current.getElementsByClassName(Classes.DIALOG_CONTAINER)[0] as HTMLDivElement;
@@ -39,7 +54,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         // add help button in dialog header
         const header = this.dd.current.getElementsByClassName(Classes.DIALOG_HEADER);
         if (this.props.helpType && header?.length > 0 && this.dd.current.getElementsByClassName("help-button").length === 0) {
-            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
+            const helpButton = <Button icon="help" variant="minimal" onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
 
@@ -63,11 +78,18 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         if (closeButton) {
             closeButton.setAttribute("data-testid", `${this.props.dialogId}-header-close-button`);
         }
+
+        const helpButton = this.dd.current.getElementsByClassName("help-button")?.[0];
+        if (helpButton) {
+            helpButton.setAttribute("data-testid", `${this.props.dialogId}-header-help-button`);
+        }
     };
 
     private onClickHelpButton = () => {
-        const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+        if (this.props.helpType && this.rnd) {
+            const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
+            HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+        }
     };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {
@@ -77,23 +99,18 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     render() {
-        const w = window,
-            d = document,
-            e = d.documentElement,
-            g = d.getElementsByTagName("body")[0],
-            windowWidth = w.innerWidth || e.clientWidth || g.clientWidth,
-            windowHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+        const {width: windowWidth, height: windowHeight} = getViewportDimensions();
 
-        const resizeEnabled = this.props.enableResizing;
+        const isResizeEnabled = this.props.isResizingEnabled;
         const resizeSettings: ResizeEnable = {
-            top: resizeEnabled,
-            bottom: resizeEnabled,
-            left: resizeEnabled,
-            right: resizeEnabled,
-            topLeft: resizeEnabled,
-            topRight: resizeEnabled,
-            bottomLeft: resizeEnabled,
-            bottomRight: resizeEnabled
+            top: isResizeEnabled,
+            bottom: isResizeEnabled,
+            left: isResizeEnabled,
+            right: isResizeEnabled,
+            topLeft: isResizeEnabled,
+            topRight: isResizeEnabled,
+            bottomLeft: isResizeEnabled,
+            bottomRight: isResizeEnabled
         };
 
         const appStore = AppStore.Instance;
@@ -104,7 +121,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 {this.props.dialogProps.isOpen && (
                     <Rnd
                         enableResizing={resizeSettings}
-                        bounds={".gl-container-app"}
+                        bounds={".layout-container"}
                         dragGrid={[1, 1]}
                         resizeGrid={[25, 25]}
                         default={{

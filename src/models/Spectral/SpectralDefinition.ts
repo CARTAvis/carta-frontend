@@ -1,3 +1,5 @@
+import {FrequencyUnit, IntensityUnitType, SpectralSystem, SpectralType, SpectralUnit} from "enums";
+
 export interface SpectralTypeSet {
     code: string;
     unit: string;
@@ -18,23 +20,6 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "BETA", name: "Beta", unit: ""}
 ];
 
-// FREQ, ENER, WAVN
-export enum SpectralColorMap {
-    FREQ = "FREQ",
-    ENER = "ENER",
-    WAVE = "WAVE"
-}
-
-export enum SpectralType {
-    VRAD = "VRAD",
-    VOPT = "VOPT",
-    FREQ = "FREQ",
-    WAVE = "WAVE",
-    AWAV = "AWAV",
-    CHANNEL = "CHANNEL",
-    NATIVE = "NATIVE" // for non-support spectral type/unit images to switch the coordinate between channel and native value
-}
-
 // Channel is not a valid standalone spectral type
 export const IsSpectralTypeSupported = (typeStr: string): boolean => {
     const normalizedStr = typeStr?.toUpperCase();
@@ -42,46 +27,14 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
-export function IsSpectralMatchingTypeValid(type: SpectralType) {
+
+export const IsSpectralMatchingTypeValid = (type: SpectralType) => {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
-}
-
-export enum SpectralUnit {
-    KMS = "km/s",
-    MS = "m/s",
-    GHZ = "GHz",
-    MHZ = "MHz",
-    KHZ = "kHz",
-    HZ = "Hz",
-    M = "m",
-    MM = "mm",
-    UM = "um",
-    NM = "nm",
-    ANGSTROM = "Angstrom",
-    M_SQUARE = "m^2",
-    MM_SQUARE = "mm^2",
-    UM_SQUARE = "um^2",
-    NM_SQUARE = "nm^2",
-    ANGSTROM_SQUARE = "Angstrom^2"
-}
-
-export enum FrequencyUnit {
-    GHZ = "GHz",
-    MHZ = "MHz",
-    KHZ = "kHz",
-    HZ = "Hz"
-}
+};
 
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return Object.values(SpectralUnit).includes(unit as SpectralUnit);
 };
-
-export enum SpectralSystem {
-    LSRK = "LSRK",
-    LSRD = "LSRD",
-    BARY = "BARYCENT",
-    TOPO = "TOPOCENT"
-}
 
 export const IsSpectralSystemSupported = (systemStr: string): boolean => {
     const normalizedStr = systemStr?.toUpperCase();
@@ -157,15 +110,6 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
 
-export enum IntensityUnitType {
-    Kelvin,
-    JyBeam,
-    JySr,
-    JyArcsec2,
-    JyPixel,
-    Unsupported
-}
-
 enum Jansky {
     MJy = "MJy",
     Jy = "Jy",
@@ -179,7 +123,7 @@ enum Kelvin {
 }
 
 const Jys = Object.values(Jansky);
-const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
+const INTENSITY_OPTIONS_MAP = new Map<IntensityUnitType, string[]>([
     [IntensityUnitType.Kelvin, Object.values(Kelvin)],
     [IntensityUnitType.JyBeam, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
     [IntensityUnitType.JySr, Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
@@ -188,19 +132,19 @@ const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
 ]);
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
-    const lowercaseJyBeam = IntensityOptionsMap.get(IntensityUnitType.JyBeam)?.map(unit => {
+    const lowercaseJyBeam = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyBeam)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJySr = IntensityOptionsMap.get(IntensityUnitType.JySr)?.map(unit => {
+    const lowercaseJySr = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JySr)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyArcsec2 = IntensityOptionsMap.get(IntensityUnitType.JyArcsec2)?.map(unit => {
+    const lowercaseJyArcsec2 = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyArcsec2)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyPixel = IntensityOptionsMap.get(IntensityUnitType.JyPixel)?.map(unit => {
+    const lowercaseJyPixel = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.JyPixel)?.map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseKelvins = IntensityOptionsMap.get(IntensityUnitType.Kelvin)?.map(unit => {
+    const lowercaseKelvins = INTENSITY_OPTIONS_MAP.get(IntensityUnitType.Kelvin)?.map(unit => {
         return unit.toLowerCase();
     });
     const lowercaseUnitStr = unitStr?.toLowerCase();
@@ -226,7 +170,7 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 
 export type IntensityConfig = {nativeIntensityUnit: string; bmaj?: number[]; bmin?: number[]; cdelta1?: number; cdelta2?: number; freqGHz?: number[]};
 const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitType[] => {
-    let options: IntensityUnitType[] = [];
+    const options: IntensityUnitType[] = [];
     const type = FindIntensityUnitType(config?.nativeIntensityUnit);
     if (type !== IntensityUnitType.Unsupported) {
         if (type === IntensityUnitType.Kelvin) {
@@ -270,9 +214,9 @@ const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitTy
 
 export const GetIntensityOptions = (config: IntensityConfig): string[] => {
     const convertibleTypes = FindConvertibleIntensityTypes(config);
-    let supportedOptions: string[] = [];
+    const supportedOptions: string[] = [];
     convertibleTypes?.forEach(type => {
-        supportedOptions.push(...(IntensityOptionsMap.get(type) ?? []));
+        supportedOptions.push(...(INTENSITY_OPTIONS_MAP.get(type) ?? []));
     });
     return supportedOptions;
 };
@@ -286,26 +230,26 @@ export const GetCommonIntensityOptions = (intensityConfigs: IntensityConfig[]): 
     }
 };
 
-const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, isForward: boolean = true): number => {
     const coefficient = (1.222 * 1e6) / (freqGHz * freqGHz * bmaj * bmin);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
-const JyBeamToJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToJySr = (bmaj: number, bmin: number, isForward: boolean = true): number => {
     const bmajRad = (bmaj * Math.PI) / 648000;
     const bminRad = (bmin * Math.PI) / 648000;
     const omega = (Math.PI * bmajRad * bminRad) / (4 * Math.LN2);
-    return forward ? 1 / omega : omega;
+    return isForward ? 1 / omega : omega;
 };
 
-const JySrToJyArcsec2 = (forward: boolean = true): number => {
+const JySrToJyArcsec2 = (isForward: boolean = true): number => {
     const constant = 2.350443 * 1e-11;
-    return forward ? constant : 1 / constant;
+    return isForward ? constant : 1 / constant;
 };
 
-const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, forward: boolean = true): number => {
+const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
     const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
-    return forward ? coefficient : 1 / coefficient;
+    return isForward ? coefficient : 1 / coefficient;
 };
 
 export type IntensityConversion = (values: Float32Array | Float64Array) => Float32Array | Float64Array;

@@ -1,7 +1,62 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "baseUrl": "./src",
+    "paths": {
+      "components": [
+        "./src/components/index"
+      ],
+      "HotkeyWrapper": [
+        "./src/HotkeyWrapper"
+      ],
+      "components/*": [
+        "./src/components/*"
+      ],
+      "enums": [
+        "./src/enums/index"
+      ],
+      "enums/*": [
+        "./src/enums/*"
+      ],
+      "icons": [
+        "./src/icons/index"
+      ],
+      "icons/*": [
+        "./src/icons/*"
+      ],
+      "models": [
+        "./src/models/index"
+      ],
+      "models/*": [
+        "./src/models/*"
+      ],
+      "scripting": [
+        "./src/scripting/index"
+      ],
+      "scripting/*": [
+        "./src/scripting/*"
+      ],
+      "services": [
+        "./src/services/index"
+      ],
+      "services/*": [
+        "./src/services/*"
+      ],
+      "stores": [
+        "./src/stores/index"
+      ],
+      "stores/*": [
+        "./src/stores/*"
+      ],
+      "static/*": [
+        "./src/static/*"
+      ],
+      "utilities": [
+        "./src/utilities/index"
+      ],
+      "utilities/*": [
+        "./src/utilities/*"
+      ]
+    },
     "rootDir": "src",
     "lib": [
       "dom",
@@ -16,18 +71,17 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitAny": false,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "noUnusedLocals": false,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
     "noEmit": true,
     "jsx": "react-jsx",
-    "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src",

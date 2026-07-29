@@ -1,7 +1,7 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
+import type {TypedArray} from "utilities";
 
-import {FrameScaling} from "stores/Frame";
-import {TypedArray} from "utilities";
+import {FrameScaling} from "enums";
 
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
@@ -47,7 +47,7 @@ export function normalising(a: number, b: number) {
     return (a / b) * 100;
 }
 
-export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
+export function getPercentiles(histogram: CARTA.Histogram.$Properties, ranks: number[]): number[] {
     if (!ranks || !ranks.length || !histogram || !histogram.bins?.length) {
         return [];
     }
@@ -55,7 +55,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     const minVal = (histogram.firstBinCenter ?? NaN) - (histogram.binWidth ?? NaN) / 2.0;
     const dx = histogram.binWidth ?? NaN;
     const vals = histogram.bins;
-    let remainingRanks = ranks.slice();
+    const remainingRanks = ranks.slice();
     let cumulativeSum = 0;
 
     let totalSum = 0;
@@ -67,7 +67,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
         return [];
     }
 
-    let calculatedPercentiles: number[] = [];
+    const calculatedPercentiles: number[] = [];
 
     for (let i = 0; i < vals.length && remainingRanks.length; i++) {
         const currentFraction = cumulativeSum / totalSum;
@@ -108,7 +108,7 @@ function getSmoothedValue(bias: number, contrast: number) {
     return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
@@ -130,7 +130,7 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             scaleValue = x;
     }
 
-    if (useSmoothedBiasContrast) {
+    if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             scaleValue = clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
@@ -145,9 +145,9 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
-    if (useSmoothedBiasContrast) {
+    if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             if (x === 0 && smoothedBias === 0 && contrast === 0) {

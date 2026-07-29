@@ -1,6 +1,7 @@
 import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
+import {ColorMap, ColormapSet} from "enums";
 import {AppStore, type FrameStore, RenderConfigStore} from "stores";
 import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 
@@ -8,12 +9,12 @@ import {COLOR_MAPS_MONO, getColorsForValues} from "utilities";
 type ColormapSetConfig =
     | {
           type: "gradient";
-          colormap: string;
+          colormap: ColorMap;
           inverted: boolean;
       }
     | {
           type: "collection";
-          colormaps: readonly string[];
+          colormaps: readonly ColorMap[];
       };
 
 /** Configuration of a color blended image. */
@@ -23,26 +24,26 @@ export class ColorBlendingStore {
     /** The filename of the color blended image. */
     readonly filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
-    static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
-        ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
-        ["CMY", {type: "collection", colormaps: ["Magenta", "Yellow", "Cyan"]}],
-        ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
+    public static readonly COLORMAP_SETS: ReadonlyMap<ColormapSet, ColormapSetConfig> = new Map([
+        [ColormapSet.RGB, {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
+        [ColormapSet.CMY, {type: "collection", colormaps: [ColorMap.Magenta, ColorMap.Yellow, ColorMap.Cyan]}],
+        [ColormapSet.Rainbow, {type: "gradient", colormap: ColorMap.Rainbow, inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
-    static readonly DefaultLayerLimit = 10;
+    public static readonly DEFAULT_LAYER_LIMIT = 10;
 
     /** The custom title shown in the image view overlay. */
-    @observable titleCustomText: string;
+    @observable titleCustomText: string = "";
     /** The frames from the layers excluding the base layer. */
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
     /** The visibility of the blended raster image. */
-    @observable rasterVisible = true;
+    @observable isRasterVisible: boolean = true;
     /** The visibility of all the contours. */
-    @observable contourVisible = true;
+    @observable isContourVisible: boolean = true;
     /** The visibility of all the vector overlays. */
-    @observable vectorOverlayVisible = true;
+    @observable isVectorOverlayVisible: boolean = true;
 
     /**
      * Sets the custom title shown in the image view overlay.
@@ -114,17 +115,17 @@ export class ColorBlendingStore {
 
     /** Hides or shows the blended raster image. */
     @action toggleRasterVisible = () => {
-        this.rasterVisible = !this.rasterVisible;
+        this.isRasterVisible = !this.isRasterVisible;
     };
 
     /** Hides or shows all the contours. */
     @action toggleContourVisible = () => {
-        this.contourVisible = !this.contourVisible;
+        this.isContourVisible = !this.isContourVisible;
     };
 
     /** Hides or shows all the vector overlays. */
     @action toggleVectorOverlayVisible = () => {
-        this.vectorOverlayVisible = !this.vectorOverlayVisible;
+        this.isVectorOverlayVisible = !this.isVectorOverlayVisible;
     };
 
     /** The frame from the base layer. */
@@ -141,7 +142,7 @@ export class ColorBlendingStore {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
         this.titleCustomText = this.filename;
-        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DefaultLayerLimit - 1) ?? [];
+        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DEFAULT_LAYER_LIMIT - 1) ?? [];
         this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
 
@@ -165,10 +166,10 @@ export class ColorBlendingStore {
      * Applies the specified colormap set to the layers. Frames with raster scaling matching enabled are skipped.
      * - If the colormap set is a single gradient colormap, it interpolates colors along the gradient for each frame.
      * - If the colormap set is a collection of multiple colormaps, it interpolates between the indexes and selects a colormap from the collection to match the number of frames.
-     * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
+     * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.COLORMAP_SETS` map.
      */
-    applyColormapSet = (set: string) => {
-        const colormapSetConfig = ColorBlendingStore.ColormapSets.get(set);
+    applyColormapSet = (set: ColormapSet) => {
+        const colormapSetConfig = ColorBlendingStore.COLORMAP_SETS.get(set);
         if (!colormapSetConfig) {
             console.error("Invalid colormap set name.");
             return;

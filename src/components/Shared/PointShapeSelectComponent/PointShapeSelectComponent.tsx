@@ -1,6 +1,6 @@
 import React from "react";
 import {Button, Classes, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -10,9 +10,9 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     const appStore = AppStore.Instance;
     const preference = appStore.preferenceStore;
 
-    const iconWrapper = (path: React.ReactNode, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+    const iconWrapper = (path: React.ReactNode, color: string, shouldFill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
         let fillColor = color;
-        if (!fill) {
+        if (!shouldFill) {
             fillColor = "none";
         }
         return (
@@ -65,7 +65,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             itemRenderer={renderShapePopOver}
             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
         >
-            <Button icon={getPointShape(props.pointShape)} rightIcon="double-caret-vertical" />
+            <Button icon={getPointShape(props.pointShape)} endIcon="double-caret-vertical" />
         </Select>
     );
 });

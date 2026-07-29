@@ -5,30 +5,34 @@ import {Snippet} from "models";
 import {ApiService} from "services";
 import {AlertStore} from "stores";
 
-import {exampleSnippets} from "./ExampleSnippets";
+import {EXAMPLE_SNIPPETS} from "./ExampleSnippets";
 
 export class SnippetStore {
     private static staticInstance: SnippetStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SnippetStore.staticInstance) {
             SnippetStore.staticInstance = new SnippetStore();
         }
         return SnippetStore.staticInstance;
     }
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
-    @observable snippets: Map<string, Snippet>;
-    @observable activeSnippet: Snippet;
-    @observable activeSnippetName: string | undefined;
-    @observable isExecuting: boolean;
+    @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
+    @observable activeSnippet: Snippet = {
+        code: "",
+        frontendVersion: Snippet.FRONTEND_VERSION,
+        snippetVersion: Snippet.SNIPPET_VERSION,
+        categories: []
+    };
+    @observable activeSnippetName: string | undefined = "";
+    @observable isExecuting: boolean = false;
 
     private constructor() {
         makeObservable(this);
         this.setDefaultSnippets();
         this.clearActiveSnippet();
-        this.isExecuting = false;
     }
 
     public snippetExists = (name: string): boolean => {
@@ -40,7 +44,7 @@ export class SnippetStore {
             this.snippets = new Map<string, Snippet>();
         }
         this.snippets.clear();
-        for (const example of exampleSnippets) {
+        for (const example of EXAMPLE_SNIPPETS) {
             let category = "Examples";
             if (example.section) {
                 category += `/${example.section}`;
@@ -50,8 +54,8 @@ export class SnippetStore {
                 tags: ["example"],
                 categories: [category],
                 code: example.code,
-                frontendVersion: Snippet.FrontendVersion,
-                snippetVersion: Snippet.SnippetVersion
+                frontendVersion: Snippet.FRONTEND_VERSION,
+                snippetVersion: Snippet.SNIPPET_VERSION
             };
 
             this.snippets.set(example.name, snippet);
@@ -72,7 +76,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined snippets failed!");
-            console.log(err);
+            console.error(err);
         }
     }
 
@@ -80,19 +84,20 @@ export class SnippetStore {
         return this.snippets.size;
     }
 
-    @computed get validInput() {
+    @computed get isInputValid() {
         return this.functionToExecute !== undefined;
     }
 
     @computed
     private get functionToExecute() {
-        const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-        if (this.activeSnippet && AsyncFunction) {
+        const asyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+        if (this.activeSnippet && asyncFunction) {
             let f;
             try {
-                f = new AsyncFunction(this.activeSnippet.code);
+                f = new asyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
+                console.error(e);
             }
             return f;
         }
@@ -117,8 +122,8 @@ export class SnippetStore {
     @action clearActiveSnippet = () => {
         this.activeSnippet = {
             code: "",
-            frontendVersion: Snippet.FrontendVersion,
-            snippetVersion: Snippet.FrontendVersion,
+            frontendVersion: Snippet.FRONTEND_VERSION,
+            snippetVersion: Snippet.SNIPPET_VERSION,
             categories: []
         };
         this.activeSnippetName = "";
@@ -131,15 +136,15 @@ export class SnippetStore {
         this.activeSnippet.code = val;
     };
 
-    @flow.bound *saveSnippet(name: string, snippet: Snippet, silent: boolean = false) {
+    @flow.bound *saveSnippet(name: string, snippet: Snippet, isSilent: boolean = false) {
         this.snippets.set(name, snippet);
 
         try {
             const success = yield ApiService.Instance.setSnippet(name, snippet);
             if (success) {
                 // Silently exit on success if silent flag is set
-                if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                if (!isSilent) {
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -148,18 +153,19 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }
 
-    @flow.bound *deleteSnippet(name: string, silent: boolean = false) {
+    @flow.bound *deleteSnippet(name: string, isSilent: boolean = false) {
         this.snippets.delete(name);
         try {
             const success = yield ApiService.Instance.clearSnippet(name);
             if (success) {
                 // Silently exit on success if silent flag is set
-                if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                if (!isSilent) {
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
                 }
                 return true;
             } else {
@@ -168,12 +174,13 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }
 
-    @action private setSnippetExecuting = (val: boolean) => {
-        this.isExecuting = val;
+    @action private setSnippetExecuting = (isExecuting: boolean) => {
+        this.isExecuting = isExecuting;
     };
 
     @flow.bound *executeCurrentSnippet() {

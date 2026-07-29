@@ -1,7 +1,7 @@
 import * as React from "react";
-import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition, PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 // Static assets
@@ -24,6 +24,7 @@ interface ColormapComponentProps {
     customColorStart?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ColorMapSelect = Select<string>;
 const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
@@ -32,7 +33,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : COLOR_MAPS_SELECTED;
 
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
-        const disableAlpha = true;
+        const shouldDisableAlpha = true;
         const changeDelay = 100;
 
         if (!modifiers.matchesPredicate) {
@@ -40,18 +41,18 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
 
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
-            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
             const handleColorChange = _.throttle((color: any) => {
-                props.onCustomColorSelect(color.hex);
+                props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
-                    <Popover position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={disableAlpha} />}>
+                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}>
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
-                    </Popover>
+                    </PopoverNext>
                 </div>
             );
         } else {
@@ -63,12 +64,24 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
         <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
-            <Button disabled={props.disabled} text={colormapBlock} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
+            <Button disabled={props.disabled} text={colormapBlock} endIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
 };
 
-export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColorStart, selectedCustomColor}: {colormap: string; inverted: boolean; roundIcon?: boolean; customColorStart?: string; selectedCustomColor?: string}) => {
+export const ColormapBlock = ({
+    colormap,
+    inverted: isInverted,
+    roundIcon: isRoundIcon = false,
+    customColorStart,
+    selectedCustomColor
+}: {
+    colormap: string;
+    inverted: boolean;
+    roundIcon?: boolean;
+    customColorStart?: string;
+    selectedCustomColor?: string;
+}) => {
     const className = "colormap-block";
     const blockHeight = 15;
 
@@ -77,7 +90,7 @@ export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColo
             <div
                 className={className}
                 style={{
-                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    transform: `scaleX(${isInverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
                     backgroundImage: `linear-gradient(to right, ${customColorStart}, ${selectedCustomColor})`,
                     backgroundSize: `100% 300%`,
@@ -90,10 +103,10 @@ export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColo
             <div
                 className={className}
                 style={{
-                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    transform: `scaleX(${isInverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
-                    width: roundIcon ? `${blockHeight}px` : undefined,
-                    borderRadius: roundIcon ? `100%` : undefined,
+                    width: isRoundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: isRoundIcon ? `100%` : undefined,
                     backgroundImage: `linear-gradient(to right, black, ${COLOR_MAPS_MONO.get(colormap)})`,
                     backgroundSize: `100% 300%`,
                     backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
@@ -107,10 +120,10 @@ export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColo
             <div
                 className={className}
                 style={{
-                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    transform: `scaleX(${isInverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
-                    width: roundIcon ? `${blockHeight}px` : undefined,
-                    borderRadius: roundIcon ? `100%` : undefined,
+                    width: isRoundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: isRoundIcon ? `100%` : undefined,
                     backgroundImage: `url(${allMaps})`,
                     backgroundSize: `100% calc(300% * ${N})`,
                     backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`

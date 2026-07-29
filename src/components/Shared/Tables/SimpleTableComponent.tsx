@@ -1,7 +1,7 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {type CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 export class SimpleTableComponentProps {
@@ -11,18 +11,18 @@ export class SimpleTableComponentProps {
     columnWidths?: Array<number>;
     onColumnWidthChanged?: (index: number, size: number) => void;
     defaultRowHeight?: number;
-    enableGhostCells?: boolean;
+    areGhostCellsEnabled?: boolean;
     isIndexZero?: boolean;
     boldIndex?: number[];
-    updateTableRef?: (ref: Table2) => void;
+    updateTableRef?: (ref: Table) => void;
     tooltipIndex?: number;
     cellRendererDependencies?: React.DependencyList;
 }
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-    private getFontStyle = (rowIndex: number): CSSProperties => {
-        return this.props.boldIndex?.includes(rowIndex) ? {fontWeight: "bold"} : null;
+    private getFontStyle = (rowIndex: number): CSSProperties | undefined => {
+        return this.props.boldIndex?.includes(rowIndex) ? {fontWeight: "bold"} : undefined;
     };
 
     private renderRowHeaderCell = (rowIndex: number) => {
@@ -53,34 +53,34 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     render() {
         const table = this.props;
-        const tableColumns = [];
+        const tableColumns: React.ReactElement[] = [];
         const tableData = table.dataset;
 
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
-            let dataArray = tableData.get(columnIndex)?.data;
+            const dataArray = tableData.get(columnIndex)?.data;
             const column = this.renderDataColumn(header.name, dataArray);
             tableColumns.push(column);
         });
 
         return (
-            <Table2
-                ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
+            <Table
+                ref={table.updateTableRef ? ref => ref && table.updateTableRef?.(ref) : undefined}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
                 selectionModes={SelectionModes.NONE}
-                enableGhostCells={this.props.enableGhostCells ?? true}
+                enableGhostCells={this.props.areGhostCellsEnabled ?? true}
                 defaultRowHeight={this.props.defaultRowHeight}
                 rowHeaderCellRenderer={this.renderRowHeaderCell}
                 enableRowResizing={false}
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
                 cellRendererDependencies={this.props.cellRendererDependencies}
-                getCellClipboardData={null}
+                getCellClipboardData={undefined}
             >
                 {tableColumns}
-            </Table2>
+            </Table>
         );
     }
 }

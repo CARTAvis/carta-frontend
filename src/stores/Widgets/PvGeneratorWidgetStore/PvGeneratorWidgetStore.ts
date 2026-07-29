@@ -1,32 +1,29 @@
-import {OptionProps} from "@blueprintjs/core";
+import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {SpectralSystem} from "models";
-import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
+import {TelemetryService} from "services";
+import {AppStore, PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
-
-export enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
+import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
-    @observable width: number;
-    @observable reverse: boolean;
-    @observable keep: boolean;
-    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+    @observable width: number = 3;
+    @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
+    @observable shouldKeep: boolean = false;
+    @observable range: CARTA.IntBounds.$Properties = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
     @observable xyRebin: number = 1;
     @observable zRebin: number = 1;
-    @observable previewRegionId: number;
-    @observable previewFrame: FrameStore | null;
-    @observable pvCutRegionId: number | null;
+    @observable previewRegionId: number = RegionId.NONE;
+    @observable previewFrame: FrameStore | null = null;
+    @observable pvCutRegionId: number | null = null;
     @observable previewFullViewWidth: number = 1;
     @observable previewFullViewHeight: number = 1;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -76,7 +73,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         return RegionId.IMAGE;
     }
 
-    @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
+    @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
         if (!frame) {
             return;
@@ -101,30 +98,30 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             channelIndexMin = channelIndexMax - 1;
         }
         if (frame && this.effectiveRegion) {
-            const requestMessage: CARTA.IPvRequest = {
+            const requestMessage: CARTA.PvRequest.$Properties = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
-                reverse: this.reverse,
-                keep: this.keep,
+                reverse: this.isReverse,
+                keep: this.shouldKeep,
                 previewSettings:
-                    preview && pvGeneratorId
+                    isPreview && pvGeneratorId
                         ? {
                               previewId: parseInt(pvGeneratorId.split("-")[2]),
                               regionId: this.effectivePreviewRegionId,
                               rebinXy: this.xyRebin,
                               rebinZ: this.zRebin,
-                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality ?? 11,
+                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality ?? 9,
                               compressionType: CARTA.CompressionType.ZFP
                           }
                         : undefined
             };
-            if (preview && pvGeneratorId) {
+            if (isPreview && pvGeneratorId) {
                 AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
             } else {
-                AppStore.Instance.requestPV(requestMessage, frame, this.keep);
+                AppStore.Instance.requestPV(requestMessage, frame, this.shouldKeep);
                 const depth = channelIndexMax - channelIndexMin + 1;
                 TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, length: length2D(this.effectiveRegion.size), depth});
             }
@@ -155,16 +152,16 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.width = val;
     };
 
-    @action setReverse = (bool: boolean) => {
-        this.reverse = bool;
-        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE, bool);
+    @action setReverse = (isReverse: boolean) => {
+        this.isReverse = isReverse;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE, isReverse);
     };
 
-    @action setKeep = (bool: boolean) => {
-        this.keep = bool;
+    @action setKeep = (shouldKeep: boolean) => {
+        this.shouldKeep = shouldKeep;
     };
 
-    @action setSpectralRange = (range: CARTA.IIntBounds) => {
+    @action setSpectralRange = (range: CARTA.IntBounds.$Properties) => {
         if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
             this.range = range;
         }
@@ -207,18 +204,23 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
-        this.width = 3;
-        this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
-        this.keep = false;
+
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
 
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
-                    this.setSpectralRange(channelValueBounds);
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.channelValueBounds,
+                channelValueBounds => {
+                    if (channelValueBounds) {
+                        this.setSpectralRange(channelValueBounds);
+                    }
                 }
-            }
+            )
         );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 }

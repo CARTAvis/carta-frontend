@@ -1,8 +1,8 @@
 export * from "./AnnotationMenu/AnnotationMenuComponent";
-export * from "./AutoColorPicker/AutoColorPickerComponent";
 export * from "./BiasContrastSelectComponent/BiasContrastSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInputComponent";
 export * from "./ColormapComponent/ColormapComponent";
+export * from "./ColorPicker/AutoColorPickerComponent";
 export * from "./ColorPicker/ColorPickerComponent";
 export * from "./CoordinateComponent/CoordinateComponent";
 export * from "./CoordinateComponent/CoordinateComponent";
@@ -15,6 +15,7 @@ export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
 export * from "./PointShapeSelectComponent/PointShapeSelectComponent";
 export * from "./PopoverSettings/PopoverSettingsComponent";
 export * from "./ProfilerInfo/ProfilerInfoComponent";
+export * from "./regionIcon";
 export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./ResizeDetector/ResizeDetector";
 export * from "./SafeNumericInput/SafeNumericInput";

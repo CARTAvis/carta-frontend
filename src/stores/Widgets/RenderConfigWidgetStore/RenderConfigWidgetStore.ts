@@ -1,25 +1,25 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType} from "components/Shared";
+import {LineSettings, PlotType} from "enums";
 import {isAutoColor} from "utilities";
 
 export class RenderConfigWidgetStore {
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
 
     // settings
-    @observable plotType: PlotType;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable logScaleY: boolean;
-    @observable markerTextVisible: boolean;
-    @observable meanRmsVisible: boolean;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable isLogScaleY: boolean = true;
+    @observable isMarkerTextVisible: boolean = true;
+    @observable isMeanRmsVisible: boolean = true;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -55,16 +55,16 @@ export class RenderConfigWidgetStore {
         this.maxY = undefined;
     };
 
-    @action setMarkerTextVisible = (val: boolean) => {
-        this.markerTextVisible = val;
+    @action setMarkerTextVisible = (isMarkerTextVisible: boolean) => {
+        this.isMarkerTextVisible = isMarkerTextVisible;
     };
 
-    @action setMeanRmsVisible = (val: boolean) => {
-        this.meanRmsVisible = val;
+    @action setMeanRmsVisible = (isMeanRmsVisible: boolean) => {
+        this.isMeanRmsVisible = isMeanRmsVisible;
     };
 
-    @action setLogScale = (logScale: boolean) => {
-        this.logScaleY = logScale;
+    @action setLogScale = (isLogScale: boolean) => {
+        this.isLogScaleY = isLogScale;
     };
 
     @action setPlotType = (val: PlotType) => {
@@ -77,14 +77,6 @@ export class RenderConfigWidgetStore {
 
     constructor() {
         makeObservable(this);
-        this.logScaleY = true;
-        this.plotType = PlotType.STEPS;
-        this.markerTextVisible = true;
-        this.meanRmsVisible = true;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
     }
 
     @computed get isAutoScaledX() {
@@ -131,13 +123,13 @@ export class RenderConfigWidgetStore {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
         if (typeof widgetSettings.logScaleY === "boolean") {
-            this.logScaleY = widgetSettings.logScaleY;
+            this.isLogScaleY = widgetSettings.logScaleY;
         }
         if (typeof widgetSettings.markerTextVisible === "boolean") {
-            this.markerTextVisible = widgetSettings.markerTextVisible;
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
         }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
-            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+            this.isMeanRmsVisible = widgetSettings.meanRmsVisible;
         }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
@@ -161,9 +153,9 @@ export class RenderConfigWidgetStore {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            logScaleY: this.logScaleY,
-            markerTextVisible: this.markerTextVisible,
-            meanRmsVisible: this.meanRmsVisible,
+            logScaleY: this.isLogScaleY,
+            markerTextVisible: this.isMarkerTextVisible,
+            meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,
