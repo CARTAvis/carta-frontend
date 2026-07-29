@@ -38,9 +38,13 @@ describe("Slider", () => {
 
         const onChange = jest.fn();
         const {container} = render(<Slider min={0} max={10} value={0} onChange={onChange} labelRenderer={false} />);
+        const handle = container.querySelector<HTMLElement>(`.${Classes.SLIDER_HANDLE}`)!;
+        handle.focus();
 
         trackWidth = 200;
         act(() => resizeCallback?.([], {} as ResizeObserver));
+        expect(container.querySelector(`.${Classes.SLIDER_HANDLE}`)).toBe(handle);
+        expect(document.activeElement).toBe(handle);
         fireEvent.mouseDown(container.querySelector(`.${Classes.SLIDER_TRACK}`)!, {clientX: 100});
 
         expect(onChange).toHaveBeenLastCalledWith(5);
