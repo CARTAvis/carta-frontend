@@ -52,11 +52,11 @@ export class ChannelMapStore {
         );
 
         reaction(
-            () => this.displayedFrame?.channel,
+            () => this.displayedFrame?.requiredChannel,
             channel => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
-                } else if (!this.channelArray.includes(channel)) {
+                } else if (this.isChannelMapEnabled || !this.channelArray.includes(channel)) {
                     this.setStartChannel(channel);
                 }
             }

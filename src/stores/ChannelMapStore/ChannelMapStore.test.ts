@@ -1,3 +1,5 @@
+import {runInAction} from "mobx";
+
 import {ChannelMapStore} from "./ChannelMapStore";
 
 jest.mock("services", () => ({
@@ -9,29 +11,37 @@ jest.mock("services", () => ({
     }
 }));
 
-jest.mock("stores", () => ({
-    AppStore: {
-        Instance: {
-            preferenceStore: {
-                imageCompressionQuality: 11
-            },
-            imageViewConfigStore: {
-                visibleImages: [
-                    {
-                        type: 0,
-                        store: {
-                            channel: 0,
-                            frameInfo: {fileInfoExtended: {depth: 12}},
-                            requiredFrameView: false,
-                            requiredTiles: [[], {x: 0, y: 0}],
-                            setChannel: jest.fn()
+jest.mock("stores", () => {
+    const {observable} = jest.requireActual("mobx");
+    return {
+        AppStore: {
+            Instance: {
+                preferenceStore: {
+                    imageCompressionQuality: 11
+                },
+                imageViewConfigStore: {
+                    visibleImages: [
+                        {
+                            type: 0,
+                            store: observable.object(
+                                {
+                                    channel: 0,
+                                    requiredChannel: 0,
+                                    frameInfo: {fileInfoExtended: {depth: 12}},
+                                    requiredFrameView: false,
+                                    requiredTiles: [[], {x: 0, y: 0}],
+                                    setChannel: jest.fn()
+                                },
+                                {},
+                                {deep: false}
+                            )
                         }
-                    }
-                ]
+                    ]
+                }
             }
         }
-    }
-}));
+    };
+});
 
 import {TileService} from "services";
 
@@ -44,6 +54,23 @@ describe("ChannelMapStore", () => {
 
             store.setChannelMapEnabled(true);
             expect(store.isChannelMapEnabled).toBe(true);
+        });
+
+        it("starts from a newly selected channel before its raster response arrives", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number};
+            store.setStartChannel(0);
+
+            runInAction(() => {
+                frame.channel = 0;
+                frame.requiredChannel = 2;
+            });
+
+            expect(store.startChannel).toBe(2);
+            expect(store.channelArray[0]).toBe(2);
+
+            runInAction(() => {
+                frame.requiredChannel = 0;
+            });
         });
 
         it("cancels delayed tile requests when disabled", () => {
