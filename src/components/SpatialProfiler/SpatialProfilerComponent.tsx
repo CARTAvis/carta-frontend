@@ -13,7 +13,7 @@ import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {SpatialProfileWidgetStore} from "stores/Widgets";
-import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
+import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint, TRANSPARENT_COLOR} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -624,7 +624,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
                         if (!smoothingStore.isOverlayOn) {
-                            linePlotProps.lineColor = "#00000000";
+                            linePlotProps.lineColor = TRANSPARENT_COLOR;
                         }
 
                         const smoothingPlotProps: MultiPlotProps = {

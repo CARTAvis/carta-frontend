@@ -1,4 +1,4 @@
-import type {RGBColor} from "react-color";
+import type {RgbaColor} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import type {WorkspaceVectorOverlayConfig} from "models";
@@ -26,7 +26,7 @@ export class VectorOverlayConfigStore {
     @observable isVisible: boolean = true;
     @observable thickness: number = 1;
     @observable isColormapEnabled: boolean = false;
-    @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
+    @observable color: RgbaColor = {r: 0, g: 0, b: 0, a: 1};
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;

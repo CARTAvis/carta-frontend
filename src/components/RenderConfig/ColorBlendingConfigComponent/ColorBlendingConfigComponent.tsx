@@ -1,5 +1,5 @@
-import {AlphaPicker} from "react-color";
 import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, PopoverNext, Text, Tooltip} from "@blueprintjs/core";
+import Alpha from "@uiw/react-color-alpha";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -69,7 +69,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                     />
                 </Tooltip>
                 <div className="alpha-settings">
-                    <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
+                    <Alpha className="alpha-slider" hsva={{h: 0, s: 0, v: 0, a: alpha}} onChange={color => setAlpha(color.a)} />
                     <Tooltip content="Alpha">
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip>

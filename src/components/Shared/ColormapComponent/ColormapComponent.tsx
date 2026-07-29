@@ -1,7 +1,7 @@
 import * as React from "react";
-import {SketchPicker} from "react-color";
 import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
 // Static assets
@@ -50,12 +50,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
-                    <PopoverNext
-                        placement="left"
-                        shouldReturnFocusOnClose={false}
-                        popoverClassName={popoverClassName}
-                        content={<SketchPicker color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}
-                    >
+                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}>
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </PopoverNext>
                 </div>
