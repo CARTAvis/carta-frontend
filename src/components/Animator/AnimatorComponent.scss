@@ -98,7 +98,7 @@
                 word-wrap: break-word;
             }
 
-            &.time-slider {
+            &.time-series-slider {
                 .#{$ns}-slider-label {
                     font-size: 10px;
                     font-variant-numeric: tabular-nums;
@@ -116,7 +116,7 @@
                     }
                 }
 
-                .time-slider-spacer {
+                .time-series-slider-spacer {
                     visibility: hidden;
                 }
 
@@ -133,12 +133,12 @@
                     }
                 }
 
-                &.long-time-labels {
+                &.long-time-series-labels {
                     margin-bottom: 85px;
                 }
             }
 
-            &.stokes-slider.has-time-slider-below {
+            &.stokes-slider.has-time-series-slider-below {
                 margin-bottom: 20px;
             }
 

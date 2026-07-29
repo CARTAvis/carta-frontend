@@ -114,7 +114,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         appStore.setActiveImageByIndex(this.wrapIndex(val, imageNum));
     };
 
-    onTimeChanged = (val: number) => {
+    onTimeSeriesChanged = (val: number) => {
         const timeSeriesStore = AppStore.Instance.timeSeriesStore;
         const count = timeSeriesStore.elements.length;
         if (count > 0) {
@@ -145,7 +145,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             case AnimationMode.STOKES:
                 frame.setChannels(frame.channel, 0, true);
                 break;
-            case AnimationMode.TIME:
+            case AnimationMode.TIME_SERIES:
                 appStore.timeSeriesStore.first();
                 break;
             default:
@@ -173,7 +173,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 const stokes = frame.frameInfo.fileInfoExtended.stokes;
                 frame.setChannels(frame.channel, stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : stokes - 1, true);
                 break;
-            case AnimationMode.TIME:
+            case AnimationMode.TIME_SERIES:
                 appStore.timeSeriesStore.last();
                 break;
             default:
@@ -199,7 +199,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, 1);
                 break;
-            case AnimationMode.TIME:
+            case AnimationMode.TIME_SERIES:
                 appStore.timeSeriesStore.next();
                 break;
             default:
@@ -225,7 +225,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, -1);
                 break;
-            case AnimationMode.TIME:
+            case AnimationMode.TIME_SERIES:
                 appStore.timeSeriesStore.prev();
                 break;
             default:
@@ -260,10 +260,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const sliderSettings = animatorWidgetStore ?? DEFAULT_ANIMATOR_WIDGET_CONFIG;
         const timeSeriesStore = appStore.timeSeriesStore;
         const timeSeriesElements = timeSeriesStore.elements;
-        const numTimes = timeSeriesElements.length;
-        const shouldAddTimeSliderSpacing = !shouldHideSliders && this.width < 750 && numTimes > 1 && sliderSettings.isTimeSliderVisible;
+        const numTimeSeriesElements = timeSeriesElements.length;
+        const shouldAddTimeSeriesSliderSpacing = !shouldHideSliders && this.width < 750 && numTimeSeriesElements > 1 && sliderSettings.isTimeSeriesSliderVisible;
 
-        let channelSlider, channelRangeSlider, stokesSlider, imageSlider, timeSlider;
+        let channelSlider, channelRangeSlider, stokesSlider, imageSlider, timeSeriesSlider;
         // Image Control
         const imageIndex = appStore.activeImageIndex;
         if (numImages > 1 && imageIndex !== -1 && sliderSettings.isImageSliderVisible) {
@@ -341,7 +341,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Stokes Control
         if (numStokes > 1 && activeFrame && sliderSettings.isStokesSliderVisible) {
             stokesSlider = (
-                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750, "has-time-slider-below": shouldAddTimeSliderSpacing})} data-testid="animator-polarization-slider">
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750, "has-time-series-slider-below": shouldAddTimeSeriesSliderSpacing})} data-testid="animator-polarization-slider">
                     <Radio
                         value={AnimationMode.STOKES}
                         disabled={appStore.animatorStore.isAnimationActive}
@@ -381,12 +381,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Time series control
-        if (numTimes > 1 && sliderSettings.isTimeSliderVisible) {
-            const currentTimeIndex = timeSeriesStore.currentIndex;
-            const {values: timeTick} = getDiscreteSliderTicks(numTimes, currentTimeIndex);
+        if (numTimeSeriesElements > 1 && sliderSettings.isTimeSeriesSliderVisible) {
+            const currentTimeSeriesIndex = timeSeriesStore.currentIndex;
+            const {values: timeSeriesTick} = getDiscreteSliderTicks(numTimeSeriesElements, currentTimeSeriesIndex);
             const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, sliderSettings);
             const timeLabelFormatName = getTimeLabelFormatName(sliderSettings);
-            const renderTimeTickLabel = (index: number) => {
+            const renderTimeSeriesTickLabel = (index: number) => {
                 const element = timeSeriesElements[index];
                 if (!element) {
                     return "";
@@ -406,30 +406,30 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 );
                 return (
                     <Tooltip content={tooltipContent} position={Position.TOP}>
-                        <span className={classNames("time-tick-label", {"is-selected": index === currentTimeIndex})}>{timeTickLabels[index]}</span>
+                        <span className={classNames("time-tick-label", {"is-selected": index === currentTimeSeriesIndex})}>{timeTickLabels[index]}</span>
                     </Tooltip>
                 );
             };
-            timeSlider = (
-                <div className={classNames("animator-slider", "time-slider", "angled-labels", {"long-time-labels": sliderSettings.timeLabelFormat === TimeLabelFormat.ISO})} data-testid="animator-time-slider">
+            timeSeriesSlider = (
+                <div className={classNames("animator-slider", "time-series-slider", "angled-labels", {"long-time-series-labels": sliderSettings.timeLabelFormat === TimeLabelFormat.ISO})} data-testid="animator-time-series-slider">
                     <Radio
-                        value={AnimationMode.TIME}
+                        value={AnimationMode.TIME_SERIES}
                         disabled={appStore.animatorStore.isAnimationActive}
-                        checked={appStore.animatorStore.animationMode === AnimationMode.TIME}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.TIME_SERIES}
                         onChange={this.onAnimationModeChanged}
                         labelElement={
-                            <Tooltip content={`${numTimes} spatially matched images sorted by observation time (UTC). Tick labels: ${timeLabelFormatName}.`} position={Position.TOP}>
-                                <span>Time</span>
+                            <Tooltip content={`${numTimeSeriesElements} spatially matched images sorted by observation time (UTC). Tick labels: ${timeLabelFormatName}.`} position={Position.TOP}>
+                                <span>Time series</span>
                             </Tooltip>
                         }
                     />
                     {shouldHideSliders && (
                         <SafeNumericInput
-                            value={currentTimeIndex >= 0 ? currentTimeIndex : undefined}
+                            value={currentTimeSeriesIndex >= 0 ? currentTimeSeriesIndex : undefined}
                             min={-1}
-                            max={numTimes}
+                            max={numTimeSeriesElements}
                             stepSize={1}
-                            onValueChange={this.onTimeChanged}
+                            onValueChange={this.onTimeSeriesChanged}
                             fill={true}
                             disabled={appStore.animatorStore.isAnimationActive}
                         />
@@ -437,24 +437,24 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!shouldHideSliders && (
                         <React.Fragment>
                             <Slider
-                                className={classNames({"is-outside-series": currentTimeIndex < 0})}
-                                value={Math.max(0, currentTimeIndex)}
+                                className={classNames({"is-outside-series": currentTimeSeriesIndex < 0})}
+                                value={Math.max(0, currentTimeSeriesIndex)}
                                 min={0}
-                                max={numTimes - 1}
-                                labelValues={timeTick}
-                                labelRenderer={renderTimeTickLabel}
+                                max={numTimeSeriesElements - 1}
+                                labelValues={timeSeriesTick}
+                                labelRenderer={renderTimeSeriesTickLabel}
                                 showTrackFill={false}
-                                onChange={this.onTimeChanged}
+                                onChange={this.onTimeSeriesChanged}
                                 disabled={appStore.animatorStore.isAnimationActive}
                             />
-                            <div className="slider-info time-slider-spacer" aria-hidden={true} />
+                            <div className="slider-info time-series-slider-spacer" aria-hidden={true} />
                         </React.Fragment>
                     )}
                 </div>
             );
         }
 
-        const hasAnimationControls = Boolean(imageSlider || channelSlider || stokesSlider || timeSlider);
+        const hasAnimationControls = Boolean(imageSlider || channelSlider || stokesSlider || timeSeriesSlider);
 
         const playbackClass = classNames("animator-playback", {wrap: shouldHideSliders});
         const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.isDarkTheme});
@@ -568,7 +568,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                     {channelSlider}
                                     {channelRangeSlider}
                                     {stokesSlider}
-                                    {timeSlider}
+                                    {timeSeriesSlider}
                                 </div>
                             )}
                     </ScrollShadow>

@@ -84,7 +84,7 @@ const RELATIVE_UNIT_OPTIONS = [
     {value: RelativeTimeUnit.YEAR, label: "Years"}
 ];
 
-const ANIMATION_SLIDER_MODES = [AnimationMode.FRAME, AnimationMode.CHANNEL, AnimationMode.STOKES, AnimationMode.TIME] as const;
+const ANIMATION_SLIDER_MODES = [AnimationMode.FRAME, AnimationMode.CHANNEL, AnimationMode.STOKES, AnimationMode.TIME_SERIES] as const;
 
 interface AnimatorSettingsPanelState {
     relativeReferenceIsoDraft: string | null;
@@ -267,7 +267,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         const isImageSliderAvailable = appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1;
         const isChannelSliderAvailable = (fileInfo?.depth ?? 0) > 1;
         const isStokesSliderAvailable = (fileInfo?.stokes ?? 0) > 1;
-        const isTimeSliderAvailable = elements.length > 1;
+        const isTimeSeriesSliderAvailable = elements.length > 1;
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
@@ -323,9 +323,9 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             </div>
         );
 
-        const timeContent = (
-            <div className="animator-time-settings">
-                {renderSliderToggleSection("Time", AnimationMode.TIME, isTimeSliderAvailable, widgetStore.isTimeSliderVisible, "Requires at least two time-series images", "animator-time-slider")}
+        const timeSeriesContent = (
+            <div className="animator-time-series-settings">
+                {renderSliderToggleSection("Time series", AnimationMode.TIME_SERIES, isTimeSeriesSliderAvailable, widgetStore.isTimeSeriesSliderVisible, "Requires at least two time-series images", "animator-time-series-slider")}
 
                 <section className="animator-settings-section" aria-labelledby={timeFormatSectionTitleId} data-testid="animator-time-format-section">
                     <H3 id={timeFormatSectionTitleId} className="animator-settings-section-title">
@@ -499,7 +499,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                         <Tab id="image" title="Image" panel={imageContent} />
                         <Tab id="channel" title="Channel" panel={channelContent} />
                         <Tab id="polarization" title="Polarization" panel={stokesContent} />
-                        <Tab id="time" title="Time" panel={timeContent} />
+                        <Tab id="time-series" title="Time series" panel={timeSeriesContent} />
                     </Tabs>
                 </div>
             </ScrollShadow>

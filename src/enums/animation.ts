@@ -3,7 +3,7 @@ export enum AnimationMode {
     CHANNEL = 0,
     STOKES = 1,
     FRAME = 2,
-    TIME = 3
+    TIME_SERIES = 3
 }
 
 export enum PlayMode {

@@ -35,7 +35,7 @@ export class AnimatorStore {
     @observable playMode: PlayMode = PlayMode.FORWARD;
 
     private get isFrontendAnimationMode(): boolean {
-        return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME;
+        return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME_SERIES;
     }
 
     @action setAnimationMode = (val: AnimationMode) => {
@@ -44,7 +44,7 @@ export class AnimatorStore {
             return;
         }
 
-        if (val === AnimationMode.TIME) {
+        if (val === AnimationMode.TIME_SERIES) {
             const timeSeriesStore = TimeSeriesStore.Instance;
             if (timeSeriesStore.elements.length < 2) {
                 return;
@@ -67,7 +67,7 @@ export class AnimatorStore {
             {mode: AnimationMode.FRAME, isAvailable: appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1},
             {mode: AnimationMode.CHANNEL, isAvailable: (fileInfo?.depth ?? 0) > 1},
             {mode: AnimationMode.STOKES, isAvailable: (fileInfo?.stokes ?? 0) > 1},
-            {mode: AnimationMode.TIME, isAvailable: TimeSeriesStore.Instance.elements.length > 1}
+            {mode: AnimationMode.TIME_SERIES, isAvailable: TimeSeriesStore.Instance.elements.length > 1}
         ];
         const candidate = candidates.find(({mode, isAvailable}) => isAvailable && !excludedModes.includes(mode));
         if (!candidate) {
@@ -230,7 +230,7 @@ export class AnimatorStore {
             const nextState = getNextPlaybackState(appStore.activeImageIndex, appStore.imageViewConfigStore.imageNum, this.step, this.playMode, this.animationDirection);
             this.animationDirection = nextState.direction;
             appStore.setActiveImageByIndex(nextState.index);
-        } else if (this.animationMode === AnimationMode.TIME) {
+        } else if (this.animationMode === AnimationMode.TIME_SERIES) {
             const timeSeriesStore = TimeSeriesStore.Instance;
             const nextState = getNextPlaybackState(timeSeriesStore.currentIndex, timeSeriesStore.elements.length, this.step, this.playMode, this.animationDirection);
             this.animationDirection = nextState.direction;
@@ -275,7 +275,7 @@ export class AnimatorStore {
             return true;
         }
 
-        if (this.animationMode === AnimationMode.TIME && TimeSeriesStore.Instance.elements.length <= 1) {
+        if (this.animationMode === AnimationMode.TIME_SERIES && TimeSeriesStore.Instance.elements.length <= 1) {
             return true;
         }
 
