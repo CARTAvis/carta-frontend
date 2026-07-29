@@ -23,6 +23,7 @@ export * from "./ScalingSelectComponent/ScalingSelectComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
 export * from "./ScatterPlot/ScatterPlotComponent";
 export * from "./ScrollShadow/ScrollShadow";
+export * from "./Slider/Slider";
 export * from "./SmoothingSettings/SmoothingSettingsComponent";
 export * from "./SpectralSettings/SpectralSettingsComponent";
 export * from "./Tables/FilterableTableComponent";

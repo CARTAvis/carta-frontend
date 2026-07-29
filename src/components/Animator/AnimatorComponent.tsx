@@ -1,10 +1,10 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {RangeSlider, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {AnimationMode, HelpType, NumericInputType, PlayMode} from "enums";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
