@@ -217,7 +217,7 @@ export class SourceDetectionOverlayComponent extends React.Component<SourceDetec
             context.ellipse(0, 0, Math.max(radiusX, 2), Math.max(radiusY, 2), 0, 0, Math.PI * 2);
             context.stroke();
             context.restore();
-            context.fillText(String(index + 1), centerX + Math.max(radiusX, 4) + 2, centerY + 4);
+            context.fillText(detection.className, centerX + Math.max(radiusX, 4) + 2, centerY + 4);
         }
 
         if (this.isDetecting) {
