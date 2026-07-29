@@ -276,6 +276,7 @@ export class RootMenuComponent extends React.Component {
             shouldHideImageTooltip = false;
         }
 
+        const multiColorBlendingTooltip = appStore.frameNum < 1 ? "At least one image is required." : "Create a multi-color blending image from spatially matched images.";
         const eligibleTimeSeriesFrameCount = appStore.frames.filter(appStore.timeSeriesStore.canBeMember).length;
         const hasTimeSeriesSlider = appStore.timeSeriesStore.elements.length > 1;
         const formTimeSeriesTooltip = hasTimeSeriesSlider
@@ -297,7 +298,9 @@ export class RootMenuComponent extends React.Component {
                 </Tooltip>
                 <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuDivider />
-                <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
+                <Tooltip content={multiColorBlendingTooltip} position={Position.LEFT}>
+                    <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
+                </Tooltip>
                 <Tooltip content={formTimeSeriesTooltip} position={Position.LEFT}>
                     <MenuItem text="Form Time Series" disabled={eligibleTimeSeriesFrameCount < 2 || hasTimeSeriesSlider} onClick={this.formTimeSeries} />
                 </Tooltip>
