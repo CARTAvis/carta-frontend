@@ -56,7 +56,7 @@ export class ChannelMapStore {
             channel => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
-                } else if (this.isChannelMapEnabled || !this.channelArray.includes(channel)) {
+                } else if (!this.channelArray.includes(channel)) {
                     this.setStartChannel(channel);
                 }
             }
