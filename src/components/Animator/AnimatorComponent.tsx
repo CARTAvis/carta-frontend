@@ -1,6 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
+import {throttle} from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -32,9 +33,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     @observable height: number = 200;
     @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
-    private channelChangeThrottleTimeout: number | undefined;
-    private isChannelChangeThrottled = false;
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -49,31 +47,26 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         this.numericInputType = type;
     };
 
-    onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            if (this.isChannelChangeThrottled) {
-                return;
+    onChannelChanged = throttle(
+        (val: number) => {
+            const frame = AppStore.Instance.activeFrame;
+            if (frame) {
+                const depth = frame.frameInfo.fileInfoExtended.depth;
+                if (val < 0) {
+                    val += depth;
+                }
+                if (val >= depth) {
+                    val = 0;
+                }
+                frame.setChannel(val);
             }
-            this.isChannelChangeThrottled = true;
-            this.channelChangeThrottleTimeout = window.setTimeout(() => {
-                this.isChannelChangeThrottled = false;
-                this.channelChangeThrottleTimeout = undefined;
-            }, AnimatorComponent.ChannelChangeThrottleTime);
-
-            const depth = frame.frameInfo.fileInfoExtended.depth;
-            if (val < 0) {
-                val += depth;
-            }
-            if (val >= depth) {
-                val = 0;
-            }
-            frame.setChannel(val);
-        }
-    };
+        },
+        AnimatorComponent.ChannelChangeThrottleTime,
+        {trailing: false}
+    );
 
     componentWillUnmount() {
-        window.clearTimeout(this.channelChangeThrottleTimeout);
+        this.onChannelChanged.cancel();
     }
 
     onRangeChanged = (range: NumberRange) => {
