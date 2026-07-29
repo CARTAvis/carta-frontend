@@ -54,6 +54,31 @@ export class AnimatorStore {
         this.animationMode = val;
     };
 
+    /** Selects the first available Animator control, following the order shown in the widget. */
+    @action selectFirstAvailableAnimationMode = (): boolean => {
+        if (this.isAnimationActive) {
+            return false;
+        }
+
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const fileInfo = frame?.frameInfo.fileInfoExtended;
+        const candidate = [
+            {mode: AnimationMode.FRAME, isAvailable: appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1},
+            {mode: AnimationMode.CHANNEL, isAvailable: (fileInfo?.depth ?? 0) > 1},
+            {mode: AnimationMode.STOKES, isAvailable: (fileInfo?.stokes ?? 0) > 1},
+            {mode: AnimationMode.TIME_SERIES, isAvailable: TimeSeriesStore.Instance.elements.length > 1}
+        ].find(({isAvailable}) => isAvailable);
+
+        if (!candidate) {
+            this.animationMode = AnimationMode.NONE;
+            return false;
+        }
+
+        this.setAnimationMode(candidate.mode);
+        return this.animationMode === candidate.mode;
+    };
+
     @action setFrameRate = (val: number) => {
         this.frameRate = val;
     };

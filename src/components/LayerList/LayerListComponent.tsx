@@ -31,7 +31,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 650;
     @observable height: number = 180;
-    @observable columnWidths = [132, 97, 110, 75, 95];
+    @observable columnWidths = [132, 97, 140, 75, 95];
 
     constructor(props: any) {
         super(props);
@@ -284,6 +284,42 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const timeSeriesStore = appStore.timeSeriesStore;
+        const isTimeSeriesMember = timeSeriesStore.isMember(frame);
+        const canBeTimeSeriesMember = timeSeriesStore.canBeMember(frame);
+        const isTimeSeriesMemberToggleDisabled = !canBeTimeSeriesMember || appStore.animatorStore.isAnimationActive;
+        const timeSeriesTooltipSubtitle = !canBeTimeSeriesMember
+            ? "A valid DATE-OBS or MJD-OBS is required"
+            : appStore.animatorStore.isAnimationActive
+              ? "Stop playback before changing time-series membership"
+              : `Click to ${isTimeSeriesMember ? "remove this image from" : "add this image to"} the time series`;
+        const timeSeriesMembershipButton = (
+            <Tooltip
+                position={"bottom"}
+                content={
+                    <span>
+                        Time series member
+                        <br />
+                        <i>
+                            <small>{timeSeriesTooltipSubtitle}</small>
+                        </i>
+                    </span>
+                }
+            >
+                <AnchorButton
+                    variant="minimal"
+                    size="small"
+                    active={isTimeSeriesMember}
+                    intent={isTimeSeriesMember ? "success" : "none"}
+                    disabled={isTimeSeriesMemberToggleDisabled}
+                    onClick={() => appStore.toggleTimeSeriesMember(frame)}
+                    data-testid={"image-list-" + rowIndex + "-matching-t"}
+                >
+                    T
+                </AnchorButton>
+            </Tooltip>
+        );
+
         let renderConfigMatchingButton: React.ReactNode;
         if (appStore.rasterScalingReference) {
             const isRasterScalingReference = frame === appStore.rasterScalingReference;
@@ -327,6 +363,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
+                    {timeSeriesMembershipButton}
                     {renderConfigMatchingButton}
                 </React.Fragment>
             </Cell>
@@ -453,6 +490,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRasterScalingReference = appStore.rasterScalingReference;
+        const timeSeriesMembership = appStore.frames.map(frame => appStore.timeSeriesStore.isMember(frame));
+        const isAnimationActive = appStore.animatorStore.isAnimationActive;
         const cellRendererDependencies = [
             frameChannels,
             frameStokes,
@@ -468,7 +507,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             f3,
             currentSpectralReference,
             currentSpatialReference,
-            currentRasterScalingReference
+            currentRasterScalingReference,
+            timeSeriesMembership,
+            isAnimationActive
         ];
 
         return (

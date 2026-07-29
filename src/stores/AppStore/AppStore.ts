@@ -1064,6 +1064,8 @@ export class AppStore {
                     }
                 }
 
+                this.setTimeSeriesMember(frame, false);
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -1083,6 +1085,7 @@ export class AppStore {
     @action removeAllFrames = () => {
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
+        this.timeSeriesStore.clearMembers();
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
@@ -1261,6 +1264,21 @@ export class AppStore {
     /** Sorts the image list by ascending observation time; images without a valid time keep their relative order at the end. */
     @action sortFramesByTime = () => {
         this.imageViewConfigStore.sortImagesByTime();
+    };
+
+    @action setTimeSeriesMember = (frame: FrameStore, isMember: boolean): boolean => {
+        const didUpdate = this.timeSeriesStore.setMember(frame, isMember);
+        if (didUpdate && this.animatorStore.animationMode === AnimationMode.TIME_SERIES && this.timeSeriesStore.elements.length < 2) {
+            this.animatorStore.stopAnimation();
+            this.animatorStore.selectFirstAvailableAnimationMode();
+        }
+        return didUpdate;
+    };
+
+    @action toggleTimeSeriesMember = (frame: FrameStore) => {
+        if (!this.animatorStore.isAnimationActive) {
+            this.setTimeSeriesMember(frame, !this.timeSeriesStore.isMember(frame));
+        }
     };
 
     // Region file actions
@@ -2724,6 +2742,9 @@ export class AppStore {
                         if (workspace.references?.raster === fileInfo.id) {
                             this.setRasterScalingReference(frame);
                         }
+                        if (fileInfo.timeSeriesMember) {
+                            this.setTimeSeriesMember(frame, true);
+                        }
                     }
                 }
 
@@ -2892,7 +2913,8 @@ export class AppStore {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
                 filename: frame.filename,
-                hdu: frame.frameInfo.hdu
+                hdu: frame.frameInfo.hdu,
+                timeSeriesMember: this.timeSeriesStore.isMember(frame) || undefined
             };
             workspaceFile.references = {};
 

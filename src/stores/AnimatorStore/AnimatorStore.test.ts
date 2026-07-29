@@ -1,4 +1,5 @@
 const MOCK_APP_STORE = {
+    activeFrame: null as {frameInfo: {fileInfoExtended: {depth: number; stokes: number}}} | null,
     activeImageIndex: 3,
     imageViewConfigStore: {imageNum: 5},
     setActiveImageByIndex: jest.fn()
@@ -38,6 +39,7 @@ describe("AnimatorStore animation mode", () => {
 
     beforeEach(() => {
         store = new AnimatorStore();
+        MOCK_APP_STORE.activeFrame = null;
         MOCK_APP_STORE.activeImageIndex = 3;
         MOCK_APP_STORE.imageViewConfigStore.imageNum = 5;
         MOCK_TIME_SERIES_STORE.elements = [];
@@ -70,5 +72,21 @@ describe("AnimatorStore animation mode", () => {
 
         expect(store.animationMode).toBe(AnimationMode.CHANNEL);
         expect(MOCK_TIME_SERIES_STORE.ensureActiveElement).not.toHaveBeenCalled();
+    });
+
+    test("selects the first available mode when Time series becomes unavailable", () => {
+        store.animationMode = AnimationMode.TIME_SERIES;
+
+        expect(store.selectFirstAvailableAnimationMode()).toBe(true);
+        expect(store.animationMode).toBe(AnimationMode.FRAME);
+    });
+
+    test("clears the mode when no animation control is available", () => {
+        store.animationMode = AnimationMode.TIME_SERIES;
+        MOCK_APP_STORE.activeImageIndex = -1;
+        MOCK_APP_STORE.imageViewConfigStore.imageNum = 1;
+
+        expect(store.selectFirstAvailableAnimationMode()).toBe(false);
+        expect(store.animationMode).toBe(AnimationMode.NONE);
     });
 });

@@ -90,12 +90,13 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private loadAsTimeSeries = async () => {
         try {
-            await this.loadSelectedFiles();
+            const loadedFrames = await this.loadSelectedFiles();
 
             const appStore = AppStore.Instance;
             for (const frame of appStore.frames) {
                 await flowResult(appStore.setSpatialMatchingEnabled(frame, true));
             }
+            loadedFrames.filter(frame => frame === appStore.spatialReference || frame.spatialReference === appStore.spatialReference).forEach(frame => appStore.setTimeSeriesMember(frame, true));
 
             if (appStore.timeSeriesStore.elements.length < 2) {
                 AppToaster.show({
@@ -115,9 +116,10 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private loadSelectedFiles = async () => {
+    private loadSelectedFiles = async (): Promise<FrameStore[]> => {
         const appStore = AppStore.Instance;
         const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
+        const loadedFrames: FrameStore[] = [];
 
         if (PreferenceStore.Instance.isDynamicLayoutEnabled && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
             await layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
@@ -127,15 +129,22 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.setLoadingMultipleFiles(true);
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
+                    const frame = await flowResult(this.loadFile(fileBrowserStore.selectedFiles[i], i > 0));
+                    if (frame) {
+                        loadedFrames.push(frame);
+                    }
                 } catch (err) {
                     console.error(err);
                 }
             }
             appStore.setLoadingMultipleFiles(false);
         } else {
-            await this.loadFile({fileInfo: fileBrowserStore.selectedFile || undefined, hdu: fileBrowserStore.selectedHDU || undefined});
+            const frame = await flowResult(this.loadFile({fileInfo: fileBrowserStore.selectedFile || undefined, hdu: fileBrowserStore.selectedHDU || undefined}));
+            if (frame) {
+                loadedFrames.push(frame);
+            }
         }
+        return loadedFrames;
     };
 
     @flow.bound private *loadExpression() {
@@ -583,7 +592,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                     </Tooltip>
                                 )}
                                 {!this.isImageArithmeticEnabled && fileBrowserStore.selectedFiles?.length > 1 && (
-                                    <Tooltip content={"Load the selected images, match them spatially, and order them by observation time"}>
+                                    <Tooltip content={"Load the selected images, match them spatially, and add them to a time series ordered by observation time"}>
                                         <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} onClick={this.loadAsTimeSeries} text="Load as time series" />
                                     </Tooltip>
                                 )}

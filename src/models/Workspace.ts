@@ -89,6 +89,7 @@ export interface WorkspaceFile {
     directory?: string;
     filename: string;
     hdu?: string;
+    timeSeriesMember?: boolean;
     references?: {
         spatial?: number;
         spectral?: number;

@@ -1,4 +1,4 @@
-import {action, computed, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {ImageType} from "enums";
 import {AppStore} from "stores";
@@ -16,11 +16,12 @@ export interface TimeSeriesElement {
 }
 
 /**
- * Manages the virtual time-series axis: an ordered mapping over the spatially matched
- * images, sorted by observation time.
+ * Manages the virtual time-series axis: an ordered mapping over explicitly selected
+ * member images, sorted by observation time.
  */
 export class TimeSeriesStore {
     private static staticInstance: TimeSeriesStore;
+    private readonly memberFrames = observable.set<FrameStore>([], {deep: false});
 
     public static get Instance(): TimeSeriesStore {
         if (!TimeSeriesStore.staticInstance) {
@@ -29,21 +30,49 @@ export class TimeSeriesStore {
         return TimeSeriesStore.staticInstance;
     }
 
-    /** The spatially matched images (reference and secondary images), excluding previews. */
-    @computed get matchedFrames(): FrameStore[] {
-        const spatialReference = AppStore.Instance.spatialReference;
-        if (!spatialReference) {
-            return [];
-        }
-        return [spatialReference, ...spatialReference.secondarySpatialImages].filter(frame => !frame.isPreview);
+    /** Images explicitly selected as members of the time series. */
+    @computed get members(): FrameStore[] {
+        return Array.from(this.memberFrames);
     }
 
+    isMember = (frame: FrameStore): boolean => {
+        return this.memberFrames.has(frame);
+    };
+
+    canBeMember = (frame: FrameStore): boolean => {
+        return !!frame && !frame.isPreview && frame.obsTimeMjdUtc !== undefined;
+    };
+
+    /** Adds or removes an image from the time series. Invalid-time and preview images cannot be added. */
+    @action setMember = (frame: FrameStore, isMember: boolean): boolean => {
+        if (!frame || (isMember && !this.canBeMember(frame))) {
+            return false;
+        }
+
+        if (isMember) {
+            if (this.memberFrames.has(frame)) {
+                return false;
+            }
+            this.memberFrames.add(frame);
+            return true;
+        } else {
+            return this.memberFrames.delete(frame);
+        }
+    };
+
+    @action toggleMember = (frame: FrameStore): boolean => {
+        return this.setMember(frame, !this.isMember(frame));
+    };
+
+    @action clearMembers = () => {
+        this.memberFrames.clear();
+    };
+
     /**
-     * The virtual time-series axis, sorted by ascending observation time. Spatially matched
-     * images without a valid observation time are excluded.
+     * The virtual time-series axis, sorted by ascending observation time.
      */
     @computed get elements(): TimeSeriesElement[] {
-        return this.matchedFrames
+        return this.members
             .flatMap(frame => {
                 const mjdUtc = frame.obsTimeMjdUtc;
                 return mjdUtc === undefined ? [] : [{frame, mjdUtc, isoUtc: formatMjdUtcAsIso(mjdUtc, 6)}];

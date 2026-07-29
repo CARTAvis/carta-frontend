@@ -418,7 +418,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         checked={appStore.animatorStore.animationMode === AnimationMode.TIME_SERIES}
                         onChange={this.onAnimationModeChanged}
                         labelElement={
-                            <Tooltip content={`${numTimeSeriesElements} spatially matched images sorted by observation time (UTC). Tick labels: ${timeLabelFormatName}.`} position={Position.TOP}>
+                            <Tooltip content={`${numTimeSeriesElements} time-series member images sorted by observation time (UTC). Tick labels: ${timeLabelFormatName}.`} position={Position.TOP}>
                                 <span>Time series</span>
                             </Tooltip>
                         }
