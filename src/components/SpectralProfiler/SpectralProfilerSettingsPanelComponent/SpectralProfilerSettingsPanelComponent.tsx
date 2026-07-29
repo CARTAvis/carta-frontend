@@ -3,7 +3,7 @@ import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
@@ -176,8 +176,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-        const disableCoordinateSetting = widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel;
-        const disableRestFrameSetting = disableCoordinateSetting || !widgetStore.restFrameEnabled || !widgetStore.isRestFrameSupported;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -194,7 +192,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                         onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                         onSpectralSystemChange={widgetStore.setSpectralSystem}
                                         secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
-                                        disable={disableCoordinateSetting}
+                                        disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
                                     />
                                     <FormGroup label={"Intensity unit"} inline={true}>
                                         <HTMLSelect
@@ -206,27 +204,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     </FormGroup>
                                     <FormGroup inline={true} label={"Secondary info"}>
                                         <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label={"Reference frame"} helperText={!widgetStore.isRestFrameSupported ? "Rest-frame is available in Frequency/Wavelength coordinates only." : undefined}>
-                                        <HTMLSelect
-                                            disabled={disableCoordinateSetting}
-                                            value={widgetStore.restFrameEnabled ? "rest" : "observed"}
-                                            options={[
-                                                {value: "observed", label: "Observed"},
-                                                {value: "rest", label: "Rest-frame", disabled: !widgetStore.isRestFrameSupported}
-                                            ]}
-                                            onChange={event => widgetStore.setRestFrameEnabled(event.currentTarget.value === "rest")}
-                                            data-testid="spectral-profiler-reference-frame-dropdown"
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label={"Redshift (z)"}>
-                                        <SafeNumericInput
-                                            disabled={disableRestFrameSetting}
-                                            value={widgetStore.restFrameRedshift}
-                                            buttonPosition="none"
-                                            onValueChange={widgetStore.setRestFrameRedshift}
-                                            data-testid="spectral-profiler-redshift-input"
-                                        />
                                     </FormGroup>
                                 </React.Fragment>
                             }
