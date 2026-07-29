@@ -12,6 +12,8 @@ import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
+    private static readonly ChannelChangeThrottleTime = 50;
+
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "animator",
@@ -30,6 +32,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     @observable height: number = 200;
     @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
+    private channelChangeThrottleTimeout: number | undefined;
+    private isChannelChangeThrottled = false;
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -47,6 +52,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onChannelChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
+            if (this.isChannelChangeThrottled) {
+                return;
+            }
+            this.isChannelChangeThrottled = true;
+            this.channelChangeThrottleTimeout = window.setTimeout(() => {
+                this.isChannelChangeThrottled = false;
+                this.channelChangeThrottleTimeout = undefined;
+            }, AnimatorComponent.ChannelChangeThrottleTime);
+
             const depth = frame.frameInfo.fileInfoExtended.depth;
             if (val < 0) {
                 val += depth;
@@ -57,6 +71,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             frame.setChannel(val);
         }
     };
+
+    componentWillUnmount() {
+        window.clearTimeout(this.channelChangeThrottleTimeout);
+    }
 
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;
