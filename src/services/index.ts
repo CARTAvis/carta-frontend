@@ -4,6 +4,7 @@ export * from "./CatalogApiService";
 export * from "./CatalogWebGLService";
 export * from "./ContourWebGLService";
 export * from "./ScriptingService";
+export * from "./SourceDetectionService";
 export * from "./SplatalogueService";
 export * from "./TelemetryService";
 export * from "./TileService";

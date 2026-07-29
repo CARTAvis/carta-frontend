@@ -6,7 +6,7 @@ import {Subject} from "rxjs";
 import {type Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, type FrameStore, PREVIEW_PV_FILEID} from "stores";
-import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
+import {clamp, copyToFP32Texture, createFP32Texture, GetRequiredTiles, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -15,6 +15,18 @@ export interface RasterTile {
     width: number | null | undefined;
     height: number | null | undefined;
     textureCoordinate: number | undefined;
+}
+
+export interface RawRasterROI {
+    data: Float32Array;
+    /** Number of samples in data. */
+    width: number;
+    height: number;
+    /** Corresponding extent in full-resolution image pixels. */
+    imageWidth: number;
+    imageHeight: number;
+    xMin: number;
+    yMin: number;
 }
 
 export interface CompressedTile {
@@ -73,6 +85,7 @@ export class TileService {
     private readonly completedChannels: Map<string, boolean>;
     readonly tileStream: Subject<TileStreamDetails>;
     private cachedTiles: LRUCache<bigint, RasterTile>;
+    private rawTileCache: LRUCache<bigint, RasterTile>;
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture | null>;
     private textureCoordinateQueue: Array<number | undefined>;
@@ -140,6 +153,7 @@ export class TileService {
         this.initTextures();
         this.resetCoordinateQueue();
         this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, lruCapacityGPU);
+        this.rawTileCache = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, Math.min(lruCapacityGPU, 256));
 
         // L2 cache: compressed tiles on system memory
         this.lruCapacitySystem = lruCapacitySystem;
@@ -154,6 +168,7 @@ export class TileService {
         this.cacheMapCompressedTiles = new Map<number, LRUCache<bigint, CompressedTile>>();
         this.pendingDecompressions = new Map<string, Map<number, Map<number, boolean>>>();
         this.completedChannels = new Map<string, boolean>();
+        this.rawTileCache = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, 128);
         this.receivedSynchronisedTiles = new Map<string, Map<number, Map<number, RasterTile>>>();
         this.pendingSynchronisedTiles = new Map<string, Set<number>>();
         this.syncIdMap = new Map<number, boolean>();
@@ -220,6 +235,76 @@ export class TileService {
             return this.cachedTiles.peek(gpuCacheCoordinate);
         }
         return this.cachedTiles.get(gpuCacheCoordinate);
+    }
+
+    /** Assemble the visible scientific raster data at the currently loaded mip. */
+    getVisibleRasterROI(frame: FrameStore): RawRasterROI | null {
+        const view = frame.requiredFrameView;
+        const imageWidth = frame.frameInfo.fileInfoExtended.width;
+        const imageHeight = frame.frameInfo.fileInfoExtended.height;
+        const mip = Math.max(1, view.mip);
+        const xMin = Math.max(0, Math.floor(view.xMin + 0.5));
+        const xMax = Math.min(imageWidth, Math.ceil(view.xMax + 0.5));
+        const yMin = Math.max(0, Math.floor(view.yMin + 0.5));
+        const yMax = Math.min(imageHeight, Math.ceil(view.yMax + 0.5));
+        const sampleXMin = Math.floor(xMin / mip);
+        const sampleXMax = Math.ceil(xMax / mip);
+        const sampleYMin = Math.floor(yMin / mip);
+        const sampleYMax = Math.ceil(yMax / mip);
+        const width = sampleXMax - sampleXMin;
+        const height = sampleYMax - sampleYMin;
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+
+        const boundedView = {...view, xMin: xMin - 0.5, xMax: xMax - 0.5, yMin: yMin - 0.5, yMax: yMax - 0.5};
+        const requiredTiles = GetRequiredTiles(boundedView, {x: imageWidth, y: imageHeight}, {x: TILE_SIZE, y: TILE_SIZE});
+        const tiles = new Map<number, RasterTile>();
+        for (const tileCoordinate of requiredTiles) {
+            const encodedCoordinate = tileCoordinate.encode();
+            const cacheKey = TileCoordinate.addFileIdAndChannel(encodedCoordinate, frame.id, frame.channel);
+            const tile = this.rawTileCache.get(cacheKey);
+            if (!tile?.data || !tile.width || !tile.height) {
+                return null;
+            }
+            tiles.set(encodedCoordinate, tile);
+        }
+
+        const data = new Float32Array(width * height);
+        for (let y = sampleYMin; y < sampleYMax; y++) {
+            for (let x = sampleXMin; x < sampleXMax; x++) {
+                const tileX = Math.floor(x / TILE_SIZE);
+                const tileY = Math.floor(y / TILE_SIZE);
+                const tile = tiles.get(TileCoordinate.encode(tileX, tileY, requiredTiles[0]?.layer ?? 0));
+                if (!tile?.data || !tile.width) {
+                    return null;
+                }
+                const sourceIndex = (y - tileY * TILE_SIZE) * tile.width + (x - tileX * TILE_SIZE);
+                data[(y - sampleYMin) * width + (x - sampleXMin)] = tile.data[sourceIndex];
+            }
+        }
+        const roiXMin = sampleXMin * mip;
+        const roiYMin = sampleYMin * mip;
+        return {
+            data,
+            width,
+            height,
+            imageWidth: Math.min(imageWidth, sampleXMax * mip) - roiXMin,
+            imageHeight: Math.min(imageHeight, sampleYMax * mip) - roiYMin,
+            xMin: roiXMin,
+            yMin: roiYMin
+        };
+    }
+
+    private cacheRawTile(cacheKey: bigint, tile: RasterTile) {
+        if (tile.data && tile.width && tile.height) {
+            this.rawTileCache.set(cacheKey, {
+                data: tile.data,
+                width: tile.width,
+                height: tile.height,
+                textureCoordinate: undefined
+            });
+        }
     }
 
     private getRequiredRequestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number) {
@@ -422,6 +507,13 @@ export class TileService {
         this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, cacheCapacity);
         for (let i = keys.length - 1; i >= 0; i--) {
             this.cachedTiles.set(keys[i], tiles[i]);
+        }
+
+        const rawCacheCapacity = this.rawTileCache.capacity;
+        const rawEntries = Array.from(this.rawTileCache).filter(([key]) => TileCoordinate.getFileId(key) !== fileId);
+        this.rawTileCache = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, rawCacheCapacity);
+        for (let i = rawEntries.length - 1; i >= 0; i--) {
+            this.rawTileCache.set(rawEntries[i][0], rawEntries[i][1]);
         }
     }
 
@@ -739,6 +831,7 @@ export class TileService {
                 }
                 receivedTiles?.forEach((tile, coordinate) => {
                     const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(coordinate, fileId ?? NaN, channel ?? NaN);
+                    this.cacheRawTile(gpuCacheCoordinate, tile);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tile);
                     if (oldValue) {
                         this.clearTile(oldValue.value, oldValue.key);
@@ -759,6 +852,7 @@ export class TileService {
                 data: decompressedData
             };
             const gpuCacheCoordinate = TileCoordinate.addFileIdAndChannel(encodedCoordinate, fileId ?? NaN, channel ?? NaN);
+            this.cacheRawTile(gpuCacheCoordinate, rasterTile);
             const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, rasterTile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);

@@ -15,6 +15,7 @@ import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {RasterViewComponent} from "../RasterView/RasterViewComponent";
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
+import {SourceDetectionOverlayComponent} from "../SourceDetectionOverlay/SourceDetectionOverlayComponent";
 import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 
@@ -189,6 +190,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {appStore.overlaySettings.colorbar.isVisible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {!isColorBlending && <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />}
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
+                    {!isColorBlending && <SourceDetectionOverlayComponent key={frame.id} frame={frame} width={frame.renderWidth} height={frame.renderHeight} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} />}
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={frame}

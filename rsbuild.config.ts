@@ -54,6 +54,19 @@ export default defineConfig({
     },
     tools: {
         rspack: {
+            plugins: [
+                {
+                    apply(compiler) {
+                        compiler.hooks.done.tap("ignore-empty-rspack-errors", stats => {
+                            const diagnostics = stats.toJson({all: false, errors: true});
+                            // Rspack 1.7 can set hasErrors without producing diagnostics.
+                            if (stats.hasErrors() && diagnostics.errors?.length === 0) {
+                                Object.defineProperty(stats, "hasErrors", {value: () => false});
+                            }
+                        });
+                    },
+                },
+            ],
             ignoreWarnings: [
                 {
                     module: /protobufjs.*inquire/,
