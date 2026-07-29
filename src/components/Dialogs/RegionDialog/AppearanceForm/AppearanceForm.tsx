@@ -1,6 +1,6 @@
 import * as React from "react";
-import {type ColorResult} from "react-color";
 import {FormGroup, HTMLSelect, Label, type OptionProps, Switch} from "@blueprintjs/core";
+import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
