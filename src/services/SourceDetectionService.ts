@@ -9,13 +9,16 @@ const RAW_CANDIDATE_THRESHOLD = 0.0001;
 const NMS_IOU_THRESHOLD = 0.45;
 const RAW_CONFIDENCE_KEEP_PRIORITY = 0.9;
 const HIGH_RAW_NMS_IOU_THRESHOLD = 0.65;
-const MAX_DETECTIONS = 200;
+const MAX_ONNX_CANDIDATES = 1000;
+const MAX_DISPLAY_DETECTIONS = 20;
 const CLASS_NAMES = ["point", "galaxy"];
 
 export interface SourceDetection {
     id: string;
     classId: number;
     className: string;
+    /** Model confidence before display calibration. */
+    rawConfidence?: number;
     confidence: number;
     /** [x, y, width, height] in CARTA image-pixel coordinates. */
     bboxPx: [number, number, number, number];
@@ -72,15 +75,60 @@ export class SourceDetectionService {
         const results = await session.run({[session.inputNames[0]]: tensor});
         const output = results[session.outputNames[0]];
         const detectionsWithFits = this.parseOutput(output, roi).map(detection => this.applyCosmosPostProcessing(detection, roi));
+        const extendedRegions = this.detectExtendedSources(tensorData.subarray(0, MODEL_SIZE * MODEL_SIZE), roi);
         const maximumPeakFlux = detectionsWithFits.reduce((maximum, detection) => Math.max(maximum, detection.peakFlux), 0);
         const minimumPeakFlux = maximumPeakFlux * 0.0001;
-        const detections = detectionsWithFits
-            .filter(detection => detection.peakFlux >= minimumPeakFlux)
-            .sort((a, b) => b.peakFlux - a.peakFlux)
-            .slice(0, MAX_DETECTIONS);
+        const fluxFiltered = detectionsWithFits.filter(detection => detection.peakFlux >= minimumPeakFlux);
+        // The original detector's extended-region pass consolidates repeated
+        // proposals belonging to the same connected source. Its display path
+        // then ranks proposals by fitted peak flux. Keep one such
+        // representative per region instead of globally rejecting a real,
+        // extended source merely because its raw ONNX confidence is low.
+        const regionFiltered = this.selectRegionRepresentatives(fluxFiltered, extendedRegions);
+        // Ported from Source-detection commit bf5daae ("remove overlap"):
+        // first remove smaller sources contained by an equally/more confident
+        // parent, then suppress candidates whose fitted ellipse centres overlap.
+        const containmentFiltered = this.suppressInsideLargeConfident(regionFiltered);
+        const overlapFiltered = this.suppressCenterOverlaps(containmentFiltered);
+        const detections = overlapFiltered.sort((a, b) => b.peakFlux - a.peakFlux).slice(0, MAX_DISPLAY_DETECTIONS);
+        console.info(
+            `[SourceDetection] Post-processing fitted=${detectionsWithFits.length}, flux=${fluxFiltered.length}, regions=${extendedRegions.length}, representatives=${regionFiltered.length}, containment=${containmentFiltered.length}, overlap=${overlapFiltered.length}, displayed=${detections.length}`
+        );
+        console.debug(
+            `[SourceDetection] Displayed candidates ${JSON.stringify(
+                detections.map(detection => ({
+                    center: detection.ellipsePx.slice(0, 2).map(value => Number(value.toFixed(1))),
+                    radii: detection.ellipsePx.slice(2, 4).map(value => Number(value.toFixed(1))),
+                    rawConfidence: Number((detection.rawConfidence ?? 0).toFixed(5)),
+                    confidence: Number(detection.confidence.toFixed(3)),
+                    peakFlux: Number(detection.peakFlux.toPrecision(4))
+                }))
+            )}`
+        );
         this.resultCache.set(cacheKey, detections);
         this.trimCache();
         return {cacheKey, detections};
+    }
+
+    /**
+     * Uses the connected regions produced by the original
+     * OnnxDetector.detectExtendedSources pass to consolidate repeated ONNX
+     * boxes. The original display path ranks detections by fitted peak flux,
+     * so the brightest fitted proposal becomes the region representative.
+     */
+    private selectRegionRepresentatives(detections: SourceDetection[], regions: SourceDetection[]): SourceDetection[] {
+        if (!regions.length) {
+            return detections;
+        }
+
+        const representatives: SourceDetection[] = [];
+        for (const region of regions) {
+            const candidates = detections.filter(detection => this.ellipseContainsPoint(region.ellipsePx, detection.ellipsePx[0], detection.ellipsePx[1], 1.05)).sort((a, b) => b.peakFlux - a.peakFlux || this.compareDetectionPriority(a, b));
+            if (candidates.length && !representatives.includes(candidates[0])) {
+                representatives.push(candidates[0]);
+            }
+        }
+        return representatives.length ? representatives : detections;
     }
 
     private getSession(): Promise<ort.InferenceSession> {
@@ -192,8 +240,8 @@ export class SourceDetectionService {
             console.warn(`[SourceDetection] Unsupported ONNX output shape: ${dims.join("x")}`);
         }
 
-        const onnxCandidates = candidates.sort((a, b) => b.confidence - a.confidence).slice(0, 1000);
-        const kept = this.nonMaximumSuppression(onnxCandidates).slice(0, MAX_DETECTIONS);
+        const onnxCandidates = candidates.sort((a, b) => b.confidence - a.confidence).slice(0, MAX_ONNX_CANDIDATES);
+        const kept = this.nonMaximumSuppression(onnxCandidates);
         console.info(`[SourceDetection] ONNX candidates=${candidates.length}, threshold=${RAW_CANDIDATE_THRESHOLD}, retained=${kept.length}`);
         return kept;
     }
@@ -410,7 +458,11 @@ export class SourceDetectionService {
             moments = accumulateMoments(0);
         }
         if (moments.intensity === 0) {
-            return {...detection, confidence: this.calibrateDisplayConfidence(detection.confidence)};
+            return {
+                ...detection,
+                rawConfidence: detection.rawConfidence ?? detection.confidence,
+                confidence: this.calibrateDisplayConfidence(detection.confidence)
+            };
         }
 
         const centerX = moments.weightedX / moments.intensity;
@@ -430,28 +482,75 @@ export class SourceDetectionService {
         const peakFlux = moments.intensity / (2 * Math.PI * Math.max(sigmaMajor, 0.5) * Math.max(sigmaMinor, 0.5));
         return {
             ...detection,
+            rawConfidence: detection.rawConfidence ?? detection.confidence,
             confidence: this.calibrateDisplayConfidence(detection.confidence),
             ellipsePx: [centerX, centerY, isNearlyRound ? radius : radiusMajor, isNearlyRound ? radius : radiusMinor, angle],
             peakFlux
         };
     }
 
-    private suppressPointsInsideExtended(detections: SourceDetection[]): SourceDetection[] {
-        const extendedSources = detections.filter(detection => detection.className === "galaxy" || detection.className === "diffuse");
+    /** Port of Source-detection/src/main.ts suppressInsideLargeConfident. */
+    private suppressInsideLargeConfident(detections: SourceDetection[]): SourceDetection[] {
         return detections.filter(detection => {
-            if (detection.className !== "point") {
-                return true;
-            }
-            const centerX = detection.bboxPx[0] + detection.bboxPx[2] / 2;
-            const centerY = detection.bboxPx[1] + detection.bboxPx[3] / 2;
-            return !extendedSources.some(source => {
-                const sourceCenterX = source.bboxPx[0] + source.bboxPx[2] / 2;
-                const sourceCenterY = source.bboxPx[1] + source.bboxPx[3] / 2;
-                const radiusX = Math.max((source.bboxPx[2] / 2) * 1.05, 1e-6);
-                const radiusY = Math.max((source.bboxPx[3] / 2) * 1.05, 1e-6);
-                return ((centerX - sourceCenterX) / radiusX) ** 2 + ((centerY - sourceCenterY) / radiusY) ** 2 <= 1;
+            const [centerX, centerY, radiusX, radiusY] = detection.ellipsePx;
+            const major = Math.max(radiusX, radiusY);
+            const rawConfidence = detection.rawConfidence ?? detection.confidence ?? 0;
+            return !detections.some(parent => {
+                if (parent === detection) {
+                    return false;
+                }
+                const parentMajor = Math.max(parent.ellipsePx[2], parent.ellipsePx[3]);
+                const parentRawConfidence = parent.rawConfidence ?? parent.confidence ?? 0;
+                return parentMajor > major && parentRawConfidence >= rawConfidence && this.ellipseContainsPoint(parent.ellipsePx, centerX, centerY);
             });
         });
+    }
+
+    /** Port of Source-detection/src/main.ts suppressCenterOverlaps. */
+    private suppressCenterOverlaps(detections: SourceDetection[]): SourceDetection[] {
+        const kept: SourceDetection[] = [];
+        const sorted = [...detections].sort((a, b) => this.compareDetectionPriority(a, b));
+        for (const detection of sorted) {
+            if (kept.some(parent => this.detectionsShareCenterOverlap(parent, detection))) {
+                continue;
+            }
+            kept.push(detection);
+        }
+        return kept;
+    }
+
+    private detectionsShareCenterOverlap(a: SourceDetection, b: SourceDetection): boolean {
+        const [aCenterX, aCenterY] = a.ellipsePx;
+        const [bCenterX, bCenterY] = b.ellipsePx;
+        return this.ellipseContainsPoint(a.ellipsePx, bCenterX, bCenterY) || this.ellipseContainsPoint(b.ellipsePx, aCenterX, aCenterY);
+    }
+
+    private ellipseContainsPoint(ellipse: SourceDetection["ellipsePx"], pointX: number, pointY: number, padding = 0.85): boolean {
+        const [centerX, centerY, radiusX, radiusY, angleDegrees] = ellipse;
+        const angle = angleDegrees * (Math.PI / 180);
+        const cosAngle = Math.cos(angle);
+        const sinAngle = Math.sin(angle);
+        const deltaX = pointX - centerX;
+        const deltaY = pointY - centerY;
+        const rotatedX = deltaX * cosAngle + deltaY * sinAngle;
+        const rotatedY = -deltaX * sinAngle + deltaY * cosAngle;
+        const normalizedX = rotatedX / Math.max(radiusX * padding, 1e-6);
+        const normalizedY = rotatedY / Math.max(radiusY * padding, 1e-6);
+        return normalizedX * normalizedX + normalizedY * normalizedY <= 1;
+    }
+
+    private compareDetectionPriority(a: SourceDetection, b: SourceDetection): number {
+        const aRawConfidence = a.rawConfidence ?? a.confidence ?? 0;
+        const bRawConfidence = b.rawConfidence ?? b.confidence ?? 0;
+        if (aRawConfidence !== bRawConfidence) {
+            return bRawConfidence - aRawConfidence;
+        }
+        const aSize = Math.max(a.ellipsePx[2], a.ellipsePx[3]);
+        const bSize = Math.max(b.ellipsePx[2], b.ellipsePx[3]);
+        if (Math.abs(aSize - bSize) > 1e-6) {
+            return bSize - aSize;
+        }
+        return (b.confidence ?? 0) - (a.confidence ?? 0);
     }
 
     private intersectionOverUnion(a: SourceDetection["bboxPx"], b: SourceDetection["bboxPx"]): number {

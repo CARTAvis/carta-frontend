@@ -23,7 +23,10 @@ The cosmos detector is the generic `OnnxDetector` configured in `main.ts` with:
    at most the 1000 highest-confidence proposals, then run NMS.
 7. NMS uses IoU 0.45. A child with raw confidence ≥ 0.90 instead uses IoU
    0.65. High-confidence proposals have sorting priority.
-8. No blob or extended-component result is merged into this ACDC path.
+8. Blob detections are not merged into this ACDC path. The original
+   `detectExtendedSources()` connected-region pass is used during
+   post-processing to consolidate repeated ONNX proposals, but its coarse
+   ellipses are not displayed.
 
 ## Post-processing and display
 
@@ -38,6 +41,16 @@ The cosmos detector is the generic `OnnxDetector` configured in `main.ts` with:
 4. Rank detections by Gaussian peak flux
    `flux / (2π sigmaMajor sigmaMinor)`.
 5. Keep sources whose peak flux is at least 0.01% of the brightest detection,
-   then apply the 200-source display limit.
-6. Draw the fitted ellipse and its numeric index, not the raw YOLO rectangle
+   then group proposals with the original detector's connected extended
+   regions. Keep the highest-peak fitted proposal in each region.
+6. This region pass prevents Gaussian tails and repeated boxes around one
+   source from becoming separate displayed detections. It also avoids a
+   global confidence cutoff: valid extended sources can have low raw ONNX
+   confidence while retaining peak flux comparable to compact sources.
+7. Suppress smaller fitted ellipses whose centers are contained by an
+   equally or more confident larger ellipse, then suppress candidates whose
+   fitted ellipse centers overlap. This ports the original project's
+   `bf5daae` (`remove overlap`) display filtering.
+8. Apply the original 20-source display limit.
+9. Draw the fitted ellipse and its numeric index, not the raw YOLO rectangle
    and confidence label.
