@@ -287,12 +287,19 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const timeSeriesStore = appStore.timeSeriesStore;
         const isTimeSeriesMember = timeSeriesStore.isMember(frame);
         const canBeTimeSeriesMember = timeSeriesStore.canBeMember(frame);
+        const isTimeSeriesBulkAnchor = canBeTimeSeriesMember && rowIndex === appStore.activeImageIndex;
+        const eligibleTimeSeriesFrames = isTimeSeriesBulkAnchor ? appStore.frames.filter(timeSeriesStore.canBeMember) : [];
+        const areAllEligibleFramesMembers = isTimeSeriesBulkAnchor && eligibleTimeSeriesFrames.length > 0 && eligibleTimeSeriesFrames.every(timeSeriesStore.isMember);
         const isTimeSeriesMemberToggleDisabled = !canBeTimeSeriesMember || appStore.animatorStore.isAnimationActive;
         const timeSeriesTooltipSubtitle = !canBeTimeSeriesMember
             ? "A valid DATE-OBS or MJD-OBS is required"
             : appStore.animatorStore.isAnimationActive
               ? "Stop playback before changing time-series membership"
-              : `Click to ${isTimeSeriesMember ? "remove this image from" : "add this image to"} the time series`;
+              : isTimeSeriesBulkAnchor
+                ? areAllEligibleFramesMembers
+                    ? "Click to remove all images from the time series"
+                    : "Click to add all eligible images to the time series"
+                : `Click to ${isTimeSeriesMember ? "remove this image from" : "add this image to"} the time series`;
         const timeSeriesMembershipButton = (
             <Tooltip
                 position={"bottom"}
@@ -307,12 +314,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 }
             >
                 <AnchorButton
+                    className={classNames({outlined: isTimeSeriesBulkAnchor})}
                     variant="minimal"
                     size="small"
                     active={isTimeSeriesMember}
                     intent={isTimeSeriesMember ? "success" : "none"}
                     disabled={isTimeSeriesMemberToggleDisabled}
-                    onClick={() => appStore.toggleTimeSeriesMember(frame)}
+                    onClick={() => (isTimeSeriesBulkAnchor ? appStore.toggleAllEligibleTimeSeriesMembers(frame) : appStore.toggleTimeSeriesMember(frame))}
+                    aria-label={isTimeSeriesBulkAnchor ? "Toggle all eligible time-series members" : "Toggle time-series membership"}
                     data-testid={"image-list-" + rowIndex + "-matching-t"}
                 >
                     T

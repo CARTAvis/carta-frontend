@@ -83,6 +83,17 @@ describe("TimeSeriesStore", () => {
             expect(store.toggleMember(frame as any)).toBe(true);
             expect(store.isMember(frame as any)).toBe(false);
         });
+
+        test("updates eligible members in a single batch", () => {
+            const first = MakeMockFrame(0, 59000);
+            const second = MakeMockFrame(1, 59001);
+            const noTime = MakeMockFrame(2, undefined);
+
+            expect(store.setMembers([first, second, noTime] as any[], true)).toBe(2);
+            expect(store.members).toEqual([first, second]);
+            expect(store.setMembers([first, second] as any[], false)).toBe(2);
+            expect(store.members).toEqual([]);
+        });
     });
 
     describe("currentIndex", () => {

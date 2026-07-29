@@ -64,6 +64,11 @@ export class TimeSeriesStore {
         return this.setMember(frame, !this.isMember(frame));
     };
 
+    /** Adds or removes multiple images in a single action and returns the number changed. */
+    @action setMembers = (frames: readonly FrameStore[], isMember: boolean): number => {
+        return frames.reduce((count, frame) => count + (this.setMember(frame, isMember) ? 1 : 0), 0);
+    };
+
     @action clearMembers = () => {
         this.memberFrames.clear();
     };

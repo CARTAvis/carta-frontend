@@ -1268,16 +1268,35 @@ export class AppStore {
 
     @action setTimeSeriesMember = (frame: FrameStore, isMember: boolean): boolean => {
         const didUpdate = this.timeSeriesStore.setMember(frame, isMember);
-        if (didUpdate && this.animatorStore.animationMode === AnimationMode.TIME_SERIES && this.timeSeriesStore.elements.length < 2) {
-            this.animatorStore.stopAnimation();
-            this.animatorStore.selectFirstAvailableAnimationMode();
-        }
+        this.reconcileTimeSeriesAnimationMode(didUpdate);
         return didUpdate;
+    };
+
+    @action setTimeSeriesMembers = (frames: readonly FrameStore[], isMember: boolean): number => {
+        const numUpdated = this.timeSeriesStore.setMembers(frames, isMember);
+        this.reconcileTimeSeriesAnimationMode(numUpdated > 0);
+        return numUpdated;
     };
 
     @action toggleTimeSeriesMember = (frame: FrameStore) => {
         if (!this.animatorStore.isAnimationActive) {
             this.setTimeSeriesMember(frame, !this.timeSeriesStore.isMember(frame));
+        }
+    };
+
+    @action toggleAllEligibleTimeSeriesMembers = (anchor: FrameStore) => {
+        if (this.animatorStore.isAnimationActive || !this.timeSeriesStore.canBeMember(anchor)) {
+            return;
+        }
+        const eligibleFrames = this.frames.filter(this.timeSeriesStore.canBeMember);
+        const areAllMembers = eligibleFrames.every(this.timeSeriesStore.isMember);
+        this.setTimeSeriesMembers(eligibleFrames, !areAllMembers);
+    };
+
+    private reconcileTimeSeriesAnimationMode = (didUpdate: boolean) => {
+        if (didUpdate && this.animatorStore.animationMode === AnimationMode.TIME_SERIES && this.timeSeriesStore.elements.length < 2) {
+            this.animatorStore.stopAnimation();
+            this.animatorStore.selectFirstAvailableAnimationMode();
         }
     };
 
@@ -2762,7 +2781,7 @@ export class AppStore {
                         continue;
                     }
 
-                    if (workspace.selectedFile === frame.frameInfo.fileId) {
+                    if (workspace.selectedFile === fileInfo.id) {
                         this.updateActiveImageByFrame(frame);
                     }
 
