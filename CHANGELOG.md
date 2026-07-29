@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
+* Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).
 
 ## [6.0.0]
 
