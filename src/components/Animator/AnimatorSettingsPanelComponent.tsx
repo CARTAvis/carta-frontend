@@ -1,10 +1,10 @@
 import * as React from "react";
-import {FormGroup, H3, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, H3, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Tab, Tabs} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {type AnimatorWidgetStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {convertMjdToUtc, convertMjdUtcToScale, formatMjdUtcAsIsoInScale, getTimeSeriesTickLabelResult, isValidIanaTimeZone, parseIsoInScaleToMjdUtc} from "utilities";
 
@@ -84,8 +84,6 @@ const RELATIVE_UNIT_OPTIONS = [
     {value: RelativeTimeUnit.YEAR, label: "Years"}
 ];
 
-const ANIMATION_SLIDER_MODES = [AnimationMode.FRAME, AnimationMode.CHANNEL, AnimationMode.STOKES, AnimationMode.TIME_SERIES] as const;
-
 interface AnimatorSettingsPanelState {
     relativeReferenceIsoDraft: string | null;
     relativeReferenceIsoInvalid: boolean;
@@ -100,7 +98,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             minWidth: 360,
             minHeight: 180,
             defaultWidth: 452,
-            defaultHeight: 460,
+            defaultHeight: 360,
             title: "animator-settings",
             isCloseable: true,
             parentId: "animator",
@@ -223,32 +221,6 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         this.widgetStore?.setTimeScale(event.currentTarget.value as TimeScale);
     };
 
-    private handleSliderVisibilityChange = (mode: AnimationMode, event: React.ChangeEvent<HTMLInputElement>) => {
-        const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-
-        const isVisible = event.currentTarget.checked;
-        const animatorStore = AppStore.Instance.animatorStore;
-        if (animatorStore.isAnimationActive) {
-            return;
-        }
-
-        const excludedModes = ANIMATION_SLIDER_MODES.filter(sliderMode => {
-            const isSliderVisible = sliderMode === mode ? isVisible : widgetStore.getSliderVisibility(sliderMode);
-            return !isSliderVisible;
-        });
-
-        if (!isVisible && animatorStore.animationMode === mode) {
-            animatorStore.selectFirstAvailableAnimationMode(excludedModes);
-        } else if (isVisible && animatorStore.animationMode === AnimationMode.NONE) {
-            animatorStore.setAnimationMode(mode);
-        }
-
-        widgetStore.setSliderVisibility(mode, isVisible);
-    };
-
     private handleNumericPrecisionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const value = event.currentTarget.value;
         this.widgetStore?.setNumericTimePrecision(value === "auto" ? null : Number(value));
@@ -260,14 +232,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             return null;
         }
 
-        const appStore = AppStore.Instance;
-        const elements = appStore.timeSeriesStore.elements;
-        const activeFrame = appStore.activeFrame;
-        const fileInfo = activeFrame?.frameInfo.fileInfoExtended;
-        const isImageSliderAvailable = appStore.imageViewConfigStore.imageNum > 1 && appStore.activeImageIndex !== -1;
-        const isChannelSliderAvailable = (fileInfo?.depth ?? 0) > 1;
-        const isStokesSliderAvailable = (fileInfo?.stokes ?? 0) > 1;
-        const isTimeSeriesSliderAvailable = elements.length > 1;
+        const elements = AppStore.Instance.timeSeriesStore.elements;
         const labelResult = getTimeSeriesTickLabelResult(elements, widgetStore);
         const selectedReferenceImageIndex = elements.findIndex(element => element.mjdUtc === widgetStore.relativeReferenceMjdUtc);
         const effectiveReferenceMjdUtc = widgetStore.relativeReferenceMjdUtc ?? elements[0]?.mjdUtc;
@@ -293,40 +258,8 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         const timeScaleSectionTitleId = `${this.props.id}-time-scale-section-title`;
         const precisionSectionTitleId = `${this.props.id}-precision-section-title`;
 
-        const renderSliderToggleSection = (label: string, mode: AnimationMode, isAvailable: boolean, isVisible: boolean, unavailableMessage: string, testId: string) => {
-            const sectionTitleId = `${this.props.id}-${testId}-display-section-title`;
-            const isDisabled = !isAvailable || appStore.animatorStore.isAnimationActive;
-            const title = !isAvailable ? unavailableMessage : appStore.animatorStore.isAnimationActive ? "Stop playback before changing this setting" : undefined;
-            return (
-                <section className="animator-settings-section" aria-labelledby={sectionTitleId} data-testid={`${testId}-display-section`}>
-                    <H3 id={sectionTitleId} className="animator-settings-section-title">
-                        Display
-                    </H3>
-                    <FormGroup inline={true} label={`Show ${label.toLowerCase()} slider`} disabled={isDisabled}>
-                        <Switch checked={isAvailable && isVisible} disabled={isDisabled} onChange={event => this.handleSliderVisibilityChange(mode, event)} title={title} data-testid={`${testId}-toggle`} />
-                    </FormGroup>
-                </section>
-            );
-        };
-
-        const imageContent = (
-            <div className="animator-slider-settings">{renderSliderToggleSection("Image", AnimationMode.FRAME, isImageSliderAvailable, widgetStore.isImageSliderVisible, "Requires at least two images", "animator-image-slider")}</div>
-        );
-        const channelContent = (
-            <div className="animator-slider-settings">
-                {renderSliderToggleSection("Channel", AnimationMode.CHANNEL, isChannelSliderAvailable, widgetStore.isChannelSliderVisible, "Requires an image with at least two channels", "animator-channel-slider")}
-            </div>
-        );
-        const stokesContent = (
-            <div className="animator-slider-settings">
-                {renderSliderToggleSection("Polarization", AnimationMode.STOKES, isStokesSliderAvailable, widgetStore.isStokesSliderVisible, "Requires an image with at least two polarizations", "animator-polarization-slider")}
-            </div>
-        );
-
         const timeSeriesContent = (
             <div className="animator-time-series-settings">
-                {renderSliderToggleSection("Time series", AnimationMode.TIME_SERIES, isTimeSeriesSliderAvailable, widgetStore.isTimeSeriesSliderVisible, "Requires at least two time-series images", "animator-time-series-slider")}
-
                 <section className="animator-settings-section" aria-labelledby={timeFormatSectionTitleId} data-testid="animator-time-format-section">
                     <H3 id={timeFormatSectionTitleId} className="animator-settings-section-title">
                         Time format
@@ -496,9 +429,6 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             <ScrollShadow>
                 <div className="animator-settings-panel">
                     <Tabs id="animatorSettingsTabs">
-                        <Tab id="image" title="Image" panel={imageContent} />
-                        <Tab id="channel" title="Channel" panel={channelContent} />
-                        <Tab id="polarization" title="Polarization" panel={stokesContent} />
                         <Tab id="time-series" title="Time series" panel={timeSeriesContent} />
                     </Tabs>
                 </div>

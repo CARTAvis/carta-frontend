@@ -1,12 +1,8 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {AnimationMode, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 
 export interface AnimatorWidgetConfig {
-    isImageSliderVisible: boolean;
-    isChannelSliderVisible: boolean;
-    isStokesSliderVisible: boolean;
-    isTimeSeriesSliderVisible: boolean;
     timeLabelFormat: TimeLabelFormat;
     timeZoneMode: TimeZoneMode;
     ianaTimeZone: string;
@@ -19,10 +15,6 @@ export interface AnimatorWidgetConfig {
 }
 
 export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
-    isImageSliderVisible: true,
-    isChannelSliderVisible: true,
-    isStokesSliderVisible: true,
-    isTimeSeriesSliderVisible: true,
     timeLabelFormat: TimeLabelFormat.AUTO,
     timeZoneMode: TimeZoneMode.UTC,
     ianaTimeZone: "UTC",
@@ -35,15 +27,6 @@ export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
 };
 
 export type PersistedAnimatorWidgetConfig = Partial<Record<keyof AnimatorWidgetConfig, unknown>>;
-
-type SliderVisibilityKey = "isImageSliderVisible" | "isChannelSliderVisible" | "isStokesSliderVisible" | "isTimeSeriesSliderVisible";
-
-const SLIDER_VISIBILITY_KEYS: Partial<Record<AnimationMode, SliderVisibilityKey>> = {
-    [AnimationMode.FRAME]: "isImageSliderVisible",
-    [AnimationMode.CHANNEL]: "isChannelSliderVisible",
-    [AnimationMode.STOKES]: "isStokesSliderVisible",
-    [AnimationMode.TIME_SERIES]: "isTimeSeriesSliderVisible"
-};
 
 function isEnumValue<T extends string>(enumeration: Record<string, T>, value: unknown): value is T {
     return typeof value === "string" && Object.values(enumeration).includes(value as T);
@@ -58,10 +41,6 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 export class AnimatorWidgetStore implements AnimatorWidgetConfig {
-    @observable isImageSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isImageSliderVisible;
-    @observable isChannelSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isChannelSliderVisible;
-    @observable isStokesSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isStokesSliderVisible;
-    @observable isTimeSeriesSliderVisible: boolean = DEFAULT_ANIMATOR_WIDGET_CONFIG.isTimeSeriesSliderVisible;
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
     @observable ianaTimeZone: string = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
@@ -71,18 +50,6 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     @observable relativeTimeReference: RelativeTimeReference = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeReference;
     @observable relativeReferenceMjdUtc: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeReferenceMjdUtc;
     @observable relativeTimeUnit: RelativeTimeUnit = DEFAULT_ANIMATOR_WIDGET_CONFIG.relativeTimeUnit;
-
-    getSliderVisibility = (mode: AnimationMode): boolean => {
-        const key = SLIDER_VISIBILITY_KEYS[mode];
-        return key ? this[key] : false;
-    };
-
-    @action setSliderVisibility = (mode: AnimationMode, isVisible: boolean) => {
-        const key = SLIDER_VISIBILITY_KEYS[mode];
-        if (key) {
-            this[key] = isVisible;
-        }
-    };
 
     @action setTimeLabelFormat = (format: TimeLabelFormat) => {
         this.timeLabelFormat = format;
@@ -121,18 +88,6 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     @action init = (config: PersistedAnimatorWidgetConfig) => {
-        if (typeof config.isImageSliderVisible === "boolean") {
-            this.isImageSliderVisible = config.isImageSliderVisible;
-        }
-        if (typeof config.isChannelSliderVisible === "boolean") {
-            this.isChannelSliderVisible = config.isChannelSliderVisible;
-        }
-        if (typeof config.isStokesSliderVisible === "boolean") {
-            this.isStokesSliderVisible = config.isStokesSliderVisible;
-        }
-        if (typeof config.isTimeSeriesSliderVisible === "boolean") {
-            this.isTimeSeriesSliderVisible = config.isTimeSeriesSliderVisible;
-        }
         if (isEnumValue(TimeLabelFormat, config.timeLabelFormat)) {
             this.timeLabelFormat = config.timeLabelFormat;
         }
@@ -169,10 +124,6 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     };
 
     toConfig = (): AnimatorWidgetConfig => ({
-        isImageSliderVisible: this.isImageSliderVisible,
-        isChannelSliderVisible: this.isChannelSliderVisible,
-        isStokesSliderVisible: this.isStokesSliderVisible,
-        isTimeSeriesSliderVisible: this.isTimeSeriesSliderVisible,
         timeLabelFormat: this.timeLabelFormat,
         timeZoneMode: this.timeZoneMode,
         ianaTimeZone: this.ianaTimeZone,

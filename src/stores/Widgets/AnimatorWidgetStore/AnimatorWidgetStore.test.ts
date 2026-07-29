@@ -5,10 +5,6 @@ import {AnimatorWidgetStore} from "./AnimatorWidgetStore";
 describe("AnimatorWidgetStore", () => {
     test("uses backward-compatible time label defaults", () => {
         expect(new AnimatorWidgetStore().toConfig()).toEqual({
-            isImageSliderVisible: true,
-            isChannelSliderVisible: true,
-            isStokesSliderVisible: true,
-            isTimeSeriesSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
             ianaTimeZone: "UTC",
@@ -24,10 +20,6 @@ describe("AnimatorWidgetStore", () => {
     test("restores valid settings from a layout config", () => {
         const store = new AnimatorWidgetStore();
         store.init({
-            isImageSliderVisible: false,
-            isChannelSliderVisible: false,
-            isStokesSliderVisible: false,
-            isTimeSeriesSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Asia/Taipei",
@@ -40,10 +32,6 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
-            isImageSliderVisible: false,
-            isChannelSliderVisible: false,
-            isStokesSliderVisible: false,
-            isTimeSeriesSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Asia/Taipei",
@@ -59,10 +47,6 @@ describe("AnimatorWidgetStore", () => {
     test("ignores invalid persisted values", () => {
         const store = new AnimatorWidgetStore();
         store.init({
-            isImageSliderVisible: "invalid",
-            isChannelSliderVisible: "invalid",
-            isStokesSliderVisible: "invalid",
-            isTimeSeriesSliderVisible: "invalid",
             timeLabelFormat: "invalid",
             timeZoneMode: "invalid",
             timeScale: "invalid",
@@ -74,10 +58,6 @@ describe("AnimatorWidgetStore", () => {
         });
 
         expect(store.toConfig()).toEqual({
-            isImageSliderVisible: true,
-            isChannelSliderVisible: true,
-            isStokesSliderVisible: true,
-            isTimeSeriesSliderVisible: true,
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
             ianaTimeZone: "UTC",

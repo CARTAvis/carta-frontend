@@ -169,10 +169,6 @@ describe("WidgetsStore PV preview test ids", () => {
     test("persists Animator time label settings in widget config", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.addAnimatorWidget("animator-7", {
-            isImageSliderVisible: false,
-            isChannelSliderVisible: false,
-            isStokesSliderVisible: false,
-            isTimeSeriesSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Pacific/Honolulu",
@@ -185,10 +181,6 @@ describe("WidgetsStore PV preview test ids", () => {
         });
 
         expect(widgetsStore.toWidgetSettingsConfig("animator", "animator-7")).toEqual({
-            isImageSliderVisible: false,
-            isChannelSliderVisible: false,
-            isStokesSliderVisible: false,
-            isTimeSeriesSliderVisible: false,
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Pacific/Honolulu",

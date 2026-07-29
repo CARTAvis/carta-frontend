@@ -261,12 +261,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const timeSeriesStore = appStore.timeSeriesStore;
         const timeSeriesElements = timeSeriesStore.elements;
         const numTimeSeriesElements = timeSeriesElements.length;
-        const shouldAddTimeSeriesSliderSpacing = !shouldHideSliders && this.width < 750 && numTimeSeriesElements > 1 && sliderSettings.isTimeSeriesSliderVisible;
+        const shouldAddTimeSeriesSliderSpacing = !shouldHideSliders && this.width < 750 && numTimeSeriesElements > 1;
 
         let channelSlider, channelRangeSlider, stokesSlider, imageSlider, timeSeriesSlider;
         // Image Control
         const imageIndex = appStore.activeImageIndex;
-        if (numImages > 1 && imageIndex !== -1 && sliderSettings.isImageSliderVisible) {
+        if (numImages > 1 && imageIndex !== -1) {
             const {values: imageTick} = getDiscreteSliderTicks(numImages);
             imageSlider = (
                 <div className="animator-slider">
@@ -283,7 +283,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Channel Control
-        if (numChannels > 1 && activeFrame && sliderSettings.isChannelSliderVisible) {
+        if (numChannels > 1 && activeFrame) {
             const {values: channelTick, step: channelStep} = getDiscreteSliderTicks(numChannels);
             channelSlider = (
                 <div className="animator-slider" data-testid="animator-slider">
@@ -339,7 +339,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Stokes Control
-        if (numStokes > 1 && activeFrame && sliderSettings.isStokesSliderVisible) {
+        if (numStokes > 1 && activeFrame) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750, "has-time-series-slider-below": shouldAddTimeSeriesSliderSpacing})} data-testid="animator-polarization-slider">
                     <Radio
@@ -381,7 +381,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Time series control
-        if (numTimeSeriesElements > 1 && sliderSettings.isTimeSeriesSliderVisible) {
+        if (numTimeSeriesElements > 1) {
             const currentTimeSeriesIndex = timeSeriesStore.currentIndex;
             const {values: timeSeriesTick} = getDiscreteSliderTicks(numTimeSeriesElements, currentTimeSeriesIndex);
             const timeTickLabels = formatTimeSeriesTickLabels(timeSeriesElements, sliderSettings);
