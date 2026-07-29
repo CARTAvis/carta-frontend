@@ -30,7 +30,11 @@
         }
 
         &.outlined {
-            border: solid 1px;
+            border: solid 1px $pt-text-color;
+
+            .#{$ns}-dark & {
+                border-color: $pt-dark-text-color;
+            }
         }
 
         border: solid 1px transparent;
