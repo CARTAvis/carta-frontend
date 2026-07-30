@@ -77,7 +77,7 @@ describe("FileListTableComponent", () => {
         ]);
     });
 
-    test("prefixes upper-bound file sizes with less-than sign", () => {
-        expect((FileListTableComponent as any).getFileSizeDisplay(1024, true)).toBe("<1.0 kB");
+    test("prefixes upper-bound file sizes with less-than-or-equal sign", () => {
+        expect((FileListTableComponent as any).getFileSizeDisplay(1024, true)).toBe("≤1.0 kB");
     });
 });

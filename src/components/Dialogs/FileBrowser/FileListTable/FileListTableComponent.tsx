@@ -84,7 +84,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     }
 
     private static getFileSizeDisplay(sizeInBytes: number, isSizeUpperBound?: boolean): string {
-        const upperBoundPrefix = isSizeUpperBound ? "<" : "";
+        const upperBoundPrefix = isSizeUpperBound ? "≤" : "";
         if (sizeInBytes >= 1e12) {
             return `${upperBoundPrefix}${toFixed(sizeInBytes / 1e12, 2)} TB`;
         } else if (sizeInBytes >= 1e9) {
