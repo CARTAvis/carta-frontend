@@ -233,7 +233,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: isSpatialReference})}
+                        className={classNames("matching-button", {outlined: isSpatialReference})}
                         variant="minimal"
                         size="small"
                         active={!!frame.spatialReference}
@@ -247,42 +247,46 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let spectralMatchingButton: React.ReactNode;
-        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
-            const isSpectralReference = frame === appStore.spectralReference;
-            let tooltipSubtitle: string;
-            if (isSpectralReference) {
-                tooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
-            } else {
-                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
-            }
-            spectralMatchingButton = (
-                <Tooltip
-                    position={"bottom"}
-                    content={
-                        <span>
-                            Spectral matching
-                            <br />
-                            <i>
-                                <small>{tooltipSubtitle}</small>
-                            </i>
-                        </span>
-                    }
-                >
-                    <AnchorButton
-                        className={classNames({outlined: isSpectralReference})}
-                        variant="minimal"
-                        size="small"
-                        active={!!frame.spectralReference}
-                        intent={frame.spectralReference ? "success" : "none"}
-                        onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
-                        data-testid={"image-list-" + rowIndex + "-matching-z"}
-                    >
-                        Z
-                    </AnchorButton>
-                </Tooltip>
-            );
+        const hasSpectralAxis = frame.frameInfo.fileInfoExtended.depth > 1;
+        const spectralReference = appStore.spectralReference;
+        let spectralTooltipSubtitle: string;
+        if (!hasSpectralAxis) {
+            spectralTooltipSubtitle = "Spectral matching is unavailable because this image has no Z axis";
+        } else if (!spectralReference) {
+            spectralTooltipSubtitle = "No spectral reference is available";
+        } else if (frame === spectralReference) {
+            spectralTooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
+        } else {
+            spectralTooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${spectralReference.filename}`;
         }
+
+        const spectralMatchingButton = (
+            <Tooltip
+                position={"bottom"}
+                content={
+                    <span>
+                        Spectral matching
+                        <br />
+                        <i>
+                            <small>{spectralTooltipSubtitle}</small>
+                        </i>
+                    </span>
+                }
+            >
+                <AnchorButton
+                    className={classNames("matching-button", {outlined: frame === spectralReference})}
+                    variant="minimal"
+                    size="small"
+                    active={!!frame.spectralReference}
+                    intent={frame.spectralReference ? "success" : "none"}
+                    disabled={!hasSpectralAxis || !spectralReference}
+                    onClick={() => (frame === spectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
+                    data-testid={"image-list-" + rowIndex + "-matching-z"}
+                >
+                    Z
+                </AnchorButton>
+            </Tooltip>
+        );
 
         const timeSeriesStore = appStore.timeSeriesStore;
         const isTimeSeriesMember = timeSeriesStore.isMember(frame);
@@ -314,7 +318,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 }
             >
                 <AnchorButton
-                    className={classNames({outlined: isTimeSeriesBulkAnchor})}
+                    className={classNames("matching-button", {outlined: isTimeSeriesBulkAnchor})}
                     variant="minimal"
                     size="small"
                     active={isTimeSeriesMember}
@@ -352,7 +356,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: isRasterScalingReference})}
+                        className={classNames("matching-button", {outlined: isRasterScalingReference})}
                         variant="minimal"
                         size="small"
                         active={!!frame.rasterScalingReference}
@@ -369,12 +373,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
         return (
             <Cell className={className}>
-                <React.Fragment>
-                    {spatialMatchingButton}
-                    {spectralMatchingButton}
-                    {timeSeriesMembershipButton}
-                    {renderConfigMatchingButton}
-                </React.Fragment>
+                <div className="matching-controls">
+                    <div className="matching-control-slot">{spatialMatchingButton}</div>
+                    <div className="matching-control-slot">{spectralMatchingButton}</div>
+                    <div className="matching-control-slot">{timeSeriesMembershipButton}</div>
+                    <div className="matching-control-slot">{renderConfigMatchingButton}</div>
+                </div>
             </Cell>
         );
     };

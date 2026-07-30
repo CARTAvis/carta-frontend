@@ -54,6 +54,20 @@
         }
     }
 
+    .matching-controls {
+        display: grid;
+        grid-template-columns: repeat(4, 28px);
+        column-gap: 2px;
+        align-items: center;
+
+        .matching-control-slot,
+        .#{$ns}-popover-wrapper,
+        .#{$ns}-popover-target,
+        .matching-button {
+            width: 28px;
+        }
+    }
+
     .#{$ns}-popover-wrapper + .#{$ns}-popover-wrapper {
         margin-left: 2px;
     }
