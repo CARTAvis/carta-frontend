@@ -23,7 +23,7 @@ function getBasePointingEventInit(event: MouseEvent | PointerEvent): MouseEventI
 /**
  * Forwards mouse, pointer, and touch tracking events from a popout window's document
  * to the main window's document. This allows third-party libraries (Blueprint.js Slider,
- * react-split-pane, react-color, etc.) that attach their drag-tracking listeners to the
+ * react-split-pane, the color picker, etc.) that attach their drag-tracking listeners to the
  * main `document` to work correctly when a widget is in a FlexLayout popout window.
  *
  * Only move/end events are forwarded. Down events reach the correct listeners through

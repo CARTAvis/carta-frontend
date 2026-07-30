@@ -1,6 +1,6 @@
 import * as React from "react";
-import {type ColorResult} from "react-color";
 import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
+import type {ColorResult} from "@uiw/react-color";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
@@ -105,8 +105,8 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgba.a);
                         }}
                         disableAlpha={false}
                         darkTheme={appStore.isDarkTheme}

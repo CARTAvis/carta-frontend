@@ -1,7 +1,7 @@
 import * as React from "react";
-import {type ColorResult} from "react-color";
 import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -443,7 +443,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                         <ColorPickerComponent
                             color={dataSource.vectorOverlayConfig.color}
                             presetColors={SWATCH_COLORS}
-                            setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgb)}
+                            setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgba)}
                             disableAlpha={true}
                             darkTheme={appStore.isDarkTheme}
                         />
