@@ -1,4 +1,4 @@
-import type {RGBColor} from "react-color";
+import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import type {WorkspaceContourConfig} from "models";
@@ -13,7 +13,7 @@ export class ContourConfigStore {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    @observable color: RGBColor;
+    @observable color: RgbaColor;
     @observable isColormapEnabled: boolean = false;
     @observable colormap: string;
     @observable colormapContrast: number = 1.0;
