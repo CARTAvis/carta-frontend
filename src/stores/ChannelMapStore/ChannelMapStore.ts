@@ -117,11 +117,16 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
+            if (isDisablingChannelMap) {
+                const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
+                AppStore.Instance.updateChannels(updates);
+            }
         }
     };
 

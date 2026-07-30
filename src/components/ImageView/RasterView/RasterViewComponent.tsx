@@ -175,7 +175,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
-                const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
+                const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
                 const canRender = (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) && frameStokesIndex === histStokesIndex;
                 if (canRender) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);

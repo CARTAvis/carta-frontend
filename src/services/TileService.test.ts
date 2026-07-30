@@ -10,9 +10,11 @@ import {TileService} from "./TileService";
 
 type TestTileService = {
     activeChannelMapRequests: Map<number, unknown>;
-    backendService: {setChannels: jest.Mock};
+    backendService: {addRequiredTiles: jest.Mock; animationId: number; setChannels: jest.Mock};
     cachedTiles: {has: jest.Mock};
+    channelMapGenerations: Map<number, number>;
     channelMapRequestQueues: Map<number, unknown[]>;
+    channelMapRequestTimeouts: Map<number, ReturnType<typeof setTimeout>>;
     channelMap: Map<number, {channel: number; stokes: number}>;
     clearCompressedCache: jest.Mock;
     clearGPUCache: jest.Mock;
@@ -23,6 +25,8 @@ type TestTileService = {
     getCompressedCache: jest.Mock;
     getRequiredRequestTiles: jest.Mock;
     handleChannelMapFlowControl: (eventId: number, message: {fileId: number; completedChannel: number; status: CARTA.ChannelMapFlowControl.Status}) => void;
+    handleStreamSync: (message: CARTA.RasterTileSync.$Properties) => void;
+    isAnimationEnabled: boolean;
     pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
     pendingRequests: Map<string, Map<number, boolean>>;
     pendingSynchronisedTiles: Map<string, Set<number>>;
@@ -31,17 +35,24 @@ type TestTileService = {
     requestChannelMapTiles: TileService["requestChannelMapTiles"];
     requestTiles: TileService["requestTiles"];
     cancelChannelMapRequests: TileService["cancelChannelMapRequests"];
+    syncIdGenerationMap: Map<number, number>;
+    syncIdMap: Map<number, boolean>;
+    syncIdTileCountMap: Map<number, number>;
     tileStream: {next: jest.Mock};
     updateChannelMapActiveChannel: TileService["updateChannelMapActiveChannel"];
+    updateHiddenFileChannels: TileService["updateHiddenFileChannels"];
     updateRemainingTileCount: jest.Mock;
+    updateStream: (fileId: number, channel: number, stokes: number, data: Float32Array, width: number, height: number, layer: number, coordinate: number, syncId: number, generation: number) => void;
 };
 
 const CreateService = () => {
     const service = Object.create(TileService.prototype) as TestTileService;
     let requestId = 0;
-    service.backendService = {setChannels: jest.fn(() => ++requestId)};
+    service.backendService = {addRequiredTiles: jest.fn(), animationId: 0, setChannels: jest.fn(() => ++requestId)};
     service.channelMapRequestQueues = new Map();
     service.activeChannelMapRequests = new Map();
+    service.channelMapRequestTimeouts = new Map();
+    service.channelMapGenerations = new Map();
     service.channelMap = new Map();
     service.clearCompressedCache = jest.fn();
     service.clearGPUCache = jest.fn();
@@ -52,6 +63,10 @@ const CreateService = () => {
     service.pendingDecompressions = new Map();
     service.pendingSynchronisedTiles = new Map();
     service.receivedSynchronisedTiles = new Map();
+    service.syncIdGenerationMap = new Map();
+    service.syncIdMap = new Map();
+    service.syncIdTileCountMap = new Map();
+    service.isAnimationEnabled = false;
     service.tileStream = {next: jest.fn()};
     service.updateRemainingTileCount = jest.fn();
     return service;
@@ -71,8 +86,18 @@ const Complete = (channel: number) => ({
 });
 
 describe("TileService channel map request queue", () => {
+    beforeEach(() => {
+        jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        jest.useRealTimers();
+    });
+
     test("sends one channel at a time and ignores unrelated completion messages", () => {
         const service = CreateService();
+        jest.spyOn(console, "warn").mockImplementation();
         service.queueChannelMapRequests(1, [MakeRequest(2), MakeRequest(3)]);
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
@@ -193,6 +218,18 @@ describe("TileService channel map request queue", () => {
         expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 0, fileId: 1, channel: 2, stokes: 0, flush: false});
     });
 
+    test("uses SetImageChannels only for the first normal-view synchronization", () => {
+        const service = CreateService();
+        const tile = {x: 0, y: 0, encode: () => 4};
+        service.getRequiredRequestTiles = jest.fn(() => [tile]);
+
+        service.requestTiles([tile] as never, 1, 2, 0, {x: 0, y: 0}, 11, true);
+        service.requestTiles([tile] as never, 1, 2, 0, {x: 0, y: 0}, 11);
+
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
+        expect(service.backendService.addRequiredTiles).toHaveBeenCalledTimes(1);
+    });
+
     test("clears normal-view GPU tiles when Stokes changes", () => {
         const service = CreateService();
         service.channelMap.set(1, {channel: 2, stokes: 0});
@@ -233,6 +270,104 @@ describe("TileService channel map request queue", () => {
 
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
         expect(service.pendingRequests.get("10_0_1")?.size).toBe(1);
+    });
+
+    test("fails a queue when its completion event times out", () => {
+        const service = CreateService();
+        jest.spyOn(console, "warn").mockImplementation();
+        service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
+
+        jest.advanceTimersByTime(10_000);
+
+        expect(service.activeChannelMapRequests.has(1)).toBe(false);
+        expect(service.channelMapRequestQueues.has(1)).toBe(false);
+        expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
+        expect(console.warn).toHaveBeenCalledWith("Channel Map request 1 timed out for file 1");
+    });
+
+    test("keeps the watchdog active after a mismatched completion channel", () => {
+        const service = CreateService();
+        jest.spyOn(console, "warn").mockImplementation();
+        service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2)]);
+
+        service.handleChannelMapFlowControl(1, Complete(9));
+        jest.advanceTimersByTime(10_000);
+
+        expect(service.channelMapRequestQueues.has(1)).toBe(false);
+        expect(console.warn).toHaveBeenNthCalledWith(1, "Channel Map completion mismatch for request 1: expected channel 1, received 9");
+        expect(console.warn).toHaveBeenNthCalledWith(2, "Channel Map request 1 timed out for file 1");
+    });
+
+    test("ignores a late completion from an expired request", () => {
+        const service = CreateService();
+        jest.spyOn(console, "warn").mockImplementation();
+        service.queueChannelMapRequests(1, [MakeRequest(1)]);
+        jest.advanceTimersByTime(10_000);
+        service.queueChannelMapRequests(1, [MakeRequest(2), MakeRequest(3)]);
+
+        service.handleChannelMapFlowControl(1, Complete(1));
+
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        expect(service.activeChannelMapRequests.get(1)).toEqual(expect.objectContaining({channel: 2, requestId: 2}));
+    });
+
+    test("retires synchronization state when cancelled", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.completedChannels.set("1_0_1", true);
+        service.pendingSynchronisedTiles.set("1_0_1", new Set([4]));
+        service.receivedSynchronisedTiles.set("1_0_1", new Map([[7, new Map()]]));
+        service.pendingDecompressions.set("1_0_1", new Map([[7, new Map()]]));
+        service.syncIdMap.set(7, true);
+        service.syncIdTileCountMap.set(7, 1);
+        service.syncIdGenerationMap.set(7, 0);
+
+        service.cancelChannelMapRequests(1);
+
+        expect(service.channelMapGenerations.get(1)).toBe(1);
+        expect(service.completedChannels.has("1_0_1")).toBe(false);
+        expect(service.pendingSynchronisedTiles.has("1_0_1")).toBe(false);
+        expect(service.receivedSynchronisedTiles.has("1_0_1")).toBe(false);
+        expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
+        expect(service.syncIdMap.has(7)).toBe(false);
+        expect(service.syncIdTileCountMap.has(7)).toBe(false);
+        expect(service.syncIdGenerationMap.has(7)).toBe(false);
+    });
+
+    test("discards decompression results from a cancelled generation", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.channelMapGenerations.set(1, 1);
+        service.pendingDecompressions.set("1_0_1", new Map([[-1, new Map([[4, true]])]]));
+
+        service.updateStream(1, 1, 0, new Float32Array([1]), 1, 1, 0, 4, -1, 0);
+
+        expect(service.pendingDecompressions.get("1_0_1")?.get(-1)?.has(4)).toBe(true);
+        expect(service.tileStream.next).not.toHaveBeenCalled();
+    });
+
+    test("completes a synchronized stream when no requested tiles succeed", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.pendingSynchronisedTiles.set("1_0_1", new Set([4]));
+
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 0, endSync: true});
+
+        expect(service.pendingSynchronisedTiles.has("1_0_1")).toBe(false);
+        expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
+        expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 0, fileId: 1, channel: 1, stokes: 0, flush: true});
+    });
+
+    test("keeps hidden-file caches when only the channel changes", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 0});
+
+        service.updateHiddenFileChannels(1, 2, 0);
+
+        expect(service.clearCompressedCache).not.toHaveBeenCalled();
+        expect(service.clearGPUCache).not.toHaveBeenCalled();
+        expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 2, 0, {});
     });
 
     test("abandons the sequence when sending fails", () => {

@@ -36,8 +36,10 @@ jest.mock("stores", () => {
                                 {deep: false}
                             )
                         }
-                    ]
-                }
+                    ],
+                    visibleFrames: []
+                },
+                updateChannels: jest.fn()
             }
         }
     };
@@ -47,6 +49,10 @@ import {TileService} from "services";
 
 describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
 
     describe("setChannelMapEnabled", () => {
         it("updates the channel map mode correctly", () => {
@@ -62,11 +68,11 @@ describe("ChannelMapStore", () => {
 
             runInAction(() => {
                 frame.channel = 0;
-                frame.requiredChannel = 2;
+                frame.requiredChannel = 4;
             });
 
-            expect(store.startChannel).toBe(2);
-            expect(store.channelArray[0]).toBe(2);
+            expect(store.startChannel).toBe(4);
+            expect(store.channelArray[0]).toBe(4);
 
             runInAction(() => {
                 frame.requiredChannel = 0;
@@ -118,6 +124,18 @@ describe("ChannelMapStore", () => {
             testStore.requestChannels(store.displayedFrame);
 
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
+        });
+
+        it("synchronizes visible frames when disabled", () => {
+            const appStore = jest.requireMock("stores").AppStore.Instance;
+            const frame = {...store.displayedFrame, channel: 2, stokes: 1};
+            appStore.imageViewConfigStore.visibleFrames = [frame];
+            appStore.updateChannels.mockClear();
+
+            store.setChannelMapEnabled(true);
+            store.setChannelMapEnabled(false);
+
+            expect(appStore.updateChannels).toHaveBeenCalledWith([{frame, channel: 2, stokes: 1}]);
         });
     });
 

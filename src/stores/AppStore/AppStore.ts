@@ -2258,7 +2258,7 @@ export class AppStore {
             return;
         }
         const frame = this.getFrame(regionHistogramData.fileId);
-        const isCubeHistogram = regionHistogramData.regionId === -2;
+        const isCubeHistogram = regionHistogramData.regionId === RegionIdType.CUBE;
         if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && (!frame || frame.channel !== regionHistogramData.channel || frame.stokes !== regionHistogramData.stokes)) {
             return;
         }
@@ -2283,7 +2283,7 @@ export class AppStore {
         if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config?.fixedNumBins && !regionHistogramData.config?.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
-        } else if (regionHistogramData.regionId === -2) {
+        } else if (regionHistogramData.regionId === RegionIdType.CUBE) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             if (updatedFrame) {
