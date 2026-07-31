@@ -781,7 +781,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 return (
                     <InputGroup
                         className="arithmetic-input"
-                        inputRef={this.imageArithmeticInputRef}
+                        inputRef={this.imageArithmeticInputRef as React.Ref<HTMLInputElement>}
                         autoFocus={true}
                         placeholder="Enter an image arithmetic expression"
                         value={this.imageArithmeticString}

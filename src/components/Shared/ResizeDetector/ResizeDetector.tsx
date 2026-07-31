@@ -5,7 +5,7 @@ interface ResizeDetectorProps {
     onResize: (width: number, height: number) => void;
     throttleTime?: number; // optional throttle time in milliseconds
     targetRef?: React.RefObject<HTMLElement | null>; // if there is ref attached to children, the same ref must be set here
-    forceResizeRef?: React.RefObject<(() => void) | null>; // assign a ref to imperatively trigger a resize measurement
+    forceResizeRef?: {current: (() => void) | null}; // assign a ref to imperatively trigger a resize measurement
     children: React.ReactElement;
 }
 
