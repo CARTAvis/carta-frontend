@@ -287,8 +287,7 @@ export class PreferenceDialogComponent extends React.Component {
                         color={tinycolor(preference.nanColorHex).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgba.a);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());
                         }}
                         disableAlpha={false}
                         darkTheme={appStore.isDarkTheme}
