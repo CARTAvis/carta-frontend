@@ -1,7 +1,7 @@
 import * as React from "react";
-import {type ColorResult} from "react-color";
 import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import type {ColorResult} from "@uiw/react-color";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
@@ -146,7 +146,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     <ColorPickerComponent
                         color={frame.contourConfig.color}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgb)}
+                        setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgba)}
                         disableAlpha={true}
                         disabled={frame.contourConfig.isColormapEnabled}
                         darkTheme={this.props.darkTheme}

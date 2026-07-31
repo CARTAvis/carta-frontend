@@ -25,6 +25,7 @@ export const SWATCH_COLORS: string[] = [
 ];
 
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
+export const TRANSPARENT_COLOR = "#00000000";
 
 export const SELECTABLE_COLORS: string[] = [
     SelectableColor.Blue,

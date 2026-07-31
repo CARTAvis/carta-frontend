@@ -1,4 +1,4 @@
-import type {RGBColor} from "react-color";
+import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 
 import {type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
@@ -32,7 +32,7 @@ export interface WorkspaceContourConfig {
     levels: number[];
     smoothingMode: CARTA.SmoothingMode;
     smoothingFactor: number;
-    color?: RGBColor;
+    color?: RgbaColor;
     colormapEnabled: boolean;
     colormap?: string;
     colormapContrast: number;
@@ -57,7 +57,7 @@ export interface WorkspaceVectorOverlayConfig {
     visible: boolean;
     thickness: number;
     colormapEnabled: boolean;
-    color?: RGBColor;
+    color?: RgbaColor;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;

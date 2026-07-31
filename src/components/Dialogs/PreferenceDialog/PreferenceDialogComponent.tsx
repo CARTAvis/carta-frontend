@@ -1,7 +1,7 @@
 import * as React from "react";
-import {type ColorResult} from "react-color";
 import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -294,8 +294,7 @@ export class PreferenceDialogComponent extends React.Component {
                         color={tinycolor(preference.nanColorHex).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            const colorStr = color.hex === "transparent" ? "rgba(0, 0, 0, 0)" : tinycolor(color.rgb).toRgbString();
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, colorStr);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());
                         }}
                         disableAlpha={false}
                         darkTheme={appStore.isDarkTheme}
