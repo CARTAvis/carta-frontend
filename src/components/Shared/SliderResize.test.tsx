@@ -10,6 +10,8 @@ describe("Slider", () => {
     afterEach(() => {
         if (originalClientWidth) {
             Object.defineProperty(HTMLElement.prototype, "clientWidth", originalClientWidth);
+        } else {
+            Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
         }
         window.ResizeObserver = originalResizeObserver;
     });
