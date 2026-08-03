@@ -126,6 +126,17 @@ describe("ChannelMapStore", () => {
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
         });
 
+        it("requests tiles after session resume", () => {
+            const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
+            requestChannelMapTiles.mockClear();
+            store.setChannelMapEnabled(true);
+
+            store.requestTilesAfterSessionResume();
+
+            expect(requestChannelMapTiles).toHaveBeenCalled();
+            store.setChannelMapEnabled(false);
+        });
+
         it("synchronizes visible frames when disabled", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
             const frame = {...store.displayedFrame, channel: 2, stokes: 1};

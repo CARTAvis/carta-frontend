@@ -569,6 +569,27 @@ export class TileService {
         this.backendService.setChannels(fileId, channel, stokes, {});
     }
 
+    resetForSessionResume() {
+        this.channelMapRequestTimeouts.forEach(timeout => clearTimeout(timeout));
+        this.channelMapRequestQueues.clear();
+        this.activeChannelMapRequests.clear();
+        this.channelMapRequestTimeouts.clear();
+        this.desiredChannelMapStokes.clear();
+        this.confirmedChannelMapStokes.clear();
+        this.pendingRequests.clear();
+        this.pendingDecompressions.clear();
+        this.pendingSynchronisedTiles.clear();
+        this.receivedSynchronisedTiles.clear();
+        this.completedChannels.clear();
+        this.syncIdMap.clear();
+        this.syncIdTileCountMap.clear();
+        this.syncIdGenerationMap.clear();
+        this.channelMap.forEach((_channels, fileId) => {
+            this.channelMapGenerations.set(fileId, (this.channelMapGenerations.get(fileId) ?? 0) + 1);
+        });
+        this.updateRemainingTileCount();
+    }
+
     clearGPUCache(fileId: number | null | undefined) {
         const cacheCapacity = this.cachedTiles.capacity;
         const keys: string[] = [];

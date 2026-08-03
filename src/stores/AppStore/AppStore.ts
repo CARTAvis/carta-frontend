@@ -2533,7 +2533,7 @@ export class AppStore {
     private *resumeSession() {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
-        this.tileService.clearRequestQueue();
+        this.tileService.resetForSessionResume();
 
         // Ignore & remove generated in-memory images
         const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);
@@ -2643,6 +2643,7 @@ export class AppStore {
         this.initRequirements();
         this.isResumingSession = false;
         this.backendService.hasConnectionDropped = false;
+        this.requestUnreceivedTilesAfterSessionResume();
 
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {
@@ -2689,6 +2690,18 @@ export class AppStore {
             }
             fittingStore.resetFittingState();
         }
+    };
+
+    private requestUnreceivedTilesAfterSessionResume = () => {
+        if (this.channelMapStore.isChannelMapEnabled) {
+            this.channelMapStore.requestTilesAfterSessionResume();
+            return;
+        }
+
+        this.imageViewConfigStore.visibleFrames.forEach(frame => {
+            const [tiles, focusPoint] = frame.requiredTiles;
+            this.updateView(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, focusPoint, frame.headerUnit ?? "");
+        });
     };
 
     @flow.bound

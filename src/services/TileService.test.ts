@@ -35,6 +35,7 @@ type TestTileService = {
     requestChannelMapTiles: TileService["requestChannelMapTiles"];
     requestTiles: TileService["requestTiles"];
     cancelChannelMapRequests: TileService["cancelChannelMapRequests"];
+    resetForSessionResume: TileService["resetForSessionResume"];
     syncIdGenerationMap: Map<number, number>;
     syncIdMap: Map<number, boolean>;
     syncIdTileCountMap: Map<number, number>;
@@ -288,6 +289,32 @@ describe("TileService channel map request queue", () => {
 
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
         expect(service.pendingRequests.get("10_0_1")?.size).toBe(1);
+    });
+
+    test("resets in-flight tile state for session resume", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.channelMapGenerations.set(1, 3);
+        service.pendingRequests.set("1_0_1", new Map([[4, true]]));
+        service.pendingDecompressions.set("1_0_1", new Map([[7, new Map([[4, true]])]]));
+        service.pendingSynchronisedTiles.set("1_0_1", new Set([4]));
+        service.receivedSynchronisedTiles.set("1_0_1", new Map([[7, new Map()]]));
+        service.completedChannels.set("1_0_1", true);
+        service.syncIdMap.set(7, false);
+        service.syncIdTileCountMap.set(7, 1);
+        service.syncIdGenerationMap.set(7, 3);
+
+        service.resetForSessionResume();
+
+        expect(service.pendingRequests.size).toBe(0);
+        expect(service.pendingDecompressions.size).toBe(0);
+        expect(service.pendingSynchronisedTiles.size).toBe(0);
+        expect(service.receivedSynchronisedTiles.size).toBe(0);
+        expect(service.completedChannels.size).toBe(0);
+        expect(service.syncIdMap.size).toBe(0);
+        expect(service.syncIdTileCountMap.size).toBe(0);
+        expect(service.syncIdGenerationMap.size).toBe(0);
+        expect(service.channelMapGenerations.get(1)).toBe(4);
     });
 
     test("fails a queue when its completion event times out", () => {

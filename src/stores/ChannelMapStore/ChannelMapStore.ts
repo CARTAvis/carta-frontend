@@ -112,6 +112,12 @@ export class ChannelMapStore {
         TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
     };
 
+    requestTilesAfterSessionResume = () => {
+        if (this.displayedFrame) {
+            this.requestChannels(this.displayedFrame);
+        }
+    };
+
     /**
      * Enables or disables the channel map mode.
      * @param isEnabled - Whether to enable the channel map mode.
