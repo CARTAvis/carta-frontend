@@ -393,16 +393,17 @@ export class TileService {
 
         const activeRequest = this.activeChannelMapRequests.get(fileId);
         const activeChannelRequest: ChannelMapRequest = {fileId, channel: frame.channel, stokes, requiredTiles: {}};
+        const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
+        if (activeChannelIndex > 0) {
+            requests.unshift(requests.splice(activeChannelIndex, 1)[0]);
+        }
+
         const isActiveRequestStokesTransition = activeRequest?.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
         if (this.confirmedChannelMapStokes.get(fileId) !== this.desiredChannelMapStokes.get(fileId) && !isActiveRequestStokesTransition) {
             requests.unshift(activeChannelRequest);
-        } else if (requests.length || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
-            const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
-            if (activeChannelIndex >= 0) {
-                requests.push(requests.splice(activeChannelIndex, 1)[0]);
-            } else {
-                requests.push(activeChannelRequest);
-            }
+        }
+        if (requests.some(request => request.channel !== frame.channel) || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
+            requests.push(activeChannelRequest);
         }
         this.queueChannelMapRequests(fileId, requests);
     }
