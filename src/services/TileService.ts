@@ -401,6 +401,8 @@ export class TileService {
         const isActiveRequestStokesTransition = activeRequest?.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
         if (this.confirmedChannelMapStokes.get(fileId) !== this.desiredChannelMapStokes.get(fileId) && !isActiveRequestStokesTransition) {
             requests.unshift(activeChannelRequest);
+        } else if (requests.length) {
+            requests.unshift(activeChannelRequest);
         }
         if (requests.some(request => request.channel !== frame.channel) || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
             requests.push(activeChannelRequest);
