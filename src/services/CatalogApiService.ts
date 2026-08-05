@@ -39,7 +39,8 @@ export class CatalogApiService {
     }
 
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
-        return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${query}`);
+        const encoded = encodeURIComponent(query);
+        return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
     };
 
     public cancelQuery(type: CatalogDatabase) {

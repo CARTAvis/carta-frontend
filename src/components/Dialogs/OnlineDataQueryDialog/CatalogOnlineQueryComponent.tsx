@@ -462,7 +462,8 @@ export class CatalogQueryComponent extends React.Component {
 
     private handleObjectUpdate = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
+        const objectName = configStore.objectName.replace(/'/g, "''");
+        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${objectName}'`;
         configStore.setObjectQueryStatus(true);
         CatalogApiService.Instance.getSimbadCatalog(query)
             .then(response => {
