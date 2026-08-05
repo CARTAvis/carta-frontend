@@ -1,6 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import {type Subscription} from "rxjs";
 
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
@@ -25,6 +26,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
+    private sub: Subscription;
+    private animationFrameRequest: number | null = null;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
@@ -37,7 +40,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const contourStream = AppStore.Instance.backendService.contourStream;
         this.triggerUpdate();
         if (this.canvas) {
-            contourStream.subscribe(this.triggerUpdate);
+            this.sub = contourStream.subscribe(this.triggerUpdate);
         }
     }
 
@@ -46,13 +49,29 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.triggerUpdate();
     }
 
+    componentWillUnmount() {
+        this.sub?.unsubscribe();
+        if (this.animationFrameRequest !== null) {
+            cancelAnimationFrame(this.animationFrameRequest);
+        }
+    }
+
+    private scheduleUpdate() {
+        if (this.animationFrameRequest === null) {
+            this.animationFrameRequest = requestAnimationFrame(() => {
+                this.animationFrameRequest = null;
+                this.updateCanvas();
+            });
+        }
+    }
+
     private triggerUpdate = () => {
         const appStore = AppStore.Instance;
         const animatorStore = AnimatorStore.Instance;
         if (appStore.contourRequestStore.areContoursComplete(this.props.frame) && animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
+            this.scheduleUpdate();
         } else if (!animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
+            this.scheduleUpdate();
         }
     };
 

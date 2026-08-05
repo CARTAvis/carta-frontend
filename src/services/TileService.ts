@@ -436,6 +436,10 @@ export class TileService {
         }
     }
 
+    hasPendingChannelMapRequests() {
+        return this.activeChannelMapRequests.size > 0 || [...this.channelMapRequestQueues.values()].some(requests => requests.length > 0);
+    }
+
     private sendNextChannelMapRequest(fileId: number) {
         let request = this.channelMapRequestQueues.get(fileId)?.shift();
         if (!request) {

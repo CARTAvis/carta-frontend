@@ -19,7 +19,10 @@ jest.mock("stores", () => ({
                 contourCompressionLevel: 1,
                 contourDecimation: 4
             },
-            spectralMatchingType: 0
+            spectralMatchingType: 0,
+            tileService: {
+                hasPendingChannelMapRequests: jest.fn(() => false)
+            }
         }
     }
 }));
@@ -32,6 +35,7 @@ describe("ContourRequestStore", () => {
     const appStore = jest.requireMock("stores").AppStore.Instance;
     const mockSubscribe = appStore.backendService.channelMapFlowControlStream.subscribe as jest.Mock;
     const mockSetContourParameters = appStore.backendService.setContourParameters as jest.Mock;
+    const mockHasPendingChannelMapRequests = appStore.tileService.hasPendingChannelMapRequests as jest.Mock;
     let store: ContourRequestStore;
     let onFlowControl: (event: unknown) => void;
     const frame = {
@@ -51,6 +55,7 @@ describe("ContourRequestStore", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockHasPendingChannelMapRequests.mockReturnValue(false);
         mockSetContourParameters.mockReturnValueOnce(41).mockReturnValueOnce(42).mockReturnValueOnce(43);
         appStore.contourFrames = new Map([[frame, [frame]]]);
     });
@@ -91,6 +96,27 @@ describe("ContourRequestStore", () => {
         onFlowControl({eventId: 42, flowControl: {fileId: 8, completedChannel: 3, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
         expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({fileId: 8, channel: 5, stokes: 1}));
         onFlowControl({eventId: 43, flowControl: {fileId: 8, completedChannel: 5, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+    });
+
+    test("waits for channel-map raster requests before generating contours", () => {
+        const delayedFrame = {
+            ...frame,
+            frameInfo: {fileId: 9, fileInfoExtended: {depth: 8, height: 10, width: 10}}
+        };
+        appStore.contourFrames = new Map([[frame, [delayedFrame]]]);
+        mockHasPendingChannelMapRequests.mockReturnValue(true);
+
+        store.requestContours(frame as any);
+        expect(mockSetContourParameters).not.toHaveBeenCalled();
+
+        mockHasPendingChannelMapRequests.mockReturnValue(false);
+        onFlowControl({eventId: 90, flowControl: {fileId: 99, completedChannel: 1, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+        expect(mockSetContourParameters).toHaveBeenCalledTimes(1);
+        expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({fileId: 9, channel: 3, stokes: 1}));
+
+        onFlowControl({eventId: 41, flowControl: {fileId: 9, completedChannel: 3, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+        onFlowControl({eventId: 42, flowControl: {fileId: 9, completedChannel: 1, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+        onFlowControl({eventId: 43, flowControl: {fileId: 9, completedChannel: 5, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
     });
 
     test("ignores stale channels while channel-map mode is active", () => {

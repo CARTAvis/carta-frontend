@@ -105,6 +105,9 @@ export class ContourRequestStore {
     }
 
     private sendNext(fileId: number) {
+        if (AppStore.Instance.tileService.hasPendingChannelMapRequests()) {
+            return;
+        }
         const request = this.requestQueues.get(fileId)?.shift();
         if (!request) {
             this.requestQueues.delete(fileId);
@@ -118,6 +121,17 @@ export class ContourRequestStore {
         this.activeRequests.set(fileId, {...request, requestId});
     }
 
+    private resumeQueuedRequests() {
+        if (AppStore.Instance.tileService.hasPendingChannelMapRequests()) {
+            return;
+        }
+        this.requestQueues.forEach((_requests, fileId) => {
+            if (!this.activeRequests.has(fileId)) {
+                this.sendNext(fileId);
+            }
+        });
+    }
+
     private handleFlowControl(eventId: number, flowControl: CARTA.ChannelMapFlowControl.$Properties) {
         const fileId = flowControl.fileId;
         if (fileId === null || fileId === undefined) {
@@ -125,6 +139,7 @@ export class ContourRequestStore {
         }
         const activeRequest = this.activeRequests.get(fileId);
         if (!activeRequest || activeRequest.requestId !== eventId || activeRequest.channel !== flowControl.completedChannel) {
+            this.resumeQueuedRequests();
             return;
         }
         this.activeRequests.delete(fileId);

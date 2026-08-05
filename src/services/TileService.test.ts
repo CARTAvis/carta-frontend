@@ -24,6 +24,7 @@ type TestTileService = {
     desiredChannelMapStokes: Map<number, number>;
     getCompressedCache: jest.Mock;
     getRequiredRequestTiles: jest.Mock;
+    hasPendingChannelMapRequests: TileService["hasPendingChannelMapRequests"];
     handleChannelMapFlowControl: (eventId: number, message: {fileId: number; completedChannel: number; status: CARTA.ChannelMapFlowControl.Status}) => void;
     handleStreamSync: (message: CARTA.RasterTileSync.$Properties) => void;
     isAnimationEnabled: boolean;
@@ -89,6 +90,18 @@ const Complete = (channel: number) => ({
 describe("TileService channel map request queue", () => {
     beforeEach(() => {
         jest.useFakeTimers();
+    });
+
+    test("reports whether channel-map raster requests are pending", () => {
+        const service = CreateService();
+        expect(service.hasPendingChannelMapRequests()).toBe(false);
+
+        service.channelMapRequestQueues.set(1, [MakeRequest(1)]);
+        expect(service.hasPendingChannelMapRequests()).toBe(true);
+
+        service.channelMapRequestQueues.set(1, []);
+        service.activeChannelMapRequests.set(1, MakeRequest(1));
+        expect(service.hasPendingChannelMapRequests()).toBe(true);
     });
 
     afterEach(() => {
