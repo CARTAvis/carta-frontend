@@ -1,9 +1,4 @@
-export enum AngularSizeUnit {
-    MILLIARCSEC = "milliarcsec",
-    ARCSEC = "arcsec",
-    ARCMIN = "arcmin",
-    DEG = "deg"
-}
+import {AngularSizeUnit} from "enums";
 
 export const FACTOR_TO_ARCSEC = new Map<AngularSizeUnit, number>([
     [AngularSizeUnit.DEG, 3600.0],
@@ -34,13 +29,13 @@ export class AngularSize {
         }
     };
 
-    public static convertFromArcsec = (arcsec: number, supportMilliarcsec: boolean = false): AngularSize => {
+    public static convertFromArcsec = (arcsec: number, shouldSupportMilliarcsec: boolean = false): AngularSize => {
         if (!isFinite(arcsec)) {
             return {value: NaN, unit: AngularSizeUnit.ARCSEC};
         }
 
         let unit;
-        if (supportMilliarcsec && arcsec < 0.002) {
+        if (shouldSupportMilliarcsec && arcsec < 0.002) {
             unit = AngularSizeUnit.MILLIARCSEC;
         } else if (arcsec < 120) {
             unit = AngularSizeUnit.ARCSEC;

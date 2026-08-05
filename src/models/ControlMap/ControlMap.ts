@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 
-import {Point2D} from "models";
-import {FrameStore} from "stores/Frame";
+import {type Point2D} from "models";
+import {type FrameStore} from "stores/Frame";
 import {GL2} from "utilities";
 
 export class ControlMap {
@@ -15,12 +15,12 @@ export class ControlMap {
     gl: WebGL2RenderingContext;
     private grid: Float32Array;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.Mapping, width: number, height: number, updateBoudary: boolean = true) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.Mapping, width: number, height: number, shouldUpdateBoundary: boolean = true) {
         this.source = src;
         this.destination = dst;
         this.width = width;
         this.height = height;
-        if (updateBoudary) {
+        if (shouldUpdateBoundary) {
             this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width - 1, this.source.frameInfo.fileInfoExtended.height - 1);
             this.setGrid(astTransform);
         }
@@ -34,16 +34,16 @@ export class ControlMap {
     };
 
     setGrid = (astTransform?: AST.Mapping) => {
-        let cleanUpTransform: boolean = false;
+        let shouldCleanUpTransform: boolean = false;
 
         if (!astTransform || (astTransform as number) < 0) {
             astTransform = AST.getSpatialMapping(this.source.wcsInfo, this.destination.wcsInfo);
-            cleanUpTransform = true;
+            shouldCleanUpTransform = true;
         }
 
         this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, this.width, this.minPoint.y, this.maxPoint.y, this.height, true);
 
-        if (cleanUpTransform) {
+        if (shouldCleanUpTransform) {
             AST.deleteObject(astTransform);
         }
     };

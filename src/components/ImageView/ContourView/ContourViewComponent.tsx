@@ -2,9 +2,10 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
-import {ContourDashMode, FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./ContourViewComponent.scss";
@@ -24,7 +25,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
-        this.gl = this.contourWebGLService.gl;
+        const gl = this.contourWebGLService.gl;
+        if (!gl) {
+            console.error("Failed to get WebGL2 context");
+            return;
+        }
+        this.gl = gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
         this.triggerUpdate();
         if (this.canvas) {
@@ -40,9 +46,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
         const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
+        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
-        } else if (!animatorStore.serverAnimationActive) {
+        } else if (!animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
     };
@@ -100,10 +106,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
-            const w = this.canvas.width;
-            const h = this.canvas.height;
-            ctx.clearRect(0, 0, w, h);
-            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            if (ctx) {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                ctx.clearRect(0, 0, w, h);
+                ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            }
         }
     };
 
@@ -119,6 +127,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                 y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
             };
+
+            if (!baseFrame.spatialTransform) {
+                return;
+            }
 
             // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
             const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
@@ -176,15 +188,15 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.LineThickness, lineThickness);
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
-        if (frame.contourConfig.colormapEnabled) {
+        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.isColormapEnabled ? 1 : 0);
+        if (frame.contourConfig.isColormapEnabled) {
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
         }
 
         if (frame.contourStores) {
-            const levels = [];
+            const levels: number[] = [];
             frame.contourStores.forEach((v, level) => levels.push(level));
             const minVal = Math.min(...levels);
             const maxVal = Math.max(...levels);
@@ -197,7 +209,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             frame.contourStores.forEach((contourStore, level) => {
-                if (frame.contourConfig.colormapEnabled) {
+                if (frame.contourConfig.isColormapEnabled) {
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -242,7 +254,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             for (const frame of contourFrames) {
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
-                const color = config.colormapEnabled ? config.colormap : config.color;
+                const color = config.isColormapEnabled ? config.colormap : config.color;
                 const dashMode = config.dashMode;
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;

@@ -2,9 +2,10 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {VectorOverlaySource} from "enums";
 import {VectorOverlayWebGLService} from "services";
 import {AppStore} from "stores";
-import {FrameStore, VectorOverlaySource} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./VectorOverlayView.scss";
@@ -24,7 +25,11 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
     componentDidMount() {
         this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
-        this.gl = this.vectorOverlayWebGLService.gl;
+        const gl = this.vectorOverlayWebGLService.gl;
+        if (!gl) {
+            return;
+        }
+        this.gl = gl;
         if (this.canvas) {
             this.updateCanvas();
         }
@@ -95,6 +100,9 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
+            if (!ctx) {
+                return;
+            }
             const w = this.canvas.width;
             const h = this.canvas.height;
             ctx.clearRect(0, 0, w, h);
@@ -107,7 +115,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const appStore = AppStore.Instance;
         const isActive = frame === baseFrame;
 
-        if (baseFrame.spatialReference) {
+        if (baseFrame.spatialReference && baseFrame.spatialTransform) {
             const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
 
             const rangeScale = {
@@ -175,12 +183,12 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform1f(shaderUniforms.RotationOffset, 0);
         }
 
-        const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
-        const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
+        const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin ?? NaN) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
+        const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         if (frame.vectorOverlayConfig.angularSource === VectorOverlaySource.None) {
-            this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
-            this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
+            this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin ?? 0);
+            this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax ?? 1);
             this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * appStore.pixelRatio);
             this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 1);
@@ -191,8 +199,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         } else {
-            this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
-            this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
+            this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin ?? 0);
+            this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax ?? 1);
             this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * appStore.pixelRatio);
             this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
@@ -200,8 +208,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         // TODO: support non-uniform pixel ratios
         // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.colormapEnabled ? 1 : 0);
-        if (frame.vectorOverlayConfig.colormapEnabled) {
+        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.isColormapEnabled ? 1 : 0);
+        if (frame.vectorOverlayConfig.isColormapEnabled) {
             this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
             this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
             this.gl.uniform1f(shaderUniforms.Contrast, frame.vectorOverlayConfig.colormapContrast);
@@ -239,10 +247,10 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
-                intensityMin = isFinite(intensityMin) ? intensityMin : frame.vectorOverlayStore.intensityMin;
-                intensityMax = isFinite(intensityMax) ? intensityMax : frame.vectorOverlayStore.intensityMax;
+                const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, colormap, lengthMin, lengthMax, isVisible} = config;
+                config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+                config.intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
                 frame.vectorOverlayStore.tiles?.forEach(t => {
                     const numVertices = t.numVertices;

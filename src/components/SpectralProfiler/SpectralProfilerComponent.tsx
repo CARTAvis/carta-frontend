@@ -1,20 +1,21 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
-import {Point2D, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
+import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
+import {type Point2D} from "models";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
-import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {type ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 
 import "./SpectralProfilerComponent.scss";
@@ -23,7 +24,11 @@ const INFO_HEIGHT_MIN = 28;
 const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private readonly cachedWidgetStore: SpectralProfileWidgetStore;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
@@ -37,69 +42,72 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get widgetStore(): SpectralProfileWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new SpectralProfileWidgetStore();
+    get widgetStore(): SpectralProfileWidgetStore {
+        return this.cachedWidgetStore;
     }
 
-    @computed get plotData(): MultiPlotData {
+    @computed get plotData(): MultiPlotData | null {
         return this.widgetStore.plotData;
     }
 
     @computed get isMeanRmsVisible(): boolean {
         // Show Mean/RMS when only 1 profile
-        return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
+        return this.widgetStore.isMeanRmsVisible && this.plotData?.numProfiles === 1;
     }
 
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === SpectralProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpectralProfileWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
+            }
         } else {
-            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
+            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.widgetId)) {
+                appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.spectralProfileWidgets.get(this.widgetId) ?? new SpectralProfileWidgetStore();
 
         // Update widget title
-        autorun(() => {
-            let title = "Z Profile";
-            const currentData = this.plotData;
-            if (this.widgetStore && currentData && isFinite(currentData.progress)) {
-                if (currentData.progress < 1.0) {
-                    const totalProgress = currentData.numProfiles * 100;
-                    title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
-                    this.widgetStore.updateStreamingDataStatus(true);
-                } else {
-                    this.widgetStore.updateStreamingDataStatus(false);
+        this.disposers.push(
+            autorun(() => {
+                let title = "Z Profile";
+                const currentData = this.plotData;
+                if (this.widgetStore && currentData && isFinite(currentData.progress)) {
+                    if (currentData.progress < 1.0) {
+                        const totalProgress = currentData.numProfiles * 100;
+                        title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
+                        this.widgetStore.updateStreamingDataStatus(true);
+                    } else {
+                        this.widgetStore.updateStreamingDataStatus(false);
+                    }
                 }
-            }
-            appStore.widgetsStore.setWidgetTitle(this.props.id, title);
-        });
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
         const appStore = AppStore.Instance;
-        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.isAnimationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
-        const nearestIndex = frame.findChannelIndexByValue(x);
-        if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
+        const nearestIndex = frame?.findChannelIndexByValue(x);
+        if (frame && nearestIndex !== undefined && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
             frame.setChannel(nearestIndex);
             if (!_.isEqual(frame, appStore.activeFrame)) {
                 appStore.setChannelsByFrame(frame);
@@ -107,7 +115,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @computed get currentChannelValue(): number {
+    @computed get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -119,7 +127,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    @computed get requiredChannelValue(): number {
+    @computed get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -151,13 +159,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }, 33);
 
     private precisionFormatting = (data: number, diff: number, spectralType: SpectralType): string => {
-        return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotationByDiff(data, diff);
+        return spectralType === SpectralType.CHANNEL ? toFixed(data) : (toFormattedNotationByDiff(data, diff) ?? data.toString());
     };
 
     private genCursorInfoString = (data: Point2D[], smoothedData: Point2D[], secondaryXData: number[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         const frame = this.widgetStore.effectiveFrame;
+        if (!frame) {
+            return "";
+        }
 
-        let diffLeft: number = undefined;
+        let diffLeft: number = 0;
         let secondaryXUnit = "";
         let secondaryChannelString = "";
         let cursorInfoString: string = "";
@@ -166,28 +177,29 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let primaryXStr: string = "";
-            let smoothedFloatXStr = "";
             const currentIndex = nearest.index;
             const neighborIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex + 1;
             diffLeft = data.length === 1 ? 1e-9 : Math.abs(data[currentIndex].x - data[neighborIndex].x);
-            primaryXStr = this.precisionFormatting(data[currentIndex].x, diffLeft, frame.spectralType);
-            smoothedFloatXStr = this.precisionFormatting(nearestSmooth?.point.x, diffLeft, frame.spectralType);
+            const spectralType = frame.spectralType ?? SpectralType.CHANNEL;
+            primaryXStr = this.precisionFormatting(data[currentIndex].x, diffLeft, spectralType);
+            const smoothedFloatXStr = nearestSmooth?.point.x !== undefined ? this.precisionFormatting(nearestSmooth.point.x, diffLeft, spectralType) : "";
 
             let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
-            if (this.widgetStore.secondaryAxisCursorInfoVisible) {
+            if (this.widgetStore.isSecondaryAxisCursorInfoVisible) {
                 diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryXData[currentIndex] - secondaryXData[neighborIndex]);
-                const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, frame.spectralTypeSecondary);
+                const spectralTypeSecondary = frame.spectralTypeSecondary ?? SpectralType.CHANNEL;
+                const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, spectralTypeSecondary);
 
-                if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) {
-                    secondaryXUnit = frame.spectralUnitSecondary;
+                if (spectralTypeSecondary !== SpectralType.CHANNEL) {
+                    secondaryXUnit = frame.spectralUnitSecondary ?? "";
                 } else {
                     secondaryChannelString = "Channel";
                 }
 
                 xLabel += secondaryChannelString === "Channel" ? `, Channel ${secondaryXStr}` : `, ${secondaryXStr}${secondaryXUnit ? ` ${secondaryXUnit}` : ""}`;
             }
-            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${toFixed(nearestSmooth?.point.x, 0)}` : `${smoothedFloatXStr} ${cursorXUnit}`;
+            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${nearestSmooth?.point.x !== undefined ? toFixed(nearestSmooth.point.x, 0) : ""}` : `${smoothedFloatXStr} ${cursorXUnit}`;
             if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
             } else if (nearestSmooth) {
@@ -200,13 +212,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): ProfileInfo[] => {
-        let profilerInfo: ProfileInfo[] = [];
+        const profilerInfo: ProfileInfo[] = [];
         const frame = this.widgetStore.effectiveFrame;
-        if (frame && this.plotData?.numProfiles > 0 && this.plotData?.data) {
+        if (frame && this.plotData && this.plotData.numProfiles > 0 && this.plotData.data) {
             const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
             const label = isCursorInsideLinePlots ? "Cursor" : "Data";
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
             const cursorXUnit = frame.spectralUnitStr;
+
+            // Only generate cursor info if we have a valid cursor value
+            if (!cursorXValue) {
+                return profilerInfo;
+            }
 
             if (this.plotData.numProfiles === 1 && !(this.widgetStore.smoothingStore.type !== SmoothingType.NONE && this.widgetStore.smoothingStore.isOverlayOn)) {
                 // Single profile, Mean/RMS is available
@@ -215,7 +232,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const secondary = this.plotData.secondaryXData[0];
                 const cursorInfoString = this.genCursorInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
-                    infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
+                    infoString:
+                        this.isMeanRmsVisible && this.plotData.yMean !== undefined && this.plotData.yRms !== undefined
+                            ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}`
+                            : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
@@ -264,7 +284,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
-        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
         if (spectralLines?.length > 0) {
             // find x range
@@ -283,12 +303,33 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         label: `${line.species} ${line.qn}`,
                         draggable: false,
                         horizontal: false,
-                        color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        color: AppStore.Instance.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
                 }
             }
         }
         return spectralLineMarkers;
+    };
+
+    private getExportComments = (plotKey: string): string[] => {
+        const match = plotKey.match(/^(profile|smoothedProfile)(\d+)$/);
+        if (!match) {
+            return [];
+        }
+
+        const seriesType = match[1];
+        const profileIndex = parseInt(match[2], 10);
+        const profile = this.widgetStore.profileSelectionStore.profiles?.[profileIndex];
+        if (!profile) {
+            return [];
+        }
+
+        const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
+        const regionComments = frame ? frame.getRegionProperties(profile.regionId ?? NaN) : [];
+        if (seriesType === "smoothedProfile") {
+            return [...regionComments, ...this.widgetStore.smoothingStore.comments];
+        }
+        return regionComments;
     };
 
     render() {
@@ -297,10 +338,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            isDarkMode: appStore.isDarkTheme,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -308,7 +349,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             markers: this.fillVisibleSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
@@ -322,7 +363,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             insideTexts: this.widgetStore.fittingStore.componentResultNumber,
             zeroLineWidth: 2,
             order: 1,
-            multiPlotPropsMap: new Map<string, MultiPlotProps>()
+            multiPlotPropsMap: new Map<string, MultiPlotProps>(),
+            exportCommentsGenerator: this.getExportComments,
+            testId: this.widgetId
         };
 
         const frame = this.widgetStore.effectiveFrame;
@@ -336,40 +379,40 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             const currentPlotData = this.plotData;
             const fittingStore = this.widgetStore.fittingStore;
-            if (currentPlotData?.numProfiles > 0) {
+            if (currentPlotData && currentPlotData.numProfiles > 0) {
                 linePlotProps.imageName = currentPlotData.plotName?.image;
                 linePlotProps.plotName = currentPlotData.plotName?.plot;
                 // Fill profile & smoothed profiles
                 for (let i = 0; i < currentPlotData.numProfiles; i++) {
                     const smoothingStore = this.widgetStore.smoothingStore;
-                    const imageName = currentPlotData.labels[i]?.image;
-                    const plotName = `Z-profile-${currentPlotData.labels[i]?.plot}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
-                    if (i < currentPlotData.data?.length) {
+                    const imageName = currentPlotData.labels?.[i]?.image ?? "";
+                    const plotName = `Z-profile-${currentPlotData.labels?.[i]?.plot ?? ""}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
+                    if (i < (currentPlotData.data?.length ?? 0)) {
+                        linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             imageName: imageName,
                             plotName: plotName,
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
-                            borderColor: currentPlotData.colors[i],
-                            comments: currentPlotData.comments[i],
+                            borderColor: currentPlotData.colors?.[i],
                             order: 1,
-                            hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
-                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : null
+                            isHidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
+                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : undefined
                         });
                     }
 
-                    if (smoothingStore.type !== SmoothingType.NONE && i < currentPlotData.smoothedData?.length) {
+                    if (smoothingStore.type !== SmoothingType.NONE && i < (currentPlotData.smoothedData?.length ?? 0)) {
+                        linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
                             imageName: imageName,
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,
-                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
+                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors?.[i] : getColorForTheme(smoothingStore.lineColor),
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            comments: [...currentPlotData.comments[i], ...smoothingStore.comments],
-                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult ? ["fittingModel", "fittingResidual"] : null
+                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult ? ["fittingModel", "fittingResidual"] : undefined
                         });
                     }
                 }
@@ -378,12 +421,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
 
                 // set line color
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 if (this.widgetStore.profileNum === 1) {
                     if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
+                        const fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName.image,
                             plotName: currentPlotData.plotName.plot,
                             data: fittingStore.baseLinePoint2DArray,
@@ -392,28 +435,30 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
-                            noExport: true
+                            shouldNotExport: true
                         };
+                        linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                     }
                     if (fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
-                            imageName: currentPlotData.plotName.image,
-                            plotName: currentPlotData.plotName.plot,
+                        const fittingPlotProps: MultiPlotProps = {
+                            imageName: currentPlotData.plotName?.image ?? "",
+                            plotName: currentPlotData.plotName?.plot ?? "",
                             data: fittingStore.modelPoint2DArray,
                             type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-orange"),
                             borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
-                            noExport: true
+                            shouldNotExport: true
                         };
+                        linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set("fittingModel", fittingPlotProps);
 
                         for (let i = 0; i < fittingStore.individualModelPoint2DArrays.length; i++) {
                             const individualPlotProps: MultiPlotProps = {
-                                imageName: currentPlotData.plotName.image,
-                                plotName: currentPlotData.plotName.plot,
+                                imageName: currentPlotData.plotName?.image ?? "",
+                                plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.individualModelPoint2DArrays[i],
                                 type: PlotType.LINES,
                                 borderColor: getColorForTheme("auto-orange"),
@@ -421,23 +466,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 pointRadius: 1,
                                 order: 0,
                                 opacity: 0.6,
-                                noExport: true
+                                shouldNotExport: true
                             };
+                            linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                             linePlotProps.multiPlotPropsMap.set(`fittingModel(${i + 1})`, individualPlotProps);
                         }
 
-                        if (fittingStore.enableResidual) {
-                            let fittingResidualPlotProps: MultiPlotProps = {
-                                imageName: currentPlotData.plotName.image,
-                                plotName: currentPlotData.plotName.plot,
+                        if (fittingStore.isResidualEnabled) {
+                            const fittingResidualPlotProps: MultiPlotProps = {
+                                imageName: currentPlotData.plotName?.image ?? "",
+                                plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.residualPoint2DArray,
                                 type: PlotType.POINTS,
                                 borderColor: getColorForTheme("auto-orange"),
                                 borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
-                                noExport: true
+                                shouldNotExport: true
                             };
+                            linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                             linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
                         }
                     }
@@ -460,18 +507,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            // Ensure markers is initialized as array
+            linePlotProps.markers = linePlotProps.markers || [];
+
             if (!isNaN(this.widgetStore.cursorX)) {
                 linePlotProps.markers.push({
                     value: this.widgetStore.cursorX,
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: true
                 });
             }
-            if (!isNaN(this.currentChannelValue)) {
+            if (this.currentChannelValue !== null && !isNaN(this.currentChannelValue)) {
                 linePlotProps.markers.push({
                     value: this.currentChannelValue,
                     id: "marker-channel-current",
@@ -480,23 +530,23 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: false
                 });
             }
-            if (!isNaN(this.requiredChannelValue)) {
+            if (this.requiredChannelValue !== null && !isNaN(this.requiredChannelValue)) {
                 linePlotProps.markers.push({
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: !AnimatorStore.Instance.animationActive,
+                    draggable: !AnimatorStore.Instance.isAnimationActive,
                     dragMove: this.onChannelChanged,
                     horizontal: false
                 });
             }
 
-            if (this.isMeanRmsVisible && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+            if (this.isMeanRmsVisible && currentPlotData && currentPlotData.yMean !== undefined && currentPlotData.yRms !== undefined && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                 linePlotProps.markers.push({
                     value: currentPlotData.yMean,
                     id: "marker-mean",
                     draggable: false,
                     horizontal: true,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                     dash: [5]
                 });
 
@@ -507,7 +557,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: true,
                     width: currentPlotData.yRms,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
             }
 
@@ -520,7 +570,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: selectedRange.isHorizontal,
                     width: selectedRange.width / 2,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
         }
@@ -531,19 +581,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
-                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                     </div>
-                    <SplitPane
-                        className="body-split-pane"
-                        split="horizontal"
-                        primary={"second"}
-                        defaultSize={clamp(this.plotData?.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
-                        minSize={INFO_HEIGHT_MIN}
-                    >
+                    <SplitPane className="body-split-pane" direction="vertical">
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
-                        <Pane className={"info-container"}>
+                        <Pane
+                            className={"info-container"}
+                            defaultSize={clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                            minSize={INFO_HEIGHT_MIN}
+                        >
                             <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
                         </Pane>
                     </SplitPane>

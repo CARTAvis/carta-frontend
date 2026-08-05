@@ -1,8 +1,8 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {VectorOverlayWebGLService} from "services";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {createTextureFromArray, equalIfBothFinite} from "utilities";
 
 export interface VectorOverlayTile {
@@ -12,9 +12,9 @@ export interface VectorOverlayTile {
 
 export class VectorOverlayStore {
     @observable progress: number;
-    @observable tiles: VectorOverlayTile[];
-    @observable intensityMin: number | undefined;
-    @observable intensityMax: number | undefined;
+    @observable tiles: VectorOverlayTile[] = [];
+    @observable intensityMin: number | undefined = undefined;
+    @observable intensityMax: number | undefined = undefined;
 
     private readonly gl: WebGL2RenderingContext | null;
     private readonly frame: FrameStore;
@@ -23,8 +23,6 @@ export class VectorOverlayStore {
         makeObservable(this);
         this.gl = VectorOverlayWebGLService.Instance.gl;
         this.frame = frame;
-        this.intensityMin = undefined;
-        this.intensityMax = undefined;
     }
 
     @computed get isComplete() {
@@ -45,12 +43,12 @@ export class VectorOverlayStore {
         this.intensityMax = undefined;
     };
 
-    @action setData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
+    @action setData = (intensityTiles: CARTA.TileData.$Properties[], angleTiles: CARTA.TileData.$Properties[], progress: number) => {
         this.clearData();
         this.addData(intensityTiles, angleTiles, progress);
     };
 
-    @action addData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
+    @action addData = (intensityTiles: CARTA.TileData.$Properties[], angleTiles: CARTA.TileData.$Properties[], progress: number) => {
         this.progress = progress;
 
         let localMin = Number.MAX_VALUE;
@@ -59,8 +57,8 @@ export class VectorOverlayStore {
         const numTiles = Math.max(intensityTiles.length, angleTiles.length);
 
         for (let i = 0; i < numTiles; i++) {
-            let intensityTile: CARTA.ITileData | null = intensityTiles?.[i];
-            let angleTile: CARTA.ITileData | null = angleTiles?.[i];
+            let intensityTile: CARTA.TileData.$Properties | null = intensityTiles?.[i];
+            let angleTile: CARTA.TileData.$Properties | null = angleTiles?.[i];
             if (!intensityTile?.imageData?.length) {
                 intensityTile = null;
             }
@@ -108,8 +106,8 @@ export class VectorOverlayStore {
             let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            let offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
-            let offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
+            const offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
+            const offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
             for (let j = 0; j < tileHeight; j++) {
                 for (let i = 0; i < tileWidth; i++) {
                     const index = i + tileWidth * j;

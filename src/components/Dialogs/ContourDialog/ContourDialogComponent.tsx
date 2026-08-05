@@ -1,17 +1,19 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import * as _ from "lodash";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 
@@ -20,22 +22,18 @@ import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelC
 
 import "./ContourDialogComponent.scss";
 
-enum ContourDialogTabs {
-    Levels,
-    Configuration,
-    Styling
-}
-
+/* eslint-disable @typescript-eslint/naming-convention */
 const DataSourceSelect = Select<FrameStore>;
 const HistogramSelect = Select<boolean>;
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @observer
 export class ContourDialogComponent extends React.Component {
-    @observable showCubeHistogramAlert: boolean;
+    @observable shouldShowCubeHistogramAlert: boolean = false;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
-    @observable levels: number[];
-    @observable smoothingMode: CARTA.SmoothingMode;
-    @observable smoothingFactor: number;
+    @observable levels: number[] = [];
+    @observable smoothingMode: CARTA.SmoothingMode = CARTA.SmoothingMode.NoSmoothing;
+    @observable smoothingFactor: number = 0;
 
     private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 700;
@@ -43,33 +41,42 @@ export class ContourDialogComponent extends React.Component {
     private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
-    private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.IHistogram;
+    private cachedFrame: FrameStore | null;
+    private cachedHistogram: CARTA.Histogram.$Properties | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
 
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            if (appStore.contourDataSource) {
-                const newHist = appStore.contourDataSource.renderConfig.contourHistogram;
-                if (newHist !== this.cachedHistogram) {
-                    this.cachedHistogram = newHist;
-                    this.widgetStore.clearXYBounds();
+        makeObservable(this);
+
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                if (appStore.contourDataSource) {
+                    const newHist = appStore.contourDataSource.renderConfig.contourHistogram;
+                    if (newHist !== this.cachedHistogram) {
+                        this.cachedHistogram = newHist;
+                        this.widgetStore.clearXYBounds();
+                    }
                 }
-            }
-            const widgetStore = this.widgetStore;
-            if (widgetStore) {
-                const currentData = this.plotData;
-                if (currentData) {
-                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                const widgetStore = this.widgetStore;
+                if (widgetStore) {
+                    const currentData = this.plotData;
+                    if (currentData) {
+                        widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action setDefaultContourParameters() {
@@ -95,61 +102,90 @@ export class ContourDialogComponent extends React.Component {
         }
     }
 
-    @computed get contourConfigChanged(): boolean {
+    @computed get currentContourConfig() {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource) {
-            const numContourLevels = this.levels.length;
-            if (dataSource.contourConfig.smoothingMode !== this.smoothingMode) {
-                return true;
-            } else if (dataSource.contourConfig.smoothingFactor !== this.smoothingFactor) {
-                return true;
-            } else if (dataSource.contourConfig.levels.length !== numContourLevels) {
-                return true;
-            }
-
-            for (let i = 0; i < numContourLevels; i++) {
-                if (dataSource.contourConfig.levels[i] !== this.levels[i]) {
-                    return true;
-                }
-            }
+        if (!dataSource) {
+            return {
+                levels: this.levels,
+                smoothingMode: this.smoothingMode,
+                smoothingFactor: this.smoothingFactor,
+                colormapEnabled: false,
+                colormap: "",
+                color: "",
+                thickness: 1,
+                visible: true,
+                dashMode: ""
+            };
         }
-        return false;
+        return {
+            levels: this.levels,
+            smoothingMode: this.smoothingMode,
+            smoothingFactor: this.smoothingFactor,
+            colormapEnabled: dataSource.contourConfig.isColormapEnabled,
+            colormap: dataSource.contourConfig.colormap,
+            color: dataSource.contourConfig.color,
+            thickness: dataSource.contourConfig.thickness,
+            visible: dataSource.contourConfig.isVisible,
+            dashMode: dataSource.contourConfig.dashMode
+        };
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
+    @computed get hasContourConfigChanged(): boolean {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
-            const histogram = dataSource.renderConfig.contourHistogram;
-            let minIndex = 0;
-            let maxIndex = histogram.bins.length - 1;
-
-            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX) {
-                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
-            }
-
-            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-            let yMin = histogram.bins[minIndex];
-            let yMax = yMin;
-
-            let values: Array<{x: number; y: number}>;
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
-                values = new Array(maxIndex - minIndex);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                    yMin = Math.min(yMin, histogram.bins[i]);
-                    yMax = Math.max(yMax, histogram.bins[i]);
-                }
-            }
-            return {values, xMin, xMax, yMin, yMax};
+        if (!dataSource) {
+            return false;
         }
-        return null;
+        const config = dataSource.contourConfig;
+        const currentConfig = this.currentContourConfig;
+        return (
+            !_.isEqual(config.levels, currentConfig.levels) ||
+            config.smoothingMode !== currentConfig.smoothingMode ||
+            config.smoothingFactor !== currentConfig.smoothingFactor ||
+            config.isColormapEnabled !== currentConfig.colormapEnabled ||
+            config.colormap !== currentConfig.colormap ||
+            config.color !== currentConfig.color ||
+            config.thickness !== currentConfig.thickness ||
+            config.isVisible !== currentConfig.visible ||
+            config.dashMode !== currentConfig.dashMode
+        );
+    }
+
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+        const dataSource = AppStore.Instance.contourDataSource;
+        const histogram = dataSource?.renderConfig.contourHistogram;
+
+        if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
+            return null;
+        }
+
+        let minIndex = 0;
+        let maxIndex = histogram.bins.length - 1;
+
+        // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
+        if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
+            minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
+            minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+            maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
+            maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+        }
+
+        const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+        const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+        let yMin = histogram.bins[minIndex];
+        let yMax = yMin;
+
+        let values: Array<{x: number; y: number}> = [];
+        const N = maxIndex - minIndex;
+        if (N > 0 && !isNaN(N)) {
+            values = new Array(maxIndex - minIndex);
+
+            for (let i = minIndex; i <= maxIndex; i++) {
+                values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                yMin = Math.min(yMin, histogram.bins[i]);
+                yMax = Math.max(yMax, histogram.bins[i]);
+            }
+        }
+        return {values, xMin, xMax, yMin, yMax};
     }
 
     private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {
@@ -163,20 +199,20 @@ export class ContourDialogComponent extends React.Component {
         return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
-    private handleHistogramChange = (value: boolean) => {
+    private handleHistogramChange = (shouldUseCubeHistogram: boolean) => {
         const appStore = AppStore.Instance;
         if (!appStore || !appStore.contourDataSource) {
             return;
         }
-        if (value && !appStore.contourDataSource.renderConfig.cubeHistogram) {
+        if (shouldUseCubeHistogram && !appStore.contourDataSource.renderConfig.cubeHistogram) {
             // skip alert and warning for HDF5 files
             if (appStore.contourDataSource.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
                 this.handleAlertConfirm();
             } else {
-                this.showCubeHistogramAlert = true;
+                this.shouldShowCubeHistogramAlert = true;
             }
         } else {
-            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(value);
+            appStore.contourDataSource.renderConfig.setUseCubeHistogramContours(shouldUseCubeHistogram);
         }
     };
 
@@ -189,20 +225,20 @@ export class ContourDialogComponent extends React.Component {
                 appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
             }
         }
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
+        this.shouldShowCubeHistogramAlert = false;
     };
 
     private handleCubeHistogramCancelled = () => {
         const appStore = AppStore.Instance;
         const dataSource = appStore.contourDataSource;
-        if (dataSource && dataSource.renderConfig) {
+        if (dataSource?.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
         }
-        appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        appStore.cancelCubeHistogramRequest(dataSource?.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {
@@ -223,7 +259,7 @@ export class ContourDialogComponent extends React.Component {
         appStore.contourDataSource.clearContours();
     };
 
-    private handleGraphClicked = (x: number) => {
+    @action private handleGraphClicked = (x: number) => {
         this.levels.push(x);
         this.levels.sort((a, b) => a - b);
     };
@@ -277,14 +313,15 @@ export class ContourDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const className = classNames("contour-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour),
-            className: "contour-dialog",
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour) ?? false,
+            className: className,
             canEscapeKeyClose: true,
             title: "Contour Configuration"
         };
@@ -298,7 +335,7 @@ export class ContourDialogComponent extends React.Component {
                     defaultHeight={ContourDialogComponent.DefaultHeight}
                     minWidth={ContourDialogComponent.MinWidth}
                     minHeight={ContourDialogComponent.MinHeight}
-                    enableResizing={true}
+                    isResizingEnabled={true}
                     dialogId={DialogId.Contour}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -315,18 +352,18 @@ export class ContourDialogComponent extends React.Component {
 
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.darkTheme,
-            logY: this.widgetStore.logScaleY,
+            isDarkMode: appStore.isDarkTheme,
+            isLogY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
-            showYAxisTicks: false,
-            showYAxisLabel: false,
+            shouldShowYAxisTicks: false,
+            shouldShowYAxisLabel: false,
             graphClicked: this.handleGraphClicked,
             graphRightClicked: this.handleGraphRightClicked,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
-            scrollZoom: true,
+            shouldScrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2
@@ -335,7 +372,7 @@ export class ContourDialogComponent extends React.Component {
         const currentPlotData = this.plotData;
         if (currentPlotData) {
             // set line color
-            let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+            const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
             linePlotProps.lineColor = primaryLineColor;
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -358,7 +395,7 @@ export class ContourDialogComponent extends React.Component {
                 linePlotProps.yMax = this.widgetStore.maxY;
             }
             // Fix log plot min bounds for entries with zeros in them
-            if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+            if (this.widgetStore.isLogScaleY && linePlotProps.yMin != null && linePlotProps.yMin <= 0) {
                 linePlotProps.yMin = 0.5;
             }
 
@@ -379,28 +416,31 @@ export class ContourDialogComponent extends React.Component {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+        if (this.widgetStore.isMeanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+            const mean = dataSource.renderConfig.contourHistogram.mean ?? 0;
+            const stdDev = dataSource.renderConfig.contourHistogram.stdDev;
+
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: mean,
                 id: "marker-mean",
                 draggable: false,
                 horizontal: false,
-                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                 dash: [5]
             });
 
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: mean,
                 id: "marker-rms",
                 draggable: false,
                 horizontal: false,
-                width: dataSource.renderConfig.contourHistogram.stdDev,
+                width: stdDev,
                 opacity: 0.2,
-                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
             });
         }
 
-        let sortedLevels = this.levels
+        const sortedLevels = this.levels
             .slice()
             .sort((a, b) => a - b)
             .map(level => (Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2)));
@@ -410,14 +450,14 @@ export class ContourDialogComponent extends React.Component {
                 {dataSource.frameInfo.fileInfoExtended.depth > 1 && (
                     <FormGroup label={"Histogram"} inline={true}>
                         <HistogramSelect
-                            activeItem={dataSource.renderConfig.useCubeHistogramContours}
+                            activeItem={dataSource.renderConfig.isUsingCubeHistogramContours}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
                             items={[true, false]}
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={dataSource.renderConfig.isUsingCubeHistogramContours ? "Per-cube" : "Per-channel"} endIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
@@ -445,7 +485,7 @@ export class ContourDialogComponent extends React.Component {
         const configPanel = (
             <div className="contour-config-panel">
                 <FormGroup inline={true} label="Smoothing mode">
-                    <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={this.smoothingMode} onChange={ev => runInAction(() => (this.smoothingMode = Number(ev.currentTarget.value)))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
                             No smoothing
                         </option>
@@ -483,7 +523,7 @@ export class ContourDialogComponent extends React.Component {
                 defaultHeight={ContourDialogComponent.DefaultHeight}
                 minWidth={ContourDialogComponent.MinWidth}
                 minHeight={ContourDialogComponent.MinHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Contour}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -496,41 +536,48 @@ export class ContourDialogComponent extends React.Component {
                                 filterable={false}
                                 items={appStore.frames}
                                 itemRenderer={this.renderDataSourceSelectItem}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.isAnimationActive}
                                 fill={true}
                             >
-                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                                <Button text={dataSource.filename} endIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
-                            <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                                <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
+                            <Tooltip content={appStore.isFrameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                                <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} variant="minimal" onClick={appStore.toggleFrameContourLock} />
                             </Tooltip>
                         </FormGroup>
                         <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                             <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
                             <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
-                            <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} data-testid="contour-dailog-styling-tab-title" />
+                            <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.isDarkTheme} />} data-testid="contour-dailog-styling-tab-title" />
                         </Tabs>
                     </ScrollShadow>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear" />
+                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.isEnabled} text="Clear" />
                         <AnchorButton
                             intent={Intent.SUCCESS}
                             onClick={this.handleApplyContours}
-                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)}
+                            disabled={!hasLevels || (!this.hasContourConfigChanged && dataSource.contourConfig.isEnabled)}
                             text="Apply"
                             data-testid="contour-config-apply-button"
                         />
                     </div>
                 </div>
-                <Alert className={classNames({[Classes.DARK]: appStore.darkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
+                    icon={"time"}
+                    isOpen={this.shouldShowCubeHistogramAlert}
+                    onCancel={this.handleAlertCancel}
+                    onConfirm={this.handleAlertConfirm}
+                    cancelButtonText={"Cancel"}
+                >
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}

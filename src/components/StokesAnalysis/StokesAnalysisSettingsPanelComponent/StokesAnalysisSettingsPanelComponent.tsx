@@ -1,33 +1,32 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
 import {
     LinePlotSettingsPanelComponent,
-    LinePlotSettingsPanelComponentProps,
+    type LinePlotSettingsPanelComponentProps,
     ScatterPlotSettingsPanelComponent,
-    ScatterPlotSettingsPanelComponentProps,
+    type ScatterPlotSettingsPanelComponentProps,
     ScrollShadow,
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HelpType, StokesAnalysisSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";
 
-export enum StokesAnalysisSettingsTabs {
-    CONVERSION,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING
-}
-
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: StokesAnalysisWidgetStore | null = null;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",
@@ -43,48 +42,58 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         };
     }
 
-    @computed get widgetStore(): StokesAnalysisWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): StokesAnalysisWidgetStore | null {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.stokesAnalysisWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
         const appStore = AppStore.Instance;
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
-        autorun(() => {
-            if (this.widgetStore) {
-                const frame = this.widgetStore.effectiveFrame;
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore && this.floatingSettingsId) {
+                    const frame = this.widgetStore.effectiveFrame;
+                    if (frame) {
+                        const regionId = this.widgetStore.effectiveRegionId;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleEqualAxesValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
+        this.widgetStore?.setEqualAxesValue(changeEvent.target.checked);
     };
 
     handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
+        this.widgetStore?.setInvertedColorMap(changeEvent.target.checked);
     };
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+
+    handleSelectedTabChanged = (newTabId: string | number) => {
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: new Map<LineKey, string>([
                 ["Primary", widgetStore.primaryLineColor],
@@ -113,14 +122,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
-            equalAxes: widgetStore.equalAxes,
+            areAxesEqual: widgetStore.areAxesEqual,
             setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
-            invertedColorMap: widgetStore.invertedColorMap,
+            isColorMapInverted: widgetStore.isInvertedColorMap,
             handleInvertedColorMapChanged: this.handleInvertedColorMapChanged,
-            showReferenceAxes: widgetStore.showReferenceAxes,
+            shouldShowReferenceAxes: widgetStore.shouldShowReferenceAxes,
             referenceAxesThickness: widgetStore.referenceAxesThickness,
             referenceAxesColor: widgetStore.referenceAxesColor,
             setShowReferenceAxes: widgetStore.setShowReferenceAxes
@@ -136,12 +145,16 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                             id={StokesAnalysisSettingsTabs.CONVERSION}
                             title="Conversion"
                             panel={
-                                <SpectralSettingsComponent
-                                    frame={widgetStore.effectiveFrame}
-                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                    disable={!hasStokes || !widgetStore.effectiveFrame?.isSpectralChannel}
-                                />
+                                widgetStore.effectiveFrame ? (
+                                    <SpectralSettingsComponent
+                                        frame={widgetStore.effectiveFrame}
+                                        onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                        onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                        disable={!hasStokes || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                    />
+                                ) : (
+                                    <div>No frame available</div>
+                                )
                             }
                         />
                         <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />

@@ -1,18 +1,20 @@
 import * as React from "react";
 import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit, MOMENT_TEXT} from "models";
-import {AppStore, FrameStore} from "stores";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
+import {FrequencyUnit, MomentSelectingMode} from "enums";
+import {MOMENT_TEXT} from "models";
+import {AppStore, type FrameStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer
@@ -59,15 +61,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ? MomentSelectingMode.NONE : MomentSelectingMode.MASK);
     };
 
-    private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
+    private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, isExactMatch) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        const normalizedMoment = momentContent.tag.toLowerCase();
+        const normalizedMoment = momentContent?.tag.toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
-        if (exactMatch) {
+        if (isExactMatch) {
             return normalizedMoment === normalizedQuery;
         } else {
-            return momentContent.tag.indexOf(normalizedQuery) === 0;
+            return momentContent?.tag.indexOf(normalizedQuery) === 0;
         }
     };
 
@@ -78,27 +80,32 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
+        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : null;
     };
 
     private renderRestFreqInput = (frame: FrameStore) => {
-        const disableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
+        const shouldDisableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
         const restFreqStore = frame?.restFreqStore;
         return (
             <div className="freq-input">
                 <ClearableNumericInputComponent
                     label="Rest frequency"
                     value={restFreqStore?.customRestFreq.value ?? NaN}
-                    disabled={disableCoordinateSetting}
+                    disabled={shouldDisableCoordinateSetting}
                     placeholder="Rest frequency"
                     selectAllOnFocus={true}
                     onValueChanged={restFreqStore?.setCustomVal}
                     onValueCleared={restFreqStore?.restoreDefaults}
-                    resetDisabled={restFreqStore?.resetDisable}
+                    resetDisabled={restFreqStore?.isResetDisabled}
                     tooltipContent={restFreqStore?.defaultInfo}
                     tooltipPlacement={"bottom"}
                 />
-                <HTMLSelect disabled={disableCoordinateSetting} options={Object.values(FrequencyUnit)} value={restFreqStore?.customRestFreq.unit} onChange={ev => restFreqStore?.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+                <HTMLSelect
+                    disabled={shouldDisableCoordinateSetting}
+                    options={Object.values(FrequencyUnit)}
+                    value={restFreqStore?.customRestFreq.unit}
+                    onChange={ev => restFreqStore?.setCustomUnit(ev.currentTarget.value as FrequencyUnit)}
+                />
             </div>
         );
     };
@@ -175,11 +182,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const spectralPanel = (
+        const spectralPanel = frame && (
             <React.Fragment>
-                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame?.isPVImage || !frame?.isSpectralChannel} />
-                {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>
+                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame.isPVImage || !frame.isSpectralChannel} />
+                {frame.numChannels > 1 && (
+                    <FormGroup label="Range" inline={true} labelInfo={frame.spectralUnit ? `(${frame.spectralUnit})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.channelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
@@ -230,7 +237,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
         const hint = (
             <span>
                 <br />
@@ -267,7 +274,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             tagProps: {
                                 minimal: true
                             },
-                            rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear} data-testid="moment-generator-clear-select-button" />
+                            rightElement: <Button icon="cross" variant="minimal" onClick={this.handleMomentsClear} data-testid="moment-generator-clear-select-button" />
                         }}
                     />
                 </FormGroup>
@@ -280,10 +287,10 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             widgetStore.setKeep(e.checked);
                         }}
                     />
-                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
+                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.shouldMatchMoment} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>
@@ -304,9 +311,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {momentsPanel}
                 </div>
                 <TaskProgressDialogComponent
-                    isOpen={frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
-                    progress={frame ? frame.requestingMomentsProgress : 0}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    isOpen={!!frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
+                    progress={frame?.requestingMomentsProgress ?? 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}
                     onCancel={this.handleRequestingMomentCancelled}
                     text={"Generating moments"}

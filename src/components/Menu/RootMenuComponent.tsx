@@ -1,19 +1,18 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, PopoverNext, Position, Switch, Tooltip} from "@blueprintjs/core";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, ImageViewItem, Snippet} from "models";
-import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
-import {copyToClipboard, toFixed} from "utilities";
-
-import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+import {copyToClipboardWithToast, ExportImageMenuComponent} from "components/Shared";
+import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
+import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
+import {ApiService} from "services";
+import {AppStore, SnippetStore, WidgetsStore} from "stores";
+import {toFixed} from "utilities";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
@@ -21,22 +20,27 @@ import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
-    @observable documentationAlertVisible: boolean;
-    @observable disableCheckRelease: boolean = false;
+    @observable isDocumentationAlertVisible: boolean = false;
+    @observable isCheckReleaseDisabled: boolean = false;
 
     @action toggleDisableCheckRelease = () => {
-        this.disableCheckRelease = !this.disableCheckRelease;
+        this.isCheckReleaseDisabled = !this.isCheckReleaseDisabled;
     };
 
-    private documentationAlertTimeoutHandle;
+    private documentationAlertTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.documentationAlertTimeoutHandle);
+        this.documentationAlertTimeoutHandle = undefined;
+    }
+
     private handleDashboardClicked = () => {
-        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+        window.open(ApiService.runtimeConfig.dashboardAddress, "_blank");
     };
 
     private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
@@ -61,20 +65,25 @@ export class RootMenuComponent extends React.Component {
         return (
             <Menu className="widgets-menu">
                 <MenuItem text="Info Panels" icon={"panel-stats"}>
-                    <MenuItem text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />
-                    <MenuItem text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />
-                    <MenuItem text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />
-                    <MenuItem text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />
+                    {regionListConfig && <MenuItem text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />}
+                    {imageListConfig && <MenuItem text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />}
+                    {cursorInfoConfig && <MenuItem text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />}
+                    {logConfig && <MenuItem text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />}
                 </MenuItem>
                 <MenuItem text="Profiles" icon={"pulse"}>
-                    <MenuItem text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />} onClick={spatialProfilerConfig.onClick} />
-                    <MenuItem text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />
+                    {spatialProfilerConfig && <MenuItem text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />} onClick={spatialProfilerConfig.onClick} />}
+                    {spectralProfilerConfig && <MenuItem text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />}
                 </MenuItem>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = cartaWidgets.get(widgetType);
                     const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
-                        <MenuItem key={`${trimmedStr}Menu`} text={widgetType} icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)} onClick={widgetConfig.onClick} />
+                        <MenuItem
+                            key={`${trimmedStr}Menu`}
+                            text={widgetType}
+                            icon={widgetConfig?.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig?.icon as IconName)}
+                            onClick={widgetConfig?.onClick}
+                        />
                     );
                 })}
             </Menu>
@@ -82,7 +91,7 @@ export class RootMenuComponent extends React.Component {
     };
 
     private recurseSnippetMap(snippetMap: Map<string, any>): React.ReactNode[] {
-        let nodes = [];
+        const nodes: React.ReactNode[] = [];
         for (const [name, node] of snippetMap) {
             // Create menu and recurse
             if (node instanceof Map) {
@@ -98,7 +107,7 @@ export class RootMenuComponent extends React.Component {
         // Sort nodes as follows:
         // - Folders first (sorted alphabetically)
         // - Items sorted alphabetically
-        return nodes.sort((a, b) => {
+        return nodes.sort((a: any, b: any) => {
             const lengthA = a.props?.children?.length ?? 0;
             const lengthB = b.props?.children?.length ?? 0;
             if ((lengthA > 0 && lengthB > 0) || lengthA === lengthB) {
@@ -110,7 +119,7 @@ export class RootMenuComponent extends React.Component {
 
     private newReleaseButtonOnClick = () => {
         const appStore = AppStore.Instance;
-        if (this.disableCheckRelease) {
+        if (this.isCheckReleaseDisabled) {
             appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
         }
         appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
@@ -119,7 +128,7 @@ export class RootMenuComponent extends React.Component {
 
     @computed get snippetsMenu() {
         const appStore = AppStore.Instance;
-        if (!appStore.preferenceStore.codeSnippetsEnabled) {
+        if (!appStore.preferenceStore.isCodeSnippetsEnabled) {
             return null;
         }
 
@@ -132,7 +141,7 @@ export class RootMenuComponent extends React.Component {
             }
 
             const labelElement = (
-                <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
+                <Button className="snippet-run-button" size="small" variant="minimal" icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
             const menuItem = <MenuItem key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {snippet: snippet, name: name, newSnippet: false})} />;
@@ -170,16 +179,16 @@ export class RootMenuComponent extends React.Component {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let serverMenu: React.ReactNode[] = [];
+        const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
+        if (apiService.authenticated && ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress) {
+        if (ApiService.runtimeConfig.logoutAddress) {
             serverMenu.push(<MenuItem key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        if (ApiService.runtimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
         serverMenu.push(
@@ -188,10 +197,9 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await copyToClipboard(appStore.backendService.sessionId.toString());
-                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                        await copyToClipboardWithToast(appStore.backendService.sessionId.toString(), "Session ID copied!");
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -206,15 +214,14 @@ export class RootMenuComponent extends React.Component {
                         if (url.protocol.startsWith("file")) {
                             const socketUrl = url.searchParams.get("socketUrl");
                             const token = url.searchParams.get("token");
-                            const httpUrl = socketUrl.replace("ws", "http");
+                            const httpUrl = socketUrl?.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            await copyToClipboard(finalUrl);
+                            await copyToClipboardWithToast(finalUrl, "Session URL copied!");
                         } else {
-                            await copyToClipboard(document.URL);
+                            await copyToClipboardWithToast(document.URL, "Session URL copied!");
                         }
-                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -229,10 +236,10 @@ export class RootMenuComponent extends React.Component {
         }
 
         let saveImageTooltip: string | React.JSX.Element = "";
-        let hideImageTooltip = true;
+        let shouldHideImageTooltip = true;
         if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
             saveImageTooltip = "Not allowed in read-only mode";
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         } else if (appStore.activeImage?.type !== ImageType.FRAME) {
             saveImageTooltip = (
                 <span>
@@ -241,25 +248,25 @@ export class RootMenuComponent extends React.Component {
                     <small>To save color-blending images, please save as a workspace via the File menu.</small>
                 </span>
             );
-            hideImageTooltip = false;
+            shouldHideImageTooltip = false;
         }
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
-                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
+                <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.isOpenFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
+                <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.isAppendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
+                <Tooltip content={saveImageTooltip} disabled={shouldHideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
+                        disabled={appStore.isAppendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
-                <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
                     content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
@@ -271,13 +278,13 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip>
-                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled || appStore.activeFrame?.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
-                <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                <MenuItem text="Open Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
+                <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
                 <MenuDivider />
                 <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />
                 {serverSubMenu}
@@ -310,13 +317,13 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
                 <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
+                {appStore.preferenceStore.isCodeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
-                <MenuItem text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/5.0")} />
+                <MenuItem text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked(`https://carta.readthedocs.io/en/${CARTA_INFO.docsVersion}`)} />
                 <MenuItem text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={() => appStore.dialogStore.showDialog(DialogId.Hotkey)} />
                 <MenuItem text="About" icon={"info-sign"} onClick={() => appStore.dialogStore.showDialog(DialogId.About)} />
             </Menu>
@@ -332,7 +339,7 @@ export class RootMenuComponent extends React.Component {
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                if (appStore.backendService.connectionDropped) {
+                if (appStore.backendService.hasConnectionDropped) {
                     connectivityTooltip = (
                         <span>
                             Reconnected to server {userString} after disconnect. Some errors may occur
@@ -367,38 +374,38 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame?.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const vectorOverlayLoading = appStore.activeFrame?.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const isLoadingTiles = appStore.tileService.remainingTiles > 0;
+        const isLoadingContours = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const isLoadingVectorOverlay = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
-        let loadingIndicatorClass = "contour-loading-icon";
-        let showLoadingIndicator = false;
+        const loadingIndicatorClass = "contour-loading-icon";
+        let shouldShowLoadingIndicator = false;
 
-        if (tilesLoading || contoursLoading || vectorOverlayLoading) {
+        if (isLoadingTiles || isLoadingContours || isLoadingVectorOverlay) {
             let tilesTooltipContent;
-            if (tilesLoading) {
+            if (isLoadingTiles) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
-            if (contoursLoading) {
+            if (isLoadingContours && appStore.activeFrame) {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
-            if (vectorOverlayLoading) {
+            if (isLoadingVectorOverlay && appStore.activeFrame) {
                 vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
-                    {contoursLoading && tilesLoading && <br />}
+                    {isLoadingContours && isLoadingTiles && <br />}
                     {contourTooltipContent}
                     {vectorOverlayTooltipContent}
                 </React.Fragment>
             );
 
-            showLoadingIndicator = true;
+            shouldShowLoadingIndicator = true;
         }
 
         let loadingIndicator;
@@ -413,7 +420,7 @@ export class RootMenuComponent extends React.Component {
         }
 
         const newReleaseMessage = (
-            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.darkTheme})}>
+            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.isDarkTheme})}>
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png" />
                     <div className={Classes.ALERT_CONTENTS}>
@@ -433,44 +440,44 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
+                    <Switch checked={this.isCheckReleaseDisabled} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );
 
         return (
             <div className="root-menu">
-                <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={fileMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="File" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={viewMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="View" />
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.genWidgetsMenu()} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Widgets" />
                     </Menu>
-                </Popover>
-                {appStore.preferenceStore.codeSnippetsEnabled && (
-                    <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
+                </PopoverNext>
+                {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
+                    <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.snippetsMenu} placement="bottom-start">
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />
                         </Menu>
-                    </Popover>
+                    </PopoverNext>
                 )}
-                <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
+                <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={helpMenu} placement="bottom-start">
                     <Menu className="root-menu-entry">
                         <MenuItem text="Help" />
                     </Menu>
-                </Popover>
+                </PopoverNext>
                 <ToolbarMenuComponent />
                 <Alert
-                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
-                    isOpen={this.documentationAlertVisible}
+                    className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
+                    isOpen={this.isDocumentationAlertVisible}
                     onClose={this.handleAlertDismissed}
                     canEscapeKeyCancel={true}
                     canOutsideClickCancel={true}
@@ -478,14 +485,14 @@ export class RootMenuComponent extends React.Component {
                 >
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {appStore.showNewRelease && (
-                    <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
+                {appStore.shouldShowNewRelease && (
+                    <PopoverNext content={newReleaseMessage} placement="bottom-end" shouldReturnFocusOnClose={false}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
-                            <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                            <Button icon={"envelope"} intent={"warning"} variant="minimal" />
                         </Tooltip>
-                    </Popover>
+                    </PopoverNext>
                 )}
-                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                {ApiService.runtimeConfig.apiAddress && appStore.activeWorkspace?.id && !appStore.layoutStore?.hasPopoutWidget && (
                     <Tooltip
                         content={
                             <span>
@@ -497,11 +504,11 @@ export class RootMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
+                        <AnchorButton icon="share" variant="minimal" onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
-                {showLoadingIndicator && loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode && (
+                {shouldShowLoadingIndicator && loadingIndicator}
+                {appStore.preferenceStore.isLowBandwidthMode && (
                     <Tooltip
                         content={
                             <span>
@@ -533,15 +540,16 @@ export class RootMenuComponent extends React.Component {
 
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
-        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
-            this.documentationAlertVisible = true;
+        if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
+            this.isDocumentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
-            this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
+            this.documentationAlertTimeoutHandle = undefined;
+            this.documentationAlertTimeoutHandle = setTimeout(() => (this.isDocumentationAlertVisible = false), 10000);
         }
     };
 
     handleAlertDismissed = () => {
-        this.documentationAlertVisible = false;
+        this.isDocumentationAlertVisible = false;
     };
 
     handleImageSelect = (image: ImageViewItem) => {

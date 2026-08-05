@@ -1,9 +1,10 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {SPECTRAL_TYPE_STRING, SpectralSystem, SpectralType} from "models";
-import {FrameStore} from "stores/Frame";
+import {type SpectralSystem, SpectralType} from "enums";
+import {SPECTRAL_TYPE_STRING} from "models";
+import {type FrameStore} from "stores/Frame";
 
 @observer
 export class SpectralSettingsComponent extends React.Component<{
@@ -28,19 +29,19 @@ export class SpectralSettingsComponent extends React.Component<{
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord, key: coord};
         });
         const spectralSystemOptions: OptionProps[] =
-            frame?.spectralSystemsSupported?.length > 0
+            frame?.spectralSystemsSupported && frame.spectralSystemsSupported.length > 0
                 ? frame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system, key: system};
                   })
-                : [{value: frame?.spectralAxis?.specsys, label: frame?.spectralAxis?.specsys}];
-        const disableCoordinateSetting = this.props.disable;
-        const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
+                : [{value: frame?.spectralAxis?.specsys ?? "", label: frame?.spectralAxis?.specsys ?? ""}];
+        const shouldDisableCoordinateSetting = this.props.disable;
+        const shouldDisableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 
         return (
             <React.Fragment>
-                <FormGroup label={this.props.customLabel ? this.props.customLabel : "Coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                <FormGroup label={this.props.customLabel ? this.props.customLabel : "Coordinate"} inline={true} disabled={shouldDisableCoordinateSetting}>
                     <HTMLSelect
-                        disabled={disableCoordinateSetting}
+                        disabled={shouldDisableCoordinateSetting}
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                         options={spectralCoordinateOptions}
                         onChange={event => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
@@ -48,19 +49,19 @@ export class SpectralSettingsComponent extends React.Component<{
                     />
                 </FormGroup>
                 {this.props.secondaryAxisCursorInfoVisible && (
-                    <FormGroup label={"Secondary coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                    <FormGroup label={"Secondary coordinate"} inline={true} disabled={shouldDisableCoordinateSetting}>
                         <HTMLSelect
-                            disabled={disableCoordinateSetting}
+                            disabled={shouldDisableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
                             options={spectralCoordinateOptions}
-                            onChange={event => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
+                            onChange={event => this.props.onSpectralCoordinateChangeSecondary?.(event.currentTarget.value as string)}
                         />
                     </FormGroup>
                 )}
 
-                <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
+                <FormGroup label={"System"} inline={true} disabled={shouldDisableSystemSetting}>
                     <HTMLSelect
-                        disabled={disableSystemSetting}
+                        disabled={shouldDisableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
                         onChange={event => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}

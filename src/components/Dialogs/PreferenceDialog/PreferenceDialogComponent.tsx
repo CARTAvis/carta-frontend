@@ -1,7 +1,7 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -9,32 +9,27 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
-import {CompressionQuality, ConvertToGB, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {TelemetryMode} from "services";
-import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
-import {copyToClipboard, SWATCH_COLORS} from "utilities";
+import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
+import {
+    AutoColorPickerComponent,
+    ColormapComponent,
+    ColorPickerComponent,
+    copyToClipboardWithToast,
+    PointShapeSelectComponent,
+    SafeNumericInput,
+    ScalingParameterControlComponent,
+    ScalingSelectComponent,
+    ScrollShadow
+} from "components/Shared";
+import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
+import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {AppStore, PreferenceStore} from "stores";
+import {RegionStore, RenderConfigStore} from "stores/Frame";
+import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
-enum PreferenceDialogTabs {
-    GLOBAL,
-    RENDER_CONFIG,
-    CONTOUR_CONFIG,
-    VECTOR_OVERLAY_CONFIG,
-    WCS_OVERLAY_CONFIG,
-    LAYOUT,
-    REGION,
-    ANNOTATION,
-    PERFORMANCE,
-    LOG_EVENT,
-    CATALOG,
-    TELEMETRY,
-    COMPATIBILITY
-}
-
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const PercentileSelect = Select<string>;
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB
@@ -97,6 +92,17 @@ export class PreferenceDialogComponent extends React.Component {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
     }, 100);
 
+    private updatePointShapeCache = (pointShape: CARTA.PointAnnotationShape) => {
+        AppStore.Instance.frames.forEach(frame => {
+            frame.pointShapeCache = pointShape;
+        });
+    };
+
+    private handlePointAnnotationShapeChange = (item: CARTA.PointAnnotationShape) => {
+        PreferenceStore.Instance.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item);
+        this.updatePointShapeCache(item);
+    };
+
     // variable for showing preview cube size unit in the dialog
     @observable private pvPreviewCubeSizeLimitUnit = "GB";
 
@@ -123,6 +129,7 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.ANNOTATION:
                 preference.resetAnnotationSettings();
+                this.updatePointShapeCache(preference.pointAnnotationShape);
                 break;
             case PreferenceDialogTabs.PERFORMANCE:
                 preference.resetPerformanceSettings();
@@ -149,12 +156,31 @@ export class PreferenceDialogComponent extends React.Component {
     private handleUserIdCopied = async () => {
         const appStore = AppStore.Instance;
         try {
-            await copyToClipboard(appStore.telemetryService.decodedUserId);
-            AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
+            await copyToClipboardWithToast(appStore.telemetryService.decodedUserId, "Copied user ID to clipboard.");
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
+
+    private renderScalingParameterInput(preference: PreferenceStore): React.ReactNode {
+        const parameterConfig = getScalingParameterConfig(preference.scaling);
+        if (!parameterConfig) {
+            return null;
+        }
+        const parameterName = preference.scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha";
+
+        return (
+            <FormGroup label={parameterName} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={preference.scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={preference.getScalingParameter(preference.scaling)}
+                    onValueChange={newValue => preference.setPreference(parameterConfig.preferenceKey, newValue)}
+                />
+            </FormGroup>
+        );
+    }
 
     public render() {
         const appStore = AppStore.Instance;
@@ -171,10 +197,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable code snippets">
-                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isCodeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch file browser">
-                    <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldAutoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="File list">
                     <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, ev.currentTarget.value)}>
@@ -202,7 +228,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
-                    <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isDragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Matching on append">
                     {WCSMatching.MATCHING_TYPES.map(matchingType => (
@@ -225,10 +251,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Transparent image background">
-                    <Switch checked={preference.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
+                    <Switch checked={preference.hasTransparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Save last used directory">
-                    <Switch checked={preference.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldKeepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -245,6 +271,7 @@ export class PreferenceDialogComponent extends React.Component {
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
                         onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX, selected)}
+                        onCustomColorStartSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
                     />
@@ -258,47 +285,23 @@ export class PreferenceDialogComponent extends React.Component {
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlpha}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.GAMMA && (
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.GAMMA_MIN}
-                            max={RenderConfigStore.GAMMA_MAX}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={preference.scalingGamma}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
-                        />
-                    </FormGroup>
-                )}
+                {this.renderScalingParameterInput(preference)}
                 <FormGroup inline={true} label="NaN color">
                     <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
+                        color={tinycolor(preference.nanColorHex).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());
                         }}
                         disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed bias/contrast">
-                    <Switch checked={preference.useSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldUseSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -328,8 +331,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default smoothing factor">
                     <SafeNumericInput
                         placeholder="Default smoothing factor"
-                        min={1}
-                        max={33}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? 33}
                         value={preference.contourSmoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
@@ -339,8 +342,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default contour levels">
                     <SafeNumericInput
                         placeholder="Default contour levels"
-                        min={1}
-                        max={15}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? 15}
                         value={preference.contourNumLevels}
                         majorStepSize={1}
                         stepSize={1}
@@ -350,8 +353,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Thickness">
                     <SafeNumericInput
                         placeholder="Thickness"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? 10}
                         value={preference.contourThickness}
                         majorStepSize={0.5}
                         stepSize={0.5}
@@ -359,7 +362,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color mode">
-                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.isContourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -377,7 +380,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -388,22 +391,24 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default pixel averaging">
                     <SafeNumericInput
                         placeholder="Default pixel averaging"
-                        min={0}
-                        max={64}
+                        min={1}
+                        max={VectorOverlayDialogComponent.MAX_PIXEL_AVERAGING}
                         value={preference.vectorOverlayPixelAveraging}
+                        stepSize={1}
                         majorStepSize={2}
-                        stepSize={2}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, value)}
+                        minorStepSize={1}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.round(value))}
+                        onBlur={ev => (ev.currentTarget.value = preference.vectorOverlayPixelAveraging.toString())}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
-                    <Switch checked={preference.vectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isVectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness">
                     <SafeNumericInput
                         placeholder="Thickness"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? 10}
                         value={preference.vectorOverlayThickness}
                         majorStepSize={0.5}
                         stepSize={0.5}
@@ -411,7 +416,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color mode">
-                    <HTMLSelect value={preference.vectorOverlayColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.isVectorOverlayColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -429,7 +434,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -441,10 +446,10 @@ export class PreferenceDialogComponent extends React.Component {
                     <AutoColorPickerComponent color={preference.astColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS grid visible">
-                    <Switch checked={preference.astGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isAstGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Labels visible">
-                    <Switch checked={preference.astLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isAstLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor info visible">
                     <HTMLSelect value={preference.cursorInfoVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, ev.currentTarget.value)}>
@@ -462,10 +467,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar visible">
-                    <Switch checked={preference.colorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar interactive">
-                    <Switch checked={preference.colorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar position">
                     <HTMLSelect value={preference.colorbarPosition} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION, ev.currentTarget.value)}>
@@ -477,8 +482,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Colorbar width" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Colorbar width"
-                        min={1}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? 100}
                         value={preference.colorbarWidth}
                         stepSize={1}
                         minorStepSize={1}
@@ -490,8 +495,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Colorbar ticks density" labelInfo="(per 100px)">
                     <SafeNumericInput
                         placeholder="Colorbar ticks density"
-                        min={0.2}
-                        max={20}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? 0.2}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? 20}
                         value={preference.colorbarTicksDensity}
                         stepSize={0.2}
                         minorStepSize={0.1}
@@ -500,10 +505,10 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar label visible">
-                    <Switch checked={preference.colorbarLabelVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarLabelVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam visible">
-                    <Switch checked={preference.beamVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isBeamVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam color">
                     <AutoColorPickerComponent color={preference.beamColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color)} disableAlpha={true} />
@@ -521,8 +526,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Beam width" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Beam width"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? 10}
                         value={preference.beamWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -533,7 +538,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let regionTypes = [];
+        const regionTypes: React.JSX.Element[] = [];
         RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
@@ -555,16 +560,16 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Dynamic layout">
                     <Tooltip content={"Apply a linked layout when loaded images based on data type"}>
-                        <Switch checked={preference.dynamicLayoutEnable} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, !preference.dynamicLayoutEnable)} />
+                        <Switch checked={preference.isDynamicLayoutEnabled} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, !preference.isDynamicLayoutEnabled)} />
                     </Tooltip>
                 </FormGroup>
-                <Collapse isOpen={preference.dynamicLayoutEnable}>
+                <Collapse isOpen={preference.isDynamicLayoutEnabled}>
                     <FormGroup inline={true} label="Higher dimension priority">
                         <Tooltip content={"When disable, the dynamic layout will depend on the last selected file among multiple selected files."}>
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
                         </Tooltip>
                     </FormGroup>
-                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || (appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "")}>
+                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || (appStore.activeFrame ? appStore.activeFrame.dynamicLayout.ctype !== "" : false)}>
                         <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preference.existLayoutMapping} activeFrame={appStore.activeFrame} />
                     </Collapse>
                 </Collapse>
@@ -579,7 +584,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.REGION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -610,11 +615,13 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Region size" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Region size"
-                        min={10}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10}
+                        max={preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100}
                         value={preference.regionSize}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(10, Math.min(100, value)))}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(PreferenceKeys.REGION_SIZE, clamp(value, preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10, preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100))
+                        }
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Creation mode">
@@ -623,10 +630,17 @@ export class PreferenceDialogComponent extends React.Component {
                         <Radio label="Corner to corner" value={RegionCreationMode.CORNER} />
                     </RadioGroup>
                 </FormGroup>
+                <FormGroup inline={true} label="Paste offset">
+                    <HTMLSelect value={preference.regionPasteOffsetUnit} onChange={ev => preference.setPreference(PreferenceKeys.REGION_PASTE_OFFSET_UNIT, ev.currentTarget.value)}>
+                        <option value={PasteOffsetUnit.Auto}>Auto</option>
+                        <option value={PasteOffsetUnit.ScreenPixel}>Screen px</option>
+                        <option value={PasteOffsetUnit.ImagePixel}>Image px</option>
+                    </HTMLSelect>
+                </FormGroup>
             </React.Fragment>
         );
 
-        let annotationTypes = [];
+        const annotationTypes: React.JSX.Element[] = [];
         RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
             annotationTypes.push(
                 <option key={annotationType} value={annotationType}>
@@ -643,7 +657,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -653,7 +667,7 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_LINE_WIDTH}
                         value={preference.annotationLineWidth}
                         stepSize={0.5}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, clamp(value, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dash length" labelInfo="(px)">
@@ -663,20 +677,40 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_DASH_LENGTH}
                         value={preference.annotationDashLength}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, clamp(value, 0, RegionStore.MAX_DASH_LENGTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Point shape">
-                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
+                    <PointShapeSelectComponent handleChange={this.handlePointAnnotationShapeChange} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Point size"
-                        min={1}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, Math.min(100, value)))}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(
+                                PreferenceKeys.POINT_ANNOTATION_WIDTH,
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1, preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100)
+                            )
+                        }
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text line width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Text line width"
+                        min={preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10}
+                        value={preference.textAnnotationLineWidth}
+                        stepSize={0.5}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(
+                                PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH,
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5, preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10)
+                            )
+                        }
                     />
                 </FormGroup>
             </React.Fragment>
@@ -685,10 +719,10 @@ export class PreferenceDialogComponent extends React.Component {
         const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
-                    <Switch checked={preference.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isLowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Limit overlay redraw">
-                    <Switch checked={preference.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldLimitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Compression quality" labelInfo={"(Images)"}>
                     <SafeNumericInput
@@ -735,8 +769,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Contour rounding factor">
                     <SafeNumericInput
                         placeholder="Contour rounding factor"
-                        min={1}
-                        max={32}
+                        min={preference.getMinConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? 32}
                         value={preference.contourDecimation}
                         majorStepSize={1}
                         stepSize={1}
@@ -746,8 +780,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Contour compression level">
                     <SafeNumericInput
                         placeholder="Contour compression level"
-                        min={0}
-                        max={19}
+                        min={preference.getMinConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? 0}
+                        max={preference.getMaxConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? 19}
                         value={preference.contourCompressionLevel}
                         majorStepSize={1}
                         stepSize={1}
@@ -793,7 +827,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
-                    <Switch checked={preference.streamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldStreamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Stop animation playback in">
                     <HTMLSelect value={preference.stopAnimationPlaybackMinutes} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
@@ -862,11 +896,14 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Displayed columns">
                     <SafeNumericInput
                         placeholder="Default displayed columns"
-                        min={1}
+                        min={preference.getMinConstraint(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? 1}
                         value={preference.catalogDisplayedColumnSize}
                         stepSize={1}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Auto-select image overlay columns">
+                    <Switch checked={preference.shouldAutoSelectImageOverlayCoordinateColumns} onChange={ev => preference.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, ev.currentTarget.checked)} />
                 </FormGroup>
             </div>
         );
@@ -895,7 +932,7 @@ export class PreferenceDialogComponent extends React.Component {
                         {preference.telemetryUuid && (
                             <div className="telemetry-id-text">
                                 <p>Anonymous user ID: {appStore.telemetryService.decodedUserId}</p>
-                                <Button minimal={true} intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
+                                <Button variant="minimal" intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
                             </div>
                         )}
                     </Callout>
@@ -908,7 +945,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Log telemetry output">
-                    <Switch checked={preference.telemetryLogging} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_LOGGING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isTelemetryLogging} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_LOGGING, ev.currentTarget.checked)} />
                 </FormGroup>
             </div>
         );
@@ -916,12 +953,12 @@ export class PreferenceDialogComponent extends React.Component {
         const compatibilityPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="AIPS cube beam support">
-                    <Switch checked={preference.aipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
+                    <Switch checked={preference.hasAipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
                 </FormGroup>
             </div>
         );
 
-        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "wrench",
@@ -929,7 +966,7 @@ export class PreferenceDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference) || false,
             title: "Preferences"
         };
 
@@ -941,7 +978,7 @@ export class PreferenceDialogComponent extends React.Component {
                 minHeight={PreferenceDialogComponent.MinHeight}
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isResizingEnabled={true}
                 dialogId={DialogId.Preference}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -956,7 +993,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={<ScrollShadow>{regionSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={<ScrollShadow>{annotationSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={<ScrollShadow>{performancePanel}</ScrollShadow>} />
-                        {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
+                        {process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
                         <Tab id={PreferenceDialogTabs.COMPATIBILITY} title="Compatibility" panel={<ScrollShadow>{compatibilityPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={<ScrollShadow>{logEventsPanel}</ScrollShadow>} />
                     </Tabs>

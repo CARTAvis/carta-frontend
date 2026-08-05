@@ -8,8 +8,6 @@ import {AlertStore, AppStore, SnippetStore} from "stores";
 
 import "./SaveSnippetDialogComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 interface SaveSnippetDialogProps {
     onSaveClicked: (layoutName: string, categories: string[]) => void;
     onCancelClicked: () => void;
@@ -47,22 +45,26 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
     };
 
     private handleKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && SnippetStore.Instance.activeSnippetName?.length) {
+        if (ev.key === "Enter" && SnippetStore.Instance.activeSnippetName?.length) {
             this.saveSnippet();
         }
     };
 
     @computed get validInput() {
         const snippetStore = SnippetStore.Instance;
-        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.categories;
+        return (snippetStore.activeSnippetName?.length ?? 0) > 0 && snippetStore.activeSnippet?.categories;
     }
 
     saveSnippet = async () => {
         const snippetStore = SnippetStore.Instance;
 
+        if (!snippetStore.activeSnippetName || !snippetStore.activeSnippet?.categories) {
+            return;
+        }
+
         if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
-            const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
-            if (!confirmed) {
+            const isConfirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
+            if (!isConfirmed) {
                 return;
             }
         }
@@ -73,7 +75,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
         const snippet = snippetStore.activeSnippet;
-        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog

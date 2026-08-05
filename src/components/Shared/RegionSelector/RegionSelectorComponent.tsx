@@ -1,11 +1,12 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {type FrameStore, type RegionStore} from "stores/Frame";
+import {ACTIVE_FILE_ID, type RegionWidgetStore} from "stores/Widgets";
 
 import "./RegionSelectorComponent.scss";
 
@@ -17,9 +18,14 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         if (appStore.activeFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             widgetStore.setFileId(selectedFileId);
-            widgetStore.setRegionId(widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
-            if (this.props.onFrameChanged) {
-                this.props.onFrameChanged(widgetStore.effectiveFrame);
+            if (widgetStore.effectiveFrame) {
+                const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+                if (fileId !== undefined) {
+                    widgetStore.setRegionId(fileId, RegionId.ACTIVE);
+                    if (this.props.onFrameChanged) {
+                        this.props.onFrameChanged(widgetStore.effectiveFrame);
+                    }
+                }
             }
         }
     };
@@ -27,10 +33,12 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
-        if (appStore.activeFrame) {
+        if (appStore.activeFrame && widgetStore.effectiveFrame) {
             const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
-            widgetStore.setFileId(fileId);
-            widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            if (fileId !== undefined) {
+                widgetStore.setFileId(fileId);
+                widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            }
         }
     };
 
@@ -38,14 +46,14 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
-        let enableFrameselect = false;
+        let isFrameSelectEnabled = false;
         let selectedFrameValue: number = ACTIVE_FILE_ID;
         if (appStore.activeFrame) {
             selectedFrameValue = widgetStore.fileId;
-            enableFrameselect = true;
+            isFrameSelectEnabled = true;
         }
 
-        let enableRegionSelect = false;
+        let isRegionSelectEnabled = false;
         let selectedValue: number = RegionId.ACTIVE;
         let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
 
@@ -55,7 +63,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             }
 
             let fiteredRegions: RegionStore[];
-            let regions = widgetStore.effectiveFrame.regionSet.regions;
+            const regions = widgetStore.effectiveFrame.regionSet.regions;
 
             switch (widgetStore.type) {
                 case RegionsType.CLOSED:
@@ -81,8 +89,9 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
             }
 
-            selectedValue = widgetStore.regionIdMap.get(widgetStore.effectiveFrame.frameInfo.fileId);
-            enableRegionSelect = true;
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            selectedValue = fileId !== undefined ? (widgetStore.regionIdMap.get(fileId) ?? RegionId.ACTIVE) : RegionId.ACTIVE;
+            isRegionSelectEnabled = true;
         }
 
         let frameClassName = "unlinked-to-selected";
@@ -90,28 +99,28 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const linkedClass = "linked-to-selected";
 
         if (widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
-            frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+            frameClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
-        if (widgetStore.matchesSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
-            regionClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+        if (widgetStore.isMatchingSelectedRegion && selectedValue !== undefined && selectedValue !== RegionId.ACTIVE) {
+            regionClassName = AppStore.Instance.isDarkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
         return (
             <React.Fragment>
-                <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
+                <FormGroup label={"Image"} inline={true} disabled={!isFrameSelectEnabled}>
                     <HTMLSelect
                         className={frameClassName}
                         value={selectedFrameValue}
                         options={widgetStore.frameOptions}
                         onChange={this.handleFrameChanged}
-                        disabled={!enableFrameselect}
+                        disabled={!isFrameSelectEnabled}
                         style={{width: "100px"}}
                         data-testid="image-dropdown"
                     />
                 </FormGroup>
-                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} data-testid="region-dropdown" />
+                <FormGroup label={"Region"} inline={true} disabled={!isRegionSelectEnabled}>
+                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!isRegionSelectEnabled} data-testid="region-dropdown" />
                 </FormGroup>
             </React.Fragment>
         );

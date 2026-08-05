@@ -1,10 +1,93 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
-import {NumberFormatType, OverlaySettings} from "stores";
-import {FrameStore} from "stores/Frame";
+import {NumberFormatType, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
+import {type Point2D, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, type WCSPoint2D} from "models";
+import {OverlaySettings} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
+
+export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
+    [NumberFormatType.HMS, "H:M:S"],
+    [NumberFormatType.DMS, "D:M:S"],
+    [NumberFormatType.Degrees, "Degrees"]
+]);
+
+export interface SwappedDirAxisInfo {
+    dirAxis: number;
+    dirAxisSize: number;
+    dirAxisFormat: string;
+    depthAxisFormat: string;
+}
+
+export interface SwappedZWcsSettings {
+    dirAxis: number;
+    dirAxisFormat: string;
+    spectralAxis: number;
+    spectralType: SpectralType | null | undefined;
+    spectralUnit: SpectralUnit | null | undefined;
+    spectralSystem: SpectralSystem | null | undefined;
+    restFreqInHz: number | undefined;
+    dirX: number;
+    dirXLabel: string;
+    dirY: number;
+    dirYLabel: string;
+}
+
+export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.HeaderEntry.$Properties[], wcsPrecision: number): SwappedDirAxisInfo {
+    const dirAxis = dirX < dirY ? dirX : dirY;
+    const dirAxisSize = dirAxis === 1 ? width : height;
+    const axisName = headerEntries.find(entry => entry.name?.includes(`CTYPE${dirAxis}`));
+    const axisValue = axisName?.value ?? "Unknown";
+    if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+        return {
+            dirAxis,
+            dirAxisSize,
+            dirAxisFormat: "d.*",
+            depthAxisFormat: `d.${wcsPrecision}`
+        };
+    }
+
+    return {
+        dirAxis,
+        dirAxisSize,
+        dirAxisFormat: dirX < dirY ? "hms.*" : "dms.*",
+        depthAxisFormat: dirX < dirY ? `dms.${wcsPrecision}` : `hms.${wcsPrecision}`
+    };
+}
+
+export function buildSwappedZWcsSettings({dirAxis, dirAxisFormat, spectralAxis, spectralType, spectralUnit, spectralSystem, restFreqInHz, dirX, dirXLabel, dirY, dirYLabel}: SwappedZWcsSettings): string {
+    const settings = [`Format(${dirAxis})=${dirAxisFormat}`, `Unit(${dirAxis})=""`];
+    if (spectralType) {
+        settings.push(`System(${spectralAxis})=${spectralType}`);
+    }
+    if (spectralUnit) {
+        settings.push(`Unit(${spectralAxis})=${spectralUnit}`);
+    }
+    if (spectralSystem) {
+        settings.push(`StdOfRest=${spectralSystem}`);
+    }
+    if (restFreqInHz) {
+        settings.push(`RestFreq=${restFreqInHz} Hz`);
+    }
+    if (spectralType && spectralSystem) {
+        const spectralLabel = SPECTRAL_TYPE_STRING.get(spectralType);
+        if (spectralLabel) {
+            settings.push(`Label(${spectralAxis})=[${spectralSystem}] ${spectralLabel}`);
+        }
+    }
+    // In a swapped-Z frame, exactly one of dirX/dirY equals dirAxis (≤ 2, the visible direction
+    // axis in the 2D frameset) while the other is ≥ 3 (the depth axis, not in the 2D display).
+    // The ≤ 2 check identifies the visible axis so we only emit a label for the axis that exists
+    // in the 2D frameset.
+    if (dirX <= 2 && dirXLabel !== "") {
+        settings.push(`Label(${dirX})=${dirXLabel}`);
+    }
+    if (dirY <= 2 && dirYLabel !== "") {
+        settings.push(`Label(${dirY})=${dirYLabel}`);
+    }
+    return settings.join(",");
+}
 
 export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
@@ -21,7 +104,7 @@ export function isWCSStringFormatValid(wcsString: string | null, format: NumberF
     return decimalRegExp.test(wcsString);
 }
 
-export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefined): number {
+export function getHeaderNumericValue(headerEntry: CARTA.HeaderEntry.$Properties | undefined): number {
     if (!headerEntry) {
         return NaN;
     }
@@ -33,8 +116,8 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefine
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, forward: boolean = true) {
-    return AST.transformPoint(astTransform, point.x, point.y, forward);
+export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
+    return AST.transformPoint(astTransform, point.x, point.y, isForward);
 }
 
 export function getReferencePixel(frame: FrameStore): Point2D {
@@ -132,8 +215,8 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     // Set common spectral
     const copySrc = AST.copy(srcTransform);
     const copyDest = AST.copy(destTransform);
-    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copySrc, `System=${matchingType}, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, Unit=${defaultUnit}`);
 
     // Get spectral value from forward transform
     const sourceSpectralValue = AST.transform3DPoint(copySrc, 0, 0, srcChannel, true);
@@ -169,8 +252,8 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     // Set common spectral
     const copySrc = AST.copy(srcTransform);
     const copyDest = AST.copy(destTransform);
-    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copySrc, `System=${matchingType}, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, Unit=${defaultUnit}`);
 
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
     const dummySpectralValue = AST.transform3DPoint(copyDest, 1, 1, 1, true);
@@ -228,11 +311,11 @@ export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerRe
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
-    const totalLength = polygonPerimeter(controlPoints, closed);
+export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, isClosed: boolean = true): Point2D[] {
+    const totalLength = polygonPerimeter(controlPoints, isClosed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 
-    const M = controlPoints.length + (closed ? 1 : 0);
+    const M = controlPoints.length + (isClosed ? 1 : 0);
     const approxPointsOriginalSpace = new Array<Point2D>();
     for (let i = 1; i < M; i++) {
         const p1 = controlPoints[i % controlPoints.length];

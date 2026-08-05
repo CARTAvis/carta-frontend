@@ -1,10 +1,10 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {Callout, HTMLTable, NonIdealState, Spinner} from "@blueprintjs/core";
+import {type CARTA} from "carta-protobuf";
+import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {useMap} from "usehooks-ts";
 
-import {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 import "./WorkspaceInfoComponent.scss";
@@ -15,7 +15,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
     const [isFetchingWorkspace, setIsFetchingWorkspace] = useState(false);
     const [workspace, setWorkspace] = useState<Workspace>();
     const [errorMessage, setErrorMessage] = useState("");
-    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.IFileInfoResponse>();
+    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.FileInfoResponse.$Properties>();
 
     const fetchFileInfo = useCallback(
         async (workspace: Workspace) => {
@@ -48,7 +48,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                     await fetchFileInfo(res);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 setErrorMessage(err);
             }
             setIsFetchingWorkspace(false);
@@ -60,7 +60,6 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {
@@ -88,7 +87,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         <div className="workspace-info">
             <Callout className="workspace-thumbnail">{workspace.thumbnail ? <img src={workspace.thumbnail} /> : <NonIdealState icon="media" title="No thumbnail" />}</Callout>
             <Callout className="workspace-properties">
-                <table className="info-table">
+                <HTMLTable className="info-table">
                     <tbody>
                         <tr className="entry">
                             <td className="entry-title">Name</td>
@@ -129,7 +128,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                             </td>
                         </tr>
                     </tbody>
-                </table>
+                </HTMLTable>
             </Callout>
         </div>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 
-export const TemplateNodes = {
+export const TEMPLATE_NODES = {
     WebGLErrorMessage: (
         <React.Fragment>
             <p>

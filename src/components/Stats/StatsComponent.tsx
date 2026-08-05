@@ -2,13 +2,14 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {HelpType, Polarizations} from "enums";
+import {FULL_POLARIZATIONS} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
@@ -16,7 +17,11 @@ import "./StatsComponent.scss";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private readonly cachedWidgetStore: StatsWidgetStore;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
@@ -30,31 +35,26 @@ export class StatsComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 490;
+    @observable height: number = 325;
     @observable isMouseEntered = false;
 
-    @computed get widgetStore(): StatsWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.statsWidgets) {
-            const widgetStore = widgetsStore.statsWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new StatsWidgetStore();
+    get widgetStore(): StatsWidgetStore {
+        return this.cachedWidgetStore;
     }
 
-    @computed get statsData(): CARTA.RegionStatsData {
+    @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
+                return null;
+            }
+            const regionId = this.widgetStore.effectiveRegionId;
+            const coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
-            if (!frameMap) {
+            if (!frameMap || !regionId) {
                 return null;
             }
             const regionMap = frameMap.get(regionId);
@@ -63,7 +63,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
             const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
             const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes) || null;
         }
         return null;
     }
@@ -80,7 +80,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
+    private static readonly StatsNameMap = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.FluxDensity, "FluxDensity"],
@@ -93,51 +93,64 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
-    private static readonly NAME_COLUMN_WIDTH = 90;
+    private static readonly NameColumnWidth = 90;
 
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === StatsComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addStatsWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
+            }
         } else {
-            if (!appStore.widgetsStore.statsWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore());
+            if (!appStore.widgetsStore.statsWidgets.has(this.widgetId)) {
+                appStore.widgetsStore.statsWidgets.set(this.widgetId, new StatsWidgetStore());
             }
         }
+        this.cachedWidgetStore = appStore.widgetsStore.statsWidgets.get(this.widgetId) ?? new StatsWidgetStore();
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                let regionString = "Unknown";
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore && this.widgetStore.effectiveFrame) {
+                    let regionString = "Unknown";
 
-                const regionId = this.widgetStore.effectiveRegionId;
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                if (regionId === -1) {
-                    regionString = "Image";
-                } else if (this.widgetStore.effectiveFrame.regionSet) {
-                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                    if (region) {
-                        regionString = region.nameString;
+                    const regionId = this.widgetStore.effectiveRegionId;
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                    if (regionId === -1) {
+                        regionString = "Image";
+                    } else if (this.widgetStore.effectiveFrame.regionSet) {
+                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                        if (region) {
+                            regionString = region.nameString;
+                        }
                     }
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString} ${selectedString}`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics`);
-            }
-        });
+            })
+        );
 
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
-        autorun(() => {
-            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)) {
-                this.widgetStore.setCoordinate("z");
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)) {
+                    this.widgetStore.setCoordinate("z");
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -161,9 +174,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.headerUnit) {
                 let unit: string;
-                if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                const effectivePolarization = this.widgetStore.effectivePolarization;
+                if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
                     unit = "%";
-                } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+                } else if (effectivePolarization === Polarizations.Pangle) {
                     unit = "degree";
                 } else {
                     unit = frame.headerUnit;
@@ -181,8 +195,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
 
             const value = this.statsData.statistics[index].value;
-            numString = toExponential(value, 12);
-            unitString = isFinite(value) ? unitString : "";
+            if (value != null) {
+                numString = toExponential(value, 12);
+                unitString = isFinite(value) ? unitString : "";
+            }
         }
 
         return {num: numString, unit: unitString};
@@ -197,25 +213,27 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             let regionInfo = "";
             const regionId = this.widgetStore.effectiveRegionId;
-            if (regionId !== -1) {
+            if (regionId !== -1 && regionId !== null) {
                 const regionProperties = frame.getRegionProperties(regionId);
                 regionProperties?.forEach(regionProperty => (regionInfo += `# ${regionProperty}\n`));
             } else {
                 regionInfo += "# full image\n";
             }
-            let channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
-            let stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
-            let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
+            const channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
+            const stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
+            const comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
-                if (index >= 0 && index < this.statsData.statistics?.length) {
-                    const value = this.getTableValue(index, type);
-                    value.unit = value.unit === "" ? "N/A" : value.unit;
-                    rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`;
+            StatsComponent.StatsNameMap.forEach((name, type) => {
+                if (this.statsData?.statistics) {
+                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+                    if (index >= 0 && index < this.statsData.statistics.length) {
+                        const value = this.getTableValue(index, type);
+                        value.unit = value.unit === "" ? "N/A" : value.unit;
+                        rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`;
+                    }
                 }
             });
 
@@ -228,71 +246,73 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         const widgetStore = this.widgetStore;
 
-        let enableStokesSelect = false;
+        let isStokesSelectEnabled = false;
         let stokesClassName = "unlinked-to-selected";
         const coordinateOptions = [{value: "z", label: "Current"}];
 
         if (widgetStore.effectiveFrame?.regionSet) {
-            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
+            isStokesSelectEnabled = widgetStore.effectiveFrame.hasStokes;
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
-                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
+            if (isStokesSelectEnabled && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
+                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.isDarkTheme});
             }
         }
 
         let formContent;
-        let exportDataComponent = null;
+        let exportDataComponent: React.JSX.Element | null = null;
         if (this.statsData) {
             // stretch value column to cover width
-            const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
+            const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
-            let rows = [];
-            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
-                if (index >= 0 && index < this.statsData.statistics.length) {
-                    const value = this.getTableValue(index, type);
-                    rows.push(
-                        <tr key={type}>
-                            <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>
-                                {value.num} {value.unit}
-                            </td>
-                        </tr>
-                    );
+            const rows: React.JSX.Element[] = [];
+            StatsComponent.StatsNameMap.forEach((name, type) => {
+                if (this.statsData?.statistics) {
+                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+                    if (index >= 0 && index < this.statsData.statistics.length) {
+                        const value = this.getTableValue(index, type);
+                        rows.push(
+                            <tr key={type}>
+                                <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
+                                <td style={{width: valueWidth}}>
+                                    {value.num} {value.unit}
+                                </td>
+                            </tr>
+                        );
+                    }
                 }
             });
 
             formContent = (
                 <HTMLTable data-testid="statistics-table">
-                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
+                    <thead className={appStore.isDarkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
+                            <th style={{width: StatsComponent.NameColumnWidth}}>Statistic</th>
                             <th style={{width: valueWidth}}>Value</th>
                         </tr>
                     </thead>
-                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>{rows}</tbody>
+                    <tbody className={appStore.isDarkTheme ? "dark-theme" : ""}>{rows}</tbody>
                 </HTMLTable>
             );
 
             exportDataComponent = (
                 <div className="stats-export-data">
-                    <ToolbarComponent darkMode={appStore.darkTheme} visible={this.isMouseEntered} exportData={this.exportData} />
+                    <ToolbarComponent isDarkMode={appStore.isDarkTheme} isVisible={this.isMouseEntered} exportData={this.exportData} />
                 </div>
             );
         } else {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
-        const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
+        const className = classNames("stats-widget", {"dark-theme": appStore.isDarkTheme});
 
         return (
             <ResizeDetector onResize={this.onResize}>
                 <div className={className}>
                     <div className="stats-toolbar">
                         <RegionSelectorComponent widgetStore={this.widgetStore} />
-                        <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
-                            <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} data-testid="polarization-dropdown" />
+                        <FormGroup label={"Polarization"} inline={true} disabled={!isStokesSelectEnabled}>
+                            <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!isStokesSelectEnabled} data-testid="polarization-dropdown" />
                         </FormGroup>
                     </div>
                     <div className="stats-display" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>

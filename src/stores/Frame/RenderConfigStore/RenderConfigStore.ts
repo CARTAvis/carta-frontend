@@ -1,65 +1,57 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
+import type {WorkspaceRenderConfig} from "models";
 
-import {WorkspaceRenderConfig} from "models";
-import {AppStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
-
-export enum FrameScaling {
-    LINEAR = 0,
-    LOG = 1,
-    SQRT = 2,
-    SQUARE = 3,
-    POWER = 4,
-    GAMMA = 5,
-    EXP = 6,
-    CUSTOM = 7
-}
+import {FrameScaling, PreferenceKeys} from "enums";
+import {AppStore, type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, isSupportedFrameScaling, sanitizeScalingParameter, scaleValueInverse, SUPPORTED_SCALING_TYPES} from "utilities";
 
 export class RenderConfigStore {
-    static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"]
-    ]);
+    public static readonly SCALING_TYPES = SUPPORTED_SCALING_TYPES;
 
-    static readonly CUSTOM_COLOR_MAP_INDEX = -1;
-    static readonly COLOR_MAPS_CUSTOM = "custom";
-    static readonly COLOR_MAPS_PANEL = "color_panel";
+    public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
+    public static readonly COLOR_MAPS_CUSTOM = "custom";
+    public static readonly COLOR_MAPS_PANEL = "color_panel";
 
-    static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+    public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    static readonly GAMMA_MIN = 0.1;
-    static readonly GAMMA_MAX = 2;
-    static readonly ALPHA_MIN = 0.1;
-    static readonly ALPHA_MAX = 1000000;
-    static readonly BIAS_MIN = -1;
-    static readonly BIAS_MAX = 1;
-    static readonly CONTRAST_MIN = 0;
-    static readonly CONTRAST_MAX = 2;
+    /* eslint-disable @typescript-eslint/naming-convention */
+    public static get BIAS_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
+    }
+    public static get BIAS_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? 1;
+    }
+    public static get CONTRAST_MIN(): number {
+        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 0;
+    }
+    public static get CONTRAST_MAX(): number {
+        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_CONTRAST) ?? 2;
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     @observable scaling: FrameScaling;
-    @observable colorMapIndex: number;
-    @observable bias: number;
-    @observable contrast: number;
+    @observable colorMapIndex: number = 0;
+    @observable bias: number = 0;
+    @observable contrast: number = 1;
     @observable gamma: number;
-    @observable alpha: number;
-    @observable inverted: boolean;
-    @observable channelHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram | null;
-    @observable useCubeHistogram: boolean;
-    @observable useCubeHistogramContours: boolean;
-    @observable cubeHistogramProgress: number;
+    @observable alphaLog: number;
+    @observable alphaPower: number;
+    @observable alphaSinh: number;
+    @observable alphaAsinh: number;
+    @observable isInverted: boolean = false;
+    @observable channelHistogram: CARTA.Histogram.$Properties | undefined = undefined;
+    @observable cubeHistogram: CARTA.Histogram.$Properties | null = null;
+    @observable isUsingCubeHistogram: boolean = false;
+    @observable isUsingCubeHistogramContours: boolean = false;
+    @observable cubeHistogramProgress: number = 0;
     @observable selectedPercentile: number[];
-    @observable histChannel: number;
-    @observable stokesIndex: number;
+    @observable histChannel: number = 0;
+    @observable stokesIndex: number = 0;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
-    @observable visible: boolean;
+    @observable isVisible: boolean = true;
     @observable previewHistogramMax: number | null = null;
     @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
@@ -71,41 +63,64 @@ export class RenderConfigStore {
         readonly preference: PreferenceStore,
         frame: FrameStore
     ) {
-        makeObservable(this);
         this.frame = frame;
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.bias = 0;
-        this.contrast = 1;
-        this.alpha = preference.scalingAlpha;
-        this.gamma = preference.scalingGamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, preference.scalingAlphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, preference.scalingAlphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, preference.scalingAlphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, preference.scalingAlphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, preference.scalingGamma);
         this.scaling = preference.scaling;
-        this.inverted = false;
-        this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
-        this.stokesIndex = 0;
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
-        this.visible = true;
         this.customColormapHexEnd = preference.colormapHex;
         this.customColormapHexStart = preference.colormapHexStart;
+        makeObservable(this);
     }
 
-    public static IsScalingValid(scaling: FrameScaling): boolean {
-        return RenderConfigStore.SCALING_TYPES.has(scaling);
+    public static isScalingValid(scaling: FrameScaling): boolean {
+        return isSupportedFrameScaling(scaling);
     }
 
-    public static IsGammaValid(gamma: number): boolean {
-        return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
-    }
-
-    public static IsColormapValid(colormap: string): boolean {
+    public static isColormapValid(colormap: string): boolean {
         return COLOR_MAPS_SELECTED.includes(colormap);
     }
 
-    public static IsPercentileValid(percentile: number): boolean {
+    public static isPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
+    }
+
+    @computed get alpha(): number {
+        switch (this.scaling) {
+            case FrameScaling.LOG:
+                return this.alphaLog;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
+    }
+
+    getScalingParameter(scaling: FrameScaling): number {
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                return this.gamma;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
     }
 
     @computed get colorMap() {
@@ -137,31 +152,31 @@ export class RenderConfigStore {
         if (!colorsForValues) {
             return [];
         }
-        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
-        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
-        let rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
+        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.isInverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
+        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.shouldUseSmoothedBiasContrast));
+        const rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
         // Fix: Explicitly type colorscale as (number | string)[]
-        let colorscale: (number | string)[] = [];
+        const colorscale: (number | string)[] = [];
         if (this.contrast === 0) {
             for (let i = 0; i < colorsForValues.size; i++) {
-                if (scaledArray[i] === (this.inverted ? 1 : 0)) {
+                if (scaledArray[i] === (this.isInverted ? 1 : 0)) {
                     return [0, rbgString(i), 1, rbgString(i)];
                 }
             }
             return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
         } else if (Math.min(...scaledArray) === 1) {
-            const color = this.inverted ? rbgString(0) : rbgString(colorsForValues.size - 1);
+            const color = this.isInverted ? rbgString(0) : rbgString(colorsForValues.size - 1);
             return [0, color, 1, color];
         } else if (Math.max(...scaledArray) === 0) {
-            const color = this.inverted ? rbgString(colorsForValues.size - 1) : rbgString(0);
+            const color = this.isInverted ? rbgString(colorsForValues.size - 1) : rbgString(0);
             return [0, color, 1, color];
         } else {
             for (let i = 0; i < colorsForValues.size; i++) {
                 if (scaledArray[i + 1] !== scaledArray[i]) {
                     colorscale.push(scaledArray[i], rbgString(i));
                 }
-                if (scaledArray[i] === (this.inverted ? 1 : 0)) {
+                if (scaledArray[i] === (this.isInverted ? 1 : 0)) {
                     break;
                 }
             }
@@ -170,7 +185,7 @@ export class RenderConfigStore {
     }
 
     @computed get scalingName() {
-        const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);
+        const scalingType = SUPPORTED_SCALING_TYPES.get(this.scaling);
         if (scalingType) {
             return scalingType;
         } else {
@@ -179,7 +194,7 @@ export class RenderConfigStore {
     }
 
     @computed get histogram() {
-        if (this.useCubeHistogram && this.cubeHistogram) {
+        if (this.isUsingCubeHistogram && this.cubeHistogram) {
             return this.cubeHistogram;
         } else {
             return this.channelHistogram;
@@ -187,7 +202,7 @@ export class RenderConfigStore {
     }
 
     @computed get contourHistogram() {
-        if (this.useCubeHistogramContours && this.cubeHistogram) {
+        if (this.isUsingCubeHistogramContours && this.cubeHistogram) {
             return this.cubeHistogram;
         } else {
             return this.channelHistogram;
@@ -227,11 +242,11 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the histogram.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogram - True for using the cube data.
      */
-    @action setUseCubeHistogram = (val: boolean) => {
-        if (val !== this.useCubeHistogram) {
-            this.useCubeHistogram = val;
+    @action setUseCubeHistogram = (isUsingCubeHistogram: boolean) => {
+        if (isUsingCubeHistogram !== this.isUsingCubeHistogram) {
+            this.isUsingCubeHistogram = isUsingCubeHistogram;
             if (this.selectedPercentile[this.stokesIndex] > 0) {
                 this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
             }
@@ -241,10 +256,10 @@ export class RenderConfigStore {
     /**
      * Use cube data instead of per channel data for the contour.
      *
-     * @param val - True for using the cube data.
+     * @param isUsingCubeHistogramContours - True for using the cube data.
      */
-    @action setUseCubeHistogramContours = (val: boolean) => {
-        this.useCubeHistogramContours = val;
+    @action setUseCubeHistogramContours = (isUsingCubeHistogramContours: boolean) => {
+        this.isUsingCubeHistogramContours = isUsingCubeHistogramContours;
     };
 
     @computed get histogramMin() {
@@ -286,6 +301,9 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
+        if (!this.histogram) {
+            return false;
+        }
         const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
             this.scaleMin[this.stokesIndex] = percentiles[0];
@@ -297,17 +315,17 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateChannelHistogram = (histogram: CARTA.IHistogram) => {
+    @action updateChannelHistogram = (histogram: CARTA.Histogram.$Properties) => {
         this.channelHistogram = histogram;
-        if (this.selectedPercentile[this.stokesIndex] > 0 && !this.useCubeHistogram) {
+        if (this.selectedPercentile[this.stokesIndex] > 0 && !this.isUsingCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.IHistogram | null, progress: number) => {
+    @action updateCubeHistogram = (histogram: CARTA.Histogram.$Properties | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
-        if (this.selectedPercentile[this.stokesIndex] > 0 && this.useCubeHistogram) {
+        if (this.selectedPercentile[this.stokesIndex] > 0 && this.isUsingCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
     };
@@ -377,10 +395,10 @@ export class RenderConfigStore {
     /**
      * Set the colormap scaling type.
      *
-     * @param newScaling - The colormap scaling type {@link RenderConfigStore.SCALING_TYPES}.
+     * @param newScaling - The colormap scaling type in {@link SUPPORTED_SCALING_TYPES}.
      */
     @action setScaling = (newScaling: FrameScaling) => {
-        if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
+        if (SUPPORTED_SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
             this.updateSiblings();
         }
@@ -392,17 +410,43 @@ export class RenderConfigStore {
      * @param gamma - The gamma value of the scaling type Gamma.
      */
     @action setGamma = (gamma: number) => {
-        this.gamma = gamma;
-        this.updateSiblings();
+        this.setScalingParameter(FrameScaling.GAMMA, gamma);
     };
 
     /**
-     * Set the alpha value for the scaling type Power.
+     * Set the alpha value for the current scaling type.
      *
-     * @param alpha - The alpha value of the scaling type Power.
+     * @param alpha - The alpha value.
      */
     @action setAlpha = (alpha: number) => {
-        this.alpha = alpha;
+        this.setScalingParameter(this.scaling, alpha);
+    };
+
+    @action setScalingParameter = (scaling: FrameScaling, value: number) => {
+        if (!Number.isFinite(value)) {
+            return;
+        }
+
+        const sanitizedValue = sanitizeScalingParameter(scaling, value);
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                this.gamma = sanitizedValue;
+                break;
+            case FrameScaling.LOG:
+                this.alphaLog = sanitizedValue;
+                break;
+            case FrameScaling.POWER:
+                this.alphaPower = sanitizedValue;
+                break;
+            case FrameScaling.SINH:
+                this.alphaSinh = sanitizedValue;
+                break;
+            case FrameScaling.ASINH:
+                this.alphaAsinh = sanitizedValue;
+                break;
+            default:
+                return;
+        }
         this.updateSiblings();
     };
 
@@ -435,6 +479,18 @@ export class RenderConfigStore {
     };
 
     /**
+     * Set bias and contrast together.
+     *
+     * @param bias - The bias value of the colormap.
+     * @param contrast - The contrast value of the colormap.
+     */
+    @action setBiasContrast = (bias: number, contrast: number) => {
+        this.bias = bias;
+        this.contrast = contrast;
+        this.updateSiblings();
+    };
+
+    /**
      * Set the contrast to be default value 1.
      */
     @action resetContrast = () => {
@@ -445,15 +501,15 @@ export class RenderConfigStore {
     /**
      * Invert the colormap.
      *
-     * @param inverted - True for inverting colormap.
+     * @param isInverted - True for inverting colormap.
      */
-    @action setInverted = (inverted: boolean) => {
-        this.inverted = inverted;
+    @action setInverted = (isInverted: boolean) => {
+        this.isInverted = isInverted;
         this.updateSiblings();
     };
 
-    @action setVisible = (visible: boolean) => {
-        this.visible = visible;
+    @action setVisible = (isVisible: boolean) => {
+        this.isVisible = isVisible;
     };
 
     /**
@@ -475,7 +531,7 @@ export class RenderConfigStore {
     };
 
     @action toggleVisibility = () => {
-        this.visible = !this.visible;
+        this.isVisible = !this.isVisible;
     };
 
     @action updateSiblings = () => {
@@ -489,8 +545,11 @@ export class RenderConfigStore {
 
     @action updateFrom = (other: RenderConfigStore) => {
         this.scaling = other.scaling;
-        this.alpha = other.alpha;
-        this.gamma = other.gamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, other.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, other.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, other.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, other.alphaAsinh, this.alphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, other.gamma, this.gamma);
         this.bias = other.bias;
         this.contrast = other.contrast;
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
@@ -499,11 +558,13 @@ export class RenderConfigStore {
         this.colorMapIndex = other.colorMapIndex;
         this.customColormapHexEnd = other.customColormapHexEnd;
         this.customColormapHexStart = other.customColormapHexStart;
-        this.inverted = other.inverted;
+        this.isInverted = other.isInverted;
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling ?? this.scaling;
+        if (isSupportedFrameScaling(config.scaling)) {
+            this.scaling = config.scaling;
+        }
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }
@@ -512,16 +573,19 @@ export class RenderConfigStore {
         }
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
-        this.gamma = config.gamma ?? this.gamma;
-        this.alpha = config.alpha ?? this.alpha;
-        this.inverted = config.inverted ?? this.inverted;
-        this.visible = config.visible ?? this.visible;
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, config.gamma ?? this.gamma, this.gamma);
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, config.alphaLog ?? this.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, config.alphaPower ?? this.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, config.alphaSinh ?? this.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, config.alphaAsinh ?? this.alphaAsinh, this.alphaAsinh);
+        this.isInverted = config.inverted ?? this.isInverted;
+        this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;
         // TODO: Handle cube histograms properly. For now, default to false
-        this.useCubeHistogram = false;
-        this.useCubeHistogramContours = false;
+        this.isUsingCubeHistogram = false;
+        this.isUsingCubeHistogramContours = false;
         this.updateSiblings();
     };
 }

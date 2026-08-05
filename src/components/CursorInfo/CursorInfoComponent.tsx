@@ -5,16 +5,16 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SimpleTableComponent} from "components/Shared";
-import {ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {FrameStore} from "stores/Frame";
+import {HelpType, ImageType} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorInfoComponent.scss";
 
 @observer
 export class CursorInfoComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "cursor-info",
             type: "cursor-info",
@@ -91,7 +91,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     private genImageCoordContent = (frame: FrameStore): React.ReactNode => {
         const x = frame?.cursorInfo?.posImageSpace?.x;
         const y = frame?.cursorInfo?.posImageSpace?.y;
-        if (!isFinite(x) || !isFinite(y) || (x === -Number.MAX_VALUE && y === -Number.MAX_VALUE)) {
+        if (x === undefined || y === undefined || !isFinite(x) || !isFinite(y) || (x === -Number.MAX_VALUE && y === -Number.MAX_VALUE)) {
             return "-";
         }
 
@@ -106,7 +106,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
     private genZCoordContent = (frame: FrameStore): React.ReactNode => {
         if (frame?.spectralInfo?.spectralString) {
-            let zCoordString = [];
+            const zCoordString: React.ReactNode[] = [];
             zCoordString.push(frame.spectralInfo.spectralString.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A"));
             if (frame.spectralInfo.freqString) {
                 zCoordString.push(<br key={0} />);
@@ -127,7 +127,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const imageNum = appStore.imageViewConfigStore.imageNum;
         const frame = appStore.hoveredFrame ?? appStore.activeFrame;
 
-        if (imageNum <= 0) {
+        if (imageNum <= 0 || !frame) {
             return (
                 <div className="region-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -149,7 +149,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const stokes = Array(imageNum).fill("-");
 
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
-        const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
+        const showFileIds = showFrames.map(frame => frame?.frameInfo?.fileId).filter(id => id !== undefined);
         appStore.frames.forEach(frame => {
             const index = appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
 
@@ -186,7 +186,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                             numVisibleRows={imageNum}
                             columnWidths={this.columnWidths}
                             onColumnWidthChanged={this.onColumnWidthChanged}
-                            enableGhostCells={false}
+                            areGhostCellsEnabled={false}
                             defaultRowHeight={40}
                             isIndexZero={true}
                             boldIndex={[appStore.activeImageIndex]}

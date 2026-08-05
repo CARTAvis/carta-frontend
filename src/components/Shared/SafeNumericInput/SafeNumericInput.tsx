@@ -1,7 +1,7 @@
 import * as React from "react";
-import {Classes, NumericInput, NumericInputProps} from "@blueprintjs/core";
+import {Classes, NumericInput, type NumericInputProps} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, makeObservable, observable, reaction} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 export interface SafeNumericInputProps extends NumericInputProps {
@@ -14,7 +14,7 @@ export interface SafeNumericInputProps extends NumericInputProps {
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     private static minorStepSize = 0.001;
     private inputRef = React.createRef<HTMLInputElement>();
-    @observable valueString: string = this.props.value?.toString();
+    @observable valueString: string = this.props.value?.toString() ?? "";
     @observable private isFocused: boolean = false;
 
     componentDidMount() {
@@ -39,19 +39,17 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     constructor(props) {
         super(props);
         makeObservable(this);
-
-        reaction(
-            () => this.props.value,
-            value => {
-                if (!this.isFocused) {
-                    this.setValueString(value?.toString());
-                }
-            }
-        );
     }
 
-    @action setFocused(value: boolean) {
-        this.isFocused = value;
+    componentDidUpdate(prevProps: SafeNumericInputProps) {
+        // Update valueString when props.value changes and component is not focused
+        if (prevProps.value !== this.props.value && !this.isFocused) {
+            this.setValueString(this.props.value?.toString() ?? "");
+        }
+    }
+
+    @action setFocused(isFocused: boolean) {
+        this.isFocused = isFocused;
     }
 
     handleOnFocus = () => {
@@ -75,20 +73,25 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 inputElement.value = roundValue.toString();
             }
         }
-        if (this.props.onValueChange && isFinite(valueAsNumber) && (!isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
+        if (
+            this.props.onValueChange &&
+            isFinite(valueAsNumber) &&
+            (this.props.min === undefined || !isFinite(this.props.min) || this.props.min <= valueAsNumber) &&
+            (this.props.max === undefined || !isFinite(this.props.max) || this.props.max >= valueAsNumber)
+        ) {
             this.props.onValueChange(valueAsNumber, valueAsString, inputElement);
             this.setValueString(valueAsString);
         }
     };
 
     render() {
-        const {onBlur, intOnly, ...otherProps} = this.props;
+        const {onBlur, intOnly: isIntOnly, ...otherProps} = this.props;
 
         return (
             <NumericInput
                 {...otherProps}
                 asyncControl={true}
-                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
+                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : isIntOnly ? 1 : SafeNumericInput.minorStepSize}
                 onValueChange={this.safeHandleValueChanged}
                 value={onBlur || this.props.onKeyDown ? this.props.value : this.valueString}
                 onBlur={onBlur ?? this.handleOnBlur}

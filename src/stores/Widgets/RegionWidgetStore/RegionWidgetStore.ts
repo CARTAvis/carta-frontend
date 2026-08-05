@@ -1,38 +1,23 @@
-import {OptionProps} from "@blueprintjs/core";
+import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
 
-export enum RegionId {
-    NONE = -4,
-    ACTIVE = -3,
-    IMAGE = -1,
-    CURSOR = 0
-}
-
-export enum RegionsType {
-    CLOSED,
-    CLOSED_AND_POINT,
-    POINT_AND_LINES,
-    LINE
-}
-
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
-    @observable fileId: number;
-    @observable regionIdMap: Map<number, number>;
+    @observable fileId: number = ACTIVE_FILE_ID;
+    @observable regionIdMap: Map<number, number> = new Map<number, number>();
     @observable type: RegionsType;
 
     constructor(type: RegionsType) {
-        makeObservable(this);
         this.appStore = AppStore.Instance;
-        this.fileId = ACTIVE_FILE_ID;
         this.type = type;
-        this.regionIdMap = new Map<number, number>();
+        makeObservable(this);
     }
 
     @action clearFrameEntry = (fileId: number) => {
@@ -73,7 +58,7 @@ export class RegionWidgetStore {
             } else if (regionId === RegionId.NONE) {
                 return null;
             } else {
-                const selectedRegion = this.effectiveFrame.regionSet?.selectedRegion;
+                const selectedRegion = this.effectiveFrame.regionSet?.focusedRegion;
                 if (selectedRegion) {
                     switch (this.type) {
                         case RegionsType.CLOSED:
@@ -120,14 +105,14 @@ export class RegionWidgetStore {
         return undefined;
     }
 
-    @computed get matchesSelectedRegion(): boolean {
+    @computed get isMatchingSelectedRegion(): boolean {
         if (this.isEffectiveFrameEqualToActiveFrame) {
-            if (this.appStore.selectedRegion) {
-                return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
-            } else {
-                if (this.effectiveRegionId === RegionId.CURSOR || this.effectiveRegionId === RegionId.IMAGE) {
-                    return true;
-                }
+            const focusedRegion = this.appStore.focusedRegion;
+            if (this.effectiveRegionId === focusedRegion?.regionId) {
+                return true;
+            }
+            if (focusedRegion?.regionId === RegionId.CURSOR && this.effectiveRegionId === RegionId.IMAGE) {
+                return true;
             }
         }
         return false;
@@ -137,7 +122,7 @@ export class RegionWidgetStore {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
-    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
+    public static calculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
 
         widgetsMap.forEach(widgetStore => {

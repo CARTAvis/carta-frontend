@@ -1,30 +1,20 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 
-// order matters, since ... and .. both having .. (same for < and <=, > and >=)
-export enum ComparisonOperator {
-    Equal = "==",
-    NotEqual = "!=",
-    LessorOrEqual = "<=",
-    Lesser = "<",
-    GreaterOrEqual = ">=",
-    Greater = ">",
-    RangeClosed = "...",
-    RangeOpen = ".."
-}
+import {ComparisonOperator} from "enums";
 
-export function parseBoolean(value: string, defaultValue: boolean): boolean {
+export function parseBoolean(value: string, isDefault: boolean): boolean {
     if (value === "true") {
         return true;
     } else if (value === "false") {
         return false;
     } else {
-        return defaultValue;
+        return isDefault;
     }
 }
 
-export function parseNumber(val: number, initVal: number): number {
-    if (isFinite(val)) {
+export function parseNumber(val: number | undefined, initVal: number | undefined): number | undefined {
+    if (val !== undefined && isFinite(val)) {
         return val;
     } else {
         return initVal;
@@ -72,12 +62,12 @@ function getNumberFromFilterString(filterString: string): number | undefined {
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
-    let result: {operator: number; values: number[]} = {operator: -1, values: []};
+    const result: {operator: number; values: number[]} = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)
     for (const key of Object.keys(ComparisonOperator)) {
         const operator = ComparisonOperator[key];
-        const found = filter.includes(operator);
-        if (found) {
+        const isFound = filter.includes(operator);
+        if (isFound) {
             if (operator === ComparisonOperator.Equal) {
                 const equalTo = getNumberFromFilterString(filter);
                 if (equalTo !== undefined) {

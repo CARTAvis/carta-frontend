@@ -1,13 +1,19 @@
 import Ajv from "ajv";
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
+import tinycolor from "tinycolor2";
 
 import {AppToaster} from "components/Shared";
-import {ConvertToGB, LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
-import {AppStore, PreferenceKeys} from "stores";
+import {ConvertToGB, FrameScaling, LegacyASTColor, PreferenceKeys} from "enums";
+import {LayoutConfig, type Snippet, type Workspace, WorkspaceConfig, type WorkspaceListItem} from "models";
+import {AppStore} from "stores";
+import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
+const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -19,16 +25,16 @@ export interface RuntimeConfig {
 export class ApiService {
     private static staticInstance: ApiService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!ApiService.staticInstance) {
             ApiService.staticInstance = new ApiService();
         }
         return ApiService.staticInstance;
     }
 
-    public static RuntimeConfig: RuntimeConfig = {};
+    public static runtimeConfig: RuntimeConfig = {};
 
-    public static SetRuntimeConfig(data: any) {
+    public static setRuntimeConfig(data: any) {
         console.log("Setting runtime config");
         if (typeof data === "object") {
             if (typeof data.apiAddress === "string") {
@@ -39,18 +45,19 @@ export class ApiService {
                 const socketPort = socketUrl?.match(socketRegex)?.[1] ?? "";
                 data.apiAddress = data.apiAddress.replace("{port}", socketPort);
             }
-            ApiService.RuntimeConfig = data as RuntimeConfig;
+            ApiService.runtimeConfig = data as RuntimeConfig;
         } else {
-            ApiService.RuntimeConfig = {};
+            ApiService.runtimeConfig = {};
         }
     }
 
-    private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
-    private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
+    private static preferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
+    private static snippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile<Snippet>(snippetSchema);
+    private static workspaceValidator = new Ajv({strictTypes: false, allErrors: true}).compile<Workspace>(workspaceSchema);
 
-    @observable private _accessToken: string | undefined;
-    private _tokenLifetime: number;
-    private _tokenExpiryHandler: any;
+    @observable private _accessToken: string | undefined = "";
+    @observable private _tokenLifetime: number = 0;
+    private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
@@ -91,7 +98,7 @@ export class ApiService {
     constructor() {
         makeObservable(this);
         this.axiosInstance = axios.create();
-        if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (localStorage.getItem("authenticationType") || ApiService.runtimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
         } else {
             this._accessToken = "no_auth_configured";
@@ -101,8 +108,9 @@ export class ApiService {
 
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
-        const tokenRefreshed = await this.refreshAccessToken();
-        if (tokenRefreshed) {
+        this._tokenExpiryHandler = undefined;
+        const didTokenRefresh = await this.refreshAccessToken();
+        if (didTokenRefresh) {
             console.debug("Authenticated");
             const dt = this.tokenLifetime;
             // Queue up an access token refresh 10 seconds before the current one expires
@@ -112,11 +120,17 @@ export class ApiService {
         }
     };
 
+    public dispose = () => {
+        clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
+    };
+
     private handleAuthLost = () => {
-        if (ApiService.RuntimeConfig.dashboardAddress) {
+        this.dispose();
+        if (ApiService.runtimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
-            window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
+            window.open(`${ApiService.runtimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
             AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
@@ -124,9 +138,9 @@ export class ApiService {
     };
 
     private refreshAccessToken = async () => {
-        if (ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (ApiService.runtimeConfig.tokenRefreshAddress) {
             try {
-                const response = await this.axiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress);
+                const response = await this.axiosInstance.post(ApiService.runtimeConfig.tokenRefreshAddress);
                 if (response?.data?.access_token) {
                     // If access token does not expire, set lifetime to maximum
                     this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
@@ -137,7 +151,7 @@ export class ApiService {
                 }
             } catch (err) {
                 this.clearToken();
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -146,28 +160,29 @@ export class ApiService {
     };
 
     public logout = async () => {
+        this.dispose();
         // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
-        window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
+        window.open(ApiService.runtimeConfig.logoutAddress, "_self");
     };
 
     public stopServer = async () => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
                 AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
-                console.log(err);
+                console.error(err);
             }
         }
     };
 
     public getPreferences = async () => {
         let preferences;
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     preferences = response.data.preferences;
@@ -175,7 +190,7 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
                 return undefined;
             }
@@ -184,12 +199,11 @@ export class ApiService {
         }
 
         if (preferences) {
-            this.upgradePreferences(preferences);
-            console.log(preferences);
-            const valid = ApiService.PreferenceValidator(preferences);
-            let deletedKeys: string[] = [];
-            if (!valid) {
-                for (const error of ApiService.PreferenceValidator.errors ?? []) {
+            await this.upgradePreferences(preferences);
+            const isValid = ApiService.preferenceValidator(preferences);
+            const deletedKeys: string[] = [];
+            if (!isValid) {
+                for (const error of ApiService.preferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
@@ -210,55 +224,99 @@ export class ApiService {
         return preferences;
     };
 
-    private upgradePreferences = (preferences: any) => {
+    private upgradePreferences = async (preferences: any) => {
         // Upgrade to V2 if required
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
-            enum ASTColors {
-                black = 0,
-                white = 1,
-                red = 2,
-                forest = 3,
-                blue = 4,
-                turquoise = 5,
-                violet = 6,
-                gold = 7,
-                gray = 8
-            }
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
-            preferences[astColorKey] = `auto-${color}`;
-            this.setPreference(astColorKey, preferences[astColorKey]);
+            if (astColorKey in preferences) {
+                const color = typeof preferences[astColorKey] === "number" ? (LegacyASTColor[preferences[astColorKey]] ?? "blue") : "blue";
+                preferences[astColorKey] = `auto-${color}`;
+            }
+
+            // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
+            const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+            if (preferences[key] && /[A-Z]/.test(preferences[key])) {
+                preferences[key] = preferences[key].toLowerCase();
+            }
+
+            // This is to ensure consistency in the unit used for the preview cube size limit
+            const cubeSizeUnitKey = "pvPreviewCubeSizeLimitUnit";
+            const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
+
+            if (cubeSizeUnitKey in preferences) {
+                const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+                if (typeof conversionFactor === "number") {
+                    const gbSize = preferences[cubeSizeKey] * conversionFactor;
+                    if (gbSize !== preferences[cubeSizeKey]) {
+                        preferences[cubeSizeKey] = gbSize;
+                    }
+                } else {
+                    // set an invalid value to cubeSizeKey to be removed by the validator
+                    preferences[cubeSizeKey] = -1;
+                }
+                delete preferences[cubeSizeUnitKey];
+                await this.clearPreferences([cubeSizeUnitKey]);
+            }
 
             preferences["version"] = 2;
-            this.setPreference("version", 2);
+            await this.setPreferences(preferences);
         }
 
-        // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
-        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-        if (/[A-Z]/.test(preferences[key])) {
-            preferences[key] = preferences[key].toLowerCase();
-            this.setPreference(key, preferences[key]);
-        }
+        // Migrate scalingAlpha to the separate Log and Power preferences if present
+        const alphaKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY;
+        const legacyAlphaTargets = [
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, scaling: FrameScaling.LOG},
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, scaling: FrameScaling.POWER}
+        ];
+        if (alphaKey in preferences) {
+            const alpha = preferences[alphaKey];
+            const isValid = typeof alpha === "number" && Number.isFinite(alpha) && alpha > 0;
+            const updates: Record<string, number> = {};
 
-        // This is to ensure consistency in the unit used for the preview cube size limit
-        const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
-        const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
-
-        const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
-        if (typeof conversionFactor === "number") {
-            let gbSize = preferences[cubeSizeKey] * conversionFactor;
-            if (gbSize !== preferences[cubeSizeKey]) {
-                preferences[cubeSizeKey] = gbSize;
-                this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            if (isValid) {
+                for (const {key, scaling} of legacyAlphaTargets) {
+                    if (!(key in preferences)) {
+                        const sanitizedAlpha = sanitizeScalingParameter(scaling, alpha);
+                        preferences[key] = sanitizedAlpha;
+                        updates[key] = sanitizedAlpha;
+                    }
+                }
             }
-        } else if (cubeSizeUnitKey in preferences) {
-            // set an invalid value to cubeSizeKey to be removed by the validator
-            preferences[cubeSizeKey] = -1;
+
+            if (!isValid || Object.keys(updates).length === 0 || (await this.setPreferences(updates))) {
+                await this.clearPreferences([alphaKey]);
+            }
+
+            delete preferences[alphaKey];
         }
-        delete preferences[cubeSizeUnitKey];
-        this.clearPreferences([cubeSizeUnitKey]);
+
+        const gammaKey = PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA;
+        if (gammaKey in preferences) {
+            const gamma = preferences[gammaKey];
+            if (typeof gamma === "number" && Number.isFinite(gamma) && gamma > 0) {
+                const sanitizedGamma = sanitizeScalingParameter(FrameScaling.GAMMA, gamma);
+                if (sanitizedGamma !== gamma) {
+                    preferences[gammaKey] = sanitizedGamma;
+                    await this.setPreferences({[gammaKey]: sanitizedGamma});
+                }
+            }
+        }
+
+        // Migrate nanAlpha to nanColorHex if present
+        if ("nanAlpha" in preferences) {
+            const nanColorHex = preferences["nanColorHex"] || "#137CBD";
+            const nanAlpha = preferences["nanAlpha"];
+            const combinedColor = tinycolor(nanColorHex).setAlpha(nanAlpha).toRgbString();
+            preferences["nanColorHex"] = combinedColor;
+
+            if (await this.setPreference("nanColorHex", combinedColor)) {
+                await this.clearPreferences(["nanAlpha"]);
+            }
+
+            delete preferences["nanAlpha"];
+        }
     };
 
     public setPreference = async (key: string, value: any) => {
@@ -268,43 +326,60 @@ export class ApiService {
     };
 
     public setPreferences = async (preferences: any) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        const obj = {version: 2};
+        if (typeof window !== "undefined") {
+            const currentPrefs = AppStore.Instance?.preferenceStore?.preferences;
+            if (currentPrefs && currentPrefs.size > 0) {
+                for (const [k, v] of currentPrefs.entries()) {
+                    obj[k] = v;
+                }
+            } else {
+                try {
+                    const localPrefs = JSON.parse(localStorage.getItem("preferences") ?? "{}");
+                    Object.assign(obj, localPrefs);
+                } catch {
+                    // Ignore
+                }
+            }
+        }
+        for (const key of Object.keys(preferences)) {
+            obj[key] = preferences[key];
+        }
+
+        const isValid = ApiService.preferenceValidator(obj);
+        if (!isValid) {
+            console.error("Preferences validation failed:", ApiService.preferenceValidator.errors);
+            return false;
+        }
+
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("preferences") ?? "{}");
-                for (const key of Object.keys(preferences)) {
-                    obj[key] = preferences[key];
-                }
-
-                const valid = ApiService.PreferenceValidator(obj);
-                if (!valid) {
-                    console.log(ApiService.PreferenceValidator.errors);
-                }
-
                 localStorage.setItem("preferences", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
     };
 
     public clearPreferences = async (keys: string[]) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.delete(url, {data: {keys}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -316,6 +391,7 @@ export class ApiService {
                 localStorage.setItem("preferences", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -323,9 +399,9 @@ export class ApiService {
 
     public getLayouts = async () => {
         let savedLayouts: {[name: string]: any};
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layouts`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     savedLayouts = response.data.layouts;
@@ -333,14 +409,14 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
@@ -348,10 +424,10 @@ export class ApiService {
             const validLayouts = {};
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
-                LayoutConfig.UpgradeLayout(layout);
-                const valid = LayoutConfig.LayoutValidator(layout);
-                if (!valid) {
-                    console.log(LayoutConfig.LayoutValidator.errors);
+                LayoutConfig.upgradeLayout(layout);
+                const isValid = LayoutConfig.layoutValidator(layout);
+                if (!isValid) {
+                    console.log(LayoutConfig.layoutValidator.errors);
                 } else {
                     validLayouts[layoutName] = layout;
                 }
@@ -363,13 +439,18 @@ export class ApiService {
     };
 
     public setLayout = async (layoutName: string, layout: any): Promise<boolean> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        const isValid = LayoutConfig.layoutValidator(layout);
+        if (!isValid) {
+            console.error("Layout validation failed:", LayoutConfig.layoutValidator.errors);
+            return false;
+        }
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.put(url, {layoutName, layout});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -379,19 +460,20 @@ export class ApiService {
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
     };
 
     public clearLayout = async (layoutName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.delete(url, {data: {layoutName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -401,6 +483,7 @@ export class ApiService {
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
@@ -408,9 +491,9 @@ export class ApiService {
 
     public getSnippets = async () => {
         let savedSnippets: {[name: string]: Snippet};
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippets`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippets`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     savedSnippets = response.data.snippets;
@@ -418,14 +501,14 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedSnippets = JSON.parse(localStorage.getItem("savedSnippets") ?? "{}");
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
@@ -433,9 +516,9 @@ export class ApiService {
             const validSnippets = new Map<string, Snippet>();
             for (const snippetName of Object.keys(savedSnippets)) {
                 const snippet = savedSnippets[snippetName];
-                const valid = ApiService.SnippetValidator(snippet);
-                if (!valid) {
-                    console.log(ApiService.SnippetValidator.errors);
+                const isValid = ApiService.snippetValidator(snippet);
+                if (!isValid) {
+                    console.log(ApiService.snippetValidator.errors);
                 } else {
                     validSnippets.set(snippetName, snippet);
                 }
@@ -447,13 +530,18 @@ export class ApiService {
     };
 
     public setSnippet = async (snippetName: string, snippet: Snippet) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        const isValid = ApiService.snippetValidator(snippet);
+        if (!isValid) {
+            console.error("Snippet validation failed:", ApiService.snippetValidator.errors);
+            return false;
+        }
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippet`;
                 const response = await this.axiosInstance.put(url, {snippetName, snippet});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -463,19 +551,20 @@ export class ApiService {
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
     };
 
     public clearSnippet = async (snippetName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/snippet`;
                 const response = await this.axiosInstance.delete(url, {data: {snippetName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -485,15 +574,16 @@ export class ApiService {
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }
     };
 
     public getWorkspaceList = async () => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/list/workspaces`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/list/workspaces`;
                 const response = await this.axiosInstance.get<{workspaces: WorkspaceListItem[]; success: boolean}>(url);
                 if (response?.data?.success) {
                     return response.data.workspaces;
@@ -501,7 +591,7 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -510,11 +600,12 @@ export class ApiService {
                 if (existingWorkspaces) {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
-                        const workspace = existingWorkspaces[workspaceName];
-                        if (!workspace) {
-                            // TODO: handle validation errors
+                        const storedWorkspace = existingWorkspaces[workspaceName];
+                        const workspace = storedWorkspace ? WorkspaceConfig.upgradeForRuntime(storedWorkspace) : undefined;
+                        if (workspace && ApiService.workspaceValidator(workspace)) {
+                            validWorkspaces.push({name: workspaceName, date: workspace.date ?? Date.now() / 1000});
                         } else {
-                            validWorkspaces.push({name: workspaceName, date: workspace?.date ?? Date.now() / 1000});
+                            console.error(`Workspace ${workspaceName} validation failed:`, ApiService.workspaceValidator.errors);
                         }
                     }
                     return validWorkspaces;
@@ -522,53 +613,65 @@ export class ApiService {
                     return undefined;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         }
     };
 
     public getWorkspace = async (name: string, isKey = false): Promise<Workspace | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
-                    return response.data.workspace;
+                    const workspace = WorkspaceConfig.upgradeForRuntime(response.data.workspace);
+                    const isValid = ApiService.workspaceValidator(workspace);
+                    if (!isValid) {
+                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
+                        return undefined;
+                    }
+                    return workspace;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         } else if (!isKey) {
             try {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
-                const workspace = existingWorkspaces?.[name];
-                if (workspace) {
-                    const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                    if (valid) {
+                const storedWorkspace = existingWorkspaces?.[name];
+                if (storedWorkspace) {
+                    const workspace = WorkspaceConfig.upgradeForRuntime(storedWorkspace);
+                    const isValid = ApiService.workspaceValidator(workspace);
+                    if (isValid) {
                         return workspace;
                     } else {
-                        //console.log(ApiService.WorkspaceValidator.errors);
+                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
                     }
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
         return undefined;
     };
 
     public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        const isValid = ApiService.workspaceValidator(workspace);
+        if (!isValid) {
+            console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
+            return undefined;
+        }
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;
                 const res = await this.axiosInstance.put(url, {workspaceName, workspace});
                 if (res.data?.workspace?.id) {
                     workspace.id = res.data?.workspace?.id;
                 }
                 return {...workspace, editable: res.data?.workspace?.editable, name: workspaceName};
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -578,19 +681,20 @@ export class ApiService {
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return workspace;
             } catch (err) {
+                console.error(err);
                 return undefined;
             }
         }
     };
 
     public getSharedWorkspaceKey = async (workspaceId: string): Promise<string | undefined> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/share/workspace/${workspaceId}`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/share/workspace/${workspaceId}`;
                 const response = await this.axiosInstance.post(url);
                 return response?.data?.success ? response.data.shareKey : undefined;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return undefined;
             }
         } else {
@@ -599,13 +703,13 @@ export class ApiService {
     };
 
     public clearWorkspace = async (workspaceName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
+        if (ApiService.runtimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;
                 const response = await this.axiosInstance.delete(url, {data: {workspaceName}});
                 return response?.data?.success;
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 return false;
             }
         } else {
@@ -615,6 +719,7 @@ export class ApiService {
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return true;
             } catch (err) {
+                console.error(err);
                 return false;
             }
         }

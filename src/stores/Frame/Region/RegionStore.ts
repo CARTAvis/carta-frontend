@@ -1,15 +1,35 @@
-import {Colors, IconName} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import {Colors, type IconName} from "@blueprintjs/core";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CustomIconName} from "icons/CustomIcons";
-import {isValidWcsPoint, Point2D} from "models";
-import {BackendService} from "services";
+import {CoordinateMode, PreferenceKeys, RegionOpacity} from "enums";
+import type {CustomIconName} from "icons/CustomIcons";
+import {IsValidWcsPoint, type Point2D} from "models";
+import {type BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
-import {CoordinateMode, FrameStore} from "stores/Frame";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {type FrameStore} from "stores/Frame";
+import {
+    add2D,
+    getApproximateEllipsePoints,
+    getApproximatePolygonPoints,
+    getMovedSimpleShapeSide,
+    getRegionCenterFromPoints,
+    getRegionPixelProperties,
+    getSimpleShapePointSelectionOrder,
+    isAstBadPoint,
+    length2D,
+    minMax2D,
+    rotate2D,
+    scale2D,
+    SIMPLE_SHAPE_ROTATION_POINT_INDEX,
+    simplePolygonPointTest,
+    simplePolygonTest,
+    subtract2D,
+    transformPoint,
+    translateRegionPoints
+} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -17,37 +37,61 @@ export const FOCUS_REGION_RATIO = 0.4;
 export const CENTER_POINT_INDEX = 0;
 export const SIZE_POINT_INDEX = 1;
 
+// New region types should support point selection by default. Add a type here only
+// when selecting individual control points is intentionally unsupported.
+const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT, CARTA.RegionType.ANNULUS]);
+
+const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
+const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
+const ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR]);
+const POLYGONAL_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POLYGON, CARTA.RegionType.POLYLINE, CARTA.RegionType.ANNPOLYGON, CARTA.RegionType.ANNPOLYLINE]);
+
 export class RegionStore {
     readonly fileId: number;
-    @observable regionId: number;
-    @observable name: string;
-    @observable color: string;
-    @observable lineWidth: number;
-    @observable dashLength: number;
-    @observable regionType: CARTA.RegionType;
-    @observable coordinate: CoordinateMode;
+    @observable regionId: number = -1;
+    @observable name: string = "";
+    @observable color: string = "";
+    @observable lineWidth: number = 2;
+    @observable dashLength: number = 0;
+    @observable regionType: CARTA.RegionType = CARTA.RegionType.POINT;
+    @observable coordinate: CoordinateMode = CoordinateMode.Image;
     // Shallow observable, since control point updates are atomic
-    @observable.shallow controlPoints: Point2D[];
-    @observable rotation: number;
-    @observable editing: boolean;
-    @observable creating: boolean;
-    @observable locked: boolean = false;
-    @observable isSimplePolygon: boolean;
+    @observable.shallow controlPoints: Point2D[] = [];
+    @observable rotation: number = 0;
+    @observable isEditing: boolean = false;
+    @observable isCreating: boolean = false;
+    @observable isLocked: boolean = false;
+    @observable opacity: RegionOpacity = RegionOpacity.Visible;
+    @observable isSimplePolygon: boolean = true;
     @observable activeFrame: FrameStore;
     @observable lineRegionSampleWidth: number = 3;
+    @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
-    static readonly MIN_LINE_WIDTH = 0.5;
-    static readonly MAX_LINE_WIDTH = 10;
-    static readonly MAX_DASH_LENGTH = 50;
-    static readonly TARGET_VERTEX_COUNT = 200;
-    static readonly MIN_LABEL_OFFSET = -50;
-    static readonly MAX_LABEL_OFFSET = 50;
+    /* eslint-disable @typescript-eslint/naming-convention */
+    public static get MIN_LINE_WIDTH(): number {
+        return PreferenceStore.Instance.getMinConstraint(PreferenceKeys.REGION_LINE_WIDTH) ?? 0.5;
+    }
+    public static get MAX_LINE_WIDTH(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_LINE_WIDTH) ?? 10;
+    }
+    public static get MAX_DASH_LENGTH(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_DASH_LENGTH) ?? 50;
+    }
+    public static get MIN_LABEL_OFFSET(): number {
+        return PreferenceStore.Instance.getMinConstraint(PreferenceKeys.REGION_LABEL_OFFSET) ?? -50;
+    }
+    public static get MAX_LABEL_OFFSET(): number {
+        return PreferenceStore.Instance.getMaxConstraint(PreferenceKeys.REGION_LABEL_OFFSET) ?? 50;
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    private static readonly TargetVertexCount = 200;
 
     private readonly backendService: BackendService;
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
-    public static RegionTypeString(regionType: CARTA.RegionType): string {
+    public static regionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
@@ -86,7 +130,17 @@ export class RegionStore {
         }
     }
 
-    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+    @computed get visualOpacity(): number {
+        let baseOpacity = 1;
+        if (this.isTemporary) {
+            baseOpacity = 0.5;
+        } else if (this.isLocked) {
+            baseOpacity = 0.7;
+        }
+        return baseOpacity * this.opacity;
+    }
+
+    public static isRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
@@ -99,7 +153,7 @@ export class RegionStore {
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
+    public static regionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.ANNPOINT:
@@ -132,7 +186,7 @@ export class RegionStore {
         }
     }
 
-    static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
+    public static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.POINT, "Point"],
         [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
@@ -141,7 +195,7 @@ export class RegionStore {
         [CARTA.RegionType.POLYLINE, "Polyline"]
     ]);
 
-    static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
+    public static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.ANNPOINT, "Point"],
         [CARTA.RegionType.ANNLINE, "Line"],
         [CARTA.RegionType.ANNRECTANGLE, "Rectangle"],
@@ -154,15 +208,15 @@ export class RegionStore {
         [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
-    public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
+    public static isRegionTypeValid(regionType: CARTA.RegionType): boolean {
         return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
-    public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
+    public static isRegionLineWidthValid(regionLineWidth: number): boolean {
         return regionLineWidth >= RegionStore.MIN_LINE_WIDTH && regionLineWidth <= RegionStore.MAX_LINE_WIDTH;
     }
 
-    public static IsRegionDashLengthValid(regionDashLength: number): boolean {
+    public static isRegionDashLengthValid(regionDashLength: number): boolean {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
@@ -174,30 +228,7 @@ export class RegionStore {
         if (!this.isValid) {
             return {x: 0, y: 0};
         }
-        switch (this.regionType) {
-            case CARTA.RegionType.POINT:
-            case CARTA.RegionType.ANNPOINT:
-            case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
-                return this.controlPoints[CENTER_POINT_INDEX];
-            case CARTA.RegionType.POLYGON:
-            case CARTA.RegionType.ANNPOLYGON:
-            case CARTA.RegionType.POLYLINE:
-            case CARTA.RegionType.ANNPOLYLINE:
-                const bounds = minMax2D(this.controlPoints);
-                return midpoint2D(bounds.minPoint, bounds.maxPoint);
-            case CARTA.RegionType.LINE:
-            case CARTA.RegionType.ANNLINE:
-            case CARTA.RegionType.ANNVECTOR:
-            case CARTA.RegionType.ANNRULER:
-                return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
-            default:
-                return {x: 0, y: 0};
-        }
+        return getRegionCenterFromPoints(this.controlPoints, this.regionType);
     }
 
     /**
@@ -231,11 +262,11 @@ export class RegionStore {
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
-        if (!this.size || !frame?.validWcs) {
+        if (!this.size || !frame?.isValidWcs) {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
-        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
+        return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {
@@ -333,7 +364,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        return RegionStore.GetRegionProperties(this.regionType, this.controlPoints, this.rotation);
+        return getRegionPixelProperties(this.regionType, this.controlPoints, this.rotation);
     }
 
     @computed get isPreviewCut(): boolean {
@@ -345,42 +376,69 @@ export class RegionStore {
         return false;
     }
 
-    public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
-        const point = controlPoints[CENTER_POINT_INDEX];
-        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
+    @computed get isPointSelectionSupported(): boolean {
+        return !POINT_SELECTION_UNSUPPORTED_REGION_TYPES.has(this.regionType);
+    }
 
-        switch (regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (pixel) [${center}]`;
-            case CARTA.RegionType.LINE:
-                let lineProperties = "Line (pixel) [";
-                controlPoints.forEach((point, index) => {
-                    lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    lineProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return lineProperties;
-            case CARTA.RegionType.RECTANGLE:
-                return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                return `ellipse[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                let polygonProperties = "poly[";
-                controlPoints.forEach((point, index) => {
-                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    polygonProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polygonProperties;
-            case CARTA.RegionType.POLYLINE:
-                let polylineProperties = "Polyline (pixel) [";
-                controlPoints.forEach((point, index) => {
-                    polylineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
-                    polylineProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polylineProperties;
-            default:
-                return "Not Implemented";
+    @computed get canSelectPoint(): boolean {
+        return this.isPointSelectionSupported && (this.activeFrame?.regionSet?.selectedRegionCount ?? 0) <= 1;
+    }
+
+    @computed get selectablePointCount(): number {
+        const hasSquarePixels = !!this.activeFrame?.hasSquarePixels;
+        if (this.isSimpleShapeRegion) {
+            return hasSquarePixels ? 9 : 8;
         }
-    };
+        if (this.isRotationSelectableLineLikeRegion) {
+            return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
+        }
+        if (this.isCompassRegion) {
+            return 1;
+        }
+        return this.controlPoints.length;
+    }
+
+    @computed get isSimpleShapeRegion(): boolean {
+        return SIMPLE_SHAPE_REGION_TYPES.has(this.regionType);
+    }
+
+    @computed get isLineLikeRegion(): boolean {
+        return LINE_LIKE_REGION_TYPES.has(this.regionType);
+    }
+
+    @computed get isRotationSelectableLineLikeRegion(): boolean {
+        return ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES.has(this.regionType);
+    }
+
+    @computed get isPolygonalRegion(): boolean {
+        return POLYGONAL_REGION_TYPES.has(this.regionType);
+    }
+
+    @computed get isCompassRegion(): boolean {
+        return this.regionType === CARTA.RegionType.ANNCOMPASS;
+    }
+
+    @computed get isVisible(): boolean {
+        return this.opacity !== RegionOpacity.Invisible;
+    }
+
+    @computed get rotationPointIndex(): number {
+        if (this.isSimpleShapeRegion) {
+            return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
+        }
+        if (this.isRotationSelectableLineLikeRegion) {
+            return this.controlPoints.length;
+        }
+        return -1;
+    }
+
+    @computed get hasSelectedRotationPoint(): boolean {
+        return !!this.activeFrame?.hasSquarePixels && this.rotationPointIndex >= 0 && this.selectedPointIndex === this.rotationPointIndex;
+    }
+
+    @computed get hasSelectedPoint(): boolean {
+        return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.selectablePointCount;
+    }
 
     public getRegionApproximation(astTransform: AST.Mapping): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
@@ -389,10 +447,10 @@ export class RegionStore {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TargetVertexCount);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
-                let halfWidth = this.size.x / 2;
-                let halfHeight = this.size.y / 2;
+                const halfWidth = this.size.x / 2;
+                const halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
@@ -400,11 +458,11 @@ export class RegionStore {
                     add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
-                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TargetVertexCount);
             } else if (this.regionType === CARTA.RegionType.POLYGON) {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TargetVertexCount, !this.isCreating);
             } else {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, false);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TargetVertexCount, false);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
@@ -445,7 +503,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
-        if (activeFrame.validWcs) {
+        if (activeFrame.isValidWcs) {
             this.coordinate = CoordinateMode.World;
         } else {
             this.coordinate = CoordinateMode.Image;
@@ -461,18 +519,20 @@ export class RegionStore {
         if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
             this.simplePolygonTest();
         }
-        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) && controlPoints.length === 2) {
+        if (this.isLineLikeRegion && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
     }
 
     @action setRegionId = (id: number) => {
+        const previousRegionId = this.regionId;
         this.regionId = id;
+        this.activeFrame?.regionSet?.replaceRegionId(previousRegionId, id);
     };
 
-    @action setCenter = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+    @action setCenter = (p: Point2D, shouldSkipUpdate = false) => {
+        if (this.isLineLikeRegion) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -483,8 +543,22 @@ export class RegionStore {
             const newEnd = {x: p.x + dx / 2, y: p.y + dy / 2};
             this.setControlPoints([newStart, newEnd]);
         } else {
-            this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+            this.setControlPoint(CENTER_POINT_INDEX, p, shouldSkipUpdate);
         }
+    };
+
+    @action translate = (delta: Point2D, shouldSkipUpdate = false) => {
+        if (!delta || (delta.x === 0 && delta.y === 0)) {
+            return;
+        }
+
+        const translatedPoints = translateRegionPoints(this.controlPoints, this.regionType, delta);
+        if (this.isPolygonalRegion || this.isLineLikeRegion) {
+            this.setControlPoints(translatedPoints, shouldSkipUpdate, false);
+            return;
+        }
+
+        this.setCenter(translatedPoints[CENTER_POINT_INDEX], shouldSkipUpdate);
     };
 
     /**
@@ -492,10 +566,10 @@ export class RegionStore {
      *
      * @param p - Specifies the x and y size components.
      *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
-     * @param skipUpdate - Whether to update the changes with the backend.
+     * @param shouldSkipUpdate - Whether to update the changes with the backend.
      */
-    @action setSize = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+    @action setSize = (p: Point2D, shouldSkipUpdate = false) => {
+        if (this.isLineLikeRegion) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             const x = Math.abs(p.x);
             const y = Math.abs(p.y);
@@ -503,34 +577,38 @@ export class RegionStore {
             const dy = y * -Math.sign(Math.cos(rotation) || 1);
             const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
             const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
-            this.setControlPoints([newStart, newEnd], skipUpdate);
+            this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else {
-            this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+            this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }
     };
 
-    @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
+    @action setControlPoint = (index: number, p: Point2D, shouldSkipUpdate = false) => {
         // Check for control point NaN values
         if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
             this.modifiedTimestamp = performance.now();
             this.controlPoints[index] = p;
-            if (!this.editing && !skipUpdate) {
+            if (!this.isEditing && !shouldSkipUpdate) {
                 this.updateRegion();
-            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.isCreating && this.isPreviewCut) {
+                if (PreferenceStore.Instance.isLowBandwidthMode) {
+                    this.lowBandWidthThrottledUpdateRegion(true);
+                } else {
+                    this.throttledUpdateRegion(true);
+                }
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
             }
 
-            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+            if (this.isLineLikeRegion) {
                 this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
     };
 
-    @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
+    @action setControlPoints = (points: Point2D[], shouldSkipUpdate = false, hasShapeChanged = true) => {
         // Check for control point NaN values
         if (!points.length) {
             return;
@@ -545,19 +623,43 @@ export class RegionStore {
         this.regionApproximationMap.clear();
         this.modifiedTimestamp = performance.now();
         this.controlPoints = points;
-        if (shapeChanged && (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON)) {
+        if (hasShapeChanged && (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON)) {
             this.simplePolygonTest();
         }
 
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+        if (this.isLineLikeRegion) {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
-        if (!this.editing && !skipUpdate) {
+        if (!this.isEditing && !shouldSkipUpdate) {
             this.updateRegion();
-        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.isCreating && this.isPreviewCut) {
+            if (PreferenceStore.Instance.isLowBandwidthMode) {
+                this.lowBandWidthThrottledUpdateRegion(true);
+            } else {
+                this.throttledUpdateRegion(true);
+            }
         }
+    };
+
+    @action removeControlPoint = (index: number, shouldSkipUpdate = false, hasShapeChanged = true) => {
+        if (index < 0 || index >= this.controlPoints.length) {
+            return;
+        }
+
+        const points = this.controlPoints.slice();
+        points.splice(index, 1);
+        this.setControlPoints(points, shouldSkipUpdate, hasShapeChanged);
+        this.deselectPoint();
+    };
+
+    @action removeSelectedPoint = () => {
+        if (this.isPolygonalRegion && this.hasSelectedPoint && this.controlPoints.length >= 4) {
+            this.removeControlPoint(this.selectedPointIndex);
+            return true;
+        }
+
+        return false;
     };
 
     private simplePolygonTest(point: number = -1) {
@@ -570,12 +672,12 @@ export class RegionStore {
         }
     }
 
-    @action setRotation = (angle: number, skipUpdate = false) => {
+    @action setRotation = (angle: number, shouldSkipUpdate = false) => {
         // Images with non-square pixels do not support rotations
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+        if (this.isLineLikeRegion) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -589,7 +691,7 @@ export class RegionStore {
             this.rotation = (angle + 360) % 360;
             this.regionApproximationMap.clear();
             this.modifiedTimestamp = performance.now();
-            if (!this.editing && !skipUpdate) {
+            if (!this.isEditing && !shouldSkipUpdate) {
                 this.updateRegion();
             }
         }
@@ -625,13 +727,13 @@ export class RegionStore {
     };
 
     @action beginCreating = () => {
-        this.creating = true;
-        this.editing = true;
+        this.isCreating = true;
+        this.isEditing = true;
     };
 
     @flow.bound *endCreating() {
-        this.creating = false;
-        this.editing = false;
+        this.isCreating = false;
+        this.isEditing = false;
 
         // re-calculate projected points when the status changes from unclosed to closed
         if (this.regionType === CARTA.RegionType.POLYGON) {
@@ -644,31 +746,146 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
     }
 
     @action beginEditing = () => {
-        this.editing = true;
+        this.isEditing = true;
     };
 
     @action endEditing = () => {
-        this.editing = false;
+        this.isEditing = false;
         this.updateRegion();
     };
 
     @action toggleLock = () => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.locked = !this.locked;
+            this.isLocked = !this.isLocked;
         }
     };
 
-    @action setLocked = (locked: boolean) => {
+    @action setLocked = (isLocked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
-            this.locked = locked;
+            this.isLocked = isLocked;
         }
     };
+
+    @action setVisible = (isVisible: boolean) => {
+        this.setOpacity(isVisible ? RegionOpacity.Visible : RegionOpacity.Invisible);
+    };
+
+    @action toggleVisible = () => {
+        this.setVisible(!this.isVisible);
+    };
+
+    @action setOpacity = (opacity: RegionOpacity) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.opacity = opacity;
+        }
+    };
+
+    @action selectPoint = (index: number) => {
+        if (this.canSelectPoint && index >= 0 && index < this.selectablePointCount) {
+            this.selectedPointIndex = index;
+        }
+    };
+
+    @action deselectPoint = () => {
+        this.selectedPointIndex = -1;
+    };
+
+    @action selectNextPoint = () => {
+        this.cyclePointSelection(1);
+    };
+
+    @action selectPreviousPoint = () => {
+        this.cyclePointSelection(-1);
+    };
+
+    private cyclePointSelection = (direction: 1 | -1) => {
+        const count = this.selectablePointCount;
+        if (!this.canSelectPoint || count <= 0) {
+            return;
+        }
+
+        if (this.isSimpleShapeRegion) {
+            this.cycleSimpleShapePointSelection(direction);
+            return;
+        }
+
+        if (this.selectedPointIndex < 0) {
+            this.selectedPointIndex = direction > 0 ? 0 : count - 1;
+            return;
+        }
+
+        this.selectedPointIndex = (this.selectedPointIndex + direction + count) % count;
+    };
+
+    private cycleSimpleShapePointSelection = (direction: 1 | -1) => {
+        const selectionOrder = getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels);
+        if (!selectionOrder.length) {
+            return;
+        }
+
+        const selectedOrderIndex = selectionOrder.indexOf(this.selectedPointIndex);
+        if (selectedOrderIndex < 0) {
+            this.selectedPointIndex = direction > 0 ? selectionOrder[0] : selectionOrder[selectionOrder.length - 1];
+            return;
+        }
+
+        this.selectedPointIndex = selectionOrder[(selectedOrderIndex + direction + selectionOrder.length) % selectionOrder.length];
+    };
+
+    @action moveSelectedPoint = (deltaX: number, deltaY: number) => {
+        if (!this.hasSelectedPoint || this.hasSelectedRotationPoint) {
+            return;
+        }
+
+        if (this.isCompassRegion) {
+            this.moveSelectedCompassPoint(deltaX);
+            return;
+        }
+
+        if (this.isSimpleShapeRegion) {
+            this.moveSelectedSimpleShapeSide(deltaX, deltaY);
+            return;
+        }
+
+        const currentPoint = this.controlPoints[this.selectedPointIndex];
+        this.setControlPoint(this.selectedPointIndex, {x: currentPoint.x + deltaX, y: currentPoint.y + deltaY});
+    };
+
+    protected moveSelectedCompassPoint(deltaX: number) {
+        void deltaX;
+    }
+
+    @action rotateSelectedPoint = (deltaDegrees: number) => {
+        if (this.hasSelectedRotationPoint && deltaDegrees !== 0) {
+            this.setRotation(this.rotation + deltaDegrees);
+        }
+    };
+
+    private moveSelectedSimpleShapeSide = (deltaX: number, deltaY: number) => {
+        const edit = getMovedSimpleShapeSide({
+            regionType: this.regionType,
+            center: this.center,
+            size: this.size,
+            rotation: this.rotation,
+            selectedPointIndex: this.selectedPointIndex,
+            delta: {x: deltaX, y: deltaY},
+            textScale: this.textAnnotationScale
+        });
+        if (edit) {
+            this.setControlPoints([edit.center, edit.size]);
+        }
+    };
+
+    private get textAnnotationScale(): number {
+        const zoomLevel = this.activeFrame?.spatialReference?.zoomLevel || this.activeFrame?.zoomLevel || 1;
+        return AppStore.Instance.imageRatio / zoomLevel;
+    }
 
     @action focusCenter = () => {
         if (this.activeFrame) {
@@ -700,7 +917,7 @@ export class RegionStore {
                     await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 }
             }
         }

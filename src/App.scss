@@ -1,5 +1,8 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+// Restore BP5 dark background color (BP6 changed #252a31 → #1c2127)
+$pt-dark-app-background-color: #252a31;
+
 .#{$ns}-dark {
     background-color: $dark-gray4;
 }
@@ -24,7 +27,7 @@ body {
     }
 }
 
-.gl-container-app {
+.layout-container {
     position: absolute;
     top: 48px;
     bottom: 5px;

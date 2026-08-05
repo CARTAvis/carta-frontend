@@ -1,6 +1,6 @@
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {add2D, length2D, scaleAndRotateAboutPoint2D, subtract2D, transformPoint} from "utilities";
 
 export class Transform2D {
@@ -24,8 +24,8 @@ export class Transform2D {
         this.origin = {x: refPixel.x, y: refPixel.y};
     }
 
-    transformCoordinate(point: Point2D, forward: boolean = true) {
-        if (forward) {
+    transformCoordinate(point: Point2D, isForward: boolean = true) {
+        if (isForward) {
             // Move point from the original frame to the reference frame, using the supplied transform
             const scaledPoint = scaleAndRotateAboutPoint2D(point, this.origin, this.scale, this.rotation);
             return add2D(scaledPoint, this.translation);

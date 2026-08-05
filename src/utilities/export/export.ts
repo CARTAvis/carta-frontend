@@ -35,10 +35,10 @@ export function exportTxtFile(fileName: string, content: string) {
     return null;
 }
 
-export async function exportScreenshot(imageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
+export async function exportScreenshot(isImageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
     try {
         // Screenshot of
-        const element = (imageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
+        const element = (isImageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
         if (!element) {
             return false;
         }
@@ -60,21 +60,15 @@ export async function exportScreenshot(imageOnly = true, maxWidth = 512, format 
         ctx?.drawImage(canvas, 0, 0, width, height);
         return thumbnailCanvas.toDataURL(format, quality);
     } catch (err) {
-        console.log(err);
+        console.error(err);
     }
     return undefined;
 }
 
 export async function copyToClipboard(value: string) {
-    if (navigator.clipboard) {
-        await navigator.clipboard.writeText(value);
-    } else {
-        const copyText = document.createElement("textarea");
-        copyText.value = value;
-        document.body.appendChild(copyText);
-        copyText.focus();
-        copyText.select();
-        document.execCommand("copy");
-        document.body.removeChild(copyText);
+    if (!navigator.clipboard?.writeText) {
+        return false;
     }
+    await navigator.clipboard.writeText(value);
+    return true;
 }

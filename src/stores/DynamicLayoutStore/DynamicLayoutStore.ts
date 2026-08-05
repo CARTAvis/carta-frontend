@@ -1,23 +1,24 @@
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
+import {PreferenceKeys} from "enums";
+import {AppStore, PreferenceStore} from "stores";
 
 export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 
 export class DynamicLayoutStore {
     private static staticInstance: DynamicLayoutStore;
 
-    public static readonly ToasterTimeout = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
-    static get Instance() {
+    public static get Instance() {
         if (!DynamicLayoutStore.staticInstance) {
             DynamicLayoutStore.staticInstance = new DynamicLayoutStore();
         }
         return DynamicLayoutStore.staticInstance;
     }
 
-    @observable dynamicLayoutName: string | null;
+    @observable dynamicLayoutName: string | null = null;
 
     @computed get isMappingExisted(): boolean {
         const preferenceStore = PreferenceStore.Instance;
@@ -26,8 +27,6 @@ export class DynamicLayoutStore {
 
     constructor() {
         makeObservable(this);
-
-        this.dynamicLayoutName = null;
     }
 
     matchLayoutMapping(selectedFilesCtypes: {ctype: string[]; rank: number[]}) {
@@ -40,7 +39,7 @@ export class DynamicLayoutStore {
         }
 
         // sort by dimension first. if the dimension is the same, then sort by rank (see CtypeDefinition.ts)
-        let sortByDim = selectedFilesCtypes.ctype.map((item, index) => ({index: index, value: item.split(",").length, rank: selectedFilesCtypes.rank[index]}));
+        const sortByDim = selectedFilesCtypes.ctype.map((item, index) => ({index: index, value: item.split(",").length, rank: selectedFilesCtypes.rank[index]}));
         if (PreferenceStore.Instance.isHighDimPriority) {
             sortByDim.sort((a, b) => (b.value === a.value ? b.rank - a.rank : b.value - a.value));
         }
@@ -70,11 +69,11 @@ export class DynamicLayoutStore {
                     this.deleteLayoutMapping(layoutMappingCtype);
                     this.dynamicLayoutName = preference.layout;
 
-                    if (preference.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
+                    if (preference.isDynamicLayoutEnabled && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                     AppToaster.show(ErrorToast(`Fail to delete (${layoutMappingCtype}): ${layoutName}.`));
                 }
             }
@@ -82,7 +81,7 @@ export class DynamicLayoutStore {
         }
 
         // show alert if no other alert is shown
-        if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.alertVisible === false) {
+        if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.isAlertVisible === false) {
             appStore.alertStore.showAlert(`Fail to save (${layoutMappingCtype}): ${layoutName}! No ${layoutName} layout existed.`);
             return;
         }
@@ -91,11 +90,11 @@ export class DynamicLayoutStore {
             preference.existLayoutMapping[layoutMappingCtype] = layoutName;
 
             preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
-            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
+            if (PreferenceStore.Instance.isDynamicLayoutEnabled && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                 layoutStore.applyLayout(layoutName);
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Fail to save (${layoutMappingCtype}): ${layoutName}.`));
         }
     }
@@ -112,7 +111,7 @@ export class DynamicLayoutStore {
 
             preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Fail to modify the layout mapping with ${layoutName} to ${newLayoutName}.`));
         }
     }
@@ -129,7 +128,7 @@ export class DynamicLayoutStore {
 
             preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping with layout name: ${layoutName}.`));
         }
     }
@@ -141,7 +140,7 @@ export class DynamicLayoutStore {
             delete preference.existLayoutMapping[layoutMappingCtype];
             preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping: ${layoutMappingCtype}.`));
         }
     }

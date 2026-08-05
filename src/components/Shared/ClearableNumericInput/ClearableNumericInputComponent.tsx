@@ -1,11 +1,9 @@
 import * as React from "react";
-import {AnchorButton, FormGroup, NumericInput, NumericInputProps, Placement, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, NumericInput, type NumericInputProps, type Placement, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {toExponential} from "utilities";
-
-const KEYCODE_ENTER = 13;
 
 export interface ClearableNumericInputProps extends NumericInputProps {
     label: string;
@@ -54,12 +52,12 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         makeObservable(this);
     }
 
-    @action setFocused(value: boolean) {
-        this.isFocused = value;
+    @action setFocused(isFocused: boolean) {
+        this.isFocused = isFocused;
     }
 
     handleChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
         const val = parseFloat(this.validation(ev.currentTarget.value));
@@ -119,7 +117,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                     disabled={this.props.disabled}
                     rightElement={
                         <Tooltip content={this.props.tooltipContent ?? "Reset value to default"} disabled={!this.props.showTooltip || this.props.disabled || this.props.resetDisabled} placement={this.props.tooltipPlacement ?? "auto"}>
-                            <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled || this.props.resetDisabled} />
+                            <AnchorButton icon="refresh" variant="minimal" onClick={this.props.onValueCleared} disabled={this.props.disabled || this.props.resetDisabled} />
                         </Tooltip>
                     }
                     placeholder={this.props.placeholder}

@@ -1,11 +1,13 @@
 import * as React from "react";
-import {Button, Classes, Collapse, DialogProps} from "@blueprintjs/core";
+import {Button, Classes, Collapse, type DialogProps, H4, H5, H6} from "@blueprintjs/core";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {DialogId} from "enums";
 import {CARTA_INFO} from "models";
-import {DialogId, DialogStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -16,15 +18,15 @@ export class AboutDialogComponent extends React.Component {
     private static readonly MinWidth = 525;
     private static readonly MinHeight = 615;
 
-    @observable extendUsefulLinks: boolean = false;
-    @observable extendExternalServices: boolean = false;
+    @observable isExtendUsefulLinks: boolean = false;
+    @observable isExtendExternalServices: boolean = false;
 
     @action toggleExtendUsefulLinks = () => {
-        this.extendUsefulLinks = !this.extendUsefulLinks;
+        this.isExtendUsefulLinks = !this.isExtendUsefulLinks;
     };
 
     @action toggleExtendExternalServices = () => {
-        this.extendExternalServices = !this.extendExternalServices;
+        this.isExtendExternalServices = !this.isExtendExternalServices;
     };
 
     constructor(props) {
@@ -34,14 +36,15 @@ export class AboutDialogComponent extends React.Component {
 
     public render() {
         const dialogStore = DialogStore.Instance;
+        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.dialogVisible.get(DialogId.About),
-            className: "about-dialog",
+            isOpen: dialogStore.dialogVisible.get(DialogId.About) ?? false,
+            className: className,
             canEscapeKeyClose: true,
             title: "About CARTA"
         };
@@ -53,18 +56,18 @@ export class AboutDialogComponent extends React.Component {
                 defaultHeight={AboutDialogComponent.DefaultHeight}
                 minWidth={AboutDialogComponent.MinWidth}
                 minHeight={AboutDialogComponent.MinHeight}
-                enableResizing={false}
+                isResizingEnabled={false}
                 dialogId={DialogId.About}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={80} />
-                        <h3>
+                        <H5>
                             {CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})
-                        </h3>
+                        </H5>
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
-                    <h3>Development team</h3>
+                    <H5>Development team</H5>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
                         <li>
@@ -87,11 +90,16 @@ export class AboutDialogComponent extends React.Component {
                                 Department of Physics, University of Alberta
                             </a>
                         </li>
+                        <li>
+                            <a href="https://aussrc.org" rel="noopener noreferrer" target="_blank">
+                                Australian SKA Regional Centre (AusSRC)
+                            </a>
+                        </li>
                     </ul>
-                    <Button minimal={true} icon="link" rightIcon={this.extendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendUsefulLinks}>
-                        <h4 className="extend-button-title">Useful links</h4>
+                    <Button variant="minimal" icon="link" endIcon={this.isExtendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.toggleExtendUsefulLinks}>
+                        <H6 className="extend-button-title">Useful links</H6>
                     </Button>
-                    <Collapse isOpen={this.extendUsefulLinks}>
+                    <Collapse isOpen={this.isExtendUsefulLinks}>
                         <ul>
                             <li>
                                 Source code for CARTA is available on{" "}
@@ -112,7 +120,7 @@ export class AboutDialogComponent extends React.Component {
                             </li>
                             <li>
                                 Documentation is available{" "}
-                                <a href="https://carta.readthedocs.io/en/5.0" rel="noopener noreferrer" target="_blank">
+                                <a href={`https://carta.readthedocs.io/en/${CARTA_INFO.docsVersion}`} rel="noopener noreferrer" target="_blank">
                                     online
                                 </a>
                             </li>
@@ -124,10 +132,10 @@ export class AboutDialogComponent extends React.Component {
                             </li>
                         </ul>
                     </Collapse>
-                    <Button minimal={true} icon="database" rightIcon={this.extendExternalServices ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendExternalServices}>
-                        <h4 className="extend-button-title">External services</h4>
+                    <Button variant="minimal" icon="database" endIcon={this.isExtendExternalServices ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.toggleExtendExternalServices}>
+                        <H6 className="extend-button-title">External services</H6>
                     </Button>
-                    <Collapse isOpen={this.extendExternalServices}>
+                    <Collapse isOpen={this.isExtendExternalServices}>
                         <p className="external-services-content">This software has made use of:</p>
                         <ul>
                             <li>
@@ -163,9 +171,9 @@ export class AboutDialogComponent extends React.Component {
                             </li>
                         </ul>
                     </Collapse>
-                    <h3>License</h3>
+                    <H4>License</H4>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, Department of Physics, University of Alberta, and AusSRC. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>

@@ -1,20 +1,20 @@
 import * as React from "react";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import "./RenderConfigSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private cachedWidgetStore: RenderConfigWidgetStore | undefined;
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",
@@ -30,16 +30,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
     }
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): RenderConfigWidgetStore {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.renderConfigWidgets.get(this.props.id);
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore ?? new RenderConfigWidgetStore();
     }
 
     handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +50,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -63,6 +58,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -71,7 +69,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -79,6 +77,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
@@ -87,7 +88,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -95,6 +96,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
@@ -103,7 +107,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
@@ -111,6 +115,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         const widgetStore = this.widgetStore;
         const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {
@@ -133,11 +140,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            logScaleY: widgetStore.logScaleY,
+            isLogScaleY: widgetStore.isLogScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
-            markerTextVisible: widgetStore.markerTextVisible,
+            isMarkerTextVisible: widgetStore.isMarkerTextVisible,
             handleMarkerTextChanged: this.handleMarkerTextChanged,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,

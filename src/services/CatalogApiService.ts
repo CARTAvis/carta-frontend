@@ -1,21 +1,17 @@
-import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
+import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
-import {action} from "mobx";
+import {action, makeObservable} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, PreferenceKeys, PreferenceStore, RadiusUnits, SystemType} from "stores";
-import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
+import {CatalogDatabase, CatalogType, DialogId, PreferenceKeys, RadiusUnits, SystemType, TelemetryAction} from "enums";
+import {type CatalogInfo, type WCSPoint2D} from "models";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, PreferenceStore} from "stores";
+import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
-import {TelemetryAction, TelemetryService} from "./TelemetryService";
-
-export enum CatalogDatabase {
-    SIMBAD = "SIMBAD",
-    VIZIER = "VizieR"
-}
+import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
-    public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+    public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
     private static staticInstance: CatalogApiService;
     private axiosInstanceSimbad: AxiosInstance;
@@ -23,7 +19,7 @@ export class CatalogApiService {
     private cancelTokenSourceSimbad: CancelTokenSource;
     private cancelTokenSourceVizier: CancelTokenSource;
 
-    static get Instance() {
+    public static get Instance() {
         if (!CatalogApiService.staticInstance) {
             CatalogApiService.staticInstance = new CatalogApiService();
         }
@@ -31,6 +27,7 @@ export class CatalogApiService {
     }
 
     constructor() {
+        makeObservable(this);
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
@@ -64,7 +61,7 @@ export class CatalogApiService {
         try {
             await axios.get(requestUrl, {timeout: timeoutMs, signal});
             return performance.now() - startTime;
-        } catch (error) {
+        } catch {
             return null;
         }
     };
@@ -194,7 +191,7 @@ export class CatalogApiService {
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         // http://cdsarc.u-strasbg.fr/doc/asu-summary.htx
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
         // -meta.max = 100000, use a large number to get all tables(same number as vizier use for their websit). default is 500.
@@ -207,7 +204,7 @@ export class CatalogApiService {
         try {
             const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizierData(response.data);
+                resources = CatalogApiProcessing.processVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -226,19 +223,19 @@ export class CatalogApiService {
 
     public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizierResource[]): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
         sources.forEach(element => {
             sourceString += `${element.table.name},`;
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        const query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
             const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizierData(response.data);
+                resources = CatalogApiProcessing.processVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -259,17 +256,17 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         resources.forEach(element => {
             const fileId = appStore.catalogNextFileId;
-            const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizierTableData(element.table.tableElement);
+            const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
-            const coosy: CARTA.ICoosys = {system: element.coosys.system};
+            const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
             const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
-            const catalogFileInfo: CARTA.ICatalogFileInfo = {
+            const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                 name: fileName,
                 type: CARTA.CatalogFileType.VOTable,
                 description: "Online VizieR Catalog",
                 coosys: [coosy]
             };
-            let catalogInfo: CatalogInfo = {
+            const catalogInfo: CatalogInfo = {
                 fileId,
                 fileInfo: catalogFileInfo,
                 dataSize: size,
@@ -321,18 +318,18 @@ export class CatalogApiService {
             const response = await this.getSimbadCatalog(query);
             if (frame && response?.status === 200 && response?.data?.data?.length) {
                 const configStore = CatalogOnlineQueryConfigStore.Instance;
-                const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
-                const coosys: CARTA.ICoosys = {system: configStore.coordsType};
+                const headers = CatalogApiProcessing.processSimbadMetaData(response.data?.metadata);
+                const columnData = CatalogApiProcessing.processSimbadData(response.data?.data, headers);
+                const coosys: CARTA.Coosys.$Properties = {system: configStore.coordsType};
                 const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
-                const catalogFileInfo: CARTA.ICatalogFileInfo = {
+                const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                     name: fileName,
                     type: CARTA.CatalogFileType.VOTable,
                     description: "Online Simbad Catalog",
                     coosys: [coosys]
                 };
-                let catalogInfo: CatalogInfo = {
+                const catalogInfo: CatalogInfo = {
                     fileId,
                     fileInfo: catalogFileInfo,
                     dataSize: response.data?.data?.length ?? 0,

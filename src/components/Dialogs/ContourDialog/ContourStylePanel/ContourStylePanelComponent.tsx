@@ -1,19 +1,71 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
 import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import type {ColorResult} from "@uiw/react-color";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {ContourDashMode, FrameStore} from "stores/Frame";
+import {ContourDashMode} from "enums";
+import {type ContourConfigStore, type FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const DashModeSelect = Select<ContourDashMode>;
+
+interface ColormapPreviewSession {
+    config: ContourConfigStore;
+    baseColormap: string;
+}
 
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {
+    private colormapPreviewSession: ColormapPreviewSession | null = null;
+
+    componentDidUpdate(prevProps: {frame: FrameStore; darkTheme: boolean}) {
+        if (prevProps.frame.contourConfig !== this.props.frame.contourConfig) {
+            this.revertColormapPreview();
+        }
+    }
+
+    componentWillUnmount() {
+        this.revertColormapPreview();
+    }
+
+    private revertColormapPreview() {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+        if (session && session.config.colormap !== session.baseColormap) {
+            session.config.setColormap(session.baseColormap);
+        }
+    }
+
+    private handleColormapHovered(config: ContourConfigStore, colormap: string) {
+        if (this.colormapPreviewSession?.config !== config) {
+            this.revertColormapPreview();
+            this.colormapPreviewSession = {config, baseColormap: config.colormap};
+        }
+        if (config.colormap !== colormap) {
+            config.setColormap(colormap);
+        }
+    }
+
+    private handleColormapSelected(config: ContourConfigStore, colormap: string) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.config !== config) {
+            this.revertColormapPreview();
+        } else {
+            this.colormapPreviewSession = null;
+        }
+        config.setColormap(colormap);
+    }
+
+    private handleColormapDropdownOpenChange(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    }
+
     private renderDashModeSelectItem = (mode: ContourDashMode, {handleClick, modifiers, query}) => {
         return <MenuItem text={mode} onClick={handleClick} key={mode} />;
     };
@@ -43,11 +95,11 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         items={[ContourDashMode.None, ContourDashMode.Dashed, ContourDashMode.NegativeOnly]}
                         itemRenderer={this.renderDashModeSelectItem}
                     >
-                        <Button text={frame.contourConfig.dashMode} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={frame.contourConfig.dashMode} endIcon="double-caret-vertical" alignText={"right"} />
                     </DashModeSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Color mode">
-                    <HTMLSelect value={frame.contourConfig.colormapEnabled ? 1 : 0} onChange={ev => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={frame.contourConfig.isColormapEnabled ? 1 : 0} onChange={ev => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -56,12 +108,19 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.colormapEnabled}>
-                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedColormap={frame.contourConfig.colormap} onColormapSelect={frame.contourConfig.setColormap} />
+                <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.isColormapEnabled}>
+                    <ColormapComponent
+                        inverted={false}
+                        disabled={!frame.contourConfig.isColormapEnabled}
+                        selectedColormap={frame.contourConfig.colormap}
+                        onColormapSelect={colormap => this.handleColormapSelected(frame.contourConfig, colormap)}
+                        onColormapHover={colormap => this.handleColormapHovered(frame.contourConfig, colormap)}
+                        onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
+                    />
                 </FormGroup>
-                <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
+                        disabled={!frame.contourConfig.isColormapEnabled}
                         placeholder="Bias"
                         min={-1.0}
                         max={1.0}
@@ -71,9 +130,9 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         onValueChange={frame.contourConfig.setColormapBias}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
+                        disabled={!frame.contourConfig.isColormapEnabled}
                         placeholder="Contrast"
                         min={0.0}
                         max={3.0}
@@ -83,13 +142,13 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         onValueChange={frame.contourConfig.setColormapContrast}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Color" disabled={frame.contourConfig.isColormapEnabled}>
                     <ColorPickerComponent
                         color={frame.contourConfig.color}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgb)}
+                        setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgba)}
                         disableAlpha={true}
-                        disabled={frame.contourConfig.colormapEnabled}
+                        disabled={frame.contourConfig.isColormapEnabled}
                         darkTheme={this.props.darkTheme}
                     />
                 </FormGroup>

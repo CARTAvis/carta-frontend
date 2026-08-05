@@ -1,19 +1,9 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import type {ProcessedColumnData} from "utilities";
 
-import {CatalogSystemType} from "models";
-import {AppStore, NumberFormatType, SystemType} from "stores";
-import {ProcessedColumnData} from "utilities";
-
-enum DataType {
-    CHAR = "CHAR",
-    SHORT = "SHORT",
-    FLOAT = "FLOAT",
-    LONG = "LONG",
-    INT = "INT",
-    DOUBLE = "DOUBLE",
-    UNSIGNEDBYTE = "UNSIGNEDBYTE"
-}
+import {CatalogSystemType, DataType, NumberFormatType, SystemType} from "enums";
+import {AppStore} from "stores";
 
 export type VizierResource = {
     id: string | null;
@@ -35,8 +25,8 @@ type VizierTable = {
 };
 
 export class CatalogApiProcessing {
-    static ProcessSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
-        let headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
+    public static processSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
+        const headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
             const header = metaData[index];
             headers[index] = new CARTA.CatalogHeader({
@@ -70,7 +60,7 @@ export class CatalogApiProcessing {
         return headers;
     }
 
-    static ProcessSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
+    public static processSimbadData(data: [], headers: CARTA.CatalogHeader.$Properties[]): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
@@ -93,7 +83,7 @@ export class CatalogApiProcessing {
 
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
-            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
+            const column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
             if (column.data) {
                 for (let j = 0; j < data.length; j++) {
                     if (header["name"] === "dist") {
@@ -117,7 +107,7 @@ export class CatalogApiProcessing {
         return dataMap;
     }
 
-    static matchDataType(dataType: string | null): CARTA.ColumnType {
+    public static matchDataType(dataType: string | null): CARTA.ColumnType {
         const dataTypeUpperCase = dataType?.toUpperCase();
         switch (dataTypeUpperCase) {
             case DataType.CHAR:
@@ -138,11 +128,10 @@ export class CatalogApiProcessing {
         }
     }
 
-    static ProcessVizierData(data: string): Map<string, VizierResource> {
+    public static processVizierData(data: string): Map<string, VizierResource> {
         const resources: Map<string, VizierResource> = new Map();
-        let dom: Document;
         const parser = new DOMParser();
-        dom = parser.parseFromString(data, "application/xml");
+        const dom = parser.parseFromString(data, "application/xml");
         const resourceElements = dom.documentElement.getElementsByTagName("RESOURCE");
         for (let index = 0; index < resourceElements.length; index++) {
             const resourceElement = resourceElements[index];
@@ -174,9 +163,9 @@ export class CatalogApiProcessing {
         return resources;
     }
 
-    static ProcessVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
+    public static processVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
-        let headers: CARTA.CatalogHeader[] = new Array(fields.length);
+        const headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
             const field = fields[index];
             headers[index] = new CARTA.CatalogHeader({
@@ -193,7 +182,7 @@ export class CatalogApiProcessing {
         const dataMap = new Map<number, ProcessedColumnData>();
         for (let index = 0; index < headers.length; index++) {
             const header = headers[index];
-            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
+            const column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
             dataMap.set(index, column);
         }
 

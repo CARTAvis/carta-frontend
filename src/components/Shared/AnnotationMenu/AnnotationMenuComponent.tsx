@@ -1,8 +1,8 @@
 import * as React from "react";
-import {IconName, MenuItem} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {type IconName, MenuItem} from "@blueprintjs/core";
+import {type CARTA} from "carta-protobuf";
 
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionStore} from "stores/Frame";
 
 interface AnnotationMenuComponentProps {
@@ -13,8 +13,8 @@ export const AnnotationMenuComponent = ({handleRegionTypeClicked}: AnnotationMen
     return (
         <>
             {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
-                const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+                const annotationIconString: IconName | CustomIconName = RegionStore.regionIconString(type);
+                const annotationIcon = RegionStore.isRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
                 return <MenuItem icon={annotationIcon} text={text} onClick={() => handleRegionTypeClicked(type)} key={index} data-testid={"annotation-shortcut-dropdown-" + text.toLowerCase()} />;
             })}
         </>

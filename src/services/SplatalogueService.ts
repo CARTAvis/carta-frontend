@@ -1,19 +1,19 @@
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 
-import {SpectralLineHeaders} from "stores/Widgets";
+import {SpectralLineHeaders} from "enums";
 
 export interface SpectralLineResponse {
-    headers: CARTA.ICatalogHeader[];
-    spectralLineData: {[key: string]: CARTA.IColumnData};
+    headers: CARTA.CatalogHeader.$Properties[];
+    spectralLineData: {[key: string]: CARTA.ColumnData.$Properties};
     dataSize: number;
 }
 
 export class SplatalogueService {
-    private static BaseUrl = "https://splatalogue.online/splata-slap/advanceded/false/";
+    private static baseUrl = "https://splatalogue.online/splata-slap/advanceded/false/";
     private readonly axiosInstance: AxiosInstance;
 
-    private static SplatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
+    private static splatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
         [SpectralLineHeaders.Species, CARTA.ColumnType.String],
         [SpectralLineHeaders.ChemicalName, CARTA.ColumnType.String],
         [SpectralLineHeaders.ShiftedFrequency, CARTA.ColumnType.Double],
@@ -35,7 +35,7 @@ export class SplatalogueService {
         [SpectralLineHeaders.LineList, CARTA.ColumnType.String]
     ]);
 
-    private static SplatalogueHeaderStringMap = new Map<SpectralLineHeaders, string>([
+    private static splatalogueHeaderStringMap = new Map<SpectralLineHeaders, string>([
         [SpectralLineHeaders.Species, "name"],
         [SpectralLineHeaders.ChemicalName, "chemical_name"],
         [SpectralLineHeaders.ShiftedFrequency, "orderedFreq"],
@@ -59,7 +59,7 @@ export class SplatalogueService {
 
     private static staticInstance: SplatalogueService;
 
-    static get Instance() {
+    public static get Instance() {
         if (!SplatalogueService.staticInstance) {
             SplatalogueService.staticInstance = new SplatalogueService();
         }
@@ -67,16 +67,16 @@ export class SplatalogueService {
     }
 
     private constructor() {
-        this.axiosInstance = axios.create({baseURL: SplatalogueService.BaseUrl});
+        this.axiosInstance = axios.create({baseURL: SplatalogueService.baseUrl});
     }
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
-        const params = SplatalogueService.GetParams(freqMin, freqMax, intensityLimit);
+        const params = SplatalogueService.getParams(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.post("", {body: JSON.stringify(params)});
-        return SplatalogueService.ConvertTable(response?.data);
+        return SplatalogueService.convertTable(response?.data);
     };
 
-    private static ConvertTable = (data: object[]) => {
+    private static convertTable = (data: object[]) => {
         if (!data) {
             throw new Error("invalid data received from Splatalogue");
         }
@@ -87,14 +87,14 @@ export class SplatalogueService {
 
         const numDataRows = data.length;
         const responseData: SpectralLineResponse = {
-            headers: new Array<CARTA.ICatalogHeader>(),
+            headers: new Array<CARTA.CatalogHeader.$Properties>(),
             spectralLineData: {},
             dataSize: numDataRows
         };
 
         let columnIndex = 0;
-        SplatalogueService.SplatalogueHeaderTypeMap.forEach((value, key) => {
-            const header: CARTA.ICatalogHeader = {
+        SplatalogueService.splatalogueHeaderTypeMap.forEach((value, key) => {
+            const header: CARTA.CatalogHeader.$Properties = {
                 dataType: value,
                 name: key,
                 columnIndex: columnIndex
@@ -111,7 +111,7 @@ export class SplatalogueService {
             const line = data[i];
 
             let j = 0;
-            SplatalogueService.SplatalogueHeaderStringMap.forEach((value, key) => {
+            SplatalogueService.splatalogueHeaderStringMap.forEach((value, key) => {
                 let entry = line[value]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
 
@@ -135,19 +135,19 @@ export class SplatalogueService {
         return responseData;
     };
 
-    private static GetParams = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
+    private static getParams = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
         if (freqMin > freqMax) {
             [freqMin, freqMax] = [freqMax, freqMin];
         }
-        let freqFrom = new Array(20).fill("");
+        const freqFrom = new Array(20).fill("");
         freqFrom[0] = freqMin.toString();
-        let freqTo = new Array(20).fill("");
+        const freqTo = new Array(20).fill("");
         freqTo[0] = freqMax.toString();
         const unit = "MHz";
 
-        const intensityLimitEnabled = Number.isFinite(intensityLimit);
+        const isIntensityLimitEnabled = Number.isFinite(intensityLimit);
         // use 0.000001 instead of 0 to avoid issues from the catalog itself
-        const limit = intensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
+        const limit = isIntensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
 
         return {
             searchSpecies: "",
@@ -160,7 +160,7 @@ export class SplatalogueService {
             energyFrom: 0,
             energyTo: 0,
             energyRangeType: "el_cm-1",
-            lineIntensity: intensityLimitEnabled ? "CDMS/JPL (log)" : "None",
+            lineIntensity: isIntensityLimitEnabled ? "CDMS/JPL (log)" : "None",
             lineIntensityLowerLimit: limit,
             excludeAtmosSpecies: false,
             excludePotentialInterstellarSpecies: false,
@@ -170,13 +170,13 @@ export class SplatalogueService {
             showOnlyNRAORecommendedFrequencies: false,
             lineListDisplayJPL: true,
             lineListDisplayCDMS: true,
-            lineListDisplayLovasNIST: !intensityLimitEnabled,
-            lineListDisplaySLAIM: !intensityLimitEnabled,
-            lineListDisplayToyaMA: !intensityLimitEnabled,
-            lineListDisplayOSU: !intensityLimitEnabled,
-            lineListDisplayRecombination: !intensityLimitEnabled,
-            lineListDisplayTopModel: !intensityLimitEnabled,
-            lineListDisplayRFI: !intensityLimitEnabled,
+            lineListDisplayLovasNIST: !isIntensityLimitEnabled,
+            lineListDisplaySLAIM: !isIntensityLimitEnabled,
+            lineListDisplayToyaMA: !isIntensityLimitEnabled,
+            lineListDisplayOSU: !isIntensityLimitEnabled,
+            lineListDisplayRecombination: !isIntensityLimitEnabled,
+            lineListDisplayTopModel: !isIntensityLimitEnabled,
+            lineListDisplayRFI: !isIntensityLimitEnabled,
             lineStrengthDisplayCDMSJPL: true,
             lineStrengthDisplaySijMu2: true,
             lineStrengthDisplaySij: true,

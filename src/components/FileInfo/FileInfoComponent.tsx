@@ -1,42 +1,32 @@
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
-import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {List} from "react-window";
+import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, PopoverInteractionKind, PopoverNext, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
+import {type CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
-import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {SimpleTableComponent, type SimpleTableComponentProps} from "components/Shared";
+import {FileInfoType} from "enums";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 
 import "./FileInfoComponent.scss";
 
-export enum FileInfoType {
-    IMAGE_FILE = "image-file",
-    IMAGE_HEADER = "image-header",
-    SAVE_IMAGE = "save-image",
-    REGION_FILE = "region-file",
-    SELECT_REGION = "select-region",
-    CATALOG_FILE = "catalog-file",
-    CATALOG_HEADER = "catalog-header"
-}
-
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
     HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
-    fileInfoExtended: CARTA.IFileInfoExtended;
+    fileInfoExtended: CARTA.FileInfoExtended.$Properties | null;
     regionFileInfo: string;
-    catalogFileInfo: CARTA.ICatalogFileInfo;
+    catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null;
     selectedTab: TabId;
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean;
     errorMessage: string;
     catalogHeaderTable?: SimpleTableComponentProps;
-    selectedFile?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    selectedFile?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
 }> {
     @observable searchString: string = "";
     @observable matchedIter: number = 0;
@@ -45,12 +35,12 @@ export class FileInfoComponent extends React.Component<{
     private isSearchOpened: boolean = false;
     private matchedTotal: number = 0;
     private matchedIterLocation: {line: number; num: number} = {line: -1, num: -1};
-    private selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    private selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | undefined;
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{line: number; num: number}> = [];
     private listRef = React.createRef<any>();
-    private clickMatchedTimer;
-    private clickMatchedTimerStart;
+    private clickMatchedTimer: ReturnType<typeof setInterval> | undefined;
+    private clickMatchedTimerStart: ReturnType<typeof setTimeout> | undefined;
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -108,20 +98,15 @@ export class FileInfoComponent extends React.Component<{
     // calculate the correct positions and use scrollTo() instead
     private scrollToPosition = () => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent) {
+        const rowCount = this.props.fileInfoExtended?.headerEntries?.length ?? 0;
+        if (!listRefCurrent || !isFinite(this.matchedIterLocation.line) || this.matchedIterLocation.line < 0 || this.matchedIterLocation.line >= rowCount) {
             return;
         }
-        const origOffset = listRefCurrent.state.scrollOffset;
-        const height = listRefCurrent.props.height;
-        const itemSize = listRefCurrent.props.itemSize;
-        const targetPosition = 10 + this.matchedIterLocation.line * itemSize;
-        if (targetPosition > origOffset + height - itemSize || targetPosition < origOffset) {
-            this.listRef.current.scrollTo(targetPosition - height / 2);
-        }
+        this.listRef.current.scrollToRow({index: this.matchedIterLocation.line, align: "center"});
     };
 
-    private handleSearchPanelClicked = (opened: boolean) => {
-        this.isSearchOpened = opened ? true : false;
+    private handleSearchPanelClicked = (isOpened: boolean) => {
+        this.isSearchOpened = isOpened ? true : false;
         this.resetSearchString();
         this.resetMatchedIter();
         this.matchedTotal = 0;
@@ -139,8 +124,8 @@ export class FileInfoComponent extends React.Component<{
             this.splitLengthArray = [];
             this.matchedLocationArray = [];
 
-            this.props.fileInfoExtended.headerEntries.forEach((entriesValue, index) => {
-                let splitString = entriesValue.name !== "END" ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
+            this.props.fileInfoExtended?.headerEntries?.forEach((entriesValue, index) => {
+                const splitString = entriesValue.name !== "END" ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
                 this.splitLengthArray.push(splitString.map(value => value.length));
                 this.matchedTotal += splitString.length - 1;
                 if (splitString.length > 1) {
@@ -160,14 +145,16 @@ export class FileInfoComponent extends React.Component<{
 
     // mode 1/-1: one step forward/backward, 99/-99: continuously forward/backward, 0: stop
     private handleClickMatched = (mode: number, keyEvent?) => {
-        if ((keyEvent && keyEvent?.keyCode !== 13) || this.searchString === "") {
+        if ((keyEvent && keyEvent.key !== "Enter") || this.searchString === "") {
             return;
         }
         if (mode === 0) {
             clearTimeout(this.clickMatchedTimerStart);
+            this.clickMatchedTimerStart = undefined;
             clearInterval(this.clickMatchedTimer);
+            this.clickMatchedTimer = undefined;
         } else {
-            let clickMatched = () => {
+            const clickMatched = () => {
                 if (mode === -1 || mode === -99) {
                     this.minusMatchedIter();
                 } else {
@@ -193,6 +180,13 @@ export class FileInfoComponent extends React.Component<{
     constructor(props) {
         super(props);
         makeObservable(this);
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.clickMatchedTimerStart);
+        this.clickMatchedTimerStart = undefined;
+        clearInterval(this.clickMatchedTimer);
+        this.clickMatchedTimer = undefined;
     }
 
     private renderInfoTabs = () => {
@@ -229,7 +223,7 @@ export class FileInfoComponent extends React.Component<{
             <ControlGroup vertical={false}>
                 <Divider />
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)} />
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
@@ -261,15 +255,15 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.SELECT_REGION:
                 return <RegionSelectComponent />;
             case FileInfoType.IMAGE_FILE:
-                return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
+                return this.renderImageHeaderList(this.props.fileInfoExtended?.computedEntries ?? []);
             case FileInfoType.IMAGE_HEADER:
-                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries);
+                return this.renderImageHeaderList(this.props.fileInfoExtended?.headerEntries ?? []);
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
                 return (
                     <Pre className="file-info-pre">
-                        <Text>{this.props.catalogFileInfo.description}</Text>
+                        <Text>{this.props.catalogFileInfo?.description}</Text>
                     </Pre>
                 );
             case FileInfoType.CATALOG_HEADER:
@@ -286,20 +280,20 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    private highlightString = (index: number, name: string, value?: string, comment?: string) => {
+    private highlightString = (index: number, name: string | null | undefined, value?: string | null, comment?: string | null) => {
         if (!isFinite(index) || index < 0 || !name) {
             return null;
         }
 
         const splitLength = this.splitLengthArray[index];
-        const nameValueLength = name.length + 3 + value.length;
-        let highlightedString = [];
+        const nameValueLength = name.length + 3 + (value?.length ?? 0);
+        const highlightedString: React.ReactNode[] = [];
         let keyIter = 0; // add unique keys to span to avoid warning
         let highlightClassName = "";
         let typeClassName = "header-name";
         let usedLength = 0;
 
-        let addHighlightedString = (sliceStart: number, sliceEnd: number) => {
+        const addHighlightedString = (sliceStart: number, sliceEnd: number) => {
             if (!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }
@@ -352,7 +346,7 @@ export class FileInfoComponent extends React.Component<{
         return highlightedString;
     };
 
-    private renderImageHeaderList = (entries: CARTA.IHeaderEntry[]) => {
+    private renderImageHeaderList = (entries: CARTA.HeaderEntry.$Properties[]) => {
         if (this.props.selectedFile !== this.selectedFile) {
             this.isSearchOpened = false;
         }
@@ -385,15 +379,7 @@ export class FileInfoComponent extends React.Component<{
         };
 
         const numHeaders = entries?.length || 0;
-        return (
-            <AutoSizer>
-                {({height, width}) => (
-                    <List className={classNames("header-list", Classes.CODE_BLOCK)} itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
-                        {renderHeaderRow}
-                    </List>
-                )}
-            </AutoSizer>
-        );
+        return <List className={classNames("header-list", Classes.CODE_BLOCK)} rowComponent={renderHeaderRow} rowCount={numHeaders} rowHeight={18} rowProps={{} as any} listRef={this.listRef as any} />;
     };
 
     private renderHeaderToolbar = () => {
@@ -404,7 +390,7 @@ export class FileInfoComponent extends React.Component<{
                 </span>
                 <Button
                     icon="caret-left"
-                    minimal={true}
+                    variant="minimal"
                     onMouseDown={() => this.handleClickMatched(-99)}
                     onMouseUp={() => this.handleClickMatched(0)}
                     onKeyDown={ev => this.handleClickMatched(-1, ev)}
@@ -412,7 +398,7 @@ export class FileInfoComponent extends React.Component<{
                 />
                 <Button
                     icon="caret-right"
-                    minimal={true}
+                    variant="minimal"
                     onMouseDown={() => this.handleClickMatched(99)}
                     onMouseUp={() => this.handleClickMatched(0)}
                     onKeyDown={ev => this.handleClickMatched(1, ev)}
@@ -425,13 +411,14 @@ export class FileInfoComponent extends React.Component<{
 
         return !this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended && this.props.selectedTab === FileInfoType.IMAGE_HEADER ? (
             <ButtonGroup className="header-search-button" style={{opacity: this.isMouseEntered || this.isSearchOpened ? 1 : 0}}>
-                <Popover
-                    position={Position.LEFT}
+                <PopoverNext
+                    placement="left"
+                    shouldReturnFocusOnClose={false}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     usePortal={false}
-                    modifiers={{
-                        arrow: {enabled: false},
-                        offset: {enabled: true, options: {offset: [0, searchBarPopperDistance]}}
+                    arrow={false}
+                    middleware={{
+                        offset: {mainAxis: searchBarPopperDistance}
                     }}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
@@ -448,17 +435,21 @@ export class FileInfoComponent extends React.Component<{
                     }
                 >
                     <Button icon="search-text"></Button>
-                </Popover>
+                </PopoverNext>
                 <Button icon="th" onClick={this.exportHeader}></Button>
             </ButtonGroup>
         ) : null;
     };
 
     private exportHeader = () => {
-        const headerContent = this.props.fileInfoExtended.headerEntries;
-        const imageName = `${this.props.fileInfoExtended.computedEntries[0].value}-Header`;
+        const headerContent = this.props.fileInfoExtended?.headerEntries;
+        const computedEntries = this.props.fileInfoExtended?.computedEntries;
+        if (!headerContent || !computedEntries?.[0]?.value) {
+            return;
+        }
+        const imageName = `${computedEntries[0].value}-Header`;
         let content = "";
-        content += `# ${this.props.fileInfoExtended.computedEntries[0].value}\n`;
+        content += `# ${computedEntries[0].value}\n`;
         headerContent.forEach((row, index) => {
             if (row.comment) {
                 content += `${row.name} = ${row.value} / ${row.comment}\n`;

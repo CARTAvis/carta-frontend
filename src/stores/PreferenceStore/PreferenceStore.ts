@@ -2,154 +2,12 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {
-    CARTA_INFO,
-    CompressionQuality,
-    CursorInfoVisibility,
-    CursorPosition,
-    Event,
-    FileFilterMode,
-    getEventList,
-    ImagePanelMode,
-    PresetLayout,
-    RegionCreationMode,
-    SpectralType,
-    Theme,
-    TileCache,
-    WCSMatching,
-    WCSMatchingType,
-    WCSType,
-    Zoom,
-    ZoomPoint
-} from "models";
+import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
-import {TelemetryMode} from "services/TelemetryService";
-import {BeamType, FileFilteringType} from "stores";
-import {ContourGeneratorType, FrameScaling} from "stores/Frame";
+import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
-export enum PreferenceKeys {
-    SILENT_FILE_SORTING_STRING = "fileSortingString",
-    SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
-    SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
-
-    GLOBAL_THEME = "theme",
-    GLOBAL_AUTOLAUNCH = "autoLaunch",
-    GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
-    GLOBAL_CURSOR_POSITION = "cursorPosition",
-    GLOBAL_ZOOM_MODE = "zoomMode",
-    GLOBAL_ZOOM_POINT = "zoomPoint",
-    GLOBAL_DRAG_PANNING = "dragPanning",
-    GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
-    GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
-    GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
-    GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
-    GLOBAL_KEEP_LAST_USED_FOLDER = "keepLastUsedFolder",
-    GLOBAL_SAVED_LAST_FOLDER = "lastUsedFolder",
-
-    RENDER_CONFIG_SCALING = "scaling",
-    RENDER_CONFIG_COLORMAP = "colormap",
-    RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
-    RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
-    RENDER_CONFIG_PERCENTILE = "percentile",
-    RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
-    RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
-    RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
-    RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
-    RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
-
-    CONTOUR_CONFIG_GENERATOR_TYPE = "contourGeneratorType",
-    CONTOUR_CONFIG_SMOOTHING_MODE = "contourSmoothingMode",
-    CONTOUR_CONFIG_SMOOTHING_FACTOR = "contourSmoothingFactor",
-    CONTOUR_CONFIG_NUM_LEVELS = "contourNumLevels",
-    CONTOUR_CONFIG_THICKNESS = "contourThickness",
-    CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
-    CONTOUR_CONFIG_COLOR = "contourColor",
-    CONTOUR_CONFIG_COLORMAP = "contourColormap",
-
-    VECTOR_OVERLAY_PIXEL_AVERAGING = "vectorOverlayPixelAveraging",
-    VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
-    VECTOR_OVERLAY_THICKNESS = "vectorOverlayThickness",
-    VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
-    VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
-    VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
-
-    WCS_OVERLAY_AST_COLOR = "astColor",
-    WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
-    WCS_OVERLAY_AST_LABELS_VISIBLE = "astLabelsVisible",
-    WCS_OVERLAY_WCS_TYPE = "wcsType",
-    WCS_OVERLAY_COLORBAR_VISIBLE = "colorbarVisible",
-    WCS_OVERLAY_COLORBAR_INTERACTIVE = "colorbarInteractive",
-    WCS_OVERLAY_COLORBAR_POSITION = "colorbarPosition",
-    WCS_OVERLAY_COLORBAR_WIDTH = "colorbarWidth",
-    WCS_OVERLAY_COLORBAR_TICKS_DENSITY = "colorbarTicksDensity",
-    WCS_OVERLAY_COLORBAR_LABEL_VISIBLE = "colorbarLabelVisible",
-    WCS_OVERLAY_BEAM_VISIBLE = "beamVisible",
-    WCS_OVERLAY_BEAM_COLOR = "beamColor",
-    WCS_OVERLAY_BEAM_TYPE = "beamType",
-    WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
-    WCS_OVERLAY_CURSOR_INFO = "cursorInfoVisible",
-
-    LAYOUT = "layout",
-    LAYOUT_DYNAMIC_LAYOUT_ENABLE = "dynamicLayoutEnable",
-    LAYOUT_IS_HIGH_DIM_PRIORITY = "isHighDimPriority",
-    LAYOUT_DYNAMIC_LAYOUT = "dynamicLayout",
-
-    REGION_COLOR = "regionColor",
-    REGION_LINE_WIDTH = "regionLineWidth",
-    REGION_DASH_LENGTH = "regionDashLength",
-    REGION_TYPE = "regionType",
-    REGION_CREATION_MODE = "regionCreationMode",
-    REGION_SIZE = "regionSize",
-
-    ANNOTATION_COLOR = "annotationColor",
-    ANNOTATION_LINE_WIDTH = "annotationLineWidth",
-    ANNOTATION_DASH_LENGTH = "annotationDashLength",
-    POINT_ANNOTATION_SHAPE = "pointAnnotationShape",
-    POINT_ANNOTATION_WIDTH = "pointAnnotationWidth",
-    TEXT_ANNOTATION_LINE_WIDTH = "textAnnotationLineWidth",
-
-    PERFORMANCE_IMAGE_COMPRESSION_QUALITY = "imageCompressionQuality",
-    PERFORMANCE_ANIMATION_COMPRESSION_QUALITY = "animationCompressionQuality",
-    PERFORMANCE_GPU_TILE_CACHE = "GPUTileCache",
-    PERFORMANCE_SYSTEM_TILE_CACHE = "systemTileCache",
-    PERFORMANCE_CONTOUR_DECIMATION = "contourDecimation",
-    PERFORMANCE_CONTOUR_COMPRESSION_LEVEL = "contourCompressionLevel",
-    PERFORMANCE_CONTOUR_CHUNK_SIZE = "contourChunkSize",
-    PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH = "contourControlMapWidth",
-    PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING = "streamContoursWhileZooming",
-    PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
-    PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
-    PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
-    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
-    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
-
-    LOG_EVENT = "logEventList",
-
-    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
-    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
-    CATALOG_QUERY_SIMBAD_MIRRORS = "catalogQuerySimbadMirrors",
-    CATALOG_QUERY_VIZIER_MIRRORS = "catalogQueryVizierMirrors",
-
-    PIXEL_GRID_VISIBLE = "pixelGridVisible",
-    PIXEL_GRID_COLOR = "pixelGridColor",
-    IMAGE_MULTI_PANEL_ENABLED = "imageMultiPanelEnabled",
-    IMAGE_PANEL_MODE = "imagePanelMode",
-    IMAGE_PANEL_COLUMNS = "imagePanelColumns",
-    IMAGE_PANEL_ROWS = "imagePanelRows",
-
-    STATS_PANEL_ENABLED = "statsPanelEnabled",
-    STATS_PANEL_MODE = "statsPanelMode",
-
-    TELEMETRY_UUID = "telemetryUuid",
-    TELEMETRY_MODE = "telemetryMode",
-    TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
-    TELEMETRY_LOGGING = "telemetryLogging",
-
-    CHECK_NEW_RELEASE = "checkNewRelease",
-    LATEST_RELEASE = "latestRelease",
-
-    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport"
-}
+const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
 
 const DEFAULTS = {
     SILENT: {
@@ -182,14 +40,11 @@ const DEFAULTS = {
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
-        colormap: "inferno",
+        colormap: ColorMap.Inferno,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
-        scalingAlpha: 1000,
-        scalingGamma: 1,
         nanColorHex: "#137CBD",
-        nanAlpha: 1,
         useSmoothedBiasContrast: true
     },
     CONTOUR_CONFIG: {
@@ -200,7 +55,7 @@ const DEFAULTS = {
         contourThickness: 1,
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
-        contourColormap: "viridis"
+        contourColormap: ColorMap.Viridis
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
@@ -208,7 +63,7 @@ const DEFAULTS = {
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
-        vectorOverlayColormap: "viridis"
+        vectorOverlayColormap: ColorMap.Viridis
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -239,7 +94,8 @@ const DEFAULTS = {
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
-        regionSize: 30
+        regionSize: 30,
+        regionPasteOffsetUnit: PasteOffsetUnit.Auto
     },
     ANNOTATION: {
         annotationColor: "#ffba01",
@@ -270,7 +126,8 @@ const DEFAULTS = {
     },
     CATALOG: {
         catalogDisplayedColumnSize: 10,
-        catalogTableSeparatorPosition: "60%"
+        catalogTableSeparatorPosition: "60%",
+        catalogAutoSelectImageOverlayColumns: true
     },
     CATALOG_QUERY: {
         catalogQuerySimbadMirrors: ["https://simbad.u-strasbg.fr/simbad/sim-tap/", "https://simbad.cfa.harvard.edu/simbad/sim-tap/"],
@@ -304,34 +161,48 @@ const DEFAULTS = {
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
 
-    static get Instance() {
+    public static get Instance() {
         if (!PreferenceStore.staticInstance) {
             PreferenceStore.staticInstance = new PreferenceStore();
         }
         return PreferenceStore.staticInstance;
     }
 
-    static get defaultCatalogQuerySimbadMirrors(): string[] {
+    static get DefaultCatalogQuerySimbadMirrors(): string[] {
         return [...DEFAULTS.CATALOG_QUERY.catalogQuerySimbadMirrors];
     }
 
-    static get defaultCatalogQueryVizierMirrors(): string[] {
+    static get DefaultCatalogQueryVizierMirrors(): string[] {
         return [...DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors];
     }
 
-    @observable preferences: Map<PreferenceKeys, any>;
+    @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
+
+    /**
+     * Get the minimum constraint from the schema for a preference key
+     */
+    public getMinConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.minimum;
+    }
+
+    /**
+     * Get the maximum constraint from the schema for a preference key
+     */
+    public getMaxConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.maximum;
+    }
 
     /**
      * Whether the preference data is initialized from the preference file or localStorage.
      */
-    @observable preferenceReady: boolean = false;
+    @observable isPreferenceReady: boolean = false;
 
     // getters for global settings
     @computed get theme(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
     }
 
-    @computed get autoLaunch(): boolean {
+    @computed get shouldAutoLaunch(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
     }
 
@@ -359,7 +230,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
     }
 
-    @computed get dragPanning(): boolean {
+    @computed get isDragPanning(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
     }
 
@@ -378,15 +249,15 @@ export class PreferenceStore {
         return false;
     };
 
-    @computed get transparentImageBackground(): boolean {
+    @computed get hasTransparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
     }
 
-    @computed get codeSnippetsEnabled(): boolean {
+    @computed get isCodeSnippetsEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
     }
 
-    @computed get keepLastUsedFolder(): boolean {
+    @computed get shouldKeepLastUsedFolder(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
     }
 
@@ -396,7 +267,8 @@ export class PreferenceStore {
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+        const scaling = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        return isSupportedFrameScaling(scaling) ? scaling : DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
@@ -415,23 +287,47 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
     }
 
-    @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
+    @computed get scalingAlphaLog(): number {
+        return this.getScalingParameter(FrameScaling.LOG);
+    }
+
+    @computed get scalingAlphaPower(): number {
+        return this.getScalingParameter(FrameScaling.POWER);
+    }
+
+    @computed get scalingAlphaSinh(): number {
+        return this.getScalingParameter(FrameScaling.SINH);
+    }
+
+    @computed get scalingAlphaAsinh(): number {
+        return this.getScalingParameter(FrameScaling.ASINH);
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+        return this.getScalingParameter(FrameScaling.GAMMA);
+    }
+
+    public getScalingParameter(scaling: FrameScaling): number {
+        const config = getScalingParameterConfig(scaling);
+        if (!config) {
+            return 1;
+        }
+
+        const storedValue = this.preferences.get(config.preferenceKey);
+        if (storedValue !== undefined) {
+            return storedValue;
+        }
+
+        const legacyAlpha = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY);
+        const isLegacyAlphaSupported = scaling === FrameScaling.LOG || scaling === FrameScaling.POWER;
+        return isLegacyAlphaSupported && legacyAlpha !== undefined ? legacyAlpha : config.defaultValue;
     }
 
     @computed get nanColorHex(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
     }
 
-    @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
-    }
-
-    @computed get useSmoothedBiasContrast(): boolean {
+    @computed get shouldUseSmoothedBiasContrast(): boolean {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
     }
 
@@ -440,7 +336,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
     }
 
-    @computed get contourColormapEnabled(): boolean {
+    @computed get isContourColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
@@ -485,7 +381,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
     }
 
-    @computed get vectorOverlayFractionalIntensity(): boolean {
+    @computed get isVectorOverlayFractionalIntensity(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
     }
 
@@ -493,7 +389,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
     }
 
-    @computed get vectorOverlayColormapEnabled(): boolean {
+    @computed get isVectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
     }
 
@@ -510,11 +406,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
-    @computed get astGridVisible(): boolean {
+    @computed get isAstGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
     }
 
-    @computed get astLabelsVisible(): boolean {
+    @computed get isAstLabelsVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
     }
 
@@ -522,11 +418,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
     }
 
-    @computed get colorbarVisible(): boolean {
+    @computed get isColorbarVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
     }
 
-    @computed get colorbarInteractive(): boolean {
+    @computed get isColorbarInteractive(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
     }
 
@@ -542,11 +438,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
     }
 
-    @computed get colorbarLabelVisible(): boolean {
+    @computed get isColorbarLabelVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
     }
 
-    @computed get beamVisible(): boolean {
+    @computed get isBeamVisible(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
     }
 
@@ -589,6 +485,10 @@ export class PreferenceStore {
 
     @computed get regionSize(): number {
         return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
+    }
+
+    @computed get regionPasteOffsetUnit(): PasteOffsetUnit {
+        return this.preferences.get(PreferenceKeys.REGION_PASTE_OFFSET_UNIT) ?? DEFAULTS.REGION.regionPasteOffsetUnit;
     }
 
     // getters for annotation
@@ -637,11 +537,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
     }
 
-    @computed get streamContoursWhileZooming(): boolean {
+    @computed get shouldStreamContoursWhileZooming(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
     }
 
-    @computed get lowBandwidthMode(): boolean {
+    @computed get isLowBandwidthMode(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
     }
 
@@ -722,7 +622,11 @@ export class PreferenceStore {
         return DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors;
     }
 
-    @computed get pixelGridVisible(): boolean {
+    @computed get shouldAutoSelectImageOverlayCoordinateColumns(): boolean {
+        return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
+    }
+
+    @computed get isPixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
 
@@ -730,11 +634,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
     }
 
-    @computed get limitOverlayRedraw(): boolean {
+    @computed get shouldLimitOverlayRedraw(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
-    @computed get imageMultiPanelEnabled(): boolean {
+    @computed get isImageMultiPanelEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
     }
 
@@ -750,7 +654,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
     }
 
-    @computed get statsPanelEnabled(): boolean {
+    @computed get isStatsPanelEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
     }
 
@@ -759,7 +663,7 @@ export class PreferenceStore {
     }
 
     // getters for telemetry
-    @computed get telemetryConsentShown(): boolean {
+    @computed get hasTelemetryConsentShown(): boolean {
         return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
     }
 
@@ -767,7 +671,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
     }
 
-    @computed get telemetryLogging(): boolean {
+    @computed get isTelemetryLogging(): boolean {
         return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
     }
 
@@ -776,12 +680,12 @@ export class PreferenceStore {
     }
 
     // getters for compatibility
-    @computed get aipsBeamSupport(): boolean {
+    @computed get hasAipsBeamSupport(): boolean {
         return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
     }
 
     // getters for showing new release
-    @computed get checkNewRelease(): boolean {
+    @computed get shouldCheckNewRelease(): boolean {
         return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
     }
 
@@ -794,7 +698,7 @@ export class PreferenceStore {
     }
 
     // getter for dynamic layout setting
-    @computed get dynamicLayoutEnable(): boolean {
+    @computed get isDynamicLayoutEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
     }
 
@@ -819,6 +723,18 @@ export class PreferenceStore {
     @flow.bound *setPreference(key: PreferenceKeys, value: any) {
         if (!key) {
             return false;
+        }
+
+        if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(value)) {
+            return false;
+        }
+
+        const scaling = getScalingForParameterPreference(key);
+        if (scaling !== undefined) {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
+                return false;
+            }
+            value = sanitizeScalingParameter(scaling, value);
         }
 
         // set preference in variable
@@ -901,11 +817,14 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
-            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
             PreferenceKeys.RENDER_CONFIG_SCALING,
-            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
             PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);
@@ -975,7 +894,15 @@ export class PreferenceStore {
      * Reset the region settings
      */
     @action resetRegionSettings = () => {
-        this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
+        this.clearPreferences([
+            PreferenceKeys.REGION_COLOR,
+            PreferenceKeys.REGION_CREATION_MODE,
+            PreferenceKeys.REGION_DASH_LENGTH,
+            PreferenceKeys.REGION_LINE_WIDTH,
+            PreferenceKeys.REGION_TYPE,
+            PreferenceKeys.REGION_SIZE,
+            PreferenceKeys.REGION_PASTE_OFFSET_UNIT
+        ]);
     };
 
     /**
@@ -1009,8 +936,7 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
             PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
             PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT
         ]);
     };
 
@@ -1043,7 +969,13 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS]);
+        this.clearPreferences([
+            PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE,
+            PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
+            PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS,
+            PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS,
+            PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS
+        ]);
     };
 
     /**
@@ -1062,14 +994,16 @@ export class PreferenceStore {
             const keys = Object.keys(preferences);
             for (const key of keys) {
                 const val = preferences[key];
+                if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(val)) {
+                    continue;
+                }
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
-        this.preferenceReady = true;
+        this.isPreferenceReady = true;
     }
 
     private constructor() {
         makeObservable(this);
-        this.preferences = new Map<PreferenceKeys, any>();
     }
 }

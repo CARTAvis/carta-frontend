@@ -1,13 +1,13 @@
 import * as React from "react";
 import {Circle, Layer, Rect, Stage} from "react-konva";
 import {Button, Colors, FormGroup} from "@blueprintjs/core";
-import Konva from "konva";
+import type Konva from "konva";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
 import {clamp} from "utilities";
+import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
-const DRAG_MOVE_INTERVAL = 10;
 const DOUBLE_CLICK_THRESHOLD = 300;
 
 interface BiasContrastSelectComponentProps {
@@ -15,6 +15,7 @@ interface BiasContrastSelectComponentProps {
     contrast: number;
     setBias: (bias: number) => void;
     setContrast: (contrast: number) => void;
+    setBiasContrast: (bias: number, contrast: number) => void;
     resetBias: () => void;
     resetContrast: () => void;
     boardWidth: number;
@@ -27,37 +28,99 @@ interface BiasContrastSelectComponentProps {
 
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
-    private updateValuesTimer;
+    private updateValuesTimer: ReturnType<typeof setTimeout> | undefined;
+    private updateValuesFrame: number | undefined;
+    private pendingValuesPoint: {x: number; y: number} | undefined;
+    private stageRef: Konva.Stage | null = null;
+    private popoutDragCleanup: (() => void) | null = null;
 
-    private updateValues = (x: number, y: number, interval: number) => {
+    private setValuesFromPoint = (x: number, y: number): void => {
+        const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+        const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
+        this.props.setBiasContrast(bias, contrast);
+    };
+
+    private cancelClickUpdate = (): void => {
         clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
+    };
+
+    private cancelDragUpdate = (): void => {
+        if (this.updateValuesFrame !== undefined) {
+            cancelAnimationFrame(this.updateValuesFrame);
+            this.updateValuesFrame = undefined;
+        }
+        this.pendingValuesPoint = undefined;
+    };
+
+    private scheduleClickValues = (x: number, y: number): void => {
+        this.cancelClickUpdate();
         this.updateValuesTimer = setTimeout(() => {
-            const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-            const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
-            this.props.setBias(bias);
-            this.props.setContrast(contrast);
-        }, interval);
+            this.updateValuesTimer = undefined;
+            this.setValuesFromPoint(x, y);
+        }, DOUBLE_CLICK_THRESHOLD);
+    };
+
+    private scheduleDragValues = (x: number, y: number): void => {
+        this.pendingValuesPoint = {x, y};
+        if (this.updateValuesFrame !== undefined) {
+            return;
+        }
+        this.updateValuesFrame = requestAnimationFrame(() => {
+            this.updateValuesFrame = undefined;
+            const point = this.pendingValuesPoint;
+            this.pendingValuesPoint = undefined;
+            if (point) {
+                this.setValuesFromPoint(point.x, point.y);
+            }
+        });
     };
 
     private handleDoubleClick = () => {
-        clearTimeout(this.updateValuesTimer);
+        this.cancelClickUpdate();
+        this.cancelDragUpdate();
         this.props.resetBias();
         this.props.resetContrast();
     };
 
     private handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        const point = event.target.getStage().getPointerPosition();
-        this.updateValues(point.x, point.y, DOUBLE_CLICK_THRESHOLD);
+        const stage = event.target.getStage();
+        const point = stage?.getPointerPosition();
+        if (point) {
+            this.scheduleClickValues(point.x, point.y);
+        }
     };
 
     private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {
         const point = event.target.getPosition();
-        this.updateValues(point.x, point.y, DRAG_MOVE_INTERVAL);
+        this.scheduleDragValues(point.x, point.y);
     };
 
     private resetButton = handleClick => {
-        return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
+        return <Button icon={"refresh"} variant="minimal" size="small" onClick={handleClick} />;
     };
+
+    componentDidUpdate() {
+        this.setupPopoutDragListeners();
+    }
+
+    componentWillUnmount() {
+        this.cancelClickUpdate();
+        this.cancelDragUpdate();
+        this.cleanupPopoutDragListeners();
+    }
+
+    private setupPopoutDragListeners() {
+        this.cleanupPopoutDragListeners();
+        this.popoutDragCleanup = setupKonvaPopoutDragListeners(this.stageRef);
+    }
+
+    private cleanupPopoutDragListeners() {
+        if (this.popoutDragCleanup) {
+            this.popoutDragCleanup();
+            this.popoutDragCleanup = null;
+        }
+    }
 
     render() {
         const twoDimensionBoard = (
@@ -78,7 +141,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
         return (
             <React.Fragment>
-                <Stage className={"bias-contrast-stage"} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
+                <Stage className={"bias-contrast-stage"} ref={ref => (this.stageRef = ref)} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
                     <Layer>{twoDimensionBoard}</Layer>
                 </Stage>
                 <FormGroup label={"Bias"} inline={true}>

@@ -1,9 +1,10 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {AbstractCatalogProfileStore, CatalogInfo, CatalogType} from "models";
-import {ControlHeader, PreferenceStore} from "stores";
-import {getInitIndexMap, getSortedIndexMap, ProcessedColumnData} from "utilities";
+import {CatalogType} from "enums";
+import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
+import {type ControlHeader, PreferenceStore} from "stores";
+import {getInitIndexMap, getSortedIndexMap, type ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -16,11 +17,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType) {
         super(catalogType, catalogData);
-        makeObservable(this);
         this.catalogInfo = catalogInfo;
-        this.catalogHeader = catalogHeader.sort((a, b) => {
-            return a.columnIndex - b.columnIndex;
-        });
+        this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = catalogInfo.dataSize;
 
@@ -34,6 +32,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         };
         this.initSortedIndexMap();
         this.initFilterIndexMap();
+        makeObservable(this);
     }
 
     get updateRequestDataSize() {
@@ -45,8 +44,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return false;
     }
 
-    get loadOntoImage() {
-        return this.loadingData;
+    get isLoadingOntoImage() {
+        return this.isLoadingData;
     }
 
     get maxRows() {
@@ -60,20 +59,20 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let display = false;
+                let isDisplayed = false;
                 if (this.catalogType === CatalogType.SIMBAD && CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
-                    display = true;
+                    isDisplayed = true;
                 } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizierInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
-                    display = true;
+                    isDisplayed = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: isDisplayed, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
         return controlHeaders;
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
         this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }

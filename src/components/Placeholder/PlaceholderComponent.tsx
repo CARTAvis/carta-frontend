@@ -1,19 +1,21 @@
 import * as React from "react";
+import {H2} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {DefaultWidgetConfig, HelpType} from "stores";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig} from "stores";
 
 import "./PlaceholderComponent.scss";
 
 class PlaceholderComponentProps {
     id: string;
     label: string;
-    docked: boolean;
+    isDocked: boolean;
 }
 
 @observer
 export class PlaceholderComponent extends React.Component<PlaceholderComponentProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "placeholder",
             type: "placeholder",
@@ -30,7 +32,7 @@ export class PlaceholderComponent extends React.Component<PlaceholderComponentPr
     render() {
         return (
             <div className="placeholder-container">
-                <h1>{this.props.label}</h1>
+                <H2>{this.props.label}</H2>
             </div>
         );
     }

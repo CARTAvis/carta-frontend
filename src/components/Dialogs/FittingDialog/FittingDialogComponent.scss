@@ -16,12 +16,12 @@
         text-overflow: ellipsis;
     }
 
-    .SplitPane {
+    .split-pane {
         position: inherit !important;
         height: calc(100% - 40px - 65px) !important; // dialog h - heading h - pinned inputs h
         min-height: calc(100% - 40px - 65px) !important; // dialog h - heading h - pinned inputs h
 
-        .Resizer {
+        .split-pane-divider {
             background: rgba(0, 0, 0, 0);
             opacity: 0;
             z-index: 1;
@@ -32,21 +32,21 @@
             -webkit-background-clip: padding;
             background-clip: padding-box;
         }
-        .Resizer.horizontal {
+        .split-pane-divider.vertical {
             height: 15px;
             border-top: 5px solid rgba(255, 255, 255, 0);
             border-bottom: 5px solid rgba(255, 255, 255, 0);
             cursor: row-resize;
             width: 100%;
         }
-        .Resizer.disabled {
+        .split-pane-divider[aria-disabled="true"] {
             cursor: not-allowed;
         }
-        .Resizer.disabled:hover {
+        .split-pane-divider[aria-disabled="true"]:hover {
             border-color: transparent;
         }
 
-        .Pane1 {
+        .split-pane-pane:first-child {
             min-height: 65px; // at least show one input column
             max-height: calc(100% - 15px - 65px); // split pane h - resizer h - pane 2 min h
             width: 100%;
@@ -72,7 +72,7 @@
             }
         }
 
-        .Pane2 {
+        .split-pane-pane:last-child {
             min-height: 65px; // at least show the two tabs
             overflow: auto;
 

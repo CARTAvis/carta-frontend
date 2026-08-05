@@ -9,7 +9,7 @@
 
 .colormap-select-popover {
     .#{$ns}-menu {
-        max-height: 180px;
+        max-height: 240px;
         overflow: auto;
         padding: 0;
     }
@@ -27,7 +27,6 @@
         .options-form {
             padding-right: 10px;
             padding-top: 10px;
-            overflow-y: auto;
             flex-wrap: nowrap;
             display: flex;
             flex-direction: column;
@@ -93,7 +92,7 @@
 
     .histogram-container {
         flex: 3 3 auto;
-        min-width: 0;
+        min-width: 150px;
         .histogram-plot {
             margin-left: 5px;
             height: calc(100% - 35px);

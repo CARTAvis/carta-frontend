@@ -1,11 +1,12 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {HelpType, MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
@@ -13,19 +14,14 @@ import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFitting
 
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
-const KEYCODE_ENTER = 13;
-
-export enum SpectralProfilerSettingsTabs {
-    CONVERSION,
-    STYLING,
-    SMOOTHING,
-    MOMENTS,
-    FITTING
-}
-
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+    private cachedWidgetStore: SpectralProfileWidgetStore | null = null;
+    private readonly disposers: IReactionDisposer[] = [];
+
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
@@ -47,108 +43,132 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
     }
 
-    @computed get widgetStore(): SpectralProfileWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
-            if (widgetStore) {
-                return widgetStore;
-            }
+    get widgetStore(): SpectralProfileWidgetStore | null {
+        if (!this.cachedWidgetStore) {
+            this.cachedWidgetStore = WidgetsStore.Instance.spectralProfileWidgets.get(this.widgetId) ?? null;
         }
-        console.log("can't find store for widget");
-        return null;
+        return this.cachedWidgetStore;
     }
 
     constructor(props: WidgetProps) {
         super(props);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
+
         const appStore = AppStore.Instance;
-        autorun(() => {
-            if (this.widgetStore) {
-                const frame = this.widgetStore.effectiveFrame;
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Z Profile Settings: ${regionString} ${selectedString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const frame = this.widgetStore.effectiveFrame;
+                    if (frame) {
+                        const regionId = this.widgetStore.effectiveRegionId;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
+                        const id = this.floatingSettingsId;
+                        if (id) {
+                            appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
+                        }
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX, widgetStore?.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore?.maxX, widgetStore?.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
-            widgetStore.setXBounds(val, maxX);
+            widgetStore?.setXBounds(val, maxX);
         } else {
             ev.currentTarget.value = minX.toString();
         }
     };
 
     handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX, widgetStore?.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore?.maxX, widgetStore?.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
     };
 
     handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
     };
 
     handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+        if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    handleSelectedTabChanged = (newTabId: string | number) => {
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: widgetStore.lineColorMap,
             lineOrderedKeys: widgetStore.profileSelectionStore.profileOrderedKeys,
@@ -160,7 +180,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
@@ -186,24 +206,26 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                             title="Conversion"
                             panel={
                                 <React.Fragment>
-                                    <SpectralSettingsComponent
-                                        frame={widgetStore.effectiveFrame}
-                                        onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                        onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
-                                        onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                        secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
-                                        disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
-                                    />
+                                    {widgetStore.effectiveFrame && (
+                                        <SpectralSettingsComponent
+                                            frame={widgetStore.effectiveFrame}
+                                            onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                            onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
+                                            onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                            secondaryAxisCursorInfoVisible={widgetStore.isSecondaryAxisCursorInfoVisible}
+                                            disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                        />
+                                    )}
                                     <FormGroup label={"Intensity unit"} inline={true}>
                                         <HTMLSelect
                                             value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
-                                            options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
-                                            onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
+                                            options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : widgetStore.effectiveFrame?.headerUnit ? [widgetStore.effectiveFrame.headerUnit] : []}
+                                            onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame?.setIntensityUnit(ev.currentTarget.value))}
                                             data-testid="spectral-profiler-settings-intensity-unit-dropdown"
                                         />
                                     </FormGroup>
                                     <FormGroup inline={true} label={"Secondary info"}>
-                                        <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
+                                        <Switch checked={widgetStore.isSecondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                     </FormGroup>
                                 </React.Fragment>
                             }
