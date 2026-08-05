@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogDatabase, CatalogType, DialogId, PreferenceKeys, RadiusUnits, SystemType, TelemetryAction} from "enums";
+import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, PreferenceStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
@@ -39,7 +39,7 @@ export class CatalogApiService {
     }
 
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
-        return this.getWithFallback(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${query}`);
+        return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${query}`);
     };
 
     public cancelQuery(type: CatalogDatabase) {
@@ -66,48 +66,21 @@ export class CatalogApiService {
         }
     };
 
-    private getWithFallback = async (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
-        const mirrorUrls = this.getMirrorUrls(database);
-        const fallbackTimeoutMs = 5000;
-        let lastError: any;
-        for (let index = 0; index < mirrorUrls.length; index++) {
-            const baseUrl = mirrorUrls[index];
-            const requestUrl = this.joinUrl(baseUrl, path);
-            try {
-                const response = await instance.get(requestUrl, index === 0 ? undefined : {timeout: fallbackTimeoutMs});
-                if (index > 0) {
-                    this.promoteMirror(database, baseUrl);
-                }
-                return response;
-            } catch (error) {
-                if (axios.isCancel(error)) {
-                    throw error;
-                }
-                lastError = error;
-                if (!this.shouldTryNextMirror(error)) {
-                    throw error;
-                }
-            }
-        }
-        throw lastError;
+    private getFromActiveMirror = (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
+        const activeMirrorUrl = this.getActiveMirrorUrl(database);
+        return instance.get(this.joinUrl(activeMirrorUrl, path));
     };
 
-    private shouldTryNextMirror = (error: any): boolean => {
-        const status = error?.response?.status;
-        if (!status) {
-            return true;
-        }
-        return status >= 500 || status === 429 || status === 408;
-    };
-
-    private getMirrorUrls = (database: CatalogDatabase): string[] => {
+    private getActiveMirrorUrl = (database: CatalogDatabase): string => {
         const preferences = PreferenceStore.Instance;
         const rawUrls = database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
-        const normalized = this.normalizeMirrorUrls(database, rawUrls);
-        if (normalized.length > 0) {
-            return normalized;
+        if (Array.isArray(rawUrls)) {
+            const normalizedUrl = this.normalizeMirrorUrl(database, rawUrls[0]);
+            if (normalizedUrl) {
+                return normalizedUrl;
+            }
         }
-        return database === CatalogDatabase.SIMBAD ? ["https://simbad.u-strasbg.fr/simbad/sim-tap/"] : ["https://vizier.cds.unistra.fr/viz-bin/"];
+        return database === CatalogDatabase.SIMBAD ? "https://simbad.u-strasbg.fr/simbad/sim-tap/" : "https://vizier.cds.unistra.fr/viz-bin/";
     };
 
     private getBenchmarkPath = (database: CatalogDatabase): string => {
@@ -121,38 +94,6 @@ export class CatalogApiService {
     private appendCacheBuster = (path: string): string => {
         const cacheBuster = `_=${Date.now()}`;
         return path.includes("?") ? `${path}&${cacheBuster}` : `${path}?${cacheBuster}`;
-    };
-
-    private promoteMirror = (database: CatalogDatabase, normalizedBaseUrl: string) => {
-        const preferences = PreferenceStore.Instance;
-        const rawList = database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
-        if (!Array.isArray(rawList) || rawList.length === 0) {
-            return;
-        }
-        const normalizedList = rawList.map(url => this.normalizeMirrorUrl(database, url));
-        const targetIndex = normalizedList.findIndex(url => url === normalizedBaseUrl);
-        if (targetIndex <= 0) {
-            return;
-        }
-        const nextList = [...rawList];
-        const [moved] = nextList.splice(targetIndex, 1);
-        nextList.unshift(moved);
-        const key = database === CatalogDatabase.SIMBAD ? PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS : PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS;
-        preferences.setPreference(key, nextList);
-    };
-
-    private normalizeMirrorUrls = (database: CatalogDatabase, urls: string[]): string[] => {
-        const normalized: string[] = [];
-        if (!Array.isArray(urls)) {
-            return normalized;
-        }
-        urls.forEach(url => {
-            const candidate = this.normalizeMirrorUrl(database, url);
-            if (candidate && !normalized.includes(candidate)) {
-                normalized.push(candidate);
-            }
-        });
-        return normalized;
     };
 
     private normalizeMirrorUrl = (database: CatalogDatabase, url: string): string | null => {
@@ -202,7 +143,7 @@ export class CatalogApiService {
         }
 
         try {
-            const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
+            const response = await this.getFromActiveMirror(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.processVizierData(response.data);
             }
@@ -233,7 +174,7 @@ export class CatalogApiService {
         const query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
-            const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
+            const response = await this.getFromActiveMirror(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.processVizierData(response.data);
             }
