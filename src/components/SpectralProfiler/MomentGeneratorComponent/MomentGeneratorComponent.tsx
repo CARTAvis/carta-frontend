@@ -23,7 +23,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedChannelRange(from, widgetStore.channelValueRange[1]);
+            widgetStore.setSelectedDisplayChannelRange(from, widgetStore.displayChannelValueRange[1]);
         }
     };
 
@@ -31,7 +31,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedChannelRange(widgetStore.channelValueRange[0], to);
+            widgetStore.setSelectedDisplayChannelRange(widgetStore.displayChannelValueRange[0], to);
         }
     };
 
@@ -186,13 +186,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame.isPVImage || !frame.isSpectralChannel} />
                 {frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={frame.spectralUnit ? `(${frame.spectralUnit})` : ""}>
+                    <FormGroup label="Range" inline={true} labelInfo={widgetStore.spectralUnitLabel ? `(${widgetStore.spectralUnitLabel})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={widgetStore.channelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
+                                <SafeNumericInput value={widgetStore.displayChannelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={widgetStore.channelValueRange[1]} buttonPosition="none" onValueChange={val => this.onChannelToChanged(val)} data-testid="moment-generator-spectral-range-to-input" />
+                                <SafeNumericInput value={widgetStore.displayChannelValueRange[1]} buttonPosition="none" onValueChange={val => this.onChannelToChanged(val)} data-testid="moment-generator-spectral-range-to-input" />
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>

@@ -20,6 +20,20 @@
         .#{$ns}-form-group .#{$ns}-label {
             min-width: 11em;
         }
+
+        .reference-frame-form-content {
+            min-width: 0;
+
+            .#{$ns}-form-helper-text {
+                white-space: normal;
+            }
+        }
+
+        .redshift-input {
+            .#{$ns}-input-group input {
+                width: 10em;
+            }
+        }
     }
 
     .moment-tab-panel {

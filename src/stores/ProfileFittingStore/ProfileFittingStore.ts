@@ -140,7 +140,7 @@ export class ProfileFittingStore {
         }
 
         let resultString = "";
-        const xUnit = this.widgetStore.effectiveFrame.spectralUnitStr;
+        const xUnit = this.widgetStore.spectralUnitLabel;
         const yUnit = this.widgetStore.yUnit;
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
@@ -348,7 +348,7 @@ export class ProfileFittingStore {
             component.setResultIntegral(fittingResult.integral[2 * i]);
             component.setResultIntegralError(fittingResult.integral[2 * i + 1]);
         }
-        const xUnit = this.widgetStore.effectiveFrame.spectralUnitStr;
+        const xUnit = this.widgetStore.spectralUnitLabel;
         const yUnit = this.widgetStore.yUnit;
         let log: string = fittingResult.log;
         log = log.replaceAll("@yUnit", yUnit ? `(${yUnit})` : "");
@@ -364,6 +364,20 @@ export class ProfileFittingStore {
         makeObservable(this);
         this.widgetStore = widgetStore;
     }
+
+    @action reset = () => {
+        this.setComponents(1, true);
+        this.setHasResult(false);
+        this.setContinuum(FittingContinuum.NONE);
+        this.setYIntercept(0);
+        this.setSlope(0);
+        this.setResultYIntercept(0);
+        this.setResultSlope(0);
+        this.setIsCursorSelectingYIntercept(false);
+        this.setIsCursorSelectingSlope(false);
+        this.setIsCursorSelectingComponentOn(false);
+        this.setHasAutoDetectResult(false);
+    };
 
     @action setFunction = (val: FittingFunction) => {
         this.function = val;

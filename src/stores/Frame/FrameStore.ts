@@ -2083,12 +2083,12 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
-    public convertFreqMHzToSettingWCS = (value: number): number | undefined => {
-        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit) {
+    public convertFreqMHzToSettingWCS = (value: number, spectralType: SpectralType | null = this.spectralType, spectralUnit: SpectralUnit | null = this.spectralUnit): number | undefined => {
+        if (!this.spectralFrame || !isFinite(value) || !spectralType || !spectralUnit) {
             return undefined;
         }
 
-        if (this.spectralType === SpectralType.FREQ && this.spectralUnit === SpectralUnit.MHZ) {
+        if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
             return value;
         }
 
@@ -2097,8 +2097,26 @@ export class FrameStore {
             return undefined;
         }
 
-        const settingWCSValue = this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, nativeWCSValue);
+        const settingWCSValue = this.astSpectralTransform(spectralType, spectralUnit, this.spectralSystem, nativeWCSValue);
         return settingWCSValue && isFinite(settingWCSValue) ? settingWCSValue : undefined;
+    };
+
+    public convertSettingWCSToFreqMHz = (value: number, spectralType: SpectralType | null = this.spectralType, spectralUnit: SpectralUnit | null = this.spectralUnit): number | undefined => {
+        if (!this.spectralFrame || !isFinite(value) || !spectralType || !spectralUnit) {
+            return undefined;
+        }
+
+        if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
+            return value;
+        }
+
+        const nativeWCSValue = AST.transformSpectralPoint(this.spectralFrame, spectralType, spectralUnit, this.spectralSystem, value, false);
+        if (!isFinite(nativeWCSValue)) {
+            return undefined;
+        }
+
+        const freqMHzValue = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.MHZ, this.spectralSystem, nativeWCSValue);
+        return freqMHzValue !== undefined && isFinite(freqMHzValue) ? freqMHzValue : undefined;
     };
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {

@@ -215,4 +215,28 @@ describe("FrameStore", () => {
             expect(lastSettings).toContain("Label(2)=[LSRK] Frequency");
         });
     });
+
+    describe("spectral value conversion helpers", () => {
+        test("converts an explicit setting WCS value to frequency in MHz", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+
+            expect(frame.convertSettingWCSToFreqMHz(500, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500, false);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 12);
+        });
+
+        test("converts frequency in MHz to an explicit setting WCS", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+
+            expect(frame.convertFreqMHzToSettingWCS(100, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 100, false);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 12);
+        });
+    });
 });

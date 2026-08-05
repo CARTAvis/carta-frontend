@@ -150,18 +150,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     @action private reset = () => {
-        const fittingStore = this.fittingStore;
-        fittingStore.setComponents(1, true);
-        fittingStore.setHasResult(false);
-        fittingStore.setContinuum(FittingContinuum.NONE);
-        fittingStore.setYIntercept(0);
-        fittingStore.setSlope(0);
-        fittingStore.setResultYIntercept(0);
-        fittingStore.setResultSlope(0);
-        fittingStore.setIsCursorSelectingYIntercept(false);
-        fittingStore.setIsCursorSelectingSlope(false);
-        fittingStore.setIsCursorSelectingComponentOn(false);
-        fittingStore.setHasAutoDetectResult(false);
+        this.fittingStore.reset();
     };
 
     private fitData = () => {

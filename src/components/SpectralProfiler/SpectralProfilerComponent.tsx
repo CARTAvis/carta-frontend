@@ -106,7 +106,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.isAnimationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
-        const nearestIndex = frame?.findChannelIndexByValue(x);
+        const observedX = this.widgetStore.convertDisplayXToObserved(x);
+        const nearestIndex = frame?.findChannelIndexByValue(observedX);
         if (frame && nearestIndex !== undefined && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
             frame.setChannel(nearestIndex);
             if (!_.isEqual(frame, appStore.activeFrame)) {
@@ -124,7 +125,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return frame.isCoordChannel ? channel : frame.channelValues[channel];
+        const observedValue = frame.isCoordChannel ? channel : frame.channelValues[channel];
+        return this.widgetStore.convertObservedXToDisplay(observedValue);
     }
 
     @computed get requiredChannelValue(): number | null {
@@ -136,7 +138,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return frame.isCoordChannel ? channel : frame.channelValues[channel];
+        const observedValue = frame.isCoordChannel ? channel : frame.channelValues[channel];
+        return this.widgetStore.convertObservedXToDisplay(observedValue);
     }
 
     @computed get linePlotSelectingMode(): LinePlotSelectingMode {
@@ -188,11 +191,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             if (this.widgetStore.isSecondaryAxisCursorInfoVisible) {
                 diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryXData[currentIndex] - secondaryXData[neighborIndex]);
-                const spectralTypeSecondary = frame.spectralTypeSecondary ?? SpectralType.CHANNEL;
+                const spectralTypeSecondary = this.widgetStore.effectiveSecondarySpectralType;
                 const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, spectralTypeSecondary);
 
                 if (spectralTypeSecondary !== SpectralType.CHANNEL) {
-                    secondaryXUnit = frame.spectralUnitSecondary ?? "";
+                    secondaryXUnit = this.widgetStore.secondarySpectralUnitLabel;
                 } else {
                     secondaryChannelString = "Channel";
                 }
@@ -218,10 +221,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
             const label = isCursorInsideLinePlots ? "Cursor" : "Data";
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
-            const cursorXUnit = frame.spectralUnitStr;
+            const cursorXUnit = this.widgetStore.spectralUnitLabel;
 
             // Only generate cursor info if we have a valid cursor value
-            if (!cursorXValue) {
+            if (cursorXValue === null || cursorXValue === undefined || !isFinite(cursorXValue)) {
                 return profilerInfo;
             }
 
@@ -256,7 +259,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private setSelectedRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
             if (this.widgetStore.isSelectingMomentChannelRange) {
-                this.widgetStore.setSelectedChannelRange(min, max);
+                this.widgetStore.setSelectedDisplayChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
                 this.widgetStore.setSelectedMaskRange(min, max);
             }
@@ -371,7 +374,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                linePlotProps.xLabel = frame.spectralLabel;
+                linePlotProps.xLabel = this.widgetStore.xAxisLabel;
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
