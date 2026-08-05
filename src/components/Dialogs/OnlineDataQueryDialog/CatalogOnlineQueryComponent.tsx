@@ -527,7 +527,9 @@ export class CatalogQueryComponent extends React.Component {
         this.cancelMirrorEdit();
         this.cancelMirrorBenchmark();
         const sites = configStore.catalogDB === CatalogDatabase.SIMBAD ? PreferenceStore.DefaultCatalogQuerySimbadMirrors : PreferenceStore.DefaultCatalogQueryVizierMirrors;
-        this.setMirrorSites(configStore.catalogDB, sites);
+        this.pruneMirrorBenchmarks(sites);
+        const key = configStore.catalogDB === CatalogDatabase.SIMBAD ? PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS : PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS;
+        PreferenceStore.Instance.clearPreferences([key]);
     };
 
     private getMirrorLabel = (url: string): string => {
