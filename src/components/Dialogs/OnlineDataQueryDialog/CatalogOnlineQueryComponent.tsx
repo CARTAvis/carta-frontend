@@ -666,6 +666,7 @@ export class CatalogQueryComponent extends React.Component {
                 this.mirrorBenchmarks.set(site, {status: "idle"});
             }
         }
+        this.sortMirrorsByBenchmark(CatalogOnlineQueryConfigStore.Instance.catalogDB);
     };
 
     private syncMirrorBenchmarks = () => {
