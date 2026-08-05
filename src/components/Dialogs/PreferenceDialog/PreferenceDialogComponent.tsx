@@ -10,12 +10,22 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
-import {AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, copyToClipboardWithToast, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
+import {
+    AutoColorPickerComponent,
+    ColormapComponent,
+    ColorPickerComponent,
+    copyToClipboardWithToast,
+    PointShapeSelectComponent,
+    SafeNumericInput,
+    ScalingParameterControlComponent,
+    ScalingSelectComponent,
+    ScrollShadow
+} from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
-import {clamp, SWATCH_COLORS} from "utilities";
+import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -152,6 +162,26 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
+    private renderScalingParameterInput(preference: PreferenceStore): React.ReactNode {
+        const parameterConfig = getScalingParameterConfig(preference.scaling);
+        if (!parameterConfig) {
+            return null;
+        }
+        const parameterName = preference.scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha";
+
+        return (
+            <FormGroup label={parameterName} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={preference.scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={preference.getScalingParameter(preference.scaling)}
+                    onValueChange={newValue => preference.setPreference(parameterConfig.preferenceKey, newValue)}
+                />
+            </FormGroup>
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -258,30 +288,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlpha}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.GAMMA && (
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.GAMMA_MIN}
-                            max={RenderConfigStore.GAMMA_MAX}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={preference.scalingGamma}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
-                        />
-                    </FormGroup>
-                )}
+                {this.renderScalingParameterInput(preference)}
                 <FormGroup inline={true} label="NaN color">
                     <ColorPickerComponent
                         color={tinycolor(preference.nanColorHex).toRgb()}

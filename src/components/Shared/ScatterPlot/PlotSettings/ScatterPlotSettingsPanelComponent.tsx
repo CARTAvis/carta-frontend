@@ -24,8 +24,53 @@ export class ScatterPlotSettingsPanelComponentProps {
     setShowReferenceAxes: (val: boolean) => void;
 }
 
+interface ColormapPreviewSession {
+    baseColormap: string;
+    setColormap: (val: string) => void;
+}
+
 @observer
 export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPlotSettingsPanelComponentProps> {
+    private colormapPreviewSession: ColormapPreviewSession | null = null;
+
+    componentDidUpdate(prevProps: ScatterPlotSettingsPanelComponentProps) {
+        if (prevProps.setColormap !== this.props.setColormap) {
+            this.revertColormapPreview();
+        }
+    }
+
+    componentWillUnmount() {
+        this.revertColormapPreview();
+    }
+
+    private revertColormapPreview() {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+        if (session) {
+            session.setColormap(session.baseColormap);
+        }
+    }
+
+    private handleColormapHovered(colormap: string) {
+        if (!this.colormapPreviewSession) {
+            this.colormapPreviewSession = {baseColormap: this.props.colorMap, setColormap: this.props.setColormap};
+        }
+        if (this.props.colorMap !== colormap) {
+            this.props.setColormap(colormap);
+        }
+    }
+
+    private handleColormapSelected(colormap: string) {
+        this.colormapPreviewSession = null;
+        this.props.setColormap(colormap);
+    }
+
+    private handleColormapDropdownOpenChange(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    }
+
     render() {
         const props = this.props;
         return (
@@ -35,9 +80,9 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         <ColormapComponent
                             inverted={props.isColorMapInverted}
                             selectedColormap={props.colorMap}
-                            onColormapSelect={selected => {
-                                props.setColormap(selected);
-                            }}
+                            onColormapSelect={selected => this.handleColormapSelected(selected)}
+                            onColormapHover={colormap => this.handleColormapHovered(colormap)}
+                            onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true}>

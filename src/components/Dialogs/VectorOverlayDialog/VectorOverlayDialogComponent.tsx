@@ -12,13 +12,18 @@ import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent,
 import {DialogId, HelpType, Polarizations, VectorOverlayDialogTabs, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {type FrameStore} from "stores/Frame";
+import {type FrameStore, type VectorOverlayConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const DataSourceSelect = Select<FrameStore>;
+
+interface ColormapPreviewSession {
+    config: VectorOverlayConfigStore;
+    baseColormap: string;
+}
 
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
@@ -47,13 +52,21 @@ export class VectorOverlayDialogComponent extends React.Component {
     public static readonly MAX_PIXEL_AVERAGING = 64;
 
     private cachedFrame: FrameStore | null = null;
+    private colormapPreviewSession: ColormapPreviewSession | null = null;
 
     componentDidUpdate() {
         const appStore = AppStore.Instance;
+        if (this.colormapPreviewSession && this.colormapPreviewSession.config !== appStore.activeFrame?.vectorOverlayConfig) {
+            this.revertColormapPreview();
+        }
         if (appStore.activeFrame !== this.cachedFrame) {
             this.cachedFrame = appStore.activeFrame;
             this.setDefaultVectorOverlayParameters();
         }
+    }
+
+    componentWillUnmount() {
+        this.revertColormapPreview();
     }
 
     constructor(props: {appStore: AppStore}) {
@@ -86,6 +99,39 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.thresholdOption = CARTA.PolarizationType.Plinear;
         }
     };
+
+    private revertColormapPreview() {
+        const session = this.colormapPreviewSession;
+        this.colormapPreviewSession = null;
+        if (session && session.config.colormap !== session.baseColormap) {
+            session.config.setColormap(session.baseColormap);
+        }
+    }
+
+    private handleColormapHovered(config: VectorOverlayConfigStore, colormap: string) {
+        if (this.colormapPreviewSession?.config !== config) {
+            this.revertColormapPreview();
+            this.colormapPreviewSession = {config, baseColormap: config.colormap};
+        }
+        if (config.colormap !== colormap) {
+            config.setColormap(colormap);
+        }
+    }
+
+    private handleColormapSelected(config: VectorOverlayConfigStore, colormap: string) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.config !== config) {
+            this.revertColormapPreview();
+        } else {
+            this.colormapPreviewSession = null;
+        }
+        config.setColormap(colormap);
+    }
+
+    private handleColormapDropdownOpenChange(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapPreview();
+        }
+    }
 
     @computed get hasConfigChanged(): boolean {
         const config = AppStore.Instance.activeFrame?.vectorOverlayConfig;
@@ -421,7 +467,13 @@ export class VectorOverlayDialogComponent extends React.Component {
                 {dataSource.vectorOverlayConfig.isColormapEnabled ? (
                     <React.Fragment>
                         <FormGroup inline={true} label="Colormap">
-                            <ColormapComponent inverted={false} selectedColormap={dataSource.vectorOverlayConfig.colormap} onColormapSelect={dataSource.vectorOverlayConfig.setColormap} />
+                            <ColormapComponent
+                                inverted={false}
+                                selectedColormap={dataSource.vectorOverlayConfig.colormap}
+                                onColormapSelect={colormap => this.handleColormapSelected(dataSource.vectorOverlayConfig, colormap)}
+                                onColormapHover={colormap => this.handleColormapHovered(dataSource.vectorOverlayConfig, colormap)}
+                                onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
+                            />
                         </FormGroup>
                         <FormGroup inline={true} label="Bias">
                             <SafeNumericInput placeholder="Bias" min={-1.0} max={1.0} value={dataSource.vectorOverlayConfig.colormapBias} majorStepSize={0.1} stepSize={0.1} onValueChange={dataSource.vectorOverlayConfig.setColormapBias} />

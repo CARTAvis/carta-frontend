@@ -5,17 +5,10 @@ import type {WorkspaceRenderConfig} from "models";
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, isSupportedFrameScaling, sanitizeScalingParameter, scaleValueInverse, SUPPORTED_SCALING_TYPES} from "utilities";
 
 export class RenderConfigStore {
-    public static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"]
-    ]);
+    public static readonly SCALING_TYPES = SUPPORTED_SCALING_TYPES;
 
     public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     public static readonly COLOR_MAPS_CUSTOM = "custom";
@@ -24,18 +17,6 @@ export class RenderConfigStore {
     public static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
     /* eslint-disable @typescript-eslint/naming-convention */
-    public static get GAMMA_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 0.1;
-    }
-    public static get GAMMA_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? 2;
-    }
-    public static get ALPHA_MIN(): number {
-        return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? 0.1;
-    }
-    public static get ALPHA_MAX(): number {
-        return AppStore.Instance.preferenceStore.getMaxConstraint(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? 1000000;
-    }
     public static get BIAS_MIN(): number {
         return AppStore.Instance.preferenceStore.getMinConstraint(PreferenceKeys.RENDER_CONFIG_BIAS) ?? -1;
     }
@@ -55,7 +36,10 @@ export class RenderConfigStore {
     @observable bias: number = 0;
     @observable contrast: number = 1;
     @observable gamma: number;
-    @observable alpha: number;
+    @observable alphaLog: number;
+    @observable alphaPower: number;
+    @observable alphaSinh: number;
+    @observable alphaAsinh: number;
     @observable isInverted: boolean = false;
     @observable channelHistogram: CARTA.Histogram.$Properties | undefined = undefined;
     @observable cubeHistogram: CARTA.Histogram.$Properties | null = null;
@@ -83,8 +67,11 @@ export class RenderConfigStore {
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.alpha = preference.scalingAlpha;
-        this.gamma = preference.scalingGamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, preference.scalingAlphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, preference.scalingAlphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, preference.scalingAlphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, preference.scalingAlphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, preference.scalingGamma);
         this.scaling = preference.scaling;
         this.setColorMap(preference.colormap);
         this.scaleMin = new Array<number>(stokesLength).fill(0);
@@ -95,11 +82,7 @@ export class RenderConfigStore {
     }
 
     public static isScalingValid(scaling: FrameScaling): boolean {
-        return RenderConfigStore.SCALING_TYPES.has(scaling);
-    }
-
-    public static isGammaValid(gamma: number): boolean {
-        return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
+        return isSupportedFrameScaling(scaling);
     }
 
     public static isColormapValid(colormap: string): boolean {
@@ -108,6 +91,36 @@ export class RenderConfigStore {
 
     public static isPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
+    }
+
+    @computed get alpha(): number {
+        switch (this.scaling) {
+            case FrameScaling.LOG:
+                return this.alphaLog;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
+    }
+
+    getScalingParameter(scaling: FrameScaling): number {
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                return this.gamma;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
     }
 
     @computed get colorMap() {
@@ -172,7 +185,7 @@ export class RenderConfigStore {
     }
 
     @computed get scalingName() {
-        const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);
+        const scalingType = SUPPORTED_SCALING_TYPES.get(this.scaling);
         if (scalingType) {
             return scalingType;
         } else {
@@ -382,10 +395,10 @@ export class RenderConfigStore {
     /**
      * Set the colormap scaling type.
      *
-     * @param newScaling - The colormap scaling type {@link RenderConfigStore.SCALING_TYPES}.
+     * @param newScaling - The colormap scaling type in {@link SUPPORTED_SCALING_TYPES}.
      */
     @action setScaling = (newScaling: FrameScaling) => {
-        if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
+        if (SUPPORTED_SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
             this.updateSiblings();
         }
@@ -397,17 +410,43 @@ export class RenderConfigStore {
      * @param gamma - The gamma value of the scaling type Gamma.
      */
     @action setGamma = (gamma: number) => {
-        this.gamma = gamma;
-        this.updateSiblings();
+        this.setScalingParameter(FrameScaling.GAMMA, gamma);
     };
 
     /**
-     * Set the alpha value for the scaling type Power.
+     * Set the alpha value for the current scaling type.
      *
-     * @param alpha - The alpha value of the scaling type Power.
+     * @param alpha - The alpha value.
      */
     @action setAlpha = (alpha: number) => {
-        this.alpha = alpha;
+        this.setScalingParameter(this.scaling, alpha);
+    };
+
+    @action setScalingParameter = (scaling: FrameScaling, value: number) => {
+        if (!Number.isFinite(value)) {
+            return;
+        }
+
+        const sanitizedValue = sanitizeScalingParameter(scaling, value);
+        switch (scaling) {
+            case FrameScaling.GAMMA:
+                this.gamma = sanitizedValue;
+                break;
+            case FrameScaling.LOG:
+                this.alphaLog = sanitizedValue;
+                break;
+            case FrameScaling.POWER:
+                this.alphaPower = sanitizedValue;
+                break;
+            case FrameScaling.SINH:
+                this.alphaSinh = sanitizedValue;
+                break;
+            case FrameScaling.ASINH:
+                this.alphaAsinh = sanitizedValue;
+                break;
+            default:
+                return;
+        }
         this.updateSiblings();
     };
 
@@ -435,6 +474,18 @@ export class RenderConfigStore {
      * @param contrast - The contrast value of the colormap.
      */
     @action setContrast = (contrast: number) => {
+        this.contrast = contrast;
+        this.updateSiblings();
+    };
+
+    /**
+     * Set bias and contrast together.
+     *
+     * @param bias - The bias value of the colormap.
+     * @param contrast - The contrast value of the colormap.
+     */
+    @action setBiasContrast = (bias: number, contrast: number) => {
+        this.bias = bias;
         this.contrast = contrast;
         this.updateSiblings();
     };
@@ -494,8 +545,11 @@ export class RenderConfigStore {
 
     @action updateFrom = (other: RenderConfigStore) => {
         this.scaling = other.scaling;
-        this.alpha = other.alpha;
-        this.gamma = other.gamma;
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, other.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, other.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, other.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, other.alphaAsinh, this.alphaAsinh);
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, other.gamma, this.gamma);
         this.bias = other.bias;
         this.contrast = other.contrast;
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
@@ -508,7 +562,9 @@ export class RenderConfigStore {
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling ?? this.scaling;
+        if (isSupportedFrameScaling(config.scaling)) {
+            this.scaling = config.scaling;
+        }
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }
@@ -517,8 +573,11 @@ export class RenderConfigStore {
         }
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
-        this.gamma = config.gamma ?? this.gamma;
-        this.alpha = config.alpha ?? this.alpha;
+        this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, config.gamma ?? this.gamma, this.gamma);
+        this.alphaLog = sanitizeScalingParameter(FrameScaling.LOG, config.alphaLog ?? this.alphaLog, this.alphaLog);
+        this.alphaPower = sanitizeScalingParameter(FrameScaling.POWER, config.alphaPower ?? this.alphaPower, this.alphaPower);
+        this.alphaSinh = sanitizeScalingParameter(FrameScaling.SINH, config.alphaSinh ?? this.alphaSinh, this.alphaSinh);
+        this.alphaAsinh = sanitizeScalingParameter(FrameScaling.ASINH, config.alphaAsinh ?? this.alphaAsinh, this.alphaAsinh);
         this.isInverted = config.inverted ?? this.isInverted;
         this.isVisible = config.visible ?? this.isVisible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
