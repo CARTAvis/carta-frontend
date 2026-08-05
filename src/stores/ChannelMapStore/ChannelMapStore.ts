@@ -146,6 +146,9 @@ export class ChannelMapStore {
             return;
         }
         this.startChannel = startChannel;
+        if (this.isChannelMapEnabled) {
+            this.debouncedSetActiveChannel(startChannel);
+        }
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */

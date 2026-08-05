@@ -162,6 +162,22 @@ describe("ChannelMapStore", () => {
             expect(store.channelArray).toEqual([1, 2, 3, 4]);
         });
 
+        it("updates the active channel when the channel-map range moves", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame as unknown as {channel: number; setChannel: jest.Mock};
+            frame.channel = 0;
+            frame.setChannel.mockClear();
+
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(1);
+            jest.advanceTimersByTime(200);
+
+            expect(frame.setChannel).toHaveBeenCalledWith(1);
+
+            store.setStartChannel(1);
+            store.setChannelMapEnabled(false);
+        });
+
         it("skips when the channel is out of range", () => {
             store.setStartChannel(-1);
             expect(store.startChannel).toBe(1);
