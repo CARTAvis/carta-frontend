@@ -144,7 +144,7 @@
     &__separator {
         height: 1px;
         background: rgba(0, 0, 0, 0.12);
-        margin: 8px 4px 8px 4px;
+        margin: 8px 4px;
 
         .#{$ns}-dark & {
             background: rgba(255, 255, 255, 0.1);
@@ -165,7 +165,7 @@
     &__error {
         color: $red2;
         font-size: 11px;
-        padding: 4px 8px 0 8px;
+        padding: 4px 8px 0;
 
         .#{$ns}-dark & {
             color: $red5;
@@ -217,11 +217,6 @@
         &.is-active {
             background: rgba(50, 164, 103, 0.08);
             border-color: rgba(50, 164, 103, 0.4);
-
-            .#{$ns}-dark & {
-                background: rgba(50, 164, 103, 0.08);
-                border-color: rgba(50, 164, 103, 0.4);
-            }
         }
 
         .#{$ns}-input-group {

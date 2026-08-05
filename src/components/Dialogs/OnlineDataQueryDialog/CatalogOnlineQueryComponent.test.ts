@@ -11,10 +11,10 @@ jest.mock("components/Shared", () => ({
 jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: jest.fn(), getSimbadCatalog: jest.fn()}}}));
 
 const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB: jest.fn(), setObjectQueryStatus: jest.fn()};
+const MOCK_MIRROR_SITES: Partial<Record<CatalogDatabase, string[]>> = {};
 const MOCK_PREFERENCE_STORE = {
-    catalogQuerySimbadMirrors: [] as string[],
-    catalogQueryVizierMirrors: [] as string[],
-    setPreference: jest.fn()
+    getCatalogQueryMirrors: jest.fn((database: CatalogDatabase) => MOCK_MIRROR_SITES[database] ?? []),
+    setCatalogQueryMirrors: jest.fn()
 };
 
 jest.mock("stores", () => ({
@@ -31,7 +31,7 @@ jest.mock("utilities", () => ({
 }));
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {CatalogDatabase, PreferenceKeys} from "enums";
+import {CatalogDatabase} from "enums";
 import {CatalogApiService} from "services";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
@@ -58,14 +58,10 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
-        MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = ["slow", "not-tested", "fast"];
-        MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = ["vizier-default"];
-        MOCK_PREFERENCE_STORE.setPreference.mockImplementation((key: PreferenceKeys, sites: string[]) => {
-            if (key === PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS) {
-                MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = sites;
-            } else {
-                MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = sites;
-            }
+        MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "not-tested", "fast"];
+        MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = ["vizier-default"];
+        MOCK_PREFERENCE_STORE.setCatalogQueryMirrors.mockImplementation((database: CatalogDatabase, sites: string[]) => {
+            MOCK_MIRROR_SITES[database] = sites;
         });
     });
 
@@ -88,8 +84,8 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
 
         expect(abort).toHaveBeenCalledTimes(1);
         expect(component.isBenchmarking).toBe(false);
-        expect(MOCK_PREFERENCE_STORE.setPreference).toHaveBeenCalledWith(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, ["fast", "slow", "not-tested"]);
-        expect(MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors).toEqual(["vizier-default"]);
+        expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow", "not-tested"]);
+        expect(MOCK_MIRROR_SITES[CatalogDatabase.VIZIER]).toEqual(["vizier-default"]);
         expect(component.mirrorBenchmarks.get("not-tested")).toEqual({status: "idle"});
     });
 
@@ -114,10 +110,10 @@ describe("CatalogQueryComponent MobX actions", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
-        MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = ["slow", "fast"];
-        MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = [];
-        MOCK_PREFERENCE_STORE.setPreference.mockImplementation((_key: PreferenceKeys, sites: string[]) => {
-            MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = sites;
+        MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "fast"];
+        MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = [];
+        MOCK_PREFERENCE_STORE.setCatalogQueryMirrors.mockImplementation((database: CatalogDatabase, sites: string[]) => {
+            MOCK_MIRROR_SITES[database] = sites;
         });
     });
 
@@ -136,7 +132,7 @@ describe("CatalogQueryComponent MobX actions", () => {
             expect(component.isBenchmarking).toBe(false);
             expect(component.mirrorBenchmarks.get("fast")).toEqual({status: "ok", ms: 50});
             expect(component.mirrorBenchmarks.get("slow")).toEqual({status: "ok", ms: 200});
-            expect(MOCK_PREFERENCE_STORE.setPreference).toHaveBeenCalledWith(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, ["fast", "slow"]);
+            expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
             expect(consoleWarn).not.toHaveBeenCalled();
         } finally {
             dispose();

@@ -10,6 +10,11 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 
 import {TelemetryService} from "./TelemetryService";
 
+const DEFAULT_MIRROR_URLS = {
+    [CatalogDatabase.SIMBAD]: "https://simbad.u-strasbg.fr/simbad/sim-tap/",
+    [CatalogDatabase.VIZIER]: "https://vizier.cds.unistra.fr/viz-bin/"
+};
+
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
@@ -89,15 +94,8 @@ export class CatalogApiService {
     };
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {
-        const preferences = PreferenceStore.Instance;
-        const rawUrls = database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
-        if (Array.isArray(rawUrls)) {
-            const normalizedUrl = this.normalizeMirrorUrl(database, rawUrls[0]);
-            if (normalizedUrl) {
-                return normalizedUrl;
-            }
-        }
-        return database === CatalogDatabase.SIMBAD ? "https://simbad.u-strasbg.fr/simbad/sim-tap/" : "https://vizier.cds.unistra.fr/viz-bin/";
+        const [activeMirrorUrl] = PreferenceStore.Instance.getCatalogQueryMirrors(database);
+        return this.normalizeMirrorUrl(database, activeMirrorUrl) ?? DEFAULT_MIRROR_URLS[database];
     };
 
     private getBenchmarkPath = (database: CatalogDatabase): string => {
@@ -113,7 +111,7 @@ export class CatalogApiService {
         return path.includes("?") ? `${path}&${cacheBuster}` : `${path}?${cacheBuster}`;
     };
 
-    private normalizeMirrorUrl = (database: CatalogDatabase, url: string): string | null => {
+    private normalizeMirrorUrl = (database: CatalogDatabase, url?: string): string | null => {
         if (!url || typeof url !== "string") {
             return null;
         }
@@ -125,11 +123,8 @@ export class CatalogApiService {
         normalized = normalized.replace(/\/+$/, "");
 
         if (database === CatalogDatabase.VIZIER) {
-            normalized = normalized.replace(/\/(VizieR|vizier)$/i, "");
-            normalized = normalized.replace(/\/viz-bin$/i, "/viz-bin");
-            if (!/\/viz-bin$/i.test(normalized)) {
-                normalized = `${normalized}/viz-bin`;
-            }
+            normalized = normalized.replace(/\/(?:vizier|viz-bin)$/i, "");
+            normalized = `${normalized}/viz-bin`;
         } else if (!/sim-tap$/i.test(normalized)) {
             const hasSimbadPath = /\/simbad(\/|$)/i.test(normalized);
             normalized = hasSimbadPath ? `${normalized}/sim-tap` : `${normalized}/simbad/sim-tap`;

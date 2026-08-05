@@ -2,7 +2,22 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {
+    BeamType,
+    CatalogDatabase,
+    ColorMap,
+    ContourGeneratorType,
+    CursorInfoVisibility,
+    FileFilteringType,
+    FileFilterMode,
+    FrameScaling,
+    ImagePanelMode,
+    PasteOffsetUnit,
+    PreferenceKeys,
+    SpectralType,
+    TelemetryMode,
+    WCSMatchingType
+} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
@@ -130,8 +145,8 @@ const DEFAULTS = {
         catalogAutoSelectImageOverlayColumns: true
     },
     CATALOG_QUERY: {
-        catalogQuerySimbadMirrors: ["https://simbad.u-strasbg.fr/simbad/sim-tap/", "https://simbad.cfa.harvard.edu/simbad/sim-tap/"],
-        catalogQueryVizierMirrors: [
+        [CatalogDatabase.SIMBAD]: ["https://simbad.u-strasbg.fr/simbad/sim-tap/", "https://simbad.cfa.harvard.edu/simbad/sim-tap/"],
+        [CatalogDatabase.VIZIER]: [
             "https://vizier.cds.unistra.fr/vizier/",
             "http://vizier.nao.ac.jp/vizier/",
             "https://vizier.iucaa.in/vizier/",
@@ -155,6 +170,11 @@ const DEFAULTS = {
     }
 };
 
+const CATALOG_QUERY_MIRROR_PREFERENCE_KEYS = {
+    [CatalogDatabase.SIMBAD]: PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS,
+    [CatalogDatabase.VIZIER]: PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS
+};
+
 /**
  * The store manages the preference setting
  */
@@ -166,14 +186,6 @@ export class PreferenceStore {
             PreferenceStore.staticInstance = new PreferenceStore();
         }
         return PreferenceStore.staticInstance;
-    }
-
-    static get DefaultCatalogQuerySimbadMirrors(): string[] {
-        return [...DEFAULTS.CATALOG_QUERY.catalogQuerySimbadMirrors];
-    }
-
-    static get DefaultCatalogQueryVizierMirrors(): string[] {
-        return [...DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors];
     }
 
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
@@ -600,26 +612,24 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
-    @computed get catalogQuerySimbadMirrors(): string[] {
-        const mirrors = this.preferences.get(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS);
+    public getCatalogQueryMirrors(database: CatalogDatabase): string[] {
+        const preferenceKey = CATALOG_QUERY_MIRROR_PREFERENCE_KEYS[database];
+        const mirrors = this.preferences.get(preferenceKey);
         if (Array.isArray(mirrors)) {
             const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
             if (cleaned.length > 0) {
                 return cleaned;
             }
         }
-        return DEFAULTS.CATALOG_QUERY.catalogQuerySimbadMirrors;
+        return DEFAULTS.CATALOG_QUERY[database];
     }
 
-    @computed get catalogQueryVizierMirrors(): string[] {
-        const mirrors = this.preferences.get(PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS);
-        if (Array.isArray(mirrors)) {
-            const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
-            if (cleaned.length > 0) {
-                return cleaned;
-            }
-        }
-        return DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors;
+    public setCatalogQueryMirrors(database: CatalogDatabase, mirrors: string[]) {
+        this.setPreference(CATALOG_QUERY_MIRROR_PREFERENCE_KEYS[database], mirrors);
+    }
+
+    public resetCatalogQueryMirrors(database: CatalogDatabase) {
+        this.clearPreferences([CATALOG_QUERY_MIRROR_PREFERENCE_KEYS[database]]);
     }
 
     @computed get shouldAutoSelectImageOverlayCoordinateColumns(): boolean {
@@ -973,8 +983,7 @@ export class PreferenceStore {
             PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE,
             PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
             PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS,
-            PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS,
-            PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS
+            ...Object.values(CATALOG_QUERY_MIRROR_PREFERENCE_KEYS)
         ]);
     };
 
