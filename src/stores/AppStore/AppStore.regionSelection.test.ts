@@ -88,6 +88,7 @@ jest.mock("stores", () => ({
     AnimatorStore: {Instance: MockMakeStore()},
     CatalogStore: {Instance: MockMakeStore()},
     ChannelMapStore: {Instance: MockMakeStore()},
+    ContourRequestStore: {Instance: MockMakeStore({acceptsContourData: jest.fn(() => true)})},
     DialogStore: {Instance: MockMakeStore()},
     DynamicLayoutStore: {Instance: MockMakeStore()},
     FileBrowserStore: {Instance: MockMakeStore()},

@@ -283,6 +283,29 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     return destChannels;
 }
 
+/** Returns whether two frames use the same spectral coordinate reference. */
+export function shareSpectralReference(frameA: FrameStore, frameB: FrameStore): boolean {
+    return frameA === frameB || frameA.spectralReference === frameB || frameB.spectralReference === frameA || (!!frameA.spectralReference && frameA.spectralReference === frameB.spectralReference);
+}
+
+/** Converts a channel from the base frame's coordinate space to the target frame's. */
+export function transformChannelToFrame(baseFrame: FrameStore, targetFrame: FrameStore, channel: number, matchingType: SpectralType): number {
+    if (targetFrame === baseFrame) {
+        return channel;
+    }
+    if (baseFrame.spectralReference && targetFrame.spectralReference && baseFrame.spectralReference === targetFrame.spectralReference) {
+        const referenceChannel = Math.round(getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel));
+        return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, referenceChannel));
+    }
+    if (targetFrame.spectralReference) {
+        return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, channel));
+    }
+    if (baseFrame.spectralReference) {
+        return Math.round(getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel));
+    }
+    return channel;
+}
+
 export function isAstBad(value: number) {
     return !isFinite(value) || value === -Number.MAX_VALUE;
 }

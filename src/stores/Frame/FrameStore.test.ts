@@ -128,6 +128,15 @@ describe("FrameStore", () => {
                 channelMapStore.setChannelMapEnabled(false);
             }
         });
+
+        test("marks an empty channel contour response complete", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            frame.contourConfig.setContourConfiguration([1], CARTA.SmoothingMode.NoSmoothing, 1);
+
+            frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 1}));
+
+            expect(frame.contourStores.get(1)?.progress[2]).toBe(1);
+        });
     });
 
     describe("beamProperties", () => {

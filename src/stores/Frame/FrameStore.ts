@@ -1093,7 +1093,7 @@ export class FrameStore {
         let totalProgress = 0;
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.indexOf(level) !== -1) {
-                totalProgress += contourStore.progress; // need to be updated
+                totalProgress += contourStore.progress[this.requiredChannel] ?? 0;
             }
         });
 
@@ -2648,15 +2648,28 @@ export class FrameStore {
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const processedData = ProtobufProcessing.processContourData(contourImageData);
+        const contourChannel = processedData.channel ?? 0;
         if (!AppStore.Instance.channelMapStore.isChannelMapEnabled) {
             this.stokes = processedData.stokes ?? 0;
-            this.channel = processedData.channel ?? 0;
+            this.channel = contourChannel;
         }
 
         const animatorStore = AnimatorStore.Instance;
         if (animatorStore.isServerAnimationActive) {
             this.requiredChannel = processedData.channel ?? 0;
             this.requiredStokes = processedData.stokes ?? 0;
+        }
+
+        if (!processedData.contourSets?.length && processedData.progress != null) {
+            for (const level of this.contourConfig.levels) {
+                let contourStore = this.contourStores.get(level);
+                if (!contourStore) {
+                    contourStore = new ContourStore();
+                    this.contourStores.set(level, contourStore);
+                }
+                contourStore.clearData(contourChannel);
+                contourStore.setProgress(contourChannel, processedData.progress);
+            }
         }
 
         for (const contourSet of processedData.contourSets ?? []) {
@@ -2669,11 +2682,11 @@ export class FrameStore {
 
                 if (processedData.progress != null) {
                     if (!contourSet.coordinates) {
-                        contourStore.setProgress(processedData.progress);
-                    } else if (!contourStore.isComplete && processedData.progress > 0) {
-                        contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                        contourStore.setProgress(contourChannel, processedData.progress);
+                    } else if (!contourStore.isComplete(contourChannel) && processedData.progress > 0) {
+                        contourStore.addContourData(contourChannel, contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
                     } else {
-                        contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                        contourStore.setContourData(contourChannel, contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
                     }
                 }
             }
@@ -3008,6 +3021,11 @@ export class FrameStore {
 
         const preferenceStore = PreferenceStore.Instance;
         this.contourConfig.setEnabled(true);
+
+        if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
+            AppStore.Instance.contourRequestStore.throttledRequestContours(AppStore.Instance.channelMapStore.displayedFrame ?? this);
+            return;
+        }
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.SetContourParameters.$Properties = {

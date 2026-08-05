@@ -695,14 +695,15 @@ export class BackendService {
     }
 
     @action("set contour parameters")
-    setContourParameters(message: CARTA.SetContourParameters.$Properties) {
+    setContourParameters(message: CARTA.SetContourParameters.$Properties): number | null {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, this.eventCounter, message, false);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, CARTA.SetContourParameters.encode(message).finish())) {
-                return true;
+                return requestId;
             }
         }
-        return false;
+        return null;
     }
 
     @action("set vector overlay parameters")
