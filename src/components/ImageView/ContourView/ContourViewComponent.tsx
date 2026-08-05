@@ -6,7 +6,7 @@ import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, shareSpectralReference, subtract2D, transformChannelToFrame} from "utilities";
+import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D, transformChannelToFrame} from "utilities";
 
 import "./ContourViewComponent.scss";
 
@@ -157,7 +157,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
             for (let i = contourFrames.length - 1; i >= 0; --i) {
                 const contourFrame = contourFrames[i];
-                const contourChannel = shareSpectralReference(baseFrame, contourFrame) ? transformChannelToFrame(baseFrame, contourFrame, channel, appStore.spectralMatchingType) : contourFrame.requiredChannel;
+                const contourChannel = transformChannelToFrame(baseFrame, contourFrame, channel, appStore.spectralMatchingType);
                 this.renderFrameContours(contourFrame, baseFrame, contourChannel);
             }
         });

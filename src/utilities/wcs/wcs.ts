@@ -283,11 +283,6 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     return destChannels;
 }
 
-/** Returns whether two frames use the same spectral coordinate reference. */
-export function shareSpectralReference(frameA: FrameStore, frameB: FrameStore): boolean {
-    return frameA === frameB || frameA.spectralReference === frameB || frameB.spectralReference === frameA || (!!frameA.spectralReference && frameA.spectralReference === frameB.spectralReference);
-}
-
 /** Converts a channel from the base frame's coordinate space to the target frame's. */
 export function transformChannelToFrame(baseFrame: FrameStore, targetFrame: FrameStore, channel: number, matchingType: SpectralType): number {
     if (targetFrame === baseFrame) {

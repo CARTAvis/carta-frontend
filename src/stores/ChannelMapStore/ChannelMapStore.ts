@@ -54,7 +54,9 @@ export class ChannelMapStore {
         reaction(
             () => {
                 const frame = this.displayedFrame;
-                const contours = frame ? (AppStore.Instance.contourFrames?.get(frame) ?? []).map(contourFrame => `${contourFrame.frameInfo.fileId}:${contourFrame.contourConfig.levels.join(",")}`).join("|") : "";
+                const contours = frame
+                    ? (AppStore.Instance.contourFrames?.get(frame) ?? []).map(contourFrame => `${contourFrame.frameInfo.fileId}:${contourFrame.requiredStokes}:${contourFrame.contourConfig.levels.join(",")}`).join("|")
+                    : "";
                 return {frame, contours, channels: this.channelArray.join(","), stokes: frame?.requiredStokes, enabled: this.isChannelMapEnabled};
             },
             ({frame}) => {

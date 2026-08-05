@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 
 import {AppStore, type FrameStore} from "stores";
-import {shareSpectralReference, transformChannelToFrame} from "utilities";
+import {transformChannelToFrame} from "utilities";
 
 interface ContourRequest {
     frame: FrameStore;
@@ -62,7 +62,7 @@ export class ContourRequestStore {
     }
 
     private channelsForFrame(baseFrame: FrameStore, contourFrame: FrameStore, channels: number[]): number[] {
-        const frameChannels = shareSpectralReference(baseFrame, contourFrame) ? channels.map(channel => transformChannelToFrame(baseFrame, contourFrame, channel, AppStore.Instance.spectralMatchingType)) : [contourFrame.requiredChannel];
+        const frameChannels = channels.map(channel => transformChannelToFrame(baseFrame, contourFrame, channel, AppStore.Instance.spectralMatchingType));
         return [...new Set(frameChannels.filter(channel => Number.isInteger(channel) && channel >= 0 && channel < contourFrame.numChannels))];
     }
 

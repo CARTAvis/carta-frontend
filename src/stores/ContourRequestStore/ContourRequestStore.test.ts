@@ -25,7 +25,6 @@ jest.mock("stores", () => ({
 }));
 
 jest.mock("utilities", () => ({
-    shareSpectralReference: jest.fn(() => true),
     transformChannelToFrame: jest.fn((_base, _target, channel) => channel)
 }));
 
@@ -33,6 +32,8 @@ describe("ContourRequestStore", () => {
     const appStore = jest.requireMock("stores").AppStore.Instance;
     const mockSubscribe = appStore.backendService.channelMapFlowControlStream.subscribe as jest.Mock;
     const mockSetContourParameters = appStore.backendService.setContourParameters as jest.Mock;
+    let store: ContourRequestStore;
+    let onFlowControl: (event: unknown) => void;
     const frame = {
         contourConfig: {isEnabled: true, levels: [1], smoothingFactor: 1, smoothingMode: 0},
         contourStores: new Map(),
@@ -43,6 +44,11 @@ describe("ContourRequestStore", () => {
         spectralReference: null
     };
 
+    beforeAll(() => {
+        store = ContourRequestStore.Instance;
+        onFlowControl = mockSubscribe.mock.calls[0][0];
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
         mockSetContourParameters.mockReturnValueOnce(41).mockReturnValueOnce(42).mockReturnValueOnce(43);
@@ -50,13 +56,11 @@ describe("ContourRequestStore", () => {
     });
 
     test("requests sparse channel-map contours one channel at a time", () => {
-        const store = ContourRequestStore.Instance;
         store.requestContours(frame as any);
 
         expect(mockSetContourParameters).toHaveBeenCalledTimes(1);
         expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({channel: 3, stokes: 1}));
 
-        const onFlowControl = mockSubscribe.mock.calls[0][0];
         onFlowControl({eventId: 41, flowControl: {fileId: 7, completedChannel: 3, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
         expect(mockSetContourParameters).toHaveBeenCalledTimes(2);
         expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({channel: 1, stokes: 1}));
@@ -68,8 +72,28 @@ describe("ContourRequestStore", () => {
         onFlowControl({eventId: 43, flowControl: {fileId: 7, completedChannel: 5, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
     });
 
+    test("requests every displayed channel for a spatially matched contour frame", () => {
+        const spatialFrame = {
+            ...frame,
+            frameInfo: {fileId: 8, fileInfoExtended: {depth: 8, height: 10, width: 10}},
+            requiredChannel: 2
+        };
+        appStore.contourFrames = new Map([[frame, [spatialFrame]]]);
+
+        store.requestContours(frame as any);
+
+        expect(mockSetContourParameters).toHaveBeenCalledTimes(1);
+        expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({fileId: 8, channel: 1, stokes: 1}));
+
+        onFlowControl({eventId: 41, flowControl: {fileId: 8, completedChannel: 1, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+        expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({fileId: 8, channel: 3, stokes: 1}));
+
+        onFlowControl({eventId: 42, flowControl: {fileId: 8, completedChannel: 3, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+        expect(mockSetContourParameters).toHaveBeenLastCalledWith(expect.objectContaining({fileId: 8, channel: 5, stokes: 1}));
+        onFlowControl({eventId: 43, flowControl: {fileId: 8, completedChannel: 5, status: CARTA.ChannelMapFlowControl.Status.COMPLETED}});
+    });
+
     test("ignores stale channels while channel-map mode is active", () => {
-        const store = ContourRequestStore.Instance;
         store.requestContours(frame as any);
 
         expect(store.acceptsContourData({fileId: 7, channel: 3, stokes: 1})).toBe(true);
