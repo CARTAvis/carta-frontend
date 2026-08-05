@@ -1,3 +1,6 @@
+import type {DragEvent} from "react";
+import {autorun, runInAction} from "mobx";
+
 jest.mock("components/Shared", () => ({
     AppToaster: {show: jest.fn()},
     ClearableNumericInputComponent: jest.fn(),
@@ -7,7 +10,7 @@ jest.mock("components/Shared", () => ({
 }));
 jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: jest.fn(), getSimbadCatalog: jest.fn()}}}));
 
-const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setObjectQueryStatus: jest.fn()};
+const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB: jest.fn(), setObjectQueryStatus: jest.fn()};
 const MOCK_PREFERENCE_STORE = {
     catalogQuerySimbadMirrors: [] as string[],
     catalogQueryVizierMirrors: [] as string[],
@@ -36,40 +39,143 @@ import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 type MirrorBenchmark = {status: "idle" | "pending" | "ok" | "fail"; ms?: number};
 
 interface TestableCatalogQueryComponent {
+    dragSourceMirrorIndex?: number;
+    dragOverMirrorIndex?: number;
     isBenchmarking: boolean;
     mirrorBenchmarks: Map<string, MirrorBenchmark>;
     mirrorBenchmarkAbort?: {abort: () => void};
+    mirrorBenchmarkDatabase?: CatalogDatabase;
     cancelMirrorBenchmark: () => void;
+    handleDatabaseSelect: (database: CatalogDatabase) => void;
+    handleMirrorDragStart: (index: number) => (event: DragEvent<HTMLDivElement>) => void;
+    handleMirrorDragOver: (index: number) => (event: DragEvent<HTMLDivElement>) => void;
+    handleMirrorDragEnd: () => void;
     handleObjectUpdate: () => void;
+    runMirrorBenchmark: () => Promise<void>;
 }
 
 describe("CatalogQueryComponent mirror benchmark cancellation", () => {
     beforeEach(() => {
+        jest.clearAllMocks();
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
         MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = ["slow", "not-tested", "fast"];
-        MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = [];
-        MOCK_PREFERENCE_STORE.setPreference.mockImplementation((_key: string, sites: string[]) => {
-            MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = sites;
+        MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = ["vizier-default"];
+        MOCK_PREFERENCE_STORE.setPreference.mockImplementation((key: PreferenceKeys, sites: string[]) => {
+            if (key === PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS) {
+                MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = sites;
+            } else {
+                MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = sites;
+            }
         });
     });
 
-    test("sorts completed benchmark results when the run is cancelled", () => {
+    test("sorts completed results for the benchmarked database when selection changes before cancellation", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
         const abort = jest.fn();
-        component.isBenchmarking = true;
-        component.mirrorBenchmarkAbort = {abort};
-        component.mirrorBenchmarks = new Map([
-            ["slow", {status: "ok", ms: 200}],
-            ["not-tested", {status: "pending"}],
-            ["fast", {status: "ok", ms: 50}]
-        ]);
+        runInAction(() => {
+            component.isBenchmarking = true;
+            component.mirrorBenchmarkAbort = {abort};
+            component.mirrorBenchmarkDatabase = CatalogDatabase.SIMBAD;
+            component.mirrorBenchmarks = new Map([
+                ["slow", {status: "ok", ms: 200}],
+                ["not-tested", {status: "pending"}],
+                ["fast", {status: "ok", ms: 50}]
+            ]);
+        });
+        MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.VIZIER;
 
         component.cancelMirrorBenchmark();
 
         expect(abort).toHaveBeenCalledTimes(1);
         expect(component.isBenchmarking).toBe(false);
         expect(MOCK_PREFERENCE_STORE.setPreference).toHaveBeenCalledWith(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, ["fast", "slow", "not-tested"]);
+        expect(MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors).toEqual(["vizier-default"]);
         expect(component.mirrorBenchmarks.get("not-tested")).toEqual({status: "idle"});
+    });
+
+    test("ignores database changes while a mirror benchmark is running", () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        runInAction(() => {
+            component.isBenchmarking = true;
+        });
+
+        component.handleDatabaseSelect(CatalogDatabase.VIZIER);
+        expect(MOCK_CONFIG_STORE.setCatalogDB).not.toHaveBeenCalled();
+
+        runInAction(() => {
+            component.isBenchmarking = false;
+        });
+        component.handleDatabaseSelect(CatalogDatabase.VIZIER);
+        expect(MOCK_CONFIG_STORE.setCatalogDB).toHaveBeenCalledWith(CatalogDatabase.VIZIER);
+    });
+});
+
+describe("CatalogQueryComponent MobX actions", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
+        MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = ["slow", "fast"];
+        MOCK_PREFERENCE_STORE.catalogQueryVizierMirrors = [];
+        MOCK_PREFERENCE_STORE.setPreference.mockImplementation((_key: PreferenceKeys, sites: string[]) => {
+            MOCK_PREFERENCE_STORE.catalogQuerySimbadMirrors = sites;
+        });
+    });
+
+    test("updates benchmark observables inside actions after asynchronous requests", async () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        const consoleWarn = jest.spyOn(console, "warn").mockImplementation();
+        const dispose = autorun(() => {
+            void component.isBenchmarking;
+            Array.from(component.mirrorBenchmarks.values());
+        });
+        (CatalogApiService.Instance.benchmarkMirror as jest.Mock).mockImplementation((_database, site) => Promise.resolve(site === "fast" ? 50 : 200));
+
+        try {
+            await component.runMirrorBenchmark();
+
+            expect(component.isBenchmarking).toBe(false);
+            expect(component.mirrorBenchmarks.get("fast")).toEqual({status: "ok", ms: 50});
+            expect(component.mirrorBenchmarks.get("slow")).toEqual({status: "ok", ms: 200});
+            expect(MOCK_PREFERENCE_STORE.setPreference).toHaveBeenCalledWith(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, ["fast", "slow"]);
+            expect(consoleWarn).not.toHaveBeenCalled();
+        } finally {
+            dispose();
+            consoleWarn.mockRestore();
+        }
+    });
+
+    test("updates drag observables inside actions", () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        const consoleWarn = jest.spyOn(console, "warn").mockImplementation();
+        const dispose = autorun(() => {
+            void component.dragSourceMirrorIndex;
+            void component.dragOverMirrorIndex;
+        });
+        const setData = jest.fn();
+        const setDragImage = jest.fn();
+        const dragHandle = document.createElement("div");
+        const mirrorItem = document.createElement("div");
+        jest.spyOn(dragHandle, "closest").mockReturnValue(mirrorItem);
+        const dragStartEvent = {currentTarget: dragHandle, dataTransfer: {effectAllowed: "none", setData, setDragImage}} as unknown as DragEvent<HTMLDivElement>;
+        const dragOverEvent = {preventDefault: jest.fn()} as unknown as DragEvent<HTMLDivElement>;
+
+        try {
+            component.handleMirrorDragStart(1)(dragStartEvent);
+            component.handleMirrorDragOver(2)(dragOverEvent);
+
+            expect(component.dragSourceMirrorIndex).toBe(1);
+            expect(component.dragOverMirrorIndex).toBe(2);
+            expect(setData).toHaveBeenCalledWith("text/plain", "1");
+            expect(setDragImage).toHaveBeenCalledWith(mirrorItem, 0, 0);
+
+            component.handleMirrorDragEnd();
+            expect(component.dragSourceMirrorIndex).toBeUndefined();
+            expect(component.dragOverMirrorIndex).toBeUndefined();
+            expect(consoleWarn).not.toHaveBeenCalled();
+        } finally {
+            dispose();
+            consoleWarn.mockRestore();
+        }
     });
 });
 
