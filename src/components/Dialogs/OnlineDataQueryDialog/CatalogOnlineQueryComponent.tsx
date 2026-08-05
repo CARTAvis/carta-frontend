@@ -579,6 +579,14 @@ export class CatalogQueryComponent extends React.Component {
         }
     };
 
+    private normalizeMirrorUrl = (value: string): string => {
+        try {
+            return new URL(value).toString();
+        } catch {
+            return value;
+        }
+    };
+
     @action private handleAddMirror = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const url = this.newMirrorUrl.trim();
@@ -590,7 +598,8 @@ export class CatalogQueryComponent extends React.Component {
             return;
         }
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
-        if (sites.includes(url)) {
+        const normalized = this.normalizeMirrorUrl(url);
+        if (sites.some(site => this.normalizeMirrorUrl(site) === normalized)) {
             this.addMirrorError = "This mirror is already in the list.";
             return;
         }
@@ -629,7 +638,8 @@ export class CatalogQueryComponent extends React.Component {
         const value = this.editingMirrorValue.trim();
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
-        const isDuplicate = sites.some((site, i) => i !== index && site === value);
+        const normalizedValue = this.normalizeMirrorUrl(value);
+        const isDuplicate = sites.some((site, i) => i !== index && this.normalizeMirrorUrl(site) === normalizedValue);
         if (this.isValidMirrorUrl(value) && !isDuplicate && value !== sites[index]) {
             sites[index] = value;
             this.setMirrorSites(configStore.catalogDB, sites);
