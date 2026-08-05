@@ -68,7 +68,23 @@ export class CatalogApiService {
 
     private getFromActiveMirror = (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
         const activeMirrorUrl = this.getActiveMirrorUrl(database);
-        return instance.get(this.joinUrl(activeMirrorUrl, path));
+        return instance.get(this.joinUrl(activeMirrorUrl, path)).catch(error => {
+            if (axios.isCancel(error)) {
+                throw error;
+            }
+            throw this.createMirrorRequestError(activeMirrorUrl, error);
+        });
+    };
+
+    private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {
+        let mirrorLabel = mirrorUrl;
+        try {
+            mirrorLabel = new URL(mirrorUrl).host;
+        } catch {
+            // Use the full URL when it cannot be parsed.
+        }
+        const details = error?.message ? ` Details: ${error.message}` : "";
+        return new Error(`Request to mirror ${mirrorLabel} failed. The mirror may be unavailable. Select another mirror site and retry.${details}`);
     };
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {

@@ -1,11 +1,13 @@
 jest.mock("components/Shared", () => ({
+    AppToaster: {show: jest.fn()},
     ClearableNumericInputComponent: jest.fn(),
+    ErrorToast: jest.fn((message: string) => ({message})),
     SafeNumericInput: jest.fn(),
     ScrollShadow: jest.fn()
 }));
-jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: jest.fn()}}}));
+jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: jest.fn(), getSimbadCatalog: jest.fn()}}}));
 
-const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD"};
+const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setObjectQueryStatus: jest.fn()};
 const MOCK_PREFERENCE_STORE = {
     catalogQuerySimbadMirrors: [] as string[],
     catalogQueryVizierMirrors: [] as string[],
@@ -25,7 +27,9 @@ jest.mock("utilities", () => ({
     isWCSStringFormatValid: jest.fn()
 }));
 
+import {AppToaster, ErrorToast} from "components/Shared";
 import {CatalogDatabase, PreferenceKeys} from "enums";
+import {CatalogApiService} from "services";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 
@@ -36,6 +40,7 @@ interface TestableCatalogQueryComponent {
     mirrorBenchmarks: Map<string, MirrorBenchmark>;
     mirrorBenchmarkAbort?: {abort: () => void};
     cancelMirrorBenchmark: () => void;
+    handleObjectUpdate: () => void;
 }
 
 describe("CatalogQueryComponent mirror benchmark cancellation", () => {
@@ -65,5 +70,21 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
         expect(component.isBenchmarking).toBe(false);
         expect(MOCK_PREFERENCE_STORE.setPreference).toHaveBeenCalledWith(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, ["fast", "slow", "not-tested"]);
         expect(component.mirrorBenchmarks.get("not-tested")).toEqual({status: "idle"});
+    });
+});
+
+describe("CatalogQueryComponent object resolution error", () => {
+    test("shows the actionable mirror error in a toast", async () => {
+        const error = new Error("Request to mirror active.example failed. Select another mirror site and retry.");
+        (CatalogApiService.Instance.getSimbadCatalog as jest.Mock).mockRejectedValueOnce(error);
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+
+        component.handleObjectUpdate();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(ErrorToast).toHaveBeenCalledWith(error.message);
+        expect(AppToaster.show).toHaveBeenCalledWith({message: error.message});
+        expect(MOCK_CONFIG_STORE.setObjectQueryStatus).toHaveBeenNthCalledWith(1, true);
+        expect(MOCK_CONFIG_STORE.setObjectQueryStatus).toHaveBeenNthCalledWith(2, false);
     });
 });

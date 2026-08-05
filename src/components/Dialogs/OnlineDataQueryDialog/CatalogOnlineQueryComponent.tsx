@@ -5,7 +5,7 @@ import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AppToaster, ClearableNumericInputComponent, ErrorToast, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogDatabase, PreferenceKeys, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
@@ -479,7 +479,11 @@ export class CatalogQueryComponent extends React.Component {
             .catch(error => {
                 this.setObjectSize(0);
                 configStore.setObjectQueryStatus(false);
-                console.log(`Object search error ${error}`);
+                if (error?.message) {
+                    AppToaster.show(ErrorToast(error.message));
+                } else {
+                    console.log(`Object search error ${error}`);
+                }
             });
     };
 
