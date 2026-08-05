@@ -9,8 +9,6 @@ import {getScalingForParameterPreference, getScalingParameterConfig, isSupported
 
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
 
-const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
-
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
