@@ -22,6 +22,9 @@ export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
     @observable objectSize: number | undefined = undefined;
     @observable newMirrorUrl: string = "";
+    @observable addMirrorError: string | undefined = undefined;
+    @observable editingMirrorIndex: number | undefined = undefined;
+    @observable editingMirrorValue: string = "";
     @observable dragSourceMirrorIndex: number | undefined = undefined;
     @observable dragOverMirrorIndex: number | undefined = undefined;
     @observable isBenchmarking: boolean = false;
@@ -117,7 +120,7 @@ export class CatalogQueryComponent extends React.Component {
                             filterable={false}
                             resetOnSelect={true}
                         >
-                            <Button text={configStore.catalogDB} disabled={isDisabled} endIcon="double-caret-vertical" />
+                            <Button className="database-select-button" text={configStore.catalogDB} disabled={isDisabled} endIcon="double-caret-vertical" />
                         </Select>
                     </FormGroup>
                     <FormGroup inline={false} label="Mirror site" disabled={isDisabled} className="mirror-site-group">
@@ -132,7 +135,7 @@ export class CatalogQueryComponent extends React.Component {
                                 filterable={false}
                                 resetOnSelect={true}
                             >
-                                <Button text={this.getMirrorLabel(activeMirror)} disabled={isDisabled} endIcon="double-caret-vertical" style={{minWidth: "180px", justifyContent: "space-between"}} />
+                                <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isDisabled} endIcon="double-caret-vertical" />
                             </Select>
                             <PopoverNext
                                 placement="bottom"
@@ -140,30 +143,62 @@ export class CatalogQueryComponent extends React.Component {
                                 arrow={false}
                                 content={
                                     <div className="mirror-manager">
+                                        <div className="mirror-manager__header">
+                                            <span className="mirror-manager__title">
+                                                Mirror sites<span className="mirror-manager__count">{mirrorSites.length}</span>
+                                            </span>
+                                            <div className="mirror-manager__action-buttons">
+                                                <Tooltip content="Reset to default mirrors" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                                                    <Button icon="reset" variant="minimal" disabled={isDisabled} onClick={this.resetMirrorSites} aria-label="Reset to default mirrors" />
+                                                </Tooltip>
+                                                <Tooltip
+                                                    content={this.isBenchmarking ? "Cancel speed test" : "Test all mirrors and sort by response time"}
+                                                    disabled={isDisabled || mirrorSites.length === 0}
+                                                    position={Position.BOTTOM}
+                                                    hoverOpenDelay={300}
+                                                >
+                                                    <Button
+                                                        variant="minimal"
+                                                        intent={this.isBenchmarking ? Intent.DANGER : Intent.PRIMARY}
+                                                        className={`mirror-manager__rank${this.isBenchmarking ? " is-loading" : ""}`}
+                                                        icon={this.isBenchmarking ? "stop" : "dashboard"}
+                                                        text={this.isBenchmarking ? "Cancel" : "Test speed"}
+                                                        disabled={isDisabled || mirrorSites.length === 0}
+                                                        onClick={this.runMirrorBenchmark}
+                                                    />
+                                                </Tooltip>
+                                            </div>
+                                        </div>
                                         <div className="mirror-manager__add-row">
                                             <InputGroup
                                                 asyncControl={false}
                                                 placeholder="Add new mirror URL..."
                                                 disabled={isDisabled}
+                                                intent={this.addMirrorError ? Intent.DANGER : Intent.NONE}
                                                 value={this.newMirrorUrl}
                                                 onChange={event => this.handleMirrorInputChange(event.target.value)}
                                                 onKeyDown={e => {
                                                     if (e.key === "Enter") this.handleAddMirror();
                                                 }}
-                                                rightElement={<Button icon="plus" variant="minimal" disabled={isDisabled || !this.newMirrorUrl.trim()} onClick={this.handleAddMirror} intent={Intent.PRIMARY} />}
+                                                rightElement={<Button icon="plus" variant="minimal" disabled={isDisabled || !this.newMirrorUrl.trim()} onClick={this.handleAddMirror} intent={Intent.PRIMARY} aria-label="Add mirror" />}
                                             />
                                         </div>
+                                        {this.addMirrorError ? <div className="mirror-manager__error">{this.addMirrorError}</div> : null}
                                         <div className="mirror-manager__separator" />
                                         <div className="mirror-manager__list">
+                                            {mirrorSites.length === 0 ? <div className="mirror-manager__empty">No mirror sites. Add a URL above or reset to defaults.</div> : null}
                                             {mirrorSites.map((site, index) => {
                                                 const benchmark = this.mirrorBenchmarks.get(site);
                                                 const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(benchmark);
                                                 const isDragOver = this.dragOverMirrorIndex === index;
+                                                const isActive = index === 0;
+                                                const isEditing = this.editingMirrorIndex === index;
+                                                const isLastMirror = mirrorSites.length === 1;
 
                                                 return (
                                                     <div
                                                         key={`${site}-${index}`}
-                                                        className={`mirror-manager__item${isDragOver ? " is-drag-over" : ""}`}
+                                                        className={`mirror-manager__item${isDragOver ? " is-drag-over" : ""}${isActive ? " is-active" : ""}`}
                                                         onDragOver={this.handleMirrorDragOver(index)}
                                                         onDrop={this.handleMirrorDrop(index)}
                                                         onDragEnd={this.handleMirrorDragEnd}
@@ -171,25 +206,64 @@ export class CatalogQueryComponent extends React.Component {
                                                         <Tooltip content="Drag to reorder" hoverOpenDelay={800} disabled={this.dragSourceMirrorIndex !== undefined}>
                                                             <Icon icon="drag-handle-vertical" className="mirror-manager__handle" draggable={!isDisabled} onDragStart={this.handleMirrorDragStart(index)} />
                                                         </Tooltip>
-                                                        <InputGroup asyncControl={false} disabled={isDisabled} value={site} onChange={event => this.handleMirrorEdit(index, event.target.value)} />
+                                                        {isActive ? (
+                                                            <Tooltip content="Current mirror" position={Position.TOP} hoverOpenDelay={300}>
+                                                                <Icon icon="tick-circle" className="mirror-manager__active-icon" intent={Intent.SUCCESS} />
+                                                            </Tooltip>
+                                                        ) : (
+                                                            <Tooltip content="Use this mirror" position={Position.TOP} hoverOpenDelay={300}>
+                                                                <Button
+                                                                    icon="circle"
+                                                                    variant="minimal"
+                                                                    size="small"
+                                                                    className="mirror-manager__use-button"
+                                                                    disabled={isDisabled}
+                                                                    onClick={() => this.handleMirrorSelect(site)}
+                                                                    aria-label="Use this mirror"
+                                                                />
+                                                            </Tooltip>
+                                                        )}
+                                                        {isEditing ? (
+                                                            <InputGroup
+                                                                autoFocus={true}
+                                                                asyncControl={false}
+                                                                disabled={isDisabled}
+                                                                intent={this.isValidMirrorUrl(this.editingMirrorValue.trim()) ? Intent.NONE : Intent.DANGER}
+                                                                value={this.editingMirrorValue}
+                                                                onChange={event => this.setEditingMirrorValue(event.target.value)}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === "Enter") this.commitMirrorEdit(index);
+                                                                    else if (e.key === "Escape") this.cancelMirrorEdit();
+                                                                }}
+                                                                onBlur={() => this.commitMirrorEdit(index)}
+                                                            />
+                                                        ) : (
+                                                            <div className="mirror-manager__url" title={site} onDoubleClick={isDisabled ? undefined : () => this.startMirrorEdit(index, site)}>
+                                                                <span className="mirror-manager__url-host">{this.getMirrorLabel(site)}</span>
+                                                                <span className="mirror-manager__url-path">{this.getMirrorPath(site)}</span>
+                                                            </div>
+                                                        )}
                                                         <div className={`mirror-manager__result is-${status}`} style={resultStyle}>
                                                             {this.renderBenchmarkResult(status, label)}
                                                         </div>
-                                                        <Tooltip content="Remove mirror">
-                                                            <Button icon="trash" variant="minimal" disabled={isDisabled} intent={Intent.DANGER} onClick={() => this.handleRemoveMirror(index)} />
+                                                        {!isEditing ? (
+                                                            <Tooltip content="Edit URL" hoverOpenDelay={300}>
+                                                                <Button icon="edit" variant="minimal" disabled={isDisabled} onClick={() => this.startMirrorEdit(index, site)} aria-label="Edit URL" />
+                                                            </Tooltip>
+                                                        ) : null}
+                                                        <Tooltip content={isLastMirror ? "At least one mirror is required" : "Remove mirror"} hoverOpenDelay={300}>
+                                                            <AnchorButton
+                                                                icon="trash"
+                                                                variant="minimal"
+                                                                disabled={isDisabled || isLastMirror}
+                                                                intent={Intent.DANGER}
+                                                                onClick={() => this.handleRemoveMirror(index)}
+                                                                aria-label="Remove mirror"
+                                                            />
                                                         </Tooltip>
                                                     </div>
                                                 );
                                             })}
-                                        </div>
-                                        <div className="mirror-manager__actions">
-                                            <Button text="Reset Defaults" icon="undo" variant="minimal" disabled={isDisabled} onClick={this.resetMirrorSites} />
-                                            <Button intent={Intent.PRIMARY} className={`mirror-manager__rank${this.isBenchmarking ? " is-loading" : ""}`} disabled={isDisabled || mirrorSites.length === 0} onClick={this.runMirrorBenchmark}>
-                                                <span className="mirror-manager__rank-label" data-state={this.isBenchmarking ? "cancel" : "auto"}>
-                                                    <span className="mirror-manager__rank-text">Auto Rank</span>
-                                                    <span className="mirror-manager__rank-text mirror-manager__rank-text--cancel">Cancel</span>
-                                                </span>
-                                            </Button>
                                         </div>
                                     </div>
                                 }
@@ -442,6 +516,7 @@ export class CatalogQueryComponent extends React.Component {
 
     private resetMirrorSites = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
+        this.cancelMirrorEdit();
         this.cancelMirrorBenchmark();
         const sites = configStore.catalogDB === CatalogDatabase.SIMBAD ? PreferenceStore.DefaultCatalogQuerySimbadMirrors : PreferenceStore.DefaultCatalogQueryVizierMirrors;
         this.setMirrorSites(configStore.catalogDB, sites);
@@ -459,45 +534,97 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleMirrorSelect = (mirror: string) => {
+        this.cancelMirrorEdit();
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
         const nextSites = [mirror, ...sites.filter(item => item !== mirror)];
         this.setMirrorSites(configStore.catalogDB, nextSites);
     };
 
-    private handleMirrorInputChange = (value: string) => {
+    @action private handleMirrorInputChange = (value: string) => {
         this.newMirrorUrl = value;
+        this.addMirrorError = undefined;
     };
 
-    private handleAddMirror = () => {
+    private isValidMirrorUrl = (value: string): boolean => {
+        try {
+            const url = new URL(value);
+            return url.protocol === "http:" || url.protocol === "https:";
+        } catch {
+            return false;
+        }
+    };
+
+    private getMirrorPath = (url: string): string => {
+        try {
+            const parsed = new URL(url);
+            const path = `${parsed.pathname}${parsed.search}`;
+            return path === "/" ? "" : path;
+        } catch {
+            return "";
+        }
+    };
+
+    @action private handleAddMirror = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const url = this.newMirrorUrl.trim();
         if (!url) {
             return;
         }
-        const sites = [...this.getMirrorSites(configStore.catalogDB)];
-        if (!sites.includes(url)) {
-            sites.push(url);
-            this.setMirrorSites(configStore.catalogDB, sites);
+        if (!this.isValidMirrorUrl(url)) {
+            this.addMirrorError = "Please enter a valid http(s) URL.";
+            return;
         }
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        if (sites.includes(url)) {
+            this.addMirrorError = "This mirror is already in the list.";
+            return;
+        }
+        sites.push(url);
+        this.setMirrorSites(configStore.catalogDB, sites);
         this.newMirrorUrl = "";
+        this.addMirrorError = undefined;
     };
 
     private handleRemoveMirror = (index: number) => {
+        this.cancelMirrorEdit();
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
         sites.splice(index, 1);
         this.setMirrorSites(configStore.catalogDB, sites);
     };
 
-    private handleMirrorEdit = (index: number, value: string) => {
+    @action private startMirrorEdit = (index: number, value: string) => {
+        this.editingMirrorIndex = index;
+        this.editingMirrorValue = value;
+    };
+
+    @action private setEditingMirrorValue = (value: string) => {
+        this.editingMirrorValue = value;
+    };
+
+    @action private cancelMirrorEdit = () => {
+        this.editingMirrorIndex = undefined;
+        this.editingMirrorValue = "";
+    };
+
+    @action private commitMirrorEdit = (index: number) => {
+        if (this.editingMirrorIndex !== index) {
+            return;
+        }
+        const value = this.editingMirrorValue.trim();
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
-        sites[index] = value;
-        this.setMirrorSites(configStore.catalogDB, sites);
+        const isDuplicate = sites.some((site, i) => i !== index && site === value);
+        if (this.isValidMirrorUrl(value) && !isDuplicate && value !== sites[index]) {
+            sites[index] = value;
+            this.setMirrorSites(configStore.catalogDB, sites);
+        }
+        this.cancelMirrorEdit();
     };
 
     private handleMirrorDragStart = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+        this.cancelMirrorEdit();
         this.dragSourceMirrorIndex = index;
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", index.toString());
@@ -704,9 +831,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private renderMirrorPopOver = (mirror: string, itemProps: ItemRendererProps) => {
-        return (
-            <MenuItem key={`${mirror}-${itemProps.index}`} active={itemProps.modifiers.active} icon="globe-network" text={this.getMirrorLabel(mirror)} label={mirror} onClick={itemProps.handleClick} labelClassName="mirror-menu-item-label" />
-        );
+        return <MenuItem key={`${mirror}-${itemProps.index}`} active={itemProps.modifiers.active} text={this.getMirrorLabel(mirror)} onClick={itemProps.handleClick} />;
     };
 
     private renderUnitsPopOver = (units: RadiusUnits, itemProps: ItemRendererProps) => {
