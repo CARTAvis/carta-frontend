@@ -34,7 +34,9 @@ export enum FrameScaling {
     POWER = 4,
     GAMMA = 5,
     EXP = 6,
-    CUSTOM = 7
+    CUSTOM = 7,
+    SINH = 8,
+    ASINH = 9
 }
 
 export enum CoordinateMode {
