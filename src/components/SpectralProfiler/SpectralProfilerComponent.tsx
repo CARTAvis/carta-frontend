@@ -261,7 +261,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isSelectingMomentChannelRange) {
                 this.widgetStore.setSelectedDisplayChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
-                this.widgetStore.setSelectedMaskRange(min, max);
+                this.widgetStore.setSelectedDisplayMaskRange(min, max);
             }
         }
     };
@@ -329,10 +329,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
         const regionComments = frame ? frame.getRegionProperties(profile.regionId ?? NaN) : [];
+        const restFrameComments = this.widgetStore.restFrameExportComments;
         if (seriesType === "smoothedProfile") {
-            return [...regionComments, ...this.widgetStore.smoothingStore.comments];
+            return [...regionComments, ...restFrameComments, ...this.widgetStore.smoothingStore.comments];
         }
-        return regionComments;
+        return [...regionComments, ...restFrameComments];
     };
 
     render() {
@@ -376,8 +377,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = this.widgetStore.xAxisLabel;
             }
-            if (this.widgetStore.yUnit) {
-                linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
+            if (this.widgetStore.yAxisLabel) {
+                linePlotProps.yLabel = this.widgetStore.yAxisLabel;
             }
 
             const currentPlotData = this.plotData;

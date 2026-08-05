@@ -1,6 +1,7 @@
+import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {SpectralType, SpectralUnit} from "enums";
+import {Polarizations, SpectralType, SpectralUnit} from "enums";
 import {AppStore} from "stores";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
@@ -12,8 +13,12 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         spectralType: SpectralType = SpectralType.FREQ,
         spectralUnit: SpectralUnit = SpectralUnit.GHZ,
         spectralTypeSecondary: SpectralType | null = spectralType,
-        spectralUnitSecondary: SpectralUnit | null = spectralUnit
+        spectralUnitSecondary: SpectralUnit | null = spectralUnit,
+        nativeIntensityUnit: string = "Jy/beam",
+        displayIntensityUnit: string = nativeIntensityUnit,
+        requiredPolarization: Polarizations = Polarizations.I
     ) => {
+        const intensityConfig = {nativeIntensityUnit};
         const frame = {
             channelInfo: {},
             channelSecondaryValues: [10, 11],
@@ -23,12 +28,14 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             frameInfo: {fileId: 7},
             getRegion: jest.fn(),
             hasStokes: false,
-            headerUnit: "Jy/beam",
-            intensityConfig: undefined,
+            headerUnit: nativeIntensityUnit,
+            intensityConfig,
+            intensityUnit: displayIntensityUnit,
             isCoordChannel: spectralType === SpectralType.CHANNEL,
             isSpectralChannel: true,
             regionSet: {focusedRegion: undefined, regions: []},
-            requiredPolarization: 0,
+            requiredPolarization,
+            requiredUnit: nativeIntensityUnit,
             spectralType,
             spectralTypeSecondary,
             spectralUnit,
@@ -147,6 +154,118 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([4, 8]);
     });
 
+    test("applies the optional F_nu Jacobian consistently to plot data, statistics, fitting, labels, and export metadata", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 200, y: 2},
+            {x: 220, y: 4}
+        ]);
+        expect(widgetStore.plotData?.yMean).toBe(3);
+        expect(widgetStore.plotData?.yRms).toBe(1);
+        expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([2, 4]);
+        expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam, rest-frame density)");
+        expect(widgetStore.restFrameExportComments).toEqual(["spectral reference frame: rest", "redshift: 1", "spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+    });
+
+    test("applies the F_nu Jacobian after converting the selected intensity unit", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "mJy/beam", "Jy/beam");
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.plotData?.data[0][0].y).toBeCloseTo(0.002);
+        expect(widgetStore.plotData?.data[0][1].y).toBeCloseTo(0.004);
+    });
+
+    test("uses the F_nu Jacobian even when the displayed spectral coordinate is wavelength", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 50, y: 2},
+            {x: 55, y: 4}
+        ]);
+    });
+
+    test.each(["K", "mK"])("does not enable the F_nu Jacobian for %s intensity", intensityUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
+        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test.each(["Jy", "mJy", "uJy", "MJy"])("supports the F_nu Jacobian for bare %s flux-density units", intensityUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.isRestFrameJacobianActive).toBe(true);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
+    });
+
+    test("does not enable the F_nu Jacobian for SumSq profiles", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.profileSelectionStore.selectStatSingleMode(CARTA.StatsType.SumSq);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
+        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test("does not enable the F_nu Jacobian for fractional-polarization profiles", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "Jy/beam", "Jy/beam", Polarizations.PFtotal);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+
+        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
+        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test("converts display mask values back to observed values and resets only affected display state", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXBounds(90, 120);
+        widgetStore.setYBounds(1, 9);
+        widgetStore.fittingStore.setHasResult(true);
+
+        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setSelectedDisplayMaskRange(2, 4);
+
+        expect(widgetStore.maskRange).toEqual([4, 8]);
+        expect(widgetStore.minX).toBe(90);
+        expect(widgetStore.maxX).toBe(120);
+        expect(widgetStore.minY).toBeUndefined();
+        expect(widgetStore.maxY).toBeUndefined();
+        expect(widgetStore.fittingStore.hasResult).toBe(false);
+
+        widgetStore.setXYBounds(90, 120, 1, 9);
+        widgetStore.fittingStore.setHasResult(true);
+        widgetStore.setRestFrameRedshift(3);
+
+        expect(widgetStore.minX).toBeUndefined();
+        expect(widgetStore.maxX).toBeUndefined();
+        expect(widgetStore.minY).toBeUndefined();
+        expect(widgetStore.maxY).toBeUndefined();
+        expect(widgetStore.fittingStore.hasResult).toBe(false);
+    });
+
     test("falls back to the native spectral coordinate for secondary rest-frame values", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, null, null);
         widgetStore.setRestFrameRedshift(1);
@@ -179,11 +298,12 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("rejects invalid redshifts and persists valid rest-frame settings", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameEnabled: true, restFrameRedshift: 0.25}));
+        runInAction(() => widgetStore.init({restFrameEnabled: true, restFrameRedshift: 0.25, restFrameJacobianEnabled: true}));
 
         expect(widgetStore.isRestFrameEnabled).toBe(true);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
-        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameEnabled: true, restFrameRedshift: 0.25}));
+        expect(widgetStore.isRestFrameJacobianActive).toBe(true);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameEnabled: true, restFrameRedshift: 0.25, restFrameJacobianEnabled: true}));
 
         widgetStore.setRestFrameRedshift(-1);
         expect(widgetStore.restFrameRedshift).toBe(0.25);

@@ -198,6 +198,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         const isCoordinateSettingDisabled = widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel;
         const isRedshiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameEnabled || !widgetStore.isRestFrameSupported;
+        const isJacobianInputDisabled = !widgetStore.isRestFrameActive || !widgetStore.isRestFrameJacobianSupported;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -238,9 +239,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 "Rest frame is available for frequency and wavelength coordinates."
                                             ) : (
                                                 <React.Fragment>
-                                                    Only the spectral x coordinate is transformed;
+                                                    The spectral x coordinate is transformed;
                                                     <br />
-                                                    intensity values are unchanged.
+                                                    intensity changes only when the optional Fν Jacobian is enabled.
                                                 </React.Fragment>
                                             )
                                         }
@@ -265,6 +266,26 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             className="redshift-input"
                                             onValueChange={widgetStore.setRestFrameRedshift}
                                             data-testid="spectral-profiler-redshift-input"
+                                        />
+                                    </FormGroup>
+                                    <FormGroup
+                                        inline={true}
+                                        label={"Y-axis correction"}
+                                        contentClassName="reference-frame-form-content"
+                                        helperText={
+                                            !widgetStore.isRestFrameActive
+                                                ? "Available in rest frame."
+                                                : widgetStore.isRestFrameJacobianSupported
+                                                  ? "Displays Fν,rest = Fν,observed / (1 + z)."
+                                                  : "Available for Jy-based intensity profiles; K, polarization fractions, angles, and SumSq are unchanged."
+                                        }
+                                    >
+                                        <Switch
+                                            checked={widgetStore.isRestFrameJacobianActive}
+                                            disabled={isJacobianInputDisabled}
+                                            label="Apply Fν Jacobian"
+                                            onChange={event => widgetStore.setRestFrameJacobianEnabled(event.currentTarget.checked)}
+                                            data-testid="spectral-profiler-rest-frame-jacobian-switch"
                                         />
                                     </FormGroup>
                                 </React.Fragment>

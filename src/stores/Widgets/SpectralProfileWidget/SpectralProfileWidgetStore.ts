@@ -19,7 +19,7 @@ import {
     type SpectralUnit,
     TelemetryAction
 } from "enums";
-import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, type Point2D} from "models";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, type Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -62,6 +62,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable intensityUnit: string | undefined = undefined;
     @observable isRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
+    @observable isRestFrameJacobianEnabled: boolean = false;
 
     // style settings
     @observable plotType: PlotType = PlotType.STEPS;
@@ -153,6 +154,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setRestFrameJacobianEnabled = (isEnabled: boolean) => {
+        const isNextEnabled = isEnabled && this.isRestFrameJacobianSupported;
+        if (isNextEnabled !== this.isRestFrameJacobianEnabled) {
+            this.isRestFrameJacobianEnabled = isNextEnabled;
+        }
+    };
+
     @action setMultiProfileIntensityUnit = (intensityUnitStr: string | undefined) => {
         this.intensityUnit = intensityUnitStr;
     };
@@ -202,6 +210,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.maskRange[1] = max;
         }
         this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedDisplayMaskRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.setSelectedMaskRange(this.convertDisplayYToObserved(min), this.convertDisplayYToObserved(max));
+        }
     };
 
     @action private updateRanges = () => {
@@ -342,8 +356,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action clearYBounds = () => {
-        this.minX = undefined;
-        this.maxX = undefined;
+        this.minY = undefined;
+        this.maxY = undefined;
     };
 
     @action setXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
@@ -413,6 +427,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
+
+        this.disposers.push(
+            reaction(
+                () => this.restFrameJacobianScale,
+                () => {
+                    this.clearYBounds();
+                    this.fittingStore.reset();
+                }
+            )
+        );
 
         this.disposers.push(
             reaction(
@@ -516,6 +540,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.profileSelectionStore.profiles?.length;
     }
 
+    @computed get displayIntensityUnit(): string | undefined {
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        if (isMultiProfileActive) {
+            const frame = this.effectiveFrame;
+            const hasSelectedUnit = this.intensityUnit && (frame?.intensityConfig.nativeIntensityUnit === this.intensityUnit || GetIntensityConversion(frame?.intensityConfig, this.intensityUnit));
+            return hasSelectedUnit ? this.intensityUnit : frame?.headerUnit;
+        }
+        return this.effectiveFrame?.intensityUnit;
+    }
+
     private getRestFrameTransformMode = (spectralType: SpectralType | string | null | undefined): RestFrameTransformMode => {
         switch (spectralType) {
             case SpectralType.FREQ:
@@ -546,6 +580,25 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.isRestFrameActive ? this.restFrameRedshift + 1 : 1;
     }
 
+    @computed get isRestFrameJacobianSupported(): boolean {
+        return (
+            this.isRestFrameSupported &&
+            this.profileSelectionStore.isSameStatsTypeUnit &&
+            !this.profileSelectionStore.isStatsTypeSumSqOnly &&
+            this.profileSelectionStore.isSameCoordinatesUnit &&
+            !this.profileSelectionStore.isCoordinatesIncludingNonIntensityUnit &&
+            IsFrequencyDensityUnit(this.displayIntensityUnit ?? "")
+        );
+    }
+
+    @computed get isRestFrameJacobianActive(): boolean {
+        return this.isRestFrameActive && this.isRestFrameJacobianEnabled && this.isRestFrameJacobianSupported;
+    }
+
+    @computed get restFrameJacobianScale(): number {
+        return this.isRestFrameJacobianActive ? 1 / this.restFrameFactor : 1;
+    }
+
     @computed get spectralUnitLabel(): string {
         const unit = this.effectiveFrame?.spectralUnitStr ?? "";
         return this.isRestFrameActive ? `${unit}${unit ? " " : ""}(rest frame)` : unit;
@@ -574,9 +627,34 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return label && this.isRestFrameActive ? `${label} (Rest frame, z=${this.restFrameRedshift})` : label;
     }
 
+    @computed get yAxisLabel(): string | undefined {
+        const unit = this.yUnit;
+        if (!unit) {
+            return undefined;
+        }
+        return this.isRestFrameJacobianActive ? `Value (${unit}, rest-frame density)` : `Value (${unit})`;
+    }
+
+    @computed get restFrameExportComments(): string[] {
+        if (!this.isRestFrameActive) {
+            return [];
+        }
+        return ["spectral reference frame: rest", `redshift: ${this.restFrameRedshift}`, `spectral-density Jacobian: ${this.isRestFrameJacobianActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`];
+    }
+
     @computed get displayChannelValueRange(): NumberRange {
         return [this.convertObservedXToDisplay(this.channelValueRange[0]), this.convertObservedXToDisplay(this.channelValueRange[1])];
     }
+
+    private getDisplayIntensityValues = (values: Float32Array | Float64Array | null | undefined, intensityConfig: IntensityConfig, intensityUnit: string | undefined): Float32Array | Float64Array | null | undefined => {
+        if (!values) {
+            return values;
+        }
+        const intensityConversion = GetIntensityConversion(intensityConfig, intensityUnit);
+        const convertedValues = intensityConversion ? intensityConversion(values) : values;
+        const scale = this.restFrameJacobianScale;
+        return scale === 1 ? convertedValues : convertedValues.map(value => value * scale);
+    };
 
     @computed get plotData(): MultiPlotData | null {
         const frame = this.effectiveFrame;
@@ -614,10 +692,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
 
-                const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
-                const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
+                const intensityValues = this.getDisplayIntensityValues(profile.data.values, profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const displayChannelValues = this.convertObservedArrayToDisplay(profile.channelValues);
-                const pointsAndProperties = this.getDataPointsAndProperties(displayChannelValues, intensityValues, shouldComputeMeanRms);
+                const pointsAndProperties = this.getDataPointsAndProperties(displayChannelValues, intensityValues ?? null, shouldComputeMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
@@ -655,8 +732,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = this.convertObservedArrayToDisplay(profiles[0].channelValues).slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
-            const intensityValues = intensityConversion && profiles[0].data?.values ? intensityConversion(profiles[0].data.values) : profiles[0].data?.values;
+            const intensityValues = this.getDisplayIntensityValues(profiles[0].data?.values, profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
             let y: Float32Array | Float64Array | undefined = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE && y) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
@@ -811,7 +887,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string | undefined {
-        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         if (this.intensityUnit || this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string | undefined;
@@ -820,11 +895,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = isMultiProfileActive
-                        ? GetIntensityConversion(this.effectiveFrame?.intensityConfig, this.intensityUnit) && this.intensityUnit
-                            ? this.intensityUnit
-                            : this.effectiveFrame?.headerUnit
-                        : this.effectiveFrame?.intensityUnit;
+                    unitString = this.displayIntensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
@@ -1055,6 +1126,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.restFrameRedshift === "number" && isFinite(widgetSettings.restFrameRedshift) && widgetSettings.restFrameRedshift > -1) {
             this.restFrameRedshift = widgetSettings.restFrameRedshift;
         }
+        if (typeof widgetSettings.restFrameJacobianEnabled === "boolean") {
+            this.isRestFrameJacobianEnabled = widgetSettings.restFrameJacobianEnabled;
+        }
     };
 
     public selectFrame = (fileId: number) => {
@@ -1073,8 +1147,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             minYVal: this.linePlotInitXYBoundaries.minYVal,
             maxYVal: this.linePlotInitXYBoundaries.maxYVal,
             restFrameEnabled: this.isRestFrameEnabled,
-            restFrameRedshift: this.restFrameRedshift
+            restFrameRedshift: this.restFrameRedshift,
+            restFrameJacobianEnabled: this.isRestFrameJacobianEnabled
         };
+    };
+
+    public convertObservedYToDisplay = (value: number): number => {
+        return isFinite(value) ? value * this.restFrameJacobianScale : NaN;
+    };
+
+    public convertDisplayYToObserved = (value: number): number => {
+        return isFinite(value) ? value / this.restFrameJacobianScale : NaN;
     };
 
     public convertObservedXToDisplay = (
