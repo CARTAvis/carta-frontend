@@ -19,6 +19,7 @@ interface ColormapComponentProps {
     disabled?: boolean;
     onColormapSelect: (selected: string) => void;
     onCustomColorSelect?: (selected: string) => void;
+    onCustomColorStartSelect?: (selected: string) => void;
     enableAdditionalColor?: boolean;
     selectedCustomColor?: string;
     customColorStart?: string;
@@ -43,14 +44,22 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
-            const handleColorChange = _.throttle((color: any) => {
+            // Keep this for future use if we want to allow users to select the start color of the custom colormap
+            /*
+            const handleStartColorChange = _.throttle((color: any) => {
+                props.onCustomColorStartSelect?.(color.hex);
+                props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
+            }, changeDelay);
+            */
+
+            const handleEndColorChange = _.throttle((color: any) => {
                 props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
-                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}>
+                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}>
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </PopoverNext>
                 </div>
