@@ -17,6 +17,8 @@ import "./CatalogOnlineQueryComponent.scss";
 type MirrorBenchmarkStatus = "idle" | "pending" | "ok" | "fail" | "disabled";
 type MirrorBenchmark = {status: MirrorBenchmarkStatus; ms?: number};
 
+const MIRROR_BENCHMARK_TIMEOUT_MS = 10000;
+
 @observer
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
@@ -139,7 +141,7 @@ export class CatalogQueryComponent extends React.Component {
                             >
                                 <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" />
                             </Select>
-                            <PopoverNext placement="bottom" animation="minimal" arrow={false} content={this.renderMirrorManager(mirrorSites, isDisabled, isMirrorConfigDisabled)}>
+                            <PopoverNext placement="bottom" animation="minimal" arrow={false} content={this.renderMirrorManager(mirrorSites, isDisabled, isMirrorConfigDisabled, activeMirror)}>
                                 <Button icon="cog" disabled={isDisabled} />
                             </PopoverNext>
                         </ControlGroup>
@@ -290,12 +292,10 @@ export class CatalogQueryComponent extends React.Component {
         );
     }
 
-    private renderMirrorManager = (mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean) => {
+    private renderMirrorManager = (mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
         const hasNoMirrors = mirrorSites.length === 0;
-        const hasNoTestableMirrors = mirrorSites.every(site => this.isMirrorDisabled(site));
         const testableMirrorCount = mirrorSites.filter(site => !this.isMirrorDisabled(site)).length;
-        const isBenchmarkButtonDisabled = isQueryDisabled || (!this.isBenchmarking && hasNoTestableMirrors);
-        const activeMirror = this.getActiveMirror(mirrorSites);
+        const isBenchmarkButtonDisabled = isQueryDisabled || (!this.isBenchmarking && testableMirrorCount === 0);
         return (
             <div className="mirror-manager">
                 <div className="mirror-manager__header">
@@ -518,7 +518,7 @@ export class CatalogQueryComponent extends React.Component {
         return mirrorSites.find(site => !this.isMirrorDisabled(site));
     };
 
-    private isMirrorRemovalDisabled = (mirror: string, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean): boolean => {
+    private isMirrorRemovalDisabled = (mirror: string, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled = false): boolean => {
         return isMirrorConfigDisabled || (!this.isMirrorDisabled(mirror) && (mirrorCount === 1 || testableMirrorCount === 1));
     };
 
@@ -528,11 +528,11 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private resetMirrorSites = () => {
-        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const database = CatalogOnlineQueryConfigStore.Instance.catalogDB;
         this.cancelMirrorEdit();
         this.cancelMirrorBenchmark();
-        PreferenceStore.Instance.resetCatalogQueryMirrors(configStore.catalogDB);
-        this.pruneMirrorBenchmarks(this.getMirrorSites(configStore.catalogDB));
+        PreferenceStore.Instance.resetCatalogQueryMirrors(database);
+        this.pruneMirrorBenchmarks(this.getMirrorSites(database));
     };
 
     private getMirrorLabel = (url?: string): string => {
@@ -625,7 +625,7 @@ export class CatalogQueryComponent extends React.Component {
             return;
         }
         const testableMirrorCount = sites.filter(item => !this.isMirrorDisabled(item)).length;
-        if (this.isMirrorRemovalDisabled(site, sites.length, testableMirrorCount, false)) {
+        if (this.isMirrorRemovalDisabled(site, sites.length, testableMirrorCount)) {
             return;
         }
         this.cancelMirrorEdit();
@@ -712,7 +712,7 @@ export class CatalogQueryComponent extends React.Component {
 
     @action private pruneMirrorBenchmarks = (sites: string[]) => {
         const allowed = new Set(sites);
-        for (const key of Array.from(this.mirrorBenchmarks.keys())) {
+        for (const key of this.mirrorBenchmarks.keys()) {
             if (!allowed.has(key)) {
                 this.mirrorBenchmarks.delete(key);
             }
@@ -742,24 +742,26 @@ export class CatalogQueryComponent extends React.Component {
             return {label: "—", status: "idle"};
         }
 
-        if (benchmark.status === "pending") {
-            return {label: "Testing…", status: "pending"};
+        switch (benchmark.status) {
+            case "pending":
+                return {label: "Testing…", status: "pending"};
+            case "fail":
+                return {label: "Failed", status: "fail"};
+            case "ok":
+                if (benchmark.ms !== undefined) {
+                    const hue = this.getBenchmarkHue(benchmark.ms);
+                    return {
+                        label: this.formatBenchmarkMs(benchmark.ms),
+                        resultStyle: {["--bench-hue" as any]: hue} as React.CSSProperties,
+                        status: "ok"
+                    };
+                }
+                break;
+            default:
+                return {label: "—", status: benchmark.status};
         }
 
-        if (benchmark.status === "fail") {
-            return {label: "Failed", status: "fail"};
-        }
-
-        if (benchmark.status === "ok" && benchmark.ms !== undefined) {
-            const hue = this.getBenchmarkHue(benchmark.ms);
-            return {
-                label: this.formatBenchmarkMs(benchmark.ms),
-                resultStyle: {["--bench-hue" as any]: hue} as React.CSSProperties,
-                status: "ok"
-            };
-        }
-
-        return {label: "—", status: benchmark.status};
+        return {label: "—", status: "ok"};
     };
 
     @action private runMirrorBenchmark = async () => {
@@ -779,12 +781,13 @@ export class CatalogQueryComponent extends React.Component {
         this.mirrorBenchmarkAbort = abortController;
         this.mirrorBenchmarkDatabase = database;
         this.isBenchmarking = true;
-        sites.forEach(site => this.mirrorBenchmarks.set(site, {status: this.isMirrorDisabled(site) ? "disabled" : "pending"}));
+        const testableSiteSet = new Set(testableSites);
+        sites.forEach(site => this.mirrorBenchmarks.set(site, {status: testableSiteSet.has(site) ? "pending" : "disabled"}));
 
         try {
             await Promise.all(
                 testableSites.map(async site => {
-                    const ms = await CatalogApiService.Instance.benchmarkMirror(database, site, 10000, abortController.signal);
+                    const ms = await CatalogApiService.Instance.benchmarkMirror(database, site, MIRROR_BENCHMARK_TIMEOUT_MS, abortController.signal);
                     runInAction(() => {
                         if (!this.isBenchmarking || this.mirrorBenchmarkAbort !== abortController) {
                             return;

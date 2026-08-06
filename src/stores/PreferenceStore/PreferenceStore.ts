@@ -617,13 +617,12 @@ export class PreferenceStore {
     public getCatalogQueryMirrors(database: CatalogDatabase): string[] {
         const preferenceKey = CATALOG_QUERY_MIRROR_PREFERENCE_KEYS[database];
         const mirrors = this.preferences.get(preferenceKey);
-        if (Array.isArray(mirrors)) {
-            const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
-            if (cleaned.length > 0) {
-                return cleaned;
-            }
+        if (!Array.isArray(mirrors)) {
+            return DEFAULTS.CATALOG_QUERY[database];
         }
-        return DEFAULTS.CATALOG_QUERY[database];
+
+        const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
+        return cleaned.length > 0 ? cleaned : DEFAULTS.CATALOG_QUERY[database];
     }
 
     public isCatalogQueryMirrorDisabled = (mirror: string): boolean => {

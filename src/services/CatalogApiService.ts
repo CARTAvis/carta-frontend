@@ -119,22 +119,23 @@ export class CatalogApiService {
         if (!url || typeof url !== "string") {
             return null;
         }
-        let normalized = url.trim();
+        const normalized = url.trim();
         if (!normalized) {
             return null;
         }
 
-        normalized = normalized.replace(/\/+$/, "");
+        const withoutTrailingSlashes = normalized.replace(/\/+$/, "");
 
         if (database === CatalogDatabase.VIZIER) {
-            normalized = normalized.replace(/\/(?:vizier|viz-bin)$/i, "");
-            normalized = `${normalized}/viz-bin`;
-        } else if (!/sim-tap$/i.test(normalized)) {
-            const hasSimbadPath = /\/simbad(\/|$)/i.test(normalized);
-            normalized = hasSimbadPath ? `${normalized}/sim-tap` : `${normalized}/simbad/sim-tap`;
+            return `${withoutTrailingSlashes.replace(/\/(?:vizier|viz-bin)$/i, "")}/viz-bin/`;
         }
 
-        return `${normalized}/`;
+        if (/sim-tap$/i.test(withoutTrailingSlashes)) {
+            return `${withoutTrailingSlashes}/`;
+        }
+
+        const simbadBase = /\/simbad(\/|$)/i.test(withoutTrailingSlashes) ? withoutTrailingSlashes : `${withoutTrailingSlashes}/simbad`;
+        return `${simbadBase}/sim-tap/`;
     };
 
     private joinUrl = (baseUrl: string, path: string): string => {
