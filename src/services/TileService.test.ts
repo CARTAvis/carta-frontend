@@ -168,6 +168,18 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels.mock.calls.map(call => call[1])).toEqual([1, 1, 0, 2, 1]);
     });
 
+    test("prioritizes the selected channel in a new page over the previous frame channel", () => {
+        const service = CreateService();
+        service.clearQueueForChannelMap = jest.fn();
+        const tile = {x: 0, y: 0, encode: () => 4};
+        service.getRequiredRequestTiles = jest.fn(() => [tile]);
+        const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 0, requiredChannel: 4};
+
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 4, max: 6});
+
+        expect(service.backendService.setChannels).toHaveBeenNthCalledWith(1, 1, 4, 0, {}, true);
+    });
+
     test("tracks the requested channel-map Stokes", () => {
         const service = CreateService();
         service.clearQueueForChannelMap = jest.fn();

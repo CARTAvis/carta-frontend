@@ -2260,7 +2260,7 @@ export class AppStore {
         }
         const frame = this.getFrame(regionHistogramData.fileId);
         const isCubeHistogram = regionHistogramData.regionId === RegionIdType.CUBE;
-        if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && (!frame || frame.channel !== regionHistogramData.channel || frame.stokes !== regionHistogramData.stokes)) {
+        if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && (!frame || this.getChannelMapActiveChannel(frame) !== regionHistogramData.channel || frame.stokes !== regionHistogramData.stokes)) {
             return;
         }
 
@@ -2347,7 +2347,7 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                if (this.channelMapStore.isChannelMapEnabled && (updatedFrame.channel !== channel || updatedFrame.stokes !== stokes)) {
+                if (this.channelMapStore.isChannelMapEnabled && (this.getChannelMapActiveChannel(updatedFrame) !== channel || updatedFrame.stokes !== stokes)) {
                     this.pendingChannelHistograms.delete(key);
                     return;
                 }
@@ -2434,6 +2434,18 @@ export class AppStore {
                 }
             }
         }
+    };
+
+    private getChannelMapActiveChannel = (frame: FrameStore | null | undefined): number | undefined => {
+        if (!frame) {
+            return undefined;
+        }
+
+        const requestedChannels = this.channelMapStore.channelArray;
+        if (requestedChannels.includes(frame.requiredChannel)) {
+            return frame.requiredChannel;
+        }
+        return requestedChannels[0] ?? frame.channel;
     };
 
     handleMomentProgressStream = (momentProgress: CARTA.MomentProgress) => {

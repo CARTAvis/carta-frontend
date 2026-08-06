@@ -362,7 +362,18 @@ export class TileService {
             this.confirmedChannelMapStokes.set(fileId, previousStokes ?? stokes);
         }
         this.desiredChannelMapStokes.set(fileId, stokes);
-        this.setCurrentChannel(fileId, frame.channel, stokes);
+
+        // During a page change, frame.channel can still refer to the previous
+        // page while requiredChannel already points at the new selection. Use
+        // the selected channel in the requested page (or its first channel) so
+        // its empty synchronization request arrives before its tiles.
+        const activeChannel =
+            fullChannelRange.min <= frame.channel && frame.channel <= fullChannelRange.max
+                ? frame.channel
+                : fullChannelRange.min <= frame.requiredChannel && frame.requiredChannel <= fullChannelRange.max
+                  ? frame.requiredChannel
+                  : fullChannelRange.min;
+        this.setCurrentChannel(fileId, activeChannel, stokes);
 
         if (isPolarizationChanged) {
             for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
@@ -392,8 +403,8 @@ export class TileService {
         }
 
         const activeRequest = this.activeChannelMapRequests.get(fileId);
-        const activeChannelRequest: ChannelMapRequest = {fileId, channel: frame.channel, stokes, requiredTiles: {}};
-        const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
+        const activeChannelRequest: ChannelMapRequest = {fileId, channel: activeChannel, stokes, requiredTiles: {}};
+        const activeChannelIndex = requests.findIndex(request => request.channel === activeChannel);
         if (activeChannelIndex > 0) {
             requests.unshift(requests.splice(activeChannelIndex, 1)[0]);
         }
@@ -404,7 +415,7 @@ export class TileService {
         } else if (requests.length) {
             requests.unshift(activeChannelRequest);
         }
-        if (requests.some(request => request.channel !== frame.channel) || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
+        if (requests.some(request => request.channel !== activeChannel) || (activeRequest && (activeRequest.channel !== activeChannel || activeRequest.stokes !== stokes))) {
             requests.push(activeChannelRequest);
         }
         this.queueChannelMapRequests(fileId, requests);

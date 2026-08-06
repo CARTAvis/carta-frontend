@@ -83,6 +83,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         return <NonIdealState icon={"folder-open"} title={"No image available"} description={"No image data to display"} />;
     }
 
+    const activeChannel = channelMapStore.channelArray.includes(frame.requiredChannel) ? frame.requiredChannel : channelMapStore.channelArray[0];
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const column = index % channelMapStore.numColumns;
         const row = Math.floor(index / channelMapStore.numColumns);
@@ -113,7 +114,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             height={innerRenderHeight}
                             isDocked={props.isDocked}
                             channel={channel}
-                            isHighlighted={channel === frame.requiredChannel}
+                            isHighlighted={channel === activeChannel}
                         />
                     )}
                     <RegionViewComponent
