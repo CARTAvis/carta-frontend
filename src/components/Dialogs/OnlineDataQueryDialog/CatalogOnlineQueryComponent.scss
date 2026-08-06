@@ -219,6 +219,11 @@
             border-color: rgba(50, 164, 103, 0.4);
         }
 
+        &.is-disabled {
+            opacity: 0.55;
+            border-style: dashed;
+        }
+
         .#{$ns}-input-group {
             flex: 1;
         }
@@ -332,6 +337,16 @@
                 background: rgba(182, 46, 46, 0.22);
                 border-color: rgba(255, 95, 95, 0.5);
                 color: rgba(255, 185, 185, 0.95);
+            }
+        }
+
+        &.is-disabled {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+
+            .#{$ns}-dark & {
+                background: rgba(255, 255, 255, 0.04);
+                border-color: rgba(255, 255, 255, 0.08);
             }
         }
     }

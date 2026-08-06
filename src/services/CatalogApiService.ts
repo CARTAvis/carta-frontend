@@ -57,6 +57,9 @@ export class CatalogApiService {
     }
 
     public benchmarkMirror = async (database: CatalogDatabase, mirrorUrl: string, timeoutMs: number = 10000, signal?: AbortSignal): Promise<number | null> => {
+        if (PreferenceStore.Instance.isCatalogQueryMirrorDisabled(mirrorUrl)) {
+            return null;
+        }
         const normalized = this.normalizeMirrorUrl(database, mirrorUrl);
         if (!normalized) {
             return null;
@@ -94,7 +97,8 @@ export class CatalogApiService {
     };
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {
-        const [activeMirrorUrl] = PreferenceStore.Instance.getCatalogQueryMirrors(database);
+        const preferenceStore = PreferenceStore.Instance;
+        const activeMirrorUrl = preferenceStore.getCatalogQueryMirrors(database).find(mirror => !preferenceStore.isCatalogQueryMirrorDisabled(mirror));
         return this.normalizeMirrorUrl(database, activeMirrorUrl) ?? DEFAULT_MIRROR_URLS[database];
     };
 

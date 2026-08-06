@@ -175,6 +175,8 @@ const CATALOG_QUERY_MIRROR_PREFERENCE_KEYS = {
     [CatalogDatabase.VIZIER]: PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS
 };
 
+const IsSecurePage = (): boolean => typeof window !== "undefined" && window.location.protocol === "https:";
+
 /**
  * The store manages the preference setting
  */
@@ -623,6 +625,17 @@ export class PreferenceStore {
         }
         return DEFAULTS.CATALOG_QUERY[database];
     }
+
+    public isCatalogQueryMirrorDisabled = (mirror: string): boolean => {
+        if (!IsSecurePage()) {
+            return false;
+        }
+        try {
+            return new URL(mirror).protocol === "http:";
+        } catch {
+            return false;
+        }
+    };
 
     public setCatalogQueryMirrors(database: CatalogDatabase, mirrors: string[]) {
         this.setPreference(CATALOG_QUERY_MIRROR_PREFERENCE_KEYS[database], mirrors);

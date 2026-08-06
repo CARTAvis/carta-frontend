@@ -14,6 +14,7 @@ const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB:
 const MOCK_MIRROR_SITES: Partial<Record<CatalogDatabase, string[]>> = {};
 const MOCK_PREFERENCE_STORE = {
     getCatalogQueryMirrors: jest.fn((database: CatalogDatabase) => MOCK_MIRROR_SITES[database] ?? []),
+    isCatalogQueryMirrorDisabled: jest.fn((_site: string) => false),
     setCatalogQueryMirrors: jest.fn()
 };
 
@@ -36,7 +37,7 @@ import {CatalogApiService} from "services";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 
-type MirrorBenchmark = {status: "idle" | "pending" | "ok" | "fail"; ms?: number};
+type MirrorBenchmark = {status: "idle" | "pending" | "ok" | "fail" | "disabled"; ms?: number};
 
 interface TestableCatalogQueryComponent {
     dragSourceMirrorIndex?: number;
@@ -51,6 +52,7 @@ interface TestableCatalogQueryComponent {
     handleMirrorDragOver: (index: number) => (event: DragEvent<HTMLDivElement>) => void;
     handleMirrorDragEnd: () => void;
     handleObjectUpdate: () => void;
+    isMirrorRemovalDisabled: (mirror: string, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean) => boolean;
     runMirrorBenchmark: () => Promise<void>;
 }
 
@@ -60,6 +62,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "not-tested", "fast"];
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = ["vizier-default"];
+        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation(() => false);
         MOCK_PREFERENCE_STORE.setCatalogQueryMirrors.mockImplementation((database: CatalogDatabase, sites: string[]) => {
             MOCK_MIRROR_SITES[database] = sites;
         });
@@ -112,6 +115,7 @@ describe("CatalogQueryComponent MobX actions", () => {
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "fast"];
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = [];
+        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation(() => false);
         MOCK_PREFERENCE_STORE.setCatalogQueryMirrors.mockImplementation((database: CatalogDatabase, sites: string[]) => {
             MOCK_MIRROR_SITES[database] = sites;
         });
@@ -138,6 +142,28 @@ describe("CatalogQueryComponent MobX actions", () => {
             dispose();
             consoleWarn.mockRestore();
         }
+    });
+
+    test("does not benchmark HTTP mirrors on secure pages", async () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["http://legacy.example/", "https://secure.example/"];
+        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation((site: string) => site.startsWith("http://"));
+        (CatalogApiService.Instance.benchmarkMirror as jest.Mock).mockResolvedValue(50);
+
+        await component.runMirrorBenchmark();
+
+        expect(CatalogApiService.Instance.benchmarkMirror).toHaveBeenCalledTimes(1);
+        expect(CatalogApiService.Instance.benchmarkMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "https://secure.example/", 10000, expect.anything());
+        expect(component.mirrorBenchmarks.get("http://legacy.example/")).toEqual({status: "disabled"});
+    });
+
+    test("keeps the last usable HTTPS mirror when HTTP mirrors are configured", () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation((site: string) => site.startsWith("http://"));
+
+        expect(component.isMirrorRemovalDisabled("https://secure.example/", 2, 1, false)).toBe(true);
+        expect(component.isMirrorRemovalDisabled("http://legacy.example/", 2, 1, false)).toBe(false);
+        expect(component.isMirrorRemovalDisabled("https://secure.example/", 2, 2, false)).toBe(false);
     });
 
     test("updates drag observables inside actions", () => {

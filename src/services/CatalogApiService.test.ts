@@ -13,7 +13,8 @@ jest.mock("stores", () => ({
     CatalogOnlineQueryProfileStore: jest.fn(),
     PreferenceStore: {
         Instance: {
-            getCatalogQueryMirrors: jest.fn(() => ["https://active.example/", "https://unused.example/"])
+            getCatalogQueryMirrors: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
+            isCatalogQueryMirrorDisabled: jest.fn(() => false)
         }
     }
 }));
