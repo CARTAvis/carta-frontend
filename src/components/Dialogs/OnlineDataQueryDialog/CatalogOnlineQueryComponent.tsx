@@ -656,7 +656,8 @@ export class CatalogQueryComponent extends React.Component {
         const sites = [...this.getMirrorSites(configStore.catalogDB)];
         const normalizedValue = this.normalizeMirrorUrl(value);
         const isDuplicate = sites.some((site, i) => i !== index && this.normalizeMirrorUrl(site) === normalizedValue);
-        if (this.isValidMirrorUrl(value) && !isDuplicate && value !== sites[index]) {
+        const isRemovingLastTestableMirror = this.isValidMirrorUrl(value) && !this.isMirrorDisabled(sites[index]) && this.isMirrorDisabled(value) && sites.every((site, i) => i === index || this.isMirrorDisabled(site));
+        if (this.isValidMirrorUrl(value) && !isDuplicate && !isRemovingLastTestableMirror && value !== sites[index]) {
             sites[index] = value;
             this.setMirrorSites(configStore.catalogDB, sites);
         }

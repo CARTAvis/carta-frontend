@@ -54,6 +54,9 @@ interface TestableCatalogQueryComponent {
     handleMirrorDragEnd: () => void;
     handleObjectUpdate: () => void;
     isMirrorRemovalDisabled: (mirror: string, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean) => boolean;
+    startMirrorEdit: (index: number, value: string) => void;
+    setEditingMirrorValue: (value: string) => void;
+    commitMirrorEdit: (index: number) => void;
     runMirrorBenchmark: () => Promise<void>;
     sortMirrorsByBenchmark: (database: CatalogDatabase) => void;
 }
@@ -176,6 +179,19 @@ describe("CatalogQueryComponent MobX actions", () => {
         expect(component.isMirrorRemovalDisabled("https://secure.example/", 2, 1, false)).toBe(true);
         expect(component.isMirrorRemovalDisabled("http://legacy.example/", 2, 1, false)).toBe(false);
         expect(component.isMirrorRemovalDisabled("https://secure.example/", 2, 2, false)).toBe(false);
+    });
+
+    test("does not edit away the last usable HTTPS mirror", () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["https://secure.example/", "http://legacy.example/"];
+        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation((site: string) => site.startsWith("http://"));
+
+        component.startMirrorEdit(0, "https://secure.example/");
+        component.setEditingMirrorValue("http://replacement.example/");
+        component.commitMirrorEdit(0);
+
+        expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).not.toHaveBeenCalled();
+        expect(MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD]).toEqual(["https://secure.example/", "http://legacy.example/"]);
     });
 
     test("updates drag observables inside actions", () => {
