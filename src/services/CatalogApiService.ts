@@ -119,32 +119,44 @@ export class CatalogApiService {
         if (!url || typeof url !== "string") {
             return null;
         }
-        const normalized = url.trim();
-        if (!normalized) {
+        try {
+            const parsed = new URL(url.trim());
+            if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                return null;
+            }
+
+            const path = parsed.pathname.replace(/\/+$/, "");
+            if (database === CatalogDatabase.VIZIER) {
+                const vizierBase = path.replace(/\/(?:vizier|viz-bin)$/i, "");
+                parsed.pathname = `${vizierBase}/viz-bin/`;
+            } else if (/sim-tap$/i.test(path)) {
+                parsed.pathname = `${path}/`;
+            } else {
+                const simbadBase = /\/simbad(\/|$)/i.test(path) ? path : `${path}/simbad`;
+                parsed.pathname = `${simbadBase}/sim-tap/`;
+            }
+            return parsed.toString();
+        } catch {
             return null;
         }
-
-        const withoutTrailingSlashes = normalized.replace(/\/+$/, "");
-
-        if (database === CatalogDatabase.VIZIER) {
-            return `${withoutTrailingSlashes.replace(/\/(?:vizier|viz-bin)$/i, "")}/viz-bin/`;
-        }
-
-        if (/sim-tap$/i.test(withoutTrailingSlashes)) {
-            return `${withoutTrailingSlashes}/`;
-        }
-
-        const simbadBase = /\/simbad(\/|$)/i.test(withoutTrailingSlashes) ? withoutTrailingSlashes : `${withoutTrailingSlashes}/simbad`;
-        return `${simbadBase}/sim-tap/`;
     };
 
     private joinUrl = (baseUrl: string, path: string): string => {
         if (!baseUrl) {
             return path;
         }
-        const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-        const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-        return `${normalizedBase}${normalizedPath}`;
+        const base = new URL(baseUrl);
+        const request = new URL(path, base);
+        const baseQuery = new URLSearchParams(base.search);
+        const requestQuery = new URLSearchParams(request.search);
+        baseQuery.forEach((value, key) => {
+            if (!requestQuery.has(key)) {
+                requestQuery.append(key, value);
+            }
+        });
+        request.search = requestQuery.toString();
+        request.hash = "";
+        return request.toString();
     };
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {

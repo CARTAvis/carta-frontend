@@ -1,5 +1,7 @@
 import type {AxiosInstance} from "axios";
 
+import {CatalogDatabase} from "enums";
+
 import {CatalogApiService} from "./CatalogApiService";
 
 jest.mock("components/Shared", () => ({
@@ -24,6 +26,8 @@ jest.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemet
 interface TestableCatalogApiService {
     axiosInstanceSimbad: AxiosInstance;
     getSimbadCatalog: (query: string) => Promise<unknown>;
+    normalizeMirrorUrl: (database: CatalogDatabase, url?: string) => string | null;
+    joinUrl: (baseUrl: string, path: string) => string;
 }
 
 describe("CatalogApiService active mirror", () => {
@@ -45,5 +49,13 @@ describe("CatalogApiService active mirror", () => {
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
 
         await expect(service.getSimbadCatalog("test")).rejects.toBe(cancellation);
+    });
+
+    test("normalizes mirror paths before query strings and preserves base query parameters", () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        const normalized = service.normalizeMirrorUrl(CatalogDatabase.VIZIER, "https://active.example/vizier/?tenant=one#section");
+
+        expect(normalized).toBe("https://active.example/viz-bin/?tenant=one#section");
+        expect(service.joinUrl(normalized as string, "votable?-out.max=1")).toBe("https://active.example/viz-bin/votable?-out.max=1&tenant=one");
     });
 });
