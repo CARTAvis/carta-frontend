@@ -1,4 +1,4 @@
-import {runInAction} from "mobx";
+import {observable, runInAction} from "mobx";
 
 import {ChannelMapStore} from "./ChannelMapStore";
 
@@ -13,6 +13,7 @@ jest.mock("services", () => ({
 
 jest.mock("stores", () => {
     const {makeAutoObservable, observable} = jest.requireActual("mobx");
+    const throttledRequestContours = Object.assign(jest.fn(), {cancel: jest.fn()});
     const animatorStore = makeAutoObservable({
         step: 1,
         maxStep: 50,
@@ -25,6 +26,11 @@ jest.mock("stores", () => {
         AppStore: {
             Instance: {
                 animatorStore,
+                contourFrames: observable.map(),
+                contourRequestStore: {
+                    reset: jest.fn(),
+                    throttledRequestContours
+                },
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
@@ -104,6 +110,7 @@ describe("ChannelMapStore", () => {
                 throttledRequestChannels: (frame: unknown) => void;
             };
             const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
+            const contourRequestStore = jest.requireMock("stores").AppStore.Instance.contourRequestStore;
             const frame = store.displayedFrame;
 
             testStore.throttledRequestChannels(frame);
@@ -113,6 +120,8 @@ describe("ChannelMapStore", () => {
             jest.runOnlyPendingTimers();
 
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
+            expect(contourRequestStore.throttledRequestContours.cancel).toHaveBeenCalled();
+            expect(contourRequestStore.reset).toHaveBeenCalled();
             jest.useRealTimers();
         });
 
@@ -166,6 +175,44 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
 
             expect(appStore.updateChannels).toHaveBeenCalledWith([{frame, channel: 2, stokes: 1}]);
+        });
+    });
+
+    describe("contour requests", () => {
+        it("requests the correct contour channels when spectral matching changes", () => {
+            jest.useFakeTimers();
+            const appStore = jest.requireMock("stores").AppStore.Instance;
+            const requestContours = appStore.contourRequestStore.throttledRequestContours as jest.Mock;
+            const frame = store.displayedFrame;
+            const contourFrame = observable.object(
+                {
+                    contourConfig: {levels: [1]},
+                    frameInfo: {fileId: 2},
+                    requiredChannel: 6,
+                    requiredStokes: 0,
+                    spectralReference: null
+                },
+                {},
+                {deep: false}
+            );
+            appStore.contourFrames.set(frame, [contourFrame]);
+            jest.runOnlyPendingTimers();
+            requestContours.mockClear();
+
+            runInAction(() => {
+                contourFrame.spectralReference = frame;
+            });
+            jest.advanceTimersByTime(100);
+            expect(requestContours).toHaveBeenCalledWith(frame);
+
+            requestContours.mockClear();
+            runInAction(() => {
+                contourFrame.spectralReference = null;
+            });
+            jest.advanceTimersByTime(100);
+            expect(requestContours).toHaveBeenCalledWith(frame);
+
+            appStore.contourFrames.clear();
         });
     });
 

@@ -4,10 +4,13 @@ import {throttle} from "lodash";
 import {AppStore, type FrameStore} from "stores";
 import {transformChannelToFrame} from "utilities";
 
+const CONTOUR_REQUEST_TIMEOUT = 10_000;
+
 interface ContourRequest {
     frame: FrameStore;
     parameters: CARTA.SetContourParameters.$Properties;
     channel: number;
+    generation: number;
 }
 
 interface ActiveContourRequest extends ContourRequest {
@@ -26,8 +29,10 @@ export class ContourRequestStore {
 
     private readonly requestQueues = new Map<number, ContourRequest[]>();
     private readonly activeRequests = new Map<number, ActiveContourRequest>();
-    private readonly requestedChannels = new Map<number, Set<number>>();
-    private readonly requestedStokes = new Map<number, number>();
+    private readonly requestGenerations = new Map<number, number>();
+    private readonly channelMapRequestIds = new Set<number>();
+    private readonly requestTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+    private nextGeneration = 0;
 
     private constructor() {
         AppStore.Instance.backendService.channelMapFlowControlStream.subscribe(({eventId, flowControl}) => this.handleFlowControl(eventId, flowControl));
@@ -35,10 +40,6 @@ export class ContourRequestStore {
 
     private getVisibleContourFrames(baseFrame: FrameStore): FrameStore[] {
         return AppStore.Instance.contourFrames.get(baseFrame) ?? [];
-    }
-
-    hasVisibleContours(baseFrame: FrameStore | null): boolean {
-        return !!baseFrame && this.getVisibleContourFrames(baseFrame).length > 0;
     }
 
     private buildContourParameters(frame: FrameStore): CARTA.SetContourParameters.$Properties {
@@ -68,29 +69,47 @@ export class ContourRequestStore {
 
     throttledRequestContours = throttle((frame: FrameStore) => this.requestContours(frame), 100);
 
+    reset(fileId?: number) {
+        const fileIds = fileId === undefined ? new Set([...this.requestQueues.keys(), ...this.activeRequests.keys(), ...this.requestGenerations.keys()]) : [fileId];
+        for (const id of fileIds) {
+            this.requestQueues.delete(id);
+            this.activeRequests.delete(id);
+            this.requestGenerations.delete(id);
+        }
+    }
+
     requestContours(baseFrame: FrameStore) {
         const contourFrames = this.getVisibleContourFrames(baseFrame).filter(frame => frame.contourConfig.isEnabled && frame.contourConfig.levels.length);
         const isChannelMapEnabled = AppStore.Instance.channelMapStore.isChannelMapEnabled;
 
+        if (!isChannelMapEnabled) {
+            this.reset();
+            for (const frame of contourFrames) {
+                AppStore.Instance.backendService.setContourParameters(this.buildContourParameters(frame));
+            }
+            return;
+        }
+
+        const desiredFileIds = new Set(contourFrames.map(frame => frame.frameInfo.fileId));
+        const trackedFileIds = new Set([...this.requestQueues.keys(), ...this.activeRequests.keys(), ...this.requestGenerations.keys()]);
+        for (const fileId of trackedFileIds) {
+            if (!desiredFileIds.has(fileId)) {
+                this.reset(fileId);
+            }
+        }
+
+        const generation = ++this.nextGeneration;
         for (const frame of contourFrames) {
             const fileId = frame.frameInfo.fileId;
             const baseParameters = this.buildContourParameters(frame);
-            if (!isChannelMapEnabled) {
-                this.requestQueues.delete(fileId);
-                this.requestedChannels.delete(fileId);
-                this.requestedStokes.delete(fileId);
-                AppStore.Instance.backendService.setContourParameters(baseParameters);
-                continue;
-            }
-
             const channels = this.channelsForFrame(baseFrame, frame, AppStore.Instance.channelMapStore.channelArray);
-            this.requestedChannels.set(fileId, new Set(channels));
-            this.requestedStokes.set(fileId, frame.requiredStokes);
+            this.requestGenerations.set(fileId, generation);
             frame.contourStores.forEach(store => store.cleanupChannelsOutsideRange(channels));
 
             const requests = channels.map(channel => ({
                 frame,
                 channel,
+                generation,
                 parameters: {...baseParameters, channel, stokes: frame.requiredStokes}
             }));
             const activeChannelIndex = requests.findIndex(request => request.channel === frame.requiredChannel);
@@ -119,6 +138,8 @@ export class ContourRequestStore {
             return;
         }
         this.activeRequests.set(fileId, {...request, requestId});
+        this.channelMapRequestIds.add(requestId);
+        this.startRequestTimeout(fileId, requestId);
     }
 
     private resumeQueuedRequests() {
@@ -138,24 +159,67 @@ export class ContourRequestStore {
             return;
         }
         const activeRequest = this.activeRequests.get(fileId);
-        if (!activeRequest || activeRequest.requestId !== eventId || activeRequest.channel !== flowControl.completedChannel) {
+        if (!activeRequest || activeRequest.requestId !== eventId) {
+            if (this.channelMapRequestIds.delete(eventId)) {
+                this.clearRequestTimeout(eventId);
+            }
             this.resumeQueuedRequests();
             return;
         }
+        if (activeRequest.channel !== flowControl.completedChannel) {
+            console.warn(`Contour completion mismatch for request ${eventId}: expected channel ${activeRequest.channel}, received ${flowControl.completedChannel}`);
+            return;
+        }
+        this.channelMapRequestIds.delete(eventId);
+        this.clearRequestTimeout(eventId);
         this.activeRequests.delete(fileId);
         if (flowControl.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
             console.warn(flowControl.message || `Contour request ${eventId} was not completed`);
+            this.requestQueues.delete(fileId);
+            this.requestGenerations.delete(fileId);
+            return;
         }
         this.sendNext(fileId);
     }
 
-    acceptsContourData(data: CARTA.ContourImageData.$Properties): boolean {
-        if (!AppStore.Instance.channelMapStore.isChannelMapEnabled) {
-            return true;
-        }
+    acceptsContourData(eventId: number, data: CARTA.ContourImageData.$Properties): boolean {
         const fileId = data.fileId;
-        const channel = data.channel;
-        return fileId != null && channel != null && this.requestedChannels.get(fileId)?.has(channel) === true && this.requestedStokes.get(fileId) === data.stokes;
+        if (fileId == null) {
+            return false;
+        }
+        if (!this.channelMapRequestIds.has(eventId)) {
+            return !AppStore.Instance.channelMapStore.isChannelMapEnabled;
+        }
+        const activeRequest = this.activeRequests.get(fileId);
+        return (
+            AppStore.Instance.channelMapStore.isChannelMapEnabled &&
+            activeRequest?.requestId === eventId &&
+            activeRequest.generation === this.requestGenerations.get(fileId) &&
+            activeRequest.channel === data.channel &&
+            activeRequest.parameters.stokes === data.stokes
+        );
+    }
+
+    private startRequestTimeout(fileId: number, requestId: number) {
+        const timeout = setTimeout(() => {
+            this.requestTimeouts.delete(requestId);
+            this.channelMapRequestIds.delete(requestId);
+            if (this.activeRequests.get(fileId)?.requestId === requestId) {
+                console.warn(`Contour request ${requestId} timed out for file ${fileId}`);
+                this.activeRequests.delete(fileId);
+                this.requestQueues.delete(fileId);
+                this.requestGenerations.delete(fileId);
+            }
+        }, CONTOUR_REQUEST_TIMEOUT);
+        this.requestTimeouts.set(requestId, timeout);
+    }
+
+    private clearRequestTimeout(requestId: number) {
+        const timeout = this.requestTimeouts.get(requestId);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.requestTimeouts.delete(requestId);
+        }
     }
 
     getContourProgress(baseFrame: FrameStore): number {

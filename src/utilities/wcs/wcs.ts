@@ -289,16 +289,16 @@ export function transformChannelToFrame(baseFrame: FrameStore, targetFrame: Fram
         return channel;
     }
     if (baseFrame.spectralReference && targetFrame.spectralReference && baseFrame.spectralReference === targetFrame.spectralReference) {
-        const referenceChannel = Math.round(getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel));
+        const referenceChannel = getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel);
         return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, referenceChannel));
     }
-    if (targetFrame.spectralReference) {
+    if (targetFrame.spectralReference === baseFrame) {
         return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, channel));
     }
-    if (baseFrame.spectralReference) {
+    if (baseFrame.spectralReference === targetFrame) {
         return Math.round(getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel));
     }
-    return channel;
+    return targetFrame.requiredChannel;
 }
 
 export function isAstBad(value: number) {

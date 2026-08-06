@@ -54,15 +54,34 @@ export class ChannelMapStore {
         reaction(
             () => {
                 const frame = this.displayedFrame;
+                const appStore = AppStore.Instance;
                 const contours = frame
-                    ? (AppStore.Instance.contourFrames?.get(frame) ?? []).map(contourFrame => `${contourFrame.frameInfo.fileId}:${contourFrame.requiredStokes}:${contourFrame.contourConfig.levels.join(",")}`).join("|")
+                    ? (appStore.contourFrames?.get(frame) ?? [])
+                          .map(
+                              contourFrame =>
+                                  `${contourFrame.frameInfo.fileId}:${contourFrame.requiredChannel}:${contourFrame.requiredStokes}:${contourFrame.spectralReference?.frameInfo.fileId ?? ""}:${contourFrame.contourConfig.levels.join(",")}`
+                          )
+                          .join("|")
                     : "";
-                return {frame, contours, channels: this.channelArray.join(","), stokes: frame?.requiredStokes, enabled: this.isChannelMapEnabled};
+                return {
+                    frame,
+                    contours,
+                    channels: this.channelArray.join(","),
+                    stokes: frame?.requiredStokes,
+                    spectralReference: frame?.spectralReference?.frameInfo.fileId,
+                    spectralMatchingType: appStore.spectralMatchingType,
+                    enabled: this.isChannelMapEnabled
+                };
             },
             ({frame}) => {
                 const contourRequestStore = AppStore.Instance.contourRequestStore;
-                if (frame && contourRequestStore?.hasVisibleContours(frame)) {
+                if (!contourRequestStore) {
+                    return;
+                }
+                if (frame) {
                     contourRequestStore.throttledRequestContours(frame);
+                } else {
+                    contourRequestStore.reset();
                 }
             }
         );
@@ -153,6 +172,8 @@ export class ChannelMapStore {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
+            AppStore.Instance.contourRequestStore?.throttledRequestContours.cancel();
+            AppStore.Instance.contourRequestStore?.reset();
             if (isDisablingChannelMap) {
                 const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
                 AppStore.Instance.updateChannels(updates);

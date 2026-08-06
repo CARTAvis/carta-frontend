@@ -22,6 +22,11 @@ export interface ChannelMapFlowControlEvent {
     flowControl: CARTA.ChannelMapFlowControl;
 }
 
+export interface ContourDataEvent {
+    eventId: number;
+    contourData: CARTA.ContourImageData;
+}
+
 // Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
 export class Deferred<T> {
     private _resolve: (value: T) => void = () => {};
@@ -85,7 +90,7 @@ export class BackendService {
     readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     readonly statsStream: Subject<CARTA.RegionStatsData>;
-    readonly contourStream: Subject<CARTA.ContourImageData>;
+    readonly contourStream: Subject<ContourDataEvent>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
@@ -113,7 +118,7 @@ export class BackendService {
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
-        this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.contourStream = new Subject<ContourDataEvent>();
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
@@ -1007,8 +1012,8 @@ export class BackendService {
         this.statsStream.next(regionStatsData);
     }
 
-    private onStreamedContourData(_eventId: number, contourData: CARTA.ContourImageData) {
-        this.contourStream.next(contourData);
+    private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
+        this.contourStream.next({eventId, contourData});
     }
 
     private onStreamedVectorOverlayData(_eventId: number, overlayData: CARTA.VectorOverlayTileData) {

@@ -49,7 +49,7 @@ import {
     type WorkspaceFile
 } from "models";
 import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
-import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
+import {ApiService, BackendService, type ContourDataEvent, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimatorStore,
@@ -999,6 +999,7 @@ export class AppStore {
             this.statsRequirements.delete(fileId);
             this.histogramRequirements.delete(fileId);
 
+            this.contourRequestStore.reset(fileId);
             this.tileService.handleFileClosed(fileId);
             this.telemetryService.addFileCloseEntry(fileId);
 
@@ -1086,6 +1087,7 @@ export class AppStore {
         this.clearSpatialReference();
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
+        this.contourRequestStore.reset();
         if (this.backendService.closeFile(-1)) {
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
@@ -2389,10 +2391,10 @@ export class AppStore {
         regionStatsMap.set(regionStatsData.stokes, regionStatsData);
     };
 
-    handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
-        const updatedFrame = this.getFrame(contourImageData.fileId);
-        if (updatedFrame && this.contourRequestStore.acceptsContourData(contourImageData)) {
-            updatedFrame.updateFromContourData(contourImageData);
+    handleContourImageStream = ({eventId, contourData}: ContourDataEvent) => {
+        const updatedFrame = this.getFrame(contourData.fileId);
+        if (updatedFrame && this.contourRequestStore.acceptsContourData(eventId, contourData)) {
+            updatedFrame.updateFromContourData(contourData);
         }
     };
 

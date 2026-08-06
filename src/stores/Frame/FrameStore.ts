@@ -3048,6 +3048,7 @@ export class FrameStore {
     };
 
     @action clearContours = (shouldUpdateBackend: boolean = true) => {
+        AppStore.Instance.contourRequestStore.reset(this.frameInfo.fileId);
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
