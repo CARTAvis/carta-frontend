@@ -47,6 +47,7 @@ interface TestableCatalogQueryComponent {
     mirrorBenchmarkAbort?: {abort: () => void};
     mirrorBenchmarkDatabase?: CatalogDatabase;
     cancelMirrorBenchmark: () => void;
+    getMirrorBenchmarkKey: (database: CatalogDatabase, site: string) => string;
     handleDatabaseSelect: (database: CatalogDatabase) => void;
     handleMirrorDragStart: (index: number) => (event: DragEvent<HTMLDivElement>) => void;
     handleMirrorDragOver: (index: number) => (event: DragEvent<HTMLDivElement>) => void;
@@ -54,6 +55,7 @@ interface TestableCatalogQueryComponent {
     handleObjectUpdate: () => void;
     isMirrorRemovalDisabled: (mirror: string, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean) => boolean;
     runMirrorBenchmark: () => Promise<void>;
+    sortMirrorsByBenchmark: (database: CatalogDatabase) => void;
 }
 
 describe("CatalogQueryComponent mirror benchmark cancellation", () => {
@@ -76,9 +78,9 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
             component.mirrorBenchmarkAbort = {abort};
             component.mirrorBenchmarkDatabase = CatalogDatabase.SIMBAD;
             component.mirrorBenchmarks = new Map([
-                ["slow", {status: "ok", ms: 200}],
-                ["not-tested", {status: "pending"}],
-                ["fast", {status: "ok", ms: 50}]
+                [component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "slow"), {status: "ok", ms: 200}],
+                [component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "not-tested"), {status: "pending"}],
+                [component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "fast"), {status: "ok", ms: 50}]
             ]);
         });
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.VIZIER;
@@ -89,7 +91,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
         expect(component.isBenchmarking).toBe(false);
         expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow", "not-tested"]);
         expect(MOCK_MIRROR_SITES[CatalogDatabase.VIZIER]).toEqual(["vizier-default"]);
-        expect(component.mirrorBenchmarks.get("not-tested")).toEqual({status: "idle"});
+        expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "not-tested"))).toEqual({status: "idle"});
     });
 
     test("ignores database changes while a mirror benchmark is running", () => {
@@ -134,8 +136,8 @@ describe("CatalogQueryComponent MobX actions", () => {
             await component.runMirrorBenchmark();
 
             expect(component.isBenchmarking).toBe(false);
-            expect(component.mirrorBenchmarks.get("fast")).toEqual({status: "ok", ms: 50});
-            expect(component.mirrorBenchmarks.get("slow")).toEqual({status: "ok", ms: 200});
+            expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "fast"))).toEqual({status: "ok", ms: 50});
+            expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "slow"))).toEqual({status: "ok", ms: 200});
             expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
             expect(consoleWarn).not.toHaveBeenCalled();
         } finally {
@@ -154,7 +156,17 @@ describe("CatalogQueryComponent MobX actions", () => {
 
         expect(CatalogApiService.Instance.benchmarkMirror).toHaveBeenCalledTimes(1);
         expect(CatalogApiService.Instance.benchmarkMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "https://secure.example/", 10000, expect.anything());
-        expect(component.mirrorBenchmarks.get("http://legacy.example/")).toEqual({status: "disabled"});
+        expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "http://legacy.example/"))).toEqual({status: "disabled"});
+    });
+
+    test("does not use benchmark results from another database when sorting", () => {
+        const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
+        MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = ["other", "shared"];
+        component.mirrorBenchmarks = new Map([[component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "shared"), {status: "ok", ms: 1}]]);
+
+        component.sortMirrorsByBenchmark(CatalogDatabase.VIZIER);
+
+        expect(MOCK_PREFERENCE_STORE.setCatalogQueryMirrors).toHaveBeenCalledWith(CatalogDatabase.VIZIER, ["other", "shared"]);
     });
 
     test("keeps the last usable HTTPS mirror when HTTP mirrors are configured", () => {

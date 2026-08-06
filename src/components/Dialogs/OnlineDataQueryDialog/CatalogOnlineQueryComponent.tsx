@@ -141,7 +141,7 @@ export class CatalogQueryComponent extends React.Component {
                             >
                                 <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" />
                             </Select>
-                            <PopoverNext placement="bottom" animation="minimal" arrow={false} content={this.renderMirrorManager(mirrorSites, isDisabled, isMirrorConfigDisabled, activeMirror)}>
+                            <PopoverNext placement="bottom" animation="minimal" arrow={false} content={this.renderMirrorManager(configStore.catalogDB, mirrorSites, isDisabled, isMirrorConfigDisabled, activeMirror)}>
                                 <Button icon="cog" disabled={isDisabled} />
                             </PopoverNext>
                         </ControlGroup>
@@ -292,7 +292,7 @@ export class CatalogQueryComponent extends React.Component {
         );
     }
 
-    private renderMirrorManager = (mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
+    private renderMirrorManager = (database: CatalogDatabase, mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
         const hasNoMirrors = mirrorSites.length === 0;
         const testableMirrorCount = mirrorSites.filter(site => !this.isMirrorDisabled(site)).length;
         const isBenchmarkButtonDisabled = isQueryDisabled || (!this.isBenchmarking && testableMirrorCount === 0);
@@ -339,15 +339,15 @@ export class CatalogQueryComponent extends React.Component {
                 <div className="mirror-manager__separator" />
                 <div className="mirror-manager__list">
                     {hasNoMirrors ? <div className="mirror-manager__empty">No mirror sites. Add a URL above or reset to defaults.</div> : null}
-                    {mirrorSites.map((site, index) => this.renderMirrorSite(site, index, mirrorSites.length, testableMirrorCount, isMirrorConfigDisabled, activeMirror))}
+                    {mirrorSites.map((site, index) => this.renderMirrorSite(database, site, index, mirrorSites.length, testableMirrorCount, isMirrorConfigDisabled, activeMirror))}
                 </div>
             </div>
         );
     };
 
-    private renderMirrorSite = (site: string, index: number, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
+    private renderMirrorSite = (database: CatalogDatabase, site: string, index: number, mirrorCount: number, testableMirrorCount: number, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
         const isMirrorDisabled = this.isMirrorDisabled(site);
-        const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(this.mirrorBenchmarks.get(site), isMirrorDisabled);
+        const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, site)), isMirrorDisabled);
         const isActive = site === activeMirror;
         const isEditing = this.editingMirrorIndex === index;
         const isLastMirror = mirrorCount === 1;
@@ -523,7 +523,7 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private setMirrorSites = (database: CatalogDatabase, sites: string[]) => {
-        this.pruneMirrorBenchmarks(sites);
+        this.pruneMirrorBenchmarks(database, sites);
         PreferenceStore.Instance.setCatalogQueryMirrors(database, sites);
     };
 
@@ -532,7 +532,7 @@ export class CatalogQueryComponent extends React.Component {
         this.cancelMirrorEdit();
         this.cancelMirrorBenchmark();
         PreferenceStore.Instance.resetCatalogQueryMirrors(database);
-        this.pruneMirrorBenchmarks(this.getMirrorSites(database));
+        this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
     };
 
     private getMirrorLabel = (url?: string): string => {
@@ -710,10 +710,15 @@ export class CatalogQueryComponent extends React.Component {
         this.dragOverMirrorIndex = undefined;
     };
 
-    @action private pruneMirrorBenchmarks = (sites: string[]) => {
-        const allowed = new Set(sites);
+    private getMirrorBenchmarkKey = (database: CatalogDatabase, site: string): string => {
+        return `${database}:${site}`;
+    };
+
+    @action private pruneMirrorBenchmarks = (database: CatalogDatabase, sites: string[]) => {
+        const allowed = new Set(sites.map(site => this.getMirrorBenchmarkKey(database, site)));
+        const databasePrefix = `${database}:`;
         for (const key of this.mirrorBenchmarks.keys()) {
-            if (!allowed.has(key)) {
+            if (key.startsWith(databasePrefix) && !allowed.has(key)) {
                 this.mirrorBenchmarks.delete(key);
             }
         }
@@ -782,7 +787,7 @@ export class CatalogQueryComponent extends React.Component {
         this.mirrorBenchmarkDatabase = database;
         this.isBenchmarking = true;
         const testableSiteSet = new Set(testableSites);
-        sites.forEach(site => this.mirrorBenchmarks.set(site, {status: testableSiteSet.has(site) ? "pending" : "disabled"}));
+        sites.forEach(site => this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: testableSiteSet.has(site) ? "pending" : "disabled"}));
 
         try {
             await Promise.all(
@@ -793,9 +798,9 @@ export class CatalogQueryComponent extends React.Component {
                             return;
                         }
                         if (ms === null || !Number.isFinite(ms)) {
-                            this.mirrorBenchmarks.set(site, {status: "fail"});
+                            this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: "fail"});
                         } else {
-                            this.mirrorBenchmarks.set(site, {status: "ok", ms});
+                            this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: "ok", ms});
                         }
                     });
                 })
@@ -817,8 +822,8 @@ export class CatalogQueryComponent extends React.Component {
     private sortMirrorsByBenchmark = (database: CatalogDatabase) => {
         const sites = [...this.getMirrorSites(database)];
         sites.sort((a, b) => {
-            const resultA = this.mirrorBenchmarks.get(a);
-            const resultB = this.mirrorBenchmarks.get(b);
+            const resultA = this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, a));
+            const resultB = this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, b));
             const scoreA = this.getBenchmarkScore(resultA);
             const scoreB = this.getBenchmarkScore(resultB);
             return scoreA - scoreB;
@@ -850,9 +855,13 @@ export class CatalogQueryComponent extends React.Component {
         this.mirrorBenchmarkAbort = undefined;
         this.mirrorBenchmarkDatabase = undefined;
         this.isBenchmarking = false;
-        for (const [site, result] of this.mirrorBenchmarks.entries()) {
-            if (result.status === "pending") {
-                this.mirrorBenchmarks.set(site, {status: "idle"});
+        if (database !== undefined) {
+            for (const site of this.getMirrorSites(database)) {
+                const key = this.getMirrorBenchmarkKey(database, site);
+                const result = this.mirrorBenchmarks.get(key);
+                if (result?.status === "pending") {
+                    this.mirrorBenchmarks.set(key, {status: "idle"});
+                }
             }
         }
         if (database !== undefined) {
@@ -862,9 +871,10 @@ export class CatalogQueryComponent extends React.Component {
 
     private syncMirrorBenchmarks = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const sites = this.getMirrorSites(configStore.catalogDB);
+        const database = configStore.catalogDB;
+        const sites = this.getMirrorSites(database);
         if (!this.areMirrorListsEqual(this.lastMirrorSites, sites)) {
-            this.pruneMirrorBenchmarks(sites);
+            this.pruneMirrorBenchmarks(database, sites);
             this.lastMirrorSites = [...sites];
         }
     };
