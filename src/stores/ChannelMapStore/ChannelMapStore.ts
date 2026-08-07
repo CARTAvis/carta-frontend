@@ -146,6 +146,11 @@ export class ChannelMapStore {
             return;
         }
         this.startChannel = startChannel;
+        const frame = this.displayedFrame;
+        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+            frame.setChannel(startChannel);
+            frame.channel = startChannel;
+        }
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */
