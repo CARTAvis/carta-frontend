@@ -1,7 +1,8 @@
 import {CARTA} from "carta-protobuf";
+import * as GSL from "gsl_wrapper";
 import {runInAction} from "mobx";
 
-import {Polarizations, SpectralType, SpectralUnit} from "enums";
+import {MomentSelectingMode, Polarizations, SpectralType, SpectralUnit} from "enums";
 import {AppStore} from "stores";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
@@ -100,6 +101,19 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.convertDisplayXToObserved(500)).toBe(1000);
     });
 
+    test.each([SpectralUnit.M_SQUARE, SpectralUnit.MM_SQUARE, SpectralUnit.UM_SQUARE, SpectralUnit.NM_SQUARE, SpectralUnit.ANGSTROM_SQUARE])("converts squared wavelength coordinates in %s with the squared redshift factor", spectralUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.WAVE, spectralUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+
+        expect(widgetStore.convertObservedXToDisplay(1000)).toBe(250);
+        expect(widgetStore.convertDisplayXToObserved(250)).toBe(1000);
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 25, y: 4},
+            {x: 27.5, y: 8}
+        ]);
+    });
+
     test("converts air wavelength through the frame spectral conversion", () => {
         const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
         frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / value);
@@ -111,6 +125,23 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.convertDisplayXToObserved(5)).toBe(10);
         expect(frame.convertSettingWCSToFreqMHz).toHaveBeenCalled();
         expect(frame.convertFreqMHzToSettingWCS).toHaveBeenCalled();
+    });
+
+    test("converts squared air wavelength through the frame spectral conversion", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / Math.sqrt(value));
+        frame.convertFreqMHzToSettingWCS.mockImplementation((value: number) => Math.pow(300 / value, 2));
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        frame.convertSettingWCSToFreqMHz.mockClear();
+        frame.convertFreqMHzToSettingWCS.mockClear();
+
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(25);
+        expect(widgetStore.convertDisplayXToObserved(25)).toBe(100);
+        expect(frame.convertSettingWCSToFreqMHz).toHaveBeenNthCalledWith(1, 100, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertSettingWCSToFreqMHz).toHaveBeenNthCalledWith(2, 25, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(1, 60, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(2, 30, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
     });
 
     test("does not approximate air wavelength when the AST conversion fails", () => {
@@ -167,8 +198,34 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.plotData?.yMean).toBe(3);
         expect(widgetStore.plotData?.yRms).toBe(1);
         expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([2, 4]);
+        expect(widgetStore.yUnitLabel).toBe("Jy/beam, rest-frame density");
         expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam, rest-frame density)");
         expect(widgetStore.restFrameExportComments).toEqual(["spectral reference frame: rest", "redshift: 1", "spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+    });
+
+    test("labels fitting results and logs as rest-frame density when the Jacobian is active", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+        (GSL.fitting as jest.Mock).mockReturnValueOnce({
+            yIntercept: 0,
+            yInterceptError: 0,
+            slope: 0,
+            slopeError: 0,
+            center: new Float64Array([200, 0]),
+            amp: new Float64Array([2, 0]),
+            fwhm: new Float64Array([10, 0]),
+            integral: new Float64Array([20, 0]),
+            residual: new Float64Array([0, 0]),
+            log: "Amplitude = @yUnit\nIntegral = @integralUnit"
+        });
+
+        widgetStore.fittingStore.fitData();
+
+        expect(widgetStore.fittingStore.resultString).toContain("Amplitude = 2.000000 (Jy/beam, rest-frame density)");
+        expect(widgetStore.fittingStore.resultString).toContain("Integral = 20.000000 (Jy/beam, rest-frame density * GHz (rest frame))");
+        expect(widgetStore.fittingStore.resultLog).toBe("Amplitude = (Jy/beam, rest-frame density)\nIntegral = (Jy/beam, rest-frame density * GHz (rest frame))");
     });
 
     test("applies the F_nu Jacobian after converting the selected intensity unit", () => {
@@ -264,6 +321,18 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.minY).toBeUndefined();
         expect(widgetStore.maxY).toBeUndefined();
         expect(widgetStore.fittingStore.hasResult).toBe(false);
+    });
+
+    test("renders native mask ranges in Jacobian-scaled display coordinates", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setSelectedDisplayMaskRange(2, 4);
+        widgetStore.setMomentRangeSelectingMode(MomentSelectingMode.MASK);
+
+        expect(widgetStore.maskRange).toEqual([4, 8]);
+        expect(widgetStore.selectedRange).toEqual({isHorizontal: true, center: 3, width: 2});
     });
 
     test("falls back to the native spectral coordinate for secondary rest-frame values", () => {

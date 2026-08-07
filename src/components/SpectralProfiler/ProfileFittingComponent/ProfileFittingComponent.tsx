@@ -16,6 +16,11 @@ export interface ProfileFittingComponentProps {
     widgetStore: SpectralProfileWidgetStore;
 }
 
+export function buildProfileFittingLogContent(header: string, restFrameComments: string[], resultLog: string): string {
+    const restFrameHeader = restFrameComments.map(comment => `# ${comment}\n`).join("");
+    return `${header}${restFrameHeader}\n${resultLog}`;
+}
+
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean = false;
@@ -144,7 +149,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `${headerString}\n${this.fittingStore.resultLog}`;
+        const content = buildProfileFittingLogContent(headerString, this.widgetStore.restFrameExportComments, this.fittingStore.resultLog);
         const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
         exportTxtFile(fileName, content);
     };

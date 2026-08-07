@@ -627,12 +627,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return label && this.isRestFrameActive ? `${label} (Rest frame, z=${this.restFrameRedshift})` : label;
     }
 
-    @computed get yAxisLabel(): string | undefined {
+    @computed get yUnitLabel(): string | undefined {
         const unit = this.yUnit;
         if (!unit) {
             return undefined;
         }
-        return this.isRestFrameJacobianActive ? `Value (${unit}, rest-frame density)` : `Value (${unit})`;
+        return this.isRestFrameJacobianActive ? `${unit}, rest-frame density` : unit;
+    }
+
+    @computed get yAxisLabel(): string | undefined {
+        return this.yUnitLabel ? `Value (${this.yUnitLabel})` : undefined;
     }
 
     @computed get restFrameExportComments(): string[] {
@@ -805,10 +809,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 width: Math.abs(displayRange[0] - displayRange[1])
             };
         } else if (this.isSelectingMomentMaskRange) {
+            const displayRange: NumberRange = [this.convertObservedYToDisplay(this.maskRange[0]), this.convertObservedYToDisplay(this.maskRange[1])];
             return {
                 isHorizontal: true,
-                center: (this.maskRange[0] + this.maskRange[1]) / 2,
-                width: Math.abs(this.maskRange[0] - this.maskRange[1])
+                center: (displayRange[0] + displayRange[1]) / 2,
+                width: Math.abs(displayRange[0] - displayRange[1])
             };
         }
         return null;
@@ -1177,7 +1182,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return value * this.restFrameFactor;
         }
         if (transformMode === "wavelength") {
-            return value / this.restFrameFactor;
+            const wavelengthPower = spectralUnit?.endsWith("^2") ? 2 : 1;
+            return value / Math.pow(this.restFrameFactor, wavelengthPower);
         }
         if (transformMode === "airWavelength") {
             const observedFreqMHz = this.effectiveFrame?.convertSettingWCSToFreqMHz(value, spectralType as SpectralType, spectralUnit ?? null);
@@ -1209,7 +1215,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return value / this.restFrameFactor;
         }
         if (transformMode === "wavelength") {
-            return value * this.restFrameFactor;
+            const wavelengthPower = spectralUnit?.endsWith("^2") ? 2 : 1;
+            return value * Math.pow(this.restFrameFactor, wavelengthPower);
         }
         if (transformMode === "airWavelength") {
             const restFreqMHz = this.effectiveFrame?.convertSettingWCSToFreqMHz(value, spectralType as SpectralType, spectralUnit ?? null);
