@@ -123,6 +123,9 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        if (isEnabled && !this.isChannelMapEnabled) {
+            AppStore.Instance.animatorStore.stopAnimation();
+        }
         const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {

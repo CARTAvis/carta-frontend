@@ -16,6 +16,9 @@ jest.mock("stores", () => {
     return {
         AppStore: {
             Instance: {
+                animatorStore: {
+                    stopAnimation: jest.fn()
+                },
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
@@ -60,6 +63,16 @@ describe("ChannelMapStore", () => {
 
             store.setChannelMapEnabled(true);
             expect(store.isChannelMapEnabled).toBe(true);
+        });
+
+        it("stops animation before enabling channel-map mode", () => {
+            const stopAnimation = jest.requireMock("stores").AppStore.Instance.animatorStore.stopAnimation as jest.Mock;
+            store.setChannelMapEnabled(false);
+            stopAnimation.mockClear();
+
+            store.setChannelMapEnabled(true);
+
+            expect(stopAnimation).toHaveBeenCalledTimes(1);
         });
 
         it("starts from a newly selected channel before its raster response arrives", () => {
