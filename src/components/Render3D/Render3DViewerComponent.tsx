@@ -251,8 +251,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         //         const t = state.clock.getElapsedTime(); 
         //         const rotationSpeed = (2 * Math.PI) / 60; // one full rotation every / x seconds
 
-        //         // meshRef.current.rotation.y = t * rotationSpeed;
-        //         meshRef.current.rotation.x = t * rotationSpeed;
+        //         // meshRef.current.rotation.x = t * rotationSpeed;
+        //         meshRef.current.rotation.y = t * rotationSpeed;
+        //         // meshRef.current.rotation.z = t * rotationSpeed;
         //     }
         // });
 
