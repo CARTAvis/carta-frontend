@@ -26,6 +26,7 @@
         .parameter-container {
             display: flex;
             flex-direction: column;
+
             .parameter-line {
                 display: flex;
                 flex-direction: row;
@@ -38,6 +39,10 @@
                         text-align: right;
                     }
                 }
+            }
+
+            .scaling-parameter-control {
+                width: 110px;
             }
         }
 

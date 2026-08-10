@@ -29,7 +29,7 @@ export class LayoutStore {
     @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     // Reference to the FlexLayout Layout component (set from App.tsx)
-    public layoutRef: React.RefObject<ILayoutApi> = {current: null};
+    public layoutRef: React.RefObject<ILayoutApi | null> = {current: null};
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);

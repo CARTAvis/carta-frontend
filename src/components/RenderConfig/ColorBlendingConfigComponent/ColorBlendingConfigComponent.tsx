@@ -1,20 +1,121 @@
-import {AlphaPicker} from "react-color";
+import * as React from "react";
 import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, PopoverNext, Text, Tooltip} from "@blueprintjs/core";
+import Alpha from "@uiw/react-color-alpha";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
-import {ImageType} from "enums";
-import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
+import {type ColormapSet, ImageType} from "enums";
+import {AppStore, ColorBlendingStore, type FrameStore, type RenderConfigStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
+interface RenderConfigSnapshot {
+    colorMap: string;
+    customColormapHexEnd: string;
+}
+
+interface ColormapSetPreviewSession {
+    store: ColorBlendingStore;
+    snapshots: Map<RenderConfigStore, RenderConfigSnapshot>;
+    activeSet: ColormapSet;
+}
+
+export class ColorBlendingColormapPreviewController {
+    private readonly layerPreviewSessions = new Map<RenderConfigStore, RenderConfigSnapshot>();
+    private colormapSetPreviewSession: ColormapSetPreviewSession | null = null;
+
+    private captureSnapshot(renderConfig: RenderConfigStore): RenderConfigSnapshot {
+        return {colorMap: renderConfig.colorMap, customColormapHexEnd: renderConfig.customColormapHexEnd};
+    }
+
+    private restoreSnapshot(renderConfig: RenderConfigStore, snapshot: RenderConfigSnapshot) {
+        if (renderConfig.customColormapHexEnd !== snapshot.customColormapHexEnd) {
+            renderConfig.setCustomHexEnd(snapshot.customColormapHexEnd);
+        }
+        if (renderConfig.colorMap !== snapshot.colorMap) {
+            renderConfig.setColorMap(snapshot.colorMap);
+        }
+    }
+
+    previewLayer(renderConfig: RenderConfigStore, colormap: string) {
+        if (!this.layerPreviewSessions.has(renderConfig)) {
+            this.layerPreviewSessions.set(renderConfig, this.captureSnapshot(renderConfig));
+        }
+        if (renderConfig.colorMap !== colormap) {
+            renderConfig.setColorMap(colormap);
+        }
+    }
+
+    commitLayer(renderConfig: RenderConfigStore, colormap: string) {
+        this.layerPreviewSessions.delete(renderConfig);
+        renderConfig.setColorMap(colormap);
+    }
+
+    closeLayer(renderConfig: RenderConfigStore, isOpen: boolean) {
+        if (!isOpen) {
+            const snapshot = this.layerPreviewSessions.get(renderConfig);
+            this.layerPreviewSessions.delete(renderConfig);
+            if (snapshot) {
+                this.restoreSnapshot(renderConfig, snapshot);
+            }
+        }
+    }
+
+    previewColormapSet(store: ColorBlendingStore, set: ColormapSet) {
+        if (this.colormapSetPreviewSession?.store !== store) {
+            this.revertColormapSet();
+            this.colormapSetPreviewSession = {
+                store,
+                snapshots: new Map(store.frames.filter(frame => !frame.rasterScalingReference).map(frame => [frame.renderConfig, this.captureSnapshot(frame.renderConfig)])),
+                activeSet: set
+            };
+        } else if (this.colormapSetPreviewSession.activeSet === set) {
+            return;
+        } else {
+            this.colormapSetPreviewSession.activeSet = set;
+        }
+        store.applyColormapSet(set);
+    }
+
+    commitColormapSet(store: ColorBlendingStore, set: ColormapSet) {
+        if (this.colormapSetPreviewSession && this.colormapSetPreviewSession.store !== store) {
+            this.revertColormapSet();
+        } else {
+            this.colormapSetPreviewSession = null;
+        }
+        store.applyColormapSet(set);
+    }
+
+    closeColormapSet(isOpen: boolean) {
+        if (!isOpen) {
+            this.revertColormapSet();
+        }
+    }
+
+    private revertColormapSet() {
+        const session = this.colormapSetPreviewSession;
+        this.colormapSetPreviewSession = null;
+        session?.snapshots.forEach((snapshot, renderConfig) => this.restoreSnapshot(renderConfig, snapshot));
+    }
+
+    revertAll() {
+        this.layerPreviewSessions.forEach((snapshot, renderConfig) => this.restoreSnapshot(renderConfig, snapshot));
+        this.layerPreviewSessions.clear();
+        this.revertColormapSet();
+    }
+}
+
 export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidth: number}) => {
     const image = AppStore.Instance.activeImage;
-    if (image?.type !== ImageType.COLOR_BLENDING) {
+    const colorBlendingStore = image?.type === ImageType.COLOR_BLENDING ? image.store : undefined;
+    const previewController = React.useRef(new ColorBlendingColormapPreviewController()).current;
+
+    React.useEffect(() => () => previewController.revertAll(), [colorBlendingStore, previewController]);
+
+    if (!colorBlendingStore) {
         return null;
     }
-    const colorBlendingStore = image.store;
     const matchedFrames = colorBlendingStore.baseFrame?.secondarySpatialImages ?? [];
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
@@ -34,7 +135,9 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 )
             }
             label={set}
-            onClick={() => colorBlendingStore.applyColormapSet(set)}
+            onClick={() => previewController.commitColormapSet(colorBlendingStore, set)}
+            onFocus={() => previewController.previewColormapSet(colorBlendingStore, set)}
+            onMouseEnter={() => previewController.previewColormapSet(colorBlendingStore, set)}
             key={set}
         />
     ));
@@ -61,7 +164,9 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                         disabled={!!frame.rasterScalingReference}
                         inverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
-                        onColormapSelect={renderConfig.setColorMap}
+                        onColormapSelect={colormap => previewController.commitLayer(renderConfig, colormap)}
+                        onColormapHover={colormap => previewController.previewLayer(renderConfig, colormap)}
+                        onDropdownOpenChange={isOpen => previewController.closeLayer(renderConfig, isOpen)}
                         enableAdditionalColor={true}
                         onCustomColorSelect={renderConfig.setCustomHexEnd}
                         selectedCustomColor={renderConfig.customColormapHexEnd}
@@ -69,7 +174,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                     />
                 </Tooltip>
                 <div className="alpha-settings">
-                    <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
+                    <Alpha className="alpha-slider" hsva={{h: 0, s: 0, v: 0, a: alpha}} onChange={color => setAlpha(color.a)} />
                     <Tooltip content="Alpha">
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip>
@@ -128,7 +233,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                             </Button>
                         </Tooltip>
                     </PopoverNext>
-                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={<Menu>{colormapSetOptions}</Menu>}>
+                    <PopoverNext animation="minimal" arrow={false} shouldReturnFocusOnClose={false} onInteraction={isOpen => previewController.closeColormapSet(isOpen)} content={<Menu>{colormapSetOptions}</Menu>}>
                         <Button icon="color-fill" endIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>

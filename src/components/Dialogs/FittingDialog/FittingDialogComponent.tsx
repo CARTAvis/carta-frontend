@@ -1,12 +1,12 @@
 import * as React from "react";
 import {Pane, SplitPane} from "react-split-pane";
-import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {CoordinateMode, DialogId, FittingResultTabs, HelpType, InputType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";

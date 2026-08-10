@@ -22,10 +22,15 @@ export enum PreferenceKeys {
     RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
     RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
     RENDER_CONFIG_PERCENTILE = "percentile",
-    RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
+    RENDER_CONFIG_SCALING_ALPHA_LEGACY = "scalingAlpha",
+    RENDER_CONFIG_SCALING_ALPHA_LOG = "scalingAlphaLog",
+    RENDER_CONFIG_SCALING_ALPHA_POWER = "scalingAlphaPower",
+    RENDER_CONFIG_SCALING_ALPHA_SINH = "scalingAlphaSinh",
+    RENDER_CONFIG_SCALING_ALPHA_ASINH = "scalingAlphaAsinh",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
+    RENDER_CONFIG_BIAS = "renderConfigBias",
+    RENDER_CONFIG_CONTRAST = "renderConfigContrast",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
-    RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
     RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
     CONTOUR_CONFIG_GENERATOR_TYPE = "contourGeneratorType",
@@ -68,6 +73,7 @@ export enum PreferenceKeys {
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
     REGION_DASH_LENGTH = "regionDashLength",
+    REGION_LABEL_OFFSET = "regionLabelOffset",
     REGION_TYPE = "regionType",
     REGION_CREATION_MODE = "regionCreationMode",
     REGION_SIZE = "regionSize",
@@ -93,7 +99,6 @@ export enum PreferenceKeys {
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
     PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
-    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
     LOG_EVENT = "logEventList",
 

@@ -519,7 +519,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        const tableColumns: React.ReactElement[] = [];
+        const tableColumns: React.ReactElement<React.ComponentProps<typeof Column>>[] = [];
         const headerNames: string[] = [];
         const headerDescriptions: string[] = [];
         const units: string[] = [];

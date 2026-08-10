@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AnimationMode, PlayMode} from "enums";
-import {type FrameView, type Point2D} from "models";
+import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
@@ -57,6 +57,7 @@ export class AnimatorStore {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
             }
+            this.animationDirection = 1;
             this.isAnimationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
@@ -178,12 +179,16 @@ export class AnimatorStore {
 
     @action animate = () => {
         if (this.isAnimationActive && this.animationMode === AnimationMode.FRAME) {
-            AppStore.Instance.nextImage();
+            const appStore = AppStore.Instance;
+            const nextState = getNextPlaybackState(appStore.activeImageIndex, appStore.imageViewConfigStore.imageNum, this.step, this.playMode, this.animationDirection);
+            this.animationDirection = nextState.direction;
+            appStore.setActiveImageByIndex(nextState.index);
         }
     };
 
     private animateHandle: ReturnType<typeof setInterval> | undefined;
     private stopHandle: ReturnType<typeof setTimeout> | undefined;
+    private animationDirection: PlaybackDirection = 1;
 
     constructor() {
         makeObservable(this);

@@ -5,6 +5,9 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
+import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
+
+const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
 
 const DEFAULTS = {
     SILENT: {
@@ -41,10 +44,7 @@ const DEFAULTS = {
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
-        scalingAlpha: 1000,
-        scalingGamma: 1,
         nanColorHex: "#137CBD",
-        nanAlpha: 1,
         useSmoothedBiasContrast: true
     },
     CONTOUR_CONFIG: {
@@ -159,6 +159,20 @@ export class PreferenceStore {
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
 
     /**
+     * Get the minimum constraint from the schema for a preference key
+     */
+    public getMinConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.minimum;
+    }
+
+    /**
+     * Get the maximum constraint from the schema for a preference key
+     */
+    public getMaxConstraint(key: PreferenceKeys): number | undefined {
+        return PREFERENCES_SCHEMA.properties[key]?.maximum;
+    }
+
+    /**
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable isPreferenceReady: boolean = false;
@@ -233,7 +247,8 @@ export class PreferenceStore {
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+        const scaling = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        return isSupportedFrameScaling(scaling) ? scaling : DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
@@ -252,20 +267,44 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
     }
 
-    @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
+    @computed get scalingAlphaLog(): number {
+        return this.getScalingParameter(FrameScaling.LOG);
+    }
+
+    @computed get scalingAlphaPower(): number {
+        return this.getScalingParameter(FrameScaling.POWER);
+    }
+
+    @computed get scalingAlphaSinh(): number {
+        return this.getScalingParameter(FrameScaling.SINH);
+    }
+
+    @computed get scalingAlphaAsinh(): number {
+        return this.getScalingParameter(FrameScaling.ASINH);
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+        return this.getScalingParameter(FrameScaling.GAMMA);
+    }
+
+    public getScalingParameter(scaling: FrameScaling): number {
+        const config = getScalingParameterConfig(scaling);
+        if (!config) {
+            return 1;
+        }
+
+        const storedValue = this.preferences.get(config.preferenceKey);
+        if (storedValue !== undefined) {
+            return storedValue;
+        }
+
+        const legacyAlpha = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY);
+        const isLegacyAlphaSupported = scaling === FrameScaling.LOG || scaling === FrameScaling.POWER;
+        return isLegacyAlphaSupported && legacyAlpha !== undefined ? legacyAlpha : config.defaultValue;
     }
 
     @computed get nanColorHex(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
-    }
-
-    @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
     }
 
     @computed get shouldUseSmoothedBiasContrast(): boolean {
@@ -644,6 +683,18 @@ export class PreferenceStore {
             return false;
         }
 
+        if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(value)) {
+            return false;
+        }
+
+        const scaling = getScalingForParameterPreference(key);
+        if (scaling !== undefined) {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
+                return false;
+            }
+            value = sanitizeScalingParameter(scaling, value);
+        }
+
         // set preference in variable
         if (key === PreferenceKeys.LOG_EVENT) {
             if (!Event.isTypeValid(value)) {
@@ -724,11 +775,14 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
-            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
             PreferenceKeys.RENDER_CONFIG_SCALING,
-            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
             PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);
@@ -840,8 +894,7 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
             PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
             PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT
         ]);
     };
 
@@ -893,6 +946,9 @@ export class PreferenceStore {
             const keys = Object.keys(preferences);
             for (const key of keys) {
                 const val = preferences[key];
+                if (key === PreferenceKeys.RENDER_CONFIG_SCALING && !isSupportedFrameScaling(val)) {
+                    continue;
+                }
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }

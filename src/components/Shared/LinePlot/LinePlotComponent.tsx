@@ -1196,7 +1196,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     {this.width > 0 && this.height > 0 && (
                         <Stage
                             className={"annotation-stage"}
-                            ref={ref => (this.stageRef = ref)}
+                            ref={ref => {
+                                this.stageRef = ref;
+                            }}
                             width={this.width}
                             height={this.height}
                             onMouseDown={this.onStageMouseDown}
