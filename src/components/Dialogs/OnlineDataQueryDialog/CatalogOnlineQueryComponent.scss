@@ -5,6 +5,12 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
+    user-select: none;
+
+    input,
+    textarea {
+        user-select: text;
+    }
 
     .online-catalog-config {
         flex: 1;
@@ -88,6 +94,10 @@
         padding: 0 10px 0 10px;
         margin: 0 5px 0 5px;
     }
+}
+
+.vizier-catalog-tag {
+    user-select: text;
 }
 
 .vizier-mulit-select {

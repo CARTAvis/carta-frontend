@@ -258,7 +258,7 @@ export class CatalogQueryComponent extends React.Component {
                             tagInputProps={{
                                 onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
-                                tagProps: {minimal: true}
+                                tagProps: {minimal: true, className: "vizier-catalog-tag"}
                             }}
                         />
                     </FormGroup>
