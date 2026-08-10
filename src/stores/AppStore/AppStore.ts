@@ -49,13 +49,14 @@ import {
     type WorkspaceFile
 } from "models";
 import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
-import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
+import {ApiService, BackendService, type ContourDataEvent, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimatorStore,
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
+    ContourRequestStore,
     DialogStore,
     DynamicLayoutStore,
     FileBrowserStore,
@@ -134,6 +135,7 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
     readonly channelMapStore: ChannelMapStore;
+    readonly contourRequestStore: ContourRequestStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -997,6 +999,7 @@ export class AppStore {
             this.statsRequirements.delete(fileId);
             this.histogramRequirements.delete(fileId);
 
+            this.contourRequestStore.reset(fileId);
             this.tileService.handleFileClosed(fileId);
             this.telemetryService.addFileCloseEntry(fileId);
 
@@ -1084,6 +1087,7 @@ export class AppStore {
         this.clearSpatialReference();
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
+        this.contourRequestStore.reset();
         if (this.backendService.closeFile(-1)) {
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
@@ -1926,6 +1930,7 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
+        this.contourRequestStore = ContourRequestStore.Instance;
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
@@ -2386,10 +2391,10 @@ export class AppStore {
         regionStatsMap.set(regionStatsData.stokes, regionStatsData);
     };
 
-    handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
-        const updatedFrame = this.getFrame(contourImageData.fileId);
-        if (updatedFrame) {
-            updatedFrame.updateFromContourData(contourImageData);
+    handleContourImageStream = ({eventId, contourData}: ContourDataEvent) => {
+        const updatedFrame = this.getFrame(contourData.fileId);
+        if (updatedFrame && this.contourRequestStore.acceptsContourData(eventId, contourData)) {
+            updatedFrame.updateFromContourData(contourData);
         }
     };
 
@@ -3706,7 +3711,8 @@ export class AppStore {
                     const isLoadingTiles = this.tileService.remainingTiles > 0;
                     let isLoadingContours = false;
                     for (const frame of this.imageViewConfigStore.visibleFrames) {
-                        if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
+                        const contourProgress = this.contourRequestStore.getContourProgress(frame);
+                        if (contourProgress >= 0 && contourProgress < 1) {
                             isLoadingContours = true;
                             break;
                         }

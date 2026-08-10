@@ -1,12 +1,13 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import {type Subscription} from "rxjs";
 
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D, transformChannelToFrame} from "utilities";
 
 import "./ContourViewComponent.scss";
 
@@ -15,6 +16,9 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
+    renderWidth?: number;
+    renderHeight?: number;
+    channel?: number[];
 }
 
 @observer
@@ -22,6 +26,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
+    private sub: Subscription;
+    private animationFrameRequest: number | null = null;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
@@ -34,7 +40,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const contourStream = AppStore.Instance.backendService.contourStream;
         this.triggerUpdate();
         if (this.canvas) {
-            contourStream.subscribe(this.triggerUpdate);
+            this.sub = contourStream.subscribe(this.triggerUpdate);
         }
     }
 
@@ -43,13 +49,29 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.triggerUpdate();
     }
 
+    componentWillUnmount() {
+        this.sub?.unsubscribe();
+        if (this.animationFrameRequest !== null) {
+            cancelAnimationFrame(this.animationFrameRequest);
+        }
+    }
+
+    private scheduleUpdate() {
+        if (this.animationFrameRequest === null) {
+            this.animationFrameRequest = requestAnimationFrame(() => {
+                this.animationFrameRequest = null;
+                this.updateCanvas();
+            });
+        }
+    }
+
     private triggerUpdate = () => {
+        const appStore = AppStore.Instance;
         const animatorStore = AnimatorStore.Instance;
-        const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
+        if (appStore.contourRequestStore.areContoursComplete(this.props.frame) && animatorStore.isServerAnimationActive) {
+            this.scheduleUpdate();
         } else if (!animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
+            this.scheduleUpdate();
         }
     };
 
@@ -97,25 +119,81 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             appStore.setCanvasUpdated();
 
             const contourFrames = appStore.contourFrames.get(baseFrame);
-            this.resizeAndClearCanvas();
             if (contourFrames) {
-                // Render back-to-front to preserve ordering
-                for (let i = contourFrames.length - 1; i >= 0; --i) {
-                    this.renderFrameContours(contourFrames[i], baseFrame);
+                if (this.props.channel && appStore.channelMapStore.isChannelMapEnabled) {
+                    this.updateChannelMapCanvas(baseFrame, contourFrames, this.props.channel);
+                } else {
+                    this.resizeAndClearCanvas();
+                    // Render back-to-front to preserve ordering
+                    for (let i = contourFrames.length - 1; i >= 0; --i) {
+                        const frame = contourFrames[i];
+                        const channel = frame.requiredChannel;
+                        frame.contourStores.forEach(store => store.cleanupChannelsOutsideRange([channel]));
+                        this.renderFrameContours(frame, baseFrame, channel);
+                    }
+                    this.copyGLToCanvas();
                 }
-            }
-            // draw in 2d canvas
-            const ctx = this.canvas.getContext("2d");
-            if (ctx) {
-                const w = this.canvas.width;
-                const h = this.canvas.height;
-                ctx.clearRect(0, 0, w, h);
-                ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
             }
         }
     };
 
-    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
+    private updateChannelMapCanvas(baseFrame: FrameStore, contourFrames: FrameStore[], channels: number[]) {
+        const appStore = AppStore.Instance;
+        const pixelRatio = appStore.pixelRatio;
+        const width = Math.max(1, (this.props.renderWidth ?? baseFrame.channelMapOuterOverlayStore.renderWidth) * pixelRatio);
+        const height = Math.max(1, (this.props.renderHeight ?? baseFrame.channelMapOuterOverlayStore.renderHeight) * pixelRatio);
+
+        if (this.canvas.width !== width || this.canvas.height !== height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+        }
+        this.contourWebGLService.setCanvasSize(width, height);
+        this.gl.viewport(0, 0, width, height);
+        this.gl.clearColor(0, 0, 0, 0);
+        this.gl.disable(GL2.SCISSOR_TEST);
+        const clearMask = GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT | GL2.STENCIL_BUFFER_BIT;
+        this.gl.clear(clearMask);
+
+        const channelMapStore = appStore.channelMapStore;
+        const innerWidth = baseFrame.channelMapInnerOverlayStore.renderWidth;
+        const innerHeight = baseFrame.channelMapInnerOverlayStore.renderHeight;
+        const gapX = baseFrame.channelMapInnerOverlayStore.gapX;
+        const gapY = baseFrame.channelMapInnerOverlayStore.gapY;
+
+        channels.forEach((channel, index) => {
+            const column = index % channelMapStore.numColumns;
+            const row = Math.floor(index / channelMapStore.numColumns);
+            const xOffset = Math.round((innerWidth + gapX) * column * pixelRatio);
+            const yOffset = Math.round(height - ((innerHeight + gapY) * (row + 1) - gapY) * pixelRatio);
+            const cellWidth = Math.round(innerWidth * pixelRatio);
+            const cellHeight = Math.round(innerHeight * pixelRatio);
+
+            this.gl.viewport(xOffset, yOffset, cellWidth, cellHeight);
+            this.gl.enable(GL2.SCISSOR_TEST);
+            this.gl.scissor(xOffset, yOffset, cellWidth, cellHeight);
+            this.gl.clear(clearMask);
+            this.gl.disable(GL2.SCISSOR_TEST);
+
+            for (let i = contourFrames.length - 1; i >= 0; --i) {
+                const contourFrame = contourFrames[i];
+                const contourChannel = transformChannelToFrame(baseFrame, contourFrame, channel, appStore.spectralMatchingType);
+                this.renderFrameContours(contourFrame, baseFrame, contourChannel);
+            }
+        });
+        this.copyGLToCanvas();
+    }
+
+    private copyGLToCanvas() {
+        const ctx = this.canvas.getContext("2d");
+        if (ctx) {
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+        }
+    }
+
+    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore, channel: number) => {
         const isActive = frame === baseFrame;
         let lineThickness: number;
         let dashFactor: number;
@@ -173,14 +251,14 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapTexture, 0);
         } else {
             const controlMap = frame.getControlMap(baseFrame);
-            if (controlMap) {
-                this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapEnabled, 1);
-                this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
-                this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
-                this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
-            } else {
+            if (!controlMap) {
                 console.error("Could not generate control map for contours");
+                return;
             }
+            this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapEnabled, 1);
+            this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+            this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+            this.gl.uniform2f(this.contourWebGLService.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
             this.gl.activeTexture(GL2.TEXTURE1);
             this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapTexture, 1);
@@ -225,9 +303,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform1f(this.contourWebGLService.shaderUniforms.DashLength, AppStore.Instance.pixelRatio * dashLength * dashFactor);
 
                 // Update buffers
-                for (let i = 0; i < contourStore.chunkCount; i++) {
-                    contourStore.bindBuffer(i);
-                    const numVertices = contourStore.numGeneratedVertices[i];
+                const numGeneratedVertices = contourStore.numGeneratedVertices[channel] ?? [];
+                for (let i = 0; i < (contourStore.chunkCount[channel] ?? 0); i++) {
+                    contourStore.bindBuffer(channel, i);
+                    const numVertices = numGeneratedVertices[i];
+                    if (!numVertices) {
+                        continue;
+                    }
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, GL2.FLOAT, false, 16, 0);
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, GL2.SHORT, false, 16, 12);
                     this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, numVertices);
@@ -259,7 +341,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;
                 frame.contourStores.forEach(contourStore => {
-                    const numVertices = contourStore.vertexCount;
+                    Object.values(contourStore.vertexCount).forEach(numVertices => numVertices);
                 });
             }
         }
@@ -277,8 +359,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: baseFrame ? baseFrame.renderWidth || 1 : 1,
-                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
+                        width: baseFrame ? this.props.renderWidth || baseFrame.renderWidth || 1 : 1,
+                        height: baseFrame ? this.props.renderHeight || baseFrame.renderHeight || 1 : 1
                     }}
                 />
             </div>

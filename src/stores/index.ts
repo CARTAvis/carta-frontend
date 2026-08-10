@@ -7,6 +7,7 @@ export * from "./CatalogOnlineQuery/CatalogOnlineQueryConfigStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryProfileStore";
 export * from "./ChannelMapStore/ChannelMapStore";
 export * from "./ColorBlendingStore/ColorBlendingStore";
+export * from "./ContourRequestStore/ContourRequestStore";
 export * from "./DialogStore/DialogStore";
 export * from "./DynamicLayoutStore/DynamicLayoutStore";
 export * from "./FileBrowserStore/FileBrowserStore";

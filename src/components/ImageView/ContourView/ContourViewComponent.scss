@@ -1,6 +1,7 @@
 .contour-div {
     position: absolute;
     left: 0;
+    pointer-events: none;
 
     &.docked {
         z-index: 3;

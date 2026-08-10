@@ -9,6 +9,7 @@ import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
+import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {RasterViewComponent} from "../RasterView/RasterViewComponent";
@@ -158,6 +159,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 renderHeight={outerRenderHeight}
                 channel={channelMapStore.channelArray}
             />
+            <ContourViewComponent frame={frame} docked={props.isDocked} row={0} column={0} renderWidth={outerRenderWidth} renderHeight={outerRenderHeight} channel={channelMapStore.channelArray} />
             <CursorOverlayComponent
                 cursorInfo={frame.cursorInfo}
                 cursorValue={frame.cursorInfo?.isInsideImage ? (frame.cursorValue?.value ?? 0) : 0}

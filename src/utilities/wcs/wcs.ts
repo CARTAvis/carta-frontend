@@ -283,6 +283,24 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     return destChannels;
 }
 
+/** Converts a channel from the base frame's coordinate space to the target frame's. */
+export function transformChannelToFrame(baseFrame: FrameStore, targetFrame: FrameStore, channel: number, matchingType: SpectralType): number {
+    if (targetFrame === baseFrame) {
+        return channel;
+    }
+    if (baseFrame.spectralReference && targetFrame.spectralReference && baseFrame.spectralReference === targetFrame.spectralReference) {
+        const referenceChannel = getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel);
+        return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, referenceChannel));
+    }
+    if (targetFrame.spectralReference === baseFrame) {
+        return Math.round(getTransformedChannel(targetFrame.spectralReference.wcsInfo3D, targetFrame.wcsInfo3D, matchingType, channel));
+    }
+    if (baseFrame.spectralReference === targetFrame) {
+        return Math.round(getTransformedChannel(baseFrame.wcsInfo3D, baseFrame.spectralReference.wcsInfo3D, matchingType, channel));
+    }
+    return targetFrame.requiredChannel;
+}
+
 export function isAstBad(value: number) {
     return !isFinite(value) || value === -Number.MAX_VALUE;
 }

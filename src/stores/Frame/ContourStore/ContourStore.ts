@@ -1,123 +1,121 @@
 import * as CARTACompute from "carta_computation";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
 export class ContourStore {
-    @observable progress: number = 0;
-    @observable numGeneratedVertices: number[] = [];
-    @observable vertexCount: number = 0;
-    @observable chunkCount: number = 0;
+    @observable progress: {[channel: number]: number} = {};
+    @observable numGeneratedVertices: {[channel: number]: number[]} = {};
+    @observable vertexCount: {[channel: number]: number} = {};
+    @observable chunkCount: {[channel: number]: number} = {};
 
-    private indexOffsets: Int32Array[] = [];
-    private vertexData: (Float32Array | null)[] = [];
-    private vertexBuffers: WebGLBuffer[] = [];
+    private indexOffsets: {[channel: number]: Int32Array[]} = {};
+    private vertexData: {[channel: number]: (Float32Array | null)[]} = {};
+    private vertexBuffers: {[channel: number]: WebGLBuffer[]} = {};
 
     private gl: WebGL2RenderingContext | null;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
     // Each vertex is repeated twice
     private static vertexDataElements = 8;
 
-    get hasValidData() {
-        if (!this.vertexData) {
-            return false;
-        }
-
-        return this.vertexData.length > 0;
-    }
-
-    @computed get isComplete() {
-        return this.progress >= 1.0;
-    }
-
     constructor() {
         makeObservable(this);
         this.gl = ContourWebGLService.Instance.gl;
     }
 
-    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
-        // Clear existing data to remove data buffers
-        this.clearData();
-        this.addContourData(indexOffsets, vertexData, progress);
+    isComplete(channel: number) {
+        return (this.progress[channel] ?? 0) >= 1.0;
+    }
+
+    @action setContourData = (channel: number, indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
+        this.clearData(channel);
+        this.addContourData(channel, indexOffsets, vertexData, progress);
     };
 
-    @action setProgress = (progress: number) => {
-        this.progress = progress;
+    @action setProgress = (channel: number, progress: number) => {
+        this.progress[channel] = progress;
     };
 
-    @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
+    @action addContourData = (channel: number, indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
         const numVertices = sourceVertices.length / 2;
-        this.progress = progress;
+        this.progress[channel] = progress;
 
         if (!numVertices) {
             return;
         }
 
-        if (!this.vertexData) {
-            this.vertexData = [];
-        }
-        if (!this.indexOffsets) {
-            this.indexOffsets = [];
-        }
-        if (!this.numGeneratedVertices) {
-            this.numGeneratedVertices = [];
-        }
+        this.vertexData[channel] ??= [];
+        this.indexOffsets[channel] ??= [];
+        this.numGeneratedVertices[channel] ??= [];
 
         const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
-        this.vertexData.push(vertexData);
-        this.indexOffsets.push(indexOffsets);
-        this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
+        this.vertexData[channel].push(vertexData);
+        this.indexOffsets[channel].push(indexOffsets);
+        this.numGeneratedVertices[channel].push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
-        const index = this.vertexData.length - 1;
-        this.generateBuffers(index);
+        const index = this.vertexData[channel].length - 1;
+        this.generateBuffers(channel, index);
 
-        this.vertexCount += numVertices;
-        this.chunkCount++;
+        this.vertexCount[channel] = (this.vertexCount[channel] ?? 0) + numVertices;
+        this.chunkCount[channel] = (this.chunkCount[channel] ?? 0) + 1;
     };
 
-    private generateBuffers(index: number) {
-        if (!this.vertexBuffers) {
-            this.vertexBuffers = [];
-        }
+    private generateBuffers(channel: number, index: number) {
+        this.vertexBuffers[channel] ??= [];
 
-        if (!this.gl || this.vertexBuffers.length !== index) {
+        if (!this.gl || this.vertexBuffers[channel].length !== index) {
             console.log(`WebGL buffer index is incorrect!`);
             return;
         }
 
-        // TODO: handle buffer cleanup when no longer needed
-        if (this.gl) {
-            this.vertexBuffers.push(this.gl.createBuffer()!);
-            this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
-            this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
-        }
+        this.vertexBuffers[channel].push(this.gl.createBuffer()!);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[channel][index]);
+        this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[channel][index], GL2.STATIC_DRAW);
 
         // Clear CPU memory after copying to GPU
-        this.vertexData[index] = null;
+        this.vertexData[channel][index] = null;
     }
 
-    @action clearData = () => {
-        this.indexOffsets = [];
-        this.vertexData = [];
-        this.numGeneratedVertices = [];
-        this.vertexCount = 0;
-        this.chunkCount = 0;
-
-        if (this.gl && this.vertexBuffers) {
-            const numBuffers = this.vertexBuffers.length;
-            for (let i = 0; i < numBuffers; i++) {
-                this.gl.deleteBuffer(this.vertexBuffers[i]);
-            }
-            this.vertexBuffers = [];
+    @action clearData = (channel?: number) => {
+        const channels = channel === undefined ? Object.keys(this.vertexBuffers).map(Number) : [channel];
+        if (this.gl) {
+            channels.forEach(ch => this.vertexBuffers[ch]?.forEach(buffer => this.gl?.deleteBuffer(buffer)));
         }
+
+        if (channel === undefined) {
+            Object.keys(this.progress).forEach(ch => delete this.progress[Number(ch)]);
+            Object.keys(this.numGeneratedVertices).forEach(ch => delete this.numGeneratedVertices[Number(ch)]);
+            Object.keys(this.vertexCount).forEach(ch => delete this.vertexCount[Number(ch)]);
+            Object.keys(this.chunkCount).forEach(ch => delete this.chunkCount[Number(ch)]);
+            this.indexOffsets = {};
+            this.vertexData = {};
+            this.vertexBuffers = {};
+            return;
+        }
+
+        delete this.indexOffsets[channel];
+        delete this.vertexData[channel];
+        delete this.vertexBuffers[channel];
+        delete this.progress[channel];
+        delete this.numGeneratedVertices[channel];
+        delete this.vertexCount[channel];
+        delete this.chunkCount[channel];
     };
 
-    bindBuffer(index: number) {
-        if (!this.vertexBuffers || index >= this.vertexBuffers.length) {
+    @action cleanupChannelsOutsideRange = (channels: number[]) => {
+        Object.keys(this.progress)
+            .map(Number)
+            .filter(channel => !channels.includes(channel))
+            .forEach(this.clearData);
+    };
+
+    bindBuffer(channel: number, index: number) {
+        const buffer = this.vertexBuffers[channel]?.[index];
+        if (!buffer) {
             console.log(`WebGL buffer missing`);
         } else if (this.gl) {
-            this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
+            this.gl.bindBuffer(GL2.ARRAY_BUFFER, buffer);
         }
     }
 }

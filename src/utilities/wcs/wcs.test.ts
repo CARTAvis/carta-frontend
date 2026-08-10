@@ -1,8 +1,16 @@
+import * as AST from "ast_wrapper";
+
+import {SPECTRAL_DEFAULT_UNIT} from "models";
+
 import {SpectralSystem, SpectralType, SpectralUnit} from "../../enums";
 
 jest.mock("ast_wrapper", () => ({
     __esModule: true,
-    fonts: []
+    copy: jest.fn(transform => transform),
+    deleteObject: jest.fn(),
+    fonts: [],
+    set: jest.fn(),
+    transform3DPoint: jest.fn()
 }));
 
 jest.mock("models", () => ({
@@ -29,7 +37,7 @@ jest.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
 }));
 
-import {buildSwappedZWcsSettings, getSwappedDirAxisInfo} from "./wcs";
+import {buildSwappedZWcsSettings, getSwappedDirAxisInfo, transformChannelToFrame} from "./wcs";
 
 describe("getSwappedDirAxisInfo", () => {
     test("returns galactic axis formats for swapped GLON/GLAT axes", () => {
@@ -108,5 +116,39 @@ describe("buildSwappedZWcsSettings", () => {
         });
 
         expect(settings).toBe('Format(2)=hms.*,Unit(2)="",System(1)=FREQ,RestFreq=1420405751 Hz');
+    });
+});
+
+describe("transformChannelToFrame", () => {
+    test("uses the selected target channel when frames are only spatially matched", () => {
+        const baseFrame = {requiredChannel: 2, spectralReference: null};
+        const targetFrame = {requiredChannel: 7, spectralReference: null};
+
+        expect(transformChannelToFrame(baseFrame as any, targetFrame as any, 4, SpectralType.FREQ)).toBe(7);
+    });
+
+    test("rounds only after transforming through a shared spectral reference", () => {
+        const referenceFrame = {wcsInfo3D: "reference"};
+        const baseFrame = {requiredChannel: 2, spectralReference: referenceFrame, wcsInfo3D: "base"};
+        const targetFrame = {requiredChannel: 7, spectralReference: referenceFrame, wcsInfo3D: "target"};
+        (SPECTRAL_DEFAULT_UNIT as Map<SpectralType, string>).set(SpectralType.FREQ, "Hz");
+        (AST.transform3DPoint as jest.Mock).mockImplementation((transform, _x, _y, z, forward) => {
+            if (transform === "base" && forward) {
+                return {x: 0, y: 0, z: 16};
+            }
+            if (transform === "reference" && !forward) {
+                return {x: 0, y: 0, z: z / 10};
+            }
+            if (transform === "reference" && forward) {
+                return {x: 0, y: 0, z: z * 10};
+            }
+            if (transform === "target" && !forward) {
+                return {x: 0, y: 0, z: z / 4};
+            }
+            return {x: 0, y: 0, z: 0};
+        });
+
+        expect(transformChannelToFrame(baseFrame as any, targetFrame as any, 3, SpectralType.FREQ)).toBe(4);
+        expect(AST.transform3DPoint).toHaveBeenCalledWith("reference", 0, 0, 1.6, true);
     });
 });
