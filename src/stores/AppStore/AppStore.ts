@@ -1786,18 +1786,19 @@ export class AppStore {
                 return;
             }
 
-            frame.channel = update.channel;
-            frame.stokes = update.stokes;
-
             if (this.channelMapStore.isChannelMapEnabled) {
+                frame.channel = update.channel;
+                frame.stokes = update.stokes;
                 this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, update.channel, update.stokes, midPointTileCoords, compressionQuality, true);
             } else {
+                frame.channel = update.channel;
+                frame.stokes = update.stokes;
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
         }
@@ -2302,9 +2303,8 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
+        const frame = this.getFrame(tileStreamDetails.fileId ?? -1);
         if (this.animatorStore.isServerAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
-            const frame = this.getFrame(tileStreamDetails.fileId ?? -1);
-
             // Get stokes from the backend tile stream message
             const stokes = tileStreamDetails.stokes ?? 0;
 
@@ -2331,6 +2331,9 @@ export class AppStore {
                 frame.channel = tileStreamChannel;
                 frame.stokes = tileStreamStokes;
             }
+        } else if (!this.channelMapStore.isChannelMapEnabled && frame && tileStreamDetails.tileCount !== undefined) {
+            frame.channel = tileStreamDetails.channel ?? frame.channel;
+            frame.stokes = tileStreamDetails.stokes ?? frame.stokes;
         }
 
         this.updateHistogram(tileStreamDetails.fileId ?? -1, tileStreamDetails.stokes ?? 0, tileStreamDetails.channel ?? 0);
@@ -2353,10 +2356,6 @@ export class AppStore {
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                if (!this.channelMapStore.isChannelMapEnabled) {
-                    updatedFrame.channel = channel;
-                    updatedFrame.stokes = stokes;
-                }
             }
 
             this.pendingChannelHistograms.delete(key);

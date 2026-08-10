@@ -20,6 +20,7 @@ jest.mock("stores", () => {
             this.step = step;
         }
     });
+    Object.assign(animatorStore, {stopAnimation: jest.fn()});
     return {
         AppStore: {
             Instance: {
@@ -68,6 +69,16 @@ describe("ChannelMapStore", () => {
 
             store.setChannelMapEnabled(true);
             expect(store.isChannelMapEnabled).toBe(true);
+        });
+
+        it("stops animation before enabling channel-map mode", () => {
+            const stopAnimation = jest.requireMock("stores").AppStore.Instance.animatorStore.stopAnimation as jest.Mock;
+            store.setChannelMapEnabled(false);
+            stopAnimation.mockClear();
+
+            store.setChannelMapEnabled(true);
+
+            expect(stopAnimation).toHaveBeenCalledTimes(1);
         });
 
         it("starts from a newly selected channel before its raster response arrives", () => {
@@ -168,6 +179,21 @@ describe("ChannelMapStore", () => {
             expect(store.startChannel).toBe(1);
             expect(store.endChannel).toBe(4);
             expect(store.channelArray).toEqual([1, 2, 3, 4]);
+        });
+
+        it("promotes the start channel before requesting channel-map tiles", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; setChannel: jest.Mock};
+            frame.channel = 0;
+            frame.setChannel.mockClear();
+
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(2);
+
+            expect(frame.setChannel).toHaveBeenCalledWith(2);
+            expect(frame.channel).toBe(2);
+
+            store.setStartChannel(1);
+            store.setChannelMapEnabled(false);
         });
 
         it("skips when the channel is out of range", () => {

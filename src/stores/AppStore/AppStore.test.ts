@@ -214,6 +214,28 @@ describe("AppStore.updateHistogram", () => {
 
         expect(updateHistogram).toHaveBeenCalledWith(1, 0, 1);
     });
+
+    test("keeps the previous normal-view channel until the next tile arrives", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            polarizations: [],
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+        expect(frame.channel).toBe(0);
+
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 1, stokes: 0, flush: true});
+
+        expect(frame.channel).toBe(1);
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
+    });
 });
 
 describe("AppStore channel-map data streams", () => {

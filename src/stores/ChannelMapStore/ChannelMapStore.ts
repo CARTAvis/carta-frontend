@@ -128,6 +128,9 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        if (isEnabled && !this.isChannelMapEnabled) {
+            AppStore.Instance.animatorStore.stopAnimation();
+        }
         const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {
@@ -151,6 +154,11 @@ export class ChannelMapStore {
             return;
         }
         this.startChannel = startChannel;
+        const frame = this.displayedFrame;
+        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+            frame.setChannel(startChannel);
+            frame.channel = startChannel;
+        }
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */
