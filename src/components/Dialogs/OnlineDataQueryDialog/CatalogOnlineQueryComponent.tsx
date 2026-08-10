@@ -256,9 +256,24 @@ export class CatalogQueryComponent extends React.Component {
                             itemPredicate={this.filterVizierTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
-                                onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
-                                tagProps: {minimal: true, className: "vizier-catalog-tag"}
+                                tagProps: (_tag, index) => ({
+                                    minimal: true,
+                                    className: "vizier-catalog-tag",
+                                    onClickCapture: event => {
+                                        const target = event.target as Element;
+                                        if (!target.closest(`.${Classes.TAG_REMOVE}`)) {
+                                            event.stopPropagation();
+                                        }
+                                    },
+                                    onRemove: event => {
+                                        event.stopPropagation();
+                                        const item = configStore.vizierSelectedTableName[index];
+                                        if (item?.name) {
+                                            configStore.removeVizierSelectedTable(item.name);
+                                        }
+                                    }
+                                })
                             }}
                         />
                     </FormGroup>
