@@ -164,7 +164,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const w = canvas.width;
         const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+        let isCanvasCleared = false;
 
         if (image?.type === ImageType.COLOR_BLENDING) {
             ctx.globalCompositeOperation = "lighter";
@@ -178,6 +178,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
                 const canRender = (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) && frameStokesIndex === histStokesIndex;
                 if (canRender) {
+                    if (!isCanvasCleared) {
+                        ctx.clearRect(0, 0, w, h);
+                        isCanvasCleared = true;
+                    }
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
                     if (channel && isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame);
