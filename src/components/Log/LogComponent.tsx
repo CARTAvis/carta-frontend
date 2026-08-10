@@ -34,7 +34,7 @@ export class LogComponent extends React.Component<WidgetProps> {
         LogStore.Instance.toggleTag(tag);
     };
 
-    onLogLevelChanged = (event: React.FormEvent<HTMLSelectElement>) => {
+    onLogLevelChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
         LogStore.Instance.setLevel(parseInt(event.currentTarget.value));
     };
 

@@ -212,7 +212,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <HTMLSelect
                         value={widgetStore.momentMask}
                         options={Object.keys(CARTA.MomentMask).map(key => ({label: key, value: CARTA.MomentMask[key]}))}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)}
+                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)}
                         disabled={!frame}
                         data-testid="moment-generator-mask-dropdown"
                     />
