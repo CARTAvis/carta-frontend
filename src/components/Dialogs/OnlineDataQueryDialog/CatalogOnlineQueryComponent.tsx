@@ -250,7 +250,7 @@ export class CatalogQueryComponent extends React.Component {
                             popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
                             items={configStore.vizierTable}
                             itemRenderer={this.vizierItemRenderer}
-                            onItemSelect={item => configStore.updateVizierSelectedTable(item)}
+                            onItemSelect={item => configStore.toggleVizierSelectedTable(item)}
                             selectedItems={configStore.vizierSelectedTableName}
                             tagRenderer={item => item.name}
                             itemPredicate={this.filterVizierTable}
