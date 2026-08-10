@@ -1,0 +1,49 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.scaling-parameter-control {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 130px;
+
+    .#{$ns}-numeric-input,
+    .#{$ns}-numeric-input .#{$ns}-input-group,
+    .#{$ns}-numeric-input .#{$ns}-input-group input {
+        width: 100%;
+    }
+
+    .scaling-parameter-slider-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        align-self: flex-start;
+        width: 100%;
+        margin: 10px 0 2px !important;
+    }
+
+    .scaling-parameter-reset {
+        position: absolute;
+        top: 50%;
+        right: calc(100% + 12px);
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px;
+        min-height: 16px;
+        padding: 0 !important;
+        transform: translateY(-50%);
+        margin-left: 0 !important;
+    }
+
+    .scaling-parameter-slider {
+        align-self: flex-start;
+        min-width: 100%;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+
+        &,
+        div {
+            margin-left: 0 !important;
+        }
+    }
+}
