@@ -45,7 +45,7 @@ describe("WidgetsStore PV preview test ids", () => {
         const componentId = (widgetsStore as any).getWidgetComponentId(node as any);
         const testId = (widgetsStore as any).getWidgetTestId(node as any);
 
-        const renderValues: {content?: React.ReactElement} = {};
+        const renderValues: {content?: React.ReactElement<any>} = {};
         widgetsStore.onRenderTab(node as any, renderValues as any);
 
         expect(componentId).toBe("pv-generator-2");
@@ -68,7 +68,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
         widgetsStore.onRenderTabSet(tabSetNode as any, renderValues as any);
 
-        const buttons = (renderValues.buttons || []) as React.ReactElement[];
+        const buttons = (renderValues.buttons || []) as React.ReactElement<any>[];
 
         expect(buttons).toHaveLength(1);
         expect(buttons[0].props["data-testid"]).toBe("pv-preview-3-header-dock-button");
@@ -83,8 +83,8 @@ describe("WidgetsStore PV preview test ids", () => {
             getName: () => "Placeholder"
         };
 
-        const element = widgetsStore.renderWidgetFactory(node as any) as React.ReactElement;
-        const children = element.props.children as React.ReactElement[];
+        const element = widgetsStore.renderWidgetFactory(node as any) as React.ReactElement<any>;
+        const children = element.props.children as React.ReactElement<any>[];
 
         expect(children).toHaveLength(2);
         expect(children[0].props.nodeId).toBe("placeholder-2");

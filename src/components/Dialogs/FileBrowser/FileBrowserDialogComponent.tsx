@@ -26,7 +26,7 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable imageArithmeticString: string = "";
     @observable inputPathString: string = "";
     @observable isEditPathEnabled: boolean = false;
-    private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
+    private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement | null>;
 
     private static readonly DefaultWidth = 1200;
     private static readonly DefaultHeight = 600;
@@ -822,7 +822,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 return (
                     <InputGroup
                         className="arithmetic-input"
-                        inputRef={this.imageArithmeticInputRef}
+                        inputRef={this.imageArithmeticInputRef as React.Ref<HTMLInputElement>}
                         autoFocus={true}
                         placeholder="Enter an image arithmetic expression"
                         value={this.imageArithmeticString}

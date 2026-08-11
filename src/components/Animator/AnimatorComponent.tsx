@@ -1,10 +1,10 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {RangeSlider, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {AnimationMode, HelpType, NumericInputType, PlayMode, RelativeTimeReference, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, type TimeLabelSettings, toFixed} from "utilities";
@@ -122,7 +122,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
     };
 
-    onAnimationModeChanged = (event: React.FormEvent<HTMLInputElement>) => {
+    onAnimationModeChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newMode = parseInt(event.currentTarget.value) as AnimationMode;
         AnimatorStore.Instance.setAnimationMode(newMode);
     };

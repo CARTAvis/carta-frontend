@@ -180,7 +180,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
         return (
             <Rnd
-                ref={c => (this.rnd = c)}
+                ref={c => {
+                    this.rnd = c;
+                }}
                 className={className}
                 style={{zIndex: this.props.zIndex}}
                 default={{

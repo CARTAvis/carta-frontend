@@ -6,17 +6,19 @@ import {ApiService} from "services";
 
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
+import asinhPng from "./static/equations/asinh.png";
 import gammaPng from "./static/equations/gamma.png";
 import linearPng from "./static/equations/linear.png";
 import logPng from "./static/equations/log.png";
 import powerPng from "./static/equations/power.png";
+import sinhPng from "./static/equations/sinh.png";
 import sqrtPng from "./static/equations/sqrt.png";
 import squaredPng from "./static/equations/squared.png";
 import {App} from "./App";
 
 import "./index.scss";
 
-for (const val of [allMaps, linearPng, logPng, sqrtPng, squaredPng, gammaPng, powerPng]) {
+for (const val of [allMaps, linearPng, logPng, sqrtPng, squaredPng, gammaPng, powerPng, sinhPng, asinhPng]) {
     new Image().src = val;
 }
 
