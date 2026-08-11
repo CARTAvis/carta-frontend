@@ -22,7 +22,7 @@ export class ChannelMapViewComponentProps {
 }
 
 export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = observer((props: ChannelMapViewComponentProps) => {
-    const regionViewRef = React.useRef<RegionViewComponent>();
+    const regionViewRef = React.useRef<RegionViewComponent | null>(null);
     const appStore = AppStore.Instance;
     const channelMapStore = appStore.channelMapStore;
     const frame = channelMapStore.displayedFrame;

@@ -80,6 +80,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
             const hasSizeArea = catalogWidgetStore.isSizeAreaMode;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
+            const sizeScalingParameter = catalogWidgetStore.sizeScalingParameter;
             const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
             const isAngularSize = catalogWidgetStore.isAngularSize;
             const canvassizeUnit = catalogWidgetStore.canvasSizeUnit;
@@ -90,16 +91,19 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeMinorColumnMinClipd = catalogWidgetStore.sizeMinorColumnMin.clipd;
             const hasSizeMinorArea = catalogWidgetStore.isSizeMinorAreaMode;
             const sizeMinorScalingType = catalogWidgetStore.sizeMinorScalingType;
+            const sizeMinorScalingParameter = catalogWidgetStore.sizeMinorScalingParameter;
             // color
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
             const colorMap = catalogWidgetStore.colorMap;
             const colorScalingType = catalogWidgetStore.colorScalingType;
+            const colorScalingParameter = catalogWidgetStore.colorScalingParameter;
             const isColorMapInverted = catalogWidgetStore.isInvertedColorMap;
             const colorColumnMaxClipd = catalogWidgetStore.colorColumnMax.clipd;
             const colorColumnMinClipd = catalogWidgetStore.colorColumnMin.clipd;
             // orientation
             const orientationMapColumn = catalogWidgetStore.orientationMapColumn;
             const orientationScalingType = catalogWidgetStore.orientationScalingType;
+            const orientationScalingParameter = catalogWidgetStore.orientationScalingParameter;
             const angleMax = catalogWidgetStore.angleMax;
             const angleMin = catalogWidgetStore.angleMin;
             const orientationMaxClipd = catalogWidgetStore.orientationMax.clipd;

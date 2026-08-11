@@ -13,7 +13,7 @@ import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from
 
 @observer
 export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
-    private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
+    private handleNameChange = (formEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.region.setName(formEvent.currentTarget.value);
     };
 

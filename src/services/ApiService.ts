@@ -1,11 +1,13 @@
 import Ajv from "ajv";
 import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
+import tinycolor from "tinycolor2";
 
 import {AppToaster} from "components/Shared";
-import {ConvertToGB, LegacyASTColor, PreferenceKeys} from "enums";
-import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
+import {ConvertToGB, FrameScaling, LegacyASTColor, PreferenceKeys} from "enums";
+import {LayoutConfig, type Snippet, type Workspace, WorkspaceConfig, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
+import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
@@ -240,7 +242,7 @@ export class ApiService {
             }
 
             // This is to ensure consistency in the unit used for the preview cube size limit
-            const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+            const cubeSizeUnitKey = "pvPreviewCubeSizeLimitUnit";
             const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
             if (cubeSizeUnitKey in preferences) {
@@ -260,6 +262,60 @@ export class ApiService {
 
             preferences["version"] = 2;
             await this.setPreferences(preferences);
+        }
+
+        // Migrate scalingAlpha to the separate Log and Power preferences if present
+        const alphaKey = PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY;
+        const legacyAlphaTargets = [
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG, scaling: FrameScaling.LOG},
+            {key: PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER, scaling: FrameScaling.POWER}
+        ];
+        if (alphaKey in preferences) {
+            const alpha = preferences[alphaKey];
+            const isValid = typeof alpha === "number" && Number.isFinite(alpha) && alpha > 0;
+            const updates: Record<string, number> = {};
+
+            if (isValid) {
+                for (const {key, scaling} of legacyAlphaTargets) {
+                    if (!(key in preferences)) {
+                        const sanitizedAlpha = sanitizeScalingParameter(scaling, alpha);
+                        preferences[key] = sanitizedAlpha;
+                        updates[key] = sanitizedAlpha;
+                    }
+                }
+            }
+
+            if (!isValid || Object.keys(updates).length === 0 || (await this.setPreferences(updates))) {
+                await this.clearPreferences([alphaKey]);
+            }
+
+            delete preferences[alphaKey];
+        }
+
+        const gammaKey = PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA;
+        if (gammaKey in preferences) {
+            const gamma = preferences[gammaKey];
+            if (typeof gamma === "number" && Number.isFinite(gamma) && gamma > 0) {
+                const sanitizedGamma = sanitizeScalingParameter(FrameScaling.GAMMA, gamma);
+                if (sanitizedGamma !== gamma) {
+                    preferences[gammaKey] = sanitizedGamma;
+                    await this.setPreferences({[gammaKey]: sanitizedGamma});
+                }
+            }
+        }
+
+        // Migrate nanAlpha to nanColorHex if present
+        if ("nanAlpha" in preferences) {
+            const nanColorHex = preferences["nanColorHex"] || "#137CBD";
+            const nanAlpha = preferences["nanAlpha"];
+            const combinedColor = tinycolor(nanColorHex).setAlpha(nanAlpha).toRgbString();
+            preferences["nanColorHex"] = combinedColor;
+
+            if (await this.setPreference("nanColorHex", combinedColor)) {
+                await this.clearPreferences(["nanAlpha"]);
+            }
+
+            delete preferences["nanAlpha"];
         }
     };
 
@@ -544,9 +600,10 @@ export class ApiService {
                 if (existingWorkspaces) {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
-                        const workspace = existingWorkspaces[workspaceName];
+                        const storedWorkspace = existingWorkspaces[workspaceName];
+                        const workspace = storedWorkspace ? WorkspaceConfig.upgradeForRuntime(storedWorkspace) : undefined;
                         if (workspace && ApiService.workspaceValidator(workspace)) {
-                            validWorkspaces.push({name: workspaceName, date: workspace?.date ?? Date.now() / 1000});
+                            validWorkspaces.push({name: workspaceName, date: workspace.date ?? Date.now() / 1000});
                         } else {
                             console.error(`Workspace ${workspaceName} validation failed:`, ApiService.workspaceValidator.errors);
                         }
@@ -568,7 +625,7 @@ export class ApiService {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
-                    const workspace = response.data.workspace;
+                    const workspace = WorkspaceConfig.upgradeForRuntime(response.data.workspace);
                     const isValid = ApiService.workspaceValidator(workspace);
                     if (!isValid) {
                         console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
@@ -582,8 +639,9 @@ export class ApiService {
         } else if (!isKey) {
             try {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
-                const workspace = existingWorkspaces?.[name];
-                if (workspace) {
+                const storedWorkspace = existingWorkspaces?.[name];
+                if (storedWorkspace) {
+                    const workspace = WorkspaceConfig.upgradeForRuntime(storedWorkspace);
                     const isValid = ApiService.workspaceValidator(workspace);
                     if (isValid) {
                         return workspace;

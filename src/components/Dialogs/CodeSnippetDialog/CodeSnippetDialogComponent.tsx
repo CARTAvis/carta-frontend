@@ -141,7 +141,9 @@ export class CodeSnippetDialogComponent extends React.Component {
                     fontSize: 12
                 }}
                 placeholder="Enter execution string"
-                ref={ref => (this.editorRef = ref)}
+                ref={ref => {
+                    this.editorRef = ref;
+                }}
             />
         );
 

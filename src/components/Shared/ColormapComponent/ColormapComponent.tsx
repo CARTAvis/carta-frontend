@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Classes, MenuItem, PopoverNext, type PopoverProps} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {type ItemRenderer, Select} from "@blueprintjs/select";
 import Sketch from "@uiw/react-color-sketch";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -18,7 +18,10 @@ interface ColormapComponentProps {
     inverted: boolean;
     disabled?: boolean;
     onColormapSelect: (selected: string) => void;
+    onColormapHover?: (colormap: string) => void;
+    onDropdownOpenChange?: (isOpen: boolean) => void;
     onCustomColorSelect?: (selected: string) => void;
+    onCustomColorStartSelect?: (selected: string) => void;
     enableAdditionalColor?: boolean;
     selectedCustomColor?: string;
     customColorStart?: string;
@@ -30,9 +33,31 @@ const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: 
 const CUSTOM_COLOR_MAP_OPTIONS = [...COLOR_MAPS_SELECTED, ...COLOR_MAPS_MONO.keys(), RenderConfigStore.COLOR_MAPS_CUSTOM, RenderConfigStore.COLOR_MAPS_PANEL];
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
+    const [activeItem, setActiveItem] = React.useState(props.selectedColormap);
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
     const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : COLOR_MAPS_SELECTED;
 
-    const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
+    React.useEffect(() => {
+        if (!isDropdownOpen) {
+            setActiveItem(props.selectedColormap);
+        }
+    }, [isDropdownOpen, props.selectedColormap]);
+
+    const handleActiveItemChange = (colormap: string | null) => {
+        if (colormap === null) {
+            return;
+        }
+        setActiveItem(colormap);
+        if (colormap !== RenderConfigStore.COLOR_MAPS_PANEL) {
+            props.onColormapHover?.(colormap);
+        }
+    };
+
+    const handleColormapHover = (colormap: string) => {
+        props.onColormapHover?.(colormap);
+    };
+
+    const renderColormapSelectItem: ItemRenderer<string> = (colormap, {handleClick, handleFocus, modifiers, ref}) => {
         const shouldDisableAlpha = true;
         const changeDelay = 100;
 
@@ -43,27 +68,68 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.isDarkTheme});
 
-            const handleColorChange = _.throttle((color: any) => {
+            // Keep this for future use if we want to allow users to select the start color of the custom colormap
+            /*
+            const handleStartColorChange = _.throttle((color: any) => {
+                props.onCustomColorStartSelect?.(color.hex);
+                props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
+            }, changeDelay);
+            */
+
+            const handleEndColorChange = _.throttle((color: any) => {
                 props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>
-                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleColorChange} disableAlpha={shouldDisableAlpha} />}>
+                    <PopoverNext placement="left" shouldReturnFocusOnClose={false} popoverClassName={popoverClassName} content={<Sketch color={props.selectedCustomColor} onChange={handleEndColorChange} disableAlpha={shouldDisableAlpha} />}>
                         <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </PopoverNext>
                 </div>
             );
         } else {
             const colormapBlock = <ColormapBlock colormap={colormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text="" icon={colormapBlock} />;
+            return (
+                <MenuItem
+                    ref={ref}
+                    active={modifiers.active}
+                    disabled={modifiers.disabled}
+                    label={colormap}
+                    key={colormap}
+                    onClick={handleClick}
+                    onFocus={handleFocus}
+                    onMouseEnter={() => handleColormapHover(colormap)}
+                    text=""
+                    icon={colormapBlock}
+                />
+            );
+        }
+    };
+
+    const popoverProps = {
+        ...COLORMAP_POPOVER_PROPS,
+        onInteraction: (isOpen: boolean) => {
+            setIsDropdownOpen(isOpen);
+            if (isOpen) {
+                setActiveItem(props.selectedColormap);
+            }
+            props.onDropdownOpenChange?.(isOpen);
         }
     };
 
     const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
-        <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
+        <ColorMapSelect
+            disabled={props.disabled}
+            activeItem={activeItem}
+            onActiveItemChange={handleActiveItemChange}
+            popoverProps={popoverProps}
+            filterable={false}
+            items={items}
+            onItemSelect={props.onColormapSelect}
+            itemRenderer={renderColormapSelectItem}
+        >
             <Button disabled={props.disabled} text={colormapBlock} endIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
