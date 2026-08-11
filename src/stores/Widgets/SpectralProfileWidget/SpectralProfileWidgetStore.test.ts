@@ -198,8 +198,9 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.plotData?.yMean).toBe(3);
         expect(widgetStore.plotData?.yRms).toBe(1);
         expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([2, 4]);
-        expect(widgetStore.yUnitLabel).toBe("Jy/beam, rest-frame density");
-        expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam, rest-frame density)");
+        expect(widgetStore.xAxisLabel).toBe("Frequency (GHz) (rest frame)");
+        expect(widgetStore.yUnitLabel).toBe("Jy/beam (rest frame)");
+        expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam) (rest frame)");
         expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: rest", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
     });
 
@@ -215,7 +216,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: observed", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
     });
 
-    test("labels fitting results and logs as rest-frame density when the Jacobian is active", () => {
+    test("labels fitting results and logs with the rest-frame suffix when the Y-axis mode is active", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.setRestFrameRedshift(1);
         widgetStore.setXAxisRestFrameEnabled(true);
@@ -235,9 +236,9 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         widgetStore.fittingStore.fitData();
 
-        expect(widgetStore.fittingStore.resultString).toContain("Amplitude = 2.000000 (Jy/beam, rest-frame density)");
-        expect(widgetStore.fittingStore.resultString).toContain("Integral = 20.000000 (Jy/beam, rest-frame density * GHz (rest frame))");
-        expect(widgetStore.fittingStore.resultLog).toBe("Amplitude = (Jy/beam, rest-frame density)\nIntegral = (Jy/beam, rest-frame density * GHz (rest frame))");
+        expect(widgetStore.fittingStore.resultString).toContain("Amplitude = 2.000000 (Jy/beam (rest frame))");
+        expect(widgetStore.fittingStore.resultString).toContain("Integral = 20.000000 (Jy/beam (rest frame) * GHz (rest frame))");
+        expect(widgetStore.fittingStore.resultLog).toBe("Amplitude = (Jy/beam (rest frame))\nIntegral = (Jy/beam (rest frame) * GHz (rest frame))");
     });
 
     test("applies the F_nu Jacobian after converting the selected intensity unit", () => {

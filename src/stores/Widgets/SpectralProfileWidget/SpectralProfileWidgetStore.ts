@@ -627,7 +627,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get xAxisLabel(): string | undefined {
         const label = this.effectiveFrame?.spectralLabel;
-        return label && this.isXAxisRestFrameActive ? `${label} (Rest frame, z=${this.restFrameRedshift})` : label;
+        return label && this.isXAxisRestFrameActive ? `${label} (rest frame)` : label;
     }
 
     @computed get yUnitLabel(): string | undefined {
@@ -635,11 +635,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (!unit) {
             return undefined;
         }
-        return this.isYAxisRestFrameActive ? `${unit}, rest-frame density` : unit;
+        return this.isYAxisRestFrameActive ? `${unit} (rest frame)` : unit;
     }
 
     @computed get yAxisLabel(): string | undefined {
-        return this.yUnitLabel ? `Value (${this.yUnitLabel})` : undefined;
+        const unit = this.yUnit;
+        if (!unit) {
+            return undefined;
+        }
+        return this.isYAxisRestFrameActive ? `Value (${unit}) (rest frame)` : `Value (${unit})`;
     }
 
     @computed get redshiftCorrectionExportComments(): string[] {
