@@ -39,7 +39,7 @@ const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
 const MAX_TILE_WORKERS = 8;
 const MIN_TILE_WORKERS = 1;
 const MAX_TILE_WORKERS_PER_CORE = 0.75;
-const CHANNEL_MAP_REQUEST_TIMEOUT = 10_000;
+const CHANNEL_MAP_REQUEST_TIMEOUT = 300_000; // ms
 
 interface TileMessageArgs {
     width: number | null | undefined;
@@ -500,17 +500,34 @@ export class TileService {
     private startChannelMapRequestTimeout(fileId: number, requestId: number) {
         this.clearChannelMapRequestTimeout(fileId);
         const timeout = setTimeout(() => {
-            const activeRequest = this.activeChannelMapRequests.get(fileId);
-            if (!activeRequest || activeRequest.requestId !== requestId) {
-                return;
-            }
-            console.warn(`Channel Map request ${requestId} timed out for file ${fileId}`);
-            this.activeChannelMapRequests.delete(fileId);
-            this.channelMapRequestTimeouts.delete(fileId);
-            this.clearRequestQueue(fileId);
-            this.channelMapRequestQueues.delete(fileId);
+            void this.handleChannelMapRequestTimeout(fileId, requestId);
         }, CHANNEL_MAP_REQUEST_TIMEOUT);
         this.channelMapRequestTimeouts.set(fileId, timeout);
+    }
+
+    private async handleChannelMapRequestTimeout(fileId: number, requestId: number) {
+        const activeRequest = this.activeChannelMapRequests.get(fileId);
+        if (!activeRequest || activeRequest.requestId !== requestId) {
+            return;
+        }
+
+        this.channelMapRequestTimeouts.delete(fileId);
+        const shouldKeepWaiting = await AppStore.Instance.alertStore.showInteractiveAlert(
+            `Loading channel ${activeRequest.channel} is taking longer than ${CHANNEL_MAP_REQUEST_TIMEOUT / 1000} seconds. Do you want to continue waiting? Select OK to keep waiting or Cancel to stop waiting for this channel.`,
+            "warning-sign"
+        );
+        const currentRequest = this.activeChannelMapRequests.get(fileId);
+        if (!currentRequest || currentRequest.requestId !== requestId) {
+            return;
+        }
+        if (shouldKeepWaiting) {
+            this.startChannelMapRequestTimeout(fileId, requestId);
+            return;
+        }
+
+        this.activeChannelMapRequests.delete(fileId);
+        this.clearRequestQueue(fileId);
+        this.channelMapRequestQueues.delete(fileId);
     }
 
     private clearChannelMapRequestTimeout(fileId: number) {
@@ -526,7 +543,7 @@ export class TileService {
         fileIds.forEach(id => {
             this.clearChannelMapRequestTimeout(id);
             this.clearRequestQueue(id);
-            this.clearChannelMapSynchronisation(id);
+            this.clearChannelMapSynchronization(id);
         });
         if (fileId === undefined) {
             this.channelMapRequestQueues.clear();
@@ -543,7 +560,7 @@ export class TileService {
         }
     }
 
-    private clearChannelMapSynchronisation(fileId: number) {
+    private clearChannelMapSynchronization(fileId: number) {
         this.channelMapGenerations.set(fileId, (this.channelMapGenerations.get(fileId) ?? 0) + 1);
         this.pendingDecompressions.forEach((syncMaps, key) => {
             if (isTileKeyForFile(key, fileId)) {

@@ -1,10 +1,12 @@
 jest.mock("models", () => ({TileCoordinate: {}}));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
-jest.mock("stores", () => ({AppStore: {Instance: {}}, PREVIEW_PV_FILEID: -1}));
+jest.mock("stores", () => ({AppStore: {Instance: {alertStore: {showInteractiveAlert: jest.fn()}}}, PREVIEW_PV_FILEID: -1}));
 jest.mock("utilities", () => ({clamp: jest.fn(), copyToFP32Texture: jest.fn(), createFP32Texture: jest.fn(), GL2: {}}));
 jest.mock("!worker-loader!zfp_wrapper", () => jest.fn());
 
 import {CARTA} from "carta-protobuf";
+
+import {AppStore} from "stores";
 
 import {TileService} from "./TileService";
 
@@ -86,9 +88,12 @@ const Complete = (channel: number) => ({
     status: CARTA.ChannelMapFlowControl.Status.COMPLETED
 });
 
+const MockShowInteractiveAlert = AppStore.Instance.alertStore.showInteractiveAlert as jest.Mock;
+
 describe("TileService channel map request queue", () => {
     beforeEach(() => {
         jest.useFakeTimers();
+        MockShowInteractiveAlert.mockReset();
     });
 
     afterEach(() => {
@@ -317,40 +322,43 @@ describe("TileService channel map request queue", () => {
         expect(service.channelMapGenerations.get(1)).toBe(4);
     });
 
-    test("fails a queue when its completion event times out", () => {
+    test("restarts the timeout when the user chooses to keep waiting", async () => {
         const service = CreateService();
-        jest.spyOn(console, "warn").mockImplementation();
+        MockShowInteractiveAlert.mockResolvedValue(true);
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
-        jest.advanceTimersByTime(10_000);
+        jest.advanceTimersByTime(300_000);
+        await Promise.resolve();
+
+        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than expected"), "warning-sign");
+        expect(service.activeChannelMapRequests.has(1)).toBe(true);
+        expect(service.channelMapRequestQueues.has(1)).toBe(true);
+        expect(service.channelMapRequestTimeouts.has(1)).toBe(true);
+    });
+
+    test("clears the stalled request when the user stops waiting", async () => {
+        const service = CreateService();
+        MockShowInteractiveAlert.mockResolvedValue(false);
+        service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
+
+        jest.advanceTimersByTime(300_000);
+        await Promise.resolve();
 
         expect(service.activeChannelMapRequests.has(1)).toBe(false);
         expect(service.channelMapRequestQueues.has(1)).toBe(false);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
-        expect(console.warn).toHaveBeenCalledWith("Channel Map request 1 timed out for file 1");
     });
 
-    test("keeps the watchdog active after a mismatched completion channel", () => {
+    test("ignores a timeout decision after the request completes", async () => {
         const service = CreateService();
-        jest.spyOn(console, "warn").mockImplementation();
+        let resolveDecision: (shouldKeepWaiting: boolean) => void;
+        MockShowInteractiveAlert.mockReturnValue(new Promise(resolve => (resolveDecision = resolve)));
         service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2)]);
 
-        service.handleChannelMapFlowControl(1, Complete(9));
-        jest.advanceTimersByTime(10_000);
-
-        expect(service.channelMapRequestQueues.has(1)).toBe(false);
-        expect(console.warn).toHaveBeenNthCalledWith(1, "Channel Map completion mismatch for request 1: expected channel 1, received 9");
-        expect(console.warn).toHaveBeenNthCalledWith(2, "Channel Map request 1 timed out for file 1");
-    });
-
-    test("ignores a late completion from an expired request", () => {
-        const service = CreateService();
-        jest.spyOn(console, "warn").mockImplementation();
-        service.queueChannelMapRequests(1, [MakeRequest(1)]);
-        jest.advanceTimersByTime(10_000);
-        service.queueChannelMapRequests(1, [MakeRequest(2), MakeRequest(3)]);
-
+        jest.advanceTimersByTime(300_000);
         service.handleChannelMapFlowControl(1, Complete(1));
+        resolveDecision!(false);
+        await Promise.resolve();
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
         expect(service.activeChannelMapRequests.get(1)).toEqual(expect.objectContaining({channel: 2, requestId: 2}));
