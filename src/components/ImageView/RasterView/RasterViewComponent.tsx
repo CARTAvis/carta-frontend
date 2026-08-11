@@ -30,6 +30,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private sub: Subscription;
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
+    private updateCanvasFrame: number | undefined;
     private static readonly Float32Max = 3.402823466e38;
 
     @observable private channels: number[] | undefined;
@@ -61,7 +62,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
             if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
-                requestAnimationFrame(() => this.updateCanvas());
+                this.scheduleCanvasUpdate();
             }
         });
     }
@@ -76,14 +77,28 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.imageStore = this.props.image?.store as FrameStore;
         }
 
-        requestAnimationFrame(() => this.updateCanvas());
+        this.scheduleCanvasUpdate();
     }
 
     componentWillUnmount(): void {
         if (this.sub) {
             this.sub.unsubscribe();
         }
+        if (this.updateCanvasFrame !== undefined) {
+            cancelAnimationFrame(this.updateCanvasFrame);
+            this.updateCanvasFrame = undefined;
+        }
     }
+
+    private scheduleCanvasUpdate = () => {
+        if (this.updateCanvasFrame !== undefined) {
+            return;
+        }
+        this.updateCanvasFrame = requestAnimationFrame(() => {
+            this.updateCanvasFrame = undefined;
+            this.updateCanvas();
+        });
+    };
 
     private renderMultipleCanvas = (frame: FrameStore) => {
         const canvas = this.canvas;
@@ -253,7 +268,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * appStore.pixelRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, renderHeight * appStore.pixelRatio);
 
-            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
+            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex);
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
@@ -527,7 +542,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     inverted: frame.renderConfig.isInverted,
                     visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
-                    nanAlpha: appStore.preferenceStore.nanAlpha,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };

@@ -10,12 +10,22 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
-import {AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, copyToClipboardWithToast, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
+import {
+    AutoColorPickerComponent,
+    ColormapComponent,
+    ColorPickerComponent,
+    copyToClipboardWithToast,
+    PointShapeSelectComponent,
+    SafeNumericInput,
+    ScalingParameterControlComponent,
+    ScalingSelectComponent,
+    ScrollShadow
+} from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -152,6 +162,26 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
+    private renderScalingParameterInput(preference: PreferenceStore): React.ReactNode {
+        const parameterConfig = getScalingParameterConfig(preference.scaling);
+        if (!parameterConfig) {
+            return null;
+        }
+        const parameterName = preference.scaling === FrameScaling.GAMMA ? "Gamma" : "Alpha";
+
+        return (
+            <FormGroup label={parameterName} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={preference.scaling}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={preference.getScalingParameter(preference.scaling)}
+                    onValueChange={newValue => preference.setPreference(parameterConfig.preferenceKey, newValue)}
+                />
+            </FormGroup>
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -241,6 +271,7 @@ export class PreferenceDialogComponent extends React.Component {
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
                         onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX, selected)}
+                        onCustomColorStartSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
                     />
@@ -257,37 +288,13 @@ export class PreferenceDialogComponent extends React.Component {
                         <Button text={preference.percentile.toString(10) + "%"} endIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
-                    <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={preference.scalingAlpha}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
-                        />
-                    </FormGroup>
-                )}
-                {preference.scaling === FrameScaling.GAMMA && (
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.GAMMA_MIN}
-                            max={RenderConfigStore.GAMMA_MAX}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={preference.scalingGamma}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
-                        />
-                    </FormGroup>
-                )}
+                {this.renderScalingParameterInput(preference)}
                 <FormGroup inline={true} label="NaN color">
                     <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
+                        color={tinycolor(preference.nanColorHex).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgba.a);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());
                         }}
                         disableAlpha={false}
                         darkTheme={appStore.isDarkTheme}
@@ -324,8 +331,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default smoothing factor">
                     <SafeNumericInput
                         placeholder="Default smoothing factor"
-                        min={1}
-                        max={33}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? 33}
                         value={preference.contourSmoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
@@ -335,8 +342,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default contour levels">
                     <SafeNumericInput
                         placeholder="Default contour levels"
-                        min={1}
-                        max={15}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? 15}
                         value={preference.contourNumLevels}
                         majorStepSize={1}
                         stepSize={1}
@@ -346,8 +353,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Thickness">
                     <SafeNumericInput
                         placeholder="Thickness"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? 10}
                         value={preference.contourThickness}
                         majorStepSize={0.5}
                         stepSize={0.5}
@@ -400,8 +407,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Thickness">
                     <SafeNumericInput
                         placeholder="Thickness"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? 10}
                         value={preference.vectorOverlayThickness}
                         majorStepSize={0.5}
                         stepSize={0.5}
@@ -453,7 +460,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS format">
-                    <HTMLSelect value={preference.wcsType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
+                    <HTMLSelect value={preference.wcsType} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
                         <option value={WCSType.AUTOMATIC}>Automatic</option>
                         <option value={WCSType.DEGREES}>Degrees</option>
                         <option value={WCSType.SEXAGESIMAL}>Sexagesimal</option>
@@ -475,8 +482,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Colorbar width" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Colorbar width"
-                        min={1}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? 100}
                         value={preference.colorbarWidth}
                         stepSize={1}
                         minorStepSize={1}
@@ -488,8 +495,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Colorbar ticks density" labelInfo="(per 100px)">
                     <SafeNumericInput
                         placeholder="Colorbar ticks density"
-                        min={0.2}
-                        max={20}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? 0.2}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? 20}
                         value={preference.colorbarTicksDensity}
                         stepSize={0.2}
                         minorStepSize={0.1}
@@ -507,7 +514,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <AutoColorPickerComponent color={preference.beamColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam type">
-                    <HTMLSelect value={preference.beamType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, event.currentTarget.value as BeamType)}>
+                    <HTMLSelect value={preference.beamType} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, event.currentTarget.value as BeamType)}>
                         <option key={0} value={BeamType.Open}>
                             Open
                         </option>
@@ -519,8 +526,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Beam width" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Beam width"
-                        min={0.5}
-                        max={10}
+                        min={preference.getMinConstraint(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? 10}
                         value={preference.beamWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -608,11 +615,13 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Region size" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Region size"
-                        min={10}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10}
+                        max={preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100}
                         value={preference.regionSize}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(10, Math.min(100, value)))}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(PreferenceKeys.REGION_SIZE, clamp(value, preference.getMinConstraint(PreferenceKeys.REGION_SIZE) ?? 10, preference.getMaxConstraint(PreferenceKeys.REGION_SIZE) ?? 100))
+                        }
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Creation mode">
@@ -658,7 +667,7 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_LINE_WIDTH}
                         value={preference.annotationLineWidth}
                         stepSize={0.5}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, clamp(value, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dash length" labelInfo="(px)">
@@ -668,7 +677,7 @@ export class PreferenceDialogComponent extends React.Component {
                         max={RegionStore.MAX_DASH_LENGTH}
                         value={preference.annotationDashLength}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, clamp(value, 0, RegionStore.MAX_DASH_LENGTH))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Point shape">
@@ -677,11 +686,31 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Point size"
-                        min={1}
-                        max={100}
+                        min={preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, Math.min(100, value)))}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(
+                                PreferenceKeys.POINT_ANNOTATION_WIDTH,
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 1, preference.getMaxConstraint(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? 100)
+                            )
+                        }
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text line width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Text line width"
+                        min={preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5}
+                        max={preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10}
+                        value={preference.textAnnotationLineWidth}
+                        stepSize={0.5}
+                        onValueChange={(value: number) =>
+                            preference.setPreference(
+                                PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH,
+                                clamp(value, preference.getMinConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 0.5, preference.getMaxConstraint(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? 10)
+                            )
+                        }
                     />
                 </FormGroup>
             </React.Fragment>
@@ -740,8 +769,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Contour rounding factor">
                     <SafeNumericInput
                         placeholder="Contour rounding factor"
-                        min={1}
-                        max={32}
+                        min={preference.getMinConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? 1}
+                        max={preference.getMaxConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? 32}
                         value={preference.contourDecimation}
                         majorStepSize={1}
                         stepSize={1}
@@ -751,8 +780,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Contour compression level">
                     <SafeNumericInput
                         placeholder="Contour compression level"
-                        min={0}
-                        max={19}
+                        min={preference.getMinConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? 0}
+                        max={preference.getMaxConstraint(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? 19}
                         value={preference.contourCompressionLevel}
                         majorStepSize={1}
                         stepSize={1}
@@ -867,7 +896,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Displayed columns">
                     <SafeNumericInput
                         placeholder="Default displayed columns"
-                        min={1}
+                        min={preference.getMinConstraint(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? 1}
                         value={preference.catalogDisplayedColumnSize}
                         stepSize={1}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}

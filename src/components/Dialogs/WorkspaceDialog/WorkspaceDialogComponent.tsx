@@ -40,7 +40,7 @@ export const WorkspaceDialogComponent = observer(() => {
         setIsFetching(false);
     }, [appStore]);
 
-    const handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+    const handleInput = (ev: React.ChangeEvent<HTMLInputElement>) => {
         setWorkspaceName(ev.currentTarget.value);
     };
 

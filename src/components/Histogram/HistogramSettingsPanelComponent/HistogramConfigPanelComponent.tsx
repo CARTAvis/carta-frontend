@@ -1,8 +1,8 @@
 import * as React from "react";
-import {Button, Divider, FormGroup, Intent, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, Intent, Switch, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, Slider} from "components/Shared";
 import {type HistogramWidgetStore} from "stores/Widgets";
 
 @observer

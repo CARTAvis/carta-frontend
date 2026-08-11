@@ -500,7 +500,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const table = (
             <Table
-                ref={ref => (this.tableRef = ref)}
+                ref={ref => {
+                    this.tableRef = ref;
+                }}
                 className={classes.join(" ")}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}

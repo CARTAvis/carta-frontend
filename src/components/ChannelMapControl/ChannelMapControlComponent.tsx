@@ -1,10 +1,10 @@
 import * as React from "react";
-import {Button, ButtonGroup, Checkbox, Classes, Collapse, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, Classes, Collapse, FormGroup, HTMLSelect, NonIdealState, Position, Switch, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {HelpType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {clamp, SWATCH_COLORS} from "utilities";

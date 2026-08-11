@@ -4,15 +4,33 @@ import {Select} from "@blueprintjs/select";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingParameterControlComponent, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {type FrameStore, PreferenceStore} from "stores";
-import {getPercentiles, scaleValue} from "utilities";
+import {getDefaultScalingParameter, getPercentiles, getScalingParameterConfig, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const GeneratorSelect = Select<ContourGeneratorType>;
+
+export function generateMinMaxLevels(minValue: number, maxValue: number, numLevels: number, scaling: FrameScaling, alpha: number, gamma: number): number[] {
+    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue) || !Number.isFinite(numLevels)) {
+        return [];
+    }
+    if (numLevels <= 1) {
+        return [(maxValue + minValue) / 2];
+    }
+
+    const range = maxValue - minValue;
+    const numIntervals = numLevels - 1;
+    const levels: number[] = [];
+    for (let i = 0; i < numLevels; i++) {
+        const fraction = scaleValue(i / numIntervals, scaling, alpha, gamma);
+        levels.push(minValue + range * fraction);
+    }
+    return levels;
+}
 
 @observer
 export class ContourGeneratorPanelComponent extends React.Component<{
@@ -28,6 +46,17 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredMinValue: number | undefined = undefined;
     @observable enteredMaxValue: number | undefined = undefined;
     @observable scalingType: FrameScaling = FrameScaling.LINEAR;
+    @observable private scalingAlphas = new Map<FrameScaling, number>([
+        [FrameScaling.LOG, PreferenceStore.Instance.scalingAlphaLog],
+        [FrameScaling.POWER, PreferenceStore.Instance.scalingAlphaPower],
+        [FrameScaling.SINH, PreferenceStore.Instance.scalingAlphaSinh],
+        [FrameScaling.ASINH, PreferenceStore.Instance.scalingAlphaAsinh]
+    ]);
+    @observable private scalingGamma: number = PreferenceStore.Instance.scalingGamma;
+
+    private get scalingAlpha(): number {
+        return this.scalingAlphas.get(this.scalingType) ?? getDefaultScalingParameter(this.scalingType);
+    }
 
     get minValue(): number {
         if (this.enteredMinValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
@@ -50,11 +79,41 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         makeObservable(this);
     }
 
+    @action private setScalingAlpha = (alpha: number) => {
+        this.scalingAlphas.set(this.scalingType, alpha);
+    };
+
+    @action private setScalingGamma = (gamma: number) => {
+        this.scalingGamma = gamma;
+    };
+
+    private renderScalingParameterInput(): React.ReactNode {
+        const parameterConfig = getScalingParameterConfig(this.scalingType);
+        if (!parameterConfig) {
+            return null;
+        }
+
+        const isGamma = this.scalingType === FrameScaling.GAMMA;
+        return (
+            <FormGroup label={isGamma ? "Gamma" : "Alpha"} inline={true}>
+                <ScalingParameterControlComponent
+                    scaling={this.scalingType}
+                    min={parameterConfig.min}
+                    max={parameterConfig.max}
+                    value={isGamma ? this.scalingGamma : this.scalingAlpha}
+                    onValueChange={isGamma ? this.setScalingGamma : this.setScalingAlpha}
+                />
+            </FormGroup>
+        );
+    }
+
     private renderMinMaxParameterRow() {
         const frame = this.props.frame;
         if (!frame) {
             return null;
         }
+
+        const scalingParameterInput = this.renderScalingParameterInput();
 
         return (
             <div className="parameter-container">
@@ -82,25 +141,13 @@ export class ContourGeneratorPanelComponent extends React.Component<{
                         <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => runInAction(() => (this.scalingType = val))} />
                     </FormGroup>
                 </div>
+                {scalingParameterInput && <div className="parameter-line">{scalingParameterInput}</div>}
             </div>
         );
     }
 
     private generateMinMaxLevels = (): number[] => {
-        if (!isFinite(this.minValue) || !isFinite(this.maxValue) || !isFinite(this.numLevels)) {
-            return [];
-        } else if (this.numLevels <= 1) {
-            return [(this.maxValue + this.minValue) / 2.0];
-        } else {
-            const range = this.maxValue - this.minValue;
-            const numIntervals = this.numLevels - 1;
-            const levels: number[] = [];
-            for (let i = 0; i < this.numLevels; i++) {
-                const fraction = scaleValue(i / numIntervals, this.scalingType);
-                levels.push(this.minValue + range * fraction);
-            }
-            return levels;
-        }
+        return generateMinMaxLevels(this.minValue, this.maxValue, this.numLevels, this.scalingType, this.scalingAlpha, this.scalingGamma);
     };
 
     // endregion
