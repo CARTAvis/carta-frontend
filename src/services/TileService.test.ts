@@ -345,20 +345,20 @@ describe("TileService channel map request queue", () => {
         expect(service.channelMapGenerations.get(1)).toBe(4);
     });
 
-    test("reports received channel-map tiles every 30 seconds", () => {
+    test("reports received channel-map tiles every 5 seconds", () => {
         const service = CreateService();
         service.queueChannelMapRequests(1, [MakeRequest(1, [4, 5]), MakeRequest(2, [6]), MakeRequest(3, [7])]);
 
-        jest.advanceTimersByTime(30_000);
+        jest.advanceTimersByTime(5_000);
         expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 0 / 2 requested tiles.", 5_000);
 
         service.pendingRequests.get("1_0_1")?.delete(4);
-        jest.advanceTimersByTime(30_000);
+        jest.advanceTimersByTime(5_000);
         expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 1 / 2 requested tiles.", 5_000);
         expect(MockShowToast).toHaveBeenCalledTimes(2);
 
         service.cancelChannelMapRequests(1);
-        jest.advanceTimersByTime(30_000);
+        jest.advanceTimersByTime(5_000);
         expect(MockShowToast).toHaveBeenCalledTimes(2);
     });
 
@@ -367,12 +367,12 @@ describe("TileService channel map request queue", () => {
         MockShowInteractiveAlert.mockResolvedValue(true);
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
-        jest.advanceTimersByTime(59_999);
+        jest.advanceTimersByTime(39_999);
         expect(MockShowInteractiveAlert).not.toHaveBeenCalled();
         jest.advanceTimersByTime(1);
         await Promise.resolve();
 
-        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than 60 seconds"), "warning-sign");
+        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than 40 seconds"), "warning-sign");
         expect(service.activeChannelMapRequests.has(1)).toBe(true);
         expect(service.channelMapRequestQueues.has(1)).toBe(true);
         expect(service.channelMapRequestTimeouts.has(1)).toBe(true);
@@ -383,7 +383,7 @@ describe("TileService channel map request queue", () => {
         MockShowInteractiveAlert.mockResolvedValue(false);
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
-        jest.advanceTimersByTime(60_000);
+        jest.advanceTimersByTime(40_000);
         await Promise.resolve();
 
         expect(service.activeChannelMapRequests.has(1)).toBe(false);
@@ -397,7 +397,7 @@ describe("TileService channel map request queue", () => {
         MockShowInteractiveAlert.mockReturnValue(new Promise(resolve => (resolveDecision = resolve)));
         service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2)]);
 
-        jest.advanceTimersByTime(60_000);
+        jest.advanceTimersByTime(40_000);
         service.handleChannelMapFlowControl(1, Complete(1));
         resolveDecision!(false);
         await Promise.resolve();
