@@ -1250,7 +1250,31 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (!this.isXAxisRestFrameActive || !values?.length) {
             return values ?? [];
         }
-        return values.map(value => this.convertObservedXToDisplay(value, spectralType, spectralUnit));
+
+        const frame = this.effectiveFrame;
+        const resolvedSpectralType = spectralType ?? frame?.spectralType ?? frame?.spectralAxis?.type?.code;
+        const resolvedSpectralUnit = spectralUnit ?? frame?.spectralUnit;
+        const transformMode = this.getRestFrameTransformMode(resolvedSpectralType);
+        if (transformMode === "frequency") {
+            return values.map(value => value * this.redshiftFactor);
+        }
+        if (transformMode === "wavelength") {
+            const wavelengthPower = resolvedSpectralUnit?.endsWith("^2") ? 2 : 1;
+            const scale = Math.pow(this.redshiftFactor, wavelengthPower);
+            return values.map(value => value / scale);
+        }
+        if (transformMode === "airWavelength" && resolvedSpectralUnit) {
+            const observedFreqMHz = frame?.convertSettingWCSToFreqMHzArray(values, resolvedSpectralType as SpectralType, resolvedSpectralUnit);
+            if (observedFreqMHz) {
+                const restFreqMHz = observedFreqMHz.map(value => value * this.redshiftFactor);
+                const restValues = frame?.convertFreqMHzToSettingWCSArray(restFreqMHz, resolvedSpectralType as SpectralType, resolvedSpectralUnit);
+                if (restValues) {
+                    return restValues;
+                }
+            }
+            return new Array(values.length).fill(NaN);
+        }
+        return values;
     };
 
     private getBoundX = (channelValues: number[]): XBound => {

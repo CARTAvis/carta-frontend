@@ -238,5 +238,37 @@ describe("FrameStore", () => {
             expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 100, false);
             expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 12);
         });
+
+        test("converts setting WCS arrays to frequency with two batched transforms", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+            expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000], false);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, new Float64Array([12, 24]));
+        });
+
+        test("converts frequency arrays to setting WCS with two batched transforms", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+            expect(frame.convertFreqMHzToSettingWCSArray([100, 200], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, [100, 200], false);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, new Float64Array([12, 24]));
+        });
+
+        test("stops an array conversion when the AST wrapper reports invalid output", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([NaN, NaN]));
+
+            expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toBeUndefined();
+            expect(AST.transformSpectralPointArray).toHaveBeenCalledTimes(1);
+        });
     });
 });

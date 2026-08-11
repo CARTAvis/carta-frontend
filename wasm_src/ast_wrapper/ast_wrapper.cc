@@ -655,10 +655,32 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
 
     AstSpecFrame* specFrameTo = nullptr;
-    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
-    if (!specFrameTo)
-    {
+    AstFrameSet* cvt = nullptr;
+
+    auto cleanup = [&]() {
+        if (cvt) {
+            cvt = static_cast<AstFrameSet*>(astAnnul(cvt));
+        }
+        if (specFrameTo) {
+            specFrameTo = static_cast<AstSpecFrame*>(astAnnul(specFrameTo));
+        }
+    };
+
+    auto fail = [&]() -> int {
+        if (!astOK) {
+            astClearStatus;
+        }
+        cleanup();
+        if (!astOK) {
+            astClearStatus;
+        }
         return 1;
+    };
+
+    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
+    if (!specFrameTo || !astOK)
+    {
+        return fail();
     }
 
     char buffer[128];
@@ -674,13 +696,28 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
         snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
         astSet(specFrameTo, buffer);
     }
+    if (!astOK) {
+        return fail();
+    }
 
-    AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
+    if (!cvt || !astOK) {
+        return fail();
+    }
 
     astTran1(cvt, npoint, zIn, forward, zOut);
     if (!astOK)
     {
+        return fail();
+    }
+    for (int i = 0; i < npoint; i++) {
+        if (zOut[i] == AST__BAD || !std::isfinite(zOut[i])) {
+            return fail();
+        }
+    }
+
+    cleanup();
+    if (!astOK) {
         astClearStatus;
         return 1;
     }

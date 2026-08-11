@@ -45,7 +45,9 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             spectralLabel: `Frequency (${spectralUnit})`,
             spectralAxis: {type: {code: spectralType, unit: spectralUnit}},
             convertSettingWCSToFreqMHz: jest.fn((value: number): number | undefined => value),
-            convertFreqMHzToSettingWCS: jest.fn((value: number): number | undefined => value)
+            convertFreqMHzToSettingWCS: jest.fn((value: number): number | undefined => value),
+            convertSettingWCSToFreqMHzArray: jest.fn((values: number[]): number[] | undefined => values),
+            convertFreqMHzToSettingWCSArray: jest.fn((values: number[]): number[] | undefined => values)
         };
         const appStore = {
             activeFrame: frame,
@@ -142,6 +144,32 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(frame.convertSettingWCSToFreqMHz).toHaveBeenNthCalledWith(2, 25, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
         expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(1, 60, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
         expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(2, 30, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+    });
+
+    test("batches air-wavelength profile conversion without scalar AST calls", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        frame.convertSettingWCSToFreqMHzArray.mockImplementation((values: number[]) => values.map(value => 300 / value));
+        frame.convertFreqMHzToSettingWCSArray.mockImplementation((values: number[]) => values.map(value => 300 / value));
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0][0]).toEqual({x: 50, y: 4});
+        expect(widgetStore.plotData?.data[0][1].x).toBeCloseTo(55);
+        expect(widgetStore.plotData?.data[0][1].y).toBe(8);
+        expect(frame.convertSettingWCSToFreqMHzArray).toHaveBeenCalledWith([100, 110], SpectralType.AWAV, SpectralUnit.NM);
+        expect(frame.convertFreqMHzToSettingWCSArray).toHaveBeenCalledWith([6, 60 / 11], SpectralType.AWAV, SpectralUnit.NM);
+        expect(frame.convertSettingWCSToFreqMHz).not.toHaveBeenCalled();
+        expect(frame.convertFreqMHzToSettingWCS).not.toHaveBeenCalled();
+    });
+
+    test("fails an air-wavelength profile conversion closed when a batched AST step fails", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        frame.convertSettingWCSToFreqMHzArray.mockReturnValue(undefined);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0].map(point => point.x)).toEqual([NaN, NaN]);
+        expect(frame.convertFreqMHzToSettingWCSArray).not.toHaveBeenCalled();
     });
 
     test("does not approximate air wavelength when the AST conversion fails", () => {
