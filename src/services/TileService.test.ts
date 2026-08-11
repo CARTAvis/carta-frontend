@@ -131,7 +131,7 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 7, 0, {tiles: []}, true);
     });
 
-    test("does not request channels whose tiles are already cached", () => {
+    test("requests the active channel histogram when all tiles are cached", () => {
         const service = CreateService();
         service.clearQueueForChannelMap = jest.fn();
         service.getRequiredRequestTiles = jest.fn(() => []);
@@ -139,7 +139,22 @@ describe("TileService channel map request queue", () => {
 
         service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
 
-        expect(service.backendService.setChannels).not.toHaveBeenCalled();
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
+        expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 0, {}, true);
+    });
+
+    test("queues the active channel histogram when its tile request is already in flight", () => {
+        const service = CreateService();
+        service.clearQueueForChannelMap = jest.fn();
+        service.getRequiredRequestTiles = jest.fn(() => []);
+        const frame = {frameInfo: {fileId: 1}, stokes: 0, channel: 1};
+        service.queueChannelMapRequests(1, [MakeRequest(1, [4])]);
+
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2});
+        service.handleChannelMapFlowControl(1, Complete(1));
+
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 1, 0, {}, true);
     });
 
     test("requests only uncached channels and restores the selected channel", () => {
@@ -330,7 +345,7 @@ describe("TileService channel map request queue", () => {
         jest.advanceTimersByTime(300_000);
         await Promise.resolve();
 
-        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than expected"), "warning-sign");
+        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than"), "warning-sign");
         expect(service.activeChannelMapRequests.has(1)).toBe(true);
         expect(service.channelMapRequestQueues.has(1)).toBe(true);
         expect(service.channelMapRequestTimeouts.has(1)).toBe(true);

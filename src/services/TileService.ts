@@ -398,13 +398,16 @@ export class TileService {
             requests.unshift(requests.splice(activeChannelIndex, 1)[0]);
         }
 
-        const isActiveRequestStokesTransition = activeRequest?.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
-        if (this.confirmedChannelMapStokes.get(fileId) !== this.desiredChannelMapStokes.get(fileId) && !isActiveRequestStokesTransition) {
-            requests.unshift(activeChannelRequest);
-        } else if (requests.length) {
+        const isStokesTransitionPending = activeRequest?.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
+        const isStokesTransitionRequired = this.confirmedChannelMapStokes.get(fileId) !== this.desiredChannelMapStokes.get(fileId) && !isStokesTransitionPending;
+        if (requests.length || isStokesTransitionRequired) {
             requests.unshift(activeChannelRequest);
         }
-        if (requests.some(request => request.channel !== frame.channel) || (activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes))) {
+
+        const isActiveChannelRequestPending = activeRequest?.channel === frame.channel && activeRequest.stokes === stokes && !activeRequest.requiredTiles.tiles?.length;
+        const hasDifferentActiveRequest = !!activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes);
+        const shouldAppendActiveChannel = requests.some(request => request.channel !== frame.channel) || hasDifferentActiveRequest || (!requests.length && !isActiveChannelRequestPending);
+        if (shouldAppendActiveChannel) {
             requests.push(activeChannelRequest);
         }
         this.queueChannelMapRequests(fileId, requests);

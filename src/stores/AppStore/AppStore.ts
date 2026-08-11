@@ -2260,7 +2260,8 @@ export class AppStore {
         }
         const frame = this.getFrame(regionHistogramData.fileId);
         const isCubeHistogram = regionHistogramData.regionId === RegionIdType.CUBE;
-        if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && (!frame || frame.channel !== regionHistogramData.channel || frame.stokes !== regionHistogramData.stokes)) {
+        const isCurrentChannel = frame?.channel === regionHistogramData.channel && frame.stokes === regionHistogramData.stokes;
+        if (this.channelMapStore.isChannelMapEnabled && !isCubeHistogram && !isCurrentChannel) {
             return;
         }
 
@@ -2296,7 +2297,6 @@ export class AppStore {
             }
         }
 
-        const isCurrentChannel = frame?.channel === regionHistogramData.channel && frame.stokes === regionHistogramData.stokes;
         if (regionHistogramData.regionId === RegionIdType.IMAGE && ((this.channelMapStore.isChannelMapEnabled && regionHistogramData.stokes === this.activeFrame?.stokes) || (!this.channelMapStore.isChannelMapEnabled && isCurrentChannel))) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
@@ -2333,14 +2333,15 @@ export class AppStore {
                 frame.stokes = tileStreamStokes;
             }
         } else if (!this.channelMapStore.isChannelMapEnabled && frame && isRequiredTileStream) {
-            frame.channel = tileStreamDetails.channel ?? frame.channel;
-            frame.stokes = tileStreamDetails.stokes ?? frame.stokes;
+            frame.channel = frame.requiredChannel;
+            frame.stokes = frame.requiredStokes;
         }
 
         const fileId = tileStreamDetails.fileId ?? -1;
         const stokes = tileStreamDetails.stokes ?? 0;
         const channel = tileStreamDetails.channel ?? 0;
-        if (this.channelMapStore.isChannelMapEnabled || this.animatorStore.isServerAnimationActive || isRequiredTileStream) {
+        const shouldUpdateHistogram = this.channelMapStore.isChannelMapEnabled || this.animatorStore.isServerAnimationActive || isRequiredTileStream;
+        if (shouldUpdateHistogram) {
             this.updateHistogram(fileId, stokes, channel);
         } else {
             this.pendingChannelHistograms.delete(`${fileId}_${stokes}_${channel}`);
@@ -2351,23 +2352,21 @@ export class AppStore {
         // Apply pending channel histogram
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
-        if (pendingHistogram?.histograms) {
-            const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
-            const channelHist = pendingHistogram.histograms;
-            if (updatedFrame && channelHist) {
-                if (this.channelMapStore.isChannelMapEnabled && (updatedFrame.channel !== channel || updatedFrame.stokes !== stokes)) {
-                    this.pendingChannelHistograms.delete(key);
-                    return;
-                }
-                const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
-                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
-                updatedFrame.renderConfig.setStokesIndex(stokesIndex);
-                updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
-                updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-            }
-
-            this.pendingChannelHistograms.delete(key);
+        if (!pendingHistogram?.histograms) {
+            return;
         }
+
+        this.pendingChannelHistograms.delete(key);
+        const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
+        if (!updatedFrame || (this.channelMapStore.isChannelMapEnabled && (updatedFrame.channel !== channel || updatedFrame.stokes !== stokes))) {
+            return;
+        }
+
+        const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
+        const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
+        updatedFrame.renderConfig.setStokesIndex(stokesIndex);
+        updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
+        updatedFrame.renderConfig.updateChannelHistogram(pendingHistogram.histograms);
     };
 
     @action handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
