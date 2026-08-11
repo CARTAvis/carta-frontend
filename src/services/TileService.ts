@@ -3,6 +3,7 @@ import {LRUCache} from "mnemonist";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
+import {AppToaster, SuccessToast} from "components/Shared";
 import {type Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, type FrameStore, PREVIEW_PV_FILEID} from "stores";
@@ -39,7 +40,8 @@ const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
 const MAX_TILE_WORKERS = 8;
 const MIN_TILE_WORKERS = 1;
 const MAX_TILE_WORKERS_PER_CORE = 0.75;
-const CHANNEL_MAP_REQUEST_TIMEOUT = 300_000; // ms
+const CHANNEL_MAP_REQUEST_TIMEOUT = 180_000; // ms
+const CHANNEL_MAP_PROGRESS_INTERVAL = 30_000; // ms
 
 interface TileMessageArgs {
     width: number | null | undefined;
@@ -112,6 +114,7 @@ export class TileService {
     private readonly channelMapRequestQueues: Map<number, ChannelMapRequest[]>;
     private readonly activeChannelMapRequests: Map<number, ActiveChannelMapRequest>;
     private readonly channelMapRequestTimeouts: Map<number, ReturnType<typeof setTimeout>>;
+    private readonly channelMapRequestProgressIntervals: Map<number, ReturnType<typeof setInterval>>;
     private readonly channelMapGenerations: Map<number, number>;
     private readonly syncIdGenerationMap: Map<number, number>;
     // Invariant: tile-bearing requests wait until an empty-tile request makes the backend-confirmed Stokes match the desired Stokes.
@@ -192,6 +195,7 @@ export class TileService {
         this.channelMapRequestQueues = new Map<number, ChannelMapRequest[]>();
         this.activeChannelMapRequests = new Map<number, ActiveChannelMapRequest>();
         this.channelMapRequestTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+        this.channelMapRequestProgressIntervals = new Map<number, ReturnType<typeof setInterval>>();
         this.channelMapGenerations = new Map<number, number>();
         this.syncIdGenerationMap = new Map<number, number>();
         this.desiredChannelMapStokes = new Map<number, number>();
@@ -464,6 +468,7 @@ export class TileService {
         if (requestId !== null) {
             this.activeChannelMapRequests.set(fileId, {...request, requestId});
             this.startChannelMapRequestTimeout(fileId, requestId);
+            this.startChannelMapRequestProgress(fileId, requestId);
         } else {
             const key = getTileRequestKey(request.fileId, request.stokes, request.channel);
             tiles.forEach(tile => this.pendingRequests.get(key)?.delete(tile));
@@ -486,7 +491,7 @@ export class TileService {
             return;
         }
 
-        this.clearChannelMapRequestTimeout(fileId);
+        this.clearChannelMapRequestTimers(fileId);
         this.activeChannelMapRequests.delete(fileId);
         if (message.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
             this.clearRequestQueue(fileId);
@@ -501,11 +506,39 @@ export class TileService {
     }
 
     private startChannelMapRequestTimeout(fileId: number, requestId: number) {
-        this.clearChannelMapRequestTimeout(fileId);
+        const existingTimeout = this.channelMapRequestTimeouts.get(fileId);
+        if (existingTimeout !== undefined) {
+            clearTimeout(existingTimeout);
+        }
         const timeout = setTimeout(() => {
             void this.handleChannelMapRequestTimeout(fileId, requestId);
         }, CHANNEL_MAP_REQUEST_TIMEOUT);
         this.channelMapRequestTimeouts.set(fileId, timeout);
+    }
+
+    private startChannelMapRequestProgress(fileId: number, requestId: number) {
+        const existingInterval = this.channelMapRequestProgressIntervals.get(fileId);
+        if (existingInterval !== undefined) {
+            clearInterval(existingInterval);
+            this.channelMapRequestProgressIntervals.delete(fileId);
+        }
+        const activeRequest = this.activeChannelMapRequests.get(fileId);
+        const totalTiles = activeRequest?.requiredTiles.tiles?.length ?? 0;
+        if (!totalTiles) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            const currentRequest = this.activeChannelMapRequests.get(fileId);
+            if (!currentRequest || currentRequest.requestId !== requestId) {
+                return;
+            }
+            const key = getTileRequestKey(fileId, currentRequest.stokes, currentRequest.channel);
+            const remainingTiles = this.pendingRequests.get(key)?.size ?? totalTiles;
+            const receivedTiles = totalTiles - remainingTiles;
+            AppToaster.show(SuccessToast("download", `Loading channel ${currentRequest.channel}: received ${receivedTiles} / ${totalTiles} requested tiles.`, 5_000));
+        }, CHANNEL_MAP_PROGRESS_INTERVAL);
+        this.channelMapRequestProgressIntervals.set(fileId, interval);
     }
 
     private async handleChannelMapRequestTimeout(fileId: number, requestId: number) {
@@ -528,23 +561,29 @@ export class TileService {
             return;
         }
 
+        this.clearChannelMapRequestTimers(fileId);
         this.activeChannelMapRequests.delete(fileId);
         this.clearRequestQueue(fileId);
         this.channelMapRequestQueues.delete(fileId);
     }
 
-    private clearChannelMapRequestTimeout(fileId: number) {
+    private clearChannelMapRequestTimers(fileId: number) {
         const timeout = this.channelMapRequestTimeouts.get(fileId);
         if (timeout !== undefined) {
             clearTimeout(timeout);
             this.channelMapRequestTimeouts.delete(fileId);
+        }
+        const progressInterval = this.channelMapRequestProgressIntervals.get(fileId);
+        if (progressInterval !== undefined) {
+            clearInterval(progressInterval);
+            this.channelMapRequestProgressIntervals.delete(fileId);
         }
     }
 
     cancelChannelMapRequests(fileId?: number) {
         const fileIds = fileId === undefined ? new Set([...this.channelMapRequestQueues.keys(), ...this.activeChannelMapRequests.keys(), ...this.desiredChannelMapStokes.keys(), ...this.confirmedChannelMapStokes.keys()]) : [fileId];
         fileIds.forEach(id => {
-            this.clearChannelMapRequestTimeout(id);
+            this.clearChannelMapRequestTimers(id);
             this.clearRequestQueue(id);
             this.clearChannelMapSynchronization(id);
         });
@@ -552,12 +591,14 @@ export class TileService {
             this.channelMapRequestQueues.clear();
             this.activeChannelMapRequests.clear();
             this.channelMapRequestTimeouts.clear();
+            this.channelMapRequestProgressIntervals.clear();
             this.desiredChannelMapStokes.clear();
             this.confirmedChannelMapStokes.clear();
         } else {
             this.channelMapRequestQueues.delete(fileId);
             this.activeChannelMapRequests.delete(fileId);
             this.channelMapRequestTimeouts.delete(fileId);
+            this.channelMapRequestProgressIntervals.delete(fileId);
             this.desiredChannelMapStokes.delete(fileId);
             this.confirmedChannelMapStokes.delete(fileId);
         }
@@ -591,9 +632,11 @@ export class TileService {
 
     resetForSessionResume() {
         this.channelMapRequestTimeouts.forEach(timeout => clearTimeout(timeout));
+        this.channelMapRequestProgressIntervals.forEach(interval => clearInterval(interval));
         this.channelMapRequestQueues.clear();
         this.activeChannelMapRequests.clear();
         this.channelMapRequestTimeouts.clear();
+        this.channelMapRequestProgressIntervals.clear();
         this.desiredChannelMapStokes.clear();
         this.confirmedChannelMapStokes.clear();
         this.pendingRequests.clear();

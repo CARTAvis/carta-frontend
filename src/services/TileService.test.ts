@@ -1,4 +1,5 @@
 jest.mock("models", () => ({TileCoordinate: {}}));
+jest.mock("components/Shared", () => ({AppToaster: {show: jest.fn()}, SuccessToast: jest.fn((_icon, message) => ({message}))}));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
 jest.mock("stores", () => ({AppStore: {Instance: {alertStore: {showInteractiveAlert: jest.fn()}}}, PREVIEW_PV_FILEID: -1}));
 jest.mock("utilities", () => ({clamp: jest.fn(), copyToFP32Texture: jest.fn(), createFP32Texture: jest.fn(), GL2: {}}));
@@ -6,6 +7,7 @@ jest.mock("!worker-loader!zfp_wrapper", () => jest.fn());
 
 import {CARTA} from "carta-protobuf";
 
+import {AppToaster, SuccessToast} from "components/Shared";
 import {AppStore} from "stores";
 
 import {TileService} from "./TileService";
@@ -16,6 +18,7 @@ type TestTileService = {
     cachedTiles: {has: jest.Mock};
     channelMapGenerations: Map<number, number>;
     channelMapRequestQueues: Map<number, unknown[]>;
+    channelMapRequestProgressIntervals: Map<number, ReturnType<typeof setInterval>>;
     channelMapRequestTimeouts: Map<number, ReturnType<typeof setTimeout>>;
     channelMap: Map<number, {channel: number; stokes: number}>;
     clearCompressedCache: jest.Mock;
@@ -53,6 +56,7 @@ const CreateService = () => {
     let requestId = 0;
     service.backendService = {addRequiredTiles: jest.fn(), animationId: 0, setChannels: jest.fn(() => ++requestId)};
     service.channelMapRequestQueues = new Map();
+    service.channelMapRequestProgressIntervals = new Map();
     service.activeChannelMapRequests = new Map();
     service.channelMapRequestTimeouts = new Map();
     service.channelMapGenerations = new Map();
@@ -89,11 +93,15 @@ const Complete = (channel: number) => ({
 });
 
 const MockShowInteractiveAlert = AppStore.Instance.alertStore.showInteractiveAlert as jest.Mock;
+const MockShowToast = AppToaster.show as jest.Mock;
+const MockSuccessToast = SuccessToast as jest.Mock;
 
 describe("TileService channel map request queue", () => {
     beforeEach(() => {
         jest.useFakeTimers();
         MockShowInteractiveAlert.mockReset();
+        MockShowToast.mockReset();
+        MockSuccessToast.mockClear();
     });
 
     afterEach(() => {
@@ -337,12 +345,29 @@ describe("TileService channel map request queue", () => {
         expect(service.channelMapGenerations.get(1)).toBe(4);
     });
 
+    test("reports received channel-map tiles every 30 seconds", () => {
+        const service = CreateService();
+        service.queueChannelMapRequests(1, [MakeRequest(1, [4, 5])]);
+
+        jest.advanceTimersByTime(30_000);
+        expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 0 / 2 requested tiles.", 10_000);
+
+        service.pendingRequests.get("1_0_1")?.delete(4);
+        jest.advanceTimersByTime(30_000);
+        expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 1 / 2 requested tiles.", 10_000);
+        expect(MockShowToast).toHaveBeenCalledTimes(2);
+
+        service.handleChannelMapFlowControl(1, Complete(1));
+        jest.advanceTimersByTime(30_000);
+        expect(MockShowToast).toHaveBeenCalledTimes(2);
+    });
+
     test("restarts the timeout when the user chooses to keep waiting", async () => {
         const service = CreateService();
         MockShowInteractiveAlert.mockResolvedValue(true);
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
-        jest.advanceTimersByTime(300_000);
+        jest.advanceTimersByTime(180_000);
         await Promise.resolve();
 
         expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than"), "warning-sign");
@@ -356,7 +381,7 @@ describe("TileService channel map request queue", () => {
         MockShowInteractiveAlert.mockResolvedValue(false);
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
-        jest.advanceTimersByTime(300_000);
+        jest.advanceTimersByTime(180_000);
         await Promise.resolve();
 
         expect(service.activeChannelMapRequests.has(1)).toBe(false);
@@ -370,7 +395,7 @@ describe("TileService channel map request queue", () => {
         MockShowInteractiveAlert.mockReturnValue(new Promise(resolve => (resolveDecision = resolve)));
         service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2)]);
 
-        jest.advanceTimersByTime(300_000);
+        jest.advanceTimersByTime(180_000);
         service.handleChannelMapFlowControl(1, Complete(1));
         resolveDecision!(false);
         await Promise.resolve();
