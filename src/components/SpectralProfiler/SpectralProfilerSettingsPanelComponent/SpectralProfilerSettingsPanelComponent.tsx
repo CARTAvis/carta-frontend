@@ -197,8 +197,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         const isCoordinateSettingDisabled = widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel;
-        const isRedshiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameEnabled || !widgetStore.isRestFrameSupported;
-        const isJacobianInputDisabled = !widgetStore.isRestFrameActive || !widgetStore.isRestFrameJacobianSupported;
+        const isXAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isXAxisRestFrameSupported;
+        const isYAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isYAxisRestFrameSupported;
+        const isRedshiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRedshiftCorrectionActive;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -230,40 +231,25 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     <FormGroup inline={true} label={"Secondary info"}>
                                         <Switch checked={widgetStore.isSecondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                     </FormGroup>
-                                    <FormGroup
-                                        inline={true}
-                                        label={"Reference frame"}
-                                        className="rest-frame-section"
-                                        contentClassName="reference-frame-form-content"
-                                        helperText={
-                                            !widgetStore.isRestFrameSupported ? (
-                                                "Rest frame is only available for frequency and wavelength coordinates."
-                                            ) : (
-                                                <React.Fragment>
-                                                    Spectral x-coordinate is transformed to rest frame.
-                                                    <br />
-                                                    Intensity is adjusted only if Fν Jacobian is enabled.
-                                                </React.Fragment>
-                                            )
-                                        }
-                                    >
-                                        <HTMLSelect
-                                            disabled={isCoordinateSettingDisabled}
-                                            value={widgetStore.isRestFrameActive ? "rest" : "observed"}
-                                            options={[
-                                                {value: "observed", label: "Observed"},
-                                                {value: "rest", label: "Rest frame", disabled: !widgetStore.isRestFrameSupported}
-                                            ]}
-                                            onChange={event => widgetStore.setRestFrameEnabled(event.currentTarget.value === "rest")}
-                                            data-testid="spectral-profiler-reference-frame-dropdown"
-                                        />
+                                    <FormGroup inline={true} label={"Redshift corrections"} className="rest-frame-section" contentClassName="reference-frame-form-content">
+                                        <div className="redshift-correction-switches">
+                                            <Switch
+                                                checked={widgetStore.isXAxisRestFrameActive}
+                                                disabled={isXAxisRestFrameInputDisabled}
+                                                label="X-axis: Rest-frame spectral coordinate"
+                                                onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
+                                                data-testid="spectral-profiler-x-axis-rest-frame-switch"
+                                            />
+                                            <Switch
+                                                checked={widgetStore.isYAxisRestFrameActive}
+                                                disabled={isYAxisRestFrameInputDisabled}
+                                                label="Y-axis: Rest-frame flux density (Fν)"
+                                                onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
+                                                data-testid="spectral-profiler-y-axis-rest-frame-switch"
+                                            />
+                                        </div>
                                     </FormGroup>
-                                    <FormGroup
-                                        inline={true}
-                                        label={"Redshift (z)"}
-                                        contentClassName="reference-frame-form-content"
-                                        helperText={isRedshiftInputDisabled ? "Only active when Reference frame is set to Rest frame." : "Redshift used to convert observed to rest-frame coordinates."}
-                                    >
+                                    <FormGroup inline={true} label={"Redshift (z)"} contentClassName="reference-frame-form-content">
                                         <SafeNumericInput
                                             disabled={isRedshiftInputDisabled}
                                             value={widgetStore.restFrameRedshift}
@@ -272,21 +258,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             className="redshift-input"
                                             onValueChange={widgetStore.setRestFrameRedshift}
                                             data-testid="spectral-profiler-redshift-input"
-                                        />
-                                    </FormGroup>
-                                    <FormGroup
-                                        inline={true}
-                                        label={"Fν Jacobian"}
-                                        contentClassName="reference-frame-form-content"
-                                        helperText={
-                                            !widgetStore.isRestFrameActive ? "Only active in rest frame." : widgetStore.isRestFrameJacobianSupported ? "Fν,rest = Fν,observed / (1 + z)" : "Only available for Jy-based flux-density profiles."
-                                        }
-                                    >
-                                        <Switch
-                                            checked={widgetStore.isRestFrameJacobianActive}
-                                            disabled={isJacobianInputDisabled}
-                                            onChange={event => widgetStore.setRestFrameJacobianEnabled(event.currentTarget.checked)}
-                                            data-testid="spectral-profiler-rest-frame-jacobian-switch"
                                         />
                                     </FormGroup>
                                 </React.Fragment>

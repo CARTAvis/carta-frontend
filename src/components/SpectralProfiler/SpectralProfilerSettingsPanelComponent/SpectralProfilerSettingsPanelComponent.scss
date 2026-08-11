@@ -33,6 +33,16 @@
             }
         }
 
+        .redshift-correction-switches {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35em;
+
+            .#{$ns}-switch {
+                margin-bottom: 0;
+            }
+        }
+
         .redshift-input {
             .#{$ns}-input-group input {
                 width: 10em;

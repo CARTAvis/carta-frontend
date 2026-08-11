@@ -82,7 +82,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("converts frequency coordinates in both directions without changing the redshift-zero identity", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.convertObservedXToDisplay(100)).toBe(200);
         expect(widgetStore.convertDisplayXToObserved(200)).toBe(100);
@@ -95,7 +95,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("converts wavelength coordinates with the inverse frequency factor", () => {
         const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.convertObservedXToDisplay(1000)).toBe(500);
         expect(widgetStore.convertDisplayXToObserved(500)).toBe(1000);
@@ -104,7 +104,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test.each([SpectralUnit.M_SQUARE, SpectralUnit.MM_SQUARE, SpectralUnit.UM_SQUARE, SpectralUnit.NM_SQUARE, SpectralUnit.ANGSTROM_SQUARE])("converts squared wavelength coordinates in %s with the squared redshift factor", spectralUnit => {
         const {widgetStore} = createWidgetStore(SpectralType.WAVE, spectralUnit);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.convertObservedXToDisplay(1000)).toBe(250);
         expect(widgetStore.convertDisplayXToObserved(250)).toBe(1000);
@@ -119,7 +119,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / value);
         frame.convertFreqMHzToSettingWCS.mockImplementation((value: number) => 300 / value);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.convertObservedXToDisplay(10)).toBe(5);
         expect(widgetStore.convertDisplayXToObserved(5)).toBe(10);
@@ -132,7 +132,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / Math.sqrt(value));
         frame.convertFreqMHzToSettingWCS.mockImplementation((value: number) => Math.pow(300 / value, 2));
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
         frame.convertSettingWCSToFreqMHz.mockClear();
         frame.convertFreqMHzToSettingWCS.mockClear();
 
@@ -147,7 +147,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("does not approximate air wavelength when the AST conversion fails", () => {
         const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         frame.convertSettingWCSToFreqMHz.mockReturnValue(undefined);
         expect(widgetStore.convertObservedXToDisplay(10)).toBeNaN();
@@ -162,7 +162,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("keeps moment ranges native while exposing rest-frame display values", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
         widgetStore.setSelectedChannelRange(100, 110);
 
         expect(widgetStore.displayChannelValueRange).toEqual([200, 220]);
@@ -175,7 +175,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("transforms plot and fitting x coordinates without rescaling intensity values", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.plotData?.data[0]).toEqual([
             {x: 200, y: 4},
@@ -188,8 +188,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("applies the optional F_nu Jacobian consistently to plot data, statistics, fitting, labels, and export metadata", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
         expect(widgetStore.plotData?.data[0]).toEqual([
             {x: 200, y: 2},
@@ -200,14 +200,26 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([2, 4]);
         expect(widgetStore.yUnitLabel).toBe("Jy/beam, rest-frame density");
         expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam, rest-frame density)");
-        expect(widgetStore.restFrameExportComments).toEqual(["spectral reference frame: rest", "redshift: 1", "spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: rest", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+    });
+
+    test("allows the Y-axis rest-frame density mode without enabling the X-axis mode", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameActive).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
+        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: observed", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
     });
 
     test("labels fitting results and logs as rest-frame density when the Jacobian is active", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
         (GSL.fitting as jest.Mock).mockReturnValueOnce({
             yIntercept: 0,
             yInterceptError: 0,
@@ -231,8 +243,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("applies the F_nu Jacobian after converting the selected intensity unit", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "mJy/beam", "Jy/beam");
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
         expect(widgetStore.plotData?.data[0][0].y).toBeCloseTo(0.002);
         expect(widgetStore.plotData?.data[0][1].y).toBeCloseTo(0.004);
@@ -241,8 +253,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("uses the F_nu Jacobian even when the displayed spectral coordinate is wavelength", () => {
         const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
         expect(widgetStore.plotData?.data[0]).toEqual([
             {x: 50, y: 2},
@@ -253,21 +265,21 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test.each(["K", "mK"])("does not enable the F_nu Jacobian for %s intensity", intensityUnit => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
-        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
     });
 
     test.each(["Jy", "mJy", "uJy", "MJy"])("supports the F_nu Jacobian for bare %s flux-density units", intensityUnit => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isRestFrameJacobianActive).toBe(true);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
     });
 
@@ -275,34 +287,34 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.profileSelectionStore.selectStatSingleMode(CARTA.StatsType.SumSq);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
-        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
     });
 
     test("does not enable the F_nu Jacobian for fractional-polarization profiles", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "Jy/beam", "Jy/beam", Polarizations.PFtotal);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isRestFrameJacobianSupported).toBe(false);
-        expect(widgetStore.isRestFrameJacobianActive).toBe(false);
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
     });
 
     test("converts display mask values back to observed values and resets only affected display state", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
         widgetStore.setXBounds(90, 120);
         widgetStore.setYBounds(1, 9);
         widgetStore.fittingStore.setHasResult(true);
 
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
         widgetStore.setSelectedDisplayMaskRange(2, 4);
 
         expect(widgetStore.maskRange).toEqual([4, 8]);
@@ -326,8 +338,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("renders native mask ranges in Jacobian-scaled display coordinates", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
-        widgetStore.setRestFrameJacobianEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
         widgetStore.setSelectedDisplayMaskRange(2, 4);
         widgetStore.setMomentRangeSelectingMode(MomentSelectingMode.MASK);
 
@@ -338,7 +350,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("falls back to the native spectral coordinate for secondary rest-frame values", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, null, null);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.effectiveSecondarySpectralType).toBe(SpectralType.FREQ);
         expect(widgetStore.effectiveSecondarySpectralUnit).toBe(SpectralUnit.GHZ);
@@ -349,7 +361,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("keeps unsupported secondary coordinates observed and labels them explicitly", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.VRAD, SpectralUnit.KMS);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
         expect(widgetStore.plotData?.secondaryXData[0]).toEqual([10, 11]);
         expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (observed)");
@@ -358,21 +370,21 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     test("does not enable rest-frame conversion for velocity coordinates", () => {
         const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
         widgetStore.setRestFrameRedshift(1);
-        widgetStore.setRestFrameEnabled(true);
+        widgetStore.setXAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isRestFrameSupported).toBe(false);
-        expect(widgetStore.isRestFrameEnabled).toBe(false);
+        expect(widgetStore.isXAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(false);
         expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
     });
 
-    test("rejects invalid redshifts and persists valid rest-frame settings", () => {
+    test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameEnabled: true, restFrameRedshift: 0.25, restFrameJacobianEnabled: true}));
+        runInAction(() => widgetStore.init({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
-        expect(widgetStore.isRestFrameEnabled).toBe(true);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
-        expect(widgetStore.isRestFrameJacobianActive).toBe(true);
-        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameEnabled: true, restFrameRedshift: 0.25, restFrameJacobianEnabled: true}));
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
         widgetStore.setRestFrameRedshift(-1);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
