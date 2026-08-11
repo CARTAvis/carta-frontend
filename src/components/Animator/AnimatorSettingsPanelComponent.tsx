@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, H3, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Icon, InputGroup, Intent, MenuItem, Tab, Tabs} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
@@ -254,16 +254,9 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             onKeyDown: this.handleIanaTimeZoneKeyDown,
             "data-testid": "animator-iana-time-zone"
         };
-        const timeFormatSectionTitleId = `${this.props.id}-time-format-section-title`;
-        const timeScaleSectionTitleId = `${this.props.id}-time-scale-section-title`;
-        const precisionSectionTitleId = `${this.props.id}-precision-section-title`;
-
         const timeSeriesContent = (
-            <div className="animator-time-series-settings">
-                <section className="animator-settings-section" aria-labelledby={timeFormatSectionTitleId} data-testid="animator-time-format-section">
-                    <H3 id={timeFormatSectionTitleId} className="animator-settings-section-title">
-                        Time format
-                    </H3>
+            <div>
+                <section data-testid="animator-time-format-section">
                     <FormGroup inline={true} label="Format">
                         <HTMLSelect
                             options={TIME_LABEL_FORMAT_OPTIONS}
@@ -274,11 +267,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                     </FormGroup>
                 </section>
 
-                <section className="animator-settings-section" aria-labelledby={timeScaleSectionTitleId} data-testid="animator-time-scale-section">
-                    <H3 id={timeScaleSectionTitleId} className="animator-settings-section-title">
-                        Time scale
-                    </H3>
-
+                <section data-testid="animator-time-scale-section">
                     {widgetStore.timeLabelFormat === TimeLabelFormat.AUTO && (
                         <FormGroup inline={true} label="Scale">
                             <InputGroup value="UTC" disabled={true} data-testid="animator-compact-time-scale" />
@@ -388,11 +377,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                     )}
                 </section>
 
-                <section className="animator-settings-section" aria-labelledby={precisionSectionTitleId} data-testid="animator-precision-section">
-                    <H3 id={precisionSectionTitleId} className="animator-settings-section-title">
-                        Precision
-                    </H3>
-
+                <section data-testid="animator-precision-section">
                     {widgetStore.timeLabelFormat === TimeLabelFormat.AUTO && (
                         <FormGroup inline={true} label="Precision">
                             <InputGroup value="Automatic" disabled={true} data-testid="animator-compact-precision" />
