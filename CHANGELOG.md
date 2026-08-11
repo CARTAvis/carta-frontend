@@ -8,9 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added Astropy-style sinh and asinh image scaling options with hover previews in the scaling dropdown ([#1992](https://github.com/CARTAvis/carta-frontend/issues/1992)).
-### Added
-* Added a virtual time-series axis for spatially matched images, ordered by observation time based on DATE-OBS/MJD-OBS and TIMESYS, along with a Time slider in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
-* Added a "Sort images by time" action to the Image List context menu ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
+* Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 ### Fixed
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).
