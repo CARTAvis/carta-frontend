@@ -21,7 +21,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         makeObservable(this);
     }
 
-    @action private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+    @action private handleInput = (ev: React.ChangeEvent<HTMLInputElement>) => {
         SnippetStore.Instance.activeSnippetName = ev.currentTarget.value;
     };
 

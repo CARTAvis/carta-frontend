@@ -224,7 +224,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <HTMLSelect
                         options={Object.keys(LabelType).map(key => ({label: key, value: LabelType[key]}))}
                         value={global.labelType}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
+                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Coordinate system" disabled={!global.isValidWcs} helperText={disabledIfNoWcs}>
@@ -232,7 +232,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
                         value={global.system}
                         disabled={!global.isValidWcs}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
+                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
             </div>
@@ -424,7 +424,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                                 {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
                             ]}
                             value={numbers.formatX}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value as NumberFormatType)}
+                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value as NumberFormatType)}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Format" labelInfo="(Y)">
@@ -435,7 +435,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                                 {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
                             ]}
                             value={numbers.formatY}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value as NumberFormatType)}
+                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value as NumberFormatType)}
                         />
                     </FormGroup>
                 </Collapse>
@@ -701,7 +701,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             beam.isSelectedFrameValid && beamSettings ? (
                 <div className="panel-container">
                     <FormGroup inline={true} label="Image">
-                        <HTMLSelect options={appStore.frameNames} value={beam.selectedFileId} onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))} />
+                        <HTMLSelect options={appStore.frameNames} value={beam.selectedFileId} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))} />
                     </FormGroup>
                     <FormGroup inline={true} label="Visible">
                         <Switch checked={beamSettings.isVisible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
@@ -713,7 +713,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         <HTMLSelect
                             options={Object.keys(BeamType).map(key => ({label: key, value: BeamType[key]}))}
                             value={beamSettings.type}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
+                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Width" labelInfo="(px)">

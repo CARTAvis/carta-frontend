@@ -141,7 +141,15 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
         return (
             <React.Fragment>
-                <Stage className={"bias-contrast-stage"} ref={ref => (this.stageRef = ref)} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
+                <Stage
+                    className={"bias-contrast-stage"}
+                    ref={ref => {
+                        this.stageRef = ref;
+                    }}
+                    width={this.props.boardWidth}
+                    height={this.props.boardHeight}
+                    style={{paddingBottom: 10}}
+                >
                     <Layer>{twoDimensionBoard}</Layer>
                 </Stage>
                 <FormGroup label={"Bias"} inline={true}>
