@@ -1,6 +1,6 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun, type IReactionDisposer} from "mobx";
+import {FormGroup, HTMLSelect, Intent, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
@@ -20,6 +20,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     private floatingSettingsId: string | undefined;
     private cachedWidgetStore: SpectralProfileWidgetStore | null = null;
     private readonly disposers: IReactionDisposer[] = [];
+    @observable private redshiftIntent: Intent = Intent.NONE;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -54,6 +55,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         super(props);
         this.widgetId = props.id;
         this.floatingSettingsId = props.floatingSettingsId;
+        makeObservable(this);
 
         const appStore = AppStore.Instance;
         this.disposers.push(
@@ -81,6 +83,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
+    };
+
+    @action private onRedshiftChanged = (value: number) => {
+        const isValid = isFinite(value) && value > -1;
+        this.redshiftIntent = isValid ? Intent.NONE : Intent.DANGER;
+        if (isValid) {
+            this.widgetStore?.setRestFrameRedshift(value);
+        }
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -253,10 +263,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                         <SafeNumericInput
                                             disabled={isRedshiftInputDisabled}
                                             value={widgetStore.restFrameRedshift}
-                                            min={-1 + Number.EPSILON}
+                                            intent={isRedshiftInputDisabled ? Intent.NONE : this.redshiftIntent}
                                             buttonPosition="none"
                                             className="redshift-input"
-                                            onValueChange={widgetStore.setRestFrameRedshift}
+                                            onValueChange={this.onRedshiftChanged}
                                             data-testid="spectral-profiler-redshift-input"
                                         />
                                     </FormGroup>
