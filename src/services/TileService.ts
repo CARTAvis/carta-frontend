@@ -40,8 +40,9 @@ const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
 const MAX_TILE_WORKERS = 8;
 const MIN_TILE_WORKERS = 1;
 const MAX_TILE_WORKERS_PER_CORE = 0.75;
-const CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL = 30_000; // ms
-const CHANNEL_MAP_PROGRESS_INTERVAL = 30_000; // ms
+const CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL = 20_000; // ms
+const CHANNEL_MAP_PROGRESS_INTERVAL = 5_000; // ms
+const CHANNEL_MAP_PROGRESS_LASTING_TIME = 5_000; // ms
 
 interface TileMessageArgs {
     width: number | null | undefined;
@@ -543,7 +544,7 @@ export class TileService {
             const key = getTileRequestKey(fileId, currentRequest.stokes, currentRequest.channel);
             const remainingTiles = this.pendingRequests.get(key)?.size ?? totalTiles;
             const receivedTiles = totalTiles - remainingTiles;
-            AppToaster.show(SuccessToast("download", `Loading channel ${currentRequest.channel}: received ${receivedTiles} / ${totalTiles} requested tiles.`, 5_000));
+            AppToaster.show(SuccessToast("download", `Loading channel ${currentRequest.channel}: received ${receivedTiles} / ${totalTiles} requested tiles.`, CHANNEL_MAP_PROGRESS_LASTING_TIME));
         }, CHANNEL_MAP_PROGRESS_INTERVAL);
         this.channelMapRequestProgressIntervals.set(fileId, interval);
     }
