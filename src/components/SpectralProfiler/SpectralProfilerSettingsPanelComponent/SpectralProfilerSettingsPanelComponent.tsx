@@ -236,14 +236,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             <Switch
                                                 checked={widgetStore.isXAxisRestFrameActive}
                                                 disabled={isXAxisRestFrameInputDisabled}
-                                                label="X-axis: Rest-frame spectral coordinate"
+                                                label="X-axis"
                                                 onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
                                                 data-testid="spectral-profiler-x-axis-rest-frame-switch"
                                             />
                                             <Switch
                                                 checked={widgetStore.isYAxisRestFrameActive}
                                                 disabled={isYAxisRestFrameInputDisabled}
-                                                label="Y-axis: Rest-frame flux density (Fν)"
+                                                label="Y-axis"
                                                 onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
                                                 data-testid="spectral-profiler-y-axis-rest-frame-switch"
                                             />
