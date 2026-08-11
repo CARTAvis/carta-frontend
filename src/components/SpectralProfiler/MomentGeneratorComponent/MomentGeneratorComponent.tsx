@@ -44,7 +44,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedMaskRange(from, widgetStore.maskRange[1]);
+            widgetStore.setSelectedDisplayMaskRange(from, widgetStore.displayMaskRange[1]);
         }
     };
 
@@ -52,7 +52,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedMaskRange(widgetStore.maskRange[0], to);
+            widgetStore.setSelectedDisplayMaskRange(widgetStore.displayMaskRange[0], to);
         }
     };
 
@@ -218,13 +218,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.requiredUnit})`}>
+                    <FormGroup label="Range" inline={true} labelInfo={frame.requiredUnit ? `(${frame.requiredUnit}${widgetStore.isYAxisRestFrameActive ? " (rest frame)" : ""})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={widgetStore.maskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} data-testid="moment-generator-mask-range-from-input" />
+                                <SafeNumericInput value={widgetStore.displayMaskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} data-testid="moment-generator-mask-range-from-input" />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={widgetStore.maskRange[1]} buttonPosition="none" onValueChange={val => this.onMaskToChanged(val)} data-testid="moment-generator-mask-range-to-input" />
+                                <SafeNumericInput value={widgetStore.displayMaskRange[1]} buttonPosition="none" onValueChange={val => this.onMaskToChanged(val)} data-testid="moment-generator-mask-range-to-input" />
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>

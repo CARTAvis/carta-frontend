@@ -661,6 +661,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return [this.convertObservedXToDisplay(this.channelValueRange[0]), this.convertObservedXToDisplay(this.channelValueRange[1])];
     }
 
+    @computed get displayMaskRange(): NumberRange {
+        return [this.convertObservedYToDisplay(this.maskRange[0]), this.convertObservedYToDisplay(this.maskRange[1])];
+    }
+
     private getDisplayIntensityValues = (values: Float32Array | Float64Array | null | undefined, intensityConfig: IntensityConfig, intensityUnit: string | undefined): Float32Array | Float64Array | null | undefined => {
         if (!values) {
             return values;
@@ -820,7 +824,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 width: Math.abs(displayRange[0] - displayRange[1])
             };
         } else if (this.isSelectingMomentMaskRange) {
-            const displayRange: NumberRange = [this.convertObservedYToDisplay(this.maskRange[0]), this.convertObservedYToDisplay(this.maskRange[1])];
+            const displayRange = this.displayMaskRange;
             return {
                 isHorizontal: true,
                 center: (displayRange[0] + displayRange[1]) / 2,

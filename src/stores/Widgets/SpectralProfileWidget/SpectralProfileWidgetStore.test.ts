@@ -345,6 +345,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         widgetStore.setMomentRangeSelectingMode(MomentSelectingMode.MASK);
 
         expect(widgetStore.maskRange).toEqual([4, 8]);
+        expect(widgetStore.displayMaskRange).toEqual([2, 4]);
         expect(widgetStore.selectedRange).toEqual({isHorizontal: true, center: 3, width: 2});
     });
 
