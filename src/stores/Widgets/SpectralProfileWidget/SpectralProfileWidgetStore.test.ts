@@ -201,7 +201,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.xAxisLabel).toBe("Frequency (GHz) (rest frame)");
         expect(widgetStore.yUnitLabel).toBe("Jy/beam (rest frame)");
         expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam) (rest frame)");
-        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: rest", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral coordinate: rest frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "redshift (z): 1"]);
     });
 
     test("allows the Y-axis rest-frame density mode without enabling the X-axis mode", () => {
@@ -213,7 +213,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
-        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral reference frame: observed", "redshift: 1", "y-axis spectral-density Jacobian: F_nu,rest = F_nu,observed / (1 + z)"]);
+        expect(widgetStore.redshiftCorrectionExportComments).toEqual(["x-axis spectral coordinate: observed frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "redshift (z): 1"]);
     });
 
     test("labels fitting results and logs with the rest-frame suffix when the Y-axis mode is active", () => {

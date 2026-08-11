@@ -651,9 +651,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return [];
         }
         return [
-            `x-axis spectral reference frame: ${this.isXAxisRestFrameActive ? "rest" : "observed"}`,
-            `redshift: ${this.restFrameRedshift}`,
-            `y-axis spectral-density Jacobian: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`
+            `x-axis spectral coordinate: ${this.isXAxisRestFrameActive ? "rest frame" : "observed frame"}`,
+            `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
+            `redshift (z): ${this.restFrameRedshift}`
         ];
     }
 
