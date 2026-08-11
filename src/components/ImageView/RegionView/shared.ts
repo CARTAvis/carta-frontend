@@ -2,6 +2,16 @@ import {type FrameView, type Point2D, type Transform2D} from "models";
 import {type FrameStore} from "stores/Frame";
 import {rotate2D, scale2D} from "utilities";
 
+export function getPvZoomAxisForWheel(frame: FrameStore, isShiftKeyPressed: boolean, isAltKeyPressed: boolean): "x" | "y" | undefined {
+    if (!frame.isPVImage && !frame.isPreview) {
+        return undefined;
+    }
+    if (isShiftKeyPressed || isAltKeyPressed) {
+        return isShiftKeyPressed !== isAltKeyPressed ? (isShiftKeyPressed ? "y" : "x") : undefined;
+    }
+    return frame.pvZoomAxis === "both" ? undefined : frame.pvZoomAxis;
+}
+
 export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D | undefined = undefined): Point2D {
     let offset = {x: 0.0, y: 0.0};
     if (spatialTransform) {

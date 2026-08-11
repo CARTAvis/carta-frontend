@@ -3,7 +3,7 @@ jest.mock("utilities", () => ({
     scale2D: jest.fn()
 }));
 
-import {adjustPosToMutatedStage, adjustPosToUnityStage, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, adjustPosToUnityStage, getPvZoomAxisForWheel, transformedImageToCanvasPos} from "./shared";
 
 describe("region view stage coordinate helpers", () => {
     const stage = {
@@ -40,5 +40,22 @@ describe("region view stage coordinate helpers", () => {
         };
 
         expect(transformedImageToCanvasPos({x: 50, y: 25}, frame as any, 200, 100, nonUniformStage)).toEqual({x: 100, y: 37.5});
+    });
+
+    test("uses the toolbar PV axis for wheel zoom unless a modifier overrides it", () => {
+        const frame = {isPVImage: true, isPreview: false, pvZoomAxis: "x"} as any;
+
+        expect(getPvZoomAxisForWheel(frame, false, false)).toBe("x");
+        expect(getPvZoomAxisForWheel(frame, true, false)).toBe("y");
+        expect(getPvZoomAxisForWheel(frame, false, true)).toBe("x");
+        expect(getPvZoomAxisForWheel(frame, true, true)).toBeUndefined();
+
+        frame.pvZoomAxis = "both";
+        expect(getPvZoomAxisForWheel(frame, false, false)).toBeUndefined();
+
+        frame.isPVImage = false;
+        frame.isPreview = true;
+        frame.pvZoomAxis = "y";
+        expect(getPvZoomAxisForWheel(frame, false, false)).toBe("y");
     });
 });

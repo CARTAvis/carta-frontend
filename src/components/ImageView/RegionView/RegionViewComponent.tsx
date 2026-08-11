@@ -19,7 +19,7 @@ import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {isRegionInSelectionRect} from "./regionSelectionCanvasGeometry";
-import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, getPvZoomAxisForWheel, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
 import "./RegionViewComponent.scss";
@@ -635,10 +635,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             const scale = delta > 0 ? zoomSpeed : 1.0 / zoomSpeed;
-            if (frame.isPVImage && mouseEvent.shiftKey !== mouseEvent.altKey) {
-                const axis = mouseEvent.shiftKey ? "y" : "x";
+            const pvZoomAxis = getPvZoomAxisForWheel(frame, mouseEvent.shiftKey, mouseEvent.altKey);
+            if (pvZoomAxis) {
                 const zoomFrame = frame.spatialReference ?? frame;
-                frame.zoomToPointAxis(axis, cursorPosImageSpace, zoomFrame.effectiveZoomLevel[axis] * scale);
+                frame.zoomToPointAxis(pvZoomAxis, cursorPosImageSpace, zoomFrame.effectiveZoomLevel[pvZoomAxis] * scale);
                 return;
             }
 
