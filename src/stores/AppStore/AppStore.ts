@@ -2304,6 +2304,7 @@ export class AppStore {
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         const frame = this.getFrame(tileStreamDetails.fileId ?? -1);
+        const isRequiredTileStream = !!frame && tileStreamDetails.tileCount !== undefined && tileStreamDetails.channel === frame.requiredChannel && tileStreamDetails.stokes === frame.requiredStokes;
         if (this.animatorStore.isServerAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             // Get stokes from the backend tile stream message
             const stokes = tileStreamDetails.stokes ?? 0;
@@ -2331,12 +2332,19 @@ export class AppStore {
                 frame.channel = tileStreamChannel;
                 frame.stokes = tileStreamStokes;
             }
-        } else if (!this.channelMapStore.isChannelMapEnabled && frame && tileStreamDetails.tileCount !== undefined) {
+        } else if (!this.channelMapStore.isChannelMapEnabled && frame && isRequiredTileStream) {
             frame.channel = tileStreamDetails.channel ?? frame.channel;
             frame.stokes = tileStreamDetails.stokes ?? frame.stokes;
         }
 
-        this.updateHistogram(tileStreamDetails.fileId ?? -1, tileStreamDetails.stokes ?? 0, tileStreamDetails.channel ?? 0);
+        const fileId = tileStreamDetails.fileId ?? -1;
+        const stokes = tileStreamDetails.stokes ?? 0;
+        const channel = tileStreamDetails.channel ?? 0;
+        if (this.channelMapStore.isChannelMapEnabled || this.animatorStore.isServerAnimationActive || isRequiredTileStream) {
+            this.updateHistogram(fileId, stokes, channel);
+        } else {
+            this.pendingChannelHistograms.delete(`${fileId}_${stokes}_${channel}`);
+        }
     };
 
     updateHistogram = (fileId: number, stokes: number, channel: number) => {

@@ -215,10 +215,12 @@ describe("AppStore.updateHistogram", () => {
         expect(updateHistogram).toHaveBeenCalledWith(1, 0, 1);
     });
 
-    test("keeps the previous normal-view channel until the next tile arrives", () => {
+    test("keeps the previous normal-view channel until the requested tile arrives", () => {
         const frame = {
             channel: 0,
             stokes: 0,
+            requiredChannel: 2,
+            requiredStokes: 1,
             polarizations: [],
             renderConfig: {
                 setStokesIndex: jest.fn(),
@@ -229,11 +231,19 @@ describe("AppStore.updateHistogram", () => {
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
 
         appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 2, stokes: 1, histograms: {}} as CARTA.RegionHistogramData);
         expect(frame.channel).toBe(0);
 
         appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 1, stokes: 0, flush: true});
+        expect(frame.channel).toBe(0);
+        expect(frame.stokes).toBe(0);
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        expect(pendingChannelHistograms.has("1_0_1")).toBe(false);
 
-        expect(frame.channel).toBe(1);
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, flush: true});
+
+        expect(frame.channel).toBe(2);
+        expect(frame.stokes).toBe(1);
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
     });
 });
