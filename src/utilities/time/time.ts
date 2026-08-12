@@ -542,3 +542,34 @@ export function getTimeSeriesTickLabelResult(values: readonly TimeLabelValue[], 
 export function formatTimeSeriesTickLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {
     return getTimeSeriesTickLabelResult(values, settings).labels;
 }
+
+/** Returns a human-readable name for the configured time label format. */
+export function getTimeLabelFormatName(settings: TimeLabelSettings): string {
+    switch (settings.timeLabelFormat) {
+        case TimeLabelFormat.ISO:
+            if (settings.timeZoneMode === TimeZoneMode.LOCAL) {
+                return "ISO 8601 (local)";
+            }
+            if (settings.timeZoneMode === TimeZoneMode.IANA) {
+                return `ISO 8601 (${settings.ianaTimeZone ?? "UTC"})`;
+            }
+            return "ISO 8601 (UTC)";
+        case TimeLabelFormat.MJD:
+            return `MJD (${settings.timeScale ?? TimeScale.UTC})`;
+        case TimeLabelFormat.JD:
+            return `JD (${settings.timeScale ?? TimeScale.UTC})`;
+        case TimeLabelFormat.RELATIVE: {
+            const scale = settings.timeScale ?? TimeScale.UTC;
+            if (settings.relativeTimeReference === RelativeTimeReference.IMAGE) {
+                return `Relative to selected image (${scale})`;
+            }
+            if (settings.relativeTimeReference === RelativeTimeReference.CUSTOM) {
+                return `Relative to custom epoch (${scale})`;
+            }
+            return `Relative to first observation (${scale})`;
+        }
+        case TimeLabelFormat.AUTO:
+        default:
+            return "Auto (UTC)";
+    }
+}

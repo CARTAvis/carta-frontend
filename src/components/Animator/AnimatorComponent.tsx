@@ -5,41 +5,11 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RangeSlider, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
-import {AnimationMode, HelpType, NumericInputType, PlayMode, RelativeTimeReference, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {AnimationMode, HelpType, NumericInputType, PlayMode, TimeLabelFormat} from "enums";
 import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, type TimeLabelSettings, toFixed} from "utilities";
+import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, getTimeLabelFormatName, toFixed} from "utilities";
 
 import "./AnimatorComponent.scss";
-
-function getTimeLabelFormatName(settings: TimeLabelSettings): string {
-    switch (settings.timeLabelFormat) {
-        case TimeLabelFormat.ISO:
-            if (settings.timeZoneMode === TimeZoneMode.LOCAL) {
-                return "ISO 8601 (local)";
-            }
-            if (settings.timeZoneMode === TimeZoneMode.IANA) {
-                return `ISO 8601 (${settings.ianaTimeZone ?? "UTC"})`;
-            }
-            return "ISO 8601 (UTC)";
-        case TimeLabelFormat.MJD:
-            return `MJD (${settings.timeScale ?? TimeScale.UTC})`;
-        case TimeLabelFormat.JD:
-            return `JD (${settings.timeScale ?? TimeScale.UTC})`;
-        case TimeLabelFormat.RELATIVE: {
-            const scale = settings.timeScale ?? TimeScale.UTC;
-            if (settings.relativeTimeReference === RelativeTimeReference.IMAGE) {
-                return `Relative to selected image (${scale})`;
-            }
-            if (settings.relativeTimeReference === RelativeTimeReference.CUSTOM) {
-                return `Relative to custom epoch (${scale})`;
-            }
-            return `Relative to first observation (${scale})`;
-        }
-        case TimeLabelFormat.AUTO:
-        default:
-            return "Auto (UTC)";
-    }
-}
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
