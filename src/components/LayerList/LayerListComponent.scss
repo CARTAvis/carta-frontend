@@ -66,6 +66,16 @@
         .matching-button {
             width: 28px;
         }
+
+        .matching-button.time-series-member-disabled {
+            background-color: color-mix(in oklch, var(--bp-intent-success-rest) 30%, transparent);
+            color: var(--bp-intent-success-active);
+
+            .#{$ns}-dark & {
+                background-color: color-mix(in oklch, var(--bp-intent-success-rest) 20%, transparent);
+                color: color-mix(in oklch, var(--bp-intent-success-rest) 54%, var(--bp-palette-white));
+            }
+        }
     }
 
     .#{$ns}-popover-wrapper + .#{$ns}-popover-wrapper {

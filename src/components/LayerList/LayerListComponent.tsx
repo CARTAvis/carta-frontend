@@ -318,7 +318,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 }
             >
                 <AnchorButton
-                    className={classNames("matching-button", {outlined: isTimeSeriesBulkAnchor})}
+                    className={classNames("matching-button", {
+                        outlined: isTimeSeriesBulkAnchor,
+                        "time-series-member-disabled": isTimeSeriesMember && appStore.animatorStore.isAnimationActive
+                    })}
                     variant="minimal"
                     size="small"
                     active={isTimeSeriesMember}
