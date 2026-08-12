@@ -302,7 +302,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 </Tooltip>
                 <Tooltip content={formTimeSeriesTooltip} position={Position.LEFT}>
-                    <MenuItem text="Form Time Series" disabled={eligibleTimeSeriesFrameCount < 2 || hasTimeSeriesSlider} onClick={this.formTimeSeries} />
+                    <MenuItem text="Form Time Series" disabled={eligibleTimeSeriesFrameCount < 2 || hasTimeSeriesSlider} onClick={this.formTimeSeries} data-testid="root-menu-form-time-series" />
                 </Tooltip>
                 <MenuDivider />
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />

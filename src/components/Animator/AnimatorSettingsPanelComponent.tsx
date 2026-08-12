@@ -414,7 +414,7 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
             <ScrollShadow>
                 <div className="animator-settings-panel">
                     <Tabs id="animatorSettingsTabs">
-                        <Tab id="time-series" title="Time series" panel={timeSeriesContent} />
+                        <Tab id="time-series" title="Time series" panel={timeSeriesContent} data-testid="animator-time-series-tab" />
                     </Tabs>
                 </div>
             </ScrollShadow>

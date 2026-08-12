@@ -392,6 +392,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 <span>Time series</span>
                             </Tooltip>
                         }
+                        data-testid="animator-time-series-mode"
                     />
                     {shouldHideSliders && (
                         <SafeNumericInput
@@ -402,6 +403,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             onValueChange={this.onTimeSeriesChanged}
                             fill={true}
                             disabled={appStore.animatorStore.isAnimationActive}
+                            data-testid="animator-time-series-index-input"
                         />
                     )}
                     {!shouldHideSliders && (

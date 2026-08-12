@@ -593,7 +593,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 )}
                                 {!this.isImageArithmeticEnabled && fileBrowserStore.selectedFiles?.length > 1 && (
                                     <Tooltip content={"Load the selected images, match them spatially, and add them to a time series ordered by observation time"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} onClick={this.loadAsTimeSeries} text="Load as time series" />
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={isActionDisabled} onClick={this.loadAsTimeSeries} text="Load as time series" data-testid="file-browser-load-as-time-series-button" />
                                     </Tooltip>
                                 )}
                                 {fileBrowserStore.selectedFiles?.length > 1 && (
