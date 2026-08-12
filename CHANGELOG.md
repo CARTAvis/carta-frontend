@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added Astropy-style sinh and asinh image scaling options with hover previews in the scaling dropdown ([#1992](https://github.com/CARTAvis/carta-frontend/issues/1992)).
-* Added mirror site management and automatic ranking for online catalog queries ([#2588](https://github.com/CARTAvis/carta-frontend/issues/2588)).
+* Added mirror site management with speed testing for online catalog queries ([#2588](https://github.com/CARTAvis/carta-frontend/issues/2588)).
 ### Fixed
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).
