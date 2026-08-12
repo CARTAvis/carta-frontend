@@ -181,7 +181,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const size = region.size;
         const sizeWCS = this.sizeWCS;
@@ -209,7 +209,8 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 customPlaceholder="Semi-minor"
             />
         );
-        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${isImgCoordinates ? "-" : sizeWCS ? WCSPoint2D.toString(sizeWCS) : ""}` : `Image: ${Point2D.toString(size, "px", 3)}`;
+        const sizeInfoString =
+            region.coordinate === CoordinateMode.Image ? `WCS (Semi-major, Semi-minor): ${isImgCoordinates ? "-" : sizeWCS ? WCSPoint2D.toString(sizeWCS, 3) : ""}` : `Image (Semi-major, Semi-minor): ${Point2D.toString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="region-form">

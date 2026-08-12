@@ -240,7 +240,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const outerSize = region.size;
         const outerSizeWCS = this.outerSizeWCS;
@@ -269,7 +269,9 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
             />
         );
         const outerSizeInfoString =
-            region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${isImgCoordinates ? "-" : outerSizeWCS ? WCSPoint2D.toString(outerSizeWCS) : ""}` : `Image: ${Point2D.toString(outerSize, "px", 3)}`;
+            region.coordinate === CoordinateMode.Image
+                ? `WCS (Semi-major, Semi-minor): ${isImgCoordinates ? "-" : outerSizeWCS ? WCSPoint2D.toString(outerSizeWCS, 3) : ""}`
+                : `Image (Semi-major, Semi-minor): ${Point2D.toString(outerSize, "px", 3)}`;
 
         const innerSize = region.innerSize;
         const innerSizeWCS = this.innerSizeWCS;
@@ -298,7 +300,9 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
             />
         );
         const innerSizeInfoString =
-            region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${isImgCoordinates ? "-" : innerSizeWCS ? WCSPoint2D.toString(innerSizeWCS) : ""}` : `Image: ${Point2D.toString(innerSize, "px", 3)}`;
+            region.coordinate === CoordinateMode.Image
+                ? `WCS (Semi-major, Semi-minor): ${isImgCoordinates ? "-" : innerSizeWCS ? WCSPoint2D.toString(innerSizeWCS, 3) : ""}`
+                : `Image (Semi-major, Semi-minor): ${Point2D.toString(innerSize, "px", 3)}`;
 
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
@@ -314,12 +318,12 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                     {yInput}
                     <span className="info-string">{infoString}</span>
                 </FormGroup>
-                <FormGroup label="Outer semi-axes" labelInfo={pxUnit} inline={true}>
+                <FormGroup label="Outer ring" labelInfo={pxUnit} inline={true}>
                     {outerWidthInput}
                     {outerHeightInput}
                     <span className="info-string">{outerSizeInfoString}</span>
                 </FormGroup>
-                <FormGroup label="Inner semi-axes" labelInfo={pxUnit} inline={true}>
+                <FormGroup label="Inner ring" labelInfo={pxUnit} inline={true}>
                     {innerWidthInput}
                     {innerHeightInput}
                     <span className="info-string">{innerSizeInfoString}</span>

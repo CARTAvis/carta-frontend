@@ -315,7 +315,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
         );
-        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : startWCSPoint ? WCSPoint2D.toString(startWCSPoint) : ""}` : `Image: ${Point2D.toString(this.startPoint, "px", 3)}`;
+        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : startWCSPoint ? WCSPoint2D.toString(startWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(this.startPoint, "px", 3)}`;
 
         // end
         const endPoint = this.endPoint;
@@ -342,7 +342,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
         );
-        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : endWCSPoint ? WCSPoint2D.toString(endWCSPoint) : ""}` : `Image: ${Point2D.toString(this.endPoint, "px", 3)}`;
+        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : endWCSPoint ? WCSPoint2D.toString(endWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(this.endPoint, "px", 3)}`;
 
         // center
         const centerPoint = region.center;
@@ -369,7 +369,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         // length
 
