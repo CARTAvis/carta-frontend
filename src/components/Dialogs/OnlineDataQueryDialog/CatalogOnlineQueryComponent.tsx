@@ -124,7 +124,7 @@ export class CatalogQueryComponent extends React.Component {
                             filterable={false}
                             resetOnSelect={true}
                         >
-                            <Button className="database-select-button" text={configStore.catalogDB} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" />
+                            <Button className="database-select-button" text={configStore.catalogDB} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-database-select-button" />
                         </Select>
                     </FormGroup>
                     <FormGroup inline={false} label="Mirror site" disabled={isDisabled} className="mirror-site-group">
@@ -139,10 +139,10 @@ export class CatalogQueryComponent extends React.Component {
                                 filterable={false}
                                 resetOnSelect={true}
                             >
-                                <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" />
+                                <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-mirror-select-button" />
                             </Select>
                             <PopoverNext placement="bottom" animation="minimal" arrow={false} content={this.renderMirrorManager(configStore.catalogDB, mirrorSites, isDisabled, isMirrorConfigDisabled, activeMirror)}>
-                                <Button icon="cog" disabled={isDisabled} />
+                                <Button icon="cog" disabled={isDisabled} data-testid="catalog-query-mirror-manager-button" />
                             </PopoverNext>
                         </ControlGroup>
                     </FormGroup>
@@ -153,9 +153,16 @@ export class CatalogQueryComponent extends React.Component {
                     ) : null}
                 </div>
                 <FormGroup inline={false} label="Object" disabled={isDisabled}>
-                    <InputGroup asyncControl={false} disabled={isDisabled} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
+                    <InputGroup
+                        asyncControl={false}
+                        disabled={isDisabled}
+                        rightElement={objectSize === undefined ? null : sourceIndicater}
+                        onChange={event => this.updateObjectName(event.target.value)}
+                        value={configStore.objectName}
+                        data-testid="catalog-query-object-name-input"
+                    />
                     <Tooltip content="Reset center coordinates by object" disabled={isDisabled || configStore.isObjectSearchDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={isDisabled || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
+                        <Button disabled={isDisabled || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} data-testid="catalog-query-resolve-button" />
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={false} label="Search radius" disabled={isDisabled}>
@@ -181,10 +188,10 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.radiusUnits} disabled={isDisabled} endIcon="double-caret-vertical" />
+                        <Button text={configStore.radiusUnits} disabled={isDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-radius-units-button" />
                     </Select>
                     <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()}>
+                        <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()} data-testid="catalog-query-set-to-viewer-button">
                             Set to viewer
                         </Button>
                     </Tooltip>
@@ -200,7 +207,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} endIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-coordinate-system-button" />
                     </Select>
                     <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
@@ -241,6 +248,7 @@ export class CatalogQueryComponent extends React.Component {
                     displayExponential={false}
                     disabled={isDisabled}
                     inline={false}
+                    data-testid="catalog-query-max-objects-input"
                 />
                 {configStore.shouldShowVizierResult ? (
                     <FormGroup inline={false} label="VizieR catalog" disabled={isDisabled}>
@@ -256,7 +264,7 @@ export class CatalogQueryComponent extends React.Component {
                             itemPredicate={this.filterVizierTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
-                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
+                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} data-testid="catalog-query-clear-vizier-selection-button" />,
                                 tagProps: (_tag, index) => ({
                                     minimal: true,
                                     className: "vizier-catalog-tag",
@@ -296,10 +304,10 @@ export class CatalogQueryComponent extends React.Component {
                         {tableInfo}
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.canLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} data-testid="catalog-query-cancel-button" />
+                        {configStore.canLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} data-testid="catalog-query-load-selected-button" /> : null}
                         <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlaySettings.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <AnchorButton intent={Intent.SUCCESS} disabled={isDisabled || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
+                            <AnchorButton intent={Intent.SUCCESS} disabled={isDisabled || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} data-testid="catalog-query-query-button" />
                         </Tooltip>
                     </div>
                 </div>
@@ -319,7 +327,7 @@ export class CatalogQueryComponent extends React.Component {
                     </span>
                     <div className="mirror-manager__action-buttons">
                         <Tooltip content="Reset to default mirrors" disabled={isMirrorConfigDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="reset" variant="minimal" disabled={isMirrorConfigDisabled} onClick={this.resetMirrorSites} aria-label="Reset to default mirrors" />
+                            <Button icon="reset" variant="minimal" disabled={isMirrorConfigDisabled} onClick={this.resetMirrorSites} aria-label="Reset to default mirrors" data-testid="catalog-query-reset-mirrors-button" />
                         </Tooltip>
                         <Tooltip content={this.isBenchmarking ? "Cancel speed test" : "Test all mirrors and sort by response time"} disabled={isBenchmarkButtonDisabled || hasNoMirrors} position={Position.BOTTOM} hoverOpenDelay={300}>
                             <Button
@@ -330,6 +338,7 @@ export class CatalogQueryComponent extends React.Component {
                                 text={this.isBenchmarking ? "Cancel" : "Test speed"}
                                 disabled={isBenchmarkButtonDisabled || hasNoMirrors}
                                 onClick={this.runMirrorBenchmark}
+                                data-testid="catalog-query-test-mirror-speed-button"
                             />
                         </Tooltip>
                     </div>
@@ -347,7 +356,18 @@ export class CatalogQueryComponent extends React.Component {
                                 this.handleAddMirror();
                             }
                         }}
-                        rightElement={<Button icon="plus" variant="minimal" disabled={isMirrorConfigDisabled || !this.newMirrorUrl.trim()} onClick={this.handleAddMirror} intent={Intent.PRIMARY} aria-label="Add mirror" />}
+                        data-testid="catalog-query-add-mirror-input"
+                        rightElement={
+                            <Button
+                                icon="plus"
+                                variant="minimal"
+                                disabled={isMirrorConfigDisabled || !this.newMirrorUrl.trim()}
+                                onClick={this.handleAddMirror}
+                                intent={Intent.PRIMARY}
+                                aria-label="Add mirror"
+                                data-testid="catalog-query-add-mirror-button"
+                            />
+                        }
                     />
                 </div>
                 {this.addMirrorError ? <div className="mirror-manager__error">{this.addMirrorError}</div> : null}
@@ -390,6 +410,7 @@ export class CatalogQueryComponent extends React.Component {
                             disabled={isMirrorConfigDisabled || isMirrorDisabled}
                             onClick={() => this.handleMirrorSelect(site)}
                             aria-label="Use this mirror"
+                            data-testid={`catalog-query-use-mirror-button-${index}`}
                         />
                     </Tooltip>
                 )}
@@ -409,6 +430,7 @@ export class CatalogQueryComponent extends React.Component {
                             }
                         }}
                         onBlur={() => this.commitMirrorEdit(index)}
+                        data-testid={`catalog-query-edit-mirror-input-${index}`}
                     />
                 ) : (
                     <div className="mirror-manager__url" title={site} onDoubleClick={isMirrorConfigDisabled ? undefined : () => this.startMirrorEdit(index, site)}>
@@ -421,11 +443,19 @@ export class CatalogQueryComponent extends React.Component {
                 </div>
                 {!isEditing ? (
                     <Tooltip content="Edit URL" hoverOpenDelay={300}>
-                        <Button icon="edit" variant="minimal" disabled={isMirrorConfigDisabled} onClick={() => this.startMirrorEdit(index, site)} aria-label="Edit URL" />
+                        <Button icon="edit" variant="minimal" disabled={isMirrorConfigDisabled} onClick={() => this.startMirrorEdit(index, site)} aria-label="Edit URL" data-testid={`catalog-query-edit-mirror-button-${index}`} />
                     </Tooltip>
                 ) : null}
                 <Tooltip content={removeTooltip} hoverOpenDelay={300}>
-                    <AnchorButton icon="trash" variant="minimal" disabled={isRemoveDisabled} intent={Intent.DANGER} onClick={() => this.handleRemoveMirror(index)} aria-label="Remove mirror" />
+                    <AnchorButton
+                        icon="trash"
+                        variant="minimal"
+                        disabled={isRemoveDisabled}
+                        intent={Intent.DANGER}
+                        onClick={() => this.handleRemoveMirror(index)}
+                        aria-label="Remove mirror"
+                        data-testid={`catalog-query-remove-mirror-button-${index}`}
+                    />
                 </Tooltip>
             </div>
         );
