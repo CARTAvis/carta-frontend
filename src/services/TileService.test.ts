@@ -15,7 +15,7 @@ import {TileService} from "./TileService";
 type TestTileService = {
     activeChannelMapRequests: Map<number, unknown>;
     backendService: {addRequiredTiles: jest.Mock; animationId: number; setChannels: jest.Mock};
-    cachedTiles: {has: jest.Mock};
+    cachedTiles: {get?: jest.Mock; has: jest.Mock; peek?: jest.Mock; setpop?: jest.Mock};
     channelMapGenerations: Map<number, number>;
     channelMapRequestQueues: Map<number, unknown[]>;
     channelMapRequestProgressIntervals: Map<number, ReturnType<typeof setInterval>>;
@@ -28,6 +28,7 @@ type TestTileService = {
     confirmedChannelMapStokes: Map<number, number>;
     desiredChannelMapStokes: Map<number, number>;
     getCompressedCache: jest.Mock;
+    getTile: TileService["getTile"];
     getRequiredRequestTiles: jest.Mock;
     handleChannelMapFlowControl: (eventId: number, message: {fileId: number; completedChannel: number; status: CARTA.ChannelMapFlowControl.Status}) => void;
     handleStreamSync: (message: CARTA.RasterTileSync.$Properties) => void;
@@ -45,6 +46,7 @@ type TestTileService = {
     syncIdMap: Map<number, boolean>;
     syncIdTileCountMap: Map<number, number>;
     tileStream: {next: jest.Mock};
+    textureCoordinateQueue: number[];
     updateChannelMapActiveChannel: TileService["updateChannelMapActiveChannel"];
     updateHiddenFileChannels: TileService["updateHiddenFileChannels"];
     updateRemainingTileCount: jest.Mock;
@@ -205,8 +207,8 @@ describe("TileService channel map request queue", () => {
 
         service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
 
-        expect(service.clearCompressedCache).toHaveBeenCalledWith(1);
-        expect(service.clearGPUCache).toHaveBeenCalledWith(1);
+        expect(service.clearCompressedCache).not.toHaveBeenCalled();
+        expect(service.clearGPUCache).not.toHaveBeenCalled();
         expect(service.channelMap.get(1)).toEqual({channel: 1, stokes: 1});
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 1, {}, true);
     });
@@ -252,7 +254,28 @@ describe("TileService channel map request queue", () => {
         const tile = {layer: 0, encode: () => 4};
 
         expect(service.getRequiredRequestTiles([tile], 1, 32768, 0, false)).toEqual([]);
-        expect(service.cachedTiles.has).toHaveBeenCalledWith("1_32768_4");
+        expect(service.cachedTiles.has).toHaveBeenCalledWith("1_0_32768_4");
+    });
+
+    test("uses separate GPU cache entries for each Stokes value", () => {
+        const service = CreateService();
+        service.cachedTiles = {get: jest.fn(), has: jest.fn(), peek: jest.fn()};
+
+        service.getTile(4, 1, 2, 0);
+        service.getTile(4, 1, 2, 1, true);
+
+        expect(service.cachedTiles.get).toHaveBeenCalledWith("1_0_2_4");
+        expect(service.cachedTiles.peek).toHaveBeenCalledWith("1_1_2_4");
+    });
+
+    test("does not reuse a compressed tile from another Stokes value", () => {
+        const service = CreateService();
+        service.cachedTiles = {has: jest.fn(() => false)};
+        service.getCompressedCache = jest.fn(() => new Map([["1_0_2_4", {}]]));
+        const tile = {layer: 0, encode: () => 4};
+
+        expect(service.getRequiredRequestTiles([tile], 1, 2, 1, false)).toEqual([tile]);
+        expect(service.getCompressedCache).toHaveBeenCalledWith(1);
     });
 
     test("updates the backend channel when all normal-view tiles are cached", () => {
@@ -277,14 +300,15 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.addRequiredTiles).toHaveBeenCalledTimes(1);
     });
 
-    test("clears normal-view GPU tiles when Stokes changes", () => {
+    test("keeps normal-view tile caches when Stokes changes", () => {
         const service = CreateService();
         service.channelMap.set(1, {channel: 2, stokes: 0});
         service.getRequiredRequestTiles = jest.fn(() => []);
 
         service.requestTiles([], 1, 2, 1, {x: 0, y: 0}, 11, true);
 
-        expect(service.clearGPUCache).toHaveBeenCalledWith(1);
+        expect(service.clearCompressedCache).not.toHaveBeenCalled();
+        expect(service.clearGPUCache).not.toHaveBeenCalled();
     });
 
     test("keeps normal-view GPU tiles when only the channel changes", () => {
@@ -439,6 +463,20 @@ describe("TileService channel map request queue", () => {
 
         expect(service.pendingDecompressions.get("1_0_1")?.get(-1)?.has(4)).toBe(true);
         expect(service.tileStream.next).not.toHaveBeenCalled();
+    });
+
+    test("caches a completed decompression from a previously selected Stokes value", () => {
+        const service = CreateService();
+        service.channelMap.set(1, {channel: 1, stokes: 1});
+        service.channelMapGenerations.set(1, 0);
+        service.pendingDecompressions.set("1_0_1", new Map([[-1, new Map([[4, true]])]]));
+        service.cachedTiles = {has: jest.fn(), setpop: jest.fn()};
+        service.textureCoordinateQueue = [3];
+
+        service.updateStream(1, 1, 0, new Float32Array([1]), 1, 1, 0, 4, -1, 0);
+
+        expect(service.cachedTiles.setpop).toHaveBeenCalledWith("1_0_1_4", expect.objectContaining({data: new Float32Array([1])}));
+        expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 1, fileId: 1, channel: 1, stokes: 0, flush: false});
     });
 
     test("completes a synchronized stream when no requested tiles succeed", () => {

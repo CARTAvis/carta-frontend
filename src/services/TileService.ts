@@ -76,8 +76,8 @@ function getTileRequestKey(fileId: number | null | undefined, stokes: number | n
     return `${fileId}_${stokes}_${channel}`;
 }
 
-function getTileCacheKey(fileId: number | null | undefined, channel: number | null | undefined, encodedCoordinate: number) {
-    return `${fileId}_${channel}_${encodedCoordinate}`;
+function getTileCacheKey(fileId: number | null | undefined, stokes: number | null | undefined, channel: number | null | undefined, encodedCoordinate: number) {
+    return `${fileId}_${stokes}_${channel}_${encodedCoordinate}`;
 }
 
 function isTileKeyForFile(key: string | undefined, fileId: number) {
@@ -259,8 +259,8 @@ export class TileService {
         }
     }
 
-    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, shouldPeek: boolean = false) {
-        const tileCacheKey = getTileCacheKey(fileId, channel, tileCoordinateEncoded);
+    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, shouldPeek: boolean = false) {
+        const tileCacheKey = getTileCacheKey(fileId, stokes, channel, tileCoordinateEncoded);
         if (shouldPeek) {
             return this.cachedTiles.peek(tileCacheKey);
         }
@@ -275,7 +275,7 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const tileCacheKey = getTileCacheKey(fileId, channel, encodedCoordinate);
+            const tileCacheKey = getTileCacheKey(fileId, stokes, channel, encodedCoordinate);
             const compressedTile = this.getCompressedCache(fileId).get(tileCacheKey);
             const pendingCompressionMap = this.pendingDecompressions.get(key);
             const isTileQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
@@ -326,7 +326,6 @@ export class TileService {
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
             this.setCurrentChannel(fileId, channel, stokes);
-            this.clearCompressedCache(fileId);
         }
 
         const newRequests = this.getRequiredRequestTiles(tiles, fileId, channel, stokes);
@@ -430,11 +429,6 @@ export class TileService {
     }
 
     private setCurrentChannel(fileId: number, channel: number | null | undefined, stokes: number | null | undefined) {
-        const currentChannel = this.channelMap.get(fileId);
-        if (currentChannel && currentChannel.stokes !== stokes) {
-            this.clearCompressedCache(fileId);
-            this.clearGPUCache(fileId);
-        }
         this.channelMap.set(fileId, {channel, stokes});
     }
 
@@ -844,12 +838,12 @@ export class TileService {
         const appStore = AppStore.Instance;
         const currentChannels = this.channelMap.get(tileMessage.fileId ?? NaN);
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
-        if (!appStore.channelMapStore.isChannelMapEnabled && !this.isAnimationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
+        if (!appStore.channelMapStore.isChannelMapEnabled && !this.isAnimationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel)) {
             console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
             return;
         }
 
-        if (appStore.channelMapStore.isChannelMapEnabled && (!appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN) || currentChannels?.stokes !== tileMessage.stokes)) {
+        if (appStore.channelMapStore.isChannelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
             console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }
@@ -874,7 +868,7 @@ export class TileService {
 
         for (const tile of tileMessage.tiles ?? []) {
             const encodedCoordinate = TileCoordinate.encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
-            const tileCacheKey = getTileCacheKey(tileMessage.fileId, tileMessage.channel, encodedCoordinate);
+            const tileCacheKey = getTileCacheKey(tileMessage.fileId, tileMessage.stokes, tileMessage.channel, encodedCoordinate);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
             const pendingRequestsMap = this.pendingRequests.get(key);
 
@@ -972,19 +966,6 @@ export class TileService {
         if (generation !== (this.channelMapGenerations.get(fileId ?? NaN) ?? 0)) {
             return;
         }
-        const currentChannels = this.channelMap.get(fileId ?? NaN);
-        const isStaleStokesTile = currentChannels?.stokes !== stokes;
-        if (isStaleStokesTile) {
-            const staleSyncId = syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID;
-            this.pendingDecompressions.get(key)?.delete(staleSyncId);
-            this.pendingSynchronisedTiles.delete(key);
-            this.receivedSynchronisedTiles.delete(key);
-            if (syncId) {
-                this.syncIdMap.delete(syncId);
-                this.syncIdTileCountMap.delete(syncId);
-            }
-            return;
-        }
         const pendingCompressionMap = this.pendingDecompressions.get(key)?.get(syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID);
         if (!pendingCompressionMap) {
             console.warn(`Problem decompressing tile. Missing pending decompression map ${key}!`);
@@ -1022,7 +1003,7 @@ export class TileService {
                 textureCoordinate: 0,
                 data: decompressedData
             };
-            const tileCacheKey = getTileCacheKey(fileId, channel, encodedCoordinate);
+            const tileCacheKey = getTileCacheKey(fileId, stokes, channel, encodedCoordinate);
             const oldValue = this.cachedTiles.setpop(tileCacheKey, rasterTile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);
@@ -1051,11 +1032,8 @@ export class TileService {
         }
 
         this.clearRasterSync(key, syncId);
-        if (this.isAnimationEnabled) {
-            this.clearCompressedCache(fileId ?? NaN);
-        }
         receivedTiles?.forEach((tile, coordinate) => {
-            const tileCacheKey = getTileCacheKey(fileId, channel, coordinate);
+            const tileCacheKey = getTileCacheKey(fileId, stokes, channel, coordinate);
             const oldValue = this.cachedTiles.setpop(tileCacheKey, tile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);

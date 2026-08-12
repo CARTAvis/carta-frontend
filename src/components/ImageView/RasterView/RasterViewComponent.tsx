@@ -357,7 +357,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
-            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, shouldPeek);
+            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, frame.stokes, shouldPeek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
             } else {
