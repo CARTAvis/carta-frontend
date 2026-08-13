@@ -20,7 +20,7 @@ type TestTileService = {
     channelMapRequestQueues: Map<number, unknown[]>;
     channelMapRequestProgressIntervals: Map<number, ReturnType<typeof setInterval>>;
     channelMapRequestTimeouts: Map<number, ReturnType<typeof setTimeout>>;
-    channelMap: Map<number, {channel: number; stokes: number}>;
+    fileStateMap: Map<number, {channel: number; stokes: number}>;
     clearCompressedCache: jest.Mock;
     clearGPUCache: jest.Mock;
     clearQueueForChannelMap: jest.Mock;
@@ -62,7 +62,7 @@ const CreateService = () => {
     service.activeChannelMapRequests = new Map();
     service.channelMapRequestTimeouts = new Map();
     service.channelMapGenerations = new Map();
-    service.channelMap = new Map();
+    service.fileStateMap = new Map();
     service.clearCompressedCache = jest.fn();
     service.clearGPUCache = jest.fn();
     service.completedChannels = new Map();
@@ -205,13 +205,13 @@ describe("TileService channel map request queue", () => {
         service.clearQueueForChannelMap = jest.fn();
         service.getRequiredRequestTiles = jest.fn(() => []);
         const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
 
         service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
 
         expect(service.clearCompressedCache).not.toHaveBeenCalled();
         expect(service.clearGPUCache).not.toHaveBeenCalled();
-        expect(service.channelMap.get(1)).toEqual({channel: 1, stokes: 1});
+        expect(service.fileStateMap.get(1)).toEqual({channel: 1, stokes: 1});
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 1, {}, true);
     });
 
@@ -221,7 +221,7 @@ describe("TileService channel map request queue", () => {
         const tile = {x: 0, y: 0, encode: () => 4};
         service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 2 ? [tile] : []));
         const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
-        service.channelMap.set(1, {channel: 0, stokes: 0});
+        service.fileStateMap.set(1, {channel: 0, stokes: 0});
 
         service.queueChannelMapRequests(1, [MakeRequest(0, [4])]);
         service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
@@ -263,8 +263,8 @@ describe("TileService channel map request queue", () => {
         const service = CreateService();
         service.cachedTiles = {get: jest.fn(), has: jest.fn(), peek: jest.fn()};
 
-        service.getTile(4, 1, 2, 0);
-        service.getTile(4, 1, 2, 1, true);
+        service.getTile(1, 0, 2, 4);
+        service.getTile(1, 1, 2, 4, true);
 
         expect(service.cachedTiles.get).toHaveBeenCalledWith("1_0_2_4");
         expect(service.cachedTiles.peek).toHaveBeenCalledWith("1_1_2_4");
@@ -304,7 +304,7 @@ describe("TileService channel map request queue", () => {
 
     test("keeps normal-view tile caches when Stokes changes", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 2, stokes: 0});
+        service.fileStateMap.set(1, {channel: 2, stokes: 0});
         service.getRequiredRequestTiles = jest.fn(() => []);
 
         service.requestTiles([], 1, 2, 1, {x: 0, y: 0}, 11, true);
@@ -315,7 +315,7 @@ describe("TileService channel map request queue", () => {
 
     test("keeps normal-view GPU tiles when only the channel changes", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 2, stokes: 0});
+        service.fileStateMap.set(1, {channel: 2, stokes: 0});
         service.getRequiredRequestTiles = jest.fn(() => []);
 
         service.requestTiles([], 1, 3, 0, {x: 0, y: 0}, 11, true);
@@ -347,7 +347,7 @@ describe("TileService channel map request queue", () => {
 
     test("resets in-flight tile state for session resume", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
         service.channelMapGenerations.set(1, 3);
         service.pendingRequests.set("1_0_1", new Map([[4, true]]));
         service.pendingDecompressions.set("1_0_1", new Map([[7, new Map([[4, true]])]]));
@@ -476,7 +476,7 @@ describe("TileService channel map request queue", () => {
 
     test("retires synchronization state when cancelled", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
         service.completedChannels.set("1_0_1", true);
         service.pendingSynchronisedTiles.set("1_0_1", new Set([4]));
         service.receivedSynchronisedTiles.set("1_0_1", new Map([[7, new Map()]]));
@@ -499,7 +499,7 @@ describe("TileService channel map request queue", () => {
 
     test("discards decompression results from a cancelled generation", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
         service.channelMapGenerations.set(1, 1);
         service.pendingDecompressions.set("1_0_1", new Map([[-1, new Map([[4, true]])]]));
 
@@ -511,7 +511,7 @@ describe("TileService channel map request queue", () => {
 
     test("caches a completed decompression from a previously selected Stokes value", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 1});
+        service.fileStateMap.set(1, {channel: 1, stokes: 1});
         service.channelMapGenerations.set(1, 0);
         service.pendingDecompressions.set("1_0_1", new Map([[-1, new Map([[4, true]])]]));
         service.cachedTiles = {has: jest.fn(), setpop: jest.fn()};
@@ -525,7 +525,7 @@ describe("TileService channel map request queue", () => {
 
     test("completes a synchronized stream when no requested tiles succeed", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
         service.pendingSynchronisedTiles.set("1_0_1", new Set([4]));
 
         service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
@@ -538,7 +538,7 @@ describe("TileService channel map request queue", () => {
 
     test("keeps hidden-file caches when only the channel changes", () => {
         const service = CreateService();
-        service.channelMap.set(1, {channel: 1, stokes: 0});
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
 
         service.updateHiddenFileChannels(1, 2, 0);
 

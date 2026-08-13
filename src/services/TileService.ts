@@ -20,7 +20,6 @@ export interface RasterTile {
 
 export interface CompressedTile {
     tile: CARTA.TileData.$Properties;
-    channel: number | null | undefined;
     compressionQuality: number | null | undefined;
 }
 
@@ -102,7 +101,7 @@ export class TileService {
     private readonly cacheMapCompressedTiles: Map<number, LRUCache<string, CompressedTile>>;
     private readonly pendingRequests: Map<string | undefined, Map<number, boolean>>;
     private readonly pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
-    private readonly channelMap: Map<number, {channel: number | null | undefined; stokes: number | null | undefined}>;
+    private readonly fileStateMap: Map<number, {channel: number | null | undefined; stokes: number | null | undefined}>;
     private readonly completedChannels: Map<string, boolean>;
     readonly tileStream: Subject<TileStreamDetails>;
     private cachedTiles: LRUCache<string, RasterTile>;
@@ -189,7 +188,7 @@ export class TileService {
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 
-        this.channelMap = new Map<number, {channel: number; stokes: number}>();
+        this.fileStateMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
         this.cacheMapCompressedTiles = new Map<number, LRUCache<string, CompressedTile>>();
         this.pendingDecompressions = new Map<string, Map<number, Map<number, boolean>>>();
@@ -263,8 +262,8 @@ export class TileService {
         }
     }
 
-    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, shouldPeek: boolean = false) {
-        const tileCacheKey = getTileCacheKey(fileId, stokes, channel, tileCoordinateEncoded);
+    getTile(fileId: number, stokes: number, channel: number, encodedCoordinate: number, shouldPeek: boolean = false) {
+        const tileCacheKey = getTileCacheKey(fileId, stokes, channel, encodedCoordinate);
         if (shouldPeek) {
             return this.cachedTiles.peek(tileCacheKey);
         }
@@ -325,7 +324,7 @@ export class TileService {
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, areChannelsChanged: boolean = false) {
         const key = getTileRequestKey(fileId, stokes, channel);
 
-        if (areChannelsChanged || !this.channelMap.has(fileId)) {
+        if (areChannelsChanged || !this.fileStateMap.has(fileId)) {
             this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
@@ -366,7 +365,7 @@ export class TileService {
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
         const currentTiles = tiles.map(tile => tile.encode());
-        const previousStokes = this.channelMap.get(fileId)?.stokes;
+        const previousStokes = this.fileStateMap.get(fileId)?.stokes;
         if (!this.confirmedChannelMapStokes.has(fileId)) {
             this.confirmedChannelMapStokes.set(fileId, previousStokes ?? stokes);
         }
@@ -423,7 +422,7 @@ export class TileService {
     }
 
     updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
-        const previousStokes = this.channelMap.get(fileId)?.stokes;
+        const previousStokes = this.fileStateMap.get(fileId)?.stokes;
         if (!this.confirmedChannelMapStokes.has(fileId)) {
             this.confirmedChannelMapStokes.set(fileId, previousStokes ?? stokes);
         }
@@ -433,7 +432,7 @@ export class TileService {
     }
 
     private setCurrentChannel(fileId: number, channel: number | null | undefined, stokes: number | null | undefined) {
-        this.channelMap.set(fileId, {channel, stokes});
+        this.fileStateMap.set(fileId, {channel, stokes});
     }
 
     private queueChannelMapRequests(fileId: number, requests: ChannelMapRequest[]) {
@@ -467,7 +466,7 @@ export class TileService {
             request = {
                 ...request,
                 fileId,
-                channel: this.channelMap.get(fileId)?.channel ?? request.channel,
+                channel: this.fileStateMap.get(fileId)?.channel ?? request.channel,
                 stokes: desiredStokes,
                 requiredTiles: {}
             };
@@ -507,6 +506,7 @@ export class TileService {
         this.clearChannelMapRequestTimers(fileId);
         this.activeChannelMapRequests.delete(fileId);
         if (message.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
+            console.warn(`Channel Map request ${eventId} failed with status ${CARTA.ChannelMapFlowControl.Status[message.status ?? -1]}`);
             this.clearRequestQueue(fileId);
             this.channelMapRequestQueues.delete(fileId);
             this.dismissChannelMapTimeoutAlert(activeRequest.batchTiming);
@@ -678,7 +678,7 @@ export class TileService {
         this.syncIdMap.clear();
         this.syncIdTileCountMap.clear();
         this.syncIdGenerationMap.clear();
-        this.channelMap.forEach((_channels, fileId) => {
+        this.fileStateMap.forEach((_channels, fileId) => {
             this.channelMapGenerations.set(fileId, (this.channelMapGenerations.get(fileId) ?? 0) + 1);
         });
         this.updateRemainingTileCount();
@@ -758,19 +758,13 @@ export class TileService {
         this.cancelChannelMapRequests(fileId);
         this.clearCompressedCache(fileId);
         this.clearGPUCache(fileId);
-        this.channelMap.delete(fileId);
-        // remove all entries from the map with fileId in the key
-        this.completedChannels.forEach((isCompleted, key) => {
+        this.fileStateMap.delete(fileId);
+        this.pendingRequests.forEach((_pendingTiles, key) => {
             if (isTileKeyForFile(key, fileId)) {
-                this.completedChannels.delete(key);
+                this.pendingRequests.delete(key);
             }
         });
-
-        this.pendingDecompressions.forEach((value, key) => {
-            if (isTileKeyForFile(key, fileId)) {
-                this.pendingDecompressions.delete(key);
-            }
-        });
+        this.channelMapGenerations.delete(fileId);
     }
 
     private initTextures() {
@@ -864,10 +858,10 @@ export class TileService {
         }
 
         const appStore = AppStore.Instance;
-        const currentChannels = this.channelMap.get(tileMessage.fileId ?? NaN);
-        // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
-        if (!appStore.channelMapStore.isChannelMapEnabled && !this.isAnimationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel)) {
-            console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
+        const currentFileState = this.fileStateMap.get(tileMessage.fileId ?? NaN);
+        // Cached Stokes may finish loading, but ignore stale channels within the currently selected Stokes.
+        if (!appStore.channelMapStore.isChannelMapEnabled && !this.isAnimationEnabled && (!currentFileState || (currentFileState.stokes === tileMessage.stokes && currentFileState.channel !== tileMessage.channel))) {
+            console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentFileState?.channel})`);
             return;
         }
 
@@ -922,7 +916,7 @@ export class TileService {
                     );
                 } else {
                     if (tileMessage.fileId !== null && tileMessage.fileId !== undefined) {
-                        this.getCompressedCache(tileMessage.fileId).set(tileCacheKey, {tile, channel: tileMessage.channel ?? NaN, compressionQuality: tileMessage.compressionQuality});
+                        this.getCompressedCache(tileMessage.fileId).set(tileCacheKey, {tile, compressionQuality: tileMessage.compressionQuality});
                         this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate, tileMessage.syncId);
                     }
                 }

@@ -1430,7 +1430,7 @@ export class AppStore {
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: RegionIdType.CUBE, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
             this.restartTaskProgress();
         }
     };
@@ -1439,7 +1439,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
             frame.renderConfig.updateCubeHistogram(null, 0);
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: []});
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: RegionIdType.CUBE, histograms: []});
         }
     };
 
@@ -1836,7 +1836,7 @@ export class AppStore {
         }
     };
 
-    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
+    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string, areChannelsChanged: boolean = false) => {
         const isAnimating = this.animatorStore.isServerAnimationActive;
         if (isAnimating && !this.channelMapStore.isChannelMapEnabled) {
             this.backendService.addRequiredTiles(
@@ -1848,7 +1848,7 @@ export class AppStore {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality, areChannelsChanged);
         }
     };
 
@@ -2706,7 +2706,7 @@ export class AppStore {
 
         this.imageViewConfigStore.visibleFrames.forEach(frame => {
             const [tiles, focusPoint] = frame.requiredTiles;
-            this.updateView(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, focusPoint, frame.headerUnit ?? "");
+            this.updateView(tiles, frame.frameInfo.fileId, frame.requiredChannel, frame.requiredStokes, focusPoint, frame.headerUnit ?? "", true);
         });
     };
 
