@@ -65,7 +65,11 @@ interface ChannelMapRequest {
     channel: number;
     stokes: number;
     requiredTiles: CARTA.AddRequiredTiles.$Properties;
-    requestTimeoutMs?: number;
+    batchTiming?: {
+        timeoutMs: number;
+        deadlineMs: number;
+        timeoutAlert?: Promise<boolean>;
+    };
 }
 
 interface ActiveChannelMapRequest extends ChannelMapRequest {
@@ -434,21 +438,26 @@ export class TileService {
 
     private queueChannelMapRequests(fileId: number, requests: ChannelMapRequest[]) {
         const requestedChannelCount = new Set(requests.map(request => request.channel)).size;
-        const batchRequestTimeoutMs = Math.max(requestedChannelCount, 1) * CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL;
+        const batchTimeoutMs = Math.max(requestedChannelCount, 1) * CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL;
+        const batchTiming = {timeoutMs: batchTimeoutMs, deadlineMs: Date.now() + batchTimeoutMs};
         this.channelMapRequestQueues.set(
             fileId,
-            requests.map(request => ({...request, requestTimeoutMs: batchRequestTimeoutMs}))
+            requests.map(request => ({...request, batchTiming}))
         );
         if (!this.activeChannelMapRequests.has(fileId)) {
             this.sendNextChannelMapRequest(fileId);
         }
     }
 
-    private sendNextChannelMapRequest(fileId: number) {
+    private sendNextChannelMapRequest(fileId: number, completedBatchTiming?: ChannelMapRequest["batchTiming"]) {
         let request = this.channelMapRequestQueues.get(fileId)?.shift();
         if (!request) {
             this.channelMapRequestQueues.delete(fileId);
+            this.dismissChannelMapTimeoutAlert(completedBatchTiming);
             return;
+        }
+        if (request.batchTiming !== completedBatchTiming) {
+            this.dismissChannelMapTimeoutAlert(completedBatchTiming);
         }
 
         let tiles = request.requiredTiles.tiles ?? [];
@@ -469,13 +478,15 @@ export class TileService {
         const requestId = this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true);
         if (requestId !== null) {
             this.activeChannelMapRequests.set(fileId, {...request, requestId});
-            this.startChannelMapRequestTimeout(fileId, requestId, request.requestTimeoutMs);
+            const remainingBatchTimeMs = Math.max((request.batchTiming?.deadlineMs ?? Date.now() + CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL) - Date.now(), 0);
+            this.startChannelMapRequestTimeout(fileId, requestId, remainingBatchTimeMs);
             this.startChannelMapRequestProgress(fileId, requestId);
         } else {
             const key = getTileRequestKey(request.fileId, request.stokes, request.channel);
             tiles.forEach(tile => this.pendingRequests.get(key)?.delete(tile));
             this.updateRemainingTileCount();
             this.channelMapRequestQueues.delete(fileId);
+            this.dismissChannelMapTimeoutAlert(request.batchTiming);
         }
     }
 
@@ -498,13 +509,14 @@ export class TileService {
         if (message.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
             this.clearRequestQueue(fileId);
             this.channelMapRequestQueues.delete(fileId);
+            this.dismissChannelMapTimeoutAlert(activeRequest.batchTiming);
             return;
         }
 
         if (!activeRequest.requiredTiles.tiles?.length) {
             this.confirmedChannelMapStokes.set(fileId, activeRequest.stokes);
         }
-        this.sendNextChannelMapRequest(fileId);
+        this.sendNextChannelMapRequest(fileId, activeRequest.batchTiming);
     }
 
     private startChannelMapRequestTimeout(fileId: number, requestId: number, channelMapRequestTimeoutMs: number = CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL) {
@@ -550,17 +562,24 @@ export class TileService {
         }
 
         this.channelMapRequestTimeouts.delete(fileId);
-        const channelMapRequestTimeoutMs = activeRequest.requestTimeoutMs ?? CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL;
-        const shouldKeepWaiting = await AppStore.Instance.alertStore.showInteractiveAlert(
-            `Loading channel ${activeRequest.channel} is taking longer than ${channelMapRequestTimeoutMs / 1000} seconds. Do you want to continue waiting? Select OK to keep waiting or Cancel to stop waiting for this channel.`,
-            "warning-sign"
-        );
+        const batchTimeoutMs = activeRequest.batchTiming?.timeoutMs ?? CHANNEL_MAP_REQUEST_TIMEOUT_PER_CHANNEL;
+        const timeoutAlert = AppStore.Instance.alertStore.showInteractiveAlert(`Updating channel map takes longer than ${batchTimeoutMs / 1000} seconds. Click OK to continue or Cancel to stop updating.`, "warning-sign");
+        if (activeRequest.batchTiming) {
+            activeRequest.batchTiming.timeoutAlert = timeoutAlert;
+        }
+        const shouldKeepWaiting = await timeoutAlert;
+        if (activeRequest.batchTiming?.timeoutAlert === timeoutAlert) {
+            activeRequest.batchTiming.timeoutAlert = undefined;
+        }
         const currentRequest = this.activeChannelMapRequests.get(fileId);
         if (!currentRequest || currentRequest.requestId !== requestId) {
             return;
         }
         if (shouldKeepWaiting) {
-            this.startChannelMapRequestTimeout(fileId, requestId, channelMapRequestTimeoutMs);
+            if (currentRequest.batchTiming) {
+                currentRequest.batchTiming.deadlineMs = Date.now() + batchTimeoutMs;
+            }
+            this.startChannelMapRequestTimeout(fileId, requestId, batchTimeoutMs);
             return;
         }
 
@@ -568,6 +587,13 @@ export class TileService {
         this.activeChannelMapRequests.delete(fileId);
         this.clearRequestQueue(fileId);
         this.channelMapRequestQueues.delete(fileId);
+    }
+
+    private dismissChannelMapTimeoutAlert(batchTiming?: ChannelMapRequest["batchTiming"]) {
+        if (batchTiming?.timeoutAlert) {
+            AppStore.Instance.alertStore.dismissInteractiveAlert(batchTiming.timeoutAlert);
+            batchTiming.timeoutAlert = undefined;
+        }
     }
 
     private clearChannelMapRequestTimers(fileId: number) {
@@ -586,6 +612,8 @@ export class TileService {
     cancelChannelMapRequests(fileId?: number) {
         const fileIds = fileId === undefined ? new Set([...this.channelMapRequestQueues.keys(), ...this.activeChannelMapRequests.keys(), ...this.desiredChannelMapStokes.keys(), ...this.confirmedChannelMapStokes.keys()]) : [fileId];
         fileIds.forEach(id => {
+            this.dismissChannelMapTimeoutAlert(this.activeChannelMapRequests.get(id)?.batchTiming);
+            this.channelMapRequestQueues.get(id)?.forEach(request => this.dismissChannelMapTimeoutAlert(request.batchTiming));
             this.clearChannelMapRequestTimers(id);
             this.clearRequestQueue(id);
             this.clearChannelMapSynchronization(id);

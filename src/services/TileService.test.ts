@@ -1,7 +1,7 @@
 jest.mock("models", () => ({TileCoordinate: {}}));
 jest.mock("components/Shared", () => ({AppToaster: {show: jest.fn()}, SuccessToast: jest.fn((_icon, message) => ({message}))}));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
-jest.mock("stores", () => ({AppStore: {Instance: {alertStore: {showInteractiveAlert: jest.fn()}}}, PREVIEW_PV_FILEID: -1}));
+jest.mock("stores", () => ({AppStore: {Instance: {alertStore: {dismissInteractiveAlert: jest.fn(), showInteractiveAlert: jest.fn()}}}, PREVIEW_PV_FILEID: -1}));
 jest.mock("utilities", () => ({clamp: jest.fn(), copyToFP32Texture: jest.fn(), createFP32Texture: jest.fn(), GL2: {}}));
 jest.mock("!worker-loader!zfp_wrapper", () => jest.fn());
 
@@ -95,12 +95,14 @@ const Complete = (channel: number) => ({
 });
 
 const MockShowInteractiveAlert = AppStore.Instance.alertStore.showInteractiveAlert as jest.Mock;
+const MockDismissInteractiveAlert = AppStore.Instance.alertStore.dismissInteractiveAlert as jest.Mock;
 const MockShowToast = AppToaster.show as jest.Mock;
 const MockSuccessToast = SuccessToast as jest.Mock;
 
 describe("TileService channel map request queue", () => {
     beforeEach(() => {
         jest.useFakeTimers();
+        MockDismissInteractiveAlert.mockReset();
         MockShowInteractiveAlert.mockReset();
         MockShowToast.mockReset();
         MockSuccessToast.mockClear();
@@ -396,10 +398,52 @@ describe("TileService channel map request queue", () => {
         jest.advanceTimersByTime(1);
         await Promise.resolve();
 
-        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Loading channel 1 is taking longer than 40 seconds"), "warning-sign");
+        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Updating channel map takes longer than 40 seconds"), "warning-sign");
         expect(service.activeChannelMapRequests.has(1)).toBe(true);
         expect(service.channelMapRequestQueues.has(1)).toBe(true);
         expect(service.channelMapRequestTimeouts.has(1)).toBe(true);
+
+        jest.advanceTimersByTime(10_000);
+        service.handleChannelMapFlowControl(1, Complete(1));
+        jest.advanceTimersByTime(29_999);
+        expect(MockShowInteractiveAlert).toHaveBeenCalledTimes(1);
+        jest.advanceTimersByTime(1);
+        await Promise.resolve();
+        expect(MockShowInteractiveAlert).toHaveBeenCalledTimes(2);
+    });
+
+    test("shares one timeout across all channels in a request", async () => {
+        const service = CreateService();
+        MockShowInteractiveAlert.mockResolvedValue(false);
+        service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2), MakeRequest(3), MakeRequest(4)]);
+
+        jest.advanceTimersByTime(50_000);
+        service.handleChannelMapFlowControl(1, Complete(1));
+        jest.advanceTimersByTime(29_999);
+        expect(MockShowInteractiveAlert).not.toHaveBeenCalled();
+
+        jest.advanceTimersByTime(1);
+        await Promise.resolve();
+
+        expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Updating channel map takes longer than 80 seconds"), "warning-sign");
+    });
+
+    test("dismisses its timeout alert when all requested channels finish", async () => {
+        const service = CreateService();
+        let resolveDecision: (shouldKeepWaiting: boolean) => void;
+        const timeoutAlert = new Promise<boolean>(resolve => (resolveDecision = resolve));
+        MockShowInteractiveAlert.mockReturnValue(timeoutAlert);
+        service.queueChannelMapRequests(1, [MakeRequest(1), MakeRequest(2)]);
+
+        jest.advanceTimersByTime(40_000);
+        service.handleChannelMapFlowControl(1, Complete(1));
+        expect(MockDismissInteractiveAlert).not.toHaveBeenCalled();
+
+        service.handleChannelMapFlowControl(2, Complete(2));
+        expect(MockDismissInteractiveAlert).toHaveBeenCalledWith(timeoutAlert);
+
+        resolveDecision!(false);
+        await Promise.resolve();
     });
 
     test("clears the stalled request when the user stops waiting", async () => {

@@ -97,6 +97,12 @@ export class AlertStore {
         }
     };
 
+    @action dismissInteractiveAlert = (promise: Promise<boolean>) => {
+        if (this.interactionPromise?.promise === promise) {
+            this.handleInteractiveAlertClosed(false);
+        }
+    };
+
     private constructor() {
         makeObservable(this);
     }
