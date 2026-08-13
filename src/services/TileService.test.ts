@@ -34,6 +34,7 @@ type TestTileService = {
     handleStreamSync: (message: CARTA.RasterTileSync.$Properties) => void;
     isAnimationEnabled: boolean;
     pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
+    pendingRequestTilesBySyncId: Map<number, Set<number>>;
     pendingRequests: Map<string, Map<number, boolean>>;
     pendingSynchronisedTiles: Map<string, Set<number>>;
     queueChannelMapRequests: (fileId: number, requests: unknown[]) => void;
@@ -46,6 +47,7 @@ type TestTileService = {
     syncIdMap: Map<number, boolean>;
     syncIdTileCountMap: Map<number, number>;
     tileStream: {next: jest.Mock};
+    trackPendingRequests: (fileId: number, channel: number, stokes: number, tiles: number[]) => void;
     textureCoordinateQueue: number[];
     updateChannelMapActiveChannel: TileService["updateChannelMapActiveChannel"];
     updateHiddenFileChannels: TileService["updateHiddenFileChannels"];
@@ -70,6 +72,7 @@ const CreateService = () => {
     service.desiredChannelMapStokes = new Map();
     service.pendingRequests = new Map();
     service.pendingDecompressions = new Map();
+    service.pendingRequestTilesBySyncId = new Map();
     service.pendingSynchronisedTiles = new Map();
     service.receivedSynchronisedTiles = new Map();
     service.syncIdGenerationMap = new Map();
@@ -215,6 +218,19 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 1, {}, true);
     });
 
+    test("does not retain synchronization state for cached Stokes channels", () => {
+        const service = CreateService();
+        service.clearQueueForChannelMap = jest.fn();
+        const tile = {x: 0, y: 0, encode: () => 4};
+        service.getRequiredRequestTiles = jest.fn((_tiles, _fileId, channel) => (channel === 1 ? [tile] : []));
+        const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
+
+        service.requestChannelMapTiles([tile] as never, frame as never, {x: 0, y: 0}, 11, {min: 0, max: 2}, true);
+
+        expect(Array.from(service.pendingSynchronisedTiles.keys())).toEqual(["1_1_1"]);
+    });
+
     test("preserves a Stokes transition when a refresh replaces the queue", () => {
         const service = CreateService();
         service.clearQueueForChannelMap = jest.fn();
@@ -237,6 +253,7 @@ describe("TileService channel map request queue", () => {
     test.each([CARTA.ChannelMapFlowControl.Status.REJECTED, CARTA.ChannelMapFlowControl.Status.CANCELLED])("stops the sequence when the backend returns status %s", status => {
         const service = CreateService();
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
 
         service.handleChannelMapFlowControl(1, {
             fileId: 1,
@@ -247,6 +264,10 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
         expect(service.channelMapRequestQueues.has(1)).toBe(false);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
+        expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
+        expect(service.pendingRequestTilesBySyncId.has(7)).toBe(false);
+        expect(service.syncIdGenerationMap.has(7)).toBe(false);
+        expect(service.channelMapGenerations.get(1)).toBe(1);
     });
 
     test("treats GPU-cached tiles as satisfied", () => {
@@ -357,6 +378,7 @@ describe("TileService channel map request queue", () => {
         service.syncIdMap.set(7, false);
         service.syncIdTileCountMap.set(7, 1);
         service.syncIdGenerationMap.set(7, 3);
+        service.pendingRequestTilesBySyncId.set(7, new Set([4]));
 
         service.resetForSessionResume();
 
@@ -368,6 +390,7 @@ describe("TileService channel map request queue", () => {
         expect(service.syncIdMap.size).toBe(0);
         expect(service.syncIdTileCountMap.size).toBe(0);
         expect(service.syncIdGenerationMap.size).toBe(0);
+        expect(service.pendingRequestTilesBySyncId.size).toBe(0);
         expect(service.channelMapGenerations.get(1)).toBe(4);
     });
 
@@ -437,6 +460,8 @@ describe("TileService channel map request queue", () => {
 
         jest.advanceTimersByTime(40_000);
         service.handleChannelMapFlowControl(1, Complete(1));
+        jest.advanceTimersByTime(100_000);
+        expect(MockShowInteractiveAlert).toHaveBeenCalledTimes(1);
         expect(MockDismissInteractiveAlert).not.toHaveBeenCalled();
 
         service.handleChannelMapFlowControl(2, Complete(2));
@@ -457,9 +482,10 @@ describe("TileService channel map request queue", () => {
         expect(service.activeChannelMapRequests.has(1)).toBe(false);
         expect(service.channelMapRequestQueues.has(1)).toBe(false);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
+        expect(service.channelMapGenerations.get(1)).toBe(1);
     });
 
-    test("ignores a timeout decision after the request completes", async () => {
+    test("applies a timeout decision to the current request in the same batch", async () => {
         const service = CreateService();
         let resolveDecision: (shouldKeepWaiting: boolean) => void;
         MockShowInteractiveAlert.mockReturnValue(new Promise(resolve => (resolveDecision = resolve)));
@@ -471,7 +497,8 @@ describe("TileService channel map request queue", () => {
         await Promise.resolve();
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
-        expect(service.activeChannelMapRequests.get(1)).toEqual(expect.objectContaining({channel: 2, requestId: 2}));
+        expect(service.activeChannelMapRequests.has(1)).toBe(false);
+        expect(service.channelMapRequestQueues.has(1)).toBe(false);
     });
 
     test("retires synchronization state when cancelled", () => {
@@ -484,6 +511,7 @@ describe("TileService channel map request queue", () => {
         service.syncIdMap.set(7, true);
         service.syncIdTileCountMap.set(7, 1);
         service.syncIdGenerationMap.set(7, 0);
+        service.pendingRequestTilesBySyncId.set(7, new Set([4]));
 
         service.cancelChannelMapRequests(1);
 
@@ -495,6 +523,7 @@ describe("TileService channel map request queue", () => {
         expect(service.syncIdMap.has(7)).toBe(false);
         expect(service.syncIdTileCountMap.has(7)).toBe(false);
         expect(service.syncIdGenerationMap.has(7)).toBe(false);
+        expect(service.pendingRequestTilesBySyncId.has(7)).toBe(false);
     });
 
     test("discards decompression results from a cancelled generation", () => {
@@ -534,6 +563,21 @@ describe("TileService channel map request queue", () => {
         expect(service.pendingSynchronisedTiles.has("1_0_1")).toBe(false);
         expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
         expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 0, fileId: 1, channel: 1, stokes: 0, flush: true});
+    });
+
+    test("keeps a newer overlapping request pending when an older sync completes", () => {
+        const service = CreateService();
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
+        service.trackPendingRequests(1, 1, 0, [4]);
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
+
+        service.trackPendingRequests(1, 1, 0, [4, 5]);
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 0, endSync: true});
+
+        expect(Array.from(service.pendingRequests.get("1_0_1")?.keys() ?? [])).toEqual([4, 5]);
+
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 8, animationId: 0, tileCount: 2, endSync: false});
+        expect(service.pendingRequestTilesBySyncId.get(8)).toEqual(new Set([4, 5]));
     });
 
     test("keeps hidden-file caches when only the channel changes", () => {
