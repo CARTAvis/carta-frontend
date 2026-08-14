@@ -766,7 +766,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     {this.renderScalingParameter(widgetStore.colorScalingType, widgetStore.colorScalingParameter, value => widgetStore.setColorScalingParameter(value), shouldDisableColorMap)}
                     <FormGroup inline={true} label="Colormap" disabled={shouldDisableColorMap}>
                         <ColormapComponent
-                            inverted={false}
+                            inverted={widgetStore.isInvertedColorMap}
                             selectedColormap={widgetStore.colorMap}
                             onColormapSelect={selected => this.handleColormapSelected(widgetStore, selected)}
                             onColormapHover={colormap => this.handleColormapHovered(widgetStore, colormap)}
