@@ -3710,7 +3710,7 @@ export class AppStore {
         return new Promise<void>(resolve => {
             when(
                 () => {
-                    const isLoadingTiles = this.tileService.remainingTiles > 0;
+                    const isLoadingTiles = this.channelMapStore.isChannelMapEnabled ? this.tileService.isChannelMapLoading : this.tileService.remainingTiles > 0;
                     let isLoadingContours = false;
                     for (const frame of this.imageViewConfigStore.visibleFrames) {
                         if (frame.contourProgress >= 0 && frame.contourProgress < 1) {

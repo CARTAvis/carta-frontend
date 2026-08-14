@@ -177,6 +177,10 @@ export class TileService {
         return this.workersReady && this.workersReady.every(isReady => isReady);
     }
 
+    @computed get isChannelMapLoading() {
+        return this.channelMapTotalTiles > 0 && this.channelMapRenderedTiles < this.channelMapTotalTiles;
+    }
+
     @action setWorkerReady(index: number) {
         if (this.workersReady && index >= 0 && index < this.workersReady.length) {
             this.workersReady[index] = true;

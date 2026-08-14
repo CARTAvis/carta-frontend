@@ -374,7 +374,7 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const isLoadingTiles = appStore.tileService.remainingTiles > 0;
+        const isLoadingTiles = appStore.channelMapStore.isChannelMapEnabled ? appStore.tileService.isChannelMapLoading : appStore.tileService.remainingTiles > 0;
         const isLoadingContours = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
         const isLoadingVectorOverlay = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;

@@ -15,7 +15,7 @@ export const ChannelMapProgressComponent: React.FC = observer(() => {
     const appStore = AppStore.Instance;
     const totalTiles = tileService.channelMapTotalTiles;
     const renderedTiles = Math.min(tileService.channelMapRenderedTiles, totalTiles);
-    const isLoading = totalTiles > 0 && renderedTiles < totalTiles;
+    const isLoading = tileService.isChannelMapLoading;
     const [shouldShowProgress, setShouldShowProgress] = React.useState(false);
 
     React.useEffect(() => {
