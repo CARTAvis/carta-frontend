@@ -433,7 +433,14 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isVectorOverlayColormapInverted}
+                        selectedColormap={preference.vectorOverlayColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch checked={preference.isVectorOverlayColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

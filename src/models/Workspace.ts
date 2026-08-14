@@ -58,6 +58,7 @@ export interface WorkspaceVectorOverlayConfig {
     visible: boolean;
     thickness: number;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     color?: RgbaColor;
     colormap?: string;
     colormapContrast: number;
@@ -233,6 +234,7 @@ export class WorkspaceConfig {
             isVisible,
             thickness,
             isColormapEnabled,
+            isColormapInverted,
             color,
             colormap,
             colormapContrast,
@@ -262,6 +264,7 @@ export class WorkspaceConfig {
             visible: isVisible,
             thickness,
             colormapEnabled: isColormapEnabled,
+            colormapInverted: isColormapInverted,
             color,
             colormap,
             colormapContrast,

@@ -63,6 +63,7 @@ const DEFAULTS = {
         vectorOverlayFractionalIntensity: false,
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
+        vectorOverlayColormapInverted: false,
         vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: ColorMap.Viridis
     },
@@ -376,6 +377,10 @@ export class PreferenceStore {
 
     @computed get isVectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    }
+
+    @computed get isVectorOverlayColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapInverted;
     }
 
     @computed get vectorOverlayColor(): string {
@@ -820,6 +825,7 @@ export class PreferenceStore {
             PreferenceKeys.VECTOR_OVERLAY_COLOR,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED,
             PreferenceKeys.VECTOR_OVERLAY_THICKNESS
         ]);
     };

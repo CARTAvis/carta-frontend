@@ -47,6 +47,7 @@ export enum PreferenceKeys {
     VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
     VECTOR_OVERLAY_THICKNESS = "vectorOverlayThickness",
     VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
+    VECTOR_OVERLAY_COLORMAP_INVERTED = "vectorOverlayColormapInverted",
     VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
     VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
 
