@@ -444,7 +444,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
                         <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                         <MenuDivider />
-                        <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortFramesByTime()} data-testid="layer-list-sort-images-by-time" />
+                        <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortImagesByTime()} data-testid="layer-list-sort-images-by-time" />
                     </Menu>
                 );
             } else {
@@ -466,7 +466,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <MenuItem text="Close other images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(frame)} />
                             <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
                             <MenuDivider />
-                            <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortFramesByTime()} data-testid="layer-list-sort-images-by-time" />
+                            <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortImagesByTime()} data-testid="layer-list-sort-images-by-time" />
                         </Menu>
                     );
                 }

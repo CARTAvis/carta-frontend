@@ -1262,7 +1262,7 @@ export class AppStore {
     };
 
     /** Sorts the image list by ascending observation time; images without a valid time keep their relative order at the end. */
-    @action sortFramesByTime = () => {
+    @action sortImagesByTime = () => {
         this.imageViewConfigStore.sortImagesByTime();
     };
 
