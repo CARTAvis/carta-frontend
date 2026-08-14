@@ -41,6 +41,19 @@
             .#{$ns}-switch {
                 margin-bottom: 0;
             }
+
+            .redshift-correction-switch-with-info {
+                display: flex;
+                align-items: center;
+                gap: 0.35em;
+            }
+
+            .redshift-correction-info {
+                display: inline-flex;
+                cursor: help;
+                opacity: 0.8;
+                transform: translateY(0.3em);
+            }
         }
 
         .redshift-input {
@@ -70,4 +83,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+}
+
+.redshift-correction-tooltip {
+    width: 20em;
+    max-width: calc(100vw - 2em);
+    white-space: normal;
 }

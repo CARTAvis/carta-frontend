@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Icon, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -250,13 +250,27 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
                                                 data-testid="spectral-profiler-x-axis-rest-frame-switch"
                                             />
-                                            <Switch
-                                                checked={widgetStore.isYAxisRestFrameActive}
-                                                disabled={isYAxisRestFrameInputDisabled}
-                                                label="Y-axis"
-                                                onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
-                                                data-testid="spectral-profiler-y-axis-rest-frame-switch"
-                                            />
+                                            <div className="redshift-correction-switch-with-info">
+                                                <Switch
+                                                    checked={widgetStore.isYAxisRestFrameActive}
+                                                    disabled={isYAxisRestFrameInputDisabled}
+                                                    label="Y-axis"
+                                                    onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
+                                                    data-testid="spectral-profiler-y-axis-rest-frame-switch"
+                                                />
+                                                <Tooltip
+                                                    content={
+                                                        <div className="redshift-correction-tooltip">
+                                                            <div>This applies only the flux-density redshift scaling and does not include a luminosity-distance correction.</div>
+                                                        </div>
+                                                    }
+                                                    position={Position.TOP}
+                                                >
+                                                    <span className="redshift-correction-info" aria-label="Y-axis redshift correction details" tabIndex={0}>
+                                                        <Icon icon="info-sign" size={12} />
+                                                    </span>
+                                                </Tooltip>
+                                            </div>
                                         </div>
                                     </FormGroup>
                                     <FormGroup inline={true} label={"Redshift (z)"} contentClassName="reference-frame-form-content">
