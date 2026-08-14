@@ -8,15 +8,28 @@ import {AppStore} from "stores";
 
 import "./ChannelMapProgressComponent.scss";
 
+const PROGRESS_DISPLAY_DELAY = 3_000;
+
 export const ChannelMapProgressComponent: React.FC = observer(() => {
     const tileService = TileService.Instance;
     const appStore = AppStore.Instance;
     const totalTiles = tileService.channelMapTotalTiles;
     const renderedTiles = Math.min(tileService.channelMapRenderedTiles, totalTiles);
-    const isOpen = totalTiles > 0 && renderedTiles < totalTiles;
+    const isLoading = totalTiles > 0 && renderedTiles < totalTiles;
+    const [shouldShowProgress, setShouldShowProgress] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isLoading) {
+            setShouldShowProgress(false);
+            return undefined;
+        }
+
+        const timeout = setTimeout(() => setShouldShowProgress(true), PROGRESS_DISPLAY_DELAY);
+        return () => clearTimeout(timeout);
+    }, [isLoading]);
 
     return (
-        <Overlay2 autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} enforceFocus={false} hasBackdrop={false} isOpen={isOpen} transitionDuration={0}>
+        <Overlay2 autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} enforceFocus={false} hasBackdrop={false} isOpen={isLoading && shouldShowProgress} transitionDuration={0}>
             <Card className={classNames("channel-map-progress-card", {[Classes.DARK]: appStore.isDarkTheme})} data-testid="channel-map-progress">
                 <div className="channel-map-progress-label">
                     <span>Channel map tiles</span>
