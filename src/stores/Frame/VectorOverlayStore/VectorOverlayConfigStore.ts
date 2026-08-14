@@ -170,7 +170,7 @@ export class VectorOverlayConfigStore {
         this.rotationOffset = config.rotationOffset;
 
         this.isColormapEnabled = config.colormapEnabled;
-        this.isColormapInverted = config.colormapInverted ?? this.isColormapInverted;
+        this.isColormapInverted = config.colormapInverted ?? false;
         if (config.color) {
             this.color = config.color;
         }

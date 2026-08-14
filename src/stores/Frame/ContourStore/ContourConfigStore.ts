@@ -103,7 +103,7 @@ export class ContourConfigStore {
         this.isVisible = config.visible;
 
         this.isColormapEnabled = config.colormapEnabled;
-        this.isColormapInverted = config.colormapInverted ?? this.isColormapInverted;
+        this.isColormapInverted = config.colormapInverted ?? false;
         if (config.color) {
             this.color = config.color;
         }
