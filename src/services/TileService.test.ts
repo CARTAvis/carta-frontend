@@ -1,5 +1,4 @@
 jest.mock("models", () => ({TileCoordinate: {}}));
-jest.mock("components/Shared", () => ({AppToaster: {show: jest.fn()}, SuccessToast: jest.fn((_icon, message) => ({message}))}));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
 jest.mock("stores", () => ({
     AppStore: {
@@ -15,7 +14,6 @@ jest.mock("!worker-loader!zfp_wrapper", () => jest.fn());
 
 import {CARTA} from "carta-protobuf";
 
-import {AppToaster, SuccessToast} from "components/Shared";
 import {AppStore} from "stores";
 
 import {TileService} from "./TileService";
@@ -23,13 +21,14 @@ import {TileService} from "./TileService";
 type TestTileService = {
     backendService: {addRequiredTiles: jest.Mock; animationId: number; setChannels: jest.Mock};
     cachedTiles: {get?: jest.Mock; has: jest.Mock; peek?: jest.Mock; setpop?: jest.Mock};
+    channelMapRenderedTiles: number;
+    channelMapTotalTiles: number;
     channelMapStates: Map<
         number,
         {
             queue: unknown[];
             activeRequest?: {channel: number; requestId: number};
             timeout?: ReturnType<typeof setTimeout>;
-            progressInterval?: ReturnType<typeof setInterval>;
             desiredStokes?: number;
             confirmedStokes?: number;
             generation: number;
@@ -87,6 +86,8 @@ const CreateService = () => {
     let requestId = 0;
     service.backendService = {addRequiredTiles: jest.fn(() => ++requestId), animationId: 0, setChannels: jest.fn(() => ++requestId)};
     service.channelMapStates = new Map();
+    service.channelMapRenderedTiles = 0;
+    service.channelMapTotalTiles = 0;
     service.fileStateMap = new Map();
     service.clearCompressedCache = jest.fn();
     service.clearGPUCache = jest.fn();
@@ -116,8 +117,6 @@ const Complete = (channel: number) => ({
 
 const MockShowInteractiveAlert = AppStore.Instance.alertStore.showInteractiveAlert as jest.Mock;
 const MockDismissInteractiveAlert = AppStore.Instance.alertStore.dismissInteractiveAlert as jest.Mock;
-const MockShowToast = AppToaster.show as jest.Mock;
-const MockSuccessToast = SuccessToast as jest.Mock;
 const GetChannelMapState = (service: TestTileService, fileId: number = 1) => service.channelMapStates.get(fileId);
 const MakeRasterRequest = (tiles: number[], viewGeneration: number = 1, shouldSynchronize: boolean = true): RasterRequestState => ({
     key: "1_0_1",
@@ -140,8 +139,6 @@ describe("TileService channel map request queue", () => {
         jest.useFakeTimers();
         MockDismissInteractiveAlert.mockReset();
         MockShowInteractiveAlert.mockReset();
-        MockShowToast.mockReset();
-        MockSuccessToast.mockClear();
     });
 
     afterEach(() => {
@@ -217,6 +214,7 @@ describe("TileService channel map request queue", () => {
         service.handleChannelMapFlowControl(2, Complete(2));
 
         expect(service.backendService.setChannels.mock.calls.map(call => call[1])).toEqual([1, 2, 1]);
+        expect(service.channelMapTotalTiles).toBe(1);
     });
 
     test("requests uncached active-channel tiles first and restores the selected channel", () => {
@@ -428,23 +426,6 @@ describe("TileService channel map request queue", () => {
         expect(service.rasterSyncStates.size).toBe(0);
         expect(service.rasterViewGenerations.size).toBe(0);
         expect(GetChannelMapState(service)?.generation).toBe(4);
-    });
-
-    test("reports received channel-map tiles every 5 seconds", () => {
-        const service = CreateService();
-        service.queueChannelMapRequests(1, [MakeRequest(1, [4, 5]), MakeRequest(2, [6]), MakeRequest(3, [7])]);
-
-        jest.advanceTimersByTime(5_000);
-        expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 0 / 2 requested tiles.", 5_000);
-
-        service.pendingRequests.get("1_0_1")?.delete(4);
-        jest.advanceTimersByTime(5_000);
-        expect(MockSuccessToast).toHaveBeenLastCalledWith("download", "Loading channel 1: received 1 / 2 requested tiles.", 5_000);
-        expect(MockShowToast).toHaveBeenCalledTimes(2);
-
-        service.cancelChannelMapRequests(1);
-        jest.advanceTimersByTime(5_000);
-        expect(MockShowToast).toHaveBeenCalledTimes(2);
     });
 
     test("restarts the timeout when the user chooses to keep waiting", async () => {

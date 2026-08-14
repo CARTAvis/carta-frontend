@@ -16,6 +16,7 @@ import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 
 import {ChannelMapLabelComponent} from "./ChannelMapLabelComponent";
+import {ChannelMapProgressComponent} from "./ChannelMapProgressComponent";
 
 export class ChannelMapViewComponentProps {
     isDocked: boolean;
@@ -145,6 +146,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             onMouseOver={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
+            <ChannelMapProgressComponent />
             <ChannelMapInnerOverlayComponent frame={frame} docked={props.isDocked} />
             {overlayComponents}
             <RasterViewComponent

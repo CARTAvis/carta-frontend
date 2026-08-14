@@ -1,0 +1,16 @@
+.channel-map-progress-card {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    width: 220px;
+    padding: 10px;
+    pointer-events: none;
+}
+
+.channel-map-progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
