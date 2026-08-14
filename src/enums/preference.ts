@@ -39,6 +39,7 @@ export enum PreferenceKeys {
     CONTOUR_CONFIG_NUM_LEVELS = "contourNumLevels",
     CONTOUR_CONFIG_THICKNESS = "contourThickness",
     CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
+    CONTOUR_CONFIG_COLORMAP_INVERTED = "contourColormapInverted",
     CONTOUR_CONFIG_COLOR = "contourColor",
     CONTOUR_CONFIG_COLORMAP = "contourColormap",
 

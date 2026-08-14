@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
+import {Button, FormGroup, HTMLSelect, MenuItem, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import type {ColorResult} from "@uiw/react-color";
 import {observer} from "mobx-react";
@@ -110,13 +110,16 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                 </FormGroup>
                 <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.isColormapEnabled}>
                     <ColormapComponent
-                        inverted={false}
+                        inverted={frame.contourConfig.isColormapInverted}
                         disabled={!frame.contourConfig.isColormapEnabled}
                         selectedColormap={frame.contourConfig.colormap}
                         onColormapSelect={colormap => this.handleColormapSelected(frame.contourConfig, colormap)}
                         onColormapHover={colormap => this.handleColormapHovered(frame.contourConfig, colormap)}
                         onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap" disabled={!frame.contourConfig.isColormapEnabled}>
+                    <Switch checked={frame.contourConfig.isColormapInverted} onChange={ev => frame.contourConfig.setColormapInverted(ev.currentTarget.checked)} disabled={!frame.contourConfig.isColormapEnabled} />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput

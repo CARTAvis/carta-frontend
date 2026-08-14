@@ -372,7 +372,14 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isContourColormapInverted}
+                        selectedColormap={preference.contourColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch checked={preference.isContourColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

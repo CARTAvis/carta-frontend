@@ -34,6 +34,7 @@ export interface WorkspaceContourConfig {
     smoothingFactor: number;
     color?: RgbaColor;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
@@ -194,7 +195,7 @@ export class WorkspaceConfig {
     }
 
     public static createContourConfig(contourConfig: ContourConfigStore): WorkspaceContourConfig | undefined {
-        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
+        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, isColormapInverted, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
 
         if (!isEnabled) {
             return undefined;
@@ -206,6 +207,7 @@ export class WorkspaceConfig {
             smoothingFactor,
             color,
             colormapEnabled: isColormapEnabled,
+            colormapInverted: isColormapInverted,
             colormap,
             colormapContrast,
             colormapBias,

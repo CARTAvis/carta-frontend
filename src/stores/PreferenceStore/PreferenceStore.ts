@@ -54,6 +54,7 @@ const DEFAULTS = {
         contourNumLevels: 5,
         contourThickness: 1,
         contourColormapEnabled: false,
+        contourColormapInverted: false,
         contourColor: Colors.GREEN3,
         contourColormap: ColorMap.Viridis
     },
@@ -318,6 +319,10 @@ export class PreferenceStore {
 
     @computed get isContourColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+    }
+
+    @computed get isContourColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapInverted;
     }
 
     @computed get contourColormap(): string {
@@ -796,6 +801,7 @@ export class PreferenceStore {
             PreferenceKeys.CONTOUR_CONFIG_COLOR,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
             PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
             PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
