@@ -3,7 +3,7 @@ import {Classes} from "@blueprintjs/core";
 import {act, render, screen} from "@testing-library/react";
 
 const MOCK_TILE_SERVICE = {channelMapTotalTiles: 10, channelMapRenderedTiles: 6, isChannelMapLoading: true};
-const MOCK_APP_STORE = {isDarkTheme: false};
+const MOCK_APP_STORE = {isDarkTheme: false, loadingStateStore: {isLoadingTiles: true}};
 
 jest.mock("services", () => ({TileService: {Instance: MOCK_TILE_SERVICE}}));
 jest.mock("stores", () => ({AppStore: {Instance: MOCK_APP_STORE}}));
@@ -14,6 +14,7 @@ describe("ChannelMapProgressComponent", () => {
     beforeEach(() => {
         jest.useFakeTimers();
         MOCK_APP_STORE.isDarkTheme = false;
+        MOCK_APP_STORE.loadingStateStore.isLoadingTiles = true;
         MOCK_TILE_SERVICE.channelMapRenderedTiles = 6;
         MOCK_TILE_SERVICE.isChannelMapLoading = true;
     });
@@ -43,6 +44,7 @@ describe("ChannelMapProgressComponent", () => {
     test("hides after all channel-map tiles are rendered", () => {
         MOCK_TILE_SERVICE.channelMapRenderedTiles = 10;
         MOCK_TILE_SERVICE.isChannelMapLoading = false;
+        MOCK_APP_STORE.loadingStateStore.isLoadingTiles = false;
         render(<ChannelMapProgressComponent />);
 
         expect(screen.queryByTestId("channel-map-progress")).not.toBeInTheDocument();
@@ -52,6 +54,7 @@ describe("ChannelMapProgressComponent", () => {
         const {unmount} = render(<ChannelMapProgressComponent />);
         MOCK_TILE_SERVICE.channelMapRenderedTiles = 10;
         MOCK_TILE_SERVICE.isChannelMapLoading = false;
+        MOCK_APP_STORE.loadingStateStore.isLoadingTiles = false;
         unmount();
         render(<ChannelMapProgressComponent />);
         act(() => jest.advanceTimersByTime(3_000));
