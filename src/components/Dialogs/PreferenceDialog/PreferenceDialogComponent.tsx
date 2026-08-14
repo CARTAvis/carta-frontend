@@ -266,7 +266,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
-                        inverted={false}
+                        inverted={preference.isColormapInverted}
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
@@ -275,6 +275,9 @@ export class PreferenceDialogComponent extends React.Component {
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch checked={preference.isColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
                     <PercentileSelect

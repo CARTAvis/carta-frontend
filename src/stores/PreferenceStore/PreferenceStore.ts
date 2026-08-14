@@ -41,6 +41,7 @@ const DEFAULTS = {
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
         colormap: ColorMap.Inferno,
+        colormapInverted: false,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
@@ -255,6 +256,10 @@ export class PreferenceStore {
 
     @computed get colormap(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+    }
+
+    @computed get isColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.RENDER_CONFIG.colormapInverted;
     }
 
     @computed get colormapHex(): string {
@@ -783,6 +788,7 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
