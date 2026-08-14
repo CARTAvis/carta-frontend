@@ -78,7 +78,7 @@ export class BackendService {
     private pingIntervalHandle: ReturnType<typeof setInterval> | undefined;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
-    readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
+    readonly rasterSyncStream: Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>;
     readonly channelMapFlowControlStream: Subject<ChannelMapFlowControlEvent>;
     readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     readonly errorStream: Subject<CARTA.ErrorData>;
@@ -106,7 +106,7 @@ export class BackendService {
         this.sessionId = 0;
         this.animationId = INVALID_ANIMATION_ID;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
-        this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
+        this.rasterSyncStream = new Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>();
         this.channelMapFlowControlStream = new Subject<ChannelMapFlowControlEvent>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
@@ -632,15 +632,16 @@ export class BackendService {
     }
 
     @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
+    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): number | null {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
-            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
-                return true;
+                return requestId;
             }
         }
-        return false;
+        return null;
     }
 
     @action("remove required tiles")
@@ -978,8 +979,8 @@ export class BackendService {
         this.rasterTileStream.next(rasterTileData);
     }
 
-    private onStreamedRasterSync(_eventId: number, rasterTileSync: CARTA.RasterTileSync) {
-        this.rasterSyncStream.next(rasterTileSync);
+    private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
+        this.rasterSyncStream.next({eventId, rasterTileSync});
     }
 
     private onChannelMapFlowControl(eventId: number, flowControl: CARTA.ChannelMapFlowControl) {
