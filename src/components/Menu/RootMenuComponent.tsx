@@ -374,9 +374,7 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const isLoadingTiles = appStore.tileService.remainingTiles > 0;
-        const isLoadingContours = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const isLoadingVectorOverlay = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const {isLoadingContours, isLoadingTiles, isLoadingVectorOverlay} = appStore.loadingStateStore;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
         let shouldShowLoadingIndicator = false;

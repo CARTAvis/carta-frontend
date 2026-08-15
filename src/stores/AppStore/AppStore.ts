@@ -64,6 +64,7 @@ import {
     ImageFittingStore,
     ImageViewConfigStore,
     LayoutStore,
+    LoadingStateStore,
     type LogEntry,
     LogStore,
     OverlaySettings,
@@ -134,6 +135,7 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
     readonly channelMapStore: ChannelMapStore;
+    readonly loadingStateStore: LoadingStateStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -1926,6 +1928,7 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
+        this.loadingStateStore = new LoadingStateStore(this.tileService, this.channelMapStore, () => this.activeFrame);
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
@@ -3703,22 +3706,14 @@ export class AppStore {
 
     // Waits for image data to be ready. This consists of three steps:
     // 1. Wait 500 ms to allow other commands that may request new data to execute
-    // 2. Use a MobX "when" to wait until no tiles or contours are required
+    // 2. Use a MobX "when" to wait until no image data is required
     // 3. Use a MobX "when" to wait for re-rendering of raster and contour canvas
     waitForImageData = async () => {
         await this.delay(500);
         return new Promise<void>(resolve => {
             when(
                 () => {
-                    const isLoadingTiles = this.tileService.remainingTiles > 0;
-                    let isLoadingContours = false;
-                    for (const frame of this.imageViewConfigStore.visibleFrames) {
-                        if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
-                            isLoadingContours = true;
-                            break;
-                        }
-                    }
-                    return !isLoadingTiles && !isLoadingContours;
+                    return !this.loadingStateStore.isLoading;
                 },
                 () => {
                     this.setIsCanvasUpdated(false);
