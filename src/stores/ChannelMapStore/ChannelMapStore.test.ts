@@ -139,6 +139,17 @@ describe("ChannelMapStore", () => {
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
         });
 
+        it("synchronizes tile delivery after a polarization change", () => {
+            const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
+            store.setChannelMapEnabled(true);
+            requestChannelMapTiles.mockClear();
+
+            store.handlePolarizationChanged(store.displayedFrame);
+
+            expect(requestChannelMapTiles.mock.lastCall?.[5]).toBe(true);
+            store.setChannelMapEnabled(false);
+        });
+
         it("requests tiles after session resume", () => {
             const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
             requestChannelMapTiles.mockClear();

@@ -9,7 +9,8 @@ export class LoadingStateStore {
     constructor(
         private readonly tileService: TileService,
         private readonly channelMapStore: ChannelMapStore,
-        private readonly getActiveFrame: () => FrameStore | null
+        private readonly getActiveFrame: () => FrameStore | null,
+        private readonly getVisibleFrames: () => FrameStore[]
     ) {
         makeObservable(this);
     }
@@ -29,6 +30,13 @@ export class LoadingStateStore {
     }
 
     @computed get isLoading() {
-        return this.isLoadingTiles || this.isLoadingContours || this.isLoadingVectorOverlay;
+        return (
+            this.isLoadingTiles ||
+            this.getVisibleFrames().some(frame => {
+                const contourProgress = frame.contourProgress;
+                const vectorProgress = frame.vectorOverlayStore.progress;
+                return (contourProgress >= 0 && contourProgress < 1) || (vectorProgress >= 0 && vectorProgress < 1);
+            })
+        );
     }
 }

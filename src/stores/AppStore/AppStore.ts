@@ -1928,7 +1928,12 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
-        this.loadingStateStore = new LoadingStateStore(this.tileService, this.channelMapStore, () => this.activeFrame);
+        this.loadingStateStore = new LoadingStateStore(
+            this.tileService,
+            this.channelMapStore,
+            () => this.activeFrame,
+            () => this.imageViewConfigStore.visibleFrames
+        );
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
