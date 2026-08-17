@@ -64,6 +64,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isXAxisRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
     @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.REDSHIFT;
+    @observable isRestFrameShiftInputValid: boolean = true;
     @observable isYAxisRestFrameEnabled: boolean = false;
 
     // style settings
@@ -159,6 +160,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setRestFrameShiftMode = (mode: RestFrameShiftMode) => {
         if (Object.values(RestFrameShiftMode).includes(mode)) {
             this.restFrameShiftMode = mode;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
+    @action setRestFrameShiftInputValid = (isValid: boolean) => {
+        if (isValid !== this.isRestFrameShiftInputValid) {
+            this.isRestFrameShiftInputValid = isValid;
+            this.resetSpectralDisplayState();
         }
     };
 
@@ -588,19 +597,27 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get isXAxisRestFrameActive(): boolean {
-        return this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported && isFinite(this.restFrameRedshift) && this.restFrameRedshift > -1;
+        return this.isRestFrameShiftInputValid && this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported && isFinite(this.restFrameRedshift) && this.restFrameRedshift > -1;
     }
 
     @computed get isYAxisRestFrameActive(): boolean {
-        return this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported && isFinite(this.restFrameRedshift) && this.restFrameRedshift > -1;
+        return this.isRestFrameShiftInputValid && this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported && isFinite(this.restFrameRedshift) && this.restFrameRedshift > -1;
+    }
+
+    @computed get isRestFrameCorrectionRequested(): boolean {
+        return (this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported) || (this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported);
     }
 
     @computed get isRedshiftCorrectionActive(): boolean {
         return this.isXAxisRestFrameActive || this.isYAxisRestFrameActive;
     }
 
+    @computed get effectiveRestFrameRedshift(): number {
+        return this.isRestFrameShiftInputValid ? this.restFrameRedshift : 0;
+    }
+
     @computed get redshiftFactor(): number {
-        return this.isRedshiftCorrectionActive ? this.restFrameRedshift + 1 : 1;
+        return this.isRestFrameCorrectionRequested ? this.effectiveRestFrameRedshift + 1 : 1;
     }
 
     @computed get restFrameRadialVelocity(): number {
@@ -1165,6 +1182,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.restFrameRedshift === "number" && isFinite(widgetSettings.restFrameRedshift) && widgetSettings.restFrameRedshift > -1) {
             this.restFrameRedshift = widgetSettings.restFrameRedshift;
         }
+        this.isRestFrameShiftInputValid = true;
         if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
             this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
         }

@@ -431,6 +431,39 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
+    test("keeps the previous canonical redshift when either input is invalid", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(0.25);
+
+        widgetStore.setRestFrameRadialVelocity(299792.458);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+
+        widgetStore.setRestFrameRedshift(-1);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("temporarily uses zero redshift without clearing the selected correction toggles", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.redshiftFactor).toBe(2);
+
+        widgetStore.setRestFrameShiftInputValid(false);
+
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(false);
+        expect(widgetStore.effectiveRestFrameRedshift).toBe(0);
+        expect(widgetStore.redshiftFactor).toBe(1);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+
+        widgetStore.setRestFrameShiftInputValid(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.redshiftFactor).toBe(2);
+    });
+
     test("restores the shift mode while keeping legacy redshift configs valid", () => {
         const {widgetStore} = createWidgetStore();
         runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));

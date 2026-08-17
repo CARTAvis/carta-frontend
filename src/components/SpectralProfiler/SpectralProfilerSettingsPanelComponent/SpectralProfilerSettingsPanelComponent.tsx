@@ -85,10 +85,16 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
-    @action private onShiftInputChanged = (value: number) => {
+    private isValidShiftInput = (value: number): boolean => {
         const isRadialVelocityMode = this.widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const isValid = isRadialVelocityMode ? isFinite(value) && Math.abs(value) < SPEED_OF_LIGHT_KMS : isFinite(value) && value > -1;
+        return isRadialVelocityMode ? isFinite(value) && Math.abs(value) < SPEED_OF_LIGHT_KMS : isFinite(value) && value > -1;
+    };
+
+    @action private onShiftChanged = (value: number) => {
+        const isRadialVelocityMode = this.widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const isValid = this.isValidShiftInput(value);
         this.shiftInputIntent = isValid ? Intent.NONE : Intent.DANGER;
+        this.widgetStore?.setRestFrameShiftInputValid(isValid);
         if (isValid) {
             if (isRadialVelocityMode) {
                 this.widgetStore?.setRestFrameRadialVelocity(value);
@@ -219,8 +225,12 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const isCoordinateSettingDisabled = widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel;
         const isXAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isXAxisRestFrameSupported;
         const isYAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isYAxisRestFrameSupported;
-        const isShiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRedshiftCorrectionActive;
+        const isShiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameCorrectionRequested;
         const isRadialVelocityMode = widgetStore.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const shiftInputError =
+            this.shiftInputIntent === Intent.DANGER
+                ? `${isRadialVelocityMode ? `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s` : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.`
+                : undefined;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -255,7 +265,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     <FormGroup inline={true} label={"Redshift corrections"} className="rest-frame-section" contentClassName="reference-frame-form-content">
                                         <div className="redshift-correction-switches">
                                             <Switch
-                                                checked={widgetStore.isXAxisRestFrameActive}
+                                                checked={widgetStore.isXAxisRestFrameEnabled}
                                                 disabled={isXAxisRestFrameInputDisabled}
                                                 label="X-axis"
                                                 onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
@@ -263,7 +273,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             />
                                             <div className="redshift-correction-switch-with-info">
                                                 <Switch
-                                                    checked={widgetStore.isYAxisRestFrameActive}
+                                                    checked={widgetStore.isYAxisRestFrameEnabled}
                                                     disabled={isYAxisRestFrameInputDisabled}
                                                     label="Y-axis"
                                                     onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
@@ -296,21 +306,22 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             data-testid="spectral-profiler-shift-mode-dropdown"
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content">
+                                    <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content" helperText={shiftInputError}>
                                         <SafeNumericInput
+                                            key={widgetStore.restFrameShiftMode}
                                             disabled={isShiftInputDisabled}
                                             value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
                                             intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}
                                             buttonPosition="none"
                                             className="redshift-input"
-                                            onValueChange={this.onShiftInputChanged}
+                                            onValueChange={this.onShiftChanged}
                                             data-testid={isRadialVelocityMode ? "spectral-profiler-radial-velocity-input" : "spectral-profiler-redshift-input"}
                                         />
                                     </FormGroup>
                                     {isRadialVelocityMode && (
-                                        <FormGroup inline={true} label={"Equivalent redshift (z)"} contentClassName="reference-frame-form-content">
+                                        <FormGroup inline={true} label={"Effective redshift (z)"} contentClassName="reference-frame-form-content">
                                             <span className="equivalent-redshift" data-testid="spectral-profiler-equivalent-redshift">
-                                                {widgetStore.restFrameRedshift}
+                                                {widgetStore.effectiveRestFrameRedshift}
                                             </span>
                                         </FormGroup>
                                     )}
