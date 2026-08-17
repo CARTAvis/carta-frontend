@@ -1,4 +1,4 @@
-import {getValueFromArcsecString, pixelToFluxDensityUnit} from "./units";
+import {getValueFromArcsecString, pixelToFluxDensityUnit, redshiftFromRelativisticVelocity, relativisticVelocityFromRedshift} from "./units";
 
 jest.mock("models", () => ({}));
 
@@ -42,5 +42,23 @@ describe("getValueFromArcsecString", () => {
         expect(getValueFromArcsecString("")).toBeNull();
         expect(getValueFromArcsecString("abc")).toBeNull();
         expect(getValueFromArcsecString("1 arcsec")).toBeNull();
+    });
+});
+
+describe("relativistic radial velocity and redshift conversion", () => {
+    test.each([-300, 0, 300])("round trips %s km/s", velocityKms => {
+        const redshift = redshiftFromRelativisticVelocity(velocityKms);
+
+        expect(relativisticVelocityFromRedshift(redshift)).toBeCloseTo(velocityKms, 10);
+    });
+
+    test("rejects velocities at or beyond the speed of light", () => {
+        expect(redshiftFromRelativisticVelocity(-299792.458)).toBeNaN();
+        expect(redshiftFromRelativisticVelocity(299792.458)).toBeNaN();
+    });
+
+    test("rejects redshifts at or below -1", () => {
+        expect(relativisticVelocityFromRedshift(-1)).toBeNaN();
+        expect(relativisticVelocityFromRedshift(-2)).toBeNaN();
     });
 });

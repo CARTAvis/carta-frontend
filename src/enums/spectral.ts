@@ -15,6 +15,11 @@ export enum SpectralType {
     NATIVE = "NATIVE" // for non-support spectral type/unit images to switch the coordinate between channel and native value
 }
 
+export enum RestFrameShiftMode {
+    REDSHIFT = "redshift",
+    RADIAL_VELOCITY = "radial-velocity"
+}
+
 export enum SpectralSystem {
     LSRK = "LSRK",
     LSRD = "LSRD",

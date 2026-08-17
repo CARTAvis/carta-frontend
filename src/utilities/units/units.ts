@@ -2,6 +2,34 @@ import {AngularSizeUnit} from "enums";
 import {AngularSize} from "models";
 
 export const SPEED_OF_LIGHT = 299792458;
+export const SPEED_OF_LIGHT_KMS = SPEED_OF_LIGHT / 1e3;
+
+/**
+ * Convert a relativistic radial velocity in km/s to redshift.
+ * Positive values indicate recession and negative values indicate approach.
+ */
+export function redshiftFromRelativisticVelocity(velocityKms: number): number {
+    if (!isFinite(velocityKms) || velocityKms <= -SPEED_OF_LIGHT_KMS || velocityKms >= SPEED_OF_LIGHT_KMS) {
+        return NaN;
+    }
+
+    const beta = velocityKms / SPEED_OF_LIGHT_KMS;
+    return Math.sqrt((1 + beta) / (1 - beta)) - 1;
+}
+
+/**
+ * Convert redshift to a relativistic radial velocity in km/s.
+ * Positive values indicate recession and negative values indicate approach.
+ */
+export function relativisticVelocityFromRedshift(redshift: number): number {
+    if (!isFinite(redshift) || redshift <= -1) {
+        return NaN;
+    }
+
+    const redshiftFactor = 1 + redshift;
+    const inverseRedshiftFactor = 1 / redshiftFactor;
+    return SPEED_OF_LIGHT_KMS * ((redshiftFactor - inverseRedshiftFactor) / (redshiftFactor + inverseRedshiftFactor));
+}
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);

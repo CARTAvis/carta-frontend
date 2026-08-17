@@ -12,6 +12,7 @@ import {
     Polarizations,
     RegionId,
     RegionsType,
+    RestFrameShiftMode,
     SmoothingType,
     SpectralProfilerSettingsTabs,
     type SpectralSystem,
@@ -23,7 +24,7 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit, redshiftFromRelativisticVelocity, relativisticVelocityFromRedshift} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -62,6 +63,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable intensityUnit: string | undefined = undefined;
     @observable isXAxisRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
+    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.REDSHIFT;
     @observable isYAxisRestFrameEnabled: boolean = false;
 
     // style settings
@@ -151,6 +153,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (this.isRedshiftCorrectionActive) {
                 this.resetSpectralDisplayState();
             }
+        }
+    };
+
+    @action setRestFrameShiftMode = (mode: RestFrameShiftMode) => {
+        if (Object.values(RestFrameShiftMode).includes(mode)) {
+            this.restFrameShiftMode = mode;
+        }
+    };
+
+    @action setRestFrameRadialVelocity = (velocityKms: number) => {
+        const redshift = redshiftFromRelativisticVelocity(velocityKms);
+        if (isFinite(redshift)) {
+            this.setRestFrameRedshift(redshift);
         }
     };
 
@@ -588,6 +603,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.isRedshiftCorrectionActive ? this.restFrameRedshift + 1 : 1;
     }
 
+    @computed get restFrameRadialVelocity(): number {
+        return relativisticVelocityFromRedshift(this.restFrameRedshift);
+    }
+
     @computed get isYAxisRestFrameSupported(): boolean {
         return (
             this.profileSelectionStore.isSameStatsTypeUnit &&
@@ -653,7 +672,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return [
             `x-axis spectral coordinate: ${this.isXAxisRestFrameActive ? "rest frame" : "observed frame"}`,
             `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
-            `redshift (z): ${this.restFrameRedshift}`
+            this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (relativistic, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
         ];
     }
 
@@ -1146,6 +1165,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.restFrameRedshift === "number" && isFinite(widgetSettings.restFrameRedshift) && widgetSettings.restFrameRedshift > -1) {
             this.restFrameRedshift = widgetSettings.restFrameRedshift;
         }
+        if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
+            this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
+        }
         if (typeof widgetSettings.yAxisRestFrameEnabled === "boolean") {
             this.isYAxisRestFrameEnabled = widgetSettings.yAxisRestFrameEnabled;
         }
@@ -1168,6 +1190,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             maxYVal: this.linePlotInitXYBoundaries.maxYVal,
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             restFrameRedshift: this.restFrameRedshift,
+            restFrameShiftMode: this.restFrameShiftMode,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
         };
     };

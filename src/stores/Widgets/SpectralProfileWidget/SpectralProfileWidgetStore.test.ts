@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, SpectralType, SpectralUnit} from "enums";
+import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit} from "enums";
 import {AppStore} from "stores";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
@@ -417,6 +417,29 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
         widgetStore.setRestFrameRedshift(-1);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("uses relativistic radial velocity as an alternate input while persisting only redshift", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameRadialVelocity(-300);
+
+        expect(widgetStore.restFrameRedshift).toBeCloseTo(-0.0010001921, 10);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300, 10);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
+    });
+
+    test("restores the shift mode while keeping legacy redshift configs valid", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-299.942, 1);
+
+        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
     });
 });
