@@ -4,10 +4,10 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, MultiProfileCategory, RestFrameShiftMode, SpectralProfilerSettingsTabs} from "enums";
+import {HelpType, MultiProfileCategory, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {parseNumber, SPEED_OF_LIGHT_KMS} from "utilities";
+import {parseNumber, redshiftFromVelocity, SPEED_OF_LIGHT_KMS} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
@@ -86,8 +86,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     };
 
     private isValidShiftInput = (value: number): boolean => {
-        const isRadialVelocityMode = this.widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        return isRadialVelocityMode ? isFinite(value) && Math.abs(value) < SPEED_OF_LIGHT_KMS : isFinite(value) && value > -1;
+        const widgetStore = this.widgetStore;
+        if (widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY) {
+            return isFinite(redshiftFromVelocity(value, widgetStore.restFrameVelocityConvention));
+        }
+        return isFinite(value) && value > -1;
     };
 
     @action private onShiftChanged = (value: number) => {
@@ -106,6 +109,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     @action private onShiftModeChanged = (mode: string) => {
         this.widgetStore?.setRestFrameShiftMode(mode as RestFrameShiftMode);
+        this.shiftInputIntent = Intent.NONE;
+    };
+
+    @action private onVelocityConventionChanged = (convention: string) => {
+        this.widgetStore?.setRestFrameVelocityConvention(convention as VelocityConvention);
         this.shiftInputIntent = Intent.NONE;
     };
 
@@ -227,10 +235,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const isYAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isYAxisRestFrameSupported;
         const isShiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameCorrectionRequested;
         const isRadialVelocityMode = widgetStore.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const shiftInputError =
-            this.shiftInputIntent === Intent.DANGER
-                ? `${isRadialVelocityMode ? `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s` : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.`
-                : undefined;
+        const velocityValidationMessage =
+            widgetStore.restFrameVelocityConvention === VelocityConvention.RADIO
+                ? `Velocity must be less than +${SPEED_OF_LIGHT_KMS} km/s`
+                : widgetStore.restFrameVelocityConvention === VelocityConvention.OPTICAL
+                  ? `Velocity must be greater than -${SPEED_OF_LIGHT_KMS} km/s`
+                  : `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s`;
+        const shiftInputError = this.shiftInputIntent === Intent.DANGER ? `${isRadialVelocityMode ? velocityValidationMessage : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.` : undefined;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -300,15 +311,30 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             value={widgetStore.restFrameShiftMode}
                                             options={[
                                                 {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
-                                                {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Relativistic radial velocity (km/s)"}
+                                                {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
                                             ]}
                                             onChange={event => this.onShiftModeChanged(event.currentTarget.value)}
                                             data-testid="spectral-profiler-shift-mode-dropdown"
                                         />
                                     </FormGroup>
+                                    {isRadialVelocityMode && (
+                                        <FormGroup inline={true} label="Velocity convention" contentClassName="reference-frame-form-content">
+                                            <HTMLSelect
+                                                disabled={isCoordinateSettingDisabled}
+                                                value={widgetStore.restFrameVelocityConvention}
+                                                options={[
+                                                    {value: VelocityConvention.RADIO, label: "Radio"},
+                                                    {value: VelocityConvention.OPTICAL, label: "Optical"},
+                                                    {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
+                                                ]}
+                                                onChange={event => this.onVelocityConventionChanged(event.currentTarget.value)}
+                                                data-testid="spectral-profiler-velocity-convention-dropdown"
+                                            />
+                                        </FormGroup>
+                                    )}
                                     <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content" helperText={shiftInputError}>
                                         <SafeNumericInput
-                                            key={widgetStore.restFrameShiftMode}
+                                            key={`${widgetStore.restFrameShiftMode}-${widgetStore.restFrameVelocityConvention}`}
                                             disabled={isShiftInputDisabled}
                                             value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
                                             intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}

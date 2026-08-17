@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit} from "enums";
+import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "enums";
 import {AppStore} from "stores";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
@@ -431,6 +431,21 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
+    test.each([
+        [VelocityConvention.RADIO, 300, 300 / (299792.458 - 300)],
+        [VelocityConvention.OPTICAL, 300, 300 / 299792.458]
+    ])("uses %s velocity convention while persisting only redshift", (convention, velocityKms, expectedRedshift) => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameVelocityConvention(convention);
+        widgetStore.setRestFrameRadialVelocity(velocityKms);
+
+        expect(widgetStore.restFrameRedshift).toBeCloseTo(expectedRedshift, 10);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(velocityKms, 10);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: convention, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
+    });
+
     test("keeps the previous canonical redshift when either input is invalid", () => {
         const {widgetStore} = createWidgetStore();
         widgetStore.setRestFrameRedshift(0.25);
@@ -474,5 +489,17 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("restores the velocity convention while defaulting legacy configs to relativistic", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.RADIO}));
+
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(widgetStore.restFrameRadialVelocity).toBe(0);
+
+        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
     });
 });

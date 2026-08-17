@@ -18,13 +18,14 @@ import {
     type SpectralSystem,
     SpectralType,
     type SpectralUnit,
-    TelemetryAction
+    TelemetryAction,
+    VelocityConvention
 } from "enums";
 import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, type Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit, redshiftFromRelativisticVelocity, relativisticVelocityFromRedshift} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit, redshiftFromVelocity, velocityFromRedshift} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -64,6 +65,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isXAxisRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
     @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.REDSHIFT;
+    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RELATIVISTIC;
     @observable isRestFrameShiftInputValid: boolean = true;
     @observable isYAxisRestFrameEnabled: boolean = false;
 
@@ -164,6 +166,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setRestFrameVelocityConvention = (convention: VelocityConvention) => {
+        if (Object.values(VelocityConvention).includes(convention) && convention !== this.restFrameVelocityConvention) {
+            this.restFrameVelocityConvention = convention;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
     @action setRestFrameShiftInputValid = (isValid: boolean) => {
         if (isValid !== this.isRestFrameShiftInputValid) {
             this.isRestFrameShiftInputValid = isValid;
@@ -172,7 +181,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setRestFrameRadialVelocity = (velocityKms: number) => {
-        const redshift = redshiftFromRelativisticVelocity(velocityKms);
+        const redshift = redshiftFromVelocity(velocityKms, this.restFrameVelocityConvention);
         if (isFinite(redshift)) {
             this.setRestFrameRedshift(redshift);
         }
@@ -621,7 +630,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get restFrameRadialVelocity(): number {
-        return relativisticVelocityFromRedshift(this.restFrameRedshift);
+        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isYAxisRestFrameSupported(): boolean {
@@ -689,7 +698,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return [
             `x-axis spectral coordinate: ${this.isXAxisRestFrameActive ? "rest frame" : "observed frame"}`,
             `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
-            this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (relativistic, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
+            this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (${this.restFrameVelocityConvention}, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
         ];
     }
 
@@ -1186,6 +1195,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
             this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
         }
+        if (typeof widgetSettings.restFrameVelocityConvention === "string" && Object.values(VelocityConvention).includes(widgetSettings.restFrameVelocityConvention as VelocityConvention)) {
+            this.restFrameVelocityConvention = widgetSettings.restFrameVelocityConvention as VelocityConvention;
+        }
         if (typeof widgetSettings.yAxisRestFrameEnabled === "boolean") {
             this.isYAxisRestFrameEnabled = widgetSettings.yAxisRestFrameEnabled;
         }
@@ -1209,6 +1221,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             restFrameRedshift: this.restFrameRedshift,
             restFrameShiftMode: this.restFrameShiftMode,
+            restFrameVelocityConvention: this.restFrameVelocityConvention,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
         };
     };

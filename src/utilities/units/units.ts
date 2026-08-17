@@ -1,8 +1,59 @@
-import {AngularSizeUnit} from "enums";
+import {AngularSizeUnit, VelocityConvention} from "enums";
 import {AngularSize} from "models";
 
 export const SPEED_OF_LIGHT = 299792458;
 export const SPEED_OF_LIGHT_KMS = SPEED_OF_LIGHT / 1e3;
+
+/**
+ * Convert a radial velocity in km/s to redshift using an explicit velocity convention.
+ * Positive values indicate recession and negative values indicate approach.
+ */
+export function redshiftFromVelocity(velocityKms: number, convention: VelocityConvention): number {
+    if (!isFinite(velocityKms)) {
+        return NaN;
+    }
+
+    if (convention === VelocityConvention.RADIO) {
+        if (velocityKms >= SPEED_OF_LIGHT_KMS) {
+            return NaN;
+        }
+        return velocityKms / (SPEED_OF_LIGHT_KMS - velocityKms);
+    }
+
+    if (convention === VelocityConvention.OPTICAL) {
+        const redshift = velocityKms / SPEED_OF_LIGHT_KMS;
+        return redshift > -1 ? redshift : NaN;
+    }
+
+    if (convention === VelocityConvention.RELATIVISTIC) {
+        return redshiftFromRelativisticVelocity(velocityKms);
+    }
+
+    return NaN;
+}
+
+/**
+ * Convert redshift to radial velocity in km/s using an explicit velocity convention.
+ */
+export function velocityFromRedshift(redshift: number, convention: VelocityConvention): number {
+    if (!isFinite(redshift) || redshift <= -1) {
+        return NaN;
+    }
+
+    if (convention === VelocityConvention.RADIO) {
+        return SPEED_OF_LIGHT_KMS * (redshift / (1 + redshift));
+    }
+
+    if (convention === VelocityConvention.OPTICAL) {
+        return SPEED_OF_LIGHT_KMS * redshift;
+    }
+
+    if (convention === VelocityConvention.RELATIVISTIC) {
+        return relativisticVelocityFromRedshift(redshift);
+    }
+
+    return NaN;
+}
 
 /**
  * Convert a relativistic radial velocity in km/s to redshift.

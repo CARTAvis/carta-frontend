@@ -1,4 +1,6 @@
-import {getValueFromArcsecString, pixelToFluxDensityUnit, redshiftFromRelativisticVelocity, relativisticVelocityFromRedshift} from "./units";
+import {VelocityConvention} from "enums";
+
+import {getValueFromArcsecString, pixelToFluxDensityUnit, redshiftFromRelativisticVelocity, redshiftFromVelocity, relativisticVelocityFromRedshift, SPEED_OF_LIGHT_KMS, velocityFromRedshift} from "./units";
 
 jest.mock("models", () => ({}));
 
@@ -60,5 +62,27 @@ describe("relativistic radial velocity and redshift conversion", () => {
     test("rejects redshifts at or below -1", () => {
         expect(relativisticVelocityFromRedshift(-1)).toBeNaN();
         expect(relativisticVelocityFromRedshift(-2)).toBeNaN();
+    });
+});
+
+describe("radial velocity convention conversions", () => {
+    test.each([
+        [VelocityConvention.RADIO, 300, 300 / (SPEED_OF_LIGHT_KMS - 300)],
+        [VelocityConvention.OPTICAL, 300, 300 / SPEED_OF_LIGHT_KMS],
+        [VelocityConvention.RELATIVISTIC, 300, redshiftFromRelativisticVelocity(300)]
+    ])("round trips %s velocity", (convention, velocityKms, expectedRedshift) => {
+        const redshift = redshiftFromVelocity(velocityKms, convention);
+
+        expect(redshift).toBeCloseTo(expectedRedshift, 10);
+        expect(velocityFromRedshift(redshift, convention)).toBeCloseTo(velocityKms, 10);
+    });
+
+    test("uses the convention-specific physical boundaries", () => {
+        expect(redshiftFromVelocity(SPEED_OF_LIGHT_KMS, VelocityConvention.RADIO)).toBeNaN();
+        expect(redshiftFromVelocity(-SPEED_OF_LIGHT_KMS, VelocityConvention.RADIO)).toBeCloseTo(-0.5, 10);
+        expect(redshiftFromVelocity(-SPEED_OF_LIGHT_KMS, VelocityConvention.OPTICAL)).toBeNaN();
+        expect(redshiftFromVelocity(SPEED_OF_LIGHT_KMS, VelocityConvention.OPTICAL)).toBe(1);
+        expect(redshiftFromVelocity(SPEED_OF_LIGHT_KMS, VelocityConvention.RELATIVISTIC)).toBeNaN();
+        expect(redshiftFromVelocity(-SPEED_OF_LIGHT_KMS, VelocityConvention.RELATIVISTIC)).toBeNaN();
     });
 });

@@ -20,6 +20,12 @@ export enum RestFrameShiftMode {
     RADIAL_VELOCITY = "radial-velocity"
 }
 
+export enum VelocityConvention {
+    RADIO = "radio",
+    OPTICAL = "optical",
+    RELATIVISTIC = "relativistic"
+}
+
 export enum SpectralSystem {
     LSRK = "LSRK",
     LSRD = "LSRD",
