@@ -4,7 +4,6 @@ import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
 import {pluginTypeCheck} from '@rsbuild/plugin-type-check';
-import {pluginGlsl} from "rsbuild-plugin-glsl";
 
 export default defineConfig({
     plugins: [
@@ -18,7 +17,6 @@ export default defineConfig({
         pluginReact(),
         pluginSass(),
         pluginNodePolyfill(),
-        pluginGlsl(),
         pluginTypeCheck()
     ],
     source: {
@@ -71,6 +69,10 @@ export default defineConfig({
             },
             module: {
                 rules: [
+                    {
+                        test: /\.glsl$/,
+                        type: "asset/source",
+                    },
                     {
                         test: /\.worker\.js$/,
                         loader: "worker-rspack-loader",
