@@ -85,24 +85,24 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
-    private isValidShiftInput = (value: number): boolean => {
-        const widgetStore = this.widgetStore;
-        if (widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY) {
-            return isFinite(redshiftFromVelocity(value, widgetStore.restFrameVelocityConvention));
+    private isValidShiftInput = (value: number, isRadialVelocityMode: boolean, velocityConvention?: VelocityConvention): boolean => {
+        if (isRadialVelocityMode && velocityConvention) {
+            return isFinite(redshiftFromVelocity(value, velocityConvention));
         }
         return isFinite(value) && value > -1;
     };
 
     @action private onShiftChanged = (value: number) => {
-        const isRadialVelocityMode = this.widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const isValid = this.isValidShiftInput(value);
+        const widgetStore = this.widgetStore;
+        const isRadialVelocityMode = widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const isValid = this.isValidShiftInput(value, isRadialVelocityMode, widgetStore?.restFrameVelocityConvention);
         this.shiftInputIntent = isValid ? Intent.NONE : Intent.DANGER;
-        this.widgetStore?.setRestFrameShiftInputValid(isValid);
+        widgetStore?.setRestFrameShiftInputValid(isValid);
         if (isValid) {
             if (isRadialVelocityMode) {
-                this.widgetStore?.setRestFrameRadialVelocity(value);
+                widgetStore?.setRestFrameRadialVelocity(value);
             } else {
-                this.widgetStore?.setRestFrameRedshift(value);
+                widgetStore?.setRestFrameRedshift(value);
             }
         }
     };

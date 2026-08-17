@@ -13,23 +13,18 @@ export function redshiftFromVelocity(velocityKms: number, convention: VelocityCo
         return NaN;
     }
 
-    if (convention === VelocityConvention.RADIO) {
-        if (velocityKms >= SPEED_OF_LIGHT_KMS) {
-            return NaN;
+    switch (convention) {
+        case VelocityConvention.RADIO:
+            return velocityKms >= SPEED_OF_LIGHT_KMS ? NaN : velocityKms / (SPEED_OF_LIGHT_KMS - velocityKms);
+        case VelocityConvention.OPTICAL: {
+            const redshift = velocityKms / SPEED_OF_LIGHT_KMS;
+            return redshift > -1 ? redshift : NaN;
         }
-        return velocityKms / (SPEED_OF_LIGHT_KMS - velocityKms);
+        case VelocityConvention.RELATIVISTIC:
+            return redshiftFromRelativisticVelocity(velocityKms);
+        default:
+            return NaN;
     }
-
-    if (convention === VelocityConvention.OPTICAL) {
-        const redshift = velocityKms / SPEED_OF_LIGHT_KMS;
-        return redshift > -1 ? redshift : NaN;
-    }
-
-    if (convention === VelocityConvention.RELATIVISTIC) {
-        return redshiftFromRelativisticVelocity(velocityKms);
-    }
-
-    return NaN;
 }
 
 /**
@@ -40,19 +35,16 @@ export function velocityFromRedshift(redshift: number, convention: VelocityConve
         return NaN;
     }
 
-    if (convention === VelocityConvention.RADIO) {
-        return SPEED_OF_LIGHT_KMS * (redshift / (1 + redshift));
+    switch (convention) {
+        case VelocityConvention.RADIO:
+            return SPEED_OF_LIGHT_KMS * (redshift / (1 + redshift));
+        case VelocityConvention.OPTICAL:
+            return SPEED_OF_LIGHT_KMS * redshift;
+        case VelocityConvention.RELATIVISTIC:
+            return relativisticVelocityFromRedshift(redshift);
+        default:
+            return NaN;
     }
-
-    if (convention === VelocityConvention.OPTICAL) {
-        return SPEED_OF_LIGHT_KMS * redshift;
-    }
-
-    if (convention === VelocityConvention.RELATIVISTIC) {
-        return relativisticVelocityFromRedshift(redshift);
-    }
-
-    return NaN;
 }
 
 /**
