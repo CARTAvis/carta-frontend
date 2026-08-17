@@ -40,7 +40,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         makeObservable(this);
     }
 
-    handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = evt => {
+    handleInvertedChanged: React.ChangeEventHandler<HTMLInputElement> = evt => {
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
 

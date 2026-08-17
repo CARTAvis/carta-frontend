@@ -48,7 +48,7 @@ export class SmoothingSettingsComponent extends React.Component<{
                     <HTMLSelect
                         value={smoothingStore && smoothingStore.type ? smoothingStore.type : SmoothingType.NONE}
                         options={smoothingTypeOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => smoothingStore.setType(event.currentTarget.value as SmoothingType)}
+                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => smoothingStore.setType(event.currentTarget.value as SmoothingType)}
                         data-testid="smoothing-settings-method-dropdown"
                     />
                 </FormGroup>

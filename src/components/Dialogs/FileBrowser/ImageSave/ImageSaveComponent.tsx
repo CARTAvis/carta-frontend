@@ -225,7 +225,11 @@ export class ImageSaveComponent extends React.Component {
                             {activeFrame.hasStokes && (
                                 <div className="stokes-select">
                                     <FormGroup label={"Polarization"} inline={true}>
-                                        <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={this.stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
+                                        <HTMLSelect
+                                            value={fileBrowser.saveStokesOption || ""}
+                                            options={this.stokesOptions}
+                                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))}
+                                        />
                                     </FormGroup>
                                 </div>
                             )}
