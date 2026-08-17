@@ -5,7 +5,8 @@
     "scripts": {
         "docusaurus": "docusaurus",
         "start": "docusaurus start",
-        "build": "docusaurus build",
+        "build": "npm run typecheck && docusaurus build",
+        "typecheck": "tsc6 --noEmit -p ../tsconfig.json",
         "swizzle": "docusaurus swizzle",
         "deploy": "docusaurus deploy",
         "clear": "docusaurus clear",
@@ -95,6 +96,7 @@
         "react-dom": "^19.2.7"
     },
     "devDependencies": {
+        "@typescript/typescript6": "^6.0.2",
         "eslint-plugin-simple-import-sort": "^13.0.0",
         "prettier": "^3.8.3"
     },
