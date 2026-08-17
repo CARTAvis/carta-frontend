@@ -273,8 +273,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     <FormGroup inline={true} label={"Secondary info"}>
                                         <Switch checked={widgetStore.isSecondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                     </FormGroup>
-                                    <FormGroup inline={true} label={"Redshift corrections"} className="rest-frame-section" contentClassName="reference-frame-form-content">
-                                        <div className="redshift-correction-switches">
+                                    <FormGroup inline={true} label={"Rest-frame corrections"} className="rest-frame-section" contentClassName="reference-frame-form-content">
+                                        <div className="rest-frame-correction-switches">
                                             <Switch
                                                 checked={widgetStore.isXAxisRestFrameEnabled}
                                                 disabled={isXAxisRestFrameInputDisabled}
@@ -282,7 +282,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
                                                 data-testid="spectral-profiler-x-axis-rest-frame-switch"
                                             />
-                                            <div className="redshift-correction-switch-with-info">
+                                            <div className="rest-frame-correction-switch-with-info">
                                                 <Switch
                                                     checked={widgetStore.isYAxisRestFrameEnabled}
                                                     disabled={isYAxisRestFrameInputDisabled}
@@ -292,13 +292,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 />
                                                 <Tooltip
                                                     content={
-                                                        <div className="redshift-correction-tooltip">
-                                                            <div>This applies only the flux-density redshift scaling and does not include a luminosity-distance correction.</div>
+                                                        <div className="rest-frame-correction-tooltip">
+                                                            <div>This applies only the flux-density rest-frame scaling and does not include a luminosity-distance correction.</div>
                                                         </div>
                                                     }
                                                     position={Position.TOP}
                                                 >
-                                                    <span className="redshift-correction-info" aria-label="Y-axis redshift correction details" tabIndex={0}>
+                                                    <span className="rest-frame-correction-info" aria-label="Y-axis rest-frame correction details" tabIndex={0}>
                                                         <Icon icon="info-sign" size={12} />
                                                     </span>
                                                 </Tooltip>
@@ -339,14 +339,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
                                             intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}
                                             buttonPosition="none"
-                                            className="redshift-input"
+                                            className="rest-frame-shift-input"
                                             onValueChange={this.onShiftChanged}
                                             data-testid={isRadialVelocityMode ? "spectral-profiler-radial-velocity-input" : "spectral-profiler-redshift-input"}
                                         />
                                     </FormGroup>
                                     {isRadialVelocityMode && (
                                         <FormGroup inline={true} label={"Effective redshift (z)"} contentClassName="reference-frame-form-content">
-                                            <span className="equivalent-redshift" data-testid="spectral-profiler-equivalent-redshift">
+                                            <span className="effective-redshift" data-testid="spectral-profiler-effective-redshift">
                                                 {widgetStore.effectiveRestFrameRedshift}
                                             </span>
                                         </FormGroup>

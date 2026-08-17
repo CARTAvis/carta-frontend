@@ -33,7 +33,7 @@
             }
         }
 
-        .redshift-correction-switches {
+        .rest-frame-correction-switches {
             display: flex;
             flex-direction: column;
             gap: 0.35em;
@@ -42,13 +42,13 @@
                 margin-bottom: 0;
             }
 
-            .redshift-correction-switch-with-info {
+            .rest-frame-correction-switch-with-info {
                 display: flex;
                 align-items: center;
                 gap: 0.35em;
             }
 
-            .redshift-correction-info {
+            .rest-frame-correction-info {
                 display: inline-flex;
                 cursor: help;
                 opacity: 0.8;
@@ -56,13 +56,13 @@
             }
         }
 
-        .redshift-input {
+        .rest-frame-shift-input {
             .#{$ns}-input-group input {
                 width: 10em;
             }
         }
 
-        .equivalent-redshift {
+        .effective-redshift {
             line-height: 30px;
         }
     }
@@ -89,7 +89,7 @@
     }
 }
 
-.redshift-correction-tooltip {
+.rest-frame-correction-tooltip {
     width: 20em;
     max-width: calc(100vw - 2em);
     white-space: normal;

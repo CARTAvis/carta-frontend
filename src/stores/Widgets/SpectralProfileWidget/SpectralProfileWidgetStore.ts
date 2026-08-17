@@ -153,7 +153,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setRestFrameRedshift = (redshift: number) => {
         if (isFinite(redshift) && redshift > -1 && redshift !== this.restFrameRedshift) {
             this.restFrameRedshift = redshift;
-            if (this.isRedshiftCorrectionActive) {
+            if (this.isRestFrameCorrectionActive) {
                 this.resetSpectralDisplayState();
             }
         }
@@ -617,7 +617,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return (this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported) || (this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported);
     }
 
-    @computed get isRedshiftCorrectionActive(): boolean {
+    @computed get isRestFrameCorrectionActive(): boolean {
         return this.isXAxisRestFrameActive || this.isYAxisRestFrameActive;
     }
 
@@ -691,8 +691,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.isYAxisRestFrameActive ? `Value (${unit}) (rest frame)` : `Value (${unit})`;
     }
 
-    @computed get redshiftCorrectionExportComments(): string[] {
-        if (!this.isRedshiftCorrectionActive) {
+    @computed get restFrameCorrectionExportComments(): string[] {
+        if (!this.isRestFrameCorrectionActive) {
             return [];
         }
         return [

@@ -329,7 +329,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
         const regionComments = frame ? frame.getRegionProperties(profile.regionId ?? NaN) : [];
-        const restFrameComments = this.widgetStore.redshiftCorrectionExportComments;
+        const restFrameComments = this.widgetStore.restFrameCorrectionExportComments;
         if (seriesType === "smoothedProfile") {
             return [...regionComments, ...restFrameComments, ...this.widgetStore.smoothingStore.comments];
         }
