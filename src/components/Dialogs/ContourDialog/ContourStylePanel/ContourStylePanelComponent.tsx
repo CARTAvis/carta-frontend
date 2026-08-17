@@ -119,7 +119,12 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Invert colormap" disabled={!frame.contourConfig.isColormapEnabled}>
-                    <Switch checked={frame.contourConfig.isColormapInverted} onChange={ev => frame.contourConfig.setColormapInverted(ev.currentTarget.checked)} disabled={!frame.contourConfig.isColormapEnabled} />
+                    <Switch
+                        checked={frame.contourConfig.isColormapInverted}
+                        onChange={ev => frame.contourConfig.setColormapInverted(ev.currentTarget.checked)}
+                        disabled={!frame.contourConfig.isColormapEnabled}
+                        data-testid="contour-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.isColormapEnabled}>
                     <SafeNumericInput

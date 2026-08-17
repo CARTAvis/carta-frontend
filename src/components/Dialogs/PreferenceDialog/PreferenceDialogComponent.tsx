@@ -277,7 +277,11 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Invert colormap">
-                    <Switch checked={preference.isColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)} />
+                    <Switch
+                        checked={preference.isColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-render-config-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
                     <PercentileSelect
@@ -382,7 +386,11 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Invert colormap">
-                    <Switch checked={preference.isContourColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)} />
+                    <Switch
+                        checked={preference.isContourColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-contour-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -443,7 +451,11 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Invert colormap">
-                    <Switch checked={preference.isVectorOverlayColormapInverted} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED, ev.currentTarget.checked)} />
+                    <Switch
+                        checked={preference.isVectorOverlayColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-vector-overlay-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

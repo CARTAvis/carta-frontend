@@ -775,7 +775,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true} disabled={shouldDisableColorMap}>
-                        <Switch checked={widgetStore.isInvertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={shouldDisableColorMap} />
+                        <Switch checked={widgetStore.isInvertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={shouldDisableColorMap} data-testid="catalog-settings-invert-colormap-toggle" />
                     </FormGroup>
                     <ClearableNumericInputComponent
                         label="Clip min"
