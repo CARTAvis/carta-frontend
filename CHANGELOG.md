@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added Astropy-style sinh and asinh image scaling options with hover previews in the scaling dropdown ([#1992](https://github.com/CARTAvis/carta-frontend/issues/1992)).
+* Added colormap inversion controls for image rendering, contours, and vector overlays, including preferences and workspace support ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 ### Fixed
+* Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).
 

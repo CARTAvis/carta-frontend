@@ -15,6 +15,7 @@ export class ContourConfigStore {
 
     @observable color: RgbaColor;
     @observable isColormapEnabled: boolean = false;
+    @observable isColormapInverted: boolean = false;
     @observable colormap: string;
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;
@@ -31,6 +32,7 @@ export class ContourConfigStore {
 
         this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
         this.isColormapEnabled = this.preferenceStore.isContourColormapEnabled;
+        this.isColormapInverted = this.preferenceStore.isContourColormapInverted;
         this.colormap = this.preferenceStore.contourColormap;
         this.thickness = this.preferenceStore.contourThickness;
         makeObservable(this);
@@ -70,6 +72,10 @@ export class ContourConfigStore {
         this.isColormapEnabled = isColormapEnabled;
     };
 
+    @action setColormapInverted = (isColormapInverted: boolean) => {
+        this.isColormapInverted = isColormapInverted;
+    };
+
     @action setColormapBias = (val: number) => {
         this.colormapBias = val;
     };
@@ -97,6 +103,7 @@ export class ContourConfigStore {
         this.isVisible = config.visible;
 
         this.isColormapEnabled = config.colormapEnabled;
+        this.isColormapInverted = config.colormapInverted ?? false;
         if (config.color) {
             this.color = config.color;
         }
