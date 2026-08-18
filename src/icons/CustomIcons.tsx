@@ -309,14 +309,24 @@ const POPOUT_SVG = (
     </>
 );
 
-const ZOOM_AXIS_X_SVG = <path d="M1 8h14M4 5 1 8l3 3M12 5l3 3-3 3" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />;
+const ZOOM_AXIS_X_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="0.25" y="2.25" width="15.5" height="11.5" rx="0.5" />
+        <path d="M4 6 2 8l2 2m8-4 2 2-2 2" />
+    </g>
+);
 
-const ZOOM_AXIS_Y_SVG = <path d="M8 1v14M5 4l3-3 3 3M5 12l3 3 3-3" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />;
+const ZOOM_AXIS_Y_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2.25" y="0.25" width="11.5" height="15.5" rx="0.5" />
+        <path d="m6 4 2-2 2 2m-4 8 2 2 2-2" />
+    </g>
+);
 
 const ZOOM_AXIS_BOTH_SVG = (
     <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="1" width="14" height="14" rx="0.5" />
-        <path d="M6.5 5 8 3.5 9.5 5m-3 6 1.5 1.5 1.5-1.5M5 6.5 3.5 8 5 9.5m6-3 1.5 1.5-1.5 1.5" />
+        <rect x="0.25" y="0.25" width="15.5" height="15.5" rx="0.5" />
+        <path d="m6 4 2-2 2 2m-4 8 2 2 2-2M4 6 2 8l2 2m8-4 2 2-2 2" />
     </g>
 );
 
