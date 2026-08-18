@@ -94,6 +94,22 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.convertDisplayXToObserved(100)).toBe(100);
     });
 
+    test("reprojects the plot cursor when the rest-frame display transform changes", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setMouseMoveIntoLinePlots(true);
+        widgetStore.setCursor(100);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.cursorX).toBe(200);
+
+        widgetStore.setRestFrameRedshift(2);
+        expect(widgetStore.cursorX).toBe(300);
+
+        widgetStore.setXAxisRestFrameEnabled(false);
+        expect(widgetStore.cursorX).toBe(100);
+    });
+
     test("converts wavelength coordinates with the inverse frequency factor", () => {
         const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
         widgetStore.setRestFrameRedshift(1);

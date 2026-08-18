@@ -144,16 +144,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setXAxisRestFrameEnabled = (isEnabled: boolean) => {
+        const observedCursorX = this.getObservedCursorX();
         const isNextEnabled = isEnabled && this.isXAxisRestFrameSupported;
         if (isNextEnabled !== this.isXAxisRestFrameEnabled) {
             this.isXAxisRestFrameEnabled = isNextEnabled;
+            this.setCursorFromObservedX(observedCursorX);
             this.resetSpectralDisplayState();
         }
     };
 
     @action setRestFrameRedshift = (redshift: number) => {
         if (isFinite(redshift) && redshift > -1 && redshift !== this.restFrameRedshift) {
+            const observedCursorX = this.getObservedCursorX();
             this.restFrameRedshift = redshift;
+            this.setCursorFromObservedX(observedCursorX);
             if (this.isRestFrameCorrectionActive) {
                 this.resetSpectralDisplayState();
             }
@@ -176,7 +180,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setRestFrameShiftInputValid = (isValid: boolean) => {
         if (isValid !== this.isRestFrameShiftInputValid) {
+            const observedCursorX = this.getObservedCursorX();
             this.isRestFrameShiftInputValid = isValid;
+            this.setCursorFromObservedX(observedCursorX);
             this.resetSpectralDisplayState();
         }
     };
@@ -1237,6 +1243,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     public convertDisplayYToObserved = (value: number): number => {
         return isFinite(value) ? value / this.yAxisRestFrameScale : NaN;
+    };
+
+    private getObservedCursorX = (): number | undefined => {
+        if (!this.isMouseMoveIntoLinePlots || !isFinite(this.cursorX)) {
+            return undefined;
+        }
+        const observedCursorX = this.convertDisplayXToObserved(this.cursorX);
+        return isFinite(observedCursorX) ? observedCursorX : undefined;
+    };
+
+    private setCursorFromObservedX = (observedCursorX: number | undefined) => {
+        if (observedCursorX !== undefined) {
+            const displayCursorX = this.convertObservedXToDisplay(observedCursorX);
+            this.cursorX = isFinite(displayCursorX) ? displayCursorX : NaN;
+        }
     };
 
     private convertXValue = (value: number, target: XTransformTarget, spectralType: SpectralType | string | null | undefined, spectralUnit: SpectralUnit | null | undefined): number => {
