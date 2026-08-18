@@ -28,8 +28,15 @@ Options:
   --help           Show this help`);
 }
 
+function resolveManifestPath(manifest) {
+    if (!manifest || manifest.startsWith("--")) {
+        throw new Error("--manifest requires a FILE");
+    }
+    return path.resolve(process.cwd(), manifest);
+}
+
 function parseArguments(args) {
-    const options = {manifest: null, json: false};
+    const options = {manifest: null, json: false, help: false};
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -38,17 +45,9 @@ function parseArguments(args) {
         } else if (arg === "--json") {
             options.json = true;
         } else if (arg === "--manifest") {
-            const manifest = args[++i];
-            if (!manifest || manifest.startsWith("--")) {
-                throw new Error("--manifest requires a FILE");
-            }
-            options.manifest = path.resolve(process.cwd(), manifest);
+            options.manifest = resolveManifestPath(args[++i]);
         } else if (arg.startsWith("--manifest=")) {
-            const manifest = arg.slice("--manifest=".length);
-            if (!manifest) {
-                throw new Error("--manifest requires a FILE");
-            }
-            options.manifest = path.resolve(process.cwd(), manifest);
+            options.manifest = resolveManifestPath(arg.slice("--manifest=".length));
         } else {
             throw new Error(`Unknown option: ${arg}`);
         }
