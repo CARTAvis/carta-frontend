@@ -15,22 +15,21 @@ const path = require("path");
 const ts = require("typescript");
 
 const ROOT = path.resolve(__dirname, "..");
-const DEFAULT_MANIFEST = path.resolve(ROOT, "../carta-python-2/frontend_api.json");
 const APP_STORE_SOURCE = path.resolve(ROOT, "src/stores/AppStore/AppStore.ts");
 
 function usage() {
-    console.log(`Usage: npm run check-python-api -- [--manifest FILE] [--json]
+    console.log(`Usage: npm run check-python-api -- --manifest FILE [--json]
 
 Check the carta-python frontend_api.json paths against the frontend AppStore type.
 
 Options:
-  --manifest FILE  Manifest to check (default: ${path.relative(process.cwd(), DEFAULT_MANIFEST)})
+  --manifest FILE  Manifest to check (required)
   --json           Print machine-readable results
   --help           Show this help`);
 }
 
 function parseArguments(args) {
-    const options = {manifest: DEFAULT_MANIFEST, json: false};
+    const options = {manifest: null, json: false};
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -39,12 +38,24 @@ function parseArguments(args) {
         } else if (arg === "--json") {
             options.json = true;
         } else if (arg === "--manifest") {
-            options.manifest = path.resolve(process.cwd(), args[++i] ?? "");
+            const manifest = args[++i];
+            if (!manifest || manifest.startsWith("--")) {
+                throw new Error("--manifest requires a FILE");
+            }
+            options.manifest = path.resolve(process.cwd(), manifest);
         } else if (arg.startsWith("--manifest=")) {
-            options.manifest = path.resolve(process.cwd(), arg.slice("--manifest=".length));
+            const manifest = arg.slice("--manifest=".length);
+            if (!manifest) {
+                throw new Error("--manifest requires a FILE");
+            }
+            options.manifest = path.resolve(process.cwd(), manifest);
         } else {
             throw new Error(`Unknown option: ${arg}`);
         }
+    }
+
+    if (!options.help && !options.manifest) {
+        throw new Error("Missing required option: --manifest FILE");
     }
 
     return options;
