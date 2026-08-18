@@ -19,24 +19,26 @@ const APP_STORE_SOURCE = path.resolve(ROOT, "src/stores/AppStore/AppStore.ts");
 
 function usage() {
     console.log(`Usage: npm run check-python-api -- --manifest FILE [--json]
+       [--write-deprecations FILE]
 
 Check the carta-python frontend_api.json paths against the frontend AppStore type.
 
 Options:
   --manifest FILE  Manifest to check (required)
   --json           Print machine-readable results
+  --write-deprecations FILE  Write deprecated APIs found in the manifest
   --help           Show this help`);
 }
 
-function resolveManifestPath(manifest) {
-    if (!manifest || manifest.startsWith("--")) {
-        throw new Error("--manifest requires a FILE");
+function resolveFilePath(value, option) {
+    if (!value || value.startsWith("--")) {
+        throw new Error(`${option} requires a FILE`);
     }
-    return path.resolve(process.cwd(), manifest);
+    return path.resolve(process.cwd(), value);
 }
 
 function parseArguments(args) {
-    const options = {manifest: null, json: false, help: false};
+    const options = {manifest: null, json: false, help: false, writeDeprecations: null};
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -45,9 +47,13 @@ function parseArguments(args) {
         } else if (arg === "--json") {
             options.json = true;
         } else if (arg === "--manifest") {
-            options.manifest = resolveManifestPath(args[++i]);
+            options.manifest = resolveFilePath(args[++i], "--manifest");
         } else if (arg.startsWith("--manifest=")) {
-            options.manifest = resolveManifestPath(arg.slice("--manifest=".length));
+            options.manifest = resolveFilePath(arg.slice("--manifest=".length), "--manifest");
+        } else if (arg === "--write-deprecations") {
+            options.writeDeprecations = resolveFilePath(args[++i], "--write-deprecations");
+        } else if (arg.startsWith("--write-deprecations=")) {
+            options.writeDeprecations = resolveFilePath(arg.slice("--write-deprecations=".length), "--write-deprecations");
         } else {
             throw new Error(`Unknown option: ${arg}`);
         }
@@ -247,6 +253,7 @@ function narrowRuntimeTypes(checker, types, runtimeTypeNames, derivedTypes) {
 function checkPath(checker, rootType, apiPath, location, derivedTypes, runtimeTypeNames) {
     let currentTypes = [rootType];
     let traversed = [];
+    let terminalSymbols = [];
 
     for (const component of splitPath(apiPath)) {
         const nextTypes = [];
@@ -254,6 +261,7 @@ function checkPath(checker, rootType, apiPath, location, derivedTypes, runtimeTy
         if (!matchingSymbols.length) {
             return {found: false, missing: [...traversed, component.name].join(".")};
         }
+        terminalSymbols = matchingSymbols;
 
         for (const symbol of matchingSymbols) {
             const propertyType = checker.getTypeOfSymbolAtLocation(symbol, location);
@@ -272,17 +280,54 @@ function checkPath(checker, rootType, apiPath, location, derivedTypes, runtimeTy
         traversed.push(component.indexed ? `${component.name}[*]` : component.name);
     }
 
-    return {found: true, terminalTypes: currentTypes};
+    return {found: true, terminalTypes: currentTypes, terminalSymbols};
 }
 
 function checkManifest(manifest, typeInfo) {
     return manifest.apis.map(api => {
-        const {terminalTypes, ...result} = checkPath(typeInfo.checker, typeInfo.appStoreType, api.path, typeInfo.appStoreDeclaration, typeInfo.derivedTypes, api.runtime_types);
+        const {terminalTypes, terminalSymbols = [], ...result} = checkPath(typeInfo.checker, typeInfo.appStoreType, api.path, typeInfo.appStoreDeclaration, typeInfo.derivedTypes, api.runtime_types);
         if (result.found && api.kind === "action" && !terminalTypes.some(type => type.getCallSignatures().length > 0)) {
             return {...api, ...result, found: false, missing: api.path, reason: "not callable"};
         }
-        return {...api, ...result};
+        const deprecated = terminalSymbols.flatMap(symbol =>
+            symbol
+                .getJsDocTags()
+                .filter(tag => tag.name === "deprecated")
+                .map(jsDocTagText)
+        );
+        return {...api, ...result, ...(deprecated.length ? {deprecated} : {})};
     });
+}
+
+function jsDocTagText(tag) {
+    if (typeof tag.text === "string") {
+        return tag.text.trim();
+    }
+    return (tag.text ?? [])
+        .map(part => part.text)
+        .join("")
+        .trim();
+}
+
+function deprecationManifest(results) {
+    return {
+        frontend_version: JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version,
+        deprecations: results.flatMap(result =>
+            (result.deprecated ?? []).map(message => ({
+                path: result.path,
+                kind: result.kind,
+                owner: result.runtime_types?.[0] ?? "AppStore",
+                member: result.path.split(".").at(-1),
+                ...(message ? {message} : {})
+            }))
+        )
+    };
+}
+
+function writeDeprecations(file, results) {
+    const data = deprecationManifest(results);
+    fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
+    console.log(`Wrote ${data.deprecations.length} deprecations to ${file}.`);
 }
 
 function printReport(results, manifestPath, json) {
@@ -314,6 +359,9 @@ function main() {
     const manifest = loadManifest(options.manifest);
     const typeInfo = createTypeChecker();
     const results = checkManifest(manifest, typeInfo);
+    if (options.writeDeprecations) {
+        writeDeprecations(options.writeDeprecations, results);
+    }
     return printReport(results, options.manifest, options.json) ? 1 : 0;
 }
 
