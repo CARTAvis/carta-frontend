@@ -413,7 +413,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={axisFrame.zoomAxis === "x" ? "arrows-horizontal" : axisFrame.zoomAxis === "y" ? "arrows-vertical" : "move"} data-testid="pv-zoom-axis-button" />
+                                    <AnchorButton icon={<CustomIcon icon={axisFrame.zoomAxis === "x" ? "zoomAxisX" : axisFrame.zoomAxis === "y" ? "zoomAxisY" : "zoomAxisBoth"} />} data-testid="pv-zoom-axis-button" />
                                 </Tooltip>
                             </PopoverNext>
                         )}

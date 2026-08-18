@@ -23,7 +23,10 @@ export declare type CustomIconName =
     | "imageFitting"
     | "lineFitting"
     | "vectorOverlay"
-    | "popout";
+    | "popout"
+    | "zoomAxisX"
+    | "zoomAxisY"
+    | "zoomAxisBoth";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number; viewBox?: string}> {
     public static readonly SIZE_STANDARD = 16;
@@ -306,6 +309,17 @@ const POPOUT_SVG = (
     </>
 );
 
+const ZOOM_AXIS_X_SVG = <path d="M1 8h14M4 5 1 8l3 3M12 5l3 3-3 3" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />;
+
+const ZOOM_AXIS_Y_SVG = <path d="M8 1v14M5 4l3-3 3 3M5 12l3 3 3-3" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />;
+
+const ZOOM_AXIS_BOTH_SVG = (
+    <>
+        <path d="M1 8h15M4 5 1 8l3 3M12 5l3 3-3 3M8 1v15M5 4l3-3 3 3M5 12l3 3 3-3" fill="none" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="6" y="6" width="4" height="4" fill="none" strokeWidth="1.25" />
+    </>
+);
+
 const ICONS = {
     contour: CONTOUR_SVG,
     center: CENTER_SVG,
@@ -324,5 +338,8 @@ const ICONS = {
     imageFitting: IMAGE_FITTING_SVG,
     lineFitting: LINE_FITTING_SVG,
     vectorOverlay: VECTOR_OVERLAY_SVG,
-    popout: POPOUT_SVG
+    popout: POPOUT_SVG,
+    zoomAxisX: ZOOM_AXIS_X_SVG,
+    zoomAxisY: ZOOM_AXIS_Y_SVG,
+    zoomAxisBoth: ZOOM_AXIS_BOTH_SVG
 };
