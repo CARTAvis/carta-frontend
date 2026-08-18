@@ -1,0 +1,58 @@
+name: carta-python API compatibility
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout carta-frontend
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Checkout carta-python
+        uses: actions/checkout@v6
+        with:
+          repository: CARTAvis/carta-python
+          ref: dev
+          path: carta-python
+
+      - name: Install uv and set Python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.10"
+          enable-cache: true
+
+      - name: Sync Python environment
+        working-directory: carta-python
+        run: uv sync --locked --no-group dev
+
+      - name: Generate API manifest
+        working-directory: carta-python
+        run: uv run --no-sync scripts/extract_frontend_api.py --write-manifest
+
+      - name: Install Node dependencies
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build frontend protobuf types
+        run: npm run build-protobuf
+
+      - name: Check carta-python APIs
+        run: npm run check-python-api -- --manifest "$GITHUB_WORKSPACE/carta-python/frontend_api.json"
