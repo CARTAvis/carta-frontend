@@ -292,7 +292,7 @@ function checkManifest(manifest, typeInfo) {
         const deprecated = terminalSymbols.flatMap(symbol =>
             symbol
                 .getJsDocTags()
-                .filter(tag => tag.name === "deprecated")
+                .filter(tag => tag.name === "cartaDeprecated")
                 .map(jsDocTagText)
         );
         return {...api, ...result, ...(deprecated.length ? {deprecated} : {})};
