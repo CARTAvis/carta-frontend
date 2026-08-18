@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: CARTAvis/carta-python
-          ref: dev
+          ref: zhenkai/api_check
           path: carta-python
 
       - name: Install uv and set Python version
