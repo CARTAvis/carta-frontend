@@ -1,15 +1,16 @@
 import {ToolbarComponent} from "./ToolbarComponent";
 
-describe("ToolbarComponent PV zoom", () => {
-    const makeComponent = (pvZoomAxis: "x" | "y") => {
+describe("ToolbarComponent axis zoom", () => {
+    const makeComponent = (zoomAxis: "x" | "y") => {
         const frame = {
             spatialReference: undefined,
             isPVImage: true,
             isPreview: false,
-            pvZoomAxis,
+            isAxisZoomable: true,
+            zoomAxis,
             effectiveZoomLevel: {x: 2, y: 1},
             zoomLevel: 2,
-            setPvZoom: jest.fn(),
+            setAxisZoom: jest.fn(),
             setZoom: jest.fn()
         };
         const onRegionViewZoom = jest.fn();
@@ -22,7 +23,7 @@ describe("ToolbarComponent PV zoom", () => {
 
         component.handleZoomInClicked();
 
-        expect(frame.setPvZoom).toHaveBeenCalledWith(4, 1);
+        expect(frame.setAxisZoom).toHaveBeenCalledWith(4, 1);
         expect(frame.setZoom).not.toHaveBeenCalled();
         expect(onRegionViewZoom).toHaveBeenCalledWith({x: 4, y: 1});
     });
@@ -32,7 +33,7 @@ describe("ToolbarComponent PV zoom", () => {
 
         component.handleZoomOutClicked();
 
-        expect(frame.setPvZoom).toHaveBeenCalledWith(2, 0.5);
+        expect(frame.setAxisZoom).toHaveBeenCalledWith(2, 0.5);
         expect(frame.setZoom).not.toHaveBeenCalled();
         expect(onRegionViewZoom).toHaveBeenCalledWith({x: 2, y: 0.5});
     });

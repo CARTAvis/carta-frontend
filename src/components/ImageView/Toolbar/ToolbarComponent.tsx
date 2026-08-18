@@ -55,10 +55,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomInClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        if ((frame.isPVImage || frame.isPreview) && frame.pvZoomAxis !== "both") {
-            const zoomX = frame.pvZoomAxis === "x" ? frame.effectiveZoomLevel.x * 2.0 : frame.effectiveZoomLevel.x;
-            const zoomY = frame.pvZoomAxis === "y" ? frame.effectiveZoomLevel.y * 2.0 : frame.effectiveZoomLevel.y;
-            frame.setPvZoom(zoomX, zoomY);
+        if (frame.isAxisZoomable && frame.zoomAxis !== "both") {
+            const zoomX = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.x * 2.0 : frame.effectiveZoomLevel.x;
+            const zoomY = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.y * 2.0 : frame.effectiveZoomLevel.y;
+            frame.setAxisZoom(zoomX, zoomY);
             this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
             const zoom = frame.zoomLevel * 2.0;
@@ -69,10 +69,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomOutClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        if ((frame.isPVImage || frame.isPreview) && frame.pvZoomAxis !== "both") {
-            const zoomX = frame.pvZoomAxis === "x" ? frame.effectiveZoomLevel.x / 2.0 : frame.effectiveZoomLevel.x;
-            const zoomY = frame.pvZoomAxis === "y" ? frame.effectiveZoomLevel.y / 2.0 : frame.effectiveZoomLevel.y;
-            frame.setPvZoom(zoomX, zoomY);
+        if (frame.isAxisZoomable && frame.zoomAxis !== "both") {
+            const zoomX = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.x / 2.0 : frame.effectiveZoomLevel.x;
+            const zoomY = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.y / 2.0 : frame.effectiveZoomLevel.y;
+            frame.setAxisZoom(zoomX, zoomY);
             this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
             const zoom = frame.zoomLevel / 2.0;
@@ -146,12 +146,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const zoomFrame = frame.spatialReference && frame.spatialTransform ? frame.spatialReference : frame;
+        const axisFrame = frame.spatialReference || frame;
         const currentZoomSpan = (
             <span>
                 <br />
                 <i>
                     <small>Current: {toFixed(zoomLevel, 2)}x</small>
-                    {(frame.isPVImage || frame.isPreview) && Math.abs(zoomFrame.effectiveZoomLevel.x - zoomFrame.effectiveZoomLevel.y) > 1e-4 && (
+                    {axisFrame.isAxisZoomable && Math.abs(zoomFrame.effectiveZoomLevel.x - zoomFrame.effectiveZoomLevel.y) > 1e-4 && (
                         <small>
                             <br />
                             X: {toFixed(zoomFrame.effectiveZoomLevel.x, 2)}x, Y: {toFixed(zoomFrame.effectiveZoomLevel.y, 2)}x
@@ -168,11 +169,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const pvZoomAxisMenu = (
+        const zoomAxisMenu = (
             <Menu>
-                <MenuItem text="Both (XY)" icon={frame.pvZoomAxis === "both" ? "tick" : "blank"} onClick={() => frame.setPvZoomAxis("both")} data-testid="pv-zoom-axis-both" />
-                <MenuItem text="X Axis" icon={frame.pvZoomAxis === "x" ? "tick" : "blank"} onClick={() => frame.setPvZoomAxis("x")} data-testid="pv-zoom-axis-x" />
-                <MenuItem text="Y Axis" icon={frame.pvZoomAxis === "y" ? "tick" : "blank"} onClick={() => frame.setPvZoomAxis("y")} data-testid="pv-zoom-axis-y" />
+                <MenuItem text="Both (XY)" icon={axisFrame.zoomAxis === "both" ? "tick" : "blank"} onClick={() => axisFrame.setZoomAxis("both")} data-testid="pv-zoom-axis-both" />
+                <MenuItem text="X Axis" icon={axisFrame.zoomAxis === "x" ? "tick" : "blank"} onClick={() => axisFrame.setZoomAxis("x")} data-testid="pv-zoom-axis-x" />
+                <MenuItem text="Y Axis" icon={axisFrame.zoomAxis === "y" ? "tick" : "blank"} onClick={() => axisFrame.setZoomAxis("y")} data-testid="pv-zoom-axis-y" />
             </Menu>
         );
 
@@ -399,20 +400,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 </Tooltip>
                             </>
                         )}
-                        {(frame.isPVImage || frame.isPreview) && (
-                            <PopoverNext content={pvZoomAxisMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
+                        {axisFrame.isAxisZoomable && (
+                            <PopoverNext content={zoomAxisMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
                                 <Tooltip
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            PV Zoom Axis <br />
+                                            Zoom Axis <br />
                                             <small>
-                                                <i>Current: {frame.pvZoomAxis === "x" ? "X Axis" : frame.pvZoomAxis === "y" ? "Y Axis" : "Both (XY)"}</i>
+                                                <i>Current: {axisFrame.zoomAxis === "x" ? "X Axis" : axisFrame.zoomAxis === "y" ? "Y Axis" : "Both (XY)"}</i>
                                             </small>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={frame.pvZoomAxis === "x" ? "arrows-horizontal" : frame.pvZoomAxis === "y" ? "arrows-vertical" : "move"} data-testid="pv-zoom-axis-button" />
+                                    <AnchorButton icon={axisFrame.zoomAxis === "x" ? "arrows-horizontal" : axisFrame.zoomAxis === "y" ? "arrows-vertical" : "move"} data-testid="pv-zoom-axis-button" />
                                 </Tooltip>
                             </PopoverNext>
                         )}

@@ -214,22 +214,32 @@ describe("FrameStore", () => {
         });
     });
 
-    describe("PV zoom axis", () => {
-        test("sets pvZoomAxis and copies to spatialReference", () => {
+    describe("axis zoom", () => {
+        test("sets zoomAxis and copies to spatialReference", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO);
             const spatialRef = new FrameStore(EMPTYFRAME_INFO);
             frame["spatialReference"] = spatialRef;
 
-            expect(frame.pvZoomAxis).toBe("both");
-            frame.setPvZoomAxis("x");
-            expect(frame.pvZoomAxis).toBe("x");
-            expect(spatialRef.pvZoomAxis).toBe("x");
+            expect(frame.zoomAxis).toBe("both");
+            frame.setZoomAxis("x");
+            expect(frame.zoomAxis).toBe("x");
+            expect(spatialRef.zoomAxis).toBe("x");
         });
 
         test("uses independent zoom levels for preview frames", () => {
             const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
 
-            frame.setPvZoom(2, 4);
+            frame.setAxisZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+
+        test("uses independent zoom levels for rotated spectral cubes", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+
+            expect(frame.isAxisZoomable).toBe(true);
+            frame.setAxisZoom(2, 4);
 
             expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
         });

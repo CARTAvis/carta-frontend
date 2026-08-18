@@ -541,8 +541,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor),
-                    pvZoomX: spatialReference.pvZoomLevel.x,
-                    pvZoomY: spatialReference.pvZoomLevel.y
+                    axisZoomX: spatialReference.axisZoomLevel.x,
+                    axisZoomY: spatialReference.axisZoomLevel.y
                 };
                 const ratio = appStore.imageRatio;
             }
