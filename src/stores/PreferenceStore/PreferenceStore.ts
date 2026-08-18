@@ -41,6 +41,7 @@ const DEFAULTS = {
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
         colormap: ColorMap.Inferno,
+        colormapInverted: false,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
@@ -54,6 +55,7 @@ const DEFAULTS = {
         contourNumLevels: 5,
         contourThickness: 1,
         contourColormapEnabled: false,
+        contourColormapInverted: false,
         contourColor: Colors.GREEN3,
         contourColormap: ColorMap.Viridis
     },
@@ -62,6 +64,7 @@ const DEFAULTS = {
         vectorOverlayFractionalIntensity: false,
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
+        vectorOverlayColormapInverted: false,
         vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: ColorMap.Viridis
     },
@@ -255,6 +258,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
     }
 
+    @computed get isColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.RENDER_CONFIG.colormapInverted;
+    }
+
     @computed get colormapHex(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
@@ -320,6 +327,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
+    @computed get isContourColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapInverted;
+    }
+
     @computed get contourColormap(): string {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
     }
@@ -371,6 +382,10 @@ export class PreferenceStore {
 
     @computed get isVectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    }
+
+    @computed get isVectorOverlayColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapInverted;
     }
 
     @computed get vectorOverlayColor(): string {
@@ -773,6 +788,7 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
@@ -796,6 +812,7 @@ export class PreferenceStore {
             PreferenceKeys.CONTOUR_CONFIG_COLOR,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
             PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
             PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
@@ -814,6 +831,7 @@ export class PreferenceStore {
             PreferenceKeys.VECTOR_OVERLAY_COLOR,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED,
             PreferenceKeys.VECTOR_OVERLAY_THICKNESS
         ]);
     };
