@@ -47,6 +47,7 @@ import {
     getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
+    getPixelScale,
     getPixelSizes,
     getPixelValueFromWCS,
     getRegionPixelProperties,
@@ -472,30 +473,24 @@ export class FrameStore {
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; beamAreaPixels: number; beamArea: number; overlayBeamSettings: OverlayBeamStore} | null {
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
-
-        if (!this.isSwappedZ && deltaHeader) {
-            const unit = unitHeader?.value?.trim() || "deg";
-            const delta = getHeaderNumericValue(deltaHeader);
-            if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
-                if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
-                    if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
-                        const x = beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta);
-                        const y = beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta);
-                        return {
-                            x,
-                            y,
-                            majorAxis: beam.majorAxis,
-                            minorAxis: beam.minorAxis,
-                            angle: beam.pa,
-                            beamAreaPixels: (Math.PI / (4 * Math.LN2)) * x * y,
-                            beamArea: (Math.PI / (4 * Math.LN2)) * getAngleInRad(beam.majorAxis) * getAngleInRad(beam.minorAxis),
-                            overlayBeamSettings: this.overlayBeamSettings
-                        };
-                    }
-                }
+        const headerEntries = this.frameInfo.fileInfoExtended.headerEntries;
+        const xPixelScale = getPixelScale(headerEntries, this.dirXNumber);
+        const yPixelScale = getPixelScale(headerEntries, this.dirYNumber);
+        if (!this.isSwappedZ && xPixelScale && yPixelScale && this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
+            const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
+            if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
+                const x = beam.majorAxis / xPixelScale;
+                const y = beam.minorAxis / yPixelScale;
+                return {
+                    x,
+                    y,
+                    majorAxis: beam.majorAxis,
+                    minorAxis: beam.minorAxis,
+                    angle: beam.pa,
+                    beamAreaPixels: (Math.PI / (4 * Math.LN2)) * x * y,
+                    beamArea: (Math.PI / (4 * Math.LN2)) * getAngleInRad(beam.majorAxis) * getAngleInRad(beam.minorAxis),
+                    overlayBeamSettings: this.overlayBeamSettings
+                };
             }
         }
         return null;
