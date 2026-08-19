@@ -1,4 +1,4 @@
-import {getContourZoomParameters} from "./shared";
+import {getContourZoomParameters} from "./ContourViewComponent";
 
 describe("contour zoom parameters", () => {
     test("preserves screen-space thickness for independent axis zoom", () => {

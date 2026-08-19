@@ -1,14 +1,13 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
-
-import {getContourZoomParameters} from "./shared";
 
 import "./ContourViewComponent.scss";
 
@@ -17,6 +16,13 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
+}
+
+export function getContourZoomParameters(effectiveZoomLevel: Point2D, frameAspectRatio: number, transformScale: number = 1) {
+    return {
+        pixelAspectRatio: frameAspectRatio * (effectiveZoomLevel.x / effectiveZoomLevel.y),
+        zoomY: effectiveZoomLevel.y * transformScale
+    };
 }
 
 @observer
