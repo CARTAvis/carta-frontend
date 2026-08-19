@@ -66,7 +66,6 @@ type TestTileService = {
     textureCoordinateQueue: number[];
     updateChannelMapActiveChannel: TileService["updateChannelMapActiveChannel"];
     updateHiddenFileChannels: TileService["updateHiddenFileChannels"];
-    updateRemainingTileCount: jest.Mock;
     updateStream: (result: {fileId: number; channel: number; stokes: number; data: Float32Array; width: number; height: number; encodedCoordinate: number; syncId: number; generation: number}) => void;
     completeSynchronisedTiles: (location: {fileId: number; channel: number; stokes: number; syncId: number}) => void;
 };
@@ -107,7 +106,6 @@ const CreateService = () => {
     service.rasterViewGenerations = new Map();
     service.isAnimationEnabled = false;
     service.tileStream = {next: jest.fn()};
-    service.updateRemainingTileCount = jest.fn();
     return service;
 };
 
