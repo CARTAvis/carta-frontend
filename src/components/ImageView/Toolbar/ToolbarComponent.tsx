@@ -55,9 +55,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomInClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        if (frame.isAxisZoomable && frame.zoomAxis !== "both") {
-            const zoomX = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.x * 2.0 : frame.effectiveZoomLevel.x;
-            const zoomY = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.y * 2.0 : frame.effectiveZoomLevel.y;
+        if (frame.isAxisZoomable) {
+            const zoomX = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.x : frame.effectiveZoomLevel.x * 2.0;
+            const zoomY = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.y : frame.effectiveZoomLevel.y * 2.0;
             frame.setAxisZoom(zoomX, zoomY);
             this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
@@ -69,9 +69,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomOutClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        if (frame.isAxisZoomable && frame.zoomAxis !== "both") {
-            const zoomX = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.x / 2.0 : frame.effectiveZoomLevel.x;
-            const zoomY = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.y / 2.0 : frame.effectiveZoomLevel.y;
+        if (frame.isAxisZoomable) {
+            const zoomX = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.x : frame.effectiveZoomLevel.x / 2.0;
+            const zoomY = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.y : frame.effectiveZoomLevel.y / 2.0;
             frame.setAxisZoom(zoomX, zoomY);
             this.props.onRegionViewZoom({x: zoomX, y: zoomY});
         } else {
