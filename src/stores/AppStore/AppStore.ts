@@ -109,6 +109,15 @@ export function scaleZoomForImageRatio(frame: Pick<FrameStore, "effectiveZoomLev
     return {x: zoom.x * imageRatioScale, y: zoom.y * imageRatioScale};
 }
 
+function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
+    const zoom = scaleZoomForImageRatio(frame, imageRatioScale);
+    if (frame.isAxisZoomable) {
+        frame.setAxisZoom(zoom.x, zoom.y);
+    } else {
+        frame.setZoom(zoom.x, true);
+    }
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -1740,17 +1749,13 @@ export class AppStore {
     };
 
     @action setImageRatio = (val: number) => {
+        const imageRatioScale = val / this.imageRatio;
         for (const f of this.frames) {
             if (!f.spatialReference) {
-                const imageRatioScale = val / this.imageRatio;
-                const zoom = scaleZoomForImageRatio(f, imageRatioScale);
-                if (f.isAxisZoomable) {
-                    f.setAxisZoom(zoom.x, zoom.y);
-                } else {
-                    f.setZoom(zoom.x);
-                }
+                scaleFrameZoom(f, imageRatioScale);
             }
         }
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, imageRatioScale));
         this.imageRatio = val;
     };
 
@@ -2204,15 +2209,14 @@ export class AppStore {
 
     // update devicePixelRatio and make the image size invariant on screen
     @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
+        const devicePixelRatioScale = devicePixelRatio / prevDevicePixelRatio;
         this.frames.forEach(frame => {
             if (frame === this.spatialReference || !frame.spatialReference) {
-                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+                scaleFrameZoom(frame, devicePixelRatioScale);
             }
         });
 
-        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
-            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
-        });
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, devicePixelRatioScale));
 
         this.devicePixelRatio = devicePixelRatio;
     }
