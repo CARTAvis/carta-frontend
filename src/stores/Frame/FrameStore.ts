@@ -47,7 +47,6 @@ import {
     getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
-    getPixelScale,
     getPixelSizes,
     getPixelValueFromWCS,
     getRegionPixelProperties,
@@ -473,14 +472,21 @@ export class FrameStore {
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; beamAreaPixels: number; beamArea: number; overlayBeamSettings: OverlayBeamStore} | null {
-        const headerEntries = this.frameInfo.fileInfoExtended.headerEntries;
-        const xPixelScale = getPixelScale(headerEntries, this.dirXNumber);
-        const yPixelScale = getPixelScale(headerEntries, this.dirYNumber);
-        if (!this.isSwappedZ && xPixelScale && yPixelScale && this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
+        const pixelUnitSizeArcsec = this.pixelUnitSizeArcsec;
+        if (
+            !this.isSwappedZ &&
+            pixelUnitSizeArcsec &&
+            isFinite(pixelUnitSizeArcsec.x) &&
+            pixelUnitSizeArcsec.x > 0 &&
+            isFinite(pixelUnitSizeArcsec.y) &&
+            pixelUnitSizeArcsec.y > 0 &&
+            this.frameInfo.beamTable &&
+            this.frameInfo.beamTable.length > 0
+        ) {
             const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
             if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
-                const x = beam.majorAxis / xPixelScale;
-                const y = beam.minorAxis / yPixelScale;
+                const x = beam.majorAxis / pixelUnitSizeArcsec.x;
+                const y = beam.minorAxis / pixelUnitSizeArcsec.y;
                 return {
                     x,
                     y,

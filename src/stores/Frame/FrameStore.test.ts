@@ -128,6 +128,16 @@ describe("FrameStore", () => {
             expect(beam!.beamAreaPixels).toBeCloseTo((Math.PI / (4 * Math.LN2)) * beam!.x * beam!.y);
         });
 
+        test("uses pixel angular sizes for beam axes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            const pixelUnitSizeArcsec = frame.pixelUnitSizeArcsec;
+            expect(beam).not.toBeNull();
+            expect(pixelUnitSizeArcsec).not.toBeNull();
+            expect(beam!.x).toBeCloseTo(beam!.majorAxis / pixelUnitSizeArcsec!.x);
+            expect(beam!.y).toBeCloseTo(beam!.minorAxis / pixelUnitSizeArcsec!.y);
+        });
+
         test("returns the beam area in steradians", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             const beam = frame.beamProperties;
