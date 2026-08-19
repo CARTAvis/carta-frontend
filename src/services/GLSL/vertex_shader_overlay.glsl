@@ -6,6 +6,7 @@ uniform float uRotationOffset;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
 uniform float uZoomLevel;
+uniform float uPixelRatio;
 uniform float uCanvasSpaceLineWidth;
 uniform float uFeatherWidth;
 uniform sampler2D uDataTexture;
@@ -68,7 +69,8 @@ void main() {
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);
-    offset = vec2((lineWidth + uFeatherWidth / uZoomLevel) * offset.x, (lineLength + uFeatherWidth / uZoomLevel) * offset.y);
+    float featherWidth = uFeatherWidth / uZoomLevel;
+    offset = vec2((lineWidth + featherWidth) * offset.x / uPixelRatio, (lineLength + featherWidth) * offset.y);
     // location vertex attribute is in line space before rotation
     v_location = offset;
     // position is in canvas space

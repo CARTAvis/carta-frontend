@@ -135,7 +135,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
             this.gl.uniform1f(shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
-            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.spatialReference.zoomLevel);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
             const rangeScale = {
@@ -152,8 +151,12 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
             this.gl.uniform1f(shaderUniforms.RotationAngle, 0.0);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, 1.0);
-            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
         }
+
+        const zoomFrame = baseFrame.spatialReference ?? baseFrame;
+        const effectiveZoomLevel = zoomFrame.effectiveZoomLevel;
+        this.gl.uniform1f(shaderUniforms.ZoomLevel, effectiveZoomLevel.y);
+        this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio * (effectiveZoomLevel.x / effectiveZoomLevel.y));
 
         if (isActive) {
             this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
@@ -206,8 +209,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         }
 
-        // TODO: support non-uniform pixel ratios
-        // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
         this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.isColormapEnabled ? 1 : 0);
         if (frame.vectorOverlayConfig.isColormapEnabled) {
             this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));

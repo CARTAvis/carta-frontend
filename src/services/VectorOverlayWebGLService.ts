@@ -12,6 +12,7 @@ interface ShaderUniforms {
     RotationAngle: WebGLUniformLocation | null;
     ScaleAdjustment: WebGLUniformLocation | null;
     ZoomLevel: WebGLUniformLocation | null;
+    PixelRatio: WebGLUniformLocation | null;
     CanvasSpaceLineWidth: WebGLUniformLocation | null;
     FeatherWidth: WebGLUniformLocation | null;
     LengthMin: WebGLUniformLocation | null;
@@ -73,6 +74,7 @@ export class VectorOverlayWebGLService {
                 ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
                 RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
                 ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
+                PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
                 CanvasSpaceLineWidth: this.gl.getUniformLocation(shaderProgram, "uCanvasSpaceLineWidth"),
                 FeatherWidth: this.gl.getUniformLocation(shaderProgram, "uFeatherWidth"),
                 LengthMin: this.gl.getUniformLocation(shaderProgram, "uLengthMin"),
