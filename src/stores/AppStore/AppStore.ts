@@ -104,6 +104,11 @@ const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
 
+export function scaleZoomForImageRatio(frame: Pick<FrameStore, "effectiveZoomLevel" | "isAxisZoomable" | "zoomLevel">, imageRatioScale: number): Point2D {
+    const zoom = frame.isAxisZoomable ? frame.effectiveZoomLevel : {x: frame.zoomLevel, y: frame.zoomLevel};
+    return {x: zoom.x * imageRatioScale, y: zoom.y * imageRatioScale};
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -1737,7 +1742,13 @@ export class AppStore {
     @action setImageRatio = (val: number) => {
         for (const f of this.frames) {
             if (!f.spatialReference) {
-                f.setZoom((f.zoomLevel * val) / this.imageRatio);
+                const imageRatioScale = val / this.imageRatio;
+                const zoom = scaleZoomForImageRatio(f, imageRatioScale);
+                if (f.isAxisZoomable) {
+                    f.setAxisZoom(zoom.x, zoom.y);
+                } else {
+                    f.setZoom(zoom.x);
+                }
             }
         }
         this.imageRatio = val;

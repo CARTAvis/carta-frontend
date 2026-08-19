@@ -1,7 +1,7 @@
 import type {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode} from "enums";
-import {AppStore} from "stores";
+import {AppStore, scaleZoomForImageRatio} from "stores";
 import {ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -149,5 +149,11 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
+    });
+});
+
+describe("scaleZoomForImageRatio", () => {
+    test("preserves independent axis zoom while scaling for image export", () => {
+        expect(scaleZoomForImageRatio({effectiveZoomLevel: {x: 2, y: 4}, isAxisZoomable: true, zoomLevel: 4} as any, 2)).toEqual({x: 4, y: 8});
     });
 });
