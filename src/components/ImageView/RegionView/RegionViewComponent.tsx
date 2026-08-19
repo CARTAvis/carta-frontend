@@ -8,7 +8,7 @@ import {action, type IReactionDisposer, makeObservable, observable, reaction, ru
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
-import {type CursorInfo, type Point2D, ZoomPoint} from "models";
+import {type CursorInfo, type FrameView, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
@@ -68,8 +68,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
     private isDragPanning: boolean;
-    private initialStagePosition: Point2D;
+    private initialPanPosition: Point2D;
     private initialDragCenter: Point2D;
+    private initialFrameView: FrameView;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
     private suppressedClickButton: SuppressedClickButton | null = null;
@@ -454,9 +455,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     const frame = this.frame.spatialReference || this.frame;
                     const stage = konvaEvent.target.getStage();
                     if (stage) {
-                        const stagePosition = stage.getPosition();
-                        this.initialStagePosition = stagePosition;
+                        this.initialPanPosition = stage.getPointerPosition() ?? stage.getPosition();
                         this.initialDragCenter = frame.center;
+                        this.initialFrameView = frame.requiredFrameView;
                         frame.startMoving();
                     }
                 }
@@ -490,8 +491,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (isPanDrag) {
                 const stage = konvaEvent.target.getStage();
                 if (stage) {
-                    const stagePosition = stage.getPosition();
-                    this.handlePan(stagePosition);
+                    this.handlePan(stage.getPointerPosition() ?? stage.getPosition());
                 }
             }
         }
@@ -542,17 +542,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handlePan = (currentStagePosition: Point2D) => {
+    handlePan = (currentPanPosition: Point2D) => {
         // ignore invalid offsets
-        if (!currentStagePosition || !isFinite(currentStagePosition.x) || !isFinite(currentStagePosition.y)) {
+        if (!currentPanPosition || !isFinite(currentPanPosition.x) || !isFinite(currentPanPosition.y)) {
             return;
         }
         if (this.frame) {
             const frame = this.frame.spatialReference || this.frame;
-            const dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
-            const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const dragOffset = subtract2D(currentPanPosition, this.initialPanPosition);
+            const frameView = this.initialFrameView ?? frame.requiredFrameView;
+            const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frameView, this.props.width, this.props.height);
             const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, dragOffset);
-            const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frameView, this.props.width, this.props.height);
             frame.setCenter(newCenterImageSpace.x, newCenterImageSpace.y);
         }
     };
@@ -611,6 +612,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const stage = this.stageRef.current;
         if (stage) {
             const newZoom = typeof zoom === "number" ? {x: zoom, y: zoom} : zoom;
+            const imageRatio = AppStore.Instance.imageRatio;
+            const newStageZoom = {x: newZoom.x / imageRatio, y: newZoom.y / imageRatio};
             const oldScale = {x: stage.scaleX(), y: stage.scaleY()};
             const origin = stage.getPosition();
             const cursorPointTo = {
@@ -618,10 +621,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 y: (y - origin.y) / oldScale.y
             };
             const newOrigin = {
-                x: x - cursorPointTo.x * newZoom.x,
-                y: y - cursorPointTo.y * newZoom.y
+                x: x - cursorPointTo.x * newStageZoom.x,
+                y: y - cursorPointTo.y * newStageZoom.y
             };
-            stage.scale(newZoom);
+            stage.scale(newStageZoom);
             stage.position(newOrigin);
         }
     };
