@@ -3519,6 +3519,7 @@ export class FrameStore {
         const oldAspectRatio = this.aspectRatio;
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
+        const oldZoom = this.effectiveZoomLevel;
 
         // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
         // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.
@@ -3559,7 +3560,12 @@ export class FrameStore {
         const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
 
         // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
-        this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
+        const zoomScale = oldHeight / this.frameInfo.fileInfoExtended.height;
+        if (this.isAxisZoomable) {
+            this.setAxisZoom(oldZoom.x * zoomScale, oldZoom.y * zoomScale);
+        } else {
+            this.setZoom(oldZoom.x * zoomScale);
+        }
         this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
     }
 
