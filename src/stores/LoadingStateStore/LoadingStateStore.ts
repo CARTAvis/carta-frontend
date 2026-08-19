@@ -15,8 +15,8 @@ export class LoadingStateStore {
         makeObservable(this);
     }
 
-    @computed get isLoadingTiles() {
-        return this.channelMapStore.isChannelMapEnabled ? this.tileService.isChannelMapLoading : this.tileService.remainingTiles > 0;
+    @computed get remainingTiles() {
+        return this.channelMapStore.isChannelMapEnabled ? this.tileService.channelMapRemainingTiles : this.tileService.normalViewRemainingTiles;
     }
 
     @computed get isLoadingContours() {
@@ -31,7 +31,7 @@ export class LoadingStateStore {
 
     @computed get isLoading() {
         return (
-            this.isLoadingTiles ||
+            this.remainingTiles > 0 ||
             this.getVisibleFrames().some(frame => {
                 const contourProgress = frame.contourProgress;
                 const vectorProgress = frame.vectorOverlayStore.progress;

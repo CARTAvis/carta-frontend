@@ -23,6 +23,7 @@ type TestTileService = {
     cachedTiles: {get?: jest.Mock; has: jest.Mock; peek?: jest.Mock; setpop?: jest.Mock};
     channelMapPendingTileCount: number;
     channelMapPendingTiles: Set<string>;
+    channelMapRemainingTiles: number;
     channelMapStates: Map<
         number,
         {
@@ -44,7 +45,9 @@ type TestTileService = {
     handleChannelMapFlowControl: (eventId: number, message: {fileId: number; completedChannel: number; status: CARTA.ChannelMapFlowControl.Status}) => void;
     handleStreamSync: (message: CARTA.RasterTileSync.$Properties, requestId?: number) => void;
     isAnimationEnabled: boolean;
-    isChannelMapLoading: boolean;
+    normalViewPendingTileCount: number;
+    normalViewPendingTiles: Map<number, Set<string>>;
+    normalViewRemainingTiles: number;
     pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
     pendingRasterRequests: Map<number, RasterRequestState>;
     pendingRequests: Map<string, Map<number, boolean>>;
@@ -91,6 +94,8 @@ const CreateService = () => {
     service.channelMapStates = new Map();
     service.channelMapPendingTileCount = 0;
     service.channelMapPendingTiles = new Set();
+    service.normalViewPendingTileCount = 0;
+    service.normalViewPendingTiles = new Map();
     service.cachedTiles = {has: jest.fn(() => false), setpop: jest.fn()};
     service.fileStateMap = new Map();
     service.clearCompressedCache = jest.fn();
@@ -345,6 +350,25 @@ describe("TileService channel map request queue", () => {
         expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 0, fileId: 1, channel: 2, stokes: 0, flush: false});
     });
 
+    test("waits for L2 decompression before declaring a normal-view tile ready", () => {
+        const service = CreateService();
+        const tile = {layer: 0, encode: () => 4};
+        service.getCompressedCache = jest.fn(() => new Map([["1_0_2_4", {tile: {}, compressionQuality: 11}]]));
+        (service as any).asyncDecompressTile = jest.fn();
+        service.textureCoordinateQueue = [3];
+
+        service.requestTiles([tile] as never, 1, 2, 0, {x: 0, y: 0}, 11, true);
+
+        expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 2, 0, {fileId: 1, compressionQuality: 11, compressionType: CARTA.CompressionType.ZFP, tiles: []});
+        expect(service.normalViewRemainingTiles).toBe(1);
+        expect(service.tileStream.next).not.toHaveBeenCalled();
+
+        service.updateStream({fileId: 1, channel: 2, stokes: 0, data: new Float32Array([1]), width: 1, height: 1, encodedCoordinate: 4, syncId: -1, generation: 0});
+
+        expect(service.normalViewRemainingTiles).toBe(0);
+        expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 1, fileId: 1, channel: 2, stokes: 0, flush: false});
+    });
+
     test("uses SetImageChannels only for the first normal-view synchronization", () => {
         const service = CreateService();
         const tile = {x: 0, y: 0, encode: () => 4};
@@ -572,7 +596,7 @@ describe("TileService channel map request queue", () => {
         service.setChannelMapTargetTiles([tile], 1, 0, {min: 0, max: 2});
 
         expect(service.channelMapPendingTiles).toEqual(new Set(["1_0_1_4", "1_0_2_4"]));
-        expect(service.isChannelMapLoading).toBe(true);
+        expect(service.channelMapRemainingTiles).toBe(2);
 
         service.resolveChannelMapTile(1, 0, 1, 4);
         service.resolveChannelMapTile(1, 0, 1, 4);
@@ -580,7 +604,7 @@ describe("TileService channel map request queue", () => {
         expect(service.channelMapPendingTileCount).toBe(1);
 
         service.resolveChannelMapTile(1, 0, 2, 4);
-        expect(service.isChannelMapLoading).toBe(false);
+        expect(service.channelMapRemainingTiles).toBe(0);
     });
 
     test("completes a synchronized stream when no requested tiles succeed", () => {
@@ -596,7 +620,7 @@ describe("TileService channel map request queue", () => {
 
         expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
         expect(service.rasterSyncStates.has(7)).toBe(false);
-        expect(service.isChannelMapLoading).toBe(false);
+        expect(service.channelMapRemainingTiles).toBe(0);
         expect(service.tileStream.next).toHaveBeenCalledWith({tileCount: 0, fileId: 1, channel: 1, stokes: 0, flush: true});
     });
 

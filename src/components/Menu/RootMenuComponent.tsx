@@ -374,7 +374,8 @@ export class RootMenuComponent extends React.Component {
                 break;
         }
 
-        const {isLoadingContours, isLoadingTiles, isLoadingVectorOverlay} = appStore.loadingStateStore;
+        const {isLoadingContours, isLoadingVectorOverlay, remainingTiles} = appStore.loadingStateStore;
+        const isLoadingTiles = remainingTiles > 0;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
         let shouldShowLoadingIndicator = false;
@@ -382,7 +383,7 @@ export class RootMenuComponent extends React.Component {
         if (isLoadingTiles || isLoadingContours || isLoadingVectorOverlay) {
             let tilesTooltipContent;
             if (isLoadingTiles) {
-                tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
+                tilesTooltipContent = <span>Streaming image tiles. {remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
             if (isLoadingContours && appStore.activeFrame) {

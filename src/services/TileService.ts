@@ -168,17 +168,23 @@ export class TileService {
     private readonly rasterViewGenerations: Map<string, number>;
     private readonly channelMapStates: Map<number, ChannelMapFileState>;
     private readonly channelMapPendingTiles: Set<string>;
+    private readonly normalViewPendingTiles: Map<number, Set<string>>;
 
     @observable remainingTiles: number = 0;
     @observable private channelMapPendingTileCount: number = 0;
+    @observable private normalViewPendingTileCount: number = 0;
     @observable workersReady: boolean[] | undefined;
 
     @computed get isZfpReady() {
         return this.workersReady && this.workersReady.every(isReady => isReady);
     }
 
-    @computed get isChannelMapLoading() {
-        return this.channelMapPendingTileCount > 0;
+    @computed get channelMapRemainingTiles() {
+        return this.channelMapPendingTileCount;
+    }
+
+    @computed get normalViewRemainingTiles() {
+        return this.normalViewPendingTileCount;
     }
 
     @action setWorkerReady(index: number) {
@@ -245,6 +251,7 @@ export class TileService {
         this.rasterViewGenerations = new Map<string, number>();
         this.channelMapStates = new Map<number, ChannelMapFileState>();
         this.channelMapPendingTiles = new Set<string>();
+        this.normalViewPendingTiles = new Map<number, Set<string>>();
 
         this.compressionRequestCounter = 0;
         this.isAnimationEnabled = false;
@@ -359,6 +366,51 @@ export class TileService {
         this.channelMapPendingTileCount = 0;
     }
 
+    private setNormalViewTargetTiles(tiles: TileCoordinate[], fileId: number, stokes: number, channel: number) {
+        const pendingTiles = new Set<string>();
+        for (const tile of tiles) {
+            if (tile.layer < 0) {
+                continue;
+            }
+            const cacheKey = getTileCacheKey(fileId, stokes, channel, tile.encode());
+            if (!this.cachedTiles.has(cacheKey)) {
+                pendingTiles.add(cacheKey);
+            }
+        }
+        if (pendingTiles.size) {
+            this.normalViewPendingTiles.set(fileId, pendingTiles);
+        } else {
+            this.normalViewPendingTiles.delete(fileId);
+        }
+        this.updateNormalViewPendingTileCount();
+    }
+
+    private resolveNormalViewTile(fileId: number | null | undefined, stokes: number | null | undefined, channel: number | null | undefined, encodedCoordinate: number) {
+        if (fileId === null || fileId === undefined) {
+            return;
+        }
+        const pendingTiles = this.normalViewPendingTiles.get(fileId);
+        if (pendingTiles?.delete(getTileCacheKey(fileId, stokes, channel, encodedCoordinate))) {
+            if (!pendingTiles.size) {
+                this.normalViewPendingTiles.delete(fileId);
+            }
+            this.updateNormalViewPendingTileCount();
+        }
+    }
+
+    private resetNormalViewLoading(fileId?: number) {
+        if (fileId === undefined) {
+            this.normalViewPendingTiles.clear();
+        } else {
+            this.normalViewPendingTiles.delete(fileId);
+        }
+        this.updateNormalViewPendingTileCount();
+    }
+
+    private updateNormalViewPendingTileCount() {
+        this.normalViewPendingTileCount = Array.from(this.normalViewPendingTiles.values()).reduce((count, tiles) => count + tiles.size, 0);
+    }
+
     private removePendingTiles(key: string, tiles: Iterable<number>) {
         for (const tile of tiles) {
             this.pendingRequests.get(key)?.delete(tile);
@@ -466,6 +518,7 @@ export class TileService {
         }
 
         const newRequests = this.getRequiredRequestTiles(tiles, fileId, channel, stokes);
+        this.setNormalViewTargetTiles(tiles, fileId, stokes, channel);
 
         if (newRequests.length) {
             // sort by distance to midpoint and encode
@@ -489,12 +542,15 @@ export class TileService {
                 this.queueRasterRequest(requestId, rasterRequest);
             } else {
                 this.removePendingTiles(key, sortedRequests);
+                sortedRequests.forEach(tile => this.resolveNormalViewTile(fileId, stokes, channel, tile));
             }
         } else {
             if (areChannelsChanged) {
                 this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: []});
             }
-            this.tileStream.next({tileCount: 0, fileId, channel, stokes, flush: false});
+            if (!this.normalViewPendingTiles.has(fileId)) {
+                this.tileStream.next({tileCount: 0, fileId, channel, stokes, flush: false});
+            }
         }
     }
 
@@ -809,6 +865,7 @@ export class TileService {
         this.pendingRasterRequests.clear();
         this.rasterViewGenerations.clear();
         this.resetChannelMapLoading();
+        this.resetNormalViewLoading();
         this.fileStateMap.forEach((_channels, fileId) => {
             if (!this.channelMapStates.has(fileId)) {
                 this.channelMapStates.set(fileId, {queue: [], generation: 1});
@@ -861,6 +918,7 @@ export class TileService {
         }
 
         this.resetChannelMapLoading();
+        this.resetNormalViewLoading(fileId);
         this.updateRemainingTileCount();
     }
 
@@ -994,6 +1052,7 @@ export class TileService {
                 if (!this.isTileRequestedByAnotherSync(key, tile, syncMessage.syncId as number)) {
                     this.pendingRequests.get(key)?.delete(tile);
                     this.resolveChannelMapTile(syncMessage.fileId, syncMessage.stokes, syncMessage.channel, tile);
+                    this.resolveNormalViewTile(syncMessage.fileId, syncMessage.stokes, syncMessage.channel, tile);
                 }
             });
             syncState.pendingRequestTiles.clear();
@@ -1165,6 +1224,7 @@ export class TileService {
 
             pendingCompressionMap.delete(encodedCoordinate);
             this.resolveChannelMapTile(fileId, stokes, channel, encodedCoordinate);
+            this.resolveNormalViewTile(fileId, stokes, channel, encodedCoordinate);
             this.tileStream.next({tileCount: 1, fileId, channel, stokes, flush: false});
             if (syncId) {
                 this.completeSynchronisedTiles({fileId, channel, stokes, syncId});
@@ -1196,6 +1256,7 @@ export class TileService {
             // This needs to be after clearTile to avoid empty textureCoordinateQueue
             tile.textureCoordinate = this.textureCoordinateQueue.pop();
             this.resolveChannelMapTile(fileId, stokes, channel, coordinate);
+            this.resolveNormalViewTile(fileId, stokes, channel, coordinate);
         });
         const currentFileState = this.fileStateMap.get(fileId ?? NaN);
         const appStore = AppStore.Instance;

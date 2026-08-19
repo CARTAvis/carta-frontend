@@ -1,7 +1,7 @@
 import {LoadingStateStore} from "./LoadingStateStore";
 
 describe("LoadingStateStore", () => {
-    const tileService = {isChannelMapLoading: false, remainingTiles: 0};
+    const tileService = {channelMapRemainingTiles: 0, normalViewRemainingTiles: 0};
     const channelMapStore = {isChannelMapEnabled: false};
     const activeFrame = {
         contourProgress: -1,
@@ -19,8 +19,8 @@ describe("LoadingStateStore", () => {
     );
 
     beforeEach(() => {
-        tileService.isChannelMapLoading = false;
-        tileService.remainingTiles = 0;
+        tileService.channelMapRemainingTiles = 0;
+        tileService.normalViewRemainingTiles = 0;
         channelMapStore.isChannelMapEnabled = false;
         activeFrame.contourProgress = -1;
         activeFrame.vectorOverlayStore.progress = -1;
@@ -46,8 +46,16 @@ describe("LoadingStateStore", () => {
 
     test("uses channel-map rendering state for tile loading", () => {
         channelMapStore.isChannelMapEnabled = true;
-        tileService.isChannelMapLoading = true;
+        tileService.channelMapRemainingTiles = 40;
 
-        expect(store.isLoadingTiles).toBe(true);
+        expect(store.remainingTiles).toBe(40);
+        expect(store.isLoading).toBe(true);
+    });
+
+    test("includes pending L2 decompressions in normal-view tile loading", () => {
+        tileService.normalViewRemainingTiles = 1;
+
+        expect(store.remainingTiles).toBe(1);
+        expect(store.isLoading).toBe(true);
     });
 });
