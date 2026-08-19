@@ -53,12 +53,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            const frame = this.widgetStore.effectiveFrame;
+            const fileId = frame.frameInfo.fileId;
             if (fileId === undefined) {
                 return null;
             }
             const regionId = this.widgetStore.effectiveRegionId;
-            const coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap || !regionId) {
@@ -68,9 +68,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes) || null;
+            return regionMap.get(this.getEffectiveStokes(frame)) || null;
         }
         return null;
     }
@@ -176,6 +174,21 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.hideMouseEnterWidget();
     };
 
+    private getEffectiveStokes = (frame = this.widgetStore.effectiveFrame): number => {
+        if (!frame) {
+            return 0;
+        }
+        const coordinate = this.widgetStore.coordinate;
+        const stokesIndex = frame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+        const stokes = stokesIndex >= frame.frameInfo.fileInfoExtended.stokes ? frame.polarizations[stokesIndex] : stokesIndex;
+        return stokes === -1 ? frame.requiredStokes : stokes;
+    };
+
+    private getWidgetBeamProperties = () => {
+        const frame = this.widgetStore.effectiveFrame;
+        return frame ? frame.getBeamProperties(this.getEffectiveStokes(frame)) : null;
+    };
+
     private formatTableValue = (value: number | null | undefined, unit: string): StatsTableValue => {
         return {
             num: value == null ? "" : toExponential(value, 12),
@@ -191,7 +204,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     private getNumBeamsValue = (): StatsTableValue | null => {
-        const beamAreaPixels = this.widgetStore.effectiveFrame?.beamProperties?.beamAreaPixels;
+        const beamAreaPixels = this.getWidgetBeamProperties()?.beamAreaPixels;
         const numPixels = this.statsData?.statistics?.find(statistic => statistic.statsType === CARTA.StatsType.NumPixels)?.value;
         if (numPixels == null || beamAreaPixels == null || !isFinite(numPixels) || !isFinite(beamAreaPixels) || beamAreaPixels <= 0) {
             return null;
@@ -200,12 +213,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     private getBeamAreaValue = (): StatsTableValue | null => {
-        const beamArea = this.widgetStore.effectiveFrame?.beamProperties?.beamArea;
+        const beamArea = this.getWidgetBeamProperties()?.beamArea;
         return this.formatBeamValue(beamArea, "sr");
     };
 
     private getBeamPixelsValue = (): StatsTableValue | null => {
-        const beamAreaPixels = this.widgetStore.effectiveFrame?.beamProperties?.beamAreaPixels;
+        const beamAreaPixels = this.getWidgetBeamProperties()?.beamAreaPixels;
         return this.formatBeamValue(beamAreaPixels, "pixel(s)");
     };
 

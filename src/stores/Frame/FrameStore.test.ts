@@ -128,6 +128,14 @@ describe("FrameStore", () => {
             expect(beam!.beamAreaPixels).toBeCloseTo((Math.PI / (4 * Math.LN2)) * beam!.x * beam!.y);
         });
 
+        test("returns beam properties for the requested stokes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties(1);
+            expect(beam).toHaveProperty("majorAxis", 0.931560754776001);
+            expect(beam).toHaveProperty("minorAxis", 0.8433191776275635);
+            expect(beam).toHaveProperty("angle", 42.579010009765625);
+        });
+
         test("uses pixel angular sizes for beam axes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             const beam = frame.beamProperties;

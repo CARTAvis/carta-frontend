@@ -91,6 +91,8 @@ export interface FrameInfo {
 
 export const WCS_PRECISION = 10;
 
+type BeamProperties = {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; beamAreaPixels: number; beamArea: number; overlayBeamSettings: OverlayBeamStore};
+
 export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -471,7 +473,11 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; beamAreaPixels: number; beamArea: number; overlayBeamSettings: OverlayBeamStore} | null {
+    @computed get beamProperties(): BeamProperties | null {
+        return this.getBeamProperties();
+    }
+
+    getBeamProperties = (stokes: number = this.requiredStokes): BeamProperties | null => {
         const pixelUnitSizeArcsec = this.pixelUnitSizeArcsec;
         if (
             !this.isSwappedZ &&
@@ -483,7 +489,7 @@ export class FrameStore {
             this.frameInfo.beamTable &&
             this.frameInfo.beamTable.length > 0
         ) {
-            const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
+            const beam = this.getBeam(this.requiredChannel, stokes);
             if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
                 const x = beam.majorAxis / pixelUnitSizeArcsec.x;
                 const y = beam.minorAxis / pixelUnitSizeArcsec.y;
@@ -500,7 +506,7 @@ export class FrameStore {
             }
         }
         return null;
-    }
+    };
 
     @computed get beamAllChannels(): CARTA.Beam.$Properties[] {
         const channelNum = this.channelInfo?.indexes?.length;
