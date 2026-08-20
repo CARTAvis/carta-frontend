@@ -61,13 +61,12 @@ void main() {
 
     float lineLength = calculateLength(data.z);
     float lineWidth = uCanvasSpaceLineWidth;
-    float angle = -data.w * PI / 180.0 - uRotationAngle;
+    float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
 
     if (uIntensityPlot) {
         angle = -uRotationAngle;
         lineWidth = lineLength;
     }
-    angle -= uRotationOffset;
 
     vec2 offset = getOffsetFromId(gl_VertexID);
     float featherWidth = uFeatherWidth;
