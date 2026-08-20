@@ -36,7 +36,9 @@
         }
 
         .mirror-site-group {
-            .#{$ns}-control-group {
+            .mirror-site-controls {
+                display: flex;
+                align-items: center;
                 gap: 1px;
             }
         }
@@ -111,7 +113,7 @@
 }
 
 .mirror-manager {
-    width: 380px;
+    width: 360px;
     padding: 8px;
 
     &__header {
@@ -119,19 +121,19 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        padding: 2px 4px 8px 8px;
+        padding: 2px 4px 4px 8px;
     }
 
     &__title {
         font-weight: 600;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     &__count {
         margin-left: 6px;
         padding: 1px 7px;
         border-radius: 999px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 400;
         background: rgba(0, 0, 0, 0.07);
         color: rgba(0, 0, 0, 0.55);
@@ -154,42 +156,10 @@
     &__separator {
         height: 1px;
         background: rgba(0, 0, 0, 0.12);
-        margin: 8px 4px;
+        margin: 0 4px 4px;
 
         .#{$ns}-dark & {
             background: rgba(255, 255, 255, 0.1);
-        }
-    }
-
-    &__add-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 0 4px;
-
-        .#{$ns}-input-group {
-            flex: 1;
-        }
-    }
-
-    &__error {
-        color: $red2;
-        font-size: 11px;
-        padding: 4px 8px 0;
-
-        .#{$ns}-dark & {
-            color: $red5;
-        }
-    }
-
-    &__empty {
-        text-align: center;
-        color: rgba(0, 0, 0, 0.45);
-        font-size: 12px;
-        padding: 16px 8px;
-
-        .#{$ns}-dark & {
-            color: rgba(255, 255, 255, 0.5);
         }
     }
 
@@ -214,16 +184,6 @@
             border-color: rgba(255, 255, 255, 0.08);
         }
 
-        &.is-drag-over {
-            background: rgba(0, 0, 0, 0.06);
-            border-color: rgba(0, 0, 0, 0.2);
-
-            .#{$ns}-dark & {
-                background: rgba(255, 255, 255, 0.08);
-                border-color: rgba(255, 255, 255, 0.18);
-            }
-        }
-
         &.is-active {
             background: rgba(50, 164, 103, 0.08);
             border-color: rgba(50, 164, 103, 0.4);
@@ -234,32 +194,47 @@
             border-style: dashed;
         }
 
-        .#{$ns}-input-group {
-            flex: 1;
-        }
+        &.is-drag-over {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.2);
 
-        .#{$ns}-input {
-            width: 100%;
+            .#{$ns}-dark & {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.18);
+            }
         }
     }
 
     &__handle {
+        flex: none;
         cursor: grab;
         color: rgba(0, 0, 0, 0.4);
         padding: 2px 0;
+
+        &:active {
+            cursor: grabbing;
+        }
 
         .#{$ns}-dark & {
             color: rgba(255, 255, 255, 0.55);
         }
     }
 
+    &__active-slot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 18px;
+    }
+
     &__active-icon {
         flex: none;
-        padding: 0 3px;
     }
 
     &__use-button {
         flex: none;
+        padding: 0 2px;
 
         .#{$ns}-icon {
             color: rgba(0, 0, 0, 0.3);
@@ -280,27 +255,68 @@
         }
     }
 
+    &__toggle {
+        flex: none;
+        width: 28px;
+        min-width: 28px;
+        margin: 0 0 0 4px;
+        padding-left: 0;
+
+        .#{$ns}-control-indicator {
+            margin-right: 0;
+        }
+    }
+
     &__url {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0;
         flex: 1;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 12px;
-        cursor: text;
+        font-size: 14px;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
         padding: 4px 2px;
+        border: 0;
+        box-shadow: none;
 
-        &-path {
-            color: rgba(0, 0, 0, 0.45);
+        .#{$ns}-button-text {
+            display: flex;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-            .#{$ns}-dark & {
-                color: rgba(255, 255, 255, 0.45);
+        &:hover,
+        &:active,
+        &:focus {
+            color: inherit;
+            background: rgba(0, 0, 0, 0.06);
+            box-shadow: none;
+        }
+
+        .#{$ns}-dark & {
+            &:hover,
+            &:active,
+            &:focus {
+                background: rgba(255, 255, 255, 0.08);
             }
         }
     }
 
     &__result {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
         min-width: 60px;
+        height: 24px;
+        box-sizing: border-box;
         padding: 4px 8px;
         border-radius: 999px;
         font-size: 11px;
@@ -353,10 +369,12 @@
         &.is-disabled {
             background: rgba(0, 0, 0, 0.03);
             border-color: rgba(0, 0, 0, 0.1);
+            color: rgba(0, 0, 0, 0.5);
 
             .#{$ns}-dark & {
                 background: rgba(255, 255, 255, 0.04);
                 border-color: rgba(255, 255, 255, 0.08);
+                color: rgba(255, 255, 255, 0.55);
             }
         }
     }

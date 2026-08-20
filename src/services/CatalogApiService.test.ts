@@ -1,6 +1,7 @@
 import type {AxiosInstance} from "axios";
 
 import {CatalogDatabase} from "enums";
+import {PreferenceStore} from "stores";
 
 import {CatalogApiService} from "./CatalogApiService";
 
@@ -16,7 +17,9 @@ jest.mock("stores", () => ({
     PreferenceStore: {
         Instance: {
             getCatalogQueryMirrors: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
-            isCatalogQueryMirrorDisabled: jest.fn(() => false)
+            getCatalogQueryActiveMirror: jest.fn(() => undefined),
+            isCatalogQueryMirrorDisabled: jest.fn(() => false),
+            isCatalogQueryMirrorUnavailable: jest.fn(() => false)
         }
     }
 }));
@@ -49,6 +52,19 @@ describe("CatalogApiService active mirror", () => {
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
 
         await expect(service.getSimbadCatalog("test")).rejects.toBe(cancellation);
+    });
+
+    test("reports an actionable error when all mirrors are unavailable", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        const get = jest.fn();
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+        const unavailable = jest.mocked(PreferenceStore.Instance.isCatalogQueryMirrorUnavailable);
+        unavailable.mockImplementation(() => true);
+
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("All mirror sites are unavailable. Enable at least one mirror site and retry.");
+        expect(get).not.toHaveBeenCalled();
+
+        unavailable.mockImplementation(() => false);
     });
 
     test("normalizes mirror paths before query strings and preserves base query parameters", () => {

@@ -10,11 +10,6 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 
 import {TelemetryService} from "./TelemetryService";
 
-const DEFAULT_MIRROR_URLS = {
-    [CatalogDatabase.SIMBAD]: "https://simbad.u-strasbg.fr/simbad/sim-tap/",
-    [CatalogDatabase.VIZIER]: "https://vizier.cds.unistra.fr/viz-bin/"
-};
-
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
@@ -57,7 +52,7 @@ export class CatalogApiService {
     }
 
     public benchmarkMirror = async (database: CatalogDatabase, mirrorUrl: string, timeoutMs: number = 10000, signal?: AbortSignal): Promise<number | null> => {
-        if (PreferenceStore.Instance.isCatalogQueryMirrorDisabled(mirrorUrl)) {
+        if (PreferenceStore.Instance.isCatalogQueryMirrorUnavailable(database, mirrorUrl)) {
             return null;
         }
         const normalized = this.normalizeMirrorUrl(database, mirrorUrl);
@@ -76,13 +71,17 @@ export class CatalogApiService {
     };
 
     private getFromActiveMirror = (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
-        const activeMirrorUrl = this.getActiveMirrorUrl(database);
-        return instance.get(this.joinUrl(activeMirrorUrl, path)).catch(error => {
-            if (axios.isCancel(error)) {
-                throw error;
-            }
-            throw this.createMirrorRequestError(activeMirrorUrl, error);
-        });
+        try {
+            const activeMirrorUrl = this.getActiveMirrorUrl(database);
+            return instance.get(this.joinUrl(activeMirrorUrl, path)).catch(error => {
+                if (axios.isCancel(error)) {
+                    throw error;
+                }
+                throw this.createMirrorRequestError(activeMirrorUrl, error);
+            });
+        } catch (error) {
+            return Promise.reject(error);
+        }
     };
 
     private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {
@@ -98,8 +97,17 @@ export class CatalogApiService {
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {
         const preferenceStore = PreferenceStore.Instance;
-        const activeMirrorUrl = preferenceStore.getCatalogQueryMirrors(database).find(mirror => !preferenceStore.isCatalogQueryMirrorDisabled(mirror));
-        return this.normalizeMirrorUrl(database, activeMirrorUrl) ?? DEFAULT_MIRROR_URLS[database];
+        const mirrors = preferenceStore.getCatalogQueryMirrors(database);
+        const selectedMirror = preferenceStore.getCatalogQueryActiveMirror(database);
+        const activeMirrorUrl =
+            selectedMirror && mirrors.includes(selectedMirror) && !preferenceStore.isCatalogQueryMirrorUnavailable(database, selectedMirror)
+                ? selectedMirror
+                : mirrors.find(mirror => !preferenceStore.isCatalogQueryMirrorUnavailable(database, mirror));
+        const normalizedMirrorUrl = this.normalizeMirrorUrl(database, activeMirrorUrl);
+        if (!normalizedMirrorUrl) {
+            throw new Error("All mirror sites are unavailable. Enable at least one mirror site and retry.");
+        }
+        return normalizedMirrorUrl;
     };
 
     private getBenchmarkPath = (database: CatalogDatabase): string => {
