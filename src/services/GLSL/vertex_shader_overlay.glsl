@@ -61,23 +61,30 @@ void main() {
 
     float lineLength = calculateLength(data.z);
     float lineWidth = uCanvasSpaceLineWidth;
-    float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
+    float angle = -data.w * PI / 180.0 - uRotationAngle;
 
     if (uIntensityPlot) {
         angle = -uRotationAngle;
         lineWidth = lineLength;
     }
+    angle -= uRotationOffset;
 
     vec2 offset = getOffsetFromId(gl_VertexID);
     float featherWidth = uFeatherWidth;
     offset = vec2((lineWidth + featherWidth) * offset.x, (lineLength + featherWidth) * offset.y);
     // location vertex attribute is in line space before rotation
     v_location = offset;
-    // position is in canvas space
-    // Scale and rotate
-    vec2 positionOffset = rotate2D(offset, angle);
-    positionOffset.x /= uPixelRatio * uZoomLevel.x * uScaleAdjustment;
-    positionOffset.y /= uZoomLevel.y * uScaleAdjustment;
+    // Build a screen-space rectangle from the image-space direction. This keeps the
+    // edges perpendicular while allowing anisotropic zoom to change the line slope.
+    vec2 referenceDirection = rotate2D(vec2(0.0, 1.0), angle + uRotationAngle);
+    vec2 screenDirection = normalize(vec2(uPixelRatio * uZoomLevel.x * referenceDirection.x, uZoomLevel.y * referenceDirection.y));
+    vec2 screenNormal = vec2(-screenDirection.y, screenDirection.x);
+    vec2 screenOffset = offset.x * screenNormal + offset.y * screenDirection;
+
+    // Convert the screen-space offset back into image space before applying the
+    // frame's spatial transform below.
+    vec2 referenceOffset = vec2(screenOffset.x / (uPixelRatio * uZoomLevel.x), screenOffset.y / uZoomLevel.y);
+    vec2 positionOffset = rotate2D(referenceOffset, -uRotationAngle) / uScaleAdjustment;
     vec2 posImageSpace = centerPoint + positionOffset;
     vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
     // Convert from image space to GL space [-1, 1]
