@@ -2861,7 +2861,14 @@ export class FrameStore {
 
     @action zoomToSizeX = (x: number): boolean => {
         if (x > 0 && isFinite(x)) {
-            this.setZoom((this.renderWidth * AppStore.Instance.pixelRatio) / this.aspectRatio / x);
+            const zoom = (this.renderWidth * AppStore.Instance.pixelRatio) / this.aspectRatio / x;
+            const zoomFrame = this.spatialReference ?? this;
+            if (zoomFrame.isAxisZoomable) {
+                const adjustedZoom = this.spatialReference && this.spatialTransform ? zoom / this.spatialTransform.scale : zoom;
+                zoomFrame.setAxisZoom(adjustedZoom, zoomFrame.effectiveZoomLevel.y);
+            } else {
+                this.setZoom(zoom);
+            }
             return true;
         }
         return false;
@@ -2878,7 +2885,14 @@ export class FrameStore {
 
     @action zoomToSizeY = (y: number): boolean => {
         if (y > 0 && isFinite(y)) {
-            this.setZoom((this.renderHeight * AppStore.Instance.pixelRatio) / y);
+            const zoom = (this.renderHeight * AppStore.Instance.pixelRatio) / y;
+            const zoomFrame = this.spatialReference ?? this;
+            if (zoomFrame.isAxisZoomable) {
+                const adjustedZoom = this.spatialReference && this.spatialTransform ? zoom / this.spatialTransform.scale : zoom;
+                zoomFrame.setAxisZoom(zoomFrame.effectiveZoomLevel.x, adjustedZoom);
+            } else {
+                this.setZoom(zoom);
+            }
             return true;
         }
         return false;
