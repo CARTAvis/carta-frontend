@@ -109,6 +109,23 @@ export function scaleZoomForImageRatio(frame: Pick<FrameStore, "effectiveZoomLev
     return {x: zoom.x * imageRatioScale, y: zoom.y * imageRatioScale};
 }
 
+export function restoreWorkspaceZoom(frame: FrameStore, workspaceZoom: Pick<WorkspaceFile, "axisZoomLevel" | "zoomAxis" | "zoomLevel">) {
+    const zoomFrame = frame.spatialReference ?? frame;
+    const axisZoom = workspaceZoom.axisZoomLevel;
+    if (zoomFrame.isAxisZoomable && axisZoom && typeof axisZoom.x === "number" && typeof axisZoom.y === "number" && axisZoom.x > 0 && axisZoom.y > 0 && isFinite(axisZoom.x) && isFinite(axisZoom.y)) {
+        zoomFrame.setAxisZoom(axisZoom.x, axisZoom.y);
+    } else if (workspaceZoom.zoomLevel && workspaceZoom.zoomLevel > 0) {
+        if (zoomFrame.isAxisZoomable) {
+            zoomFrame.setAxisZoom(workspaceZoom.zoomLevel, workspaceZoom.zoomLevel);
+        } else {
+            frame.zoomLevel = workspaceZoom.zoomLevel;
+        }
+    }
+    if (zoomFrame.isAxisZoomable && (workspaceZoom.zoomAxis === "both" || workspaceZoom.zoomAxis === "x" || workspaceZoom.zoomAxis === "y")) {
+        zoomFrame.setZoomAxis(workspaceZoom.zoomAxis);
+    }
+}
+
 function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     const zoom = scaleZoomForImageRatio(frame, imageRatioScale);
     if (frame.isAxisZoomable) {
@@ -2780,9 +2797,7 @@ export class AppStore {
                     if (fileInfo.center) {
                         frame.center = fileInfo.center;
                     }
-                    if (fileInfo.zoomLevel) {
-                        frame.zoomLevel = fileInfo.zoomLevel;
-                    }
+                    restoreWorkspaceZoom(frame, fileInfo);
 
                     // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
@@ -2932,6 +2947,11 @@ export class AppStore {
 
             workspaceFile.center = frame.center;
             workspaceFile.zoomLevel = frame.zoomLevel;
+            const zoomFrame = frame.spatialReference ?? frame;
+            if (zoomFrame.isAxisZoomable) {
+                workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
+                workspaceFile.zoomAxis = zoomFrame.zoomAxis;
+            }
             workspaceFile.channel = frame.channel;
             workspaceFile.stokes = frame.stokes;
 
