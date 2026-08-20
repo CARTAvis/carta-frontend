@@ -11,7 +11,7 @@ import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type FrameView, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, subtract2D, transformPoint} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
@@ -19,7 +19,7 @@ import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {isRegionInSelectionRect} from "./regionSelectionCanvasGeometry";
-import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, getZoomAxisForWheel, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomAxisForWheel, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
 import "./RegionViewComponent.scss";
@@ -301,9 +301,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNTEXT:
                 frame = this.frame.spatialReference || this.frame;
                 if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
-                    const scaleFactor =
-                        (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
-                    this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
+                    const sizeFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5);
+                    const zoom = frame.effectiveZoomLevel;
+                    const size = this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1};
+                    this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoom.x, y: (size.y * sizeFactor) / zoom.y});
                 }
                 break;
             case CARTA.RegionType.ANNCOMPASS:
@@ -374,7 +375,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
         const frame = this.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
 
         let dx = cursorPosImageSpace.x - this.regionStartPoint.x;
         let dy = cursorPosImageSpace.y - this.regionStartPoint.y;
@@ -395,7 +396,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.ANNTEXT:
-                    this.creatingRegion.setControlPoints([center, {x: Math.abs((dx * zoomLevel) / AppStore.Instance.imageRatio), y: Math.abs((dy * zoomLevel) / AppStore.Instance.imageRatio)}]);
+                    this.creatingRegion.setControlPoints([center, {x: Math.abs((dx * zoom.x) / AppStore.Instance.imageRatio), y: Math.abs((dy * zoom.y) / AppStore.Instance.imageRatio)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
@@ -418,7 +419,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.ANNTEXT:
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs((dx * zoomLevel) / AppStore.Instance.imageRatio), y: 2 * Math.abs((dy * zoomLevel) / AppStore.Instance.imageRatio)}]);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs((dx * zoom.x) / AppStore.Instance.imageRatio), y: 2 * Math.abs((dy * zoom.y) / AppStore.Instance.imageRatio)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
@@ -538,7 +539,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.zoomToPoint(centerImageSpace.x, centerImageSpace.y, this.initialPinchZoom * zoomFactor);
         } else {
             this.initialPinchDistance = distance;
-            this.initialPinchZoom = frame.zoomLevel;
+            const zoom = getEffectiveZoomLevel(frame);
+            this.initialPinchZoom = Math.max(zoom.x, zoom.y);
         }
     };
 
@@ -646,12 +648,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
 
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * scale;
+            const zoomFrame = frame.spatialReference ?? frame;
+            const zoom = zoomFrame.effectiveZoomLevel;
+            const newZoom = Math.max(zoom.x, zoom.y) * scale;
             frame.zoomToPoint(cursorPosImageSpace.x, cursorPosImageSpace.y, newZoom, true);
 
             // Zoom stage
             const zoomCenter = PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};
-            this.stageZoomToPoint(zoomCenter.x, zoomCenter.y, newZoom);
+            this.stageZoomToPoint(zoomCenter.x, zoomCenter.y, {x: zoom.x * scale, y: zoom.y * scale});
         }
     };
 

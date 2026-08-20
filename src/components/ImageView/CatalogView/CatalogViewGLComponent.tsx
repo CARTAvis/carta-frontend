@@ -251,8 +251,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
-                this.gl.uniform1f(shaderUniforms.ZoomLevel, effectiveZoomLevel.y);
-                this.gl.uniform1f(shaderUniforms.PixelRatio, frameAspectRatio * (effectiveZoomLevel.x / effectiveZoomLevel.y));
+                this.gl.uniform2f(shaderUniforms.ZoomLevel, effectiveZoomLevel.x, effectiveZoomLevel.y);
+                this.gl.uniform1f(shaderUniforms.PixelRatio, frameAspectRatio);
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);

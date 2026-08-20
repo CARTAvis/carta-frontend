@@ -1,9 +1,22 @@
 jest.mock("utilities", () => ({
-    rotate2D: jest.fn(),
+    getInterpolatedPathAtDistance: jest.fn((start, points) => [start, ...points]),
+    rotate2D: (point, angle) => ({x: point.x * Math.cos(angle) - point.y * Math.sin(angle), y: point.x * Math.sin(angle) + point.y * Math.cos(angle)}),
     scale2D: jest.fn()
 }));
 
-import {adjustPosToMutatedStage, adjustPosToUnityStage, getZoomAxisForWheel, transformedImageToCanvasPos} from "./shared";
+import {getInterpolatedPathAtDistance} from "utilities";
+
+import {
+    adjustPosToMutatedStage,
+    adjustPosToUnityStage,
+    getCanvasPathAtScreenDistance,
+    getDirectionalStageScale,
+    getZoomAxisForWheel,
+    getZoomInvariantCanvasOffset,
+    getZoomInvariantCanvasTransform,
+    getZoomInvariantTransform,
+    transformedImageToCanvasPos
+} from "./shared";
 
 describe("region view stage coordinate helpers", () => {
     const stage = {
@@ -59,5 +72,48 @@ describe("region view stage coordinate helpers", () => {
 
         frame.isAxisZoomable = false;
         expect(getZoomAxisForWheel(frame, false, false)).toBeUndefined();
+    });
+
+    test("compensates annotation transforms for independent stage scales", () => {
+        const horizontal = getZoomInvariantTransform(stage);
+        const vertical = getZoomInvariantTransform(stage, 90);
+
+        expect(horizontal.scaleX).toBeCloseTo(0.5);
+        expect(horizontal.scaleY).toBeCloseTo(0.25);
+        expect(horizontal.skewX).toBeCloseTo(0);
+        expect(horizontal.skewY).toBeCloseTo(0);
+        expect(vertical.scaleX).toBeCloseTo(0.25);
+        expect(vertical.scaleY).toBeCloseTo(0.5);
+        expect(vertical.skewX).toBeCloseTo(0);
+        expect(vertical.skewY).toBeCloseTo(0);
+    });
+
+    test("builds the canvas matrix for a rotated invariant shape", () => {
+        const transform = getZoomInvariantCanvasTransform(stage, 45);
+
+        expect(transform.scaleX).toBeCloseTo(0.375);
+        expect(transform.scaleY).toBeCloseTo(0.375);
+        expect(transform.skew).toBeCloseTo(-0.125);
+    });
+
+    test("maps a rotated invariant offset back through independent stage scales", () => {
+        const offset = getZoomInvariantCanvasOffset({x: 10, y: 0}, stage, 45);
+
+        expect(offset.x * stage.scaleX()).toBeCloseTo(Math.sqrt(50));
+        expect(offset.y * stage.scaleY()).toBeCloseTo(Math.sqrt(50));
+    });
+
+    test("uses the final path segment for directional scaling", () => {
+        expect(getDirectionalStageScale([0, 0, 10, 0, 10, 10], stage)).toEqual({along: 4, across: 2});
+    });
+
+    test("measures interpolated paths in screen space", () => {
+        const path = getCanvasPathAtScreenDistance({x: 1, y: 2}, [{x: 3, y: 4}], 10, stage);
+
+        expect(getInterpolatedPathAtDistance).toHaveBeenLastCalledWith({x: 2, y: 8}, [{x: 6, y: 16}], 10);
+        expect(path).toEqual([
+            {x: 1, y: 2},
+            {x: 3, y: 4}
+        ]);
     });
 });
