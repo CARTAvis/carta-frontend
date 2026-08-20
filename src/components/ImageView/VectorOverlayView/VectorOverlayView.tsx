@@ -155,8 +155,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         const zoomFrame = baseFrame.spatialReference ?? baseFrame;
         const effectiveZoomLevel = zoomFrame.effectiveZoomLevel;
-        this.gl.uniform1f(shaderUniforms.ZoomLevel, effectiveZoomLevel.y);
-        this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio * (effectiveZoomLevel.x / effectiveZoomLevel.y));
+        this.gl.uniform2f(shaderUniforms.ZoomLevel, effectiveZoomLevel.x, effectiveZoomLevel.y);
+        this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
 
         if (isActive) {
             this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);

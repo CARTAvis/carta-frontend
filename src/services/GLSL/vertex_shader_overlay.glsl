@@ -5,7 +5,7 @@ uniform vec2 uRangeOffset;
 uniform float uRotationOffset;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
-uniform float uZoomLevel;
+uniform vec2 uZoomLevel;
 uniform float uPixelRatio;
 uniform float uCanvasSpaceLineWidth;
 uniform float uFeatherWidth;
@@ -59,8 +59,8 @@ void main() {
         centerPoint = controlMapLookup(uControlMapTexture, centerPoint, uControlMapSize, uControlMapMin, uControlMapMax);
     }
 
-    float lineLength = calculateLength(data.z) / (uZoomLevel * uScaleAdjustment);
-    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel * uScaleAdjustment);
+    float lineLength = calculateLength(data.z) / (uZoomLevel.y * uScaleAdjustment);
+    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel.y * uScaleAdjustment);
     float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
 
     if (uIntensityPlot) {
@@ -69,13 +69,15 @@ void main() {
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);
-    float featherWidth = uFeatherWidth / uZoomLevel;
-    offset = vec2((lineWidth + featherWidth) * offset.x / uPixelRatio, (lineLength + featherWidth) * offset.y);
+    float featherWidth = uFeatherWidth / uZoomLevel.y;
+    offset = vec2((lineWidth + featherWidth) * offset.x, (lineLength + featherWidth) * offset.y);
     // location vertex attribute is in line space before rotation
     v_location = offset;
     // position is in canvas space
     // Scale and rotate
-    vec2 posImageSpace = centerPoint + rotate2D(offset, angle);
+    vec2 positionOffset = rotate2D(offset, angle);
+    positionOffset.x /= uPixelRatio * (uZoomLevel.x / uZoomLevel.y);
+    vec2 posImageSpace = centerPoint + positionOffset;
     vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
     // Convert from image space to GL space [-1, 1]
     vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;

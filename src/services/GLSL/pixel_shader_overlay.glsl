@@ -1,7 +1,7 @@
 precision highp float;
 
-uniform float uZoomLevel;
-uniform float uPixelRatio;
+uniform vec2 uZoomLevel;
+uniform float uScaleAdjustment;
 uniform float uCanvasSpaceLineWidth;
 uniform float uFeatherWidth;
 uniform bool uIntensityPlot;
@@ -13,10 +13,10 @@ in float v_length;
 out vec4 outColor;
 
 void main() {
-    float W = uIntensityPlot ? v_length / uPixelRatio : uCanvasSpaceLineWidth / (uZoomLevel * uPixelRatio);
+    float W = uIntensityPlot ? v_length : uCanvasSpaceLineWidth / (uZoomLevel.y * uScaleAdjustment);
     float L = v_length;
-    float F = uFeatherWidth;
-    float Fx = F / uPixelRatio;
+    float F = uFeatherWidth / uZoomLevel.y;
+    float Fx = F;
     float x = abs(v_location.x);
     float y = abs(v_location.y);
     float alphaX, alphaY;
