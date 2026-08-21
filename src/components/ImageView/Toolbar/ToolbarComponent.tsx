@@ -147,6 +147,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const zoomFrame = frame.spatialReference && frame.spatialTransform ? frame.spatialReference : frame;
         const axisFrame = frame.spatialReference || frame;
+        const zoomAxisDescription = axisFrame.isAxisZoomable && axisFrame.zoomAxis !== "both" ? `${axisFrame.zoomAxis.toUpperCase()} axis` : "";
         const currentZoomSpan = (
             <span>
                 <br />
@@ -406,10 +407,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Zoom Axis <br />
-                                            <small>
-                                                <i>Current: {axisFrame.zoomAxis === "x" ? "X Axis" : axisFrame.zoomAxis === "y" ? "Y Axis" : "Both (XY)"}</i>
-                                            </small>
+                                            Zoom {zoomAxisDescription !== "" ? zoomAxisDescription : "both axes"} <br />
                                         </span>
                                     }
                                 >
@@ -417,10 +415,24 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 </Tooltip>
                             </PopoverNext>
                         )}
-                        <Tooltip position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
+                        <Tooltip
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Zoom in {zoomAxisDescription} (scroll wheel up){currentZoomSpan}
+                                </span>
+                            }
+                        >
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} data-testid="zoom-in-button" />
                         </Tooltip>
-                        <Tooltip position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
+                        <Tooltip
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Zoom out {zoomAxisDescription} (scroll wheel down){currentZoomSpan}
+                                </span>
+                            }
+                        >
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} data-testid="zoom-out-button" />
                         </Tooltip>
                         {!frame.isPreview && (
