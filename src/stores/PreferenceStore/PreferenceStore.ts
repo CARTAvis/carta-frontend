@@ -160,6 +160,7 @@ export class PreferenceStore {
     }
 
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
+
     /**
      * Get the minimum constraint from the schema for a preference key
      */
