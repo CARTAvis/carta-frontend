@@ -76,6 +76,10 @@ export function getZoomAxisForWheel(frame: FrameStore, isShiftKeyPressed: boolea
     return frame.zoomAxis === "both" ? undefined : frame.zoomAxis;
 }
 
+export function getWheelDelta(event: Pick<WheelEvent, "deltaX" | "deltaY" | "shiftKey">): number {
+    return event.shiftKey && event.deltaY === 0 ? event.deltaX : event.deltaY;
+}
+
 export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D | undefined = undefined): Point2D {
     let offset = {x: 0.0, y: 0.0};
     if (spatialTransform) {

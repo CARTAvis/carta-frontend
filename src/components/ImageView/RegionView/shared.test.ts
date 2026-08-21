@@ -11,6 +11,7 @@ import {
     adjustPosToUnityStage,
     getCanvasPathAtScreenDistance,
     getDirectionalStageScale,
+    getWheelDelta,
     getZoomAxisForWheel,
     getZoomInvariantCanvasOffset,
     getZoomInvariantCanvasTransform,
@@ -72,6 +73,13 @@ describe("region view stage coordinate helpers", () => {
 
         frame.isAxisZoomable = false;
         expect(getZoomAxisForWheel(frame, false, false)).toBeUndefined();
+    });
+
+    test("uses the horizontal delta for macOS shift-wheel input", () => {
+        expect(getWheelDelta({shiftKey: true, deltaX: 2, deltaY: 0})).toBe(2);
+        expect(getWheelDelta({shiftKey: true, deltaX: 0, deltaY: -2})).toBe(-2);
+        expect(getWheelDelta({shiftKey: false, deltaX: 2, deltaY: -2})).toBe(-2);
+        expect(getWheelDelta({shiftKey: false, deltaX: 2, deltaY: 0})).toBe(0);
     });
 
     test("compensates annotation transforms for independent stage scales", () => {

@@ -19,7 +19,7 @@ import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {isRegionInSelectionRect} from "./regionSelectionCanvasGeometry";
-import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomAxisForWheel, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, getEffectiveZoomLevel, getWheelDelta, getZoomAxisForWheel, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
 import "./RegionViewComponent.scss";
@@ -636,7 +636,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.frame;
         if (frame) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
+            const delta = -getWheelDelta(mouseEvent) * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             const scale = delta > 0 ? zoomSpeed : 1.0 / zoomSpeed;
