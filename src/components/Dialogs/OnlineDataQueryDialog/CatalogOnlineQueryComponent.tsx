@@ -78,16 +78,16 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         const isDisabled = configStore.isQuerying || configStore.isObjectQuerying;
-        let sourceIndicater;
+        let sourceIndicator;
         let objectSize: number | undefined = this.objectSize;
         if (configStore.isObjectSearchDisabled) {
             objectSize = undefined;
         }
 
         if (objectSize === 0) {
-            sourceIndicater = <Icon icon="cross" intent="warning" size={30} />;
+            sourceIndicator = <Icon icon="cross" intent="warning" size={30} />;
         } else if (objectSize === 1) {
-            sourceIndicater = <Icon icon="tick" intent="success" size={30} />;
+            sourceIndicator = <Icon icon="tick" intent="success" size={30} />;
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
@@ -136,7 +136,7 @@ export class CatalogQueryComponent extends React.Component {
                     <InputGroup
                         asyncControl={false}
                         disabled={isDisabled}
-                        rightElement={objectSize === undefined ? null : sourceIndicater}
+                        rightElement={objectSize === undefined ? null : sourceIndicator}
                         onChange={event => this.updateObjectName(event.target.value)}
                         value={configStore.objectName}
                         data-testid="catalog-query-object-name-input"
