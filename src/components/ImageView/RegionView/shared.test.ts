@@ -61,8 +61,8 @@ describe("region view stage coordinate helpers", () => {
 
         expect(getZoomAxisForWheel(frame, false, false)).toBe("x");
         expect(getZoomAxisForWheel(frame, true, false)).toBe("y");
-        expect(getZoomAxisForWheel(frame, false, true)).toBe("x");
-        expect(getZoomAxisForWheel(frame, true, true)).toBeUndefined();
+        expect(getZoomAxisForWheel(frame, false, true)).toBeUndefined();
+        expect(getZoomAxisForWheel(frame, true, true)).toBe("x");
 
         frame.zoomAxis = "both";
         expect(getZoomAxisForWheel(frame, false, false)).toBeUndefined();

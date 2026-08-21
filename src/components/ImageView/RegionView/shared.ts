@@ -71,7 +71,7 @@ export function getZoomAxisForWheel(frame: FrameStore, isShiftKeyPressed: boolea
         return undefined;
     }
     if (isShiftKeyPressed || isAltKeyPressed) {
-        return isShiftKeyPressed !== isAltKeyPressed ? (isShiftKeyPressed ? "y" : "x") : undefined;
+        return isShiftKeyPressed ? (isAltKeyPressed ? "x" : "y") : undefined;
     }
     return frame.zoomAxis === "both" ? undefined : frame.zoomAxis;
 }
