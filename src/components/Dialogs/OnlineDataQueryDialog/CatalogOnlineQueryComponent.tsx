@@ -9,7 +9,7 @@ import {AppToaster, ClearableNumericInputComponent, ErrorToast, SafeNumericInput
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, PreferenceStore, type VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, NUMBER_FORMAT_LABEL} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
@@ -98,7 +98,7 @@ export class CatalogQueryComponent extends React.Component {
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const mirrorSites = this.getMirrorSites(configStore.catalogDB);
-        const activeMirror = this.getActiveMirror(configStore.catalogDB, mirrorSites);
+        const activeMirror = MirrorSiteStore.Instance.getActiveMirror(configStore.catalogDB);
         const hasAvailableMirror = activeMirror !== undefined;
         const isMirrorConfigDisabled = isDisabled || this.isBenchmarking;
 
@@ -314,7 +314,7 @@ export class CatalogQueryComponent extends React.Component {
     }
 
     private renderMirrorManager = (database: CatalogDatabase, mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
-        const availableMirrorCount = mirrorSites.filter(site => !this.isMirrorUnavailable(database, site)).length;
+        const availableMirrorCount = mirrorSites.filter(site => !MirrorSiteStore.Instance.isMirrorUnavailable(database, site)).length;
         const isBenchmarkButtonDisabled = isQueryDisabled || (!this.isBenchmarking && availableMirrorCount === 0);
         return (
             <div className="mirror-manager">
@@ -350,9 +350,9 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private renderMirrorSite = (database: CatalogDatabase, site: string, index: number, availableMirrorCount: number, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
-        const isMirrorBlocked = this.isMirrorBlocked(site);
-        const isMirrorUserDisabled = this.isMirrorUserDisabled(database, site);
-        const isMirrorUnavailable = isMirrorBlocked || isMirrorUserDisabled;
+        const isMirrorBlocked = MirrorSiteStore.Instance.isMirrorBlocked(site);
+        const isMirrorUserDisabled = MirrorSiteStore.Instance.isMirrorUserDisabled(database, site);
+        const isMirrorUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, site);
         const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, site)), isMirrorBlocked, isMirrorUserDisabled);
         const isActive = site === activeMirror;
         const isLastAvailableMirror = !isMirrorUnavailable && availableMirrorCount === 1;
@@ -503,10 +503,10 @@ export class CatalogQueryComponent extends React.Component {
     }
 
     private getMirrorSites = (database: CatalogDatabase): string[] => {
-        const mirrors = PreferenceStore.Instance.getCatalogQueryMirrors(database);
+        const mirrors = MirrorSiteStore.Instance.getMirrorSites(database);
         return [...mirrors].sort((first, second) => {
-            const isFirstUnavailable = this.isMirrorUnavailable(database, first);
-            const isSecondUnavailable = this.isMirrorUnavailable(database, second);
+            const isFirstUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, first);
+            const isSecondUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, second);
             if (isFirstUnavailable !== isSecondUnavailable) {
                 return Number(isFirstUnavailable) - Number(isSecondUnavailable);
             }
@@ -517,30 +517,10 @@ export class CatalogQueryComponent extends React.Component {
         });
     };
 
-    private isMirrorBlocked = (mirror: string): boolean => {
-        return PreferenceStore.Instance.isCatalogQueryMirrorDisabled(mirror);
-    };
-
-    private isMirrorUserDisabled = (database: CatalogDatabase, mirror: string): boolean => {
-        return PreferenceStore.Instance.isCatalogQueryMirrorUserDisabled(database, mirror);
-    };
-
-    private isMirrorUnavailable = (database: CatalogDatabase, mirror: string): boolean => {
-        return this.isMirrorBlocked(mirror) || this.isMirrorUserDisabled(database, mirror);
-    };
-
-    private getActiveMirror = (database: CatalogDatabase, mirrorSites: string[]): string | undefined => {
-        const selectedMirror = PreferenceStore.Instance.getCatalogQueryActiveMirror(database);
-        if (selectedMirror && mirrorSites.includes(selectedMirror) && !this.isMirrorUnavailable(database, selectedMirror)) {
-            return selectedMirror;
-        }
-        return mirrorSites.find(site => !this.isMirrorUnavailable(database, site));
-    };
-
     private resetMirrorSites = () => {
         const database = CatalogOnlineQueryConfigStore.Instance.catalogDB;
         this.cancelMirrorBenchmark();
-        PreferenceStore.Instance.resetCatalogQueryMirrorSettings(database);
+        MirrorSiteStore.Instance.resetMirrorSettings(database);
         this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
     };
 
@@ -563,33 +543,25 @@ export class CatalogQueryComponent extends React.Component {
 
     private setMirrorSiteOrder = (database: CatalogDatabase, mirrors: string[]) => {
         this.pruneMirrorBenchmarks(database, mirrors);
-        PreferenceStore.Instance.setCatalogQueryEnabledMirrors(
+        MirrorSiteStore.Instance.setEnabledMirrors(
             database,
-            mirrors.filter(mirror => !this.isMirrorUnavailable(database, mirror))
+            mirrors.filter(mirror => !MirrorSiteStore.Instance.isMirrorUnavailable(database, mirror))
         );
     };
 
     private handleMirrorSelect = (database: CatalogDatabase, mirror: string) => {
-        if (this.isMirrorUnavailable(database, mirror) || this.isBenchmarking) {
+        if (MirrorSiteStore.Instance.isMirrorUnavailable(database, mirror) || this.isBenchmarking) {
             return;
         }
-        PreferenceStore.Instance.setCatalogQueryActiveMirror(database, mirror);
+        MirrorSiteStore.Instance.setActiveMirror(database, mirror);
     };
 
     private handleMirrorToggle = (database: CatalogDatabase, mirror: string) => {
-        const sites = this.getMirrorSites(database);
-        const isUserDisabled = this.isMirrorUserDisabled(database, mirror);
-        const availableMirrorCount = sites.filter(site => !this.isMirrorUnavailable(database, site)).length;
-        if (!isUserDisabled && availableMirrorCount <= 1) {
+        if (this.isBenchmarking) {
             return;
         }
-        PreferenceStore.Instance.toggleCatalogQueryMirrorDisabled(database, mirror);
-
-        if (isUserDisabled) {
-            const enabledMirrors = sites.filter(site => site !== mirror && !this.isMirrorUnavailable(database, site));
-            this.pruneMirrorBenchmarks(database, sites);
-            PreferenceStore.Instance.setCatalogQueryEnabledMirrors(database, [...enabledMirrors, mirror]);
-        }
+        MirrorSiteStore.Instance.toggleMirror(database, mirror);
+        this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
     };
 
     private handleMirrorDragStart = (index: number) =>
@@ -717,7 +689,7 @@ export class CatalogQueryComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const database = configStore.catalogDB;
         const sites = [...this.getMirrorSites(database)];
-        const testableSites = sites.filter(site => !this.isMirrorUnavailable(database, site));
+        const testableSites = sites.filter(site => !MirrorSiteStore.Instance.isMirrorUnavailable(database, site));
         if (testableSites.length === 0) {
             return;
         }

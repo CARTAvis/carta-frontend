@@ -13,25 +13,26 @@ jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: je
 const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB: jest.fn(), setObjectQueryStatus: jest.fn()};
 const MOCK_MIRROR_SITES: Partial<Record<CatalogDatabase, string[]>> = {};
 const MOCK_ACTIVE_MIRRORS: Partial<Record<CatalogDatabase, string>> = {};
-const MOCK_PREFERENCE_STORE = {
-    getCatalogQueryMirrors: jest.fn((database: CatalogDatabase) => MOCK_MIRROR_SITES[database] ?? []),
-    getCatalogQueryActiveMirror: jest.fn((database: CatalogDatabase) => MOCK_ACTIVE_MIRRORS[database]),
-    isCatalogQueryMirrorDisabled: jest.fn((_site: string) => false),
-    isCatalogQueryMirrorUserDisabled: jest.fn((_database: CatalogDatabase, _site: string) => false),
-    setCatalogQueryActiveMirror: jest.fn((database: CatalogDatabase, mirror: string) => {
+const MOCK_MIRROR_STORE = {
+    getMirrorSites: jest.fn((database: CatalogDatabase) => MOCK_MIRROR_SITES[database] ?? []),
+    getActiveMirror: jest.fn((database: CatalogDatabase) => MOCK_ACTIVE_MIRRORS[database]),
+    isMirrorBlocked: jest.fn((_site: string) => false),
+    isMirrorUserDisabled: jest.fn((_database: CatalogDatabase, _site: string) => false),
+    isMirrorUnavailable: jest.fn(),
+    setActiveMirror: jest.fn((database: CatalogDatabase, mirror: string) => {
         MOCK_ACTIVE_MIRRORS[database] = mirror;
     }),
-    setCatalogQueryEnabledMirrors: jest.fn((database: CatalogDatabase, mirrors: string[]) => {
+    setEnabledMirrors: jest.fn((database: CatalogDatabase, mirrors: string[]) => {
         MOCK_MIRROR_SITES[database] = mirrors;
     }),
-    toggleCatalogQueryMirrorDisabled: jest.fn(),
-    resetCatalogQueryMirrorSettings: jest.fn()
+    toggleMirror: jest.fn(),
+    resetMirrorSettings: jest.fn()
 };
 
 jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: MOCK_CONFIG_STORE},
-    PreferenceStore: {Instance: MOCK_PREFERENCE_STORE}
+    MirrorSiteStore: {Instance: MOCK_MIRROR_STORE}
 }));
 jest.mock("utilities", () => ({
     NUMBER_FORMAT_LABEL: new Map(),
@@ -73,8 +74,9 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = ["vizier-default"];
         delete MOCK_ACTIVE_MIRRORS[CatalogDatabase.SIMBAD];
         delete MOCK_ACTIVE_MIRRORS[CatalogDatabase.VIZIER];
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation(() => false);
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorUserDisabled.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorBlocked.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorUserDisabled.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorUnavailable.mockImplementation((database: CatalogDatabase, site: string) => MOCK_MIRROR_STORE.isMirrorBlocked(site) || MOCK_MIRROR_STORE.isMirrorUserDisabled(database, site));
     });
 
     test("does not reorder mirrors when cancellation occurs after a database change", () => {
@@ -117,7 +119,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
 
         component.cancelMirrorBenchmark(true);
 
-        expect(MOCK_PREFERENCE_STORE.setCatalogQueryEnabledMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
+        expect(MOCK_MIRROR_STORE.setEnabledMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
         expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "slow"))).toEqual({status: "idle"});
     });
 
@@ -146,8 +148,9 @@ describe("CatalogQueryComponent MobX actions", () => {
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = [];
         delete MOCK_ACTIVE_MIRRORS[CatalogDatabase.SIMBAD];
         delete MOCK_ACTIVE_MIRRORS[CatalogDatabase.VIZIER];
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation(() => false);
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorUserDisabled.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorBlocked.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorUserDisabled.mockImplementation(() => false);
+        MOCK_MIRROR_STORE.isMirrorUnavailable.mockImplementation((database: CatalogDatabase, site: string) => MOCK_MIRROR_STORE.isMirrorBlocked(site) || MOCK_MIRROR_STORE.isMirrorUserDisabled(database, site));
     });
 
     test("updates benchmark observables inside actions and sorts mirrors by response time", async () => {
@@ -165,7 +168,7 @@ describe("CatalogQueryComponent MobX actions", () => {
             expect(component.isBenchmarking).toBe(false);
             expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "fast"))).toEqual({status: "ok", ms: 50});
             expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "slow"))).toEqual({status: "ok", ms: 200});
-            expect(MOCK_PREFERENCE_STORE.setCatalogQueryEnabledMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
+            expect(MOCK_MIRROR_STORE.setEnabledMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "slow"]);
             expect(MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD]).toEqual(["fast", "slow"]);
             expect(consoleWarn).not.toHaveBeenCalled();
         } finally {
@@ -179,15 +182,15 @@ describe("CatalogQueryComponent MobX actions", () => {
 
         component.handleMirrorSelect(CatalogDatabase.SIMBAD, "fast");
 
-        expect(MOCK_PREFERENCE_STORE.setCatalogQueryActiveMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "fast");
-        expect(MOCK_PREFERENCE_STORE.setCatalogQueryEnabledMirrors).not.toHaveBeenCalled();
+        expect(MOCK_MIRROR_STORE.setActiveMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "fast");
+        expect(MOCK_MIRROR_STORE.setEnabledMirrors).not.toHaveBeenCalled();
         expect(MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD]).toEqual(["slow", "fast"]);
     });
 
     test("keeps disabled mirrors at the bottom in alphabetical order", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["fast", "https://zulu.example/", "https://alpha.example/"];
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorUserDisabled.mockImplementation((_database: CatalogDatabase, site: string) => site !== "fast");
+        MOCK_MIRROR_STORE.isMirrorUserDisabled.mockImplementation((_database: CatalogDatabase, site: string) => site !== "fast");
 
         expect(component.getMirrorSites(CatalogDatabase.SIMBAD)).toEqual(["fast", "https://alpha.example/", "https://zulu.example/"]);
     });
@@ -202,7 +205,7 @@ describe("CatalogQueryComponent MobX actions", () => {
     test("does not benchmark HTTP mirrors on secure pages", async () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["http://legacy.example/", "https://secure.example/"];
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation((site: string) => site.startsWith("http://"));
+        MOCK_MIRROR_STORE.isMirrorBlocked.mockImplementation((site: string) => site.startsWith("http://"));
         (CatalogApiService.Instance.benchmarkMirror as jest.Mock).mockResolvedValue(50);
 
         await component.runMirrorBenchmark();
@@ -212,29 +215,24 @@ describe("CatalogQueryComponent MobX actions", () => {
         expect(component.mirrorBenchmarks.get(component.getMirrorBenchmarkKey(CatalogDatabase.SIMBAD, "http://legacy.example/"))).toEqual({status: "disabled"});
     });
 
-    test("toggles a user-disabled mirror and keeps the last usable mirror enabled", () => {
+    test("delegates mirror toggling to the mirror store", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorDisabled.mockImplementation((site: string) => site.startsWith("http://"));
+        MOCK_MIRROR_STORE.isMirrorBlocked.mockImplementation((site: string) => site.startsWith("http://"));
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["https://secure.example/", "https://backup.example/", "http://legacy.example/"];
 
         component.handleMirrorToggle(CatalogDatabase.SIMBAD, "https://secure.example/");
-        expect(MOCK_PREFERENCE_STORE.toggleCatalogQueryMirrorDisabled).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "https://secure.example/");
-
-        MOCK_PREFERENCE_STORE.toggleCatalogQueryMirrorDisabled.mockClear();
-        MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["https://secure.example/", "http://legacy.example/"];
-        component.handleMirrorToggle(CatalogDatabase.SIMBAD, "https://secure.example/");
-        expect(MOCK_PREFERENCE_STORE.toggleCatalogQueryMirrorDisabled).not.toHaveBeenCalled();
+        expect(MOCK_MIRROR_STORE.toggleMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "https://secure.example/");
     });
 
-    test("moves an enabled mirror to the end of the enabled mirrors", () => {
+    test("does not persist mirror toggle state from the component", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["fast", "disabled", "backup"];
-        MOCK_PREFERENCE_STORE.isCatalogQueryMirrorUserDisabled.mockImplementation((_database: CatalogDatabase, site: string) => site === "disabled");
+        MOCK_MIRROR_STORE.isMirrorUserDisabled.mockImplementation((_database: CatalogDatabase, site: string) => site === "disabled");
 
         component.handleMirrorToggle(CatalogDatabase.SIMBAD, "disabled");
 
-        expect(MOCK_PREFERENCE_STORE.toggleCatalogQueryMirrorDisabled).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "disabled");
-        expect(MOCK_PREFERENCE_STORE.setCatalogQueryEnabledMirrors).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, ["fast", "backup", "disabled"]);
+        expect(MOCK_MIRROR_STORE.toggleMirror).toHaveBeenCalledWith(CatalogDatabase.SIMBAD, "disabled");
+        expect(MOCK_MIRROR_STORE.setEnabledMirrors).not.toHaveBeenCalled();
     });
 });
 

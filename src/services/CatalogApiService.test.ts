@@ -1,7 +1,7 @@
 import type {AxiosInstance} from "axios";
 
 import {CatalogDatabase} from "enums";
-import {PreferenceStore} from "stores";
+import {MirrorSiteStore} from "stores";
 
 import {CatalogApiService} from "./CatalogApiService";
 
@@ -14,12 +14,11 @@ jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: {}},
     CatalogOnlineQueryProfileStore: jest.fn(),
-    PreferenceStore: {
+    MirrorSiteStore: {
         Instance: {
-            getCatalogQueryMirrors: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
-            getCatalogQueryActiveMirror: jest.fn(() => undefined),
-            isCatalogQueryMirrorDisabled: jest.fn(() => false),
-            isCatalogQueryMirrorUnavailable: jest.fn(() => false)
+            getMirrorSites: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
+            getActiveMirror: jest.fn(() => "https://active.example/"),
+            isMirrorUnavailable: jest.fn(() => false)
         }
     }
 }));
@@ -58,13 +57,16 @@ describe("CatalogApiService active mirror", () => {
         const service = new CatalogApiService() as unknown as TestableCatalogApiService;
         const get = jest.fn();
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
-        const unavailable = jest.mocked(PreferenceStore.Instance.isCatalogQueryMirrorUnavailable);
+        const unavailable = jest.mocked(MirrorSiteStore.Instance.isMirrorUnavailable);
+        const activeMirror = jest.mocked(MirrorSiteStore.Instance.getActiveMirror);
         unavailable.mockImplementation(() => true);
+        activeMirror.mockImplementation(() => undefined);
 
         await expect(service.getSimbadCatalog("test")).rejects.toThrow("All mirror sites are unavailable. Enable at least one mirror site and retry.");
         expect(get).not.toHaveBeenCalled();
 
         unavailable.mockImplementation(() => false);
+        activeMirror.mockImplementation(() => "https://active.example/");
     });
 
     test("normalizes mirror paths before query strings and preserves base query parameters", () => {

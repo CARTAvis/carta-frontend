@@ -5,7 +5,7 @@ import {action, makeObservable} from "mobx";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, PreferenceStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
 import {TelemetryService} from "./TelemetryService";
@@ -52,7 +52,7 @@ export class CatalogApiService {
     }
 
     public benchmarkMirror = async (database: CatalogDatabase, mirrorUrl: string, timeoutMs: number = 10000, signal?: AbortSignal): Promise<number | null> => {
-        if (PreferenceStore.Instance.isCatalogQueryMirrorUnavailable(database, mirrorUrl)) {
+        if (MirrorSiteStore.Instance.isMirrorUnavailable(database, mirrorUrl)) {
             return null;
         }
         const normalized = this.normalizeMirrorUrl(database, mirrorUrl);
@@ -96,13 +96,7 @@ export class CatalogApiService {
     };
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {
-        const preferenceStore = PreferenceStore.Instance;
-        const mirrors = preferenceStore.getCatalogQueryMirrors(database);
-        const selectedMirror = preferenceStore.getCatalogQueryActiveMirror(database);
-        const activeMirrorUrl =
-            selectedMirror && mirrors.includes(selectedMirror) && !preferenceStore.isCatalogQueryMirrorUnavailable(database, selectedMirror)
-                ? selectedMirror
-                : mirrors.find(mirror => !preferenceStore.isCatalogQueryMirrorUnavailable(database, mirror));
+        const activeMirrorUrl = MirrorSiteStore.Instance.getActiveMirror(database);
         const normalizedMirrorUrl = this.normalizeMirrorUrl(database, activeMirrorUrl);
         if (!normalizedMirrorUrl) {
             throw new Error("All mirror sites are unavailable. Enable at least one mirror site and retry.");

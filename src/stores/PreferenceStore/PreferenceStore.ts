@@ -2,26 +2,9 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {
-    BeamType,
-    CatalogDatabase,
-    ColorMap,
-    ContourGeneratorType,
-    CursorInfoVisibility,
-    FileFilteringType,
-    FileFilterMode,
-    FrameScaling,
-    ImagePanelMode,
-    PasteOffsetUnit,
-    PreferenceKeys,
-    SpectralType,
-    TelemetryMode,
-    WCSMatchingType
-} from "enums";
+import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
-import {CATALOG_MIRROR_URLS, CATALOG_MIRRORS_BY_DATABASE} from "utilities/catalog/constants";
-import type {CatalogMirror} from "utilities/catalog/types";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
@@ -163,13 +146,6 @@ const DEFAULTS = {
     }
 };
 
-const CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS: Record<CatalogDatabase, PreferenceKeys> = {
-    [CatalogDatabase.SIMBAD]: PreferenceKeys.CATALOG_QUERY_SIMBAD_ENABLED_MIRRORS,
-    [CatalogDatabase.VIZIER]: PreferenceKeys.CATALOG_QUERY_VIZIER_ENABLED_MIRRORS
-};
-
-const IsSecurePage = (): boolean => typeof window !== "undefined" && window.location.protocol === "https:";
-
 /**
  * The store manages the preference setting
  */
@@ -184,8 +160,6 @@ export class PreferenceStore {
     }
 
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
-    @observable private catalogQueryActiveMirrors: Map<CatalogDatabase, CatalogMirror> = new Map();
-
     /**
      * Get the minimum constraint from the schema for a preference key
      */
@@ -620,139 +594,6 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
-    public getCatalogQueryMirrors(database: CatalogDatabase): string[] {
-        return this.getCatalogQueryMirrorIds(database).map(mirror => CATALOG_MIRROR_URLS[mirror]);
-    }
-
-    public setCatalogQueryEnabledMirrors(database: CatalogDatabase, mirrors: readonly string[]) {
-        const enabledMirrors: CatalogMirror[] = [];
-        for (const mirror of mirrors) {
-            const mirrorId = this.getCatalogQueryMirrorId(database, mirror);
-            if (mirrorId && !this.isCatalogQueryMirrorDisabled(CATALOG_MIRROR_URLS[mirrorId]) && !enabledMirrors.includes(mirrorId)) {
-                enabledMirrors.push(mirrorId);
-            }
-        }
-        this.setPreference(CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS[database], enabledMirrors);
-    }
-
-    public getCatalogQueryActiveMirror(database: CatalogDatabase): string | undefined {
-        const activeMirror = this.catalogQueryActiveMirrors.get(database);
-        if (!activeMirror || this.isCatalogQueryMirrorUserDisabled(database, CATALOG_MIRROR_URLS[activeMirror]) || this.isCatalogQueryMirrorDisabled(CATALOG_MIRROR_URLS[activeMirror])) {
-            return undefined;
-        }
-        return CATALOG_MIRROR_URLS[activeMirror];
-    }
-
-    @action public setCatalogQueryActiveMirror(database: CatalogDatabase, mirror: string) {
-        const mirrorId = this.getCatalogQueryMirrorId(database, mirror);
-        if (mirrorId && !this.isCatalogQueryMirrorUnavailable(database, mirror)) {
-            this.catalogQueryActiveMirrors.set(database, mirrorId);
-        }
-    }
-
-    public isCatalogQueryMirrorDisabled = (mirror: string): boolean => {
-        if (!IsSecurePage()) {
-            return false;
-        }
-        try {
-            return new URL(mirror).protocol === "http:";
-        } catch {
-            return false;
-        }
-    };
-
-    public isCatalogQueryMirrorUserDisabled = (database: CatalogDatabase, mirror: string): boolean => {
-        const mirrorId = this.getCatalogQueryMirrorId(database, mirror);
-        return mirrorId !== null && !this.getCatalogQueryEnabledMirrorIds(database).includes(mirrorId);
-    };
-
-    public isCatalogQueryMirrorUnavailable = (database: CatalogDatabase, mirror: string): boolean => {
-        return this.isCatalogQueryMirrorDisabled(mirror) || this.isCatalogQueryMirrorUserDisabled(database, mirror);
-    };
-
-    @action public toggleCatalogQueryMirrorDisabled = (database: CatalogDatabase, mirror: string) => {
-        if (this.isCatalogQueryMirrorDisabled(mirror)) {
-            return;
-        }
-
-        const mirrorId = this.getCatalogQueryMirrorId(database, mirror);
-        if (!mirrorId) {
-            return;
-        }
-        const enabledMirrors = this.getCatalogQueryEnabledMirrorIds(database).filter(mirrorId => !this.isCatalogQueryMirrorDisabled(CATALOG_MIRROR_URLS[mirrorId]));
-        const index = enabledMirrors.indexOf(mirrorId);
-        if (index >= 0) {
-            if (enabledMirrors.length <= 1) {
-                return;
-            }
-            enabledMirrors.splice(index, 1);
-        } else {
-            enabledMirrors.push(mirrorId);
-        }
-        this.setPreference(CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS[database], enabledMirrors);
-        if (index >= 0 && this.catalogQueryActiveMirrors.get(database) === mirrorId) {
-            this.catalogQueryActiveMirrors.delete(database);
-        }
-    };
-
-    @action public resetCatalogQueryMirrorSettings(database: CatalogDatabase) {
-        this.clearPreferences([CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS[database]]);
-        this.catalogQueryActiveMirrors.delete(database);
-    }
-
-    private normalizeCatalogMirror = (mirror: string): string => {
-        try {
-            const url = new URL(mirror.trim());
-            url.hash = "";
-            return url.toString();
-        } catch {
-            return mirror.trim();
-        }
-    };
-
-    private getCatalogQueryMirrorId = (database: CatalogDatabase, mirror: string): CatalogMirror | null => {
-        const mirrorIds = CATALOG_MIRRORS_BY_DATABASE[database];
-        const directMirrorId = mirrorIds.find(mirrorId => mirrorId === mirror.trim());
-        if (directMirrorId) {
-            return directMirrorId;
-        }
-        const normalizedMirror = this.normalizeCatalogMirror(mirror);
-        return mirrorIds.find(mirrorId => this.normalizeCatalogMirror(CATALOG_MIRROR_URLS[mirrorId]) === normalizedMirror) ?? null;
-    };
-
-    private getCatalogQueryMirrorIds = (database: CatalogDatabase): CatalogMirror[] => {
-        const defaults = [...CATALOG_MIRRORS_BY_DATABASE[database]];
-        const enabledMirrors = this.getStoredCatalogQueryMirrorIds(database);
-        if (!enabledMirrors) {
-            return defaults;
-        }
-        return [...enabledMirrors, ...defaults.filter(mirror => !enabledMirrors.includes(mirror))];
-    };
-
-    private getCatalogQueryEnabledMirrorIds = (database: CatalogDatabase): CatalogMirror[] => {
-        return this.getStoredCatalogQueryMirrorIds(database) ?? [...CATALOG_MIRRORS_BY_DATABASE[database]];
-    };
-
-    private getStoredCatalogQueryMirrorIds = (database: CatalogDatabase): CatalogMirror[] | undefined => {
-        const storedMirrors = this.preferences.get(CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS[database]);
-        if (!Array.isArray(storedMirrors)) {
-            return undefined;
-        }
-
-        const defaults = CATALOG_MIRRORS_BY_DATABASE[database];
-        const mirrorIds: CatalogMirror[] = [];
-        for (const mirror of storedMirrors) {
-            if (typeof mirror !== "string") {
-                continue;
-            }
-            const mirrorId = defaults.find(defaultMirror => defaultMirror === mirror);
-            if (mirrorId && !mirrorIds.includes(mirrorId)) {
-                mirrorIds.push(mirrorId);
-            }
-        }
-        return mirrorIds;
-    };
-
     @computed get shouldAutoSelectImageOverlayCoordinateColumns(): boolean {
         return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
     }
@@ -1103,13 +944,7 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE,
-            PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-            PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS,
-            ...Object.values(CATALOG_QUERY_ENABLED_MIRROR_PREFERENCE_KEYS)
-        ]);
-        this.catalogQueryActiveMirrors.clear();
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS]);
     };
 
     /**
