@@ -6,6 +6,14 @@ import {action, makeObservable, observable} from "mobx";
 import {AlertType} from "enums";
 import {Deferred} from "services";
 
+interface InteractiveAlert {
+    text: string | React.ReactNode;
+    icon?: IconName | MaybeElement;
+    shouldShowDashboard: boolean;
+    alertType: AlertType;
+    deferred: Deferred<boolean>;
+}
+
 export class AlertStore {
     private static staticInstance: AlertStore;
 
@@ -22,7 +30,8 @@ export class AlertStore {
     @observable alertType: AlertType = AlertType.Info;
     @observable interactiveAlertText: string | React.ReactNode = "";
     @observable shouldShowDashboardLink: boolean = false;
-    private interactionPromise: Deferred<boolean> | null;
+    private interactionPromise: Deferred<boolean> | null = null;
+    private interactionQueue: InteractiveAlert[] = [];
 
     private keyDownHandler = (ev: KeyboardEvent) => {
         const hasNoModifier = !ev.shiftKey && !ev.altKey && !ev.metaKey && !ev.ctrlKey;
@@ -61,30 +70,32 @@ export class AlertStore {
     };
 
     @action showInteractiveAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
-        this.interactiveAlertText = text;
-        this.alertIcon = icon;
-        this.alertType = AlertType.Interactive;
-        this.isAlertVisible = true;
-        this.shouldShowDashboardLink = shouldShowDashboard;
-        this.interactionPromise = new Deferred<boolean>();
-
-        document.addEventListener("keydown", this.keyDownHandler, true);
-
-        return this.interactionPromise.promise;
+        return this.queueInteractiveAlert(text, icon, shouldShowDashboard, AlertType.Interactive);
     };
 
     @action showRetryAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, shouldShowDashboard = false) => {
-        this.interactiveAlertText = text;
-        this.alertIcon = icon;
-        this.alertType = AlertType.Retry;
-        this.isAlertVisible = true;
-        this.shouldShowDashboardLink = shouldShowDashboard;
-        this.interactionPromise = new Deferred<boolean>();
-
-        document.addEventListener("keydown", this.keyDownHandler, true);
-
-        return this.interactionPromise.promise;
+        return this.queueInteractiveAlert(text, icon, shouldShowDashboard, AlertType.Retry);
     };
+
+    private queueInteractiveAlert(text: string | React.ReactNode, icon: IconName | MaybeElement, shouldShowDashboard: boolean, alertType: AlertType) {
+        const alert = {text, icon, shouldShowDashboard, alertType, deferred: new Deferred<boolean>()};
+        if (this.interactionPromise) {
+            this.interactionQueue.push(alert);
+        } else {
+            this.showNextInteractiveAlert(alert);
+        }
+        return alert.deferred.promise;
+    }
+
+    private showNextInteractiveAlert(alert: InteractiveAlert) {
+        this.interactiveAlertText = alert.text;
+        this.alertIcon = alert.icon;
+        this.alertType = alert.alertType;
+        this.isAlertVisible = true;
+        this.shouldShowDashboardLink = alert.shouldShowDashboard;
+        this.interactionPromise = alert.deferred;
+        document.addEventListener("keydown", this.keyDownHandler, true);
+    }
 
     @action handleInteractiveAlertClosed = (isConfirmed: boolean) => {
         this.isAlertVisible = false;
@@ -94,12 +105,21 @@ export class AlertStore {
         if (this.interactionPromise) {
             this.interactionPromise.resolve(isConfirmed);
             this.interactionPromise = null;
+            const nextAlert = this.interactionQueue.shift();
+            if (nextAlert) {
+                this.showNextInteractiveAlert(nextAlert);
+            }
         }
     };
 
     @action dismissInteractiveAlert = (promise: Promise<boolean>) => {
         if (this.interactionPromise?.promise === promise) {
             this.handleInteractiveAlertClosed(false);
+        } else {
+            const alertIndex = this.interactionQueue.findIndex(alert => alert.deferred.promise === promise);
+            if (alertIndex >= 0) {
+                this.interactionQueue.splice(alertIndex, 1)[0].deferred.resolve(false);
+            }
         }
     };
 
