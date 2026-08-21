@@ -527,6 +527,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const spatialReference = frame.spatialReference || frame;
                 const frameView = spatialReference.requiredFrameView;
                 const currentView = spatialReference.currentFrameView;
+                const channel = frame.channel;
+                const stokes = frame.stokes;
+                const histChannel = frame.renderConfig.histChannel;
+                const histStokesIndex = frame.renderConfig.stokesIndex;
+                const isUsingCubeHistogram = frame.renderConfig.isUsingCubeHistogram;
                 const colorMapping = {
                     min: frame.renderConfig.scaleMinVal,
                     max: frame.renderConfig.scaleMaxVal,
