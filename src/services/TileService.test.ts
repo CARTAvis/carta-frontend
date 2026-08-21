@@ -513,9 +513,10 @@ describe("TileService channel map request queue", () => {
         await Promise.resolve();
     });
 
-    test("clears the stalled request when the user stops waiting", async () => {
+    test("clears the stalled request and restores the selected backend channels when the user stops waiting", async () => {
         const service = CreateService();
         MockShowInteractiveAlert.mockResolvedValue(false);
+        service.fileStateMap.set(1, {channel: 7, stokes: 1});
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
         jest.advanceTimersByTime(40_000);
@@ -525,6 +526,7 @@ describe("TileService channel map request queue", () => {
         expect(GetChannelMapState(service)?.queue).toEqual([]);
         expect(service.pendingRequests.get("1_0_1")?.size).toBe(0);
         expect(GetChannelMapState(service)?.generation).toBe(1);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 7, 1, {});
     });
 
     test("applies a timeout decision to the current request in the same batch", async () => {

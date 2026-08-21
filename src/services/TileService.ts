@@ -779,6 +779,10 @@ export class TileService {
         this.clearRequestQueue(fileId);
         channelMapState.queue = [];
         this.clearChannelMapSynchronization(fileId);
+        const selectedChannels = this.fileStateMap.get(fileId);
+        if (selectedChannels?.channel !== null && selectedChannels?.channel !== undefined && selectedChannels.stokes !== null && selectedChannels.stokes !== undefined) {
+            this.backendService.setChannels(fileId, selectedChannels.channel, selectedChannels.stokes, {});
+        }
     }
 
     private dismissChannelMapTimeoutAlert(batchTiming?: ChannelMapRequest["batchTiming"]) {
