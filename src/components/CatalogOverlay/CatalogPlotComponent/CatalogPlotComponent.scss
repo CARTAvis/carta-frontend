@@ -54,12 +54,11 @@
 
     .catalog-scatter {
         .js-plotly-plot .plotly {
-            .modebar-container {
-                right: 80px !important;
-            }
-
             .modebar {
+                // the plot is rendered at 2x and scaled down for HiDPI screens; scale the mode bar back up from its top-right
+                // corner so it stays inside the plot instead of overflowing the widget (which shows a persistent scrollbar)
                 transform: scale(2);
+                transform-origin: top right;
             }
         }
     }

@@ -4,6 +4,10 @@
     width: 100%;
     height: 100%;
     user-select: none;
+    // flex container: keeps the table margin from collapsing through the widget, which would push the
+    // widget below the bottom of its (scrollable) layout container and show a persistent scrollbar
+    display: flex;
+    flex-direction: column;
 
     .#{$ns}-popover-target {
         flex: none !important;
