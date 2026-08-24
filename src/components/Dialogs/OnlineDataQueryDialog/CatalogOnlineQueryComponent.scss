@@ -220,41 +220,6 @@
         }
     }
 
-    &__active-slot {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex: none;
-        width: 18px;
-    }
-
-    &__active-icon {
-        flex: none;
-    }
-
-    &__use-button {
-        flex: none;
-        padding: 0 2px;
-
-        .#{$ns}-icon {
-            color: rgba(0, 0, 0, 0.3);
-        }
-
-        &:hover .#{$ns}-icon {
-            color: rgba(0, 0, 0, 0.65);
-        }
-
-        .#{$ns}-dark & {
-            .#{$ns}-icon {
-                color: rgba(255, 255, 255, 0.35);
-            }
-
-            &:hover .#{$ns}-icon {
-                color: rgba(255, 255, 255, 0.8);
-            }
-        }
-    }
-
     &__toggle {
         flex: none;
         width: 28px;

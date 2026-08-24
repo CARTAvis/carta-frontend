@@ -365,26 +365,16 @@ export class CatalogQueryComponent extends React.Component {
                 <Tooltip content="Drag to reorder" hoverOpenDelay={800} disabled={this.dragSourceMirrorIndex !== undefined}>
                     <Icon icon="drag-handle-vertical" className="mirror-manager__handle" draggable={!isMirrorConfigDisabled && !isMirrorUnavailable} onDragStart={this.handleMirrorDragStart(index)} />
                 </Tooltip>
-                <span className="mirror-manager__active-slot">
-                    {isActive ? (
-                        <Tooltip content="Current mirror" position={Position.TOP} hoverOpenDelay={300}>
-                            <Icon icon="tick-circle" className="mirror-manager__active-icon" intent={Intent.SUCCESS} />
-                        </Tooltip>
-                    ) : (
-                        <Tooltip content={isMirrorUnavailable ? "Unavailable mirror" : "Use this mirror"} position={Position.TOP} hoverOpenDelay={300}>
-                            <Button
-                                icon="circle"
-                                variant="minimal"
-                                size="small"
-                                className="mirror-manager__use-button"
-                                disabled={isMirrorConfigDisabled || isMirrorUnavailable}
-                                onClick={() => this.handleMirrorSelect(database, site)}
-                                aria-label="Use this mirror"
-                                data-testid={`catalog-query-use-mirror-button-${index}`}
-                            />
-                        </Tooltip>
-                    )}
-                </span>
+                <Tooltip content={toggleTooltip} hoverOpenDelay={300}>
+                    <Switch
+                        className="mirror-manager__toggle"
+                        checked={!isMirrorUnavailable}
+                        disabled={isToggleDisabled}
+                        aria-label={isMirrorUnavailable ? "Enable mirror" : "Disable mirror"}
+                        onChange={() => this.handleMirrorToggle(database, site)}
+                        data-testid={`catalog-query-toggle-mirror-button-${index}`}
+                    />
+                </Tooltip>
                 <Button
                     variant="minimal"
                     className="mirror-manager__url"
@@ -399,16 +389,6 @@ export class CatalogQueryComponent extends React.Component {
                 <div className={`mirror-manager__result is-${status}`} style={resultStyle}>
                     {this.renderBenchmarkResult(status, label)}
                 </div>
-                <Tooltip content={toggleTooltip} hoverOpenDelay={300}>
-                    <Switch
-                        className="mirror-manager__toggle"
-                        checked={!isMirrorUnavailable}
-                        disabled={isToggleDisabled}
-                        aria-label={isMirrorUnavailable ? "Enable mirror" : "Disable mirror"}
-                        onChange={() => this.handleMirrorToggle(database, site)}
-                        data-testid={`catalog-query-toggle-mirror-button-${index}`}
-                    />
-                </Tooltip>
             </div>
         );
     };
