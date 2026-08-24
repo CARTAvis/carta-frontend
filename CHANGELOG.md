@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).
+* Fixed the image viewer cursor info bar displaying image coordinates as negative zero, e.g. "(-0, -0)" ([#2910](https://github.com/CARTAvis/carta-frontend/issues/2910)).
+* Fixed zooming the Stokes analysis scatter plot not graying out the out-of-range parts of the profile plots ([#2847](https://github.com/CARTAvis/carta-frontend/issues/2847)).
+* Fixed Cmd/Ctrl+C copying the selected region instead of highlighted text in widgets such as the File Header ([#2892](https://github.com/CARTAvis/carta-frontend/issues/2892)).
+* Fixed the file browser Size column sorting files by the leading digit instead of the numerical size ([#2859](https://github.com/CARTAvis/carta-frontend/issues/2859)).
 * Fixed persistent scrollbars in the docked region list and catalog 2D scatter plot widgets ([#2848](https://github.com/CARTAvis/carta-frontend/issues/2848)). Also fixed the catalog plot widget toolbar being clipped without a scrollbar when the widget is too narrow.
 
 ## [6.0.0]
