@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import {type Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, VelocityConvention} from "enums";
 import {SplatalogueService} from "services";
@@ -157,6 +157,9 @@ export class SpectralLineQueryWidgetStore {
     };
 
     public isValidRedshiftInput = (input: number): boolean => {
+        if (this.isRedshiftInputDisabled) {
+            return false;
+        }
         return this.redshiftType === RedshiftType.V ? isValidVelocity(input, LINE_QUERY_VELOCITY_CONVENTION) : isValidRedshift(input);
     };
 
@@ -384,7 +387,18 @@ export class SpectralLineQueryWidgetStore {
         return this.filteredRowIndexes.length;
     }
 
+    @computed get isXAxisRestFrameActive(): boolean {
+        return Boolean(this.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)?.isXAxisRestFrameActive);
+    }
+
+    @computed get isRedshiftInputDisabled(): boolean {
+        return this.isXAxisRestFrameActive;
+    }
+
     @computed get observedFrequencyFactor() {
+        if (this.isRedshiftInputDisabled) {
+            return 1;
+        }
         return this.redshiftType === RedshiftType.V ? observedFrequencyFactorFromVelocity(this.redshiftInput, LINE_QUERY_VELOCITY_CONVENTION) : observedFrequencyFactorFromRedshift(this.redshiftInput);
     }
 
@@ -579,6 +593,13 @@ export class SpectralLineQueryWidgetStore {
                     this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
                 }
             })
+        );
+        this.disposers.push(
+            reaction(
+                () => this.isRedshiftInputDisabled,
+                () => this.applyShiftFactor(),
+                {fireImmediately: true}
+            )
         );
     }
 

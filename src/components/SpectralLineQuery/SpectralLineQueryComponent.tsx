@@ -339,11 +339,19 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         options={[RedshiftType.V, RedshiftType.Z]}
                         value={widgetStore.redshiftType}
                         onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
+                        disabled={widgetStore.isRedshiftInputDisabled}
                         data-testid="spectral-line-query-frequency-shift-reference"
                     />
                 </FormGroup>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} data-testid="spectral-line-query-frequency-shift-input" />
+                    <SafeNumericInput
+                        value={widgetStore.isRedshiftInputDisabled ? 0 : widgetStore.redshiftInput}
+                        buttonPosition="none"
+                        disabled={widgetStore.isRedshiftInputDisabled}
+                        onBlur={this.handleRedshiftChange}
+                        onKeyDown={this.handleRedshiftChange}
+                        data-testid="spectral-line-query-frequency-shift-input"
+                    />
                 </FormGroup>
             </div>
         );

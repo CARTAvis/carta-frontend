@@ -9,14 +9,17 @@ const MOCK_UTILITIES = {
     wavelengthToFrequency: jest.fn()
 };
 
+const MOCK_APP_STORE = {
+    widgetsStore: {
+        spectralProfilerList: [],
+        getSpectralWidgetStoreByID: jest.fn()
+    }
+};
+
 jest.mock("services", () => ({SplatalogueService: {Instance: {}}}));
 jest.mock("stores", () => ({
     AppStore: {
-        Instance: {
-            widgetsStore: {
-                spectralProfilerList: []
-            }
-        }
+        Instance: MOCK_APP_STORE
     }
 }));
 jest.mock("utilities", () => ({
@@ -76,6 +79,16 @@ describe("SpectralLineQueryWidgetStore frequency shift", () => {
         store.setRedshiftInput(-1);
 
         expect(store.redshiftInput).toBe(0);
+        expect(store.observedFrequencyFactor).toBe(1);
+    });
+
+    test("uses rest frequency and disables line-query shifting for an active rest-frame profile", () => {
+        store.setRedshiftType(RedshiftType.Z);
+        store.setRedshiftInput(1);
+        MOCK_APP_STORE.widgetsStore.getSpectralWidgetStoreByID.mockReturnValue({isXAxisRestFrameActive: true});
+        store.setSelectedSpectralProfiler("spectral-profiler-1");
+
+        expect(store.isRedshiftInputDisabled).toBe(true);
         expect(store.observedFrequencyFactor).toBe(1);
     });
 });

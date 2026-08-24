@@ -148,6 +148,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const isNextEnabled = isEnabled && this.isXAxisRestFrameSupported;
         if (isNextEnabled !== this.isXAxisRestFrameEnabled) {
             this.isXAxisRestFrameEnabled = isNextEnabled;
+            this.clearSpectralLines();
             this.setCursorFromObservedX(observedCursorX);
             this.resetSpectralDisplayState();
         }
@@ -955,7 +956,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
                 if (transformedValue && isFinite(transformedValue)) {
-                    transformedSpectralLines.push({species: spectralLine?.species, value: this.convertObservedXToDisplay(transformedValue), qn: spectralLine?.qn});
+                    const displayValue = this.isXAxisRestFrameActive ? transformedValue : this.convertObservedXToDisplay(transformedValue);
+                    transformedSpectralLines.push({species: spectralLine?.species, value: displayValue, qn: spectralLine?.qn});
                 }
             });
         }

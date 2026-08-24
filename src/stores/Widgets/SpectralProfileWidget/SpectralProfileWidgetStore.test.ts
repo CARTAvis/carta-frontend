@@ -94,6 +94,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.convertDisplayXToObserved(100)).toBe(100);
     });
 
+    test("keeps plotted spectral lines in rest-frame coordinates when X-axis correction is active", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.addSpectralLines([{species: "CO", value: 100, qn: "1-0"}]);
+
+        expect(widgetStore.transformedSpectralLines).toEqual([{species: "CO", value: 100, qn: "1-0"}]);
+    });
+
     test("reprojects the plot cursor when the rest-frame display transform changes", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ);
         widgetStore.setMouseMoveIntoLinePlots(true);
