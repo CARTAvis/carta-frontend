@@ -16,10 +16,10 @@ export enum SimbadMirror {
 
 export enum VizierMirror {
     CDS = "vizier.cds.unistra.fr",
-    NAO = "vizier.nao.ac.jp",
+    ADAC = "vizier.nao.ac.jp",
     IUCAA = "vizier.iucaa.in",
     INASAN = "vizier.inasan.ru",
-    CHINA_VO = "vizier.china-vo.org",
+    NAOC = "vizier.china-vo.org",
     CFA_HARVARD = "vizier.cfa.harvard.edu",
     IDIA = "vizier.idia.ac.za"
 }
