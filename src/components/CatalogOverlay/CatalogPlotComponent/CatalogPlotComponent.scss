@@ -10,6 +10,13 @@
         display: inline-flex;
         padding-left: 5px;
         padding-top: 5px;
+        // show a horizontal scrollbar when the widget is too narrow for the controls, matching the histogram widget toolbar
+        overflow-x: auto;
+        overflow-y: hidden;
+
+        .#{$ns}-form-group {
+            flex: 0 0 auto;
+        }
 
         .#{$ns}-form-content {
             margin-right: 5px;
