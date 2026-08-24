@@ -292,19 +292,20 @@
             text-overflow: ellipsis;
         }
 
-        &:hover,
-        &:active,
-        &:focus {
-            color: inherit;
-            background: rgba(0, 0, 0, 0.06);
+        &.#{$ns}-button:hover,
+        &.#{$ns}-button:active,
+        &.#{$ns}-button:focus {
+            color: inherit !important;
+            background: none !important;
             box-shadow: none;
         }
 
         .#{$ns}-dark & {
-            &:hover,
-            &:active,
-            &:focus {
-                background: rgba(255, 255, 255, 0.08);
+            &.#{$ns}-button:hover,
+            &.#{$ns}-button:active,
+            &.#{$ns}-button:focus {
+                color: inherit !important;
+                background: none !important;
             }
         }
     }

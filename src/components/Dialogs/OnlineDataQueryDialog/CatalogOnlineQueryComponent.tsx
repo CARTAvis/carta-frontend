@@ -392,6 +392,7 @@ export class CatalogQueryComponent extends React.Component {
                     onClick={() => this.handleMirrorSelect(database, site)}
                     aria-label={`Use ${this.getMirrorLabel(site)} mirror`}
                     title={site}
+                    data-testid={`catalog-query-use-mirror-url-${index}-button`}
                 >
                     <span className="mirror-manager__url-host">{this.getMirrorLabel(site)}</span>
                 </Button>
