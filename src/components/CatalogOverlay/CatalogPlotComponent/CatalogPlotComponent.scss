@@ -3,10 +3,14 @@
 .catalog-plot {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .catalog-plot-option {
         width: 100%;
-        height: 40px;
+        // the row grows beyond 40px when the horizontal scrollbar appears, so the scrollbar sits below the controls instead of covering them
+        min-height: 40px;
+        flex: none;
         display: inline-flex;
         padding-left: 5px;
         padding-top: 5px;
@@ -16,6 +20,8 @@
 
         .#{$ns}-form-group {
             flex: 0 0 auto;
+            // drop the default form-group bottom margin, previously hidden by the row's fixed 40px height
+            margin-bottom: 0;
         }
 
         .#{$ns}-form-content {
@@ -34,12 +40,16 @@
     }
 
     .non-ideal-state {
-        height: calc(100% - 40px);
+        flex: 1;
+        min-height: 0;
     }
 
     .catalog-plotly {
         width: 100%;
-        height: calc(100% - 105px);
+        flex: 1;
+        min-height: 0;
+        // leave room for the absolutely-positioned footer; equals the previous height: calc(100% - 105px) when the toolbar row is 40px
+        margin-bottom: 65px;
         position: relative;
 
         .js-plotly-plot .plotly .hoverlayer .spikeline {
@@ -50,7 +60,10 @@
 
     .catalog-plotly-dark {
         width: calc(100% - 10px);
-        height: calc(100% - 105px);
+        flex: 1;
+        min-height: 0;
+        // leave room for the absolutely-positioned footer; equals the previous height: calc(100% - 105px) when the toolbar row is 40px
+        margin-bottom: 65px;
         position: relative;
 
         .js-plotly-plot .plotly .hoverlayer .spikeline {
