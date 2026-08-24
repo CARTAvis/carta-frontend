@@ -23,8 +23,6 @@ const MIRROR_BENCHMARK_TIMEOUT_MS = 10000;
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
     @observable objectSize: number | undefined = undefined;
-    @observable dragSourceMirrorIndex: number | undefined = undefined;
-    @observable dragOverMirrorIndex: number | undefined = undefined;
     @observable isBenchmarking: boolean = false;
     @observable mirrorBenchmarks: Map<string, MirrorBenchmark> = new Map();
     private mirrorBenchmarkAbort: AbortController | undefined = undefined;
@@ -319,12 +317,7 @@ export class CatalogQueryComponent extends React.Component {
         return (
             <div className="mirror-manager">
                 <div className="mirror-manager__header">
-                    <span className="mirror-manager__title">
-                        Mirror sites
-                        <span className="mirror-manager__count">
-                            {availableMirrorCount}/{mirrorSites.length} enabled
-                        </span>
-                    </span>
+                    <span className="mirror-manager__title">Mirror sites</span>
                     <div className="mirror-manager__action-buttons">
                         <Tooltip content="Reset mirror settings" disabled={isMirrorConfigDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
                             <Button icon="reset" variant="minimal" disabled={isMirrorConfigDisabled} onClick={this.resetMirrorSites} aria-label="Reset mirror settings" data-testid="catalog-query-reset-mirrors-button" />
@@ -358,13 +351,10 @@ export class CatalogQueryComponent extends React.Component {
         const isLastAvailableMirror = !isMirrorUnavailable && availableMirrorCount === 1;
         const isToggleDisabled = isMirrorConfigDisabled || isMirrorBlocked || (!isMirrorUserDisabled && isLastAvailableMirror);
         const toggleTooltip = isMirrorBlocked ? "Unavailable on secure pages" : isMirrorUserDisabled ? "Enable mirror" : isLastAvailableMirror ? "At least one mirror must remain enabled" : "Disable mirror";
-        const itemClassName = `mirror-manager__item${this.dragOverMirrorIndex === index ? " is-drag-over" : ""}${isActive ? " is-active" : ""}${isMirrorUnavailable ? " is-disabled" : ""}`;
+        const itemClassName = `mirror-manager__item${isActive ? " is-active" : ""}${isMirrorUnavailable ? " is-disabled" : ""}`;
 
         return (
-            <div key={`${site}-${index}`} className={itemClassName} onDragOver={this.handleMirrorDragOver(index)} onDrop={this.handleMirrorDrop(index)} onDragEnd={this.handleMirrorDragEnd}>
-                <Tooltip content="Drag to reorder" hoverOpenDelay={800} disabled={this.dragSourceMirrorIndex !== undefined}>
-                    <Icon icon="drag-handle-vertical" className="mirror-manager__handle" draggable={!isMirrorConfigDisabled && !isMirrorUnavailable} onDragStart={this.handleMirrorDragStart(index)} />
-                </Tooltip>
+            <div key={`${site}-${index}`} className={itemClassName}>
                 <Tooltip content={toggleTooltip} hoverOpenDelay={300}>
                     <Switch
                         className="mirror-manager__toggle"
@@ -543,59 +533,6 @@ export class CatalogQueryComponent extends React.Component {
         }
         MirrorSiteStore.Instance.toggleMirror(database, mirror);
         this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
-    };
-
-    private handleMirrorDragStart = (index: number) =>
-        action((event: React.DragEvent<HTMLElement>) => {
-            this.dragSourceMirrorIndex = index;
-            this.dragOverMirrorIndex = index;
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData("text/plain", index.toString());
-
-            const itemElement = event.currentTarget.closest(".mirror-manager__item") as HTMLElement | null;
-            if (itemElement) {
-                event.dataTransfer.setDragImage(itemElement, 0, 0);
-            }
-        });
-
-    private handleMirrorDragOver = (index: number) =>
-        action((event: React.DragEvent<HTMLDivElement>) => {
-            if (this.dragSourceMirrorIndex === undefined) {
-                return;
-            }
-            event.preventDefault();
-            if (this.dragOverMirrorIndex !== index) {
-                this.dragOverMirrorIndex = index;
-            }
-        });
-
-    private handleMirrorDrop = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const database = CatalogOnlineQueryConfigStore.Instance.catalogDB;
-        const mirrors = [...this.getMirrorSites(database)];
-        const fromIndex = this.dragSourceMirrorIndex ?? Number(event.dataTransfer.getData("text/plain"));
-        if (!Number.isInteger(fromIndex) || fromIndex < 0 || fromIndex >= mirrors.length || fromIndex === index) {
-            this.resetMirrorDragState();
-            return;
-        }
-
-        const [movedMirror] = mirrors.splice(fromIndex, 1);
-        if (movedMirror === undefined) {
-            this.resetMirrorDragState();
-            return;
-        }
-        mirrors.splice(index, 0, movedMirror);
-        this.setMirrorSiteOrder(database, mirrors);
-        this.resetMirrorDragState();
-    };
-
-    private handleMirrorDragEnd = () => {
-        this.resetMirrorDragState();
-    };
-
-    @action private resetMirrorDragState = () => {
-        this.dragSourceMirrorIndex = undefined;
-        this.dragOverMirrorIndex = undefined;
     };
 
     private getMirrorBenchmarkKey = (database: CatalogDatabase, site: string): string => {
