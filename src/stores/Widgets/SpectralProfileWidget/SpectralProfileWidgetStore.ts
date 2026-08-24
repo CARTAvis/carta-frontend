@@ -25,7 +25,7 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit, redshiftFromVelocity, velocityFromRedshift} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, isValidRedshift, pixelToFluxDensityUnit, redshiftFromVelocity, restFrequencyFactorFromRedshift, velocityFromRedshift} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -154,7 +154,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setRestFrameRedshift = (redshift: number) => {
-        if (isFinite(redshift) && redshift > -1 && redshift !== this.restFrameRedshift) {
+        if (isValidRedshift(redshift) && redshift !== this.restFrameRedshift) {
             const observedCursorX = this.getObservedCursorX();
             this.restFrameRedshift = redshift;
             this.setCursorFromObservedX(observedCursorX);
@@ -613,7 +613,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     private get isRestFrameShiftValid(): boolean {
-        return this.isRestFrameShiftInputValid && isFinite(this.restFrameRedshift) && this.restFrameRedshift > -1;
+        return this.isRestFrameShiftInputValid && isValidRedshift(this.restFrameRedshift);
     }
 
     @computed get isXAxisRestFrameActive(): boolean {
@@ -637,7 +637,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get redshiftFactor(): number {
-        return this.isRestFrameCorrectionRequested ? this.effectiveRestFrameRedshift + 1 : 1;
+        return this.isRestFrameCorrectionRequested ? restFrequencyFactorFromRedshift(this.effectiveRestFrameRedshift) : 1;
     }
 
     @computed get restFrameRadialVelocity(): number {
@@ -1199,7 +1199,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.xAxisRestFrameEnabled === "boolean") {
             this.isXAxisRestFrameEnabled = widgetSettings.xAxisRestFrameEnabled;
         }
-        if (typeof widgetSettings.restFrameRedshift === "number" && isFinite(widgetSettings.restFrameRedshift) && widgetSettings.restFrameRedshift > -1) {
+        if (typeof widgetSettings.restFrameRedshift === "number" && isValidRedshift(widgetSettings.restFrameRedshift)) {
             this.restFrameRedshift = widgetSettings.restFrameRedshift;
         }
         this.isRestFrameShiftInputValid = true;

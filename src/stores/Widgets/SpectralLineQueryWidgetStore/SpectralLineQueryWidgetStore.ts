@@ -3,10 +3,24 @@ import {type Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable} from "mobx";
 
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, VelocityConvention} from "enums";
 import {SplatalogueService} from "services";
 import {AppStore, type ControlHeader} from "stores";
-import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {
+    booleanFiltering,
+    getHasFilter,
+    getInitIndexMap,
+    getSortedIndexMap,
+    isValidRedshift,
+    isValidVelocity,
+    numericFiltering,
+    observedFrequencyFactorFromRedshift,
+    observedFrequencyFactorFromVelocity,
+    type ProcessedColumnData,
+    ProtobufProcessing,
+    stringFiltering,
+    wavelengthToFrequency
+} from "utilities";
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineSelection, "Column for line selection"],
@@ -67,6 +81,7 @@ const MEASURED_FREQUENCY_COLUMN_INDEX = 6;
 const RESOLVED_QN_COLUMN_INDEX = 8;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
+const LINE_QUERY_VELOCITY_CONVENTION = VelocityConvention.RADIO;
 
 export class SpectralLineQueryWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType = SpectralLineQueryRangeType.Range;
@@ -128,22 +143,26 @@ export class SpectralLineQueryWidgetStore {
 
     @action setRedshiftType = (redshiftType: RedshiftType) => {
         this.redshiftType = redshiftType;
-        if (redshiftType === RedshiftType.Z && this.redshiftInput < 0) {
+        if (!this.isValidRedshiftInput(this.redshiftInput)) {
             this.redshiftInput = 0;
         }
         this.applyShiftFactor();
     };
 
     @action setRedshiftInput = (input: number) => {
-        if (isFinite(input)) {
+        if (this.isValidRedshiftInput(input)) {
             this.redshiftInput = input;
+            this.applyShiftFactor();
         }
-        this.applyShiftFactor();
+    };
+
+    public isValidRedshiftInput = (input: number): boolean => {
+        return this.redshiftType === RedshiftType.V ? isValidVelocity(input, LINE_QUERY_VELOCITY_CONVENTION) : isValidRedshift(input);
     };
 
     @action private applyShiftFactor = () => {
         const shiftedData = this.shiftedFreqColumnRawData.map(value => {
-            return isFinite(value) ? value * this.redshiftFactor : undefined;
+            return isFinite(value) ? value * this.observedFrequencyFactor : undefined;
         });
         this.filterResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
             dataType: CARTA.ColumnType.Double,
@@ -304,7 +323,7 @@ export class SpectralLineQueryWidgetStore {
                 const data =
                     controlHeader.columnIndex !== SHIFTIED_FREQUENCY_COLUMN_INDEX
                         ? column.data
-                        : (column.data as (number | undefined)[] | null | undefined)?.map(value => (value !== undefined && isFinite(value) ? value * this.redshiftFactor : undefined));
+                        : (column.data as (number | undefined)[] | null | undefined)?.map(value => (value !== undefined && isFinite(value) ? value * this.observedFrequencyFactor : undefined));
                 if (dataType === CARTA.ColumnType.Double) {
                     filteredRowIndexes = numericFiltering(data as Array<number>, filteredRowIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.Bool) {
@@ -365,8 +384,8 @@ export class SpectralLineQueryWidgetStore {
         return this.filteredRowIndexes.length;
     }
 
-    @computed get redshiftFactor() {
-        return this.redshiftType === RedshiftType.V ? 1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT : 1 / (this.redshiftInput + 1);
+    @computed get observedFrequencyFactor() {
+        return this.redshiftType === RedshiftType.V ? observedFrequencyFactorFromVelocity(this.redshiftInput, LINE_QUERY_VELOCITY_CONVENTION) : observedFrequencyFactorFromRedshift(this.redshiftInput);
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader.$Properties> {
@@ -426,7 +445,7 @@ export class SpectralLineQueryWidgetStore {
             if (isSelected) {
                 selectedLines.push({
                     species: speciesColumn?.data?.[index] as string,
-                    value: (frequencyColumn?.data?.[index] as number) * this.redshiftFactor, // update shifted value
+                    value: (frequencyColumn?.data?.[index] as number) * this.observedFrequencyFactor, // update shifted value
                     qn: qnColumn?.data?.[index] as string
                 });
             }

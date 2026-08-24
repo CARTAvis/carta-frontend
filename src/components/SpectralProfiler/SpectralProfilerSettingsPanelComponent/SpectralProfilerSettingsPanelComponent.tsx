@@ -7,7 +7,7 @@ import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps
 import {HelpType, MultiProfileCategory, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {parseNumber, redshiftFromVelocity, SPEED_OF_LIGHT_KMS} from "utilities";
+import {isValidRedshift, isValidVelocity, parseNumber, SPEED_OF_LIGHT_KMS} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
@@ -87,9 +87,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     private isValidShiftInput = (value: number, isRadialVelocityMode: boolean, velocityConvention?: VelocityConvention): boolean => {
         if (isRadialVelocityMode && velocityConvention) {
-            return isFinite(redshiftFromVelocity(value, velocityConvention));
+            return isValidVelocity(value, velocityConvention);
         }
-        return isFinite(value) && value > -1;
+        return isValidRedshift(value);
     };
 
     @action private onShiftChanged = (value: number) => {

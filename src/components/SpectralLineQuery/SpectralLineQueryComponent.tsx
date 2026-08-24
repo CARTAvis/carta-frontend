@@ -99,15 +99,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+        const value = parseFloat(ev.currentTarget.value);
         const existingValue = this.widgetStore.redshiftInput;
-        if (isFinite(value) && value !== existingValue) {
-            if ((this.widgetStore.redshiftType === RedshiftType.Z && value >= 0) || this.widgetStore.redshiftType === RedshiftType.V) {
-                this.widgetStore.setRedshiftInput(value);
-                this.widgetStore.filter();
-                return;
-            }
+        if (isFinite(value) && value !== existingValue && this.widgetStore.isValidRedshiftInput(value)) {
+            this.widgetStore.setRedshiftInput(value);
+            this.widgetStore.filter();
+            return;
         }
         ev.currentTarget.value = existingValue;
     };
