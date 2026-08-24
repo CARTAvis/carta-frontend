@@ -266,7 +266,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
-                        inverted={false}
+                        inverted={preference.isColormapInverted}
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
@@ -274,6 +274,13 @@ export class PreferenceDialogComponent extends React.Component {
                         onCustomColorStartSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-render-config-invert-colormap-toggle"
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
@@ -372,7 +379,18 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isContourColormapInverted}
+                        selectedColormap={preference.contourColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isContourColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-contour-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -426,7 +444,18 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isVectorOverlayColormapInverted}
+                        selectedColormap={preference.vectorOverlayColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isVectorOverlayColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-vector-overlay-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

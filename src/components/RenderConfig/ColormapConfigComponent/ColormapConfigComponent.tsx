@@ -168,7 +168,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 <FormGroup label={"Invert colormap"} inline={true}>
-                    <Switch checked={renderConfig.isInverted} onChange={this.handleInvertedChanged} />
+                    <Switch checked={renderConfig.isInverted} onChange={this.handleInvertedChanged} data-testid="render-config-invert-colormap-toggle" />
                 </FormGroup>
                 {this.renderScalingParameter(renderConfig)}
                 <FormGroup inline={true}>

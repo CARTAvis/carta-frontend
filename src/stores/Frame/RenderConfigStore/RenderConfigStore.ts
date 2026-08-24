@@ -74,6 +74,7 @@ export class RenderConfigStore {
         this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, preference.scalingGamma);
         this.scaling = preference.scaling;
         this.setColorMap(preference.colormap);
+        this.isInverted = preference.isColormapInverted;
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.customColormapHexEnd = preference.colormapHex;
