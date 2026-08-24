@@ -116,6 +116,17 @@ export function getHeaderNumericValue(headerEntry: CARTA.HeaderEntry.$Properties
     }
 }
 
+export function getPixelScale(headerEntries: CARTA.HeaderEntry.$Properties[], axisNumber: number): number | null {
+    const unitHeader = headerEntries.find(entry => entry.name?.indexOf(`CUNIT${axisNumber}`) !== -1);
+    const deltaHeader = headerEntries.find(entry => entry.name?.indexOf(`CDELT${axisNumber}`) !== -1);
+    const unit = unitHeader?.value?.trim() || "deg";
+    const delta = deltaHeader ? getHeaderNumericValue(deltaHeader) : NaN;
+    if (!isFinite(delta) || delta === 0 || (unit !== "deg" && unit !== "rad")) {
+        return null;
+    }
+    return Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600) / Math.PI);
+}
+
 export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, isForward);
 }
