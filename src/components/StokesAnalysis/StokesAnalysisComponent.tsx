@@ -548,6 +548,21 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const values: Array<Point3D> = [];
             // centered origin and equal scaler
             const equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
+            // the visible scatter range: zoomed bounds when the user has zoomed, otherwise the full plot range
+            const widgetStore = this.widgetStore;
+            const visibleBorder: Border = widgetStore.areAxesEqual
+                ? {
+                      xMin: widgetStore.quScatterEqualXmin ?? equalScalerBorder.xMin,
+                      xMax: widgetStore.quScatterEqualXmax ?? equalScalerBorder.xMax,
+                      yMin: widgetStore.quScatterEqualYmin ?? equalScalerBorder.yMin,
+                      yMax: widgetStore.quScatterEqualYmax ?? equalScalerBorder.yMax
+                  }
+                : {
+                      xMin: widgetStore.quScatterMinX ?? equalScalerBorder.xMin,
+                      xMax: widgetStore.quScatterMaxX ?? equalScalerBorder.xMax,
+                      yMin: widgetStore.quScatterMinY ?? equalScalerBorder.yMin,
+                      yMax: widgetStore.quScatterMaxY ?? equalScalerBorder.yMax
+                  };
             this.widgetStore.scatterOutRangePointsZIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
                 const x = qProfile[i];
@@ -556,7 +571,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 values.push({x, y, z});
 
                 // update line plot color array
-                if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                if (x < visibleBorder.xMin || x > visibleBorder.xMax || y < visibleBorder.yMin || y > visibleBorder.yMax) {
                     this.widgetStore.scatterOutRangePointsZIndex.push(z);
                 }
             }
