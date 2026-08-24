@@ -8,13 +8,13 @@ const SIMBAD_MIRROR_URLS: Record<SimbadMirror, string> = {
 };
 
 const VIZIER_MIRROR_URLS: Record<VizierMirror, string> = {
-    [VizierMirror.CDS]: "https://vizier.cds.unistra.fr/vizier/",
-    [VizierMirror.NAO]: "http://vizier.nao.ac.jp/vizier/",
-    [VizierMirror.IUCAA]: "https://vizier.iucaa.in/vizier/",
-    [VizierMirror.INASAN]: "https://vizier.inasan.ru/vizier/",
-    [VizierMirror.CHINA_VO]: "http://vizier.china-vo.org/vizier/",
-    [VizierMirror.CFA_HARVARD]: "https://vizier.cfa.harvard.edu/vizier/",
-    [VizierMirror.IDIA]: "http://vizier.idia.ac.za/vizier/"
+    [VizierMirror.CDS]: "https://vizier.cds.unistra.fr/viz-bin/",
+    [VizierMirror.NAO]: "http://vizier.nao.ac.jp/viz-bin/",
+    [VizierMirror.IUCAA]: "https://vizier.iucaa.in/viz-bin/",
+    [VizierMirror.INASAN]: "https://vizier.inasan.ru/viz-bin/",
+    [VizierMirror.CHINA_VO]: "http://vizier.china-vo.org/viz-bin/",
+    [VizierMirror.CFA_HARVARD]: "https://vizier.cfa.harvard.edu/viz-bin/",
+    [VizierMirror.IDIA]: "http://vizier.idia.ac.za/viz-bin/"
 };
 
 export const CATALOG_MIRROR_URLS: Readonly<Record<CatalogMirror, string>> = {
