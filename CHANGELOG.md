@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added Astropy-style sinh and asinh image scaling options with hover previews in the scaling dropdown ([#1992](https://github.com/CARTAvis/carta-frontend/issues/1992)).
 * Added colormap inversion controls for image rendering, contours, and vector overlays, including preferences and workspace support ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Added beam area, number of beams, and pixels in beam to the Statistics widget ([#1509](https://github.com/CARTAvis/carta-frontend/issues/1509)).
+* Added mirror site management with speed testing for online catalog queries ([#2588](https://github.com/CARTAvis/carta-frontend/issues/2588)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
