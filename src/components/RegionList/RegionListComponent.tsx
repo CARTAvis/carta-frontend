@@ -28,7 +28,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly RotationColumnDefaultWidth = 80;
     private static readonly RowHeight = 35;
     private static readonly HeaderRowHeight = 25;
-    // must match the margin and border of .region-list-table in RegionListComponent.scss
     private static readonly TableMargin = 5;
     private static readonly TableBorderWidth = 1;
     private listRef = React.createRef<any>();
@@ -412,7 +411,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const padding = RegionListComponent.TableMargin;
         const tableBorder = 2 * RegionListComponent.TableBorderWidth;
-        // height of the table including its margin and border; the header row is shorter than a region row, which leaves room for the margin
         const requiredTableHeight = RegionListComponent.RowHeight * (this.validRegions.length + 1) + tableBorder;
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
         const listHeight = tableHeight - RegionListComponent.HeaderRowHeight - padding * 2 - tableBorder;

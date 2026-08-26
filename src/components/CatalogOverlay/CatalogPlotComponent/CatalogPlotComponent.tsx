@@ -132,8 +132,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private toolbarResizeObserver: ResizeObserver | undefined;
 
-    // the toolbar row grows when its horizontal scrollbar appears, so track its rendered height (offsetHeight includes the
-    // scrollbar, unlike the content box reported by the ResizeObserver entry) to keep the plot below it correctly sized
     private onToolbarRef = (el: HTMLDivElement | null) => {
         this.toolbarResizeObserver?.disconnect();
         this.toolbarResizeObserver = undefined;
@@ -895,7 +893,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const layout: Partial<Plotly.Layout> = {
             width: this.width * ratio,
-            // 70px covers the footer and margins; the toolbar height varies when its horizontal scrollbar appears
             height: (this.height - this.toolbarHeight - 70) * ratio,
             paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,

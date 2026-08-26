@@ -8,19 +8,16 @@
 
     .catalog-plot-option {
         width: 100%;
-        // the row grows beyond 40px when the horizontal scrollbar appears, so the scrollbar sits below the controls instead of covering them
         min-height: 40px;
         flex: none;
         display: inline-flex;
         padding-left: 5px;
         padding-top: 5px;
-        // show a horizontal scrollbar when the widget is too narrow for the controls, matching the histogram widget toolbar
         overflow-x: auto;
         overflow-y: hidden;
 
         .#{$ns}-form-group {
             flex: 0 0 auto;
-            // drop the default form-group bottom margin, previously hidden by the row's fixed 40px height
             margin-bottom: 0;
         }
 
@@ -48,7 +45,6 @@
         width: 100%;
         flex: 1;
         min-height: 0;
-        // leave room for the absolutely-positioned footer; equals the previous height: calc(100% - 105px) when the toolbar row is 40px
         margin-bottom: 65px;
         position: relative;
 
@@ -62,7 +58,6 @@
         width: calc(100% - 10px);
         flex: 1;
         min-height: 0;
-        // leave room for the absolutely-positioned footer; equals the previous height: calc(100% - 105px) when the toolbar row is 40px
         margin-bottom: 65px;
         position: relative;
 
@@ -75,8 +70,6 @@
     .catalog-scatter {
         .js-plotly-plot .plotly {
             .modebar {
-                // the plot is rendered at 2x and scaled down for HiDPI screens; scale the mode bar back up from its top-right
-                // corner so it stays inside the plot instead of overflowing the widget (which shows a persistent scrollbar)
                 transform: scale(2);
                 transform-origin: top right;
             }
