@@ -5,6 +5,7 @@ export * from "./Catalog/CatalogProfileStore";
 export * from "./Catalog/CatalogStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryConfigStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryProfileStore";
+export * from "./CatalogOnlineQuery/MirrorSiteStore";
 export * from "./ChannelMapStore/ChannelMapStore";
 export * from "./ColorBlendingStore/ColorBlendingStore";
 export * from "./DialogStore/DialogStore";
