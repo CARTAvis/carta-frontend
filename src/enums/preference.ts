@@ -108,6 +108,8 @@ export enum PreferenceKeys {
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
     CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS = "catalogAutoSelectImageOverlayColumns",
+    CATALOG_QUERY_SIMBAD_ENABLED_MIRRORS = "catalogQuerySimbadEnabledMirrors",
+    CATALOG_QUERY_VIZIER_ENABLED_MIRRORS = "catalogQueryVizierEnabledMirrors",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
