@@ -3,6 +3,7 @@ const OS = require("os");
 const PATH = require("path");
 const {spawnSync: SPAWN_SYNC} = require("child_process");
 
+// @ts-expect-error The CLI checker is intentionally outside the frontend rootDir.
 const CHECKER = require("../../scripts/check_python_enum");
 
 const SCRIPT = PATH.resolve(__dirname, "../../scripts/check_python_enum.js");
