@@ -2659,8 +2659,10 @@ export class FrameStore {
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const processedData = ProtobufProcessing.processContourData(contourImageData);
-        this.stokes = processedData.stokes ?? 0;
-        this.channel = processedData.channel ?? 0;
+        if (!AppStore.Instance.channelMapStore.isChannelMapEnabled) {
+            this.stokes = processedData.stokes ?? 0;
+            this.channel = processedData.channel ?? 0;
+        }
 
         const animatorStore = AnimatorStore.Instance;
         if (animatorStore.isServerAnimationActive) {

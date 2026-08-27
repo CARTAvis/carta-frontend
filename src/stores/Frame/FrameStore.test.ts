@@ -1,7 +1,8 @@
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
 
 import {SkyRefIs, SpectralSystem, SpectralType, SpectralUnit} from "enums";
-import {type FrameInfo, FrameStore} from "stores";
+import {AppStore, type FrameInfo, FrameStore} from "stores";
 
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 
@@ -109,6 +110,23 @@ describe("FrameStore", () => {
 
             expect(frame.skyRefIs).toBe(SkyRefIs.Pole);
             expect(AST.createOffsetFrameset).toHaveBeenLastCalledWith(frame.wcsInfo, 0, 0, 1, 2, SkyRefIs.Pole);
+        });
+    });
+
+    describe("channel map contours", () => {
+        test("keeps the active channel when another channel's contours arrive", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const channelMapStore = AppStore.Instance.channelMapStore;
+            channelMapStore.setChannelMapEnabled(true);
+
+            try {
+                frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 1, progress: 1}));
+
+                expect(frame.channel).toBe(0);
+                expect(frame.stokes).toBe(0);
+            } finally {
+                channelMapStore.setChannelMapEnabled(false);
+            }
         });
     });
 

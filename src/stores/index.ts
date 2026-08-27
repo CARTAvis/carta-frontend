@@ -17,6 +17,7 @@ export * from "./HipsQueryStore/HipsQueryStore";
 export * from "./ImageFittingStore/ImageFittingStore";
 export * from "./ImageViewConfig/ImageViewConfigStore";
 export * from "./LayoutStore/LayoutStore";
+export * from "./LoadingStateStore/LoadingStateStore";
 export * from "./LogStore/LogStore";
 export * from "./OverlayStore/OverlayStore";
 export * from "./PreferenceStore/PreferenceStore";

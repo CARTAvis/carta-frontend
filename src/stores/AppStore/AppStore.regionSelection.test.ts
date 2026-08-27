@@ -96,6 +96,7 @@ jest.mock("stores", () => ({
     ImageFittingStore: {Instance: MockMakeStore()},
     ImageViewConfigStore: {Instance: MockMakeStore({frames: [], visibleFrames: []})},
     LayoutStore: {Instance: MockMakeStore()},
+    LoadingStateStore: jest.fn().mockImplementation(() => MockMakeStore({isLoading: false})),
     LogStore: {Instance: MockMakeStore({addDebug: jest.fn(), addInfo: jest.fn()})},
     OverlaySettings: {Instance: MockMakeStore()},
     PreferenceStore: {Instance: MockMakeStore({autoLaunch: false})},
