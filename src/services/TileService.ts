@@ -90,6 +90,7 @@ interface ChannelMapRequest {
     channel: number;
     stokes: number;
     requiredTiles: CARTA.AddRequiredTiles.$Properties;
+    channels?: number[];
     batchTiming?: {
         timeoutMs: number;
         deadlineMs: number;
@@ -338,9 +339,9 @@ export class TileService {
         return undefined;
     }
 
-    private setChannelMapTargetTiles(tiles: TileCoordinate[], fileId: number, stokes: number, channelRange: {min: number; max: number}) {
+    private setChannelMapTargetTiles(tiles: TileCoordinate[], fileId: number, stokes: number, channels: number[]) {
         this.channelMapPendingTiles.clear();
-        for (let channel = channelRange.min; channel <= channelRange.max; channel++) {
+        for (const channel of channels) {
             for (const tile of tiles) {
                 if (tile.layer < 0) {
                     continue;
@@ -550,7 +551,7 @@ export class TileService {
         }
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, isPolarizationChanged: boolean = false) {
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, requestedChannels: number[], isPolarizationChanged: boolean = false) {
         if (!frame) {
             return;
         }
@@ -565,7 +566,7 @@ export class TileService {
         channelMapState.desiredStokes = stokes;
         this.setCurrentChannel(fileId, frame.channel, stokes);
         const viewGenerations = new Map<number, number>();
-        for (let channel = fullChannelRange.min; channel <= fullChannelRange.max; channel++) {
+        for (const channel of requestedChannels) {
             viewGenerations.set(channel, this.beginRasterView(getTileRequestKey(fileId, stokes, channel)));
         }
 
@@ -573,10 +574,10 @@ export class TileService {
             this.clearRequestQueue(fileId);
         }
 
-        this.clearQueueForChannelMap(fileId, stokes, fullChannelRange, currentTiles);
+        this.clearQueueForChannelMap(fileId, stokes, requestedChannels, currentTiles);
 
         const requests: ChannelMapRequest[] = [];
-        for (let channel = fullChannelRange.min; channel <= fullChannelRange.max; channel++) {
+        for (const channel of requestedChannels) {
             const sortedTiles = this.getRequiredRequestTiles(tiles, fileId, channel, stokes, false)
                 .sort((a, b) => {
                     const aX = focusPoint.x - a.x;
@@ -592,6 +593,7 @@ export class TileService {
                     fileId,
                     channel,
                     stokes,
+                    channels: requestedChannels,
                     requiredTiles: {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedTiles},
                     rasterRequest: {
                         key,
@@ -604,7 +606,7 @@ export class TileService {
         }
 
         const activeRequest = channelMapState.activeRequest;
-        const activeChannelRequest: ChannelMapRequest = {fileId, channel: frame.channel, stokes, requiredTiles: {}};
+        const activeChannelRequest: ChannelMapRequest = {fileId, channel: frame.channel, stokes, requiredTiles: {}, channels: requestedChannels};
         const activeChannelIndex = requests.findIndex(request => request.channel === frame.channel);
         if (activeChannelIndex > 0) {
             requests.unshift(requests.splice(activeChannelIndex, 1)[0]);
@@ -622,7 +624,7 @@ export class TileService {
         if (shouldAppendActiveChannel) {
             requests.push(activeChannelRequest);
         }
-        this.setChannelMapTargetTiles(tiles, fileId, stokes, fullChannelRange);
+        this.setChannelMapTargetTiles(tiles, fileId, stokes, requestedChannels);
         this.queueChannelMapRequests(fileId, requests);
     }
 
@@ -634,7 +636,7 @@ export class TileService {
         }
         channelMapState.desiredStokes = stokes;
         this.setCurrentChannel(fileId, channel, stokes);
-        this.queueChannelMapRequests(fileId, [{fileId, channel, stokes, requiredTiles: {}}]);
+        this.queueChannelMapRequests(fileId, [{fileId, channel, stokes, requiredTiles: {}, channels: [channel]}]);
     }
 
     private setCurrentChannel(fileId: number, channel: number | null | undefined, stokes: number | null | undefined) {
@@ -678,7 +680,9 @@ export class TileService {
         }
 
         this.trackPendingRequests(request.fileId, request.channel, request.stokes, tiles);
-        const requestId = this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true);
+        const requestId = request.channels
+            ? this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true, request.channels)
+            : this.backendService.setChannels(request.fileId, request.channel, request.stokes, request.requiredTiles, true);
         if (requestId !== null) {
             channelMapState.activeRequest = {...request, requestId};
             if (tiles.length && request.rasterRequest) {
@@ -919,8 +923,9 @@ export class TileService {
         this.resetNormalViewLoading(fileId);
     }
 
-    clearQueueForChannelMap(fileId: number, stokes: number, currentChannelRange: {min: number; max: number}, currentTiles: number[]) {
+    clearQueueForChannelMap(fileId: number, stokes: number, requestedChannels: number[], currentTiles: number[]) {
         const currentTileSet = new Set(currentTiles);
+        const requestedChannelSet = new Set(requestedChannels);
         this.pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
@@ -929,7 +934,7 @@ export class TileService {
             if (keyFileId !== fileId) {
                 return;
             }
-            if (keyStokes !== stokes || channel < currentChannelRange.min || channel > currentChannelRange.max) {
+            if (keyStokes !== stokes || !requestedChannelSet.has(channel)) {
                 this.pendingRequests.delete(key);
             } else {
                 value.forEach((_isPending, tile) => {
