@@ -2,6 +2,7 @@ import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {toJS} from "mobx";
 
+import {isScriptingMap, parseReturnPath, type ReturnPath} from "scripting/returnPath";
 import {AppStore} from "stores";
 
 export class ExecutionEntry {
@@ -146,6 +147,48 @@ export class ScriptingService {
         });
     }
 
+    private static selectReturnPath(value: any, returnPath: Exclude<ReturnPath, string>): Record<string, any> {
+        const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path]) : Object.entries(returnPath);
+        return Object.fromEntries(paths.map(([key, path]) => [key, _.get(value, path)]));
+    }
+
+    private static applyReturnPath(response: any, returnPath: string): any {
+        const parsedReturnPath = parseReturnPath(returnPath);
+
+        if (typeof parsedReturnPath !== "string") {
+            if (Array.isArray(response)) {
+                return response.map(value => ScriptingService.selectReturnPath(value, parsedReturnPath));
+            }
+
+            if (response instanceof Map || isScriptingMap(response)) {
+                const entries = response instanceof Map ? response.entries() : Object.entries(response);
+                return Object.fromEntries(Array.from(entries, ([key, value]) => [key, ScriptingService.selectReturnPath(value, parsedReturnPath)]));
+            }
+
+            if (typeof response === "object") {
+                return ScriptingService.selectReturnPath(response, parsedReturnPath);
+            }
+
+            return response;
+        }
+
+        if (Array.isArray(response)) {
+            return response.map(value => _.get(value, parsedReturnPath));
+        }
+
+        if (response instanceof Map || isScriptingMap(response)) {
+            const entries = response instanceof Map ? response.entries() : Object.entries(response);
+            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, _.get(value, parsedReturnPath)]));
+        }
+
+        // Preserve the existing behavior for scalar and ordinary object responses.
+        if (typeof response === "object") {
+            return _.get(response, parsedReturnPath);
+        }
+
+        return response;
+    }
+
     handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {
         const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
         if (!entry.isValid) {
@@ -167,7 +210,7 @@ export class ScriptingService {
 
             // Adjust the response to just the specified path if it is non-empty
             if (typeof response === "object" && requestMessage.returnPath) {
-                response = _.get(response, requestMessage.returnPath);
+                response = ScriptingService.applyReturnPath(response, requestMessage.returnPath);
             }
 
             return {

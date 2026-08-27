@@ -48,7 +48,7 @@ import {
     WorkspaceConfig,
     type WorkspaceFile
 } from "models";
-import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
+import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry, markAsScriptingMap} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -3704,7 +3704,7 @@ export class AppStore {
 
     fetchParameter = (val: any) => {
         if (val && val instanceof Map) {
-            const obj = {};
+            const obj = markAsScriptingMap({});
             const map = val as Map<any, any>;
             for (const [key, value] of map) {
                 obj[key] = value;
