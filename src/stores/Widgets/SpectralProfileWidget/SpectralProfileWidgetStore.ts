@@ -17,7 +17,7 @@ import {
     SpectralProfilerSettingsTabs,
     type SpectralSystem,
     SpectralType,
-    type SpectralUnit,
+    SpectralUnit,
     TelemetryAction,
     VelocityConvention
 } from "enums";
@@ -25,13 +25,13 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, isValidRedshift, pixelToFluxDensityUnit, redshiftFromVelocity, restFrequencyFactorFromRedshift, velocityFromRedshift} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, isValidRedshift, pixelToFluxDensityUnit, redshiftFromVelocity, restFrequencyFactorFromRedshift, SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS, velocityFromRedshift} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
-type RestFrameTransformMode = "frequency" | "wavelength" | "airWavelength" | "none";
 type XTransformTarget = "display" | "observed";
+const REST_FRAME_SPECTRAL_TYPES: ReadonlySet<string> = new Set([SpectralType.FREQ, SpectralType.WAVE, SpectralType.AWAV, SpectralType.VRAD, SpectralType.VOPT]);
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
@@ -462,7 +462,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
-        makeObservable<SpectralProfileWidgetStore, "xAxisRestFrameTransformMode" | "spectralLinesMHz" | "updateRanges">(this);
+        makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
 
         this.smoothingStore = new ProfileSmoothingStore();
         this.fittingStore = new ProfileFittingStore(this);
@@ -591,26 +591,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveFrame?.intensityUnit;
     }
 
-    private getRestFrameTransformMode = (spectralType: SpectralType | string | null | undefined): RestFrameTransformMode => {
-        switch (spectralType) {
-            case SpectralType.FREQ:
-                return "frequency";
-            case SpectralType.WAVE:
-                return "wavelength";
-            case SpectralType.AWAV:
-                return "airWavelength";
-            default:
-                return "none";
-        }
+    private isRestFrameSpectralType = (spectralType: SpectralType | string | null | undefined): boolean => {
+        return Boolean(spectralType && REST_FRAME_SPECTRAL_TYPES.has(spectralType));
     };
 
-    @computed private get xAxisRestFrameTransformMode(): RestFrameTransformMode {
-        const frame = this.effectiveFrame;
-        return frame?.isCoordChannel ? "none" : this.getRestFrameTransformMode(frame?.spectralType ?? frame?.spectralAxis?.type?.code);
-    }
-
     @computed get isXAxisRestFrameSupported(): boolean {
-        return this.xAxisRestFrameTransformMode !== "none";
+        const frame = this.effectiveFrame;
+        return this.isRestFrameSpectralType(frame?.spectralType ?? frame?.spectralAxis?.type?.code);
     }
 
     private get isRestFrameShiftValid(): boolean {
@@ -678,7 +665,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return unit;
         }
 
-        const frameLabel = this.getRestFrameTransformMode(this.effectiveSecondarySpectralType) === "none" ? "observed" : "rest frame";
+        const frameLabel = this.isRestFrameSpectralType(this.effectiveSecondarySpectralType) ? "rest frame" : "observed";
         return `${unit}${unit ? " " : ""}(${frameLabel})`;
     }
 
@@ -955,7 +942,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && !isPlotDisabled) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
-                if (transformedValue && isFinite(transformedValue)) {
+                if (transformedValue !== undefined && isFinite(transformedValue)) {
                     const displayValue = this.isXAxisRestFrameActive ? transformedValue : this.convertObservedXToDisplay(transformedValue);
                     transformedSpectralLines.push({species: spectralLine?.species, value: displayValue, qn: spectralLine?.qn});
                 }
@@ -1263,26 +1250,41 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     private convertXValue = (value: number, target: XTransformTarget, spectralType: SpectralType | string | null | undefined, spectralUnit: SpectralUnit | null | undefined): number => {
-        const transformMode = this.getRestFrameTransformMode(spectralType);
         const redshiftScale = target === "display" ? this.redshiftFactor : 1 / this.redshiftFactor;
+        const speedOfLight = spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
+        const redshift = this.effectiveRestFrameRedshift;
 
-        switch (transformMode) {
-            case "frequency":
+        switch (spectralType) {
+            case SpectralType.FREQ:
                 return value * redshiftScale;
-            case "wavelength": {
+            case SpectralType.WAVE: {
                 const wavelengthPower = spectralUnit?.endsWith("^2") ? 2 : 1;
                 return value / Math.pow(redshiftScale, wavelengthPower);
             }
-            case "airWavelength": {
+            case SpectralType.AWAV: {
                 const frame = this.effectiveFrame;
-                const frequency = frame?.convertSettingWCSToFreqMHz(value, spectralType as SpectralType, spectralUnit ?? null);
+                const frequency = frame?.convertSettingWCSToFreqMHz(value, spectralType, spectralUnit ?? null);
                 if (frequency !== undefined && isFinite(frequency)) {
-                    const transformedValue = frame?.convertFreqMHzToSettingWCS(frequency * redshiftScale, spectralType as SpectralType, spectralUnit ?? null);
+                    const transformedValue = frame?.convertFreqMHzToSettingWCS(frequency * redshiftScale, spectralType, spectralUnit ?? null);
                     if (transformedValue !== undefined && isFinite(transformedValue)) {
                         return transformedValue;
                     }
                 }
                 return NaN;
+            }
+            case SpectralType.VRAD: {
+                if (!isFinite(speedOfLight)) {
+                    return NaN;
+                }
+                // Apply nu_rest = (1 + z) * nu_observed using the FITS VRAD definition.
+                return target === "display" ? value * this.redshiftFactor - speedOfLight * redshift : (value + speedOfLight * redshift) / this.redshiftFactor;
+            }
+            case SpectralType.VOPT: {
+                if (!isFinite(speedOfLight)) {
+                    return NaN;
+                }
+                // Apply nu_rest = (1 + z) * nu_observed using the FITS VOPT definition.
+                return target === "display" ? (value - speedOfLight * redshift) / this.redshiftFactor : value * this.redshiftFactor + speedOfLight * redshift;
             }
             default:
                 return value;
@@ -1325,27 +1327,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         const resolvedSpectralType = spectralType ?? frame?.spectralType ?? frame?.spectralAxis?.type?.code;
         const resolvedSpectralUnit = spectralUnit ?? frame?.spectralUnit;
-        const transformMode = this.getRestFrameTransformMode(resolvedSpectralType);
-        if (transformMode === "frequency") {
-            return values.map(value => value * this.redshiftFactor);
-        }
-        if (transformMode === "wavelength") {
-            const wavelengthPower = resolvedSpectralUnit?.endsWith("^2") ? 2 : 1;
-            const scale = Math.pow(this.redshiftFactor, wavelengthPower);
-            return values.map(value => value / scale);
-        }
-        if (transformMode === "airWavelength" && resolvedSpectralUnit) {
-            const observedFreqMHz = frame?.convertSettingWCSToFreqMHzArray(values, resolvedSpectralType as SpectralType, resolvedSpectralUnit);
+        if (resolvedSpectralType === SpectralType.AWAV) {
+            if (!resolvedSpectralUnit) {
+                return values;
+            }
+            const observedFreqMHz = frame?.convertSettingWCSToFreqMHzArray(values, resolvedSpectralType, resolvedSpectralUnit);
             if (observedFreqMHz) {
                 const restFreqMHz = observedFreqMHz.map(value => value * this.redshiftFactor);
-                const restValues = frame?.convertFreqMHzToSettingWCSArray(restFreqMHz, resolvedSpectralType as SpectralType, resolvedSpectralUnit);
+                const restValues = frame?.convertFreqMHzToSettingWCSArray(restFreqMHz, resolvedSpectralType, resolvedSpectralUnit);
                 if (restValues) {
                     return restValues;
                 }
             }
             return new Array(values.length).fill(NaN);
         }
-        return values;
+        return values.map(value => this.convertXValue(value, "display", resolvedSpectralType, resolvedSpectralUnit));
     };
 
     private getBoundX = (channelValues: number[]): XBound => {

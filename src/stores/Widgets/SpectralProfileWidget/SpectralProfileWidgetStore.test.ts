@@ -4,6 +4,7 @@ import {runInAction} from "mobx";
 
 import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "enums";
 import {AppStore} from "stores";
+import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "utilities";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
@@ -117,6 +118,74 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         widgetStore.setXAxisRestFrameEnabled(false);
         expect(widgetStore.cursorX).toBe(100);
+    });
+
+    test.each([
+        [SpectralType.VRAD, SpectralUnit.KMS, SPEED_OF_LIGHT_KMS],
+        [SpectralType.VRAD, SpectralUnit.MS, SPEED_OF_LIGHT],
+        [SpectralType.VOPT, SpectralUnit.KMS, SPEED_OF_LIGHT_KMS],
+        [SpectralType.VOPT, SpectralUnit.MS, SPEED_OF_LIGHT]
+    ])("moves the systemic %s coordinate in %s to zero", (spectralType, spectralUnit, speedOfLight) => {
+        const {widgetStore} = createWidgetStore(spectralType, spectralUnit);
+        const redshift = 0.1;
+        const systemicVelocity = spectralType === SpectralType.VRAD ? (speedOfLight * redshift) / (1 + redshift) : speedOfLight * redshift;
+
+        widgetStore.setRestFrameRedshift(redshift);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameSupported).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(systemicVelocity)).toBeCloseTo(0, 6);
+        expect(widgetStore.convertDisplayXToObserved(0)).toBeCloseTo(systemicVelocity, 6);
+    });
+
+    test.each([SpectralType.VRAD, SpectralType.VOPT])("converts %s profile arrays and moment ranges in both directions", spectralType => {
+        const {widgetStore} = createWidgetStore(spectralType, SpectralUnit.KMS);
+        const redshift = 0.1;
+        widgetStore.setRestFrameRedshift(redshift);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        const restFrequencyFactor = 1 + redshift;
+        const expectedDisplayValues =
+            spectralType === SpectralType.VRAD ? [100, 110].map(value => value * restFrequencyFactor - SPEED_OF_LIGHT_KMS * redshift) : [100, 110].map(value => (value - SPEED_OF_LIGHT_KMS * redshift) / restFrequencyFactor);
+        widgetStore.plotData?.data[0].forEach((point, index) => expect(point.x).toBeCloseTo(expectedDisplayValues[index], 10));
+
+        widgetStore.setSelectedDisplayChannelRange(expectedDisplayValues[0], expectedDisplayValues[1]);
+        expect(widgetStore.channelValueRange[0]).toBeCloseTo(100, 10);
+        expect(widgetStore.channelValueRange[1]).toBeCloseTo(110, 10);
+    });
+
+    test("reprojects a velocity cursor without changing its observed coordinate", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setMouseMoveIntoLinePlots(true);
+        widgetStore.setCursor(1000);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.cursorX).toBeCloseTo(widgetStore.convertObservedXToDisplay(1000), 10);
+
+        widgetStore.setRestFrameRedshift(0.2);
+        expect(widgetStore.convertDisplayXToObserved(widgetStore.cursorX)).toBeCloseTo(1000, 10);
+    });
+
+    test("transforms a secondary velocity coordinate using its own convention", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS, SpectralType.VOPT, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        const expectedSecondaryValues = [10, 11].map(value => (value - SPEED_OF_LIGHT_KMS * 0.1) / 1.1);
+        widgetStore.plotData?.secondaryXData[0].forEach((value, index) => expect(value).toBeCloseTo(expectedSecondaryValues[index], 10));
+        expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (rest frame)");
+    });
+
+    test("keeps a spectral line that transforms to zero velocity", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        frame.convertFreqMHzToSettingWCS.mockReturnValue(0);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.addSpectralLines([{species: "HI", value: 1420.405751, qn: "1-0"}]);
+
+        expect(widgetStore.transformedSpectralLines).toEqual([{species: "HI", value: 0, qn: "1-0"}]);
     });
 
     test("converts wavelength coordinates with the inverse frequency factor", () => {
@@ -413,23 +482,23 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.secondarySpectralUnitLabel).toBe("GHz (rest frame)");
     });
 
-    test("keeps unsupported secondary coordinates observed and labels them explicitly", () => {
+    test("transforms secondary radio velocity coordinates and labels them as rest frame", () => {
         const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.VRAD, SpectralUnit.KMS);
         widgetStore.setRestFrameRedshift(1);
         widgetStore.setXAxisRestFrameEnabled(true);
 
-        expect(widgetStore.plotData?.secondaryXData[0]).toEqual([10, 11]);
-        expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (observed)");
+        expect(widgetStore.plotData?.secondaryXData[0]).toEqual([20 - SPEED_OF_LIGHT_KMS, 22 - SPEED_OF_LIGHT_KMS]);
+        expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (rest frame)");
     });
 
-    test("does not enable rest-frame conversion for velocity coordinates", () => {
+    test("enables rest-frame conversion for velocity coordinates", () => {
         const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
         widgetStore.setRestFrameRedshift(1);
         widgetStore.setXAxisRestFrameEnabled(true);
 
-        expect(widgetStore.isXAxisRestFrameSupported).toBe(false);
-        expect(widgetStore.isXAxisRestFrameEnabled).toBe(false);
-        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+        expect(widgetStore.isXAxisRestFrameSupported).toBe(true);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(200 - SPEED_OF_LIGHT_KMS);
     });
 
     test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
