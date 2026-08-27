@@ -218,7 +218,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={frame.requiredUnit ? `(${frame.requiredUnit}${widgetStore.isYAxisRestFrameActive ? " (rest frame)" : ""})` : ""}>
+                    <FormGroup label="Range" inline={true} labelInfo={frame.requiredUnit ? `(${frame.requiredUnit}${widgetStore.isYAxisRestFrameActive ? "; rest frame" : ""})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.displayMaskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} data-testid="moment-generator-mask-range-from-input" />
