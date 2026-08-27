@@ -293,7 +293,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 <Tooltip
                                                     content={
                                                         <div className="rest-frame-correction-tooltip">
-                                                            <div>This applies only the flux-density rest-frame scaling and does not include a luminosity-distance correction.</div>
+                                                            <div>This applies only to rest-frame scaling of flux-density-valued quantities; it does not include a luminosity-distance correction or conversion to luminosity.</div>
                                                         </div>
                                                     }
                                                     position={Position.TOP}
