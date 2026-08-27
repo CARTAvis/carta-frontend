@@ -330,4 +330,21 @@ describe("ImageViewConfigStore", () => {
             expect(Object.keys(summary[0]).sort()).toEqual(["id", "type"]);
         });
     });
+
+    describe("getImageIdsByType", () => {
+        it("returns matching view IDs in image list order", () => {
+            imageViewConfigStore.addFrame(mockFrame1);
+            const colorBlending = imageViewConfigStore.createColorBlending();
+            imageViewConfigStore.addFrame(mockFrame2);
+
+            expect(imageViewConfigStore.getImageIdsByType(ImageType.FRAME)).toEqual([mockFrame1.id, mockFrame2.id]);
+            expect(imageViewConfigStore.getImageIdsByType(ImageType.COLOR_BLENDING)).toEqual([colorBlending.id]);
+        });
+
+        it("returns an empty list when no view matches the type", () => {
+            imageViewConfigStore.addFrame(mockFrame1);
+
+            expect(imageViewConfigStore.getImageIdsByType(ImageType.PV_PREVIEW)).toEqual([]);
+        });
+    });
 });
