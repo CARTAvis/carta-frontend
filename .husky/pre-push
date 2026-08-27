@@ -10,6 +10,9 @@ echo "[pre-push] Running root checks..."
 npm run check-eslint
 npm run checkformat
 
+echo "[pre-push] Running tests..."
+npm run test
+
 while read -r local_ref local_sha remote_ref remote_sha; do
     [ -z "$local_sha" ] && continue
     [ "$local_sha" = "$zero_hash" ] && continue

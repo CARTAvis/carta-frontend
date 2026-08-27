@@ -120,6 +120,43 @@ describe("FrameStore", () => {
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
             expect(beam).toHaveProperty("angle", 42.576087951660156);
         });
+
+        test("returns the beam area in pixels", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            expect(beam).not.toBeNull();
+            expect(beam!.beamAreaPixels).toBeCloseTo((Math.PI / (4 * Math.LN2)) * beam!.x * beam!.y);
+        });
+
+        test("returns beam properties for the requested stokes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties(1);
+            expect(beam).toHaveProperty("majorAxis", 0.931560754776001);
+            expect(beam).toHaveProperty("minorAxis", 0.8433191776275635);
+            expect(beam).toHaveProperty("angle", 42.579010009765625);
+        });
+
+        test("uses pixel angular sizes for beam axes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            const pixelUnitSizeArcsec = frame.pixelUnitSizeArcsec;
+            expect(beam).not.toBeNull();
+            expect(pixelUnitSizeArcsec).not.toBeNull();
+            expect(beam!.x).toBeCloseTo(beam!.majorAxis / pixelUnitSizeArcsec!.x);
+            expect(beam!.y).toBeCloseTo(beam!.minorAxis / pixelUnitSizeArcsec!.y);
+        });
+
+        test("returns the beam area in steradians", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            expect(beam).not.toBeNull();
+            expect(beam!.beamArea).toBeCloseTo((Math.PI / (4 * Math.LN2)) * ((beam!.majorAxis * Math.PI) / 648000) * ((beam!.minorAxis * Math.PI) / 648000));
+        });
+
+        test("does not return beam areas without a valid beam", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            expect(frame.beamProperties).toBeNull();
+        });
     });
 
     describe("beamAllChannels", () => {

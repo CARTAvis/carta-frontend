@@ -11,6 +11,7 @@ export class ExecutionEntry {
     parameters: any[];
     isValid: boolean;
     isAsync: boolean | null | undefined;
+    hasResolvedUndefinedMacro = false;
 
     public static fromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
@@ -62,8 +63,8 @@ export class ExecutionEntry {
     }
 
     async execute() {
-        const targetObject = ExecutionEntry.getTargetObject(AppStore.Instance, this.target);
-        if (targetObject == null) {
+        const {hasTarget, value: targetObject} = ExecutionEntry.resolveTargetObject(AppStore.Instance, this.target);
+        if (!hasTarget || targetObject == null) {
             throw new Error(`Missing target object: ${this.target}`);
         }
         const currentParameters = this.parameters.map(this.mapMacro);
@@ -81,9 +82,9 @@ export class ExecutionEntry {
         return response;
     }
 
-    private static getTargetObject(baseObject: any, targetString: string | null | undefined) {
+    private static resolveTargetObject(baseObject: any, targetString: string | null | undefined): {hasTarget: boolean; value: any} {
         if (!targetString) {
-            return baseObject;
+            return {hasTarget: true, value: baseObject};
         }
 
         let target = baseObject;
@@ -94,26 +95,35 @@ export class ExecutionEntry {
             const matches = arrayRegex.exec(targetEntry);
             // Check if there's an array index in this parameter
             if (matches && matches.length === 3 && matches[2] !== undefined) {
+                if (!_.hasIn(target, matches[1])) {
+                    return {hasTarget: false, value: undefined};
+                }
                 target = target[matches[1]];
                 if (target == null) {
-                    return null;
+                    return {hasTarget: false, value: undefined};
                 }
                 if (target instanceof Map) {
                     const key = JSON.parse(matches[2]);
+                    if (!target.has(key)) {
+                        return {hasTarget: false, value: undefined};
+                    }
                     target = target.get(key);
                 } else if (Array.isArray(target)) {
+                    if (!(Number(matches[2]) in target)) {
+                        return {hasTarget: false, value: undefined};
+                    }
                     target = target[matches[2]];
                 } else {
-                    return null;
+                    return {hasTarget: false, value: undefined};
                 }
             } else {
+                if (!_.hasIn(target, targetEntry)) {
+                    return {hasTarget: false, value: undefined};
+                }
                 target = target[targetEntry];
             }
-            if (target === null) {
-                return null;
-            }
         }
-        return target;
+        return {hasTarget: true, value: target};
     }
 
     private mapMacro = (parameter: any) => {
@@ -125,7 +135,14 @@ export class ExecutionEntry {
                 return undefined;
             }
             const targetString = parameter?.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
-            return ExecutionEntry.getTargetObject(AppStore.Instance, targetString);
+            const {hasTarget, value} = ExecutionEntry.resolveTargetObject(AppStore.Instance, targetString);
+            if (!hasTarget) {
+                throw new Error(`Missing macro target: ${targetString}`);
+            }
+            if (value === undefined) {
+                this.hasResolvedUndefinedMacro = true;
+            }
+            return value;
         }
         return parameter;
     };
@@ -181,9 +198,15 @@ export class ScriptingService {
             return Object.fromEntries(Array.from(entries, ([key, value]) => [key, _.get(value, parsedReturnPath)]));
         }
 
-        // Preserve the existing behavior for scalar and ordinary object responses.
         if (typeof response === "object") {
-            return _.get(response, parsedReturnPath);
+            const hasResponsePath = _.hasIn(response, parsedReturnPath);
+            const selectedResponse = _.get(response, parsedReturnPath);
+            if (!hasResponsePath) {
+                throw new Error(`Missing response path: ${parsedReturnPath}`);
+            }
+            // JSON cannot represent undefined. Preserve the distinction between a
+            // missing path and an existing path without a value by returning null.
+            return selectedResponse === undefined ? null : selectedResponse;
         }
 
         return response;
@@ -209,8 +232,15 @@ export class ScriptingService {
             }
 
             // Adjust the response to just the specified path if it is non-empty
-            if (typeof response === "object" && requestMessage.returnPath) {
+            if (requestMessage.returnPath) {
+                if (response === null || typeof response !== "object") {
+                    throw new Error(`Cannot read response path from a non-object response: ${requestMessage.returnPath}`);
+                }
                 response = ScriptingService.applyReturnPath(response, requestMessage.returnPath);
+            }
+
+            if (response === undefined && entry.hasResolvedUndefinedMacro) {
+                response = null;
             }
 
             return {
@@ -223,7 +253,7 @@ export class ScriptingService {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: false,
-                message: err?.toString()
+                message: err instanceof Error ? err.message : String(err)
             };
         }
     };

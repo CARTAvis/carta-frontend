@@ -24,6 +24,7 @@ const DEFAULT_NUM_BINS = 10; // default fallback
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable width: number = 680;
     @observable height: number = 400;
+    @observable toolbarHeight: number = 40;
     @observable profileId: string = "";
     @observable catalogFileId: number = 0;
     @observable componentId: string = "";
@@ -120,11 +121,30 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.toolbarResizeObserver?.disconnect();
+        this.toolbarResizeObserver = undefined;
     }
 
     @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+    };
+
+    private toolbarResizeObserver: ResizeObserver | undefined;
+
+    private onToolbarRef = (el: HTMLDivElement | null) => {
+        this.toolbarResizeObserver?.disconnect();
+        this.toolbarResizeObserver = undefined;
+        if (el) {
+            const win = (el.ownerDocument?.defaultView ?? window) as Window & typeof globalThis;
+            this.toolbarResizeObserver = new win.ResizeObserver(() => this.setToolbarHeight(el.offsetHeight));
+            this.toolbarResizeObserver.observe(el);
+            this.setToolbarHeight(el.offsetHeight);
+        }
+    };
+
+    @action private setToolbarHeight = (toolbarHeight: number) => {
+        this.toolbarHeight = toolbarHeight;
     };
 
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
@@ -853,7 +873,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetStore.yColumnName === CatalogPlotComponent.emptyColumn) {
             return (
                 <div className={"catalog-plot"}>
-                    <div className={"catalog-plot-option"}>
+                    <div className={"catalog-plot-option"} ref={this.onToolbarRef}>
                         {renderFileSelect}
                         {renderXSelect}
                         {isScatterPlot && renderYSelect}
@@ -873,7 +893,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const layout: Partial<Plotly.Layout> = {
             width: this.width * ratio,
-            height: (this.height - 110) * ratio,
+            height: (this.height - this.toolbarHeight - 70) * ratio,
             paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,
             hovermode: "closest",
@@ -1086,7 +1106,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
                 <div className={"catalog-plot"}>
-                    <div className={"catalog-plot-option"}>
+                    <div className={"catalog-plot-option"} ref={this.onToolbarRef}>
                         {renderFileSelect}
                         {renderXSelect}
                         {isHistogramPlot && renderHistogramBins}

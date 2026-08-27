@@ -19,6 +19,7 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
+    RENDER_CONFIG_COLORMAP_INVERTED = "colormapInverted",
     RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
     RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
     RENDER_CONFIG_PERCENTILE = "percentile",
@@ -39,6 +40,7 @@ export enum PreferenceKeys {
     CONTOUR_CONFIG_NUM_LEVELS = "contourNumLevels",
     CONTOUR_CONFIG_THICKNESS = "contourThickness",
     CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
+    CONTOUR_CONFIG_COLORMAP_INVERTED = "contourColormapInverted",
     CONTOUR_CONFIG_COLOR = "contourColor",
     CONTOUR_CONFIG_COLORMAP = "contourColormap",
 
@@ -46,6 +48,7 @@ export enum PreferenceKeys {
     VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
     VECTOR_OVERLAY_THICKNESS = "vectorOverlayThickness",
     VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
+    VECTOR_OVERLAY_COLORMAP_INVERTED = "vectorOverlayColormapInverted",
     VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
     VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
 
@@ -105,6 +108,8 @@ export enum PreferenceKeys {
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
     CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS = "catalogAutoSelectImageOverlayColumns",
+    CATALOG_QUERY_SIMBAD_ENABLED_MIRRORS = "catalogQuerySimbadEnabledMirrors",
+    CATALOG_QUERY_VIZIER_ENABLED_MIRRORS = "catalogQueryVizierEnabledMirrors",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
