@@ -3,13 +3,13 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
 import {
-    FindIntensityUnitType,
     GetFluxDensityFromSum,
     GetIntensityOptions,
     type IntensityConfig,
     type LineKey,
     type LineOption,
     POLARIZATION_LABELS,
+    ShouldUseSumForFluxDensity,
     STATISTICS_TEXT,
     StatsTypeString,
     SUPPORTED_STATISTICS_TYPES,
@@ -49,6 +49,7 @@ type Profile = {
     };
     intensityConfig: IntensityConfig;
     intensityUnit: string | undefined;
+    isFluxDensityDerivedFromSum: boolean;
 };
 
 export class SpectralProfileSelectionStore {
@@ -98,12 +99,10 @@ export class SpectralProfileSelectionStore {
 
     private getRequiredStatsType = (profileConfig: ProfileConfig, frame = AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)): CARTA.StatsType => {
         const unitTo = frame && this.getTargetIntensityUnit(frame);
-        if (profileConfig.statsType !== CARTA.StatsType.FluxDensity || !frame?.pixelUnitSizeArcsec || !unitTo) {
+        if (profileConfig.statsType !== CARTA.StatsType.FluxDensity || !frame || !unitTo) {
             return profileConfig.statsType;
         }
-        const unitFromType = FindIntensityUnitType(frame.intensityConfig.nativeIntensityUnit);
-        const unitToType = FindIntensityUnitType(unitTo);
-        return unitFromType !== unitToType ? CARTA.StatsType.Sum : profileConfig.statsType;
+        return ShouldUseSumForFluxDensity(frame.intensityConfig, unitTo) ? CARTA.StatsType.Sum : profileConfig.statsType;
     };
 
     private genProfileLabel = (fileId: number | undefined, regionName: string | undefined, statsType: CARTA.StatsType, coordinate: string): {image: string | undefined; plot: string} => {
@@ -222,10 +221,8 @@ export class SpectralProfileSelectionStore {
                 const pixelSizesArcsec = frame.pixelUnitSizeArcsec;
                 const unitTo = this.getTargetIntensityUnit(frame);
                 const isFluxDensityDerivedFromSum = requiredStatsType !== profileConfig.statsType;
-                const data =
-                    isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec
-                        ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: GetFluxDensityFromSum(profileData.values, pixelSizesArcsec, unitTo ?? "")}
-                        : profileData;
+                const fluxDensityValues = isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec && unitTo ? GetFluxDensityFromSum(profileData.values, frame.intensityConfig, pixelSizesArcsec, unitTo) : undefined;
+                const data = isFluxDensityDerivedFromSum && profileData ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: fluxDensityValues ?? null} : profileData;
                 profiles.push({
                     fileId: profileConfig.fileId,
                     regionId: profileConfig.regionId,
@@ -235,7 +232,8 @@ export class SpectralProfileSelectionStore {
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
                     intensityConfig: frame.intensityConfig,
-                    intensityUnit: frame.intensityUnit
+                    intensityUnit: frame.intensityUnit,
+                    isFluxDensityDerivedFromSum
                 });
             }
         });

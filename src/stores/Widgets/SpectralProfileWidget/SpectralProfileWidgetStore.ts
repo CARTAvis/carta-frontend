@@ -504,7 +504,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
 
-                const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
+                const intensityConversion = profile.isFluxDensityDerivedFromSum ? undefined : GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, shouldComputeMeanRms);
 
@@ -543,7 +543,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
+            const intensityConversion = profiles[0].isFluxDensityDerivedFromSum ? undefined : GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
             const intensityValues = intensityConversion && profiles[0].data?.values ? intensityConversion(profiles[0].data.values) : profiles[0].data?.values;
             let y: Float32Array | Float64Array | undefined = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE && y) {
