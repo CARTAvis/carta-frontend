@@ -700,13 +700,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private clearSuppressedClick = (button?: number): void => {
-        if (this.suppressedClickButton && (button === undefined || this.suppressedClickButton === "all" || this.suppressedClickButton === button)) {
+        if (this.suppressedClickButton !== null && (button === undefined || this.suppressedClickButton === "all" || this.suppressedClickButton === button)) {
             this.suppressedClickButton = null;
         }
     };
 
     private shouldSuppressClick = (mouseEvent: MouseEvent): boolean => {
-        if (!this.suppressedClickButton) {
+        if (this.suppressedClickButton === null) {
             return false;
         }
 
@@ -746,6 +746,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @action private handleStageMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        // The suppression flag is only valid for the click that immediately follows a box selection, so a new gesture always invalidates it.
+        this.shouldSuppressNextRegionClickSelection = false;
+
         if (this.frame.regionSet.mode === RegionMode.CREATING) {
             this.handleMouseDown(konvaEvent);
             return;
@@ -918,15 +921,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @action private finishRegionSelection = () => {
         const selectionRect = this.getRegionSelectionRect();
         const isLargeEnough = !!selectionRect && this.isSelectionRectLargeEnough(selectionRect);
-        this.shouldSuppressNextRegionClickSelection = this.didRegionSelectionStartOnRegion && isLargeEnough;
+        this.shouldSuppressNextRegionClickSelection = isLargeEnough;
         this.didRegionSelectionStartOnRegion = false;
         this.regionSelectionBox = null;
         this.restoreRegionSelectionDragNode();
-        this.clearSuppressedClick();
 
         if (!selectionRect || !isLargeEnough) {
+            this.clearSuppressedClick();
             return;
         }
+
+        this.suppressNextClick(0);
 
         const selectionGeometryContext = {
             frame: this.frame,

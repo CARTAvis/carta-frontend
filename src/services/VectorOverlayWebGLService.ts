@@ -24,6 +24,7 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation | null;
     NumCmaps: WebGLUniformLocation | null;
     CmapIndex: WebGLUniformLocation | null;
+    CmapInverted: WebGLUniformLocation | null;
     Bias: WebGLUniformLocation | null;
     Contrast: WebGLUniformLocation | null;
     LineColor: WebGLUniformLocation | null;
@@ -86,6 +87,7 @@ export class VectorOverlayWebGLService {
                 CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
                 NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
                 CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+                CmapInverted: this.gl.getUniformLocation(shaderProgram, "uCmapInverted"),
                 Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
                 Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
                 LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),

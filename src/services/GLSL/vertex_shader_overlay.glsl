@@ -32,6 +32,7 @@ uniform sampler2D uCmapTexture;
 uniform float uCmapValue;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
+uniform int uCmapInverted;
 uniform float uBias;
 uniform float uContrast;
 
@@ -98,6 +99,10 @@ void main() {
         x = clamp(x - uBias, 0.0, 1.0);
         // contrast mod
         x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+        // invert mod
+        if (uCmapInverted > 0) {
+            x = 1.0 - x;
+        }
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
         v_colour = texture(uCmapTexture, cmapCoords);

@@ -18,6 +18,7 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation | null;
     NumCmaps: WebGLUniformLocation | null;
     CmapIndex: WebGLUniformLocation | null;
+    CmapInverted: WebGLUniformLocation | null;
     Bias: WebGLUniformLocation | null;
     Contrast: WebGLUniformLocation | null;
     ControlMapEnabled: WebGLUniformLocation | null;
@@ -80,6 +81,7 @@ export class ContourWebGLService {
                 CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
                 NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
                 CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+                CmapInverted: this.gl.getUniformLocation(shaderProgram, "uCmapInverted"),
                 Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
                 Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
                 ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),

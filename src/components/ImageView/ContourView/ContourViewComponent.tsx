@@ -200,6 +200,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.LineThickness, lineThickness);
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, contourZoom.pixelAspectRatio);
         this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.isColormapEnabled ? 1 : 0);
+        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapInverted, frame.contourConfig.isColormapInverted ? 1 : 0);
         if (frame.contourConfig.isColormapEnabled) {
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
@@ -266,6 +267,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
                 const color = config.isColormapEnabled ? config.colormap : config.color;
+                const isInverted = config.isColormapInverted;
                 const dashMode = config.dashMode;
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;

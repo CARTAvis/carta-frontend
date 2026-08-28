@@ -471,11 +471,18 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <React.Fragment>
                         <FormGroup inline={true} label="Colormap">
                             <ColormapComponent
-                                inverted={false}
+                                inverted={dataSource.vectorOverlayConfig.isColormapInverted}
                                 selectedColormap={dataSource.vectorOverlayConfig.colormap}
                                 onColormapSelect={colormap => this.handleColormapSelected(dataSource.vectorOverlayConfig, colormap)}
                                 onColormapHover={colormap => this.handleColormapHovered(dataSource.vectorOverlayConfig, colormap)}
                                 onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Invert colormap">
+                            <Switch
+                                checked={dataSource.vectorOverlayConfig.isColormapInverted}
+                                onChange={ev => dataSource.vectorOverlayConfig.setColormapInverted(ev.currentTarget.checked)}
+                                data-testid="vector-field-invert-colormap-toggle"
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Bias">

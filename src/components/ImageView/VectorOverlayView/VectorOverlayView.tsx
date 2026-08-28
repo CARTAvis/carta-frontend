@@ -210,6 +210,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
 
         this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.isColormapEnabled ? 1 : 0);
+        this.gl.uniform1i(shaderUniforms.CmapInverted, frame.vectorOverlayConfig.isColormapInverted ? 1 : 0);
         if (frame.vectorOverlayConfig.isColormapEnabled) {
             this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
             this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
@@ -249,7 +250,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         if (overlayFrames) {
             for (const frame of overlayFrames) {
                 const config = frame.vectorOverlayConfig;
-                const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, colormap, lengthMin, lengthMax, isVisible} = config;
+                const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, isColormapInverted, colormap, lengthMin, lengthMax, isVisible} = config;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
                 config.intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 

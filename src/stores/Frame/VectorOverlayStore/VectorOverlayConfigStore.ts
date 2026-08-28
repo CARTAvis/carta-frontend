@@ -26,6 +26,7 @@ export class VectorOverlayConfigStore {
     @observable isVisible: boolean = true;
     @observable thickness: number = 1;
     @observable isColormapEnabled: boolean = false;
+    @observable isColormapInverted: boolean = false;
     @observable color: RgbaColor = {r: 0, g: 0, b: 0, a: 1};
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
@@ -50,6 +51,7 @@ export class VectorOverlayConfigStore {
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.isColormapEnabled = this.preferenceStore.isVectorOverlayColormapEnabled;
+        this.isColormapInverted = this.preferenceStore.isVectorOverlayColormapInverted;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
         makeObservable(this);
@@ -111,6 +113,10 @@ export class VectorOverlayConfigStore {
         this.isColormapEnabled = isColormapEnabled;
     };
 
+    @action setColormapInverted = (isColormapInverted: boolean) => {
+        this.isColormapInverted = isColormapInverted;
+    };
+
     @action setColormapBias = (val: number) => {
         this.colormapBias = val;
     };
@@ -164,6 +170,7 @@ export class VectorOverlayConfigStore {
         this.rotationOffset = config.rotationOffset;
 
         this.isColormapEnabled = config.colormapEnabled;
+        this.isColormapInverted = config.colormapInverted ?? false;
         if (config.color) {
             this.color = config.color;
         }
