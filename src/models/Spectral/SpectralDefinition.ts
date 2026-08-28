@@ -247,6 +247,11 @@ const JySrToJyArcsec2 = (isForward: boolean = true): number => {
     return isForward ? constant : 1 / constant;
 };
 
+export const GetFluxDensityFromSum = (values: Float32Array | Float64Array, pixelSizesArcsec: {x: number; y: number}, unitTo: string): Float32Array | Float64Array => {
+    const correction = FindIntensityUnitType(unitTo) === IntensityUnitType.JySr ? JySrToJyArcsec2() : 1;
+    return values.map(value => value * pixelSizesArcsec.x * pixelSizesArcsec.y * correction);
+};
+
 const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
     const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
     return isForward ? coefficient : 1 / coefficient;

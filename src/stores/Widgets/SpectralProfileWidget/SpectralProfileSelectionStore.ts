@@ -2,7 +2,19 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
-import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {
+    FindIntensityUnitType,
+    GetFluxDensityFromSum,
+    GetIntensityOptions,
+    type IntensityConfig,
+    type LineKey,
+    type LineOption,
+    POLARIZATION_LABELS,
+    STATISTICS_TEXT,
+    StatsTypeString,
+    SUPPORTED_STATISTICS_TYPES,
+    VALID_COORDINATES
+} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -59,8 +71,7 @@ export class SpectralProfileSelectionStore {
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                const statsTypes: CARTA.StatsType[] = [];
-                profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
+                const statsTypes = Array.from(new Set(profileConfigs.map(profileConfig => this.getRequiredStatsType(profileConfig))));
                 formattedSpectralConfigs.push({
                     fileId: profileConfigs[0].fileId,
                     regionId: profileConfigs[0].regionId,
@@ -72,13 +83,27 @@ export class SpectralProfileSelectionStore {
                     formattedSpectralConfigs.push({
                         fileId: profileConfig.fileId,
                         regionId: profileConfig.regionId,
-                        statsTypes: [profileConfig.statsType],
+                        statsTypes: [this.getRequiredStatsType(profileConfig)],
                         coordinate: profileConfig.coordinate
                     });
                 });
             }
         }
         return formattedSpectralConfigs;
+    };
+
+    private getTargetIntensityUnit = (frame: FrameStore): string | undefined => {
+        return this.activeProfileCategory === MultiProfileCategory.IMAGE ? this.widgetStore.intensityUnit : frame.intensityUnit;
+    };
+
+    private getRequiredStatsType = (profileConfig: ProfileConfig, frame = AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)): CARTA.StatsType => {
+        const unitTo = frame && this.getTargetIntensityUnit(frame);
+        if (profileConfig.statsType !== CARTA.StatsType.FluxDensity || !frame?.pixelUnitSizeArcsec || !unitTo) {
+            return profileConfig.statsType;
+        }
+        const unitFromType = FindIntensityUnitType(frame.intensityConfig.nativeIntensityUnit);
+        const unitToType = FindIntensityUnitType(unitTo);
+        return unitFromType !== unitToType ? CARTA.StatsType.Sum : profileConfig.statsType;
     };
 
     private genProfileLabel = (fileId: number | undefined, regionName: string | undefined, statsType: CARTA.StatsType, coordinate: string): {image: string | undefined; plot: string} => {
@@ -191,14 +216,22 @@ export class SpectralProfileSelectionStore {
             const frame = appStore.getFrame(profileConfig.fileId ?? NaN);
             const frameProfileStoreMap = appStore.spectralProfiles.get(profileConfig.fileId ?? NaN);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId ?? NaN);
-            const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
             if (frame) {
+                const requiredStatsType = this.getRequiredStatsType(profileConfig, frame);
+                const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, requiredStatsType);
+                const pixelSizesArcsec = frame.pixelUnitSizeArcsec;
+                const unitTo = this.getTargetIntensityUnit(frame);
+                const isFluxDensityDerivedFromSum = requiredStatsType !== profileConfig.statsType;
+                const data =
+                    isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec
+                        ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: GetFluxDensityFromSum(profileData.values, pixelSizesArcsec, unitTo ?? "")}
+                        : profileData;
                 profiles.push({
                     fileId: profileConfig.fileId,
                     regionId: profileConfig.regionId,
                     channelValues: frame.channelValues,
                     channelSecondaryValues: frame.channelSecondaryValues,
-                    data: profileData,
+                    data,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
                     intensityConfig: frame.intensityConfig,
