@@ -220,8 +220,10 @@ export class SpectralProfileSelectionStore {
                 const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, requiredStatsType);
                 const pixelSizesArcsec = frame.pixelUnitSizeArcsec;
                 const unitTo = this.getTargetIntensityUnit(frame);
+                const polarization = profileConfig.coordinate === "z" ? undefined : Polarizations[profileConfig.coordinate.slice(0, -1)];
+                const intensityConfig = frame.getIntensityConfig(polarization);
                 const isFluxDensityDerivedFromSum = requiredStatsType !== profileConfig.statsType;
-                const fluxDensityValues = isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec && unitTo ? GetFluxDensityFromSum(profileData.values, frame.intensityConfig, pixelSizesArcsec, unitTo) : undefined;
+                const fluxDensityValues = isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec && unitTo ? GetFluxDensityFromSum(profileData.values, intensityConfig, pixelSizesArcsec, unitTo) : undefined;
                 const data = isFluxDensityDerivedFromSum && profileData ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: fluxDensityValues ?? null} : profileData;
                 profiles.push({
                     fileId: profileConfig.fileId,
@@ -231,7 +233,7 @@ export class SpectralProfileSelectionStore {
                     data,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
-                    intensityConfig: frame.intensityConfig,
+                    intensityConfig,
                     intensityUnit: frame.intensityUnit,
                     isFluxDensityDerivedFromSum
                 });
