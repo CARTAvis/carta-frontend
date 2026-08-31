@@ -376,7 +376,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
-    public init = (widgetSettings): void => {
+    public applyConfig = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

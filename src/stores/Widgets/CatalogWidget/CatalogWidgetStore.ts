@@ -1146,7 +1146,7 @@ export class CatalogWidgetStore {
         return config;
     }
 
-    public init = (widgetSettings): void => {
+    public applyConfig = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

@@ -1441,7 +1441,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new SpatialProfileWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.spatialProfileWidgets.set(id, widgetStore);
         }
@@ -1461,7 +1461,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new SpectralProfileWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.spectralProfileWidgets.set(id, widgetStore);
         }
@@ -1500,7 +1500,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new StokesAnalysisWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.stokesAnalysisWidgets.set(id, widgetStore);
         }
@@ -1568,7 +1568,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new CatalogWidgetStore(catalogFileId);
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.catalogWidgets.set(id, widgetStore);
             catalogStore.catalogWidgets.set(catalogFileId, id);
@@ -1684,7 +1684,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new HistogramWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.histogramWidgets.set(id, widgetStore);
         }
@@ -1704,7 +1704,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new RenderConfigWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.renderConfigWidgets.set(id, widgetStore);
         }
