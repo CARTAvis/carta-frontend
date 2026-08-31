@@ -258,7 +258,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label={activeFrame.channelType}
                     />
                     {shouldHideSliders && (
-                        <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />
+                        <SafeNumericInput
+                            value={activeFrame.requiredChannel}
+                            min={-1}
+                            max={numChannels}
+                            stepSize={appStore.animatorStore.step}
+                            onValueChange={this.onChannelChanged}
+                            fill={true}
+                            disabled={appStore.animatorStore.isAnimationActive}
+                        />
                     )}
                     {!shouldHideSliders && (
                         <React.Fragment>
@@ -270,6 +278,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelValues={channelTick}
                                 labelPrecision={0}
                                 showTrackFill={false}
+                                stepSize={appStore.animatorStore.step}
                                 onChange={this.onChannelChanged}
                                 disabled={appStore.animatorStore.isAnimationActive}
                             />
@@ -396,14 +405,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             </ButtonGroup>
         );
 
+        const numericInputType = AppStore.Instance.animatorStore.step !== 1 ? NumericInputType.Step : this.numericInputType;
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
                     disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
+                    value={numericInputType}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
                     onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
-                {this.numericInputType === NumericInputType.FrameRate ? (
+                {numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
                         value={appStore.animatorStore.frameRate}
                         min={appStore.animatorStore.minFrameRate}
