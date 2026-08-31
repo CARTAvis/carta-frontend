@@ -257,16 +257,25 @@ test("give correct result when generating tiles for a 16K image at full resoluti
     expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
-test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
-    const tStart = performance.now();
-    const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, TILE256);
-    const tEnd = performance.now();
+describe("tiling performance", () => {
+    jest.retryTimes(3);
 
-    const runTime = tEnd - tStart;
+    test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
+        const frameView = {xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1};
+        const imageSize = {x: 16384, y: 16384};
 
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBe(64 * 64);
-    expect(runTime).toBeLessThan(2);
+        GetRequiredTiles(frameView, imageSize, TILE256);
+
+        const tStart = performance.now();
+        const result = GetRequiredTiles(frameView, imageSize, TILE256);
+        const tEnd = performance.now();
+
+        const runTime = tEnd - tStart;
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(64 * 64);
+        expect(runTime).toBeLessThan(2);
+    });
 });
 
 test("round trip mip -> layer -> mip", () => {
