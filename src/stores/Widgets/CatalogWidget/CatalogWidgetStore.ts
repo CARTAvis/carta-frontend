@@ -44,7 +44,7 @@ export class CatalogWidgetStore {
 
     catalogSourceRadiusTypes = new Map<CatalogSourceRadiusMode, {label: string; value: number}>([
         ["diameter", {label: "Diameter", value: 1}],
-        ["radius", {label: "Radius", value: 0.5}]
+        ["radius", {label: "Radius", value: 2}]
     ]);
 
     // -1 : apply different featherWidth according shape size
