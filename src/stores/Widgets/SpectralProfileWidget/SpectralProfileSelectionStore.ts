@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
-import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_NAME_MAP, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -338,11 +338,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {
-            return a - b;
-        });
-        return sortedKeys?.map(key => {
-            return {value: key, label: STATISTICS_TEXT.get(key)};
+        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES].sort((a, b) => a - b);
+        return sortedKeys.map(key => {
+            return {value: key, label: STATISTICS_NAME_MAP.get(key)};
         });
     }
 
