@@ -543,7 +543,7 @@ export class WidgetsStore {
             const itemId = preAssignedId || this.getNextId(CatalogOverlayComponent.WidgetConfig.type);
             if (itemId) {
                 this.catalogOverlayWidgets.set(itemId, new EmptyWidgetStore());
-                CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId).applyConfig(widgetSettings);
+                CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId).applyLayoutSettings(widgetSettings);
                 // Ensure catalogProfiles is set to the saved fileId so the component can look
                 // up the correct file (the component constructor only defaults to fileId 1).
                 CatalogStore.Instance.catalogProfiles.set(itemId, catalogFileId);
@@ -1094,8 +1094,10 @@ export class WidgetsStore {
         }
 
         if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
+            // A layout keeps only the catalog a panel shows and the panel's own geometry; the
+            // rest of a catalog's appearance is display config and belongs to the workspace.
             const catalogFileId = CatalogStore.Instance.catalogProfiles.get(widgetID);
-            return catalogFileId !== undefined ? CatalogStore.Instance.getCatalogDisplayStore(catalogFileId)?.toConfig() : undefined;
+            return catalogFileId !== undefined ? CatalogStore.Instance.getCatalogDisplayStore(catalogFileId)?.toLayoutSettings() : undefined;
         }
 
         let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
