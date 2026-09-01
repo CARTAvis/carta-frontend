@@ -123,6 +123,19 @@ describe("ScriptingService", () => {
         expect(response).toMatchObject({success: true, response: "null"});
     });
 
+    test("reports when a response cannot be serialized", async () => {
+        const circularResponse: any = {};
+        circularResponse.self = circularResponse;
+        MOCK_APP_STORE.getResponse = () => circularResponse;
+
+        const response = await scriptingService.handleScriptingRequest(MakeRequest("getResponse"));
+
+        expect(response).toMatchObject({
+            success: false,
+            message: "Response cannot be serialized to JSON because it contains a circular reference or unsupported value. Use return_path to select JSON-serializable fields."
+        });
+    });
+
     test("applies return_path to every element in an array", async () => {
         MOCK_APP_STORE.getResponse = () => [{id: 1}, {id: 2}];
 

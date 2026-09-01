@@ -221,6 +221,15 @@ export class ScriptingService {
         return selectedResponse === undefined ? null : selectedResponse;
     }
 
+    private static serializeResponse(response: any): string | undefined {
+        try {
+            return JSON.stringify(toJS(response));
+        } catch (error) {
+            console.error("Failed to serialize scripting response:", error);
+            throw new Error("Response cannot be serialized to JSON because it contains a circular reference or unsupported value. " + "Use return_path to select JSON-serializable fields.");
+        }
+    }
+
     handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {
         const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
         if (!entry.isValid) {
@@ -255,7 +264,7 @@ export class ScriptingService {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(toJS(response))
+                response: ScriptingService.serializeResponse(response)
             };
         } catch (err) {
             console.error(err);
