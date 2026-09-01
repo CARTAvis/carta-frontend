@@ -265,10 +265,10 @@ function getIsoFractionDigits(isoUtc: string, digits: number): string {
 
 const AUTO_ISO_PRECISIONS = [IsoTimePrecision.DAY, IsoTimePrecision.HOUR, IsoTimePrecision.MINUTE, IsoTimePrecision.SECOND, IsoTimePrecision.MILLISECOND, IsoTimePrecision.MICROSECOND] as const;
 
-function getAutoIsoPrecision(values: readonly TimeLabelValue[], timeZoneMode: TimeZoneMode, ianaTimeZone: string): IsoTimePrecision {
-    const numericValues = values.map(value => value.mjdUtc);
+function getAutoIsoPrecision(sources: readonly IsoLabelSource[]): IsoTimePrecision {
+    const numericValues = sources.map(source => source.mjdUtc);
     for (const precision of AUTO_ISO_PRECISIONS) {
-        const labels = values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+        const labels = sources.map(source => formatIsoLabel(source, precision));
         if (!hasDistinctValueLabelCollisions(numericValues, labels)) {
             return precision;
         }
@@ -285,6 +285,28 @@ interface ZonedDateParts {
     second: number;
     offsetMinutes: number;
     useUtcSuffix: boolean;
+}
+
+// Constructing an Intl.DateTimeFormat is expensive relative to formatting with it, so reuse one per time zone.
+const ZONED_DATE_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
+function getZonedDateFormatter(ianaTimeZone: string): Intl.DateTimeFormat {
+    const cached = ZONED_DATE_FORMATTERS.get(ianaTimeZone);
+    if (cached) {
+        return cached;
+    }
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: ianaTimeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+    });
+    ZONED_DATE_FORMATTERS.set(ianaTimeZone, formatter);
+    return formatter;
 }
 
 function getZonedDateParts(date: Date, timeZoneMode: TimeZoneMode, ianaTimeZone: string): ZonedDateParts {
@@ -314,17 +336,11 @@ function getZonedDateParts(date: Date, timeZoneMode: TimeZoneMode, ianaTimeZone:
         };
     }
 
-    const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: ianaTimeZone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hourCycle: "h23"
-    });
-    const partValues = new Map(formatter.formatToParts(date).map(part => [part.type, part.value]));
+    const partValues = new Map(
+        getZonedDateFormatter(ianaTimeZone)
+            .formatToParts(date)
+            .map(part => [part.type, part.value])
+    );
     const year = Number(partValues.get("year"));
     const month = Number(partValues.get("month"));
     const day = Number(partValues.get("day"));
@@ -346,13 +362,26 @@ function getZonedDateParts(date: Date, timeZoneMode: TimeZoneMode, ianaTimeZone:
     };
 }
 
-function formatIsoLabel(value: TimeLabelValue, timeZoneMode: TimeZoneMode, ianaTimeZone: string, precision: IsoTimePrecision): string {
-    const date = parseIsoUtc(value.isoUtc);
-    if (!date) {
-        return value.isoUtc;
+/** A time-series value with its zoned date parts resolved once, so labels at any precision are pure string work. */
+interface IsoLabelSource {
+    mjdUtc: number;
+    isoUtc: string;
+    parts: ZonedDateParts | null;
+}
+
+function getIsoLabelSources(values: readonly TimeLabelValue[], timeZoneMode: TimeZoneMode, ianaTimeZone: string): IsoLabelSource[] {
+    return values.map(value => {
+        const date = parseIsoUtc(value.isoUtc);
+        return {mjdUtc: value.mjdUtc, isoUtc: value.isoUtc, parts: date ? getZonedDateParts(date, timeZoneMode, ianaTimeZone) : null};
+    });
+}
+
+function formatIsoLabel(source: IsoLabelSource, precision: IsoTimePrecision): string {
+    const parts = source.parts;
+    if (!parts) {
+        return source.isoUtc;
     }
 
-    const parts = getZonedDateParts(date, timeZoneMode, ianaTimeZone);
     const hasMonth = precision !== IsoTimePrecision.YEAR;
     const hasDay = hasMonth && precision !== IsoTimePrecision.MONTH;
     const hasHour = hasDay && precision !== IsoTimePrecision.DAY;
@@ -376,9 +405,9 @@ function formatIsoLabel(value: TimeLabelValue, timeZoneMode: TimeZoneMode, ianaT
         label += `:${pad(parts.second)}`;
     }
     if (precision === IsoTimePrecision.MICROSECOND) {
-        label += `.${getIsoFractionDigits(value.isoUtc, 6)}`;
+        label += `.${getIsoFractionDigits(source.isoUtc, 6)}`;
     } else if (precision === IsoTimePrecision.MILLISECOND) {
-        label += `.${getIsoFractionDigits(value.isoUtc, 3)}`;
+        label += `.${getIsoFractionDigits(source.isoUtc, 3)}`;
     }
     if (!hasHour) {
         return label;
@@ -469,8 +498,9 @@ function getIsoLabels(values: readonly TimeLabelValue[], settings: TimeLabelSett
     const ianaTimeZone = settings.ianaTimeZone ?? "UTC";
     const timeZoneMode = settings.timeZoneMode === TimeZoneMode.IANA && !isValidIanaTimeZone(ianaTimeZone) ? TimeZoneMode.UTC : settings.timeZoneMode;
     const configuredPrecision = settings.isoTimePrecision ?? IsoTimePrecision.AUTO;
-    const precision = configuredPrecision === IsoTimePrecision.AUTO ? getAutoIsoPrecision(values, timeZoneMode, ianaTimeZone) : configuredPrecision;
-    return values.map(value => formatIsoLabel(value, timeZoneMode, ianaTimeZone, precision));
+    const sources = getIsoLabelSources(values, timeZoneMode, ianaTimeZone);
+    const precision = configuredPrecision === IsoTimePrecision.AUTO ? getAutoIsoPrecision(sources) : configuredPrecision;
+    return sources.map(source => formatIsoLabel(source, precision));
 }
 
 function getJulianDateLabels(values: readonly TimeLabelValue[], settings: TimeLabelSettings): string[] {

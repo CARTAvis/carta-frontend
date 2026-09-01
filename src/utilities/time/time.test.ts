@@ -360,6 +360,22 @@ describe("formatTimeSeriesTickLabels", () => {
         ).toEqual(["2020-05-31T08:00:00+08:00", "2020-05-31T14:00:00+08:00"]);
     });
 
+    test("keeps custom IANA time zones independent of each other", () => {
+        const formatInZone = (ianaTimeZone: string) =>
+            formatTimeSeriesTickLabels(values, {
+                timeLabelFormat: TimeLabelFormat.ISO,
+                timeZoneMode: TimeZoneMode.IANA,
+                ianaTimeZone,
+                isoTimePrecision: IsoTimePrecision.SECOND,
+                relativeTimeUnit: RelativeTimeUnit.AUTO
+            });
+
+        // A half-hour offset, and a negative offset that rolls the first observation back to the previous day
+        expect(formatInZone("Asia/Kolkata")).toEqual(["2020-05-31T05:30:00+05:30", "2020-05-31T11:30:00+05:30"]);
+        expect(formatInZone("America/New_York")).toEqual(["2020-05-30T20:00:00-04:00", "2020-05-31T02:00:00-04:00"]);
+        expect(formatInZone("Asia/Kolkata")).toEqual(["2020-05-31T05:30:00+05:30", "2020-05-31T11:30:00+05:30"]);
+    });
+
     test("validates IANA time zone identifiers", () => {
         expect(isValidIanaTimeZone("Asia/Taipei")).toBe(true);
         expect(isValidIanaTimeZone("Not/A_Zone")).toBe(false);
