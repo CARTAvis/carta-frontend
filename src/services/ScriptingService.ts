@@ -166,7 +166,7 @@ export class ScriptingService {
 
     private static selectReturnPath(value: any, returnPath: Exclude<ReturnPath, string>): Record<string, any> {
         const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path]) : Object.entries(returnPath);
-        return Object.fromEntries(paths.map(([key, path]) => [key, _.get(value, path)]));
+        return Object.fromEntries(paths.map(([key, path]) => [key, ScriptingService.getReturnPathValue(value, path)]));
     }
 
     private static applyReturnPath(response: any, returnPath: string): any {

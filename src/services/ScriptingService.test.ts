@@ -147,6 +147,28 @@ describe("ScriptingService", () => {
         ]);
     });
 
+    test("rejects a structured return path with a non-string array element", async () => {
+        MOCK_APP_STORE.getResponse = () => [{id: 1}];
+
+        const response = await scriptingService.handleScriptingRequest(MakeRequest("getResponse", [], JSON.stringify(["id", false])));
+
+        expect(response).toMatchObject({
+            success: false,
+            message: "Invalid return path at index 1: expected a string, got false"
+        });
+    });
+
+    test("rejects a structured return path with a missing path", async () => {
+        MOCK_APP_STORE.getResponse = () => [{frameInfo: {fileId: 0}}, {frameInfo: {fileId: 1}}];
+
+        const response = await scriptingService.handleScriptingRequest(MakeRequest("getResponse", [], JSON.stringify(["frameInfo.fileId", "not_existing"])));
+
+        expect(response).toMatchObject({
+            success: false,
+            message: "Missing response path: not_existing"
+        });
+    });
+
     test("uses aliases when selecting multiple paths", async () => {
         MOCK_APP_STORE.getResponse = () => [{frameInfo: {fileId: 7}, name: "image.fits"}];
 

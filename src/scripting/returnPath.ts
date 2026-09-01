@@ -14,16 +14,28 @@ export function isScriptingMap(value: unknown): value is Record<string, unknown>
 
 export function parseReturnPath(value: string): ReturnPath {
     if (value.startsWith("[") || value.startsWith("{")) {
+        let parsed: unknown;
         try {
-            const parsed: unknown = JSON.parse(value);
-            if (Array.isArray(parsed) && parsed.every(path => typeof path === "string")) {
-                return parsed;
-            }
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Object.values(parsed).every(path => typeof path === "string")) {
-                return parsed as Record<string, string>;
-            }
+            parsed = JSON.parse(value);
         } catch {
             // Treat invalid JSON as a legacy string path.
+            return value;
+        }
+
+        if (Array.isArray(parsed)) {
+            const invalidIndex = parsed.findIndex(path => typeof path !== "string");
+            if (invalidIndex !== -1) {
+                throw new Error(`Invalid return path at index ${invalidIndex}: expected a string, got ${JSON.stringify(parsed[invalidIndex])}`);
+            }
+            return parsed as string[];
+        }
+
+        if (parsed && typeof parsed === "object") {
+            const invalidEntry = Object.entries(parsed).find(([, path]) => typeof path !== "string");
+            if (invalidEntry) {
+                throw new Error(`Invalid return path for key "${invalidEntry[0]}": expected a string, got ${JSON.stringify(invalidEntry[1])}`);
+            }
+            return parsed as Record<string, string>;
         }
     }
 
