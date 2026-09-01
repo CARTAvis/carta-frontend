@@ -31,6 +31,8 @@ using namespace std;
 
 extern "C" {
 
+EMSCRIPTEN_KEEPALIVE double convertMJD(double mjd, const char* scaleIn, const char* scaleOut);
+
 EMSCRIPTEN_KEEPALIVE AstFitsChan* emptyFitsChan()
 {
     return astFitsChan(nullptr, nullptr, "");
@@ -688,12 +690,51 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     return 0;
 }
 
+static bool normalizeUtcLeapSecond(const char* dateString, const char* timeScale, std::string& normalizedDate)
+{
+    if (!dateString || !timeScale || strcmp(timeScale, "UTC") != 0)
+    {
+        return false;
+    }
+
+    normalizedDate = dateString;
+    const size_t timeSeparator = normalizedDate.find('T');
+    const size_t secondsPosition = timeSeparator == std::string::npos ? std::string::npos : timeSeparator + 7;
+    if (secondsPosition == std::string::npos || secondsPosition + 2 > normalizedDate.size() || normalizedDate.compare(timeSeparator + 1, 8, "23:59:60"))
+    {
+        return false;
+    }
+
+    const size_t suffixPosition = secondsPosition + 2;
+    if (suffixPosition < normalizedDate.size())
+    {
+        if (normalizedDate[suffixPosition] != '.' || suffixPosition + 1 == normalizedDate.size())
+        {
+            return false;
+        }
+        for (size_t i = suffixPosition + 1; i < normalizedDate.size(); i++)
+        {
+            if (normalizedDate[i] < '0' || normalizedDate[i] > '9')
+            {
+                return false;
+            }
+        }
+    }
+
+    normalizedDate.replace(secondsPosition, 2, "59");
+    return true;
+}
+
 EMSCRIPTEN_KEEPALIVE double parseDateToMJD(const char* dateString, const char* timeScale)
 {
     if (!dateString || !strlen(dateString))
     {
         return NAN;
     }
+
+    std::string normalizedDate;
+    const bool isUtcLeapSecond = normalizeUtcLeapSecond(dateString, timeScale, normalizedDate);
+    const char* parsedDateString = isUtcLeapSecond ? normalizedDate.c_str() : dateString;
 
     astBegin;
     AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
@@ -705,14 +746,37 @@ EMSCRIPTEN_KEEPALIVE double parseDateToMJD(const char* dateString, const char* t
     }
 
     double mjd = AST__BAD;
-    int charsRead = astUnformat(timeFrame, 1, dateString, &mjd);
+    int charsRead = astUnformat(timeFrame, 1, parsedDateString, &mjd);
     astEnd;
 
     // Reject partial parses so that malformed date strings are not silently truncated
-    if (!astOK || charsRead != (int) strlen(dateString) || mjd == AST__BAD)
+    if (!astOK || charsRead != (int) strlen(parsedDateString) || mjd == AST__BAD)
     {
         astClearStatus;
         return NAN;
+    }
+
+    if (isUtcLeapSecond)
+    {
+        constexpr double secondsPerDay = 86400.0;
+        const double dayBoundary = floor(mjd) + 1.0;
+        const double taiBeforeBoundary = convertMJD(dayBoundary - 1.0 / secondsPerDay, "UTC", "TAI");
+        const double taiAtBoundary = convertMJD(dayBoundary, "UTC", "TAI");
+        const double boundaryDurationSeconds = (taiAtBoundary - taiBeforeBoundary) * secondsPerDay;
+        if (!isfinite(taiBeforeBoundary) || !isfinite(taiAtBoundary) || fabs(boundaryDurationSeconds - 2.0) > 1e-3)
+        {
+            return NAN;
+        }
+
+        const double taiMjd = convertMJD(mjd, "UTC", "TAI");
+        if (!isfinite(taiMjd))
+        {
+            return NAN;
+        }
+
+        // AST cannot represent the 23:59:60 label directly in UTC MJD. Preserve the
+        // physical one-second transition in TAI, then project it back to AST's UTC MJD.
+        return convertMJD(taiMjd + 1.0 / secondsPerDay, "TAI", "UTC");
     }
     return mjd;
 }
