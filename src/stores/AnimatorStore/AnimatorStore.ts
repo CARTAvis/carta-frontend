@@ -34,7 +34,8 @@ export class AnimatorStore {
     @observable isAnimationActive: boolean = false;
     @observable playMode: PlayMode = PlayMode.FORWARD;
 
-    private get isFrontendAnimationMode(): boolean {
+    /** Whether the current mode is driven by the frontend, stepping through images rather than asking the backend for frames. */
+    get isFrontendAnimationMode(): boolean {
         return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME_SERIES;
     }
 
