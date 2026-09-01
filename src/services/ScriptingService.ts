@@ -190,12 +190,12 @@ export class ScriptingService {
         }
 
         if (Array.isArray(response)) {
-            return response.map(value => _.get(value, parsedReturnPath));
+            return response.map(value => ScriptingService.getReturnPathValue(value, parsedReturnPath));
         }
 
         if (response instanceof Map || isScriptingMap(response)) {
             const entries = response instanceof Map ? response.entries() : Object.entries(response);
-            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, _.get(value, parsedReturnPath)]));
+            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, ScriptingService.getReturnPathValue(value, parsedReturnPath)]));
         }
 
         if (typeof response === "object") {
@@ -210,6 +210,15 @@ export class ScriptingService {
         }
 
         return response;
+    }
+
+    private static getReturnPathValue(value: any, returnPath: string): any {
+        const hasResponsePath = _.hasIn(value, returnPath);
+        const selectedResponse = _.get(value, returnPath);
+        if (!hasResponsePath) {
+            throw new Error(`Missing response path: ${returnPath}`);
+        }
+        return selectedResponse === undefined ? null : selectedResponse;
     }
 
     handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {

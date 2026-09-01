@@ -99,6 +99,17 @@ describe("ScriptingService", () => {
         });
     });
 
+    test("rejects a missing return path from an array response", async () => {
+        MOCK_APP_STORE.getResponse = () => [{id: 1}, {id: 2}];
+
+        const response = await scriptingService.handleScriptingRequest(MakeRequest("getResponse", [], "missing"));
+
+        expect(response).toMatchObject({
+            success: false,
+            message: "Missing response path: missing"
+        });
+    });
+
     test("allows an action with no response", async () => {
         const response = await ScriptingService.Instance.handleScriptingRequest(MakeRequest("noResponse"));
 
