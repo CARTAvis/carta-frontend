@@ -81,9 +81,11 @@ jobs:
           source /emsdk/emsdk_env.sh
           n exec 24 npm run build
 
-      - name: Run unit tests
+      - name: Run unit and AST wrapper tests
         shell: bash
-        run: n exec 24 npm test
+        run: |
+          n exec 24 npm test
+          n exec 24 npm run test:ast-wrapper
 
   node-v22:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -120,9 +122,11 @@ jobs:
           source /emsdk/emsdk_env.sh
           n exec 22 npm run build
 
-      - name: Run unit tests
+      - name: Run unit and AST wrapper tests
         shell: bash
-        run: n exec 22 npm test
+        run: |
+          n exec 22 npm test
+          n exec 22 npm run test:ast-wrapper
 
   Notify:
     name: Send notifications
