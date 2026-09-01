@@ -93,7 +93,7 @@ export class FileBrowserDialogComponent extends React.Component {
             const loadedFrames = await this.loadSelectedFiles();
 
             const appStore = AppStore.Instance;
-            for (const frame of appStore.frames) {
+            for (const frame of loadedFrames) {
                 await flowResult(appStore.setSpatialMatchingEnabled(frame, true));
             }
             loadedFrames.filter(frame => frame === appStore.spatialReference || frame.spatialReference === appStore.spatialReference).forEach(frame => appStore.setTimeSeriesMember(frame, true));
