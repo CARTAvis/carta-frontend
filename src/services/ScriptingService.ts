@@ -197,7 +197,7 @@ export class ScriptingService {
         const hasResponsePath = _.hasIn(value, returnPath);
         const selectedResponse = _.get(value, returnPath);
         if (!hasResponsePath) {
-            throw new Error(`Missing response path: ${returnPath}`);
+            throw new Error(`Response path not found: ${returnPath}`);
         }
         // JSON cannot represent undefined. Preserve the distinction between a
         // missing path and an existing path without a value by returning null.

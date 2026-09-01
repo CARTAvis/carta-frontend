@@ -73,7 +73,7 @@ describe("ScriptingService", () => {
 
         expect(response).toMatchObject({
             success: false,
-            message: "Missing response path: nested.missing"
+            message: "Response path not found: nested.missing"
         });
         expect(response.response).toBeUndefined();
     });
@@ -106,7 +106,7 @@ describe("ScriptingService", () => {
 
         expect(response).toMatchObject({
             success: false,
-            message: "Missing response path: missing"
+            message: "Response path not found: missing"
         });
     });
 
@@ -178,7 +178,7 @@ describe("ScriptingService", () => {
 
         expect(response).toMatchObject({
             success: false,
-            message: "Missing response path: not_existing"
+            message: "Response path not found: not_existing"
         });
     });
 
