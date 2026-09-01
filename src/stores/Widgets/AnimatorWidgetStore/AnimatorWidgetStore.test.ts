@@ -7,7 +7,7 @@ describe("AnimatorWidgetStore", () => {
         expect(new AnimatorWidgetStore().toConfig()).toEqual({
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
-            ianaTimeZone: "UTC",
+            ianaTimeZone: null,
             timeScale: TimeScale.UTC,
             isoTimePrecision: IsoTimePrecision.AUTO,
             numericTimePrecision: null,
@@ -60,7 +60,7 @@ describe("AnimatorWidgetStore", () => {
         expect(store.toConfig()).toEqual({
             timeLabelFormat: TimeLabelFormat.AUTO,
             timeZoneMode: TimeZoneMode.UTC,
-            ianaTimeZone: "UTC",
+            ianaTimeZone: null,
             timeScale: TimeScale.UTC,
             isoTimePrecision: IsoTimePrecision.AUTO,
             numericTimePrecision: null,
@@ -79,5 +79,29 @@ describe("AnimatorWidgetStore", () => {
 
         expect(store.relativeTimeReference).toBe(RelativeTimeReference.IMAGE);
         expect(store.relativeReferenceMjdUtc).toBe(59000);
+    });
+
+    test("preserves an explicitly configured UTC IANA time zone", () => {
+        const store = new AnimatorWidgetStore();
+        store.init({timeZoneMode: TimeZoneMode.IANA, ianaTimeZone: "UTC"});
+
+        store.setIanaTimeZoneIfUnset("Asia/Taipei");
+
+        expect(store.timeZoneMode).toBe(TimeZoneMode.IANA);
+        expect(store.ianaTimeZone).toBe("UTC");
+    });
+
+    test("sets the default IANA time zone only while it is unset", () => {
+        const store = new AnimatorWidgetStore();
+
+        store.setIanaTimeZoneIfUnset("Asia/Taipei");
+        expect(store.ianaTimeZone).toBe("Asia/Taipei");
+
+        store.setIanaTimeZone("UTC");
+        store.setTimeZoneMode(TimeZoneMode.UTC);
+        store.setIanaTimeZoneIfUnset("Pacific/Honolulu");
+        store.setTimeZoneMode(TimeZoneMode.IANA);
+
+        expect(store.ianaTimeZone).toBe("UTC");
     });
 });

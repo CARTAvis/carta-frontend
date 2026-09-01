@@ -5,7 +5,7 @@ import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelForm
 export interface AnimatorWidgetConfig {
     timeLabelFormat: TimeLabelFormat;
     timeZoneMode: TimeZoneMode;
-    ianaTimeZone: string;
+    ianaTimeZone: string | null;
     timeScale: TimeScale;
     isoTimePrecision: IsoTimePrecision;
     numericTimePrecision: number | null;
@@ -17,7 +17,7 @@ export interface AnimatorWidgetConfig {
 export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
     timeLabelFormat: TimeLabelFormat.AUTO,
     timeZoneMode: TimeZoneMode.UTC,
-    ianaTimeZone: "UTC",
+    ianaTimeZone: null,
     timeScale: TimeScale.UTC,
     isoTimePrecision: IsoTimePrecision.AUTO,
     numericTimePrecision: null,
@@ -43,7 +43,7 @@ function isFiniteNumber(value: unknown): value is number {
 export class AnimatorWidgetStore implements AnimatorWidgetConfig {
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
-    @observable ianaTimeZone: string = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
+    @observable ianaTimeZone: string | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
     @observable timeScale: TimeScale = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeScale;
     @observable isoTimePrecision: IsoTimePrecision = DEFAULT_ANIMATOR_WIDGET_CONFIG.isoTimePrecision;
     @observable numericTimePrecision: number | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.numericTimePrecision;
@@ -61,6 +61,12 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
 
     @action setIanaTimeZone = (timeZone: string) => {
         this.ianaTimeZone = timeZone;
+    };
+
+    @action setIanaTimeZoneIfUnset = (timeZone: string) => {
+        if (this.ianaTimeZone === null) {
+            this.ianaTimeZone = timeZone;
+        }
     };
 
     @action setTimeScale = (scale: TimeScale) => {
@@ -94,7 +100,9 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
         if (isEnumValue(TimeZoneMode, config.timeZoneMode)) {
             this.timeZoneMode = config.timeZoneMode;
         }
-        if (typeof config.ianaTimeZone === "string" && config.ianaTimeZone.trim()) {
+        if (config.ianaTimeZone === null) {
+            this.ianaTimeZone = null;
+        } else if (typeof config.ianaTimeZone === "string" && config.ianaTimeZone.trim()) {
             this.ianaTimeZone = config.ianaTimeZone;
         }
         if (isEnumValue(TimeScale, config.timeScale)) {

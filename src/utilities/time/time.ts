@@ -21,7 +21,7 @@ export interface TimeLabelValue {
 export interface TimeLabelSettings {
     timeLabelFormat: TimeLabelFormat;
     timeZoneMode: TimeZoneMode;
-    ianaTimeZone?: string;
+    ianaTimeZone?: string | null;
     timeScale?: TimeScale;
     isoTimePrecision?: IsoTimePrecision;
     numericTimePrecision?: number | null;
@@ -246,8 +246,8 @@ function pad(value: number, length: number = 2): string {
     return value.toString().padStart(length, "0");
 }
 
-export function isValidIanaTimeZone(timeZone: string): boolean {
-    if (!timeZone.trim()) {
+export function isValidIanaTimeZone(timeZone: string | null | undefined): boolean {
+    if (!timeZone?.trim()) {
         return false;
     }
     try {

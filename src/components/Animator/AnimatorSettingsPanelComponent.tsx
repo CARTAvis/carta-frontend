@@ -118,17 +118,6 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
         relativeReferenceIsoInvalid: false
     };
 
-    componentDidMount() {
-        this.setDefaultCustomIanaTimeZone();
-    }
-
-    private setDefaultCustomIanaTimeZone = () => {
-        const widgetStore = this.widgetStore;
-        if (widgetStore?.timeZoneMode === TimeZoneMode.IANA && widgetStore.ianaTimeZone === "UTC") {
-            widgetStore.setIanaTimeZone(DEFAULT_CUSTOM_IANA_TIME_ZONE);
-        }
-    };
-
     private handleActiveIanaTimeZoneChange = (timeZone: string | null) => {
         this.activeIanaTimeZone = timeZone;
     };
@@ -140,8 +129,16 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
     };
 
     private handleTimeZoneModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.widgetStore?.setTimeZoneMode(event.currentTarget.value as TimeZoneMode);
-        this.setDefaultCustomIanaTimeZone();
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
+        const timeZoneMode = event.currentTarget.value as TimeZoneMode;
+        if (timeZoneMode === TimeZoneMode.IANA) {
+            widgetStore.setIanaTimeZoneIfUnset(DEFAULT_CUSTOM_IANA_TIME_ZONE);
+        }
+        widgetStore.setTimeZoneMode(timeZoneMode);
     };
 
     private resetRelativeReferenceIso = () => {
@@ -290,8 +287,8 @@ export class AnimatorSettingsPanelComponent extends React.Component<WidgetProps,
                                         items={IANA_TIME_ZONES}
                                         itemPredicate={FilterTimeZone}
                                         itemRenderer={RenderTimeZoneOption}
-                                        inputValueRenderer={() => widgetStore.ianaTimeZone}
-                                        query={widgetStore.ianaTimeZone}
+                                        inputValueRenderer={() => widgetStore.ianaTimeZone ?? ""}
+                                        query={widgetStore.ianaTimeZone ?? ""}
                                         onQueryChange={widgetStore.setIanaTimeZone}
                                         onItemSelect={widgetStore.setIanaTimeZone}
                                         onActiveItemChange={this.handleActiveIanaTimeZoneChange}
