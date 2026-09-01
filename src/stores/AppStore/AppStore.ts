@@ -3703,13 +3703,8 @@ export class AppStore {
     };
 
     fetchParameter = (val: any) => {
-        if (val && val instanceof Map) {
-            const obj = markAsScriptingMap({});
-            const map = val as Map<any, any>;
-            for (const [key, value] of map) {
-                obj[key] = value;
-            }
-            return obj;
+        if (val instanceof Map) {
+            return markAsScriptingMap(Object.fromEntries(val));
         }
         return val;
     };

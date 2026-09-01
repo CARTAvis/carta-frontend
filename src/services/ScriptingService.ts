@@ -164,49 +164,30 @@ export class ScriptingService {
         });
     }
 
-    private static selectReturnPath(value: any, returnPath: Exclude<ReturnPath, string>): Record<string, any> {
-        const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path]) : Object.entries(returnPath);
+    private static selectReturnPath(value: any, returnPath: ReturnPath): any {
+        if (typeof returnPath === "string") {
+            return ScriptingService.getReturnPathValue(value, returnPath);
+        }
+
+        const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path] as const) : Object.entries(returnPath);
         return Object.fromEntries(paths.map(([key, path]) => [key, ScriptingService.getReturnPathValue(value, path)]));
     }
 
     private static applyReturnPath(response: any, returnPath: string): any {
-        const parsedReturnPath = parseReturnPath(returnPath);
-
-        if (typeof parsedReturnPath !== "string") {
-            if (Array.isArray(response)) {
-                return response.map(value => ScriptingService.selectReturnPath(value, parsedReturnPath));
-            }
-
-            if (response instanceof Map || isScriptingMap(response)) {
-                const entries = response instanceof Map ? response.entries() : Object.entries(response);
-                return Object.fromEntries(Array.from(entries, ([key, value]) => [key, ScriptingService.selectReturnPath(value, parsedReturnPath)]));
-            }
-
-            if (typeof response === "object") {
-                return ScriptingService.selectReturnPath(response, parsedReturnPath);
-            }
-
-            return response;
-        }
+        const parsedPath = parseReturnPath(returnPath);
+        const selectValue = (value: any) => ScriptingService.selectReturnPath(value, parsedPath);
 
         if (Array.isArray(response)) {
-            return response.map(value => ScriptingService.getReturnPathValue(value, parsedReturnPath));
+            return response.map(selectValue);
         }
 
         if (response instanceof Map || isScriptingMap(response)) {
             const entries = response instanceof Map ? response.entries() : Object.entries(response);
-            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, ScriptingService.getReturnPathValue(value, parsedReturnPath)]));
+            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, selectValue(value)]));
         }
 
-        if (typeof response === "object") {
-            const hasResponsePath = _.hasIn(response, parsedReturnPath);
-            const selectedResponse = _.get(response, parsedReturnPath);
-            if (!hasResponsePath) {
-                throw new Error(`Missing response path: ${parsedReturnPath}`);
-            }
-            // JSON cannot represent undefined. Preserve the distinction between a
-            // missing path and an existing path without a value by returning null.
-            return selectedResponse === undefined ? null : selectedResponse;
+        if (response !== null && typeof response === "object") {
+            return selectValue(response);
         }
 
         return response;
@@ -218,6 +199,8 @@ export class ScriptingService {
         if (!hasResponsePath) {
             throw new Error(`Missing response path: ${returnPath}`);
         }
+        // JSON cannot represent undefined. Preserve the distinction between a
+        // missing path and an existing path without a value by returning null.
         return selectedResponse === undefined ? null : selectedResponse;
     }
 
@@ -226,7 +209,7 @@ export class ScriptingService {
             return JSON.stringify(toJS(response));
         } catch (error) {
             console.error("Failed to serialize scripting response:", error);
-            throw new Error("Response cannot be serialized to JSON because it contains a circular reference or unsupported value. " + "Use return_path to select JSON-serializable fields.");
+            throw new Error("Response cannot be serialized to JSON because it contains a circular reference or unsupported value. Use return_path to select JSON-serializable fields.");
         }
     }
 
