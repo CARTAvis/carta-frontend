@@ -216,9 +216,17 @@ function checkEnumMembers(source, enumName, expectedMembers, definition) {
     for (const expected of expectedMembers) {
         const actual = actualByName.get(canonicalName(expected.name));
         if (!actual) {
-            results.push({source, enum: enumName, member: expected.name, value: expected.value, found: false, reason: "member is missing"});
+            results.push({source, enum: enumName, member: expected.name, value: expected.value, found: false, reason: `member is present in carta-python but missing in ${source}`});
         } else if (actual.value !== expected.value) {
-            results.push({source, enum: enumName, member: expected.name, value: expected.value, frontend_value: actual.value, found: false, reason: "value differs"});
+            results.push({
+                source,
+                enum: enumName,
+                member: expected.name,
+                value: expected.value,
+                frontend_value: actual.value,
+                found: false,
+                reason: `value differs (${source}: ${JSON.stringify(actual.value)}, carta-python: ${JSON.stringify(expected.value)})`
+            });
         } else {
             results.push({source, enum: enumName, member: expected.name, value: expected.value, found: true});
         }
@@ -226,7 +234,7 @@ function checkEnumMembers(source, enumName, expectedMembers, definition) {
 
     for (const actual of definition.members) {
         if (!expectedByName.has(canonicalName(actual.name))) {
-            results.push({source, enum: enumName, member: actual.name, frontend_value: actual.value, found: false, reason: "member is missing in carta-python"});
+            results.push({source, enum: enumName, member: actual.name, frontend_value: actual.value, found: false, reason: `member is present in ${source} but missing in carta-python`});
         }
     }
 

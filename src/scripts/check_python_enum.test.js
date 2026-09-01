@@ -51,7 +51,7 @@ describe("check_python_enum", () => {
 
         expect(missing).toMatchObject({
             found: false,
-            reason: "member is missing in carta-python",
+            reason: "member is present in frontend but missing in carta-python",
             frontend_value: 8
         });
     });
@@ -66,7 +66,12 @@ describe("check_python_enum", () => {
         const expected = definitions.frontend.FrameScaling.members.map(member => (member.name === "SINH" ? {...member, value: 999} : member));
         const results = CHECKER.checkManifest(manifest({FrameScaling: expected}), definitions);
 
-        expect(results.find(result => result.member === "SINH")).toMatchObject({found: false, reason: "value differs", frontend_value: 8, value: 999});
+        expect(results.find(result => result.member === "SINH")).toMatchObject({
+            found: false,
+            reason: "value differs (frontend: 8, carta-python: 999)",
+            frontend_value: 8,
+            value: 999
+        });
     });
 
     test("compares enum names canonically", () => {
