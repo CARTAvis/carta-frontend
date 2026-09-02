@@ -113,6 +113,21 @@ export class ImageViewConfigStore {
         this.imageList = reordered ? reordered : this.imageList;
     };
 
+    /**
+     * Sorts the image list by ascending observation time, so that the multi-panel view renders
+     * the images in time order. Images without a valid observation time (including color blended
+     * images) keep their relative order and are placed at the end.
+     */
+    @action sortImagesByTime = () => {
+        const keyedItems = this.imageList.map((item, index) => {
+            const frame = item?.type === ImageType.FRAME ? (item.store as FrameStore) : undefined;
+            const mjdUtc = frame?.obsTimeMjdUtc;
+            return {item, index, key: mjdUtc !== undefined && isFinite(mjdUtc) ? mjdUtc : Number.POSITIVE_INFINITY};
+        });
+        keyedItems.sort((a, b) => a.key - b.key || a.index - b.index);
+        this.imageList = keyedItems.map(keyedItem => keyedItem.item);
+    };
+
     /** Removes all images from the image list. */
     @action removeAllImages = () => {
         this.imageList = [];
