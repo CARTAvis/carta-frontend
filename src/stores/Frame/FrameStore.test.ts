@@ -450,6 +450,27 @@ describe("FrameStore", () => {
             expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
         });
 
+        test("uses a non-linear AST mapping for AWAV rest-frame conversion", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.AWAV;
+            frame["spectralUnit"] = SpectralUnit.NM;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.createRestFrameMapping2D as jest.Mock).mockClear();
+            (AST.scaleMap2D as jest.Mock).mockClear();
+            (AST.shiftMap2D as jest.Mock).mockClear();
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(1);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.createRestFrameMapping2D).toHaveBeenCalledWith(1, 2, 2);
+            expect(AST.scaleMap2D).not.toHaveBeenCalled();
+            expect(AST.shiftMap2D).not.toHaveBeenCalled();
+            expect(AST.addFrame).toHaveBeenCalledTimes(1);
+            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 3);
+        });
+
         test("preserves a velocity scale close to the lower redshift limit", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             frame["spectralType"] = SpectralType.VRAD;

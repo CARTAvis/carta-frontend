@@ -952,6 +952,86 @@ EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
     return astMatrixMap(2, 2, 1, diags, "");
 }
 
+EMSCRIPTEN_KEEPALIVE AstCmpMap* createRestFrameMapping2D(AstSpecFrame* observedFrame, int spectralAxis, double frequencyFactor)
+{
+    if (!observedFrame || (spectralAxis != 1 && spectralAxis != 2) || !std::isfinite(frequencyFactor) || frequencyFactor <= 0.0)
+    {
+        return nullptr;
+    }
+
+    AstSpecFrame* frequencyFrame = nullptr;
+    AstFrameSet* observedToFrequency = nullptr;
+    AstFrameSet* frequencyToObserved = nullptr;
+    AstZoomMap* frequencyScale = nullptr;
+    AstCmpMap* scaledFrequency = nullptr;
+    AstCmpMap* spectralMapping = nullptr;
+    AstUnitMap* unitMapping = nullptr;
+    AstCmpMap* result = nullptr;
+
+    auto cleanup = [&]() {
+        if (frequencyToObserved) {
+            frequencyToObserved = static_cast<AstFrameSet*>(astAnnul(frequencyToObserved));
+        }
+        if (observedToFrequency) {
+            observedToFrequency = static_cast<AstFrameSet*>(astAnnul(observedToFrequency));
+        }
+        if (frequencyFrame) {
+            frequencyFrame = static_cast<AstSpecFrame*>(astAnnul(frequencyFrame));
+        }
+        if (scaledFrequency) {
+            scaledFrequency = static_cast<AstCmpMap*>(astAnnul(scaledFrequency));
+        }
+        if (spectralMapping) {
+            spectralMapping = static_cast<AstCmpMap*>(astAnnul(spectralMapping));
+        }
+        if (frequencyScale) {
+            frequencyScale = static_cast<AstZoomMap*>(astAnnul(frequencyScale));
+        }
+        if (unitMapping) {
+            unitMapping = static_cast<AstUnitMap*>(astAnnul(unitMapping));
+        }
+    };
+
+    frequencyFrame = static_cast<AstSpecFrame*>(astCopy(observedFrame));
+    if (!frequencyFrame || !astOK)
+    {
+        cleanup();
+        astClearStatus;
+        return nullptr;
+    }
+
+    astSet(frequencyFrame, "System=FREQ,Unit=Hz");
+    observedToFrequency = static_cast<AstFrameSet*>(astConvert(observedFrame, frequencyFrame, ""));
+    frequencyToObserved = static_cast<AstFrameSet*>(astConvert(frequencyFrame, observedFrame, ""));
+    frequencyScale = astZoomMap(1, frequencyFactor, "");
+    if (frequencyScale && frequencyToObserved) {
+        scaledFrequency = astCmpMap(frequencyScale, frequencyToObserved, 1, "");
+    }
+    if (observedToFrequency && scaledFrequency) {
+        spectralMapping = astCmpMap(observedToFrequency, scaledFrequency, 1, "");
+    }
+
+    unitMapping = astUnitMap(1, "");
+    if (spectralAxis == 1 && spectralMapping && unitMapping) {
+        result = astCmpMap(spectralMapping, unitMapping, 0, "");
+    }
+    else if (spectralAxis == 2 && spectralMapping && unitMapping) {
+        result = astCmpMap(unitMapping, spectralMapping, 0, "");
+    }
+
+    const bool success = astOK && result;
+    cleanup();
+    if (!success)
+    {
+        if (result) {
+            result = static_cast<AstCmpMap*>(astAnnul(result));
+        }
+        astClearStatus;
+        return nullptr;
+    }
+    return result;
+}
+
 EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)
 {
     if (!wcsInfo)

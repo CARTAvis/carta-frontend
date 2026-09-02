@@ -125,6 +125,7 @@ addOnPostRun(function () {
     Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
     Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
     Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
+    Module.createRestFrameMapping2D = Module.cwrap("createRestFrameMapping2D", "number", ["number", "number", "number"]);
     Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
     Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
     Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);

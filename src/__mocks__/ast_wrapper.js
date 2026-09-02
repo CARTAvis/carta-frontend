@@ -35,6 +35,7 @@ const MOCK_AST_WRAPPER = {
     convert: jest.fn(() => 1),
     shiftMap2D: jest.fn(() => 1),
     scaleMap2D: jest.fn(() => 1),
+    createRestFrameMapping2D: jest.fn(() => 1),
     frame: jest.fn(() => 1),
     addFrame: jest.fn(),
     setI: jest.fn(),

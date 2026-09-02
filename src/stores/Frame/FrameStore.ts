@@ -1817,26 +1817,10 @@ export class FrameStore {
     };
 
     private getRestFrameSpectralTransform = (): {scale: number; shift: number} => {
-        if (this.spectralType === SpectralType.AWAV) {
-            const restValueAtOne = this.convertObservedSpectralValueToRestFrame(1);
-            const restValueAtTwo = this.convertObservedSpectralValueToRestFrame(2);
-            if (isFinite(restValueAtOne) && isFinite(restValueAtTwo) && restValueAtOne !== restValueAtTwo) {
-                const scale = restValueAtTwo - restValueAtOne;
-                return {scale, shift: restValueAtOne - scale};
-            }
-            return {scale: 1, shift: 0};
-        }
-
         return getRestFrameSpectralTransformUtility(this.spectralType, this.spectralUnit, this.effectiveRestFrameRedshift) ?? {scale: 1, shift: 0};
     };
 
     private addRestFrameWcsFrames = (astFrameSet: AST.FrameSet): void => {
-        const {scale, shift} = this.getRestFrameSpectralTransform();
-        const scaleX = this.spectral === 1 ? scale : 1;
-        const scaleY = this.spectral === 2 ? scale : 1;
-        const shiftX = this.spectral === 1 ? shift : 0;
-        const shiftY = this.spectral === 2 ? shift : 0;
-
         const label1 = AST.getString(astFrameSet, "Label(1)");
         const label2 = AST.getString(astFrameSet, "Label(2)");
         const unit1 = AST.getString(astFrameSet, "Unit(1)");
@@ -1846,23 +1830,54 @@ export class FrameStore {
         const restUnit1 = this.spectral === 1 ? '""' : unit1;
         const restUnit2 = this.spectral === 2 ? '""' : unit2;
 
-        const scaleMap = AST.scaleMap2D(scaleX, scaleY);
-        const shiftMap = AST.shiftMap2D(shiftX, shiftY);
+        let scaleMap: AST.Mapping | null = null;
+        let shiftMap: AST.Mapping | null = null;
+        let restFrameMapping: AST.Mapping | null = null;
         const scaledFrame = AST.frame(2, "Domain=SCALED");
         const restFrame = AST.frame(2, "Domain=REST_FRAME");
         try {
-            AST.addFrame(astFrameSet, 2, scaleMap, scaledFrame);
             AST.set(restFrame, `Label(1)=${restLabel1}`);
             AST.set(restFrame, `Label(2)=${restLabel2}`);
             AST.set(restFrame, `Unit(1)=${restUnit1}`);
             AST.set(restFrame, `Unit(2)=${restUnit2}`);
+
+            if (this.spectralType === SpectralType.AWAV) {
+                if (!this.spectralFrame) {
+                    return;
+                }
+                // AWAV conversion is non-linear. Build the exact AST conversion
+                // through frequency instead of approximating it with a ScaleMap.
+                restFrameMapping = AST.createRestFrameMapping2D(this.spectralFrame, this.spectral, this.restFrameFactor);
+                if (!restFrameMapping) {
+                    return;
+                }
+                AST.addFrame(astFrameSet, 2, restFrameMapping, restFrame);
+                AST.setI(astFrameSet, "Current", 3);
+                return;
+            }
+
+            const {scale, shift} = this.getRestFrameSpectralTransform();
+            const scaleX = this.spectral === 1 ? scale : 1;
+            const scaleY = this.spectral === 2 ? scale : 1;
+            const shiftX = this.spectral === 1 ? shift : 0;
+            const shiftY = this.spectral === 2 ? shift : 0;
+            scaleMap = AST.scaleMap2D(scaleX, scaleY);
+            shiftMap = AST.shiftMap2D(shiftX, shiftY);
+            AST.addFrame(astFrameSet, 2, scaleMap, scaledFrame);
             AST.addFrame(astFrameSet, 3, shiftMap, restFrame);
             AST.setI(astFrameSet, "Current", 4);
         } finally {
             AST.deleteObject(restFrame);
             AST.deleteObject(scaledFrame);
-            AST.deleteObject(shiftMap);
-            AST.deleteObject(scaleMap);
+            if (restFrameMapping) {
+                AST.deleteObject(restFrameMapping);
+            }
+            if (shiftMap) {
+                AST.deleteObject(shiftMap);
+            }
+            if (scaleMap) {
+                AST.deleteObject(scaleMap);
+            }
         }
     };
 
