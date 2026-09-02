@@ -1,7 +1,7 @@
 import {ToolbarComponent} from "./ToolbarComponent";
 
 describe("ToolbarComponent axis zoom", () => {
-    const makeComponent = (zoomAxis: "both" | "x" | "y") => {
+    const makeComponent = (zoomAxis: "x" | "y") => {
         const frame = {
             spatialReference: undefined,
             isPVImage: true,
@@ -38,13 +38,13 @@ describe("ToolbarComponent axis zoom", () => {
         expect(onRegionViewZoom).toHaveBeenCalledWith({x: 2, y: 0.5});
     });
 
-    test("preserves the independent zoom ratio when zooming both axes", () => {
-        const {component, frame, onRegionViewZoom} = makeComponent("both");
+    test("uses X as the default zoom axis", () => {
+        const {component, frame, onRegionViewZoom} = makeComponent("x");
 
         component.handleZoomInClicked();
 
-        expect(frame.setAxisZoom).toHaveBeenCalledWith(4, 2);
+        expect(frame.setAxisZoom).toHaveBeenCalledWith(4, 1);
         expect(frame.setZoom).not.toHaveBeenCalled();
-        expect(onRegionViewZoom).toHaveBeenCalledWith({x: 4, y: 2});
+        expect(onRegionViewZoom).toHaveBeenCalledWith({x: 4, y: 1});
     });
 });

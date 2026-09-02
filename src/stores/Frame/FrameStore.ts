@@ -91,7 +91,7 @@ export interface FrameInfo {
 
 export const WCS_PRECISION = 10;
 
-export type ZoomAxis = "both" | "x" | "y";
+export type ZoomAxis = "x" | "y";
 type BeamProperties = {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; beamAreaPixels: number; beamArea: number; overlayBeamSettings: OverlayBeamStore};
 
 export class FrameStore {
@@ -172,7 +172,7 @@ export class FrameStore {
     @observable isCursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable axisZoomLevel: Point2D = {x: 1, y: 1};
-    @observable zoomAxis: ZoomAxis = "both";
+    @observable zoomAxis: ZoomAxis = "x";
     @observable stokes: number = 0;
     @observable channel: number = 0;
     @observable requiredStokes: number = 0;

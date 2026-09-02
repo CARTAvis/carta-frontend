@@ -257,7 +257,7 @@ describe("FrameStore", () => {
             const spatialRef = new FrameStore(EMPTYFRAME_INFO);
             frame["spatialReference"] = spatialRef;
 
-            expect(frame.zoomAxis).toBe("both");
+            expect(frame.zoomAxis).toBe("x");
             frame.setZoomAxis("x");
             expect(frame.zoomAxis).toBe("x");
             expect(spatialRef.zoomAxis).toBe("x");

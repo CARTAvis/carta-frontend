@@ -66,14 +66,11 @@ export function getCanvasPathAtScreenDistance(start: Point2D, points: Point2D[],
     return getInterpolatedPathAtDistance(toScreen(start), points.map(toScreen), distance).map(point => ({x: point.x / stageScale.x, y: point.y / stageScale.y}));
 }
 
-export function getZoomAxisForWheel(frame: FrameStore, isShiftKeyPressed: boolean, isAltKeyPressed: boolean): Exclude<ZoomAxis, "both"> | undefined {
+export function getZoomAxisForWheel(frame: FrameStore, isShiftKeyPressed: boolean): ZoomAxis | undefined {
     if (!frame.isAxisZoomable) {
         return undefined;
     }
-    if (isShiftKeyPressed || isAltKeyPressed) {
-        return isShiftKeyPressed ? (isAltKeyPressed ? "x" : "y") : undefined;
-    }
-    return frame.zoomAxis === "both" ? undefined : frame.zoomAxis;
+    return isShiftKeyPressed ? (frame.zoomAxis === "x" ? "y" : "x") : frame.zoomAxis;
 }
 
 export function getWheelDelta(event: Pick<WheelEvent, "deltaX" | "deltaY" | "shiftKey">): number {

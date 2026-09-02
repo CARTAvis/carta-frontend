@@ -635,15 +635,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt;
         const frame = this.frame;
         if (frame) {
-            if (frame.isAxisZoomable && mouseEvent.altKey && !mouseEvent.shiftKey) {
-                return;
-            }
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             const delta = -getWheelDelta(mouseEvent) * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             const scale = delta > 0 ? zoomSpeed : 1.0 / zoomSpeed;
-            const zoomAxis = getZoomAxisForWheel(frame, mouseEvent.shiftKey, mouseEvent.altKey);
+            const zoomAxis = getZoomAxisForWheel(frame, mouseEvent.shiftKey);
             if (zoomAxis) {
                 const zoomFrame = frame.spatialReference ?? frame;
                 frame.zoomToPointAxis(zoomAxis, cursorPosImageSpace, zoomFrame.effectiveZoomLevel[zoomAxis] * scale);

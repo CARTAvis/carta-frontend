@@ -121,7 +121,7 @@ export function restoreWorkspaceZoom(frame: FrameStore, workspaceZoom: Pick<Work
             frame.zoomLevel = workspaceZoom.zoomLevel;
         }
     }
-    if (zoomFrame.isAxisZoomable && (workspaceZoom.zoomAxis === "both" || workspaceZoom.zoomAxis === "x" || workspaceZoom.zoomAxis === "y")) {
+    if (zoomFrame.isAxisZoomable && (workspaceZoom.zoomAxis === "x" || workspaceZoom.zoomAxis === "y")) {
         zoomFrame.setZoomAxis(workspaceZoom.zoomAxis);
     }
 }

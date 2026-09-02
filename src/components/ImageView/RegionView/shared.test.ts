@@ -56,23 +56,19 @@ describe("region view stage coordinate helpers", () => {
         expect(transformedImageToCanvasPos({x: 50, y: 25}, frame as any, 200, 100, nonUniformStage)).toEqual({x: 100, y: 37.5});
     });
 
-    test("uses the toolbar axis for wheel zoom unless a modifier overrides it", () => {
+    test("uses the selected axis or its opposite for Shift-wheel zoom", () => {
         const frame = {isAxisZoomable: true, zoomAxis: "x"} as any;
 
-        expect(getZoomAxisForWheel(frame, false, false)).toBe("x");
-        expect(getZoomAxisForWheel(frame, true, false)).toBe("y");
-        expect(getZoomAxisForWheel(frame, false, true)).toBeUndefined();
-        expect(getZoomAxisForWheel(frame, true, true)).toBe("x");
-
-        frame.zoomAxis = "both";
-        expect(getZoomAxisForWheel(frame, false, false)).toBeUndefined();
+        expect(getZoomAxisForWheel(frame, false)).toBe("x");
+        expect(getZoomAxisForWheel(frame, true)).toBe("y");
 
         frame.isAxisZoomable = true;
         frame.zoomAxis = "y";
-        expect(getZoomAxisForWheel(frame, false, false)).toBe("y");
+        expect(getZoomAxisForWheel(frame, false)).toBe("y");
+        expect(getZoomAxisForWheel(frame, true)).toBe("x");
 
         frame.isAxisZoomable = false;
-        expect(getZoomAxisForWheel(frame, false, false)).toBeUndefined();
+        expect(getZoomAxisForWheel(frame, false)).toBeUndefined();
     });
 
     test("uses the horizontal delta for macOS shift-wheel input", () => {
