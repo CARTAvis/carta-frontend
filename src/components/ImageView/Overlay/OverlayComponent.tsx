@@ -146,7 +146,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const currentWcsIndex = parseInt(AST.getString(tempWcsInfo, "Current"), 10);
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
-                AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                try {
+                    AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                } finally {
+                    AST.deleteObject(newFrame);
+                    AST.deleteObject(scaleMapping);
+                }
                 const newBaseIndex = parseInt(AST.getString(tempWcsInfo, "Nframe"), 10);
                 AST.setI(tempWcsInfo, "Base", newBaseIndex);
                 AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? newBaseIndex : currentWcsIndex);

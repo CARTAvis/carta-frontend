@@ -8,7 +8,7 @@ import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSe
 import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, RestFrameShiftMode, SystemType, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {ColorbarStore, type FrameStore} from "stores/Frame";
-import {isValidRedshift, isValidVelocity, NUMBER_FORMAT_LABEL, SPEED_OF_LIGHT_KMS, SWATCH_COLORS, toFixed} from "utilities";
+import {NUMBER_FORMAT_LABEL, restFrameShiftValidationMessage, SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -32,17 +32,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
     };
 
     private onRestFrameShiftChanged = (frame: FrameStore, value: number) => {
-        const isRadialVelocityMode = frame.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const isValid = isRadialVelocityMode ? isValidVelocity(value, frame.restFrameVelocityConvention) : isValidRedshift(value);
+        const isValid = frame.setRestFrameShift(value);
         this.setRestFrameShiftInputIntent(isValid ? Intent.NONE : Intent.DANGER);
-        frame.setRestFrameShiftInputValid(isValid);
-        if (isValid) {
-            if (isRadialVelocityMode) {
-                frame.setRestFrameRadialVelocity(value);
-            } else {
-                frame.setRestFrameRedshift(value);
-            }
-        }
     };
 
     constructor(props: any) {
@@ -767,13 +758,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const isRadialVelocityMode = frame?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
         const isRestFrameShiftInputDisabled = !frame?.isRestFrameEnabled || !frame?.isRestFrameSupported;
-        const velocityValidationMessage =
-            frame?.restFrameVelocityConvention === VelocityConvention.RADIO
-                ? `Velocity must be less than +${SPEED_OF_LIGHT_KMS} km/s`
-                : frame?.restFrameVelocityConvention === VelocityConvention.OPTICAL
-                  ? `Velocity must be greater than -${SPEED_OF_LIGHT_KMS} km/s`
-                  : `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s`;
-        const restFrameShiftInputError = this.restFrameShiftInputIntent === Intent.DANGER ? `${isRadialVelocityMode ? velocityValidationMessage : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.` : undefined;
+        const restFrameShiftInputError =
+            this.restFrameShiftInputIntent === Intent.DANGER && frame ? `${restFrameShiftValidationMessage(frame.restFrameShiftMode, frame.restFrameVelocityConvention)}. Correction is temporarily using z = 0.` : undefined;
         const restFramePanel =
             isPVImage && frame ? (
                 <div className="rest-frame-panel">

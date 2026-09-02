@@ -68,78 +68,69 @@ function transformSpectralValues(
     return transformedValues.length === values.length && transformedValues.every(value => isFinite(value)) ? transformedValues : undefined;
 }
 
+function convertSpectralValue(
+    spectralFrame: AST.SpecFrame | null,
+    sourceType: SpectralType | null,
+    sourceUnit: SpectralUnit | null,
+    targetType: SpectralType | null,
+    targetUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    value: number
+): number | undefined {
+    if (!spectralFrame || !sourceType || !sourceUnit || !targetType || !targetUnit || !isFinite(value)) {
+        return undefined;
+    }
+    if (sourceType === targetType && sourceUnit === targetUnit) {
+        return value;
+    }
+
+    const nativeValue = transformSpectralValue(spectralFrame, sourceType, sourceUnit, spectralSystem, value, false);
+    return nativeValue === undefined ? undefined : transformSpectralValue(spectralFrame, targetType, targetUnit, spectralSystem, nativeValue);
+}
+
+function convertSpectralValues(
+    spectralFrame: AST.SpecFrame | null,
+    sourceType: SpectralType | null,
+    sourceUnit: SpectralUnit | null,
+    targetType: SpectralType | null,
+    targetUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    values: number[]
+): number[] | undefined {
+    if (!spectralFrame || !values?.length || !values.every(value => isFinite(value)) || !sourceType || !sourceUnit || !targetType || !targetUnit) {
+        return undefined;
+    }
+    if (sourceType === targetType && sourceUnit === targetUnit) {
+        return values.slice();
+    }
+
+    const nativeValues = transformSpectralValues(spectralFrame, sourceType, sourceUnit, spectralSystem, values, false);
+    if (!nativeValues) {
+        return undefined;
+    }
+
+    const transformedValues = transformSpectralValues(spectralFrame, targetType, targetUnit, spectralSystem, nativeValues);
+    return transformedValues ? Array.from(transformedValues) : undefined;
+}
+
 export function convertToNativeWCS(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
     return transformSpectralValue(spectralFrame, spectralType, spectralUnit, spectralSystem, value, false);
 }
 
 export function convertFreqMHzToSettingWCS(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
-    if (!spectralFrame || !isFinite(value) || !spectralType || !spectralUnit) {
-        return undefined;
-    }
-
-    if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
-        return value;
-    }
-
-    const nativeWCSValue = transformSpectralValue(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, value, false);
-    if (nativeWCSValue === undefined) {
-        return undefined;
-    }
-
-    return transformSpectralValue(spectralFrame, spectralType, spectralUnit, spectralSystem, nativeWCSValue);
+    return convertSpectralValue(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralType, spectralUnit, spectralSystem, value);
 }
 
 export function convertFreqMHzToSettingWCSArray(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, values: number[]): number[] | undefined {
-    if (!spectralFrame || !values?.length || !values.every(value => isFinite(value)) || !spectralType || !spectralUnit) {
-        return undefined;
-    }
-
-    if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
-        return values.slice();
-    }
-
-    const nativeWCSValues = transformSpectralValues(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, values, false);
-    if (!nativeWCSValues) {
-        return undefined;
-    }
-
-    const settingWCSValues = transformSpectralValues(spectralFrame, spectralType, spectralUnit, spectralSystem, nativeWCSValues);
-    return settingWCSValues ? Array.from(settingWCSValues) : undefined;
+    return convertSpectralValues(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralType, spectralUnit, spectralSystem, values);
 }
 
 export function convertSettingWCSToFreqMHz(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
-    if (!spectralFrame || !isFinite(value) || !spectralType || !spectralUnit) {
-        return undefined;
-    }
-
-    if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
-        return value;
-    }
-
-    const nativeWCSValue = transformSpectralValue(spectralFrame, spectralType, spectralUnit, spectralSystem, value, false);
-    if (nativeWCSValue === undefined) {
-        return undefined;
-    }
-
-    return transformSpectralValue(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, nativeWCSValue);
+    return convertSpectralValue(spectralFrame, spectralType, spectralUnit, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, value);
 }
 
 export function convertSettingWCSToFreqMHzArray(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, values: number[]): number[] | undefined {
-    if (!spectralFrame || !values?.length || !values.every(value => isFinite(value)) || !spectralType || !spectralUnit) {
-        return undefined;
-    }
-
-    if (spectralType === SpectralType.FREQ && spectralUnit === SpectralUnit.MHZ) {
-        return values.slice();
-    }
-
-    const nativeWCSValues = transformSpectralValues(spectralFrame, spectralType, spectralUnit, spectralSystem, values, false);
-    if (!nativeWCSValues) {
-        return undefined;
-    }
-
-    const freqMHzValues = transformSpectralValues(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, nativeWCSValues);
-    return freqMHzValues ? Array.from(freqMHzValues) : undefined;
+    return convertSpectralValues(spectralFrame, spectralType, spectralUnit, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, values);
 }
 
 export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.HeaderEntry.$Properties[], wcsPrecision: number): SwappedDirAxisInfo {

@@ -17,7 +17,7 @@ import {
     SpectralProfilerSettingsTabs,
     type SpectralSystem,
     SpectralType,
-    SpectralUnit,
+    type SpectralUnit,
     TelemetryAction,
     VelocityConvention
 } from "enums";
@@ -25,13 +25,23 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, isValidRedshift, pixelToFluxDensityUnit, redshiftFromVelocity, restFrequencyFactorFromRedshift, SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS, velocityFromRedshift} from "utilities";
+import {
+    clamp,
+    convertRestFrameSpectralValue,
+    getColorForTheme,
+    isAutoColor,
+    isRestFrameSpectralType,
+    isValidRedshift,
+    pixelToFluxDensityUnit,
+    redshiftFromRestFrameShift,
+    restFrequencyFactorFromRedshift,
+    velocityFromRedshift
+} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
 type XTransformTarget = "display" | "observed";
-const REST_FRAME_SPECTRAL_TYPES: ReadonlySet<string> = new Set([SpectralType.FREQ, SpectralType.WAVE, SpectralType.AWAV, SpectralType.VRAD, SpectralType.VOPT]);
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
@@ -189,10 +199,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setRestFrameRadialVelocity = (velocityKms: number) => {
-        const redshift = redshiftFromVelocity(velocityKms, this.restFrameVelocityConvention);
+        const redshift = redshiftFromRestFrameShift(velocityKms, RestFrameShiftMode.RADIAL_VELOCITY, this.restFrameVelocityConvention);
         if (isFinite(redshift)) {
             this.setRestFrameRedshift(redshift);
         }
+    };
+
+    @action setRestFrameShift = (value: number): boolean => {
+        const redshift = redshiftFromRestFrameShift(value, this.restFrameShiftMode, this.restFrameVelocityConvention);
+        const isValid = isFinite(redshift);
+        this.setRestFrameShiftInputValid(isValid);
+        if (isValid) {
+            this.setRestFrameRedshift(redshift);
+        }
+        return isValid;
     };
 
     @action setYAxisRestFrameEnabled = (isEnabled: boolean) => {
@@ -591,13 +611,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveFrame?.intensityUnit;
     }
 
-    private isRestFrameSpectralType = (spectralType: SpectralType | string | null | undefined): boolean => {
-        return Boolean(spectralType && REST_FRAME_SPECTRAL_TYPES.has(spectralType));
-    };
-
     @computed get isXAxisRestFrameSupported(): boolean {
         const frame = this.effectiveFrame;
-        return this.isRestFrameSpectralType(frame?.spectralType ?? frame?.spectralAxis?.type?.code);
+        return isRestFrameSpectralType(frame?.spectralType ?? frame?.spectralAxis?.type?.code);
     }
 
     private get isRestFrameShiftValid(): boolean {
@@ -665,7 +681,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return unit;
         }
 
-        const frameLabel = this.isRestFrameSpectralType(this.effectiveSecondarySpectralType) ? "rest frame" : "observed";
+        const frameLabel = isRestFrameSpectralType(this.effectiveSecondarySpectralType) ? "rest frame" : "observed";
         return `${unit}${unit ? " " : ""}(${frameLabel})`;
     }
 
@@ -1250,45 +1266,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     private convertXValue = (value: number, target: XTransformTarget, spectralType: SpectralType | string | null | undefined, spectralUnit: SpectralUnit | null | undefined): number => {
-        const redshiftScale = target === "display" ? this.redshiftFactor : 1 / this.redshiftFactor;
-        const speedOfLight = spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
         const redshift = this.effectiveRestFrameRedshift;
 
-        switch (spectralType) {
-            case SpectralType.FREQ:
-                return value * redshiftScale;
-            case SpectralType.WAVE: {
-                const wavelengthPower = spectralUnit?.endsWith("^2") ? 2 : 1;
-                return value / Math.pow(redshiftScale, wavelengthPower);
-            }
-            case SpectralType.AWAV: {
-                const frame = this.effectiveFrame;
-                const frequency = frame?.convertSettingWCSToFreqMHz(value, spectralType, spectralUnit ?? null);
-                if (frequency !== undefined && isFinite(frequency)) {
-                    const transformedValue = frame?.convertFreqMHzToSettingWCS(frequency * redshiftScale, spectralType, spectralUnit ?? null);
-                    if (transformedValue !== undefined && isFinite(transformedValue)) {
-                        return transformedValue;
-                    }
+        if (spectralType === SpectralType.AWAV) {
+            const frame = this.effectiveFrame;
+            const frequency = frame?.convertSettingWCSToFreqMHz(value, spectralType, spectralUnit ?? null);
+            const frequencyScale = target === "display" ? this.redshiftFactor : 1 / this.redshiftFactor;
+            if (frequency !== undefined && isFinite(frequency)) {
+                const transformedValue = frame?.convertFreqMHzToSettingWCS(frequency * frequencyScale, spectralType, spectralUnit ?? null);
+                if (transformedValue !== undefined && isFinite(transformedValue)) {
+                    return transformedValue;
                 }
-                return NaN;
             }
-            case SpectralType.VRAD: {
-                if (!isFinite(speedOfLight)) {
-                    return NaN;
-                }
-                // Apply nu_rest = (1 + z) * nu_observed using the FITS VRAD definition.
-                return target === "display" ? value * this.redshiftFactor - speedOfLight * redshift : (value + speedOfLight * redshift) / this.redshiftFactor;
-            }
-            case SpectralType.VOPT: {
-                if (!isFinite(speedOfLight)) {
-                    return NaN;
-                }
-                // Apply nu_rest = (1 + z) * nu_observed using the FITS VOPT definition.
-                return target === "display" ? (value - speedOfLight * redshift) / this.redshiftFactor : value * this.redshiftFactor + speedOfLight * redshift;
-            }
-            default:
-                return value;
+            return NaN;
         }
+
+        return convertRestFrameSpectralValue(value, spectralType, spectralUnit, redshift, target === "display" ? "observed-to-rest" : "rest-to-observed");
     };
 
     public convertObservedXToDisplay = (

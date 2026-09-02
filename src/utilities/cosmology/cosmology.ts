@@ -1,10 +1,26 @@
-import {VelocityConvention} from "enums";
+import {RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "enums";
 
 /** Speed of light in metres per second. */
 export const SPEED_OF_LIGHT = 299792458;
 
 /** Speed of light in kilometres per second. */
 export const SPEED_OF_LIGHT_KMS = SPEED_OF_LIGHT / 1e3;
+const REST_FRAME_SPECTRAL_TYPES = new Set<string>([SpectralType.FREQ, SpectralType.WAVE, SpectralType.AWAV, SpectralType.VRAD, SpectralType.VOPT]);
+
+export function isRestFrameSpectralType(spectralType: SpectralType | string | null | undefined): boolean {
+    return spectralType !== null && spectralType !== undefined && REST_FRAME_SPECTRAL_TYPES.has(spectralType);
+}
+
+export function speedOfLightForSpectralUnit(unit: SpectralUnit | string | null | undefined): number {
+    switch (unit) {
+        case SpectralUnit.MS:
+            return SPEED_OF_LIGHT;
+        case SpectralUnit.KMS:
+            return SPEED_OF_LIGHT_KMS;
+        default:
+            return NaN;
+    }
+}
 
 /** Return whether a redshift is physically valid for frequency conversion. */
 export function isValidRedshift(redshift: number): boolean {
@@ -56,6 +72,76 @@ export function redshiftFromVelocity(velocityKms: number, convention: VelocityCo
         default:
             return NaN;
     }
+}
+
+export function redshiftFromRestFrameShift(value: number, mode: RestFrameShiftMode, convention: VelocityConvention): number {
+    if (mode === RestFrameShiftMode.REDSHIFT) {
+        return isValidRedshift(value) ? value : NaN;
+    }
+    if (mode === RestFrameShiftMode.RADIAL_VELOCITY) {
+        return redshiftFromVelocity(value, convention);
+    }
+    return NaN;
+}
+
+export function restFrameShiftValidationMessage(mode: RestFrameShiftMode, convention: VelocityConvention): string {
+    if (mode === RestFrameShiftMode.REDSHIFT) {
+        return "Redshift must be greater than -1";
+    }
+
+    switch (convention) {
+        case VelocityConvention.RADIO:
+            return `Velocity must be less than +${SPEED_OF_LIGHT_KMS} km/s`;
+        case VelocityConvention.OPTICAL:
+            return `Velocity must be greater than -${SPEED_OF_LIGHT_KMS} km/s`;
+        case VelocityConvention.RELATIVISTIC:
+            return `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s`;
+        default:
+            return "Invalid velocity convention";
+    }
+}
+
+export function getRestFrameSpectralTransform(spectralType: SpectralType | string | null | undefined, spectralUnit: SpectralUnit | string | null | undefined, redshift: number): {scale: number; shift: number} | undefined {
+    if (!isValidRedshift(redshift)) {
+        return undefined;
+    }
+
+    const factor = 1 + redshift;
+    const speedOfLight = speedOfLightForSpectralUnit(spectralUnit);
+    switch (spectralType) {
+        case SpectralType.FREQ:
+            return {scale: factor, shift: 0};
+        case SpectralType.WAVE: {
+            const power = spectralUnit?.endsWith("^2") ? 2 : 1;
+            return {scale: 1 / Math.pow(factor, power), shift: 0};
+        }
+        case SpectralType.VRAD:
+            return isFinite(speedOfLight) ? {scale: factor, shift: -speedOfLight * redshift} : undefined;
+        case SpectralType.VOPT:
+            return isFinite(speedOfLight) ? {scale: 1 / factor, shift: (-speedOfLight * redshift) / factor} : undefined;
+        default:
+            return {scale: 1, shift: 0};
+    }
+}
+
+export function convertRestFrameSpectralValue(
+    value: number,
+    spectralType: SpectralType | string | null | undefined,
+    spectralUnit: SpectralUnit | string | null | undefined,
+    redshift: number,
+    direction: "observed-to-rest" | "rest-to-observed"
+): number {
+    if (!isFinite(value)) {
+        return NaN;
+    }
+
+    const transform = getRestFrameSpectralTransform(spectralType, spectralUnit, redshift);
+    if (!transform) {
+        return NaN;
+    }
+
+    const isObservedToRest = direction === "observed-to-rest";
+    return isObservedToRest ? value * transform.scale + transform.shift : (value - transform.shift) / transform.scale;
 }
 
 /** Convert redshift to radial velocity in km/s using an explicit velocity convention. */

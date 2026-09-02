@@ -7,7 +7,7 @@ import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps
 import {HelpType, MultiProfileCategory, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {isValidRedshift, isValidVelocity, parseNumber, SPEED_OF_LIGHT_KMS} from "utilities";
+import {parseNumber, restFrameShiftValidationMessage} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
@@ -85,26 +85,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
-    private isValidShiftInput = (value: number, isRadialVelocityMode: boolean, velocityConvention?: VelocityConvention): boolean => {
-        if (isRadialVelocityMode && velocityConvention) {
-            return isValidVelocity(value, velocityConvention);
-        }
-        return isValidRedshift(value);
-    };
-
     @action private onShiftChanged = (value: number) => {
         const widgetStore = this.widgetStore;
-        const isRadialVelocityMode = widgetStore?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const isValid = this.isValidShiftInput(value, isRadialVelocityMode, widgetStore?.restFrameVelocityConvention);
-        this.shiftInputIntent = isValid ? Intent.NONE : Intent.DANGER;
-        widgetStore?.setRestFrameShiftInputValid(isValid);
-        if (isValid) {
-            if (isRadialVelocityMode) {
-                widgetStore?.setRestFrameRadialVelocity(value);
-            } else {
-                widgetStore?.setRestFrameRedshift(value);
-            }
+        if (!widgetStore) {
+            return;
         }
+
+        const isValid = widgetStore.setRestFrameShift(value);
+        this.shiftInputIntent = isValid ? Intent.NONE : Intent.DANGER;
     };
 
     @action private onShiftModeChanged = (mode: string) => {
@@ -235,13 +223,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const isYAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isYAxisRestFrameSupported;
         const isShiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameCorrectionRequested;
         const isRadialVelocityMode = widgetStore.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
-        const velocityValidationMessage =
-            widgetStore.restFrameVelocityConvention === VelocityConvention.RADIO
-                ? `Velocity must be less than +${SPEED_OF_LIGHT_KMS} km/s`
-                : widgetStore.restFrameVelocityConvention === VelocityConvention.OPTICAL
-                  ? `Velocity must be greater than -${SPEED_OF_LIGHT_KMS} km/s`
-                  : `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s`;
-        const shiftInputError = this.shiftInputIntent === Intent.DANGER ? `${isRadialVelocityMode ? velocityValidationMessage : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.` : undefined;
+        const shiftInputError = this.shiftInputIntent === Intent.DANGER ? `${restFrameShiftValidationMessage(widgetStore.restFrameShiftMode, widgetStore.restFrameVelocityConvention)}. Correction is temporarily using z = 0.` : undefined;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">

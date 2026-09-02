@@ -450,6 +450,20 @@ describe("FrameStore", () => {
             expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
         });
 
+        test("preserves a velocity scale close to the lower redshift limit", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            const redshift = -0.999999999999;
+            (AST.scaleMap2D as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(redshift);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.scaleMap2D).toHaveBeenLastCalledWith(1, 1 + redshift);
+        });
+
         test("preserves axis units with rest frame annotation on label when rest-frame conversion is enabled", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             frame["spectralType"] = SpectralType.VRAD;
