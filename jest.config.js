@@ -77,6 +77,11 @@ module.exports = {
         '<rootDir>/src/**/?(*.)(spec|test).(js|jsx|ts|tsx)',
         '<rootDir>/wasm_src/**/?(*.)(spec|test).(js|jsx|ts|tsx)'
     ],
+
+    // This file uses Node's built-in node:test runner; run it via test:ast-wrapper instead.
+    testPathIgnorePatterns: [
+        '<rootDir>/wasm_src/ast_wrapper/ast_wrapper.test.js'
+    ],
     
     // Collect coverage from
     collectCoverageFrom: [
