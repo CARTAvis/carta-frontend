@@ -526,24 +526,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private assembleScatterPlotData(
         qProfile: Array<number>,
         uProfile: Array<number>,
-        type: StokesCoordinate
+        type: StokesCoordinate,
+        channelValues?: Array<number>
     ): {
         dataset: Array<Point3D>;
         border: Border;
     } | null {
         const frame = this.widgetStore.effectiveFrame;
-        if (
-            qProfile &&
-            qProfile.length &&
-            uProfile &&
-            uProfile.length &&
-            frame &&
-            frame.channelValues &&
-            frame.channelValues.length &&
-            qProfile.length === uProfile.length &&
-            (qProfile.length === frame.channelValues.length || this.widgetStore.smoothingStore.type === SmoothingType.BINNING)
-        ) {
-            const channelValues = frame.channelValues;
+        const profileChannelValues = channelValues ?? frame?.channelValues;
+        if (qProfile && qProfile.length && uProfile && uProfile.length && frame && profileChannelValues && profileChannelValues.length && qProfile.length === uProfile.length && qProfile.length === profileChannelValues.length) {
             const border = this.calculateXYborder(qProfile, uProfile, false, type);
             const values: Array<Point3D> = [];
             // centered origin and equal scaler
@@ -564,10 +555,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                       yMax: widgetStore.quScatterMaxY ?? equalScalerBorder.yMax
                   };
             this.widgetStore.scatterOutRangePointsZIndex = [];
-            for (let i = 0; i < channelValues.length; i++) {
+            for (let i = 0; i < profileChannelValues.length; i++) {
                 const x = qProfile[i];
                 const y = uProfile[i];
-                const z = channelValues[i];
+                const z = profileChannelValues[i];
                 values.push({x, y, z});
 
                 // update line plot color array
@@ -741,7 +732,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             const quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
-            const quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU);
+            const quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU, compositeProfile.qSmoothedX);
             const piDic = this.assembleLinePlotData(compositeProfile.piProfile, frame.channelValues, StokesCoordinate.PolarizedIntensity);
             const paDic = this.assembleLinePlotData(compositeProfile.paProfile, frame.channelValues, StokesCoordinate.PolarizationAngle);
             const qDic = this.assembleLinePlotData(compositeProfile.qProfile, frame.channelValues, StokesCoordinate.LinearPolarizationQ);
