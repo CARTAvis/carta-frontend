@@ -262,7 +262,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                 disabled={isXAxisRestFrameInputDisabled}
                                                 label="X-axis"
                                                 onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
-                                                data-testid="spectral-profiler-x-axis-rest-frame-switch"
+                                                data-testid="spectral-profiler-x-axis-rest-frame-toggle"
                                             />
                                             <div className="rest-frame-correction-switch-with-info">
                                                 <Switch
@@ -270,7 +270,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                                     disabled={isYAxisRestFrameInputDisabled}
                                                     label="Y-axis"
                                                     onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
-                                                    data-testid="spectral-profiler-y-axis-rest-frame-switch"
+                                                    data-testid="spectral-profiler-y-axis-rest-frame-toggle"
                                                 />
                                                 <Tooltip
                                                     content={
