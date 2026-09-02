@@ -317,6 +317,23 @@ describe("FrameStore", () => {
             expect(frame.defaultZoomAxis).toBe("y");
         });
 
+        test("initializes preview zoom axis to the spectral axis", () => {
+            const frameInfo = {
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "RA---SIN"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            const frame = new FrameStore(frameInfo);
+            expect(frame.zoomAxis).toBe("y");
+        });
+
         test("uses independent zoom levels for preview frames", () => {
             const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
 
