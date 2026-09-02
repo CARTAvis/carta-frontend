@@ -263,6 +263,37 @@ describe("FrameStore", () => {
             expect(spatialRef.zoomAxis).toBe("x");
         });
 
+        test("defaults PV and rotated cube zoom to the spectral axis", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            frame["frameInfo"] = {
+                ...EMPTYFRAME_INFO,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "OFFSET"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("y");
+
+            frame["frameInfo"] = {
+                ...frame["frameInfo"],
+                fileInfoExtended: {
+                    ...frame["frameInfo"].fileInfoExtended,
+                    headerEntries: [
+                        {name: "CTYPE1", value: "VRAD"},
+                        {name: "CTYPE2", value: "DISTANCE"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("x");
+
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+            expect(frame.defaultZoomAxis).toBe("y");
+        });
+
         test("uses independent zoom levels for preview frames", () => {
             const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
 
