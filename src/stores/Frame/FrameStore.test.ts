@@ -60,6 +60,7 @@ const EMPTYFRAME_INFO: FrameInfo = {
     hdu: "",
     fileInfo: {} as any,
     fileInfoExtended: {
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 0, stokes: 0, depth: 0},
         headerEntries: []
     } as any,
     fileFeatureFlags: 0,
