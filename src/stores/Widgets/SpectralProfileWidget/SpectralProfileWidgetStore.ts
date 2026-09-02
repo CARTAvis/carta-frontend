@@ -65,8 +65,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable intensityUnit: string | undefined = undefined;
     @observable isXAxisRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
-    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.REDSHIFT;
-    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RELATIVISTIC;
+    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.RADIAL_VELOCITY;
+    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RADIO;
     @observable isRestFrameShiftInputValid: boolean = true;
     @observable isYAxisRestFrameEnabled: boolean = false;
 

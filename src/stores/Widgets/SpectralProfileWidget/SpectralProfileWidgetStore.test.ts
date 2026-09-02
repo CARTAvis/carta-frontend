@@ -1,10 +1,11 @@
+import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "enums";
-import {AppStore} from "stores";
-import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "utilities";
+import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
+import {AppStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
@@ -45,10 +46,10 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             spectralUnitStr: spectralUnit,
             spectralLabel: `Frequency (${spectralUnit})`,
             spectralAxis: {type: {code: spectralType, unit: spectralUnit}},
-            convertSettingWCSToFreqMHz: jest.fn((value: number): number | undefined => value),
-            convertFreqMHzToSettingWCS: jest.fn((value: number): number | undefined => value),
-            convertSettingWCSToFreqMHzArray: jest.fn((values: number[]): number[] | undefined => values),
-            convertFreqMHzToSettingWCSArray: jest.fn((values: number[]): number[] | undefined => values)
+            convertSettingWCSToFreqMHz: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertFreqMHzToSettingWCS: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertSettingWCSToFreqMHzArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values),
+            convertFreqMHzToSettingWCSArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values)
         };
         const appStore = {
             activeFrame: frame,
@@ -323,7 +324,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.xAxisLabel).toBe("Frequency (GHz) (rest frame)");
         expect(widgetStore.yUnitLabel).toBe("Jy/beam (rest frame)");
         expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam) (rest frame)");
-        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: rest frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "redshift (z): 1"]);
+        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: rest frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "radial velocity (radio, km/s): 149896.229"]);
     });
 
     test("allows the Y-axis rest-frame density mode without enabling the X-axis mode", () => {
@@ -335,7 +336,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
         expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
-        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: observed frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "redshift (z): 1"]);
+        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: observed frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "radial velocity (radio, km/s): 149896.229"]);
     });
 
     test("labels fitting results and logs with the rest-frame suffix when the Y-axis mode is active", () => {
@@ -491,6 +492,14 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (rest frame)");
     });
 
+    test("defaults shift input to radio radial velocity", () => {
+        const {widgetStore} = createWidgetStore();
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(widgetStore.restFrameRadialVelocity).toBe(0);
+    });
+
     test("enables rest-frame conversion for velocity coordinates", () => {
         const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
         widgetStore.setRestFrameRedshift(1);
@@ -516,7 +525,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("uses relativistic radial velocity as an alternate input while persisting only redshift", () => {
         const {widgetStore} = createWidgetStore();
-        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
         widgetStore.setRestFrameRadialVelocity(-300);
 
         expect(widgetStore.restFrameRedshift).toBeCloseTo(-0.0010001921, 10);
@@ -578,22 +587,23 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
 
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
-        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-299.942, 1);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300.093, 1);
 
         runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
     });
 
-    test("restores the velocity convention while defaulting legacy configs to relativistic", () => {
+    test("restores the velocity convention while defaulting legacy configs to radio", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.RADIO}));
+        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
 
-        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
         expect(widgetStore.restFrameRadialVelocity).toBe(0);
 
-        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
-        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
-        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
+        const {widgetStore: legacyWidgetStore} = createWidgetStore();
+        runInAction(() => legacyWidgetStore.init({restFrameRedshift: 0.25}));
+        expect(legacyWidgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(legacyWidgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
     });
 });
