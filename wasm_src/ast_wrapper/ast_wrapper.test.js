@@ -33,19 +33,20 @@ test("createRestFrameMapping2D preserves the non-linear AWAV conversion", () => 
         "NAXIS1  = 10",
         "NAXIS2  = 10",
         `CTYPE1  = ${q}LINEAR${q}`,
-        `CTYPE2  = ${q}AWAV${q}`,
+        `CTYPE2  = ${q}FREQ${q}`,
         `CUNIT1  = ${q}pix${q}`,
-        `CUNIT2  = ${q}nm${q}`,
+        `CUNIT2  = ${q}Hz${q}`,
         "CRPIX1  = 1",
         "CRPIX2  = 1",
         "CRVAL1  = 0",
-        "CRVAL2  = 500",
+        "CRVAL2  = 6.0E14",
         "CDELT1  = 1",
-        "CDELT2  = 1"
+        "CDELT2  = 1.0E12"
     ];
     cards.forEach(card => AST.putFits(fitsChan, card));
 
     const frameSet = AST.getFrameFromFitsChan(fitsChan, false);
+    AST.set(frameSet, "System(2)=AWAV,Unit(2)=nm");
     const spectralFrame = AST.getSpectralFrame(frameSet);
     const mapping = AST.createRestFrameMapping2D(spectralFrame, 2, 2);
 

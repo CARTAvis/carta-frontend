@@ -1833,6 +1833,7 @@ export class FrameStore {
         let scaleMap: AST.Mapping | null = null;
         let shiftMap: AST.Mapping | null = null;
         let restFrameMapping: AST.Mapping | null = null;
+        let displaySpectralFrame: AST.SpecFrame | null = null;
         const scaledFrame = AST.frame(2, "Domain=SCALED");
         const restFrame = AST.frame(2, "Domain=REST_FRAME");
         try {
@@ -1842,12 +1843,11 @@ export class FrameStore {
             AST.set(restFrame, `Unit(2)=${restUnit2}`);
 
             if (this.spectralType === SpectralType.AWAV) {
-                if (!this.spectralFrame) {
+                displaySpectralFrame = AST.getSpectralFrame(astFrameSet);
+                if (!displaySpectralFrame) {
                     return;
                 }
-                // AWAV conversion is non-linear. Build the exact AST conversion
-                // through frequency instead of approximating it with a ScaleMap.
-                restFrameMapping = AST.createRestFrameMapping2D(this.spectralFrame, this.spectral, this.restFrameFactor);
+                restFrameMapping = AST.createRestFrameMapping2D(displaySpectralFrame, this.spectral, this.restFrameFactor);
                 if (!restFrameMapping) {
                     return;
                 }
@@ -1871,6 +1871,9 @@ export class FrameStore {
             AST.deleteObject(scaledFrame);
             if (restFrameMapping) {
                 AST.deleteObject(restFrameMapping);
+            }
+            if (displaySpectralFrame) {
+                AST.deleteObject(displaySpectralFrame);
             }
             if (shiftMap) {
                 AST.deleteObject(shiftMap);

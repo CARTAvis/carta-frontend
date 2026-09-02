@@ -455,20 +455,24 @@ describe("FrameStore", () => {
             frame["spectralType"] = SpectralType.AWAV;
             frame["spectralUnit"] = SpectralUnit.NM;
             frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.getSpectralFrame as jest.Mock).mockClear();
+            (AST.getSpectralFrame as jest.Mock).mockReturnValueOnce(101).mockReturnValueOnce(102).mockReturnValueOnce(103);
             (AST.createRestFrameMapping2D as jest.Mock).mockClear();
             (AST.scaleMap2D as jest.Mock).mockClear();
             (AST.shiftMap2D as jest.Mock).mockClear();
             (AST.addFrame as jest.Mock).mockClear();
             (AST.setI as jest.Mock).mockClear();
+            (AST.deleteObject as jest.Mock).mockClear();
 
             frame.setRestFrameRedshift(1);
             frame.setRestFrameEnabled(true);
 
-            expect(AST.createRestFrameMapping2D).toHaveBeenCalledWith(1, 2, 2);
+            expect(AST.createRestFrameMapping2D).toHaveBeenCalledWith(103, 2, 2);
             expect(AST.scaleMap2D).not.toHaveBeenCalled();
             expect(AST.shiftMap2D).not.toHaveBeenCalled();
             expect(AST.addFrame).toHaveBeenCalledTimes(1);
             expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 3);
+            expect(AST.deleteObject).toHaveBeenCalledWith(103);
         });
 
         test("preserves a velocity scale close to the lower redshift limit", () => {
