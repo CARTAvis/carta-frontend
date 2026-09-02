@@ -117,6 +117,7 @@
         "test:ast-wrapper": "node --test wasm_src/ast_wrapper/ast_wrapper.test.js",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
+        "check-python-api": "node scripts/check_python_api.js",
         "reformat": "npx prettier --write ./src",
         "checkformat": "npx prettier --check ./src",
         "prepack": "npm run build-libs-docker; npm run build-docker",

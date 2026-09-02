@@ -17,6 +17,7 @@ For the pull request:
 
 For dependencies:
 - [ ] e2e test passing / corresponding fix added / new e2e test created
+- [ ] carta-python updated to use non-deprecated APIs / no carta-python update required
 - [ ] protobuf version bumped / no protobuf version bumped needed
 - [ ] protobuf updated to the latest dev commit / no protobuf update needed
 - [ ] corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged)

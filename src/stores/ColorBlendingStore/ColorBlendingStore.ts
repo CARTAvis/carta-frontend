@@ -38,7 +38,10 @@ export class ColorBlendingStore {
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
-    /** The visibility of the blended raster image. */
+    /**
+     * The visibility of the blended raster image.
+     * @cartaDeprecated Temporary marker for testing the carta-python deprecation check.
+     */
     @observable isRasterVisible: boolean = true;
     /** The visibility of all the contours. */
     @observable isContourVisible: boolean = true;
@@ -81,6 +84,7 @@ export class ColorBlendingStore {
 
     /**
      * Sets the alpha value of the layer.
+     * @cartaDeprecated Temporary marker for testing the carta-python deprecation check.
      * @param index - The layer index.
      * @param alpha - The alpha value.
      */
@@ -118,7 +122,10 @@ export class ColorBlendingStore {
         this.isRasterVisible = !this.isRasterVisible;
     };
 
-    /** Hides or shows all the contours. */
+    /**
+     * Hides or shows all the contours.
+     * @cartaDeprecated Temporary marker for testing the carta-python deprecation check.
+     */
     @action toggleContourVisible = () => {
         this.isContourVisible = !this.isContourVisible;
     };
