@@ -1,9 +1,9 @@
+import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
 import * as AST from "ast_wrapper";
 
-import {SkyRefIs, SpectralSystem, SpectralType, SpectralUnit} from "enums";
-import {type FrameInfo, FrameStore} from "stores";
-
+import {RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
+import {type FrameInfo, FrameStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
@@ -200,10 +200,10 @@ describe("FrameStore", () => {
     });
 
     describe("intensityConfig", () => {
-        let mockBeamAllChannels: jest.SpyInstance;
-        let mockSpectralAxis: jest.SpyInstance;
-        let mockChannelInfo: jest.SpyInstance;
-        let mockGetFreqInGHz: jest.SpyInstance;
+        let mockBeamAllChannels: ReturnType<typeof jest.spyOn>;
+        let mockSpectralAxis: ReturnType<typeof jest.spyOn>;
+        let mockChannelInfo: ReturnType<typeof jest.spyOn>;
+        let mockGetFreqInGHz: ReturnType<typeof jest.spyOn>;
         beforeAll(() => {
             mockBeamAllChannels = jest.spyOn(FrameStore.prototype, "beamAllChannels", "get");
             mockSpectralAxis = jest.spyOn(FrameStore.prototype, "spectralAxis", "get");
@@ -328,6 +328,158 @@ describe("FrameStore", () => {
 
             expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toBeUndefined();
             expect(AST.transformSpectralPointArray).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    const pvFrameInfo: FrameInfo = {
+        fileId: 0,
+        directory: "",
+        hdu: "",
+        fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 3} as any,
+        fileInfoExtended: {
+            dimensions: 2,
+            height: 2,
+            width: 2,
+            depth: 1,
+            stokes: 0,
+            axesNumbers: {spatialX: 1, spatialY: 2, spectral: 2},
+            headerEntries: [
+                {name: "CTYPE1", value: "OFFSET"},
+                {name: "CRVAL1", value: "0", entryType: 1, numericValue: 0},
+                {name: "CDELT1", value: "1", entryType: 1, numericValue: 1},
+                {name: "CRPIX1", value: "1", entryType: 1, numericValue: 1},
+                {name: "CUNIT1", value: "arcsec"},
+                {name: "CTYPE2", value: "FREQ"},
+                {name: "CRVAL2", value: "1.42040575E9", entryType: 1, numericValue: 1420405750},
+                {name: "CDELT2", value: "100000", entryType: 1, numericValue: 100000},
+                {name: "CRPIX2", value: "1", entryType: 1, numericValue: 1},
+                {name: "CUNIT2", value: "Hz"},
+                {name: "RESTFRQ", value: "1.42040575E9", entryType: 1, numericValue: 1420405750},
+                {name: "SPECSYS", value: "LSRK"}
+            ]
+        } as any,
+        fileFeatureFlags: 0,
+        renderMode: 0,
+        beamTable: [],
+        lelExpr: false,
+        generated: false
+    };
+
+    describe("rest-frame conversion settings", () => {
+        test("defaults PV shift input to radio radial velocity", () => {
+            const frame = new FrameStore(pvFrameInfo);
+
+            expect(frame.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+            expect(frame.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+            expect(frame.restFrameRadialVelocity).toBe(0);
+        });
+
+        test("tracks and validates rest-frame shift settings", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+
+            expect(frame.isRestFrameSupported).toBe(true);
+            frame.setRestFrameEnabled(true);
+            frame.setRestFrameRedshift(1);
+
+            expect(frame.isRestFrameActive).toBe(true);
+            expect(frame.restFrameFactor).toBe(2);
+
+            frame.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+            frame.setRestFrameVelocityConvention(VelocityConvention.OPTICAL);
+            frame.setRestFrameRadialVelocity(299792.458);
+
+            expect(frame.restFrameRedshift).toBe(1);
+            expect(frame.restFrameRadialVelocity).toBeCloseTo(299792.458, 3);
+        });
+
+        test("disables rest-frame conversion for channel coordinates", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+            frame.setRestFrameEnabled(true);
+            frame["spectralType"] = SpectralType.CHANNEL;
+            frame.setRestFrameEnabled(true);
+
+            expect(frame.isRestFrameSupported).toBe(false);
+            expect(frame.isRestFrameEnabled).toBe(false);
+            expect(frame.isRestFrameActive).toBe(false);
+        });
+
+        test("converts observed spectral values to rest frame correctly", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame.setRestFrameEnabled(true);
+            frame.setRestFrameRedshift(0.5);
+
+            // FREQ
+            frame["spectralType"] = SpectralType.FREQ;
+            frame["spectralUnit"] = SpectralUnit.GHZ;
+            expect(frame.convertObservedSpectralValueToRestFrame(10)).toBeCloseTo(15);
+
+            // WAVE
+            frame["spectralType"] = SpectralType.WAVE;
+            frame["spectralUnit"] = SpectralUnit.UM;
+            expect(frame.convertObservedSpectralValueToRestFrame(15)).toBeCloseTo(10);
+
+            // VRAD
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            expect(frame.convertObservedSpectralValueToRestFrame(0)).toBeCloseTo(-149896.229);
+
+            // VOPT
+            frame["spectralType"] = SpectralType.VOPT;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            expect(frame.convertObservedSpectralValueToRestFrame(0)).toBeCloseTo(-99930.81933);
+        });
+
+        test("applies PV WCS mappings when rest-frame conversion is enabled", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.scaleMap2D as jest.Mock).mockClear();
+            (AST.shiftMap2D as jest.Mock).mockClear();
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(0.5);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.scaleMap2D).toHaveBeenCalledWith(1, 1.5);
+            expect(AST.shiftMap2D).toHaveBeenCalledWith(0, -149896.229);
+            expect(AST.addFrame).toHaveBeenCalledTimes(2);
+            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
+        });
+
+        test("preserves axis units with rest frame annotation on label when rest-frame conversion is enabled", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.set as jest.Mock).mockClear();
+            (AST.getString as jest.Mock).mockImplementation((...args: unknown[]) => {
+                switch (args[1]) {
+                    case "Label(1)":
+                        return "Offset";
+                    case "Label(2)":
+                        return "[LSRK] Radio velocity";
+                    case "Unit(1)":
+                        return "arcsec";
+                    case "Unit(2)":
+                        return "km/s";
+                    default:
+                        return "mock";
+                }
+            });
+
+            frame.setRestFrameRedshift(0.5);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("Unit(2)=km/s"));
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("Label(2)=[LSRK] Radio velocity"));
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Label(1)=Offset");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Label(2)=[LSRK] Radio velocity (km/s) (rest frame)");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Unit(1)=arcsec");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), 'Unit(2)=""');
         });
     });
 

@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {Polarizations, RegionId, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {Polarizations, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -63,19 +63,25 @@ import {
     getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
+    isValidRedshift,
     isWCSStringFormatValid,
     minMax2D,
     multiply2D,
     parseObsDateToMjdUtc,
     ProtobufProcessing,
+    redshiftFromVelocity,
+    restFrequencyFactorFromRedshift,
     rotate2D,
     round2D,
     setAstStringSystem,
     setAstSystem,
+    SPEED_OF_LIGHT,
+    SPEED_OF_LIGHT_KMS,
     subtract2D,
     toFixed,
     transformPoint,
-    trimFitsComment
+    trimFitsComment,
+    velocityFromRedshift
 } from "utilities";
 
 import {OverlayBeamStore} from "./OverlayBeamStore/OverlayBeamStore";
@@ -163,6 +169,11 @@ export class FrameStore {
     @observable spectralTypeSecondary: SpectralType | null = null;
     @observable spectralUnitSecondary: SpectralUnit | null = null;
     @observable spectralSystem: SpectralSystem | null = null;
+    @observable isRestFrameEnabled: boolean = false;
+    @observable restFrameRedshift: number = 0;
+    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.RADIAL_VELOCITY;
+    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RADIO;
+    @observable isRestFrameShiftInputValid: boolean = true;
     @observable channelValues: Array<number> = [];
     @observable channelSecondaryValues: Array<number> = [];
     /**
@@ -643,8 +654,8 @@ export class FrameStore {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
             const axis2 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
-            const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position|distance/i) && axis2?.value?.match(/freq/i);
-            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position|distance/i) && axis1?.value?.match(/freq/i);
+            const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position|distance/i) && axis2?.value?.match(/freq|vrad|vopt|wave|awav|velo/i);
+            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position|distance/i) && axis1?.value?.match(/freq|vrad|vopt|wave|awav|velo/i);
             return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
         }
         return false;
@@ -983,6 +994,26 @@ export class FrameStore {
             return false;
         }
         return IsSpectralSystemSupported(this.spectralAxis.specsys as string);
+    }
+
+    @computed get isRestFrameSupported(): boolean {
+        return this.isPVImage && [SpectralType.FREQ, SpectralType.WAVE, SpectralType.AWAV, SpectralType.VRAD, SpectralType.VOPT].includes(this.spectralType as SpectralType);
+    }
+
+    @computed get isRestFrameActive(): boolean {
+        return this.isRestFrameEnabled && this.isRestFrameSupported && this.isRestFrameShiftInputValid && isValidRedshift(this.restFrameRedshift);
+    }
+
+    @computed get effectiveRestFrameRedshift(): number {
+        return this.isRestFrameShiftInputValid && isValidRedshift(this.restFrameRedshift) ? this.restFrameRedshift : 0;
+    }
+
+    @computed get restFrameFactor(): number {
+        return this.isRestFrameEnabled ? restFrequencyFactorFromRedshift(this.effectiveRestFrameRedshift) : 1;
+    }
+
+    @computed get restFrameRadialVelocity(): number {
+        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isSpectralPropsEqual(): boolean {
@@ -1500,6 +1531,7 @@ export class FrameStore {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }
         this.applySwappedZWcsSettings();
+        this.applyPVWcsSettings();
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
@@ -1521,6 +1553,7 @@ export class FrameStore {
                         AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
                     }
                     this.applySwappedZWcsSettings();
+                    this.applyPVWcsSettings();
 
                     if (this.spectralReference) {
                         const spectralReference = this.spectralReference;
@@ -1753,6 +1786,165 @@ export class FrameStore {
 
         const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralTypeSecondary, this.spectralUnitSecondary, this.spectralSystem, values);
         return Array.from(convertedArray);
+    };
+
+    public convertObservedSpectralValueToRestFrame = (observedValue: number): number => {
+        if (!isFinite(observedValue)) {
+            return NaN;
+        }
+        if (!this.isRestFrameActive) {
+            return observedValue;
+        }
+
+        const redshift = this.effectiveRestFrameRedshift;
+        switch (this.spectralType) {
+            case SpectralType.FREQ:
+                return observedValue * this.restFrameFactor;
+            case SpectralType.WAVE:
+                return observedValue / Math.pow(this.restFrameFactor, this.spectralUnit?.endsWith("^2") ? 2 : 1);
+            case SpectralType.AWAV: {
+                const observedFrequencyMHz = this.convertSettingWCSToFreqMHz(observedValue, SpectralType.AWAV, this.spectralUnit);
+                if (observedFrequencyMHz === undefined || !isFinite(observedFrequencyMHz)) {
+                    return NaN;
+                }
+                return this.convertFreqMHzToSettingWCS(observedFrequencyMHz * this.restFrameFactor, SpectralType.AWAV, this.spectralUnit) ?? NaN;
+            }
+            case SpectralType.VRAD: {
+                const speedOfLight = this.spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : this.spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
+                return isFinite(speedOfLight) ? observedValue * this.restFrameFactor - speedOfLight * redshift : NaN;
+            }
+            case SpectralType.VOPT: {
+                const speedOfLight = this.spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : this.spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
+                return isFinite(speedOfLight) ? (observedValue - speedOfLight * redshift) / this.restFrameFactor : NaN;
+            }
+            default:
+                return observedValue;
+        }
+    };
+
+    public convertNativeSpectralValueToRestFrame = (value: number): number => {
+        const observedValue = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value);
+        if (!isFinite(observedValue)) {
+            return NaN;
+        }
+        return this.convertObservedSpectralValueToRestFrame(observedValue);
+    };
+
+    public applyPVWcsSettings = () => {
+        if (!this.isPVImage || !this.spectralAxis?.valid) {
+            return;
+        }
+
+        const astFrameSet = this.initPVFrame();
+        if (!astFrameSet) {
+            return;
+        }
+
+        if (this.spectralFrame) {
+            AST.deleteObject(this.spectralFrame);
+        }
+        this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+
+        // Apply spectral settings
+        const settings: string[] = [];
+        if (this.spectralType) {
+            settings.push(`System(${this.spectral})=${this.spectralType}`);
+        }
+        if (this.spectralUnit) {
+            settings.push(`Unit(${this.spectral})=${this.spectralUnit}`);
+        }
+        if (this.spectralSystem) {
+            settings.push(`StdOfRest=${this.spectralSystem}`);
+        }
+        if (this.restFreqStore?.restFreqInHz) {
+            settings.push(`RestFreq=${this.restFreqStore.restFreqInHz} Hz`);
+        }
+        const spectralLabel = this.spectralType ? SPECTRAL_TYPE_STRING.get(this.spectralType) : undefined;
+        if (spectralLabel && this.spectralSystem) {
+            settings.push(`Label(${this.spectral})=[${this.spectralSystem}] ${spectralLabel}`);
+        } else if (spectralLabel) {
+            settings.push(`Label(${this.spectral})=${spectralLabel}`);
+        }
+
+        if (settings.length > 0) {
+            AST.set(astFrameSet, settings.join(","));
+        }
+
+        if (this.isRestFrameActive) {
+            const redshift = this.effectiveRestFrameRedshift;
+            const factor = this.restFrameFactor;
+            let scale = 1;
+            let shift = 0;
+
+            if (this.spectralType === SpectralType.FREQ) {
+                scale = factor;
+                shift = 0;
+            } else if (this.spectralType === SpectralType.WAVE) {
+                const power = this.spectralUnit?.endsWith("^2") ? 2 : 1;
+                scale = 1 / Math.pow(factor, power);
+                shift = 0;
+            } else if (this.spectralType === SpectralType.VRAD) {
+                const speedOfLight = this.spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : this.spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
+                if (isFinite(speedOfLight)) {
+                    scale = factor;
+                    shift = -speedOfLight * redshift;
+                }
+            } else if (this.spectralType === SpectralType.VOPT) {
+                const speedOfLight = this.spectralUnit === SpectralUnit.MS ? SPEED_OF_LIGHT : this.spectralUnit === SpectralUnit.KMS ? SPEED_OF_LIGHT_KMS : NaN;
+                if (isFinite(speedOfLight)) {
+                    scale = 1 / factor;
+                    shift = (-speedOfLight * redshift) / factor;
+                }
+            } else if (this.spectralType === SpectralType.AWAV) {
+                const v1 = 1.0;
+                const v2 = 2.0;
+                const r1 = this.convertObservedSpectralValueToRestFrame(v1);
+                const r2 = this.convertObservedSpectralValueToRestFrame(v2);
+                if (isFinite(r1) && isFinite(r2) && r1 !== r2) {
+                    scale = r2 - r1;
+                    shift = r1 - scale * v1;
+                }
+            }
+
+            const scaleX = this.spectral === 1 ? scale : 1.0;
+            const scaleY = this.spectral === 2 ? scale : 1.0;
+            const shiftX = this.spectral === 1 ? shift : 0.0;
+            const shiftY = this.spectral === 2 ? shift : 0.0;
+
+            const label1 = AST.getString(astFrameSet, "Label(1)");
+            const label2 = AST.getString(astFrameSet, "Label(2)");
+            const unit1 = AST.getString(astFrameSet, "Unit(1)");
+            const unit2 = AST.getString(astFrameSet, "Unit(2)");
+
+            const restLabel1 = this.spectral === 1 ? `${label1}${unit1 ? ` (${unit1})` : ""} (rest frame)` : label1;
+            const restLabel2 = this.spectral === 2 ? `${label2}${unit2 ? ` (${unit2})` : ""} (rest frame)` : label2;
+            const restUnit1 = this.spectral === 1 ? '""' : unit1;
+            const restUnit2 = this.spectral === 2 ? '""' : unit2;
+
+            const scaleMap = AST.scaleMap2D(scaleX, scaleY);
+            const shiftMap = AST.shiftMap2D(shiftX, shiftY);
+            const scaledFrame = AST.frame(2, "Domain=SCALED");
+            AST.addFrame(astFrameSet, 2, scaleMap, scaledFrame);
+
+            const restFrame = AST.frame(2, "Domain=REST_FRAME");
+
+            AST.set(restFrame, `Label(1)=${restLabel1}`);
+            AST.set(restFrame, `Label(2)=${restLabel2}`);
+            AST.set(restFrame, `Unit(1)=${restUnit1}`);
+            AST.set(restFrame, `Unit(2)=${restUnit2}`);
+
+            AST.addFrame(astFrameSet, 3, shiftMap, restFrame);
+            AST.setI(astFrameSet, "Current", 4);
+        }
+
+        if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
+            AST.deleteObject(this.wcsInfo);
+        }
+        this.wcsInfo = astFrameSet;
+
+        if (this.cursorInfo?.posImageSpace) {
+            this.cursorInfo = this.getCursorInfo(this.cursorInfo.posImageSpace);
+        }
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem | null, value: number): number | undefined => {
@@ -2666,7 +2858,11 @@ export class FrameStore {
 
         this.spectralType = coord.type;
         this.spectralUnit = coord.unit;
+        if (!this.isRestFrameSupported) {
+            this.isRestFrameEnabled = false;
+        }
         this.applySwappedZWcsSettings();
+        this.applyPVWcsSettings();
         if (shouldAlignSpectralSiblings) {
             (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
         }
@@ -2691,6 +2887,7 @@ export class FrameStore {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
             this.applySwappedZWcsSettings();
+            this.applyPVWcsSettings();
 
             if (shouldAlignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
@@ -2698,6 +2895,49 @@ export class FrameStore {
             return true;
         }
         return false;
+    };
+
+    @action setRestFrameEnabled = (isEnabled: boolean) => {
+        const isEnabledNext = isEnabled && this.isRestFrameSupported;
+        if (this.isRestFrameEnabled !== isEnabledNext) {
+            this.isRestFrameEnabled = isEnabledNext;
+            this.applyPVWcsSettings();
+        }
+    };
+
+    @action setRestFrameRedshift = (redshift: number) => {
+        if (isValidRedshift(redshift) && this.restFrameRedshift !== redshift) {
+            this.restFrameRedshift = redshift;
+            this.applyPVWcsSettings();
+        }
+    };
+
+    @action setRestFrameShiftMode = (mode: RestFrameShiftMode) => {
+        if (Object.values(RestFrameShiftMode).includes(mode)) {
+            this.restFrameShiftMode = mode;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
+    @action setRestFrameVelocityConvention = (convention: VelocityConvention) => {
+        if (Object.values(VelocityConvention).includes(convention) && this.restFrameVelocityConvention !== convention) {
+            this.restFrameVelocityConvention = convention;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
+    @action setRestFrameShiftInputValid = (isValid: boolean) => {
+        if (this.isRestFrameShiftInputValid !== isValid) {
+            this.isRestFrameShiftInputValid = isValid;
+            this.applyPVWcsSettings();
+        }
+    };
+
+    @action setRestFrameRadialVelocity = (velocityKms: number) => {
+        const redshift = redshiftFromVelocity(velocityKms, this.restFrameVelocityConvention);
+        if (isFinite(redshift)) {
+            this.setRestFrameRedshift(redshift);
+        }
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
@@ -3532,18 +3772,7 @@ export class FrameStore {
         }
 
         // Update wcsInfo
-        const astFrameSet = this.initPVFrame();
-        if (astFrameSet) {
-            if (this.spectralFrame) {
-                AST.deleteObject(this.spectralFrame);
-            }
-            if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
-                AST.deleteObject(this.wcsInfo);
-            }
-            this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-            this.wcsInfo = AST.copy(astFrameSet);
-            AST.deleteObject(astFrameSet);
-        }
+        this.applyPVWcsSettings();
 
         const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
         const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;

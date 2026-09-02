@@ -1,14 +1,14 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Intent, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
+import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, RestFrameShiftMode, SystemType, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {ColorbarStore} from "stores/Frame";
-import {NUMBER_FORMAT_LABEL, SWATCH_COLORS, toFixed} from "utilities";
+import {ColorbarStore, type FrameStore} from "stores/Frame";
+import {isValidRedshift, isValidVelocity, NUMBER_FORMAT_LABEL, SPEED_OF_LIGHT_KMS, SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -16,6 +16,7 @@ import "./ImageViewSettingsPanelComponent.scss";
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    @observable private restFrameShiftInputIntent: Intent = Intent.NONE;
     private readonly disposers: IReactionDisposer[] = [];
 
     @action private setSelectedTab = (tab: TabId) => {
@@ -24,6 +25,24 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
         this.panAndZoomCoord = coord;
+    };
+
+    @action private setRestFrameShiftInputIntent = (intent: Intent) => {
+        this.restFrameShiftInputIntent = intent;
+    };
+
+    private onRestFrameShiftChanged = (frame: FrameStore, value: number) => {
+        const isRadialVelocityMode = frame.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const isValid = isRadialVelocityMode ? isValidVelocity(value, frame.restFrameVelocityConvention) : isValidRedshift(value);
+        this.setRestFrameShiftInputIntent(isValid ? Intent.NONE : Intent.DANGER);
+        frame.setRestFrameShiftInputValid(isValid);
+        if (isValid) {
+            if (isRadialVelocityMode) {
+                frame.setRestFrameRadialVelocity(value);
+            } else {
+                frame.setRestFrameRedshift(value);
+            }
+        }
     };
 
     constructor(props: any) {
@@ -746,13 +765,83 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </div>
             ) : null;
 
+        const isRadialVelocityMode = frame?.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const isRestFrameShiftInputDisabled = !frame?.isRestFrameEnabled || !frame?.isRestFrameSupported;
+        const velocityValidationMessage =
+            frame?.restFrameVelocityConvention === VelocityConvention.RADIO
+                ? `Velocity must be less than +${SPEED_OF_LIGHT_KMS} km/s`
+                : frame?.restFrameVelocityConvention === VelocityConvention.OPTICAL
+                  ? `Velocity must be greater than -${SPEED_OF_LIGHT_KMS} km/s`
+                  : `Velocity must be between -${SPEED_OF_LIGHT_KMS} and +${SPEED_OF_LIGHT_KMS} km/s`;
+        const restFrameShiftInputError = this.restFrameShiftInputIntent === Intent.DANGER ? `${isRadialVelocityMode ? velocityValidationMessage : "Redshift must be greater than -1"}. Correction is temporarily using z = 0.` : undefined;
+        const restFramePanel =
+            isPVImage && frame ? (
+                <div className="rest-frame-panel">
+                    <FormGroup inline={true} label="Rest-frame correction" helperText={!frame.isRestFrameSupported ? "Select a spectral coordinate to enable rest-frame correction." : undefined}>
+                        <Switch checked={frame.isRestFrameEnabled} disabled={!frame.isRestFrameSupported} onChange={event => frame.setRestFrameEnabled(event.currentTarget.checked)} data-testid="image-view-settings-rest-frame-toggle" />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Shift input">
+                        <HTMLSelect
+                            disabled={!frame.isRestFrameSupported}
+                            value={frame.restFrameShiftMode}
+                            options={[
+                                {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
+                                {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
+                            ]}
+                            onChange={event => {
+                                frame.setRestFrameShiftMode(event.currentTarget.value as RestFrameShiftMode);
+                                this.setRestFrameShiftInputIntent(Intent.NONE);
+                            }}
+                            data-testid="image-view-settings-rest-frame-shift-mode-dropdown"
+                        />
+                    </FormGroup>
+                    {isRadialVelocityMode && (
+                        <FormGroup inline={true} label="Velocity convention">
+                            <HTMLSelect
+                                disabled={!frame.isRestFrameSupported}
+                                value={frame.restFrameVelocityConvention}
+                                options={[
+                                    {value: VelocityConvention.RADIO, label: "Radio"},
+                                    {value: VelocityConvention.OPTICAL, label: "Optical"},
+                                    {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
+                                ]}
+                                onChange={event => {
+                                    frame.setRestFrameVelocityConvention(event.currentTarget.value as VelocityConvention);
+                                    this.setRestFrameShiftInputIntent(Intent.NONE);
+                                }}
+                                data-testid="image-view-settings-rest-frame-velocity-convention-dropdown"
+                            />
+                        </FormGroup>
+                    )}
+                    <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} helperText={restFrameShiftInputError}>
+                        <SafeNumericInput
+                            key={`${frame.restFrameShiftMode}-${frame.restFrameVelocityConvention}`}
+                            disabled={isRestFrameShiftInputDisabled}
+                            value={isRadialVelocityMode ? frame.restFrameRadialVelocity : frame.restFrameRedshift}
+                            intent={isRestFrameShiftInputDisabled ? Intent.NONE : this.restFrameShiftInputIntent}
+                            buttonPosition="none"
+                            onValueChange={value => this.onRestFrameShiftChanged(frame, value)}
+                            data-testid={isRadialVelocityMode ? "image-view-settings-rest-frame-radial-velocity-input" : "image-view-settings-rest-frame-redshift-input"}
+                        />
+                    </FormGroup>
+                    {isRadialVelocityMode && (
+                        <FormGroup inline={true} label="Effective redshift (z)">
+                            <span className="effective-redshift" data-testid="image-view-settings-rest-frame-effective-redshift">
+                                {frame.effectiveRestFrameRedshift}
+                            </span>
+                        </FormGroup>
+                    )}
+                </div>
+            ) : null;
+
         const spectralPanel =
             isPVImage && frame ? (
-                <div className="panel-container">
+                <div className="panel-container conversion-panel">
                     <p>For spatial-spectral image</p>
                     <Divider />
                     <p>Spectral axis</p>
                     <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={frame.setSpectralCoordinate} onSpectralSystemChange={frame.setSpectralSystem} disable={!isPVImage} disableChannelOption={true} />
+                    {restFramePanel}
                 </div>
             ) : null;
 
