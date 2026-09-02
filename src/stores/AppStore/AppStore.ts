@@ -2931,7 +2931,7 @@ export class AppStore {
             const workspaceFile: WorkspaceFile = {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
-                filename: frame.filename,
+                filename: frame.frameInfo.fileInfo.name,
                 hdu: frame.frameInfo.hdu,
                 timeSeriesMember: this.timeSeriesStore.isMember(frame) || undefined
             };
