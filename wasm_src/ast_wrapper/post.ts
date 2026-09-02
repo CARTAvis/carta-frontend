@@ -135,6 +135,9 @@ addOnPostRun(function () {
     Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
     Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
     Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
+    Module.parseDateToMJD = Module.cwrap("parseDateToMJD", "number", ["string", "string"]);
+    Module.convertMJD = Module.cwrap("convertMJD", "number", ["number", "string", "string"]);
+    Module.formatMJDToDate = Module.cwrap("formatMJDToDate", "string", ["number", "string", "number"]);
 
     // Initialize other data structures that depend on WASM being ready
     Module.currentFormatStrings = [];

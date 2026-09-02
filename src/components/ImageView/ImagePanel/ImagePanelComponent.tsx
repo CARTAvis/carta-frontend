@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AnimationMode, CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
+import {CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
 import {type CursorInfo, type ImageItem, type Point2D, Zoom} from "models";
 import {AppStore, type ColorBlendingStore, type FrameStore} from "stores";
 
@@ -200,7 +200,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.isFrontendAnimationMode) && (
                         <ToolbarComponent
                             isDocked={this.props.docked}
                             isVisible={this.isImageToolbarVisible}

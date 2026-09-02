@@ -93,6 +93,28 @@ const ROTATED_STOKES_CUBEFRAME_INFO: FrameInfo = {
     } as any
 };
 
+const OBS_TIME_FRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 2} as any,
+    fileInfoExtended: {
+        dimensions: 2,
+        width: 2,
+        height: 2,
+        depth: 1,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 0, stokes: 0, depth: 0},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---SIN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--SIN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "TIMESYS", value: "UTC"},
+            {name: "MJD-OBS", value: "5.900025000000E+04", entryType: 1, numericValue: 59000.25},
+            {name: "DATE-OBS", value: "2020-05-31T06:00:00"}
+        ]
+    } as any
+};
+
 describe("FrameStore", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -310,6 +332,35 @@ describe("FrameStore", () => {
             frame.setAxisZoom(2, 4);
 
             expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+    });
+
+    describe("obsTimeMjdUtc", () => {
+        test("prefers MJD-OBS over DATE-OBS", () => {
+            const frame = new FrameStore(OBS_TIME_FRAME_INFO);
+            expect(frame.obsTimeMjdUtc).toBe(59000.25);
+            expect(AST.parseDateToMJD).not.toHaveBeenCalled();
+        });
+
+        test("falls back to DATE-OBS parsed in the TIMESYS scale", () => {
+            const frameInfo = {
+                ...OBS_TIME_FRAME_INFO,
+                fileInfoExtended: {
+                    ...OBS_TIME_FRAME_INFO.fileInfoExtended,
+                    headerEntries: (OBS_TIME_FRAME_INFO.fileInfoExtended.headerEntries as any[]).filter(entry => entry.name !== "MJD-OBS")
+                } as any
+            };
+            (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.25);
+            (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+
+            const frame = new FrameStore(frameInfo);
+            expect(frame.obsTimeMjdUtc).toBe(59000.25);
+            expect(AST.parseDateToMJD).toHaveBeenCalledWith("2020-05-31T06:00:00", "UTC");
+        });
+
+        test("returns undefined without time headers", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            expect(frame.obsTimeMjdUtc).toBeUndefined();
         });
     });
 });
