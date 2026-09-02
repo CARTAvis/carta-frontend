@@ -366,6 +366,27 @@ describe("FrameStore", () => {
     };
 
     describe("rest-frame conversion settings", () => {
+        const configureFrameSetIndexMocks = (initialNframe: number = 2, initialCurrent: number = 2) => {
+            let nframe = initialNframe;
+            let current = initialCurrent;
+            (AST.getString as jest.Mock).mockImplementation((_object: unknown, attribute: string) => {
+                if (attribute === "Current") {
+                    return `${current}`;
+                }
+                if (attribute === "Nframe") {
+                    return `${nframe}`;
+                }
+                return "mock";
+            });
+            (AST.addFrame as jest.Mock).mockImplementation(() => {
+                current = ++nframe;
+            });
+        };
+
+        beforeEach(() => {
+            configureFrameSetIndexMocks();
+        });
+
         test("defaults PV shift input to radio radial velocity", () => {
             const frame = new FrameStore(pvFrameInfo);
 
@@ -450,11 +471,73 @@ describe("FrameStore", () => {
             expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
         });
 
+        test("applies the custom RestFreq before caching the spectral frame", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            frame["restFreqStore"] = {restFreqInHz: 1.3e9};
+            (AST.set as jest.Mock).mockClear();
+            (AST.getSpectralFrame as jest.Mock).mockClear();
+
+            frame.applyPVWcsSettings();
+
+            const restFreqCallIndex = (AST.set as jest.Mock).mock.calls.findIndex(call => `${call[1]}`.includes("RestFreq=1300000000 Hz"));
+            const spectralFrameCallOrder = (AST.getSpectralFrame as jest.Mock).mock.invocationCallOrder.at(-1);
+            expect(restFreqCallIndex).toBeGreaterThanOrEqual(0);
+            expect(spectralFrameCallOrder).toBeDefined();
+            expect((AST.set as jest.Mock).mock.invocationCallOrder[restFreqCallIndex]).toBeLessThan(spectralFrameCallOrder as number);
+            expect(frame["spectralFrame"]).toBe(1);
+        });
+
+        test("releases the PV FitsChan after building a FrameSet", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            const fitsChan = 41;
+            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
+            (AST.deleteObject as jest.Mock).mockClear();
+
+            frame["initPVFrame"]();
+
+            expect(AST.deleteObject).toHaveBeenCalledWith(fitsChan);
+        });
+
+        test("releases the PV FitsChan when building a FrameSet fails", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            const fitsChan = 42;
+            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
+            (AST.getFrameFromFitsChan as jest.Mock).mockImplementationOnce(() => {
+                throw new Error("failed to parse PV WCS");
+            });
+            (AST.deleteObject as jest.Mock).mockClear();
+
+            expect(() => frame["initPVFrame"]()).toThrow("failed to parse PV WCS");
+            expect(AST.deleteObject).toHaveBeenCalledWith(fitsChan);
+        });
+
+        test("uses the actual FrameSet indices when adding rest-frame mappings", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            frame["isRestFrameEnabled"] = true;
+            frame["restFrameRedshift"] = 0.5;
+            configureFrameSetIndexMocks(3, 2);
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+
+            frame["addRestFrameWcsFrames"](1);
+
+            expect(AST.addFrame).toHaveBeenNthCalledWith(1, 1, 2, expect.anything(), expect.anything());
+            expect(AST.addFrame).toHaveBeenNthCalledWith(2, 1, 4, expect.anything(), expect.anything());
+            expect(AST.setI).toHaveBeenCalledWith(1, "Current", 5);
+        });
+
         test("uses a non-linear AST mapping for AWAV rest-frame conversion", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             frame["spectralType"] = SpectralType.AWAV;
             frame["spectralUnit"] = SpectralUnit.NM;
             frame["spectralSystem"] = SpectralSystem.LSRK;
+            configureFrameSetIndexMocks(3, 2);
             (AST.getSpectralFrame as jest.Mock).mockClear();
             (AST.getSpectralFrame as jest.Mock).mockReturnValueOnce(101).mockReturnValueOnce(102).mockReturnValueOnce(103);
             (AST.createRestFrameMapping2D as jest.Mock).mockClear();
@@ -471,7 +554,8 @@ describe("FrameStore", () => {
             expect(AST.scaleMap2D).not.toHaveBeenCalled();
             expect(AST.shiftMap2D).not.toHaveBeenCalled();
             expect(AST.addFrame).toHaveBeenCalledTimes(1);
-            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 3);
+            expect(AST.addFrame).toHaveBeenCalledWith(expect.anything(), 2, expect.anything(), expect.anything());
+            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
             expect(AST.deleteObject).toHaveBeenCalledWith(103);
         });
 
@@ -505,6 +589,10 @@ describe("FrameStore", () => {
                         return "arcsec";
                     case "Unit(2)":
                         return "km/s";
+                    case "Current":
+                        return "2";
+                    case "Nframe":
+                        return "2";
                     default:
                         return "mock";
                 }

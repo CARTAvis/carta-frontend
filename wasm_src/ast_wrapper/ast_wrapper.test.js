@@ -64,3 +64,37 @@ test("createRestFrameMapping2D preserves the non-linear AWAV conversion", () => 
         AST.deleteObject(fitsChan);
     }
 });
+
+test("preserves valid spectral points when another point is invalid", () => {
+    const q = String.fromCharCode(39);
+    const fitsChan = AST.emptyFitsChan();
+    const cards = [
+        "NAXIS   = 2",
+        "NAXIS1  = 10",
+        "NAXIS2  = 10",
+        `CTYPE1  = ${q}LINEAR${q}`,
+        `CTYPE2  = ${q}FREQ${q}`,
+        `CUNIT1  = ${q}pix${q}`,
+        `CUNIT2  = ${q}Hz${q}`,
+        "CRPIX1  = 1",
+        "CRPIX2  = 1",
+        "CRVAL1  = 0",
+        "CRVAL2  = 1.42040575E9",
+        "CDELT1  = 1",
+        "CDELT2  = 1.0E6"
+    ];
+    cards.forEach(card => AST.putFits(fitsChan, card));
+
+    const frameSet = AST.getFrameFromFitsChan(fitsChan, false);
+    const spectralFrame = AST.getSpectralFrame(frameSet);
+
+    try {
+        const result = AST.transformSpectralPointArray(spectralFrame, "WAVE", "nm", null, [1.42040575e9, 0]);
+        expect(Number.isFinite(result[0])).toBe(true);
+        expect(Number.isNaN(result[1])).toBe(true);
+    } finally {
+        AST.deleteObject(spectralFrame);
+        AST.deleteObject(frameSet);
+        AST.deleteObject(fitsChan);
+    }
+});

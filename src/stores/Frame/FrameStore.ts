@@ -1821,6 +1821,15 @@ export class FrameStore {
     };
 
     private addRestFrameWcsFrames = (astFrameSet: AST.FrameSet): void => {
+        const getFrameSetIndex = (attribute: "Current" | "Nframe"): number | undefined => {
+            const index = Number.parseInt(AST.getString(astFrameSet, attribute), 10);
+            return Number.isInteger(index) && index > 0 ? index : undefined;
+        };
+        const currentFrameIndex = getFrameSetIndex("Current");
+        if (currentFrameIndex === undefined) {
+            return;
+        }
+
         const label1 = AST.getString(astFrameSet, "Label(1)");
         const label2 = AST.getString(astFrameSet, "Label(2)");
         const unit1 = AST.getString(astFrameSet, "Unit(1)");
@@ -1851,8 +1860,11 @@ export class FrameStore {
                 if (!restFrameMapping) {
                     return;
                 }
-                AST.addFrame(astFrameSet, 2, restFrameMapping, restFrame);
-                AST.setI(astFrameSet, "Current", 3);
+                AST.addFrame(astFrameSet, currentFrameIndex, restFrameMapping, restFrame);
+                const restFrameIndex = getFrameSetIndex("Nframe");
+                if (restFrameIndex !== undefined) {
+                    AST.setI(astFrameSet, "Current", restFrameIndex);
+                }
                 return;
             }
 
@@ -1863,9 +1875,16 @@ export class FrameStore {
             const shiftY = this.spectral === 2 ? shift : 0;
             scaleMap = AST.scaleMap2D(scaleX, scaleY);
             shiftMap = AST.shiftMap2D(shiftX, shiftY);
-            AST.addFrame(astFrameSet, 2, scaleMap, scaledFrame);
-            AST.addFrame(astFrameSet, 3, shiftMap, restFrame);
-            AST.setI(astFrameSet, "Current", 4);
+            AST.addFrame(astFrameSet, currentFrameIndex, scaleMap, scaledFrame);
+            const scaledFrameIndex = getFrameSetIndex("Nframe");
+            if (scaledFrameIndex === undefined) {
+                return;
+            }
+            AST.addFrame(astFrameSet, scaledFrameIndex, shiftMap, restFrame);
+            const restFrameIndex = getFrameSetIndex("Nframe");
+            if (restFrameIndex !== undefined) {
+                AST.setI(astFrameSet, "Current", restFrameIndex);
+            }
         } finally {
             AST.deleteObject(restFrame);
             AST.deleteObject(scaledFrame);
@@ -1894,11 +1913,6 @@ export class FrameStore {
             return;
         }
 
-        if (this.spectralFrame) {
-            AST.deleteObject(this.spectralFrame);
-        }
-        this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-
         // Apply spectral settings.
         const settings: string[] = [];
         if (this.spectralType) {
@@ -1924,9 +1938,22 @@ export class FrameStore {
             AST.set(astFrameSet, settings.join(","));
         }
 
+        // Extract the spectral frame only after all user-selected WCS settings,
+        // including RestFreq, have been applied to the new FrameSet.
+        const spectralFrame = AST.getSpectralFrame(astFrameSet);
+        if (!spectralFrame) {
+            AST.deleteObject(astFrameSet);
+            return;
+        }
+
         if (this.isRestFrameActive) {
             this.addRestFrameWcsFrames(astFrameSet);
         }
+
+        if (this.spectralFrame && this.spectralFrame !== spectralFrame) {
+            AST.deleteObject(this.spectralFrame);
+        }
+        this.spectralFrame = spectralFrame;
 
         if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
             AST.deleteObject(this.wcsInfo);
@@ -1957,59 +1984,62 @@ export class FrameStore {
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         const fitsChan = AST.emptyFitsChan();
+        try {
+            let system = "";
+            let epoch = "";
 
-        let system = "";
-        let epoch = "";
+            for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
+                let name = entry.name;
+                if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
+                    continue;
+                }
 
-        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            let name = entry.name;
-            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
-                continue;
+                if (name?.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                    name = entry.name?.replace(`${this.spectralNumber}`, `${this.spectral}`);
+                } else if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                    name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
+                } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                    name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
+                }
+
+                let value = trimFitsComment(entry.value);
+                if (entry.name?.toUpperCase() === "NAXIS" || entry.name?.toUpperCase() === "WCSAXES") {
+                    value = "2";
+                }
+                if (entry.entryType === CARTA.EntryType.STRING) {
+                    value = `'${value}'`;
+                } else {
+                    value = FrameStore.shiftASTCoords(entry, value);
+                }
+
+                while (name && name.length < 8) {
+                    name += " ";
+                }
+
+                const entryString = `${name}=  ${value}`;
+
+                const nameKey = name?.trim().toUpperCase() ?? "";
+                const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
+                if (nameKey === "RADESYS" && valueKey === "FK4") {
+                    system = SystemType.FK4;
+                }
+                if (nameKey === "DATE-OBS") {
+                    epoch = entryString;
+                    continue;
+                }
+
+                AST.putFits(fitsChan, entryString);
             }
 
-            if (name?.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
-                name = entry.name?.replace(`${this.spectralNumber}`, `${this.spectral}`);
-            } else if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
-                name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
-            } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
-                name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            if (system === SystemType.FK4 && epoch) {
+                // Only add epoch if the native system is FK4.
+                // Otherwise, coordinate conversion will be incorrect.
+                AST.putFits(fitsChan, epoch);
             }
-
-            let value = trimFitsComment(entry.value);
-            if (entry.name?.toUpperCase() === "NAXIS" || entry.name?.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.shiftASTCoords(entry, value);
-            }
-
-            while (name && name.length < 8) {
-                name += " ";
-            }
-
-            const entryString = `${name}=  ${value}`;
-
-            const nameKey = name?.trim().toUpperCase() ?? "";
-            const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
-            if (nameKey === "RADESYS" && valueKey === "FK4") {
-                system = SystemType.FK4;
-            }
-            if (nameKey === "DATE-OBS") {
-                epoch = entryString;
-                continue;
-            }
-
-            AST.putFits(fitsChan, entryString);
+            return AST.getFrameFromFitsChan(fitsChan, false);
+        } finally {
+            AST.deleteObject(fitsChan);
         }
-
-        if (system === SystemType.FK4 && epoch) {
-            // Only add epoch if the native system is FK4.
-            // Otherwise, coordinate conversion will be incorrect.
-            AST.putFits(fitsChan, epoch);
-        }
-        return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
     private initFrame2D = (): AST.FrameSet => {

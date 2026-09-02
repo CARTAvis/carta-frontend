@@ -1,6 +1,7 @@
 #include <string.h>
 #include <emscripten.h>
 #include <cmath>
+#include <limits>
 #include <string>
 
 extern "C" {
@@ -55,7 +56,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitsChan, bo
     }
 
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(frameSet, 1);
-    astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+    if (pixFrame) {
+        astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+        pixFrame = static_cast<AstFrame*>(astAnnul(pixFrame));
+    }
 
     // work around for missing CTYPE1 & CTYPE2
     if (checkSkyDomain) {
@@ -85,6 +89,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         return nullptr;
     }
     AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
+    spectralTemplate = static_cast<AstSpecFrame*>(astAnnul(spectralTemplate));
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
@@ -93,11 +98,15 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
     AstSpecFrame *specFrame = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
     if (!specFrame)
     {
+        found = static_cast<AstFrameSet*>(astAnnul(found));
         cout << "Getting spectral frame failed." << endl;
         return nullptr;
     }
 
-    return static_cast<AstSpecFrame*> astCopy(specFrame);
+    AstSpecFrame* result = static_cast<AstSpecFrame*> astCopy(specFrame);
+    specFrame = static_cast<AstSpecFrame*>(astAnnul(specFrame));
+    found = static_cast<AstFrameSet*>(astAnnul(found));
+    return result;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
@@ -715,7 +724,9 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
     for (int i = 0; i < npoint; i++) {
         if (zOut[i] == AST__BAD || !std::isfinite(zOut[i])) {
-            return fail();
+            // Keep invalid samples local to their input point so one bad
+            // channel does not discard otherwise valid profile data.
+            zOut[i] = std::numeric_limits<double>::quiet_NaN();
         }
     }
 

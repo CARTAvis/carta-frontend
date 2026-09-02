@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Intent, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -46,6 +46,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
                 }
             })
+        );
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame?.id,
+                () => this.setRestFrameShiftInputIntent(Intent.NONE),
+                {fireImmediately: true}
+            )
         );
     }
 

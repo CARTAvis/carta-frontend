@@ -14,7 +14,7 @@ type TestModule = {
     zOut?: number;
 };
 
-const loadPostModule = (spectralTransformStatus: number) => {
+const loadPostModule = (spectralTransformStatus: number, invalidOutputIndex?: number) => {
     jest.resetModules();
 
     const buffer = new ArrayBuffer(4096);
@@ -35,7 +35,7 @@ const loadPostModule = (spectralTransformStatus: number) => {
         if (spectralTransformStatus === 0) {
             const input = new Float64Array(buffer, zInPointer, npoint);
             const output = new Float64Array(buffer, zOutPointer, npoint);
-            input.forEach((value, index) => (output[index] = value * 2));
+            input.forEach((value, index) => (output[index] = index === invalidOutputIndex ? NaN : value * 2));
         }
         return spectralTransformStatus;
     });
@@ -85,5 +85,11 @@ describe("AST spectral transform helpers", () => {
 
         expect(module.transformSpectralPoint?.(1, "AWAV", "nm", "LSRK", 10, false)).toBe(20);
         expect(Array.from(module.transformSpectralPointArray?.(1, "AWAV", "nm", "LSRK", [10, 20], false) ?? [])).toEqual([20, 40]);
+    });
+
+    test("preserves valid array results alongside a point-level invalid result", () => {
+        const {module} = loadPostModule(0, 1);
+
+        expect(Array.from(module.transformSpectralPointArray?.(1, "AWAV", "nm", "LSRK", [10, 20], false) ?? [])).toEqual([20, NaN]);
     });
 });

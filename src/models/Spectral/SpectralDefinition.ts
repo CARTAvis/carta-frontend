@@ -170,7 +170,8 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 
 export const IsFrequencyDensityUnit = (unitStr: string): boolean => {
     const unitType = FindIntensityUnitType(unitStr);
-    const isJansky = Jys.includes(unitStr as Jansky);
+    const normalizedUnitStr = unitStr?.trim().toLowerCase();
+    const isJansky = Jys.some(jy => jy.toLowerCase() === normalizedUnitStr);
     return isJansky || [IntensityUnitType.JyBeam, IntensityUnitType.JySr, IntensityUnitType.JyArcsec2, IntensityUnitType.JyPixel].includes(unitType);
 };
 
