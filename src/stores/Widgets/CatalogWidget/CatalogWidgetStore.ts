@@ -100,7 +100,7 @@ export class CatalogWidgetStore {
     @observable isSizeColumnMaxLocked: boolean = false;
     @observable canvasSizeUnit: CatalogSizeUnits = CatalogSizeUnits.SCREENPIXEL;
     @observable worldSizeUnit: AngularSizeUnit = AngularSizeUnit.ARCSEC;
-    @observable catalogSourceRadiusType: number = this.catalogSourceRadiusTypes.get(PreferenceStore.Instance.catalogSourceRadiusType as CatalogSourceRadiusMode)?.value ?? 1;
+    @observable catalogSourceRadiusType: CatalogSourceRadiusMode = "diameter";
     // size map minor
     @observable sizeMinorMapColumn: string = CatalogOverlay.NONE;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
@@ -263,16 +263,6 @@ export class CatalogWidgetStore {
                     if (orientation.length) {
                         CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, orientation, CatalogTextureType.Orientation);
                     }
-                }
-            )
-        );
-
-        this.disposers.push(
-            reaction(
-                () => PreferenceStore.Instance.catalogSourceRadiusType,
-                catalogSourceRadiusType => {
-                    this.catalogSourceRadiusType = this.catalogSourceRadiusTypes.get(catalogSourceRadiusType as CatalogSourceRadiusMode)?.value ?? 1;
-                    this.setCatalogSize(this.showedCatalogSize);
                 }
             )
         );
@@ -861,6 +851,12 @@ export class CatalogWidgetStore {
         }
     }
 
+    @action setCatalogSourceRadiusType(type: CatalogSourceRadiusMode) {
+        if (this.catalogSourceRadiusTypes.has(type)) {
+            this.catalogSourceRadiusType = type;
+        }
+    }
+
     /**
      * Set the color of catalog source
      * @param color - color of catalog source
@@ -1038,7 +1034,8 @@ export class CatalogWidgetStore {
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
             const pixelAngularSize = (frame?.spatialReference?.pixelUnitSizeArcsec && frame?.spatialReference?.pixelUnitSizeArcsec.x) ?? (frame?.pixelUnitSizeArcsec && frame?.pixelUnitSizeArcsec.x) ?? 1;
             const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.worldSizeUnit : this.canvasSizeUnit;
-            return ((FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize) * this.catalogSourceRadiusType;
+            const radiusFactor = this.catalogSourceRadiusTypes.get(this.catalogSourceRadiusType)?.value ?? 1;
+            return ((FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize) * radiusFactor;
         }
     }
 
