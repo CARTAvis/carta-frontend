@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 
-import {SkyRefIs, SpectralSystem, SpectralType, SpectralUnit} from "enums";
+import {Polarizations, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit} from "enums";
 import {type FrameInfo, FrameStore} from "stores";
 
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
@@ -237,6 +237,20 @@ describe("FrameStore", () => {
             expect(config["bmaj"]).toEqual([0.9315811991691589, 0.9315744042396545, 0.9315680265426636]);
             expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);
             expect(config["freqGHz"]).toEqual([90.73634849111, 90.73631797353188, 90.73628745595375]);
+        });
+
+        test("returns the beam config for the requested polarization", () => {
+            const mockStokesOptions = jest.spyOn(FrameStore.prototype, "stokesOptions", "get").mockReturnValue([
+                {value: Polarizations.I, label: "Stokes I"},
+                {value: Polarizations.Q, label: "Stokes Q"}
+            ]);
+            mockChannelInfo.mockReturnValue({indexes: [0, 1, 2], values: [90.73634849111, 90.73631797353188, 90.73628745595375]});
+
+            const config = new FrameStore(STOKES_CUBEFRAME_INFO).getIntensityConfig(Polarizations.Q);
+            mockStokesOptions.mockRestore();
+
+            expect(config["bmaj"]).toEqual([0.931560754776001, 0.9315542578697205, 0.9315447807312012]);
+            expect(config["bmin"]).toEqual([0.8433191776275635, 0.8433099985122681, 0.8433027863502502]);
         });
     });
 

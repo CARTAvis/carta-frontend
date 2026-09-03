@@ -511,14 +511,18 @@ export class FrameStore {
     };
 
     @computed get beamAllChannels(): CARTA.Beam.$Properties[] {
+        return this.getBeamsForStokes(this.requiredStokes);
+    }
+
+    private getBeamsForStokes = (stokes: number): CARTA.Beam.$Properties[] => {
         const channelNum = this.channelInfo?.indexes?.length;
         if (!channelNum) {
             return [];
         }
 
-        const beams = this.channelInfo.indexes.map(channelIndex => this.getBeam(channelIndex, this.requiredStokes));
+        const beams = this.channelInfo.indexes.map(channelIndex => this.getBeam(channelIndex, stokes));
         return beams.filter(beam => beam !== undefined);
-    }
+    };
 
     private getBeam = (channel: number, stokes: number): CARTA.Beam.$Properties | undefined => {
         let beam: CARTA.Beam.$Properties | undefined;
@@ -646,8 +650,13 @@ export class FrameStore {
     }
 
     @computed get intensityConfig(): IntensityConfig {
+        return this.getIntensityConfig();
+    }
+
+    getIntensityConfig = (polarization?: Polarizations): IntensityConfig => {
         const config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
-        const beams = this.beamAllChannels;
+        const stokes = polarization === undefined ? -1 : this.stokesOptions.findIndex(option => option.value === polarization);
+        const beams = stokes < 0 ? this.beamAllChannels : this.getBeamsForStokes(stokes);
         if (beams?.length) {
             config["bmaj"] = beams.map(b => b.majorAxis ?? 0);
             config["bmin"] = beams.map(b => b.minorAxis ?? 0);
@@ -666,7 +675,7 @@ export class FrameStore {
             config["cdelta2"] = getAngleInRad(this.pixelUnitSizeArcsec.y);
         }
         return config;
-    }
+    };
 
     getFreqWithChannel(channel: number) {
         const result: {spectralString: string; velocityString: string; freqString: string} = {spectralString: "", velocityString: "", freqString: ""};

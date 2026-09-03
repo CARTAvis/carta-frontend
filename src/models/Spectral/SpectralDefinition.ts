@@ -248,7 +248,7 @@ const JySrToJyArcsec2 = (isForward: boolean = true): number => {
 };
 
 const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
-    const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
+    const coefficient = (2.350443 * 1e-11) / (cdelta1 * cdelta2);
     return isForward ? coefficient : 1 / coefficient;
 };
 
@@ -339,4 +339,35 @@ export const GetIntensityConversion = (config: IntensityConfig | undefined, unit
     } else {
         return FindIntensityConversion(unitFromType, unitToType, scale, config);
     }
+};
+
+export const ShouldUseSumForFluxDensity = (config: IntensityConfig, unitTo: string): boolean => {
+    const unitFromType = FindIntensityUnitType(config.nativeIntensityUnit);
+    const unitToType = FindIntensityUnitType(unitTo);
+    return unitFromType !== IntensityUnitType.Unsupported && unitToType !== IntensityUnitType.Unsupported && unitFromType !== unitToType;
+};
+
+export const GetFluxDensityFromSum = (values: Float32Array | Float64Array, config: IntensityConfig, pixelSizesArcsec: {x: number; y: number}, unitTo: string): Float32Array | Float64Array | undefined => {
+    const unitToType = FindIntensityUnitType(unitTo);
+    if (unitToType === IntensityUnitType.Unsupported) {
+        return undefined;
+    }
+
+    const intensityConversion = GetIntensityConversion(config, unitTo);
+    if (ShouldUseSumForFluxDensity(config, unitTo) && !intensityConversion) {
+        return undefined;
+    }
+
+    const intensityValues = intensityConversion ? intensityConversion(values) : values;
+    const pixelAreaArcsec2 = Math.abs(pixelSizesArcsec.x * pixelSizesArcsec.y);
+    return intensityValues.map((value, index) => {
+        if (unitToType === IntensityUnitType.JyPixel) {
+            return value;
+        } else if (unitToType === IntensityUnitType.JySr) {
+            return value * pixelAreaArcsec2 * JySrToJyArcsec2();
+        } else if (unitToType === IntensityUnitType.JyBeam) {
+            return value * pixelAreaArcsec2 * JyBeamToJySr(config.bmaj?.[index] ?? NaN, config.bmin?.[index] ?? NaN) * JySrToJyArcsec2();
+        }
+        return value * pixelAreaArcsec2;
+    });
 };
