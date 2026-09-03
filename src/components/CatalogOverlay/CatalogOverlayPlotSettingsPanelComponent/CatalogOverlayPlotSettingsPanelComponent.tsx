@@ -695,6 +695,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
+                <FormGroup inline={true} label="Axis type">
+                    <ButtonGroup>
+                        {Array.from(widgetStore.catalogSourceRadiusTypes.entries()).map(([type, option]) => (
+                            <AnchorButton
+                                key={type}
+                                disabled={isOverlayPanelDisabled || !widgetStore.isAngularSize}
+                                text={option.label}
+                                active={widgetStore.catalogSourceRadiusType === type}
+                                onClick={() => widgetStore.setCatalogSourceRadiusType(type)}
+                                data-testid={`catalog-settings-axis-type-${type}-button`}
+                            />
+                        ))}
+                    </ButtonGroup>
+                </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={isOverlayPanelDisabled}>
                     <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
                         <SafeNumericInput

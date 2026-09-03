@@ -2,7 +2,6 @@ export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
     SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
-
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
     GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
