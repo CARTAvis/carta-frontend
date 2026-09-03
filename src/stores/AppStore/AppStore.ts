@@ -48,7 +48,7 @@ import {
     WorkspaceConfig,
     type WorkspaceFile
 } from "models";
-import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry, markAsScriptingMap} from "scripting";
+import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -76,7 +76,20 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
+import {
+    Distinct,
+    exportScreenshot,
+    getColorForTheme,
+    getPasteRegionOffset,
+    GetRequiredTiles,
+    getTimestamp,
+    mapToObject,
+    markAsScriptingMap,
+    offsetPointsToAvoidCollision,
+    ProtobufProcessing,
+    type RegionClipboardData,
+    type RegionClipboardItem
+} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";

@@ -2,8 +2,8 @@ import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {toJS} from "mobx";
 
-import {isScriptingMap, parseReturnPath, type ReturnPath} from "scripting/returnPath";
 import {AppStore} from "stores";
+import {isScriptingMap, parseReturnPath, type ReturnPath} from "utilities";
 
 export class ExecutionEntry {
     target: string | null | undefined;

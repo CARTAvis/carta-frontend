@@ -18,7 +18,7 @@ jest.mock("stores", () => ({
 
 import type {CARTA} from "carta-protobuf";
 
-import {markAsScriptingMap} from "scripting/returnPath";
+import {markAsScriptingMap} from "utilities";
 
 import {ScriptingService} from "./ScriptingService";
 

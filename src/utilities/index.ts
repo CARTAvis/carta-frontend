@@ -15,6 +15,7 @@ export * from "./Processed/Processed";
 export * from "./region/region";
 export * from "./region/simpleShapePointEdit";
 export * from "./scaling/scaling";
+export * from "./scripting/returnPath";
 export * from "./sorting/sorting";
 export * from "./table/table";
 export * from "./templates/templates";
