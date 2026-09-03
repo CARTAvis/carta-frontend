@@ -29,12 +29,6 @@
       "models/*": [
         "./src/models/*"
       ],
-      "scripting": [
-        "./src/scripting/index"
-      ],
-      "scripting/*": [
-        "./src/scripting/*"
-      ],
       "services": [
         "./src/services/index"
       ],
