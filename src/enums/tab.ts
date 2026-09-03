@@ -67,6 +67,7 @@ export enum PreferenceDialogTabs {
     PERFORMANCE,
     LOG_EVENT,
     CATALOG,
+    STATISTICS,
     TELEMETRY,
     COMPATIBILITY
 }

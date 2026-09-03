@@ -8,19 +8,15 @@ import {observer} from "mobx-react";
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {HelpType, Polarizations} from "enums";
-import {FULL_POLARIZATIONS} from "models";
+import {BEAM_AREA_STATS_TYPE, BEAM_PIXELS_STATS_TYPE, FULL_POLARIZATIONS, NUM_BEAMS_STATS_TYPE, STATISTICS_NAME_MAP, type StatsDisplayType} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
 import "./StatsComponent.scss";
 
-type StatsDisplayType = CARTA.StatsType | "BeamArea" | "NumBeams" | "BeamAreaPixels";
 type StatsTableValue = {num: string; unit: string};
 type StatsTableRow = {name: string; type: StatsDisplayType; value: StatsTableValue};
-const NUM_BEAMS_STATS_TYPE = "NumBeams";
-const BEAM_AREA_STATS_TYPE = "BeamArea";
-const BEAM_PIXELS_STATS_TYPE = "BeamAreaPixels";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
@@ -84,22 +80,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
-
-    private static readonly StatsNameMap = new Map<StatsDisplayType, string>([
-        [CARTA.StatsType.NumPixels, "NumPixels"],
-        [NUM_BEAMS_STATS_TYPE, "NumBeams"],
-        [BEAM_AREA_STATS_TYPE, "BeamArea"],
-        [BEAM_PIXELS_STATS_TYPE, "BeamAreaPixels"],
-        [CARTA.StatsType.Sum, "Sum"],
-        [CARTA.StatsType.FluxDensity, "FluxDensity"],
-        [CARTA.StatsType.Mean, "Mean"],
-        [CARTA.StatsType.Sigma, "StdDev"],
-        [CARTA.StatsType.Min, "Min"],
-        [CARTA.StatsType.Max, "Max"],
-        [CARTA.StatsType.Extrema, "Extrema"],
-        [CARTA.StatsType.RMS, "RMS"],
-        [CARTA.StatsType.SumSq, "SumSq"]
-    ]);
 
     private static readonly NameColumnWidth = 90;
 
@@ -263,7 +243,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     private getTableRows = (): StatsTableRow[] => {
         const rows: StatsTableRow[] = [];
-        StatsComponent.StatsNameMap.forEach((name, type) => {
+        STATISTICS_NAME_MAP.forEach((name, type) => {
+            if (!AppStore.Instance.preferenceStore.statistics.includes(type)) {
+                return;
+            }
             const value = this.getTableValue(type);
             if (value) {
                 rows.push({name, type, value});

@@ -22,7 +22,7 @@ import {
     ScrollShadow
 } from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
-import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, STATISTICS_NAME_MAP, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
@@ -140,6 +140,9 @@ export class PreferenceDialogComponent extends React.Component {
             case PreferenceDialogTabs.CATALOG:
                 preference.resetCatalogSettings();
                 MirrorSiteStore.Instance.resetAllSettings();
+                break;
+            case PreferenceDialogTabs.STATISTICS:
+                preference.resetStatisticsSettings();
                 break;
             case PreferenceDialogTabs.TELEMETRY:
                 preference.resetTelemetrySettings();
@@ -988,6 +991,16 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
+        const statisticsPanel = (
+            <FormGroup className="statistics-panel" label="Displayed quantities" helperText="Median and quartile quantities may be slower for large regions." inline={true}>
+                <div className="statistics-list">
+                    {Array.from(STATISTICS_NAME_MAP, ([type, name]) => (
+                        <Checkbox key={type} checked={preference.statistics.includes(type)} label={name} onChange={() => preference.toggleStatistic(type)} />
+                    ))}
+                </div>
+            </FormGroup>
+        );
+
         const className = classNames("preference-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
@@ -1020,6 +1033,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={<ScrollShadow>{overlayConfigPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.LAYOUT} title="Layout" panel={<ScrollShadow>{layoutPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={<ScrollShadow>{catalogPanel}</ScrollShadow>} />
+                        <Tab id={PreferenceDialogTabs.STATISTICS} title="Statistics" panel={<ScrollShadow>{statisticsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={<ScrollShadow>{regionSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={<ScrollShadow>{annotationSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={<ScrollShadow>{performancePanel}</ScrollShadow>} />

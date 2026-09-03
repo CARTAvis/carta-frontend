@@ -1796,18 +1796,6 @@ export class AppStore {
         this.isCanvasUpdated = isUpdated;
     };
 
-    public static readonly DEFAULT_STATS_TYPES = [
-        CARTA.StatsType.NumPixels,
-        CARTA.StatsType.Sum,
-        CARTA.StatsType.FluxDensity,
-        CARTA.StatsType.Mean,
-        CARTA.StatsType.RMS,
-        CARTA.StatsType.Sigma,
-        CARTA.StatsType.SumSq,
-        CARTA.StatsType.Min,
-        CARTA.StatsType.Max,
-        CARTA.StatsType.Extrema
-    ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
     private static readonly ImageThrottleTime = 50;

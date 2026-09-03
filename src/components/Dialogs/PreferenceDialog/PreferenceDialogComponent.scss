@@ -50,6 +50,12 @@
         }
     }
 
+    .statistics-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+        gap: 8px 24px;
+    }
+
     .wcs-matching {
         .#{$ns}-form-content {
             display: flex;
