@@ -1034,7 +1034,7 @@ export class CatalogWidgetStore {
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
             const pixelAngularSize = (frame?.spatialReference?.pixelUnitSizeArcsec && frame?.spatialReference?.pixelUnitSizeArcsec.x) ?? (frame?.pixelUnitSizeArcsec && frame?.pixelUnitSizeArcsec.x) ?? 1;
             const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.worldSizeUnit : this.canvasSizeUnit;
-            const radiusFactor = this.catalogSourceRadiusTypes.get(this.catalogSourceRadiusType)?.value ?? 1;
+            const radiusFactor = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? (this.catalogSourceRadiusTypes.get(this.catalogSourceRadiusType)?.value ?? 1) : 1;
             return ((FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize) * radiusFactor;
         }
     }

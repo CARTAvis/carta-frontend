@@ -1,6 +1,6 @@
 import * as CARTACompute from "carta_computation";
 
-import {CatalogDisplayMode} from "enums";
+import {CatalogDisplayMode, CatalogSizeUnits} from "enums";
 import {type CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 
 describe("CatalogWidgetStore angular size axis type", () => {
@@ -19,6 +19,10 @@ describe("CatalogWidgetStore angular size axis type", () => {
         expect(diameterWidgetStore.pixelSizeFactor).toBe(1);
         expect(radiusWidgetStore.pixelSizeFactor).toBe(2);
         expect(radiusWidgetStore.catalogSize).toBe(fixedCatalogSize);
+
+        radiusWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
+        radiusWidgetStore.setCanvasSizeUnit(CatalogSizeUnits.ARCSEC);
+        expect(radiusWidgetStore.pixelSizeFactor).toBe(1);
 
         diameterWidgetStore.dispose();
         radiusWidgetStore.dispose();
