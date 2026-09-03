@@ -1,9 +1,9 @@
 import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
 import * as AST from "ast_wrapper";
 
-import {RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
+import {PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
-import {type FrameInfo, FrameStore} from "../index";
+import {type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
@@ -393,6 +393,24 @@ describe("FrameStore", () => {
             expect(frame.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
             expect(frame.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
             expect(frame.restFrameRadialVelocity).toBe(0);
+        });
+
+        test("initializes PV shift input from preferences", () => {
+            const preferenceStore = PreferenceStore.Instance;
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.REDSHIFT);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.OPTICAL);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.RADIAL_VELOCITY);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.RELATIVISTIC);
+
+            const frame = new FrameStore(pvFrameInfo);
+
+            expect(frame.restFrameShiftMode).toBe(RestFrameShiftMode.REDSHIFT);
+            expect(frame.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
+
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
         });
 
         test("tracks and validates rest-frame shift settings", () => {

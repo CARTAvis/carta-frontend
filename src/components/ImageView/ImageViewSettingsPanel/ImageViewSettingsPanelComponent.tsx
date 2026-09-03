@@ -784,7 +784,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                                         {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
                                     ]}
                                     onChange={event => {
-                                        frame.setRestFrameShiftMode(event.currentTarget.value as RestFrameShiftMode);
+                                        const mode = event.currentTarget.value as RestFrameShiftMode;
+                                        frame.setRestFrameShiftMode(mode);
+                                        preferences.setPreference(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE, mode);
                                         this.setRestFrameShiftInputIntent(Intent.NONE);
                                     }}
                                     data-testid="image-view-settings-rest-frame-shift-mode-dropdown"
@@ -801,7 +803,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                                             {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
                                         ]}
                                         onChange={event => {
-                                            frame.setRestFrameVelocityConvention(event.currentTarget.value as VelocityConvention);
+                                            const convention = event.currentTarget.value as VelocityConvention;
+                                            frame.setRestFrameVelocityConvention(convention);
+                                            preferences.setPreference(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION, convention);
                                             this.setRestFrameShiftInputIntent(Intent.NONE);
                                         }}
                                         data-testid="image-view-settings-rest-frame-velocity-convention-dropdown"

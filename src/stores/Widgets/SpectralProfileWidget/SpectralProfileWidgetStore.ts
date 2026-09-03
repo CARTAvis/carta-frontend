@@ -23,7 +23,7 @@ import {
 } from "enums";
 import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, type Point2D} from "models";
 import {TelemetryService} from "services";
-import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
+import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {
     clamp,
@@ -75,8 +75,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable intensityUnit: string | undefined = undefined;
     @observable isXAxisRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
-    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.RADIAL_VELOCITY;
-    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RADIO;
+    @observable restFrameShiftMode: RestFrameShiftMode = PreferenceStore.Instance.spectralProfilerRestFrameShiftMode;
+    @observable restFrameVelocityConvention: VelocityConvention = PreferenceStore.Instance.spectralProfilerRestFrameVelocityConvention;
     @observable isRestFrameShiftInputValid: boolean = true;
     @observable isYAxisRestFrameEnabled: boolean = false;
 

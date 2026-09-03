@@ -3,9 +3,9 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
-import {AppStore} from "../..";
+import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
@@ -94,6 +94,24 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         widgetStore.setRestFrameRedshift(0);
         expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
         expect(widgetStore.convertDisplayXToObserved(100)).toBe(100);
+    });
+
+    test("initializes shift input from preferences", () => {
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.REDSHIFT);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.OPTICAL);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.RADIAL_VELOCITY);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.RELATIVISTIC);
+
+        const {widgetStore} = createWidgetStore();
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.REDSHIFT);
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
+
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
     });
 
     test("keeps plotted spectral lines in rest-frame coordinates when X-axis correction is active", () => {

@@ -172,8 +172,8 @@ export class FrameStore {
     @observable spectralSystem: SpectralSystem | null = null;
     @observable isRestFrameEnabled: boolean = false;
     @observable restFrameRedshift: number = 0;
-    @observable restFrameShiftMode: RestFrameShiftMode = RestFrameShiftMode.RADIAL_VELOCITY;
-    @observable restFrameVelocityConvention: VelocityConvention = VelocityConvention.RADIO;
+    @observable restFrameShiftMode: RestFrameShiftMode = PreferenceStore.Instance.imageViewRestFrameShiftMode;
+    @observable restFrameVelocityConvention: VelocityConvention = PreferenceStore.Instance.imageViewRestFrameVelocityConvention;
     @observable isRestFrameShiftInputValid: boolean = true;
     @observable channelValues: Array<number> = [];
     @observable channelSecondaryValues: Array<number> = [];

@@ -4,7 +4,7 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, MultiProfileCategory, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
+import {HelpType, MultiProfileCategory, PreferenceKeys, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber, restFrameShiftValidationMessage} from "utilities";
@@ -97,11 +97,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     @action private onShiftModeChanged = (mode: string) => {
         this.widgetStore?.setRestFrameShiftMode(mode as RestFrameShiftMode);
+        AppStore.Instance.preferenceStore.setPreference(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, mode as RestFrameShiftMode);
         this.shiftInputIntent = Intent.NONE;
     };
 
     @action private onVelocityConventionChanged = (convention: string) => {
         this.widgetStore?.setRestFrameVelocityConvention(convention as VelocityConvention);
+        AppStore.Instance.preferenceStore.setPreference(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, convention as VelocityConvention);
         this.shiftInputIntent = Intent.NONE;
     };
 
