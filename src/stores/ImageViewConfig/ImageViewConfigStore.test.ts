@@ -250,6 +250,44 @@ describe("ImageViewConfigStore", () => {
         });
     });
 
+    describe("sortImagesByTime", () => {
+        const makeTimedFrame = (fileId: number, obsTimeMjdUtc?: number) => {
+            const frame = new FrameStore({fileId} as any);
+            Object.setPrototypeOf(frame, FrameStore.prototype);
+            return Object.assign(frame, {obsTimeMjdUtc});
+        };
+
+        it("sorts images by ascending observation time", () => {
+            const late = makeTimedFrame(10, 59100);
+            const early = makeTimedFrame(11, 58900);
+            const middle = makeTimedFrame(12, 59000);
+            imageViewConfigStore.addFrame(late);
+            imageViewConfigStore.addFrame(early);
+            imageViewConfigStore.addFrame(middle);
+
+            imageViewConfigStore.sortImagesByTime();
+            expect(imageViewConfigStore.getImage(0).store).toBe(early);
+            expect(imageViewConfigStore.getImage(1).store).toBe(middle);
+            expect(imageViewConfigStore.getImage(2).store).toBe(late);
+        });
+
+        it("keeps images without a valid time at the end in their original order", () => {
+            const late = makeTimedFrame(10, 59100);
+            const noTime = makeTimedFrame(11);
+            const early = makeTimedFrame(12, 58900);
+            imageViewConfigStore.addFrame(late);
+            imageViewConfigStore.addFrame(noTime);
+            imageViewConfigStore.addFrame(early);
+            const colorBlending = imageViewConfigStore.createColorBlending();
+
+            imageViewConfigStore.sortImagesByTime();
+            expect(imageViewConfigStore.getImage(0).store).toBe(early);
+            expect(imageViewConfigStore.getImage(1).store).toBe(late);
+            expect(imageViewConfigStore.getImage(2).store).toBe(noTime);
+            expect(imageViewConfigStore.getImage(3).store).toBe(colorBlending);
+        });
+    });
+
     describe("image panel dimensions", () => {
         beforeEach(() => {
             imageViewConfigStore.removeAllImages();

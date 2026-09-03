@@ -72,6 +72,7 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    TimeSeriesStore,
     WidgetsStore
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
@@ -147,6 +148,8 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
     readonly channelMapStore: ChannelMapStore;
+    /** Management of the virtual time-series axis. */
+    readonly timeSeriesStore: TimeSeriesStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -1074,6 +1077,8 @@ export class AppStore {
                     }
                 }
 
+                this.setTimeSeriesMember(frame, false);
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -1093,6 +1098,7 @@ export class AppStore {
     @action removeAllFrames = () => {
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
+        this.timeSeriesStore.clearMembers();
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
@@ -1266,6 +1272,45 @@ export class AppStore {
      */
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
         this.imageViewConfigStore.reorderImage(oldIndex, newIndex, length);
+    };
+
+    /** Sorts the image list by ascending observation time; images without a valid time keep their relative order at the end. */
+    @action sortImagesByTime = () => {
+        this.imageViewConfigStore.sortImagesByTime();
+    };
+
+    @action setTimeSeriesMember = (frame: FrameStore, isMember: boolean): boolean => {
+        const didUpdate = this.timeSeriesStore.setMember(frame, isMember);
+        this.reconcileTimeSeriesAnimationMode(didUpdate);
+        return didUpdate;
+    };
+
+    @action setTimeSeriesMembers = (frames: readonly FrameStore[], isMember: boolean): number => {
+        const numUpdated = this.timeSeriesStore.setMembers(frames, isMember);
+        this.reconcileTimeSeriesAnimationMode(numUpdated > 0);
+        return numUpdated;
+    };
+
+    @action toggleTimeSeriesMember = (frame: FrameStore) => {
+        if (!this.animatorStore.isAnimationActive) {
+            this.setTimeSeriesMember(frame, !this.timeSeriesStore.isMember(frame));
+        }
+    };
+
+    @action toggleAllEligibleTimeSeriesMembers = (anchor: FrameStore) => {
+        if (this.animatorStore.isAnimationActive || !this.timeSeriesStore.canBeMember(anchor)) {
+            return;
+        }
+        const eligibleFrames = this.frames.filter(this.timeSeriesStore.canBeMember);
+        const areAllMembers = eligibleFrames.every(this.timeSeriesStore.isMember);
+        this.setTimeSeriesMembers(eligibleFrames, !areAllMembers);
+    };
+
+    private reconcileTimeSeriesAnimationMode = (didUpdate: boolean) => {
+        if (didUpdate && this.animatorStore.animationMode === AnimationMode.TIME_SERIES && this.timeSeriesStore.elements.length < 2) {
+            this.animatorStore.stopAnimation();
+            this.animatorStore.selectFirstAvailableAnimationMode();
+        }
     };
 
     // Region file actions
@@ -1938,6 +1983,7 @@ export class AppStore {
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
+        this.timeSeriesStore = TimeSeriesStore.Instance;
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
@@ -2728,6 +2774,9 @@ export class AppStore {
                         if (workspace.references?.raster === fileInfo.id) {
                             this.setRasterScalingReference(frame);
                         }
+                        if (fileInfo.timeSeriesMember) {
+                            this.setTimeSeriesMember(frame, true);
+                        }
                     }
                 }
 
@@ -2745,7 +2794,7 @@ export class AppStore {
                         continue;
                     }
 
-                    if (workspace.selectedFile === frame.frameInfo.fileId) {
+                    if (workspace.selectedFile === fileInfo.id) {
                         this.updateActiveImageByFrame(frame);
                     }
 
@@ -2896,7 +2945,8 @@ export class AppStore {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
                 filename: frame.filename,
-                hdu: frame.frameInfo.hdu
+                hdu: frame.frameInfo.hdu,
+                timeSeriesMember: this.timeSeriesStore.isMember(frame) || undefined
             };
             workspaceFile.references = {};
 

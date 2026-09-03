@@ -41,6 +41,7 @@ import {
     ASTSettingsString,
     buildSwappedZWcsSettings,
     clamp,
+    convertMjdToUtc,
     formattedArcsec,
     formattedFrequency,
     frequencyFromVelocity,
@@ -60,6 +61,7 @@ import {
     isWCSStringFormatValid,
     minMax2D,
     multiply2D,
+    parseObsDateToMjdUtc,
     ProtobufProcessing,
     rotate2D,
     round2D,
@@ -797,6 +799,47 @@ export class FrameStore {
             return dirName;
         }
         return "Channel";
+    }
+
+    private getStringHeaderValue(name: string): string | undefined {
+        const header = this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === name);
+        if (!header?.value) {
+            return undefined;
+        }
+        const value = trimFitsComment(header.value)
+            ?.replace(/^'+|'+$/g, "")
+            .trim();
+        return value || undefined;
+    }
+
+    // Time scale of DATE-OBS/MJD-OBS, default UTC per the FITS standard
+    @computed private get timeSys(): string {
+        return this.getStringHeaderValue("TIMESYS") ?? "UTC";
+    }
+
+    // Observation time as MJD in UTC, from MJD-OBS or DATE-OBS. Undefined when absent or unparsable.
+    @computed get obsTimeMjdUtc(): number | undefined {
+        const entries = this.frameInfo?.fileInfoExtended?.headerEntries;
+        if (!entries) {
+            return undefined;
+        }
+
+        const mjdObsHeader = entries.find(entry => entry.name === "MJD-OBS");
+        if (mjdObsHeader) {
+            const mjdUtc = convertMjdToUtc(getHeaderNumericValue(mjdObsHeader), this.timeSys);
+            if (isFinite(mjdUtc)) {
+                return mjdUtc;
+            }
+        }
+
+        const dateObs = this.getStringHeaderValue("DATE-OBS");
+        if (dateObs) {
+            const mjdUtc = parseObsDateToMjdUtc(dateObs, this.timeSys);
+            if (isFinite(mjdUtc)) {
+                return mjdUtc;
+            }
+        }
+        return undefined;
     }
 
     get dirXLabel(): string {

@@ -59,6 +59,9 @@ export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, o
 export function createOffsetFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, pixelOffsetX: number, pixelOffsetY: number, skyRefIs: number);
 // Not exported fillTransformGrid()
 export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
+export function parseDateToMJD(dateString: string, timeScale: string): number;
+export function convertMJD(mjd: number, scaleIn: string, scaleOut: string): number;
+export function formatMJDToDate(mjd: number, timeScale: string, digits: number): string;
 
 // Helper functions
 export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number, formatString?: string, tempFormat?: boolean): {x: string, y: string};
