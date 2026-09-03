@@ -157,11 +157,9 @@ export class WorkspaceConfig {
                     return file;
                 }
 
-                const upgradedFile = WorkspaceConfig.stripHduSuffix(file);
-
-                const storedRenderConfig = upgradedFile.renderConfig;
+                const storedRenderConfig = file.renderConfig;
                 if (!storedRenderConfig || typeof storedRenderConfig !== "object" || Array.isArray(storedRenderConfig) || !("alpha" in storedRenderConfig)) {
-                    return upgradedFile;
+                    return file;
                 }
 
                 const {alpha, ...renderConfig} = storedRenderConfig as LegacyWorkspaceRenderConfig;
@@ -170,31 +168,9 @@ export class WorkspaceConfig {
                     renderConfig.alphaPower ??= sanitizeScalingParameter(FrameScaling.POWER, alpha);
                 }
 
-                return {...upgradedFile, renderConfig};
+                return {...file, renderConfig};
             })
         };
-    }
-
-    // Remove the display-only `.HDU_<hdu>[_<extension name>]` suffix which older versions
-    // stored as the file name of an image loaded from a non-zeroth HDU.
-    private static stripHduSuffix(file: WorkspaceFile): WorkspaceFile {
-        if (!file.hdu || file.hdu === "0" || typeof file.filename !== "string") {
-            return file;
-        }
-
-        const suffix = `.HDU_${file.hdu}`;
-        const suffixIndex = file.filename.lastIndexOf(suffix);
-        if (suffixIndex < 1) {
-            return file;
-        }
-
-        // Anything after the HDU is the extension name, which is separated by an underscore
-        const extName = file.filename.substring(suffixIndex + suffix.length);
-        if (extName !== "" && !extName.startsWith("_")) {
-            return file;
-        }
-
-        return {...file, filename: file.filename.substring(0, suffixIndex)};
     }
 
     public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {

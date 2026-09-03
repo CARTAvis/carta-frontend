@@ -48,41 +48,4 @@ describe("WorkspaceConfig.upgradeForRuntime", () => {
         expect(runtimeRenderConfig).toEqual({});
         expect(storedWorkspace.files?.[0].renderConfig).toHaveProperty("alpha", "invalid");
     });
-
-    test("removes the display-only HDU suffix from legacy file names", () => {
-        const storedWorkspace = {
-            workspaceVersion: 1,
-            frontendVersion: "6.0.0",
-            files: [
-                {id: 0, filename: "image.fits.HDU_1_SCI", hdu: "1"},
-                {id: 1, filename: "image.fits.HDU_2", hdu: "2"},
-                {id: 2, filename: "image.fits", hdu: "1"},
-                {id: 3, filename: "image.fits", hdu: "0"},
-                {id: 4, filename: "image.fits"}
-            ]
-        } as unknown as Workspace;
-        const originalJson = JSON.stringify(storedWorkspace);
-
-        const runtimeFiles = WorkspaceConfig.upgradeForRuntime(storedWorkspace).files;
-
-        expect(runtimeFiles?.map(file => file.filename)).toEqual(["image.fits", "image.fits", "image.fits", "image.fits", "image.fits"]);
-        expect(runtimeFiles?.map(file => file.hdu)).toEqual(["1", "2", "1", "0", undefined]);
-        expect(JSON.stringify(storedWorkspace)).toBe(originalJson);
-    });
-
-    test("keeps a file name which only looks like an HDU suffix", () => {
-        const storedWorkspace = {
-            workspaceVersion: 1,
-            frontendVersion: "6.0.0",
-            files: [
-                {id: 0, filename: "image.HDU_1.fits", hdu: "1"},
-                {id: 1, filename: "image.fits.HDU_2_SCI", hdu: "1"},
-                {id: 2, filename: ".HDU_1", hdu: "1"}
-            ]
-        } as unknown as Workspace;
-
-        const runtimeFiles = WorkspaceConfig.upgradeForRuntime(storedWorkspace).files;
-
-        expect(runtimeFiles?.map(file => file.filename)).toEqual(["image.HDU_1.fits", "image.fits.HDU_2_SCI", ".HDU_1"]);
-    });
 });
