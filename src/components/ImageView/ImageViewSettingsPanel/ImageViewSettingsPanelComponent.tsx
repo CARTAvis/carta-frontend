@@ -773,56 +773,60 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <FormGroup inline={true} label="Rest-frame correction" helperText={!frame.isRestFrameSupported ? "Select a spectral coordinate to enable rest-frame correction." : undefined}>
                         <Switch checked={frame.isRestFrameEnabled} disabled={!frame.isRestFrameSupported} onChange={event => frame.setRestFrameEnabled(event.currentTarget.checked)} data-testid="image-view-settings-rest-frame-toggle" />
                     </FormGroup>
-                    <FormGroup inline={true} label="Shift input">
-                        <HTMLSelect
-                            disabled={!frame.isRestFrameSupported}
-                            value={frame.restFrameShiftMode}
-                            options={[
-                                {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
-                                {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
-                            ]}
-                            onChange={event => {
-                                frame.setRestFrameShiftMode(event.currentTarget.value as RestFrameShiftMode);
-                                this.setRestFrameShiftInputIntent(Intent.NONE);
-                            }}
-                            data-testid="image-view-settings-rest-frame-shift-mode-dropdown"
-                        />
-                    </FormGroup>
-                    {isRadialVelocityMode && (
-                        <FormGroup inline={true} label="Velocity convention">
-                            <HTMLSelect
-                                disabled={!frame.isRestFrameSupported}
-                                value={frame.restFrameVelocityConvention}
-                                options={[
-                                    {value: VelocityConvention.RADIO, label: "Radio"},
-                                    {value: VelocityConvention.OPTICAL, label: "Optical"},
-                                    {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
-                                ]}
-                                onChange={event => {
-                                    frame.setRestFrameVelocityConvention(event.currentTarget.value as VelocityConvention);
-                                    this.setRestFrameShiftInputIntent(Intent.NONE);
-                                }}
-                                data-testid="image-view-settings-rest-frame-velocity-convention-dropdown"
-                            />
-                        </FormGroup>
-                    )}
-                    <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} helperText={restFrameShiftInputError}>
-                        <SafeNumericInput
-                            key={`${frame.restFrameShiftMode}-${frame.restFrameVelocityConvention}`}
-                            disabled={isRestFrameShiftInputDisabled}
-                            value={isRadialVelocityMode ? frame.restFrameRadialVelocity : frame.restFrameRedshift}
-                            intent={isRestFrameShiftInputDisabled ? Intent.NONE : this.restFrameShiftInputIntent}
-                            buttonPosition="none"
-                            onValueChange={value => this.onRestFrameShiftChanged(frame, value)}
-                            data-testid={isRadialVelocityMode ? "image-view-settings-rest-frame-radial-velocity-input" : "image-view-settings-rest-frame-redshift-input"}
-                        />
-                    </FormGroup>
-                    {isRadialVelocityMode && (
-                        <FormGroup inline={true} label="Effective redshift (z)">
-                            <span className="effective-redshift" data-testid="image-view-settings-rest-frame-effective-redshift">
-                                {frame.effectiveRestFrameRedshift}
-                            </span>
-                        </FormGroup>
+                    {frame.isRestFrameEnabled && (
+                        <React.Fragment>
+                            <FormGroup inline={true} label="Shift input">
+                                <HTMLSelect
+                                    disabled={!frame.isRestFrameSupported}
+                                    value={frame.restFrameShiftMode}
+                                    options={[
+                                        {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
+                                        {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
+                                    ]}
+                                    onChange={event => {
+                                        frame.setRestFrameShiftMode(event.currentTarget.value as RestFrameShiftMode);
+                                        this.setRestFrameShiftInputIntent(Intent.NONE);
+                                    }}
+                                    data-testid="image-view-settings-rest-frame-shift-mode-dropdown"
+                                />
+                            </FormGroup>
+                            {isRadialVelocityMode && (
+                                <FormGroup inline={true} label="Velocity convention">
+                                    <HTMLSelect
+                                        disabled={!frame.isRestFrameSupported}
+                                        value={frame.restFrameVelocityConvention}
+                                        options={[
+                                            {value: VelocityConvention.RADIO, label: "Radio"},
+                                            {value: VelocityConvention.OPTICAL, label: "Optical"},
+                                            {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
+                                        ]}
+                                        onChange={event => {
+                                            frame.setRestFrameVelocityConvention(event.currentTarget.value as VelocityConvention);
+                                            this.setRestFrameShiftInputIntent(Intent.NONE);
+                                        }}
+                                        data-testid="image-view-settings-rest-frame-velocity-convention-dropdown"
+                                    />
+                                </FormGroup>
+                            )}
+                            <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} helperText={restFrameShiftInputError}>
+                                <SafeNumericInput
+                                    key={`${frame.restFrameShiftMode}-${frame.restFrameVelocityConvention}`}
+                                    disabled={isRestFrameShiftInputDisabled}
+                                    value={isRadialVelocityMode ? frame.restFrameRadialVelocity : frame.restFrameRedshift}
+                                    intent={isRestFrameShiftInputDisabled ? Intent.NONE : this.restFrameShiftInputIntent}
+                                    buttonPosition="none"
+                                    onValueChange={value => this.onRestFrameShiftChanged(frame, value)}
+                                    data-testid={isRadialVelocityMode ? "image-view-settings-rest-frame-radial-velocity-input" : "image-view-settings-rest-frame-redshift-input"}
+                                />
+                            </FormGroup>
+                            {isRadialVelocityMode && (
+                                <FormGroup inline={true} label="Effective redshift (z)">
+                                    <span className="effective-redshift" data-testid="image-view-settings-rest-frame-effective-redshift">
+                                        {frame.effectiveRestFrameRedshift}
+                                    </span>
+                                </FormGroup>
+                            )}
+                        </React.Fragment>
                     )}
                 </div>
             ) : null;

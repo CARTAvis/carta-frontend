@@ -287,51 +287,55 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             </div>
                                         </div>
                                     </FormGroup>
-                                    <FormGroup inline={true} label={"Shift input"} contentClassName="reference-frame-form-content">
-                                        <HTMLSelect
-                                            disabled={isCoordinateSettingDisabled}
-                                            value={widgetStore.restFrameShiftMode}
-                                            options={[
-                                                {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
-                                                {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
-                                            ]}
-                                            onChange={event => this.onShiftModeChanged(event.currentTarget.value)}
-                                            data-testid="spectral-profiler-shift-mode-dropdown"
-                                        />
-                                    </FormGroup>
-                                    {isRadialVelocityMode && (
-                                        <FormGroup inline={true} label="Velocity convention" contentClassName="reference-frame-form-content">
-                                            <HTMLSelect
-                                                disabled={isCoordinateSettingDisabled}
-                                                value={widgetStore.restFrameVelocityConvention}
-                                                options={[
-                                                    {value: VelocityConvention.RADIO, label: "Radio"},
-                                                    {value: VelocityConvention.OPTICAL, label: "Optical"},
-                                                    {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
-                                                ]}
-                                                onChange={event => this.onVelocityConventionChanged(event.currentTarget.value)}
-                                                data-testid="spectral-profiler-velocity-convention-dropdown"
-                                            />
-                                        </FormGroup>
-                                    )}
-                                    <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content" helperText={shiftInputError}>
-                                        <SafeNumericInput
-                                            key={`${widgetStore.restFrameShiftMode}-${widgetStore.restFrameVelocityConvention}`}
-                                            disabled={isShiftInputDisabled}
-                                            value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
-                                            intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}
-                                            buttonPosition="none"
-                                            className="rest-frame-shift-input"
-                                            onValueChange={this.onShiftChanged}
-                                            data-testid={isRadialVelocityMode ? "spectral-profiler-radial-velocity-input" : "spectral-profiler-redshift-input"}
-                                        />
-                                    </FormGroup>
-                                    {isRadialVelocityMode && (
-                                        <FormGroup inline={true} label={"Effective redshift (z)"} contentClassName="reference-frame-form-content">
-                                            <span className="effective-redshift" data-testid="spectral-profiler-effective-redshift">
-                                                {widgetStore.effectiveRestFrameRedshift}
-                                            </span>
-                                        </FormGroup>
+                                    {widgetStore.isRestFrameCorrectionRequested && (
+                                        <React.Fragment>
+                                            <FormGroup inline={true} label={"Shift input"} contentClassName="reference-frame-form-content">
+                                                <HTMLSelect
+                                                    disabled={isCoordinateSettingDisabled}
+                                                    value={widgetStore.restFrameShiftMode}
+                                                    options={[
+                                                        {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
+                                                        {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
+                                                    ]}
+                                                    onChange={event => this.onShiftModeChanged(event.currentTarget.value)}
+                                                    data-testid="spectral-profiler-shift-mode-dropdown"
+                                                />
+                                            </FormGroup>
+                                            {isRadialVelocityMode && (
+                                                <FormGroup inline={true} label="Velocity convention" contentClassName="reference-frame-form-content">
+                                                    <HTMLSelect
+                                                        disabled={isCoordinateSettingDisabled}
+                                                        value={widgetStore.restFrameVelocityConvention}
+                                                        options={[
+                                                            {value: VelocityConvention.RADIO, label: "Radio"},
+                                                            {value: VelocityConvention.OPTICAL, label: "Optical"},
+                                                            {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
+                                                        ]}
+                                                        onChange={event => this.onVelocityConventionChanged(event.currentTarget.value)}
+                                                        data-testid="spectral-profiler-velocity-convention-dropdown"
+                                                    />
+                                                </FormGroup>
+                                            )}
+                                            <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content" helperText={shiftInputError}>
+                                                <SafeNumericInput
+                                                    key={`${widgetStore.restFrameShiftMode}-${widgetStore.restFrameVelocityConvention}`}
+                                                    disabled={isShiftInputDisabled}
+                                                    value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
+                                                    intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}
+                                                    buttonPosition="none"
+                                                    className="rest-frame-shift-input"
+                                                    onValueChange={this.onShiftChanged}
+                                                    data-testid={isRadialVelocityMode ? "spectral-profiler-radial-velocity-input" : "spectral-profiler-redshift-input"}
+                                                />
+                                            </FormGroup>
+                                            {isRadialVelocityMode && (
+                                                <FormGroup inline={true} label={"Effective redshift (z)"} contentClassName="reference-frame-form-content">
+                                                    <span className="effective-redshift" data-testid="spectral-profiler-effective-redshift">
+                                                        {widgetStore.effectiveRestFrameRedshift}
+                                                    </span>
+                                                </FormGroup>
+                                            )}
+                                        </React.Fragment>
                                     )}
                                 </React.Fragment>
                             }
