@@ -79,6 +79,8 @@ export class ChannelMapStore {
     @observable shouldShowFrequencyString: boolean = false;
     /** Indicates whether to show the velocity string. */
     @observable shouldShowVelocityString: boolean = false;
+    /** Indicates whether to show the beam overlay. */
+    @observable shouldShowBeamOverlay: boolean = true;
     /** Indicates whether to show the unit of the frequency string. */
     @observable shouldShowFrequencyStringUnit: boolean = true;
     /** Indicates whether to show the unit of the velocity string. */
@@ -248,6 +250,11 @@ export class ChannelMapStore {
      */
     @action setShowVelocityString = (shouldShow: boolean) => {
         this.shouldShowVelocityString = shouldShow;
+    };
+
+    /** Show or hide the beam overlay. */
+    @action setShowBeamOverlay = (shouldShow: boolean) => {
+        this.shouldShowBeamOverlay = shouldShow;
     };
 
     /**

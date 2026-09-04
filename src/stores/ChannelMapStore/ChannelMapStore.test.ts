@@ -66,6 +66,18 @@ describe("ChannelMapStore", () => {
     afterEach(() => {
         jest.useRealTimers();
         store.setChannelStep(1);
+        store.setShowBeamOverlay(true);
+    });
+
+    describe("beam overlay", () => {
+        it("is enabled by default", () => {
+            expect(store.shouldShowBeamOverlay).toBe(true);
+        });
+
+        it("can be toggled", () => {
+            store.setShowBeamOverlay(false);
+            expect(store.shouldShowBeamOverlay).toBe(false);
+        });
     });
 
     describe("setChannelMapEnabled", () => {

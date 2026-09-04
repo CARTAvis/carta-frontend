@@ -138,6 +138,40 @@ describe("FrameStore", () => {
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
             expect(beam).toHaveProperty("angle", 42.576087951660156);
         });
+
+        test("returns the beam for a specified channel", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties(2);
+            expect(beam).toHaveProperty("majorAxis", 0.9315680265426636);
+            expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
+            expect(beam).toHaveProperty("angle", 42.57808303833008);
+        });
+    });
+
+    describe("shouldShowBeamForAllChannels", () => {
+        const createFrameWithHeaders = (...additionalHeaders: CARTA.HeaderEntry.$Properties[]) =>
+            new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                fileInfoExtended: {
+                    ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
+                    headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, ...additionalHeaders]
+                }
+            } as FrameInfo);
+
+        test("returns true for CASA per-channel beam metadata", () => {
+            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(true);
+        });
+
+        test("returns false without the CASA beam table marker", () => {
+            const frame = createFrameWithHeaders();
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
+
+        test.each(["BMAJ", "BMIN", "BPA"])("returns false when %s is present", headerName => {
+            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"}, {name: headerName, value: "1"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
     });
 
     describe("beamAllChannels", () => {
