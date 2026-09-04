@@ -732,16 +732,16 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         barWidth = imageWidth;
     }
 
-    const tickColor = getColorForTheme(colorbarSettings.tickCustomColor ? colorbarSettings.tickColor : colorbarSettings.color);
-    const numberColor = getColorForTheme(colorbarSettings.numberCustomColor ? colorbarSettings.numberColor : colorbarSettings.color);
-    const labelColor = getColorForTheme(colorbarSettings.labelCustomColor ? colorbarSettings.labelColor : colorbarSettings.color);
-    const borderColor = getColorForTheme(colorbarSettings.borderCustomColor ? colorbarSettings.borderColor : colorbarSettings.color);
+    const tickColor = getColorForTheme(colorbarSettings.hasTickCustomColor ? colorbarSettings.tickColor : colorbarSettings.color);
+    const numberColor = getColorForTheme(colorbarSettings.hasNumberCustomColor ? colorbarSettings.numberColor : colorbarSettings.color);
+    const labelColor = getColorForTheme(colorbarSettings.hasLabelCustomColor ? colorbarSettings.labelColor : colorbarSettings.color);
+    const borderColor = getColorForTheme(colorbarSettings.hasBorderCustomColor ? colorbarSettings.borderColor : colorbarSettings.color);
 
     // Scale tick positions to SVG coordinates
     const scaledPositions = positions.map((p: number) => p * pixelRatio);
 
     const frameUnit = frame.requiredUnit === undefined || !frame.requiredUnit.length ? "arbitrary units" : frame.requiredUnit;
-    const labelText = colorbarSettings.labelVisible ? (colorbarSettings.labelCustomText ? (frame.colorbarLabelCustomText ?? "") : frameUnit) : "";
+    const labelText = colorbarSettings.isLabelVisible ? (colorbarSettings.hasLabelCustomText ? (frame.colorbarLabelCustomText ?? "") : frameUnit) : "";
 
     return renderColorbarToSvg(
         colorscaleArray,
@@ -755,6 +755,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         tickColor,
         colorbarSettings.tickWidth * pixelRatio,
         colorbarSettings.tickLen * pixelRatio,
+        colorbarSettings.textGap * pixelRatio,
         "sans-serif",
         colorbarSettings.numberFontSize * pixelRatio,
         numberColor,
@@ -764,7 +765,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         colorbarSettings.labelFontSize * pixelRatio,
         labelColor,
         colorbarSettings.labelRotation,
-        colorbarSettings.borderVisible,
+        colorbarSettings.isBorderVisible,
         borderColor,
         colorbarSettings.borderWidth * pixelRatio
     );
