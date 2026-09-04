@@ -1,7 +1,7 @@
 import {CatalogOverlayShape} from "enums";
 
 import {renderCatalogToSvg} from "./catalogSvgExport";
-import {renderColorbarToSvg} from "./colorbarSvgExport";
+import {type ColorbarSvgOptions, renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
@@ -93,8 +93,18 @@ describe("renderVectorOverlayToSvg", () => {
 });
 
 describe("renderColorbarToSvg", () => {
+    const createOptions = (): ColorbarSvgOptions => ({
+        colorscaleArray: [0, "#000", 1, "#fff"],
+        position: "right",
+        bar: {x: 100, y: 10, width: 8, height: 80, gradientVisible: true},
+        ticks: {positions: [10, 50, 90], texts: ["high", "mid", "low"], visible: true, color: "#fff", width: 1, length: 4},
+        numbers: {visible: true, fontFamily: "sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: 700, color: "#fff", rotation: -90, gap: 10, width: 22},
+        label: {text: "Jy/beam", fontFamily: "serif", fontSize: 12, fontStyle: "normal", fontWeight: 400, color: "#fff", rotation: -90},
+        border: {visible: true, color: "#fff", width: 1}
+    });
+
     test("uses the colorbar store's absolute tick positions", () => {
-        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], "right", 100, 10, 8, 80, [10, 50, 90], ["high", "mid", "low"], "#fff", 1, 4, 10, "sans-serif", 12, "#fff", -90, "Jy/beam", "sans-serif", 12, "#fff", -90, true, "#fff", 1);
+        const group = renderColorbarToSvg(createOptions());
 
         const border = group.querySelectorAll("rect")[1];
         const ticks = group.querySelectorAll("line");
@@ -108,18 +118,45 @@ describe("renderColorbarToSvg", () => {
         expect(labels[1]).toHaveAttribute("x", "124");
         expect(labels[1]).toHaveAttribute("y", ticks[1].getAttribute("y1"));
         expect(labels[1]).toHaveAttribute("text-anchor", "middle");
+        expect(labels[1]).toHaveAttribute("font-style", "italic");
+        expect(labels[1]).toHaveAttribute("font-weight", "700");
         expect(labels[3]).toHaveAttribute("x", "146");
+        expect(labels[3]).toHaveAttribute("font-family", "serif");
+    });
+
+    test("honors gradient, tick, and number visibility", () => {
+        const options = createOptions();
+        options.bar.gradientVisible = false;
+        options.ticks.visible = false;
+        options.numbers.visible = false;
+        options.label.text = "";
+
+        const group = renderColorbarToSvg(options);
+
+        expect(group.querySelector("rect")).toHaveAttribute("fill", "none");
+        expect(group.querySelector("line")).toBeNull();
+        expect(group.querySelector("text")).toBeNull();
     });
 
     test.each([
-        ["top", "14", "10"],
-        ["bottom", "26", "30"]
-    ])("renders %s ticks inside the bar", (position, expectedY1, expectedY2) => {
-        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], position, 100, 10, 80, 20, [50], [""], "#fff", 1, 4, 5, "sans-serif", 12, "#fff", 0, "", "sans-serif", 12, "#fff", 0, false, "#fff", 1);
+        ["top", "14", "10", "0", "-22"],
+        ["bottom", "26", "30", "52", "74"]
+    ])("renders %s ticks and labels like the canvas", (position, expectedY1, expectedY2, expectedNumberY, expectedLabelY) => {
+        const options = createOptions();
+        options.position = position as ColorbarSvgOptions["position"];
+        options.bar = {...options.bar, width: 80, height: 20};
+        options.ticks.positions = [50];
+        options.ticks.texts = ["mid"];
+
+        const group = renderColorbarToSvg(options);
         const tick = group.querySelector("line");
+        const labels = group.querySelectorAll("text");
 
         expect(tick).toHaveAttribute("y1", expectedY1);
         expect(tick).toHaveAttribute("y2", expectedY2);
+        expect(labels[0]).toHaveAttribute("y", expectedNumberY);
+        expect(labels[0]).not.toHaveAttribute("transform");
+        expect(labels[1]).toHaveAttribute("y", expectedLabelY);
     });
 });
 

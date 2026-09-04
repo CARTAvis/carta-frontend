@@ -1,3 +1,4 @@
+import {AstFonts} from "components/Shared";
 import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
@@ -99,6 +100,7 @@ describe("getPanelSvg", () => {
             channelMapStore: {isChannelMapEnabled: false},
             overlaySettings: {
                 colorbar: {isVisible: false, position: "right"},
+                global: {color: "#4C90F0"},
                 colorbarHoverInfoHeight: 0
             },
             contourFrames: new Map([[frame, [frame]]]),
@@ -123,7 +125,7 @@ describe("getPanelSvg", () => {
     });
 
     test("keeps only the raster layer embedded as an image while vectorizing overlays", () => {
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, "right", {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panelSvg).not.toBeNull();
         expect(panelSvg?.querySelectorAll("image")).toHaveLength(1);
@@ -146,21 +148,30 @@ describe("getPanelSvg", () => {
             position: "right",
             width: 10,
             offset: 2,
-            hasTickCustomColor: true,
+            hasCustomColor: false,
+            color: "#fff",
+            isGradientVisible: true,
+            isTickVisible: true,
+            hasTickCustomColor: false,
             tickColor: "#fff",
             tickWidth: 1,
             tickLen: 4,
             textGap: 5,
-            hasNumberCustomColor: true,
+            isNumberVisible: true,
+            numberWidth: 17,
+            numberFont: 0,
+            hasNumberCustomColor: false,
             numberColor: "#fff",
             numberFontSize: 12,
             numberRotation: 0,
-            hasLabelCustomColor: true,
+            labelFont: 0,
+            hasLabelCustomText: false,
+            hasLabelCustomColor: false,
             labelColor: "#fff",
             isLabelVisible: false,
             labelFontSize: 12,
             labelRotation: 0,
-            hasBorderCustomColor: true,
+            hasBorderCustomColor: false,
             borderColor: "#fff",
             isBorderVisible: false,
             borderWidth: 1
@@ -173,7 +184,7 @@ describe("getPanelSvg", () => {
             return group;
         });
 
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, "right", {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
         const coordinateViewports = panelSvg?.querySelectorAll("#channel-map-coordinate-overlays > svg");
 
         expect(coordinateViewports).toHaveLength(4);
@@ -192,31 +203,14 @@ describe("getPanelSvg", () => {
         expect(coordinateViewports?.[3]).toHaveAttribute("y", "50");
         expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(1, frame.channelMapInnerOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
         expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(2, frame.channelMapOuterOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
-        expect(renderColorbarToSvgMock).toHaveBeenCalledWith(
-            expect.anything(),
-            "right",
-            107,
-            7,
-            10,
-            80,
-            expect.anything(),
-            expect.anything(),
-            expect.anything(),
-            1,
-            4,
-            5,
-            expect.anything(),
-            12,
-            expect.anything(),
-            0,
-            "",
-            expect.anything(),
-            12,
-            expect.anything(),
-            0,
-            false,
-            expect.anything(),
-            1
-        );
+        expect(renderColorbarToSvgMock).toHaveBeenCalledWith({
+            colorscaleArray: expect.anything(),
+            position: "right",
+            bar: {x: 107, y: 7, width: 10, height: 80, gradientVisible: true},
+            ticks: {positions: expect.anything(), texts: expect.anything(), visible: true, color: "#4C90F0", width: 1, length: 4},
+            numbers: {visible: true, fontFamily: AstFonts[0].family, fontSize: 12, fontStyle: AstFonts[0].style, fontWeight: AstFonts[0].weight, color: "#4C90F0", rotation: 0, gap: 5, width: 17},
+            label: {text: "", fontFamily: AstFonts[0].family, fontSize: 12, fontStyle: AstFonts[0].style, fontWeight: AstFonts[0].weight, color: "#4C90F0", rotation: 0},
+            border: {visible: false, color: "#4C90F0", width: 1}
+        });
     });
 });
