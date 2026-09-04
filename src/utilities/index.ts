@@ -6,6 +6,7 @@ export * from "./catalog/types";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
 export * from "./color/color";
 export * from "./color/constants";
+export * from "./cosmology/cosmology";
 export * from "./export/export";
 export * from "./fitting_heuristics/fitting_heuristics";
 export * from "./math/math";

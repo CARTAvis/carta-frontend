@@ -74,7 +74,8 @@ module.exports = {
     // Test match patterns
     testMatch: [
         '<rootDir>/src/**/__tests__/**/*.(js|jsx|ts|tsx)',
-        '<rootDir>/src/**/?(*.)(spec|test).(js|jsx|ts|tsx)'
+        '<rootDir>/src/**/?(*.)(spec|test).(js|jsx|ts|tsx)',
+        '<rootDir>/wasm_src/**/?(*.)(spec|test).(js|jsx|ts|tsx)'
     ],
     
     // Collect coverage from
