@@ -22,6 +22,8 @@ import "./StokesAnalysisComponent.scss";
 
 type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 type Point3D = {x: number; y: number; z?: number};
+type SmoothedPoint3D = Point3D & {sourceZMin: number; sourceZMax: number};
+type SourceChannelRange = {min: number; max: number};
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -256,11 +258,25 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return channel;
     }
 
+    private getSourceChannelRange(point: Point3D): SourceChannelRange {
+        const smoothedPoint = point as Partial<SmoothedPoint3D>;
+        if (smoothedPoint.sourceZMin !== undefined && smoothedPoint.sourceZMax !== undefined) {
+            return {min: smoothedPoint.sourceZMin, max: smoothedPoint.sourceZMax};
+        }
+        const z = point.z ?? 0;
+        return {min: z, max: z};
+    }
+
+    private isChannelInSourceRange(channel: number, point: Point3D): boolean {
+        const sourceRange = this.getSourceChannelRange(point);
+        return channel >= sourceRange.min && channel <= sourceRange.max;
+    }
+
     private matchXYindex(z: number, data: readonly Point3D[]): Point3D {
         let point = data[0];
         for (let index = 0; index < data.length; index++) {
             const element = data[index];
-            if (element.z === z) {
+            if (this.isChannelInSourceRange(z, element)) {
                 point = element;
                 break;
             }
@@ -422,6 +438,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    private getSmoothedSourceChannelRanges(channelValues: Array<number>, smoothedLength: number): SourceChannelRange[] | undefined {
+        if (this.widgetStore.smoothingStore.type !== SmoothingType.BINNING) {
+            return undefined;
+        }
+
+        const binWidth = this.widgetStore.smoothingStore.binWidth;
+        const sourceRanges: SourceChannelRange[] = [];
+        for (let index = 0; index < smoothedLength; index++) {
+            const start = index * binWidth;
+            const end = Math.min(start + binWidth, channelValues.length);
+            if (start >= end) {
+                return undefined;
+            }
+            const sourceChannels = channelValues.slice(start, end);
+            const sourceRange = minMaxArray(sourceChannels);
+            sourceRanges.push({min: sourceRange.minVal, max: sourceRange.maxVal});
+        }
+        return sourceRanges;
+    }
+
     private getChartAreaWH(chartArea: ChartArea): {width: number; height: number} {
         if (chartArea && chartArea.right && chartArea.bottom) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
@@ -527,7 +563,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         qProfile: Array<number>,
         uProfile: Array<number>,
         type: StokesCoordinate,
-        channelValues?: Array<number>
+        channelValues?: Array<number>,
+        sourceChannelRanges?: SourceChannelRange[]
     ): {
         dataset: Array<Point3D>;
         border: Border;
@@ -559,11 +596,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const x = qProfile[i];
                 const y = uProfile[i];
                 const z = profileChannelValues[i];
-                values.push({x, y, z});
+                const sourceRange = sourceChannelRanges?.[i];
+                const point: Point3D | SmoothedPoint3D = sourceRange ? {x, y, z, sourceZMin: sourceRange.min, sourceZMax: sourceRange.max} : {x, y, z};
+                values.push(point);
 
                 // update line plot color array
                 if (x < visibleBorder.xMin || x > visibleBorder.xMax || y < visibleBorder.yMin || y > visibleBorder.yMax) {
-                    this.widgetStore.scatterOutRangePointsZIndex.push(z);
+                    this.widgetStore.scatterOutRangePointsZIndex.push(this.getSourceChannelRange(point));
                 }
             }
             return {dataset: values, border: equalScalerBorder};
@@ -600,7 +639,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const localPoints: Array<Point3D> = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
-                if (point.z !== undefined && point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
+                const sourceRange = this.getSourceChannelRange(point);
+                if (sourceRange.max >= xlinePlotRange.xMin && sourceRange.min <= xlinePlotRange.xMax) {
                     localPoints.push(point);
                 }
             }
@@ -609,7 +649,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const point = data[index];
                 let pointColor = this.pointDefaultColor;
                 let isOutOfRange = true;
-                if (point.z !== undefined && point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
+                const sourceRange = this.getSourceChannelRange(point);
+                if (sourceRange.max >= xlinePlotRange.xMin && sourceRange.min <= xlinePlotRange.xMax) {
                     isOutOfRange = false;
                 }
                 let percentage = point.z !== undefined ? (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal) : 0;
@@ -628,7 +669,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data && data.length && lineColor) {
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
-                if (!(this.widgetStore.scatterOutRangePointsZIndex && this.widgetStore.scatterOutRangePointsZIndex.indexOf(point.x) >= 0)) {
+                if (!(this.widgetStore.scatterOutRangePointsZIndex && this.widgetStore.scatterOutRangePointsZIndex.some(range => point.x >= range.min && point.x <= range.max))) {
                     lineColors.push(lineColor);
                 } else {
                     lineColors.push(this.multicolorLineColorOutRange);
@@ -638,24 +679,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return lineColors;
     }
 
-    private closestChannel(channel: number, data: Array<Point3D>): number {
-        let mid;
-        let midZ;
-        let lo = 0;
-        let hi = data.length - 1;
-        while (hi - lo > 1) {
-            mid = Math.floor((lo + hi) / 2);
-            midZ = data[mid].z;
-            if (midZ && midZ < channel) {
-                lo = mid;
-            } else {
-                hi = mid;
-            }
+    private closestChannel(channel: number, data: Array<Point3D>): Point3D {
+        const sourcePoint = data.find(point => this.isChannelInSourceRange(channel, point));
+        if (sourcePoint) {
+            return sourcePoint;
         }
-        if (data[lo].z !== undefined && data[hi].z !== undefined && channel - data[lo].z! <= data[hi].z! - channel) {
-            return data[lo].z!;
-        }
-        return data[hi].z!;
+        return data.reduce((closest, point) => (Math.abs((point.z ?? 0) - channel) < Math.abs((closest.z ?? 0) - channel) ? point : closest), data[0]);
     }
 
     private getScatterChannel(data: Array<Point3D>, channel: {channelCurrent: number; channelHovered: number}, isZIndexEnabled: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
@@ -663,23 +692,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data && data.length && isZIndexEnabled && channel) {
             const channelCurrent = channel.channelCurrent;
             const channelHovered = channel.channelHovered;
-            if (channelCurrent) {
-                let close = channelCurrent;
-                if (channelHovered) {
-                    close = this.closestChannel(channelHovered, data);
+            if (channelCurrent !== undefined && channelCurrent !== null) {
+                indicator.currentChannel = this.matchXYindex(channelCurrent, data);
+                if (channelHovered !== undefined && channelHovered !== null) {
+                    const close = this.closestChannel(channelHovered, data);
                     if (this.channelBorder && this.channelBorder.xMin !== 0) {
-                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || !this.widgetStore.isMouseMoveIntoLinePlots) {
-                            close = channelCurrent;
+                        const closeRange = this.getSourceChannelRange(close);
+                        if (closeRange.min > this.channelBorder.xMax || closeRange.max < this.channelBorder.xMin || !this.widgetStore.isMouseMoveIntoLinePlots) {
+                            indicator.hoveredChannel = indicator.currentChannel;
+                        } else {
+                            indicator.hoveredChannel = close;
                         }
-                    }
-                }
-                for (let index = 0; index < data.length; index++) {
-                    const points = data[index];
-                    if (points.z === close) {
-                        indicator.hoveredChannel = points;
-                    }
-                    if (points.z === channelCurrent) {
-                        indicator.currentChannel = points;
+                    } else {
+                        indicator.hoveredChannel = close;
                     }
                 }
             }
@@ -732,7 +757,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             const quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
-            const quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU, compositeProfile.qSmoothedX);
+            const smoothedSourceChannelRanges = this.getSmoothedSourceChannelRanges(frame.channelValues, compositeProfile.qSmoothedX.length);
+            const quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU, compositeProfile.qSmoothedX, smoothedSourceChannelRanges);
             const piDic = this.assembleLinePlotData(compositeProfile.piProfile, frame.channelValues, StokesCoordinate.PolarizedIntensity);
             const paDic = this.assembleLinePlotData(compositeProfile.paProfile, frame.channelValues, StokesCoordinate.PolarizationAngle);
             const qDic = this.assembleLinePlotData(compositeProfile.qProfile, frame.channelValues, StokesCoordinate.LinearPolarizationQ);
@@ -1246,7 +1272,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
-                if (cursor && cursor.value && typeof cursor.value !== "undefined") {
+                if (cursor && cursor.value !== undefined && cursor.value !== null) {
                     channel.channelHovered = cursor.value;
                 }
             }
