@@ -156,7 +156,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             }
         }
 
+        // files are listed first, followed by directories
         const entries: FileEntry[] = [];
+        const directoryEntries: FileEntry[] = [];
         const sortingString = this.props.sortingString || "+filename";
         const sortingConfig = {direction: sortingString.startsWith("+") ? 1 : -1, columnName: sortingString.substring(1).toLowerCase()};
         if (filteredSubdirectories && filteredSubdirectories.length) {
@@ -176,7 +178,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
             for (const directory of filteredSubdirectories) {
                 if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All && directory.size && directory.type != null && directory.type in CARTA.FileType) {
-                    entries.push({
+                    directoryEntries.push({
                         filename: directory.name || "",
                         typeInfo: FileListTableComponent.getFileTypeDisplay(directory.type),
                         size: FileListTableComponent.toNumber(directory.size),
@@ -186,7 +188,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
                     });
                 } else {
-                    entries.push({
+                    directoryEntries.push({
                         filename: directory.name || "",
                         itemCount: directory.itemCount && directory.itemCount > 0 ? directory.itemCount : undefined,
                         date: FileListTableComponent.toNumber(directory.date),
@@ -260,6 +262,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 }
             }
         }
+        entries.push(...directoryEntries);
         return entries;
     }
 

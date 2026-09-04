@@ -91,19 +91,27 @@ describe("FileListTableComponent sorting", () => {
         expect(descending.map(entry => entry.filename)).toEqual(["large.xml", "medium.xml", "small.xml"]);
     });
 
-    it("sorts directories by item count and keeps them ahead of files", () => {
+    it("sorts directories by item count and lists them after files", () => {
         const entries = MakeComponent(MakeImageFileList(), "+size").tableEntries;
-        expect(entries.slice(0, 3).map(entry => entry.filename)).toEqual(["dir_a", "dir_b", "dir_c"]);
-        expect(entries.slice(0, 3).every(entry => entry.isDirectory)).toBe(true);
+        expect(entries.slice(0, 3).every(entry => entry.isFile && !entry.isDirectory)).toBe(true);
+        expect(entries.slice(3).map(entry => entry.filename)).toEqual(["dir_a", "dir_b", "dir_c"]);
+        expect(entries.slice(3).every(entry => entry.isDirectory)).toBe(true);
+    });
+
+    it("lists files before directories regardless of sort direction", () => {
+        for (const sortingString of ["+filename", "-filename", "+size", "-size", "+date", "-date"]) {
+            const entries = MakeComponent(MakeImageFileList(), sortingString).tableEntries;
+            expect(entries.map(entry => !!entry.isDirectory)).toEqual([false, false, false, true, true, true]);
+        }
     });
 
     it("sorts files and directories by numerical date", () => {
         const ascending = MakeComponent(MakeImageFileList(), "+date").tableEntries;
-        expect(ascending.map(entry => entry.filename)).toEqual(["dir_a", "dir_b", "dir_c", "large.fits", "medium.fits", "small.fits"]);
+        expect(ascending.map(entry => entry.filename)).toEqual(["large.fits", "medium.fits", "small.fits", "dir_a", "dir_b", "dir_c"]);
         expect(ascending.map(entry => entry.date)).toEqual([1_600_000_000, 1_650_000_000, 1_700_000_000, 1_600_000_000, 1_650_000_000, 1_700_000_000]);
 
         const descending = MakeComponent(MakeImageFileList(), "-date").tableEntries;
-        expect(descending.map(entry => entry.filename)).toEqual(["dir_c", "dir_b", "dir_a", "small.fits", "medium.fits", "large.fits"]);
+        expect(descending.map(entry => entry.filename)).toEqual(["small.fits", "medium.fits", "large.fits", "dir_c", "dir_b", "dir_a"]);
     });
 
     it("converts Long sizes and dates to plain numbers in the table entries", () => {
