@@ -16,6 +16,11 @@ export interface ProfileFittingComponentProps {
     widgetStore: SpectralProfileWidgetStore;
 }
 
+export function buildProfileFittingLogContent(header: string, restFrameComments: string[], resultLog: string): string {
+    const restFrameHeader = restFrameComments.map(comment => `# ${comment}\n`).join("");
+    return `${header}${restFrameHeader}\n${resultLog}`;
+}
+
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean = false;
@@ -144,24 +149,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `${headerString}\n${this.fittingStore.resultLog}`;
+        const content = buildProfileFittingLogContent(headerString, this.widgetStore.restFrameCorrectionExportComments, this.fittingStore.resultLog);
         const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
         exportTxtFile(fileName, content);
     };
 
     @action private reset = () => {
-        const fittingStore = this.fittingStore;
-        fittingStore.setComponents(1, true);
-        fittingStore.setHasResult(false);
-        fittingStore.setContinuum(FittingContinuum.NONE);
-        fittingStore.setYIntercept(0);
-        fittingStore.setSlope(0);
-        fittingStore.setResultYIntercept(0);
-        fittingStore.setResultSlope(0);
-        fittingStore.setIsCursorSelectingYIntercept(false);
-        fittingStore.setIsCursorSelectingSlope(false);
-        fittingStore.setIsCursorSelectingComponentOn(false);
-        fittingStore.setHasAutoDetectResult(false);
+        this.fittingStore.reset();
     };
 
     private fitData = () => {
