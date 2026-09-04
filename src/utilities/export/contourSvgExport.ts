@@ -70,7 +70,7 @@ export function renderContoursToSvg(
         };
 
         if (dashLength > 0) {
-            attrs["stroke-dasharray"] = `${dashLength},${dashLength}`;
+            attrs["stroke-dasharray"] = `${dashLength * 1.5},${dashLength * 0.5}`;
         }
 
         const path = createSvgElement("path", attrs);

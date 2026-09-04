@@ -1,4 +1,4 @@
-import {ImageType, VectorOverlaySource} from "enums";
+import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
 
 import {getPanelSvg} from "./ImageViewComponent";
@@ -29,7 +29,7 @@ describe("getPanelSvg", () => {
             frameInfo: {fileId: 1},
             renderWidth: 100,
             renderHeight: 80,
-            zoomLevel: 1,
+            zoomLevel: 2,
             spatialReference: null,
             spatialTransform: null,
             overlayStore: {viewWidth: 120, viewHeight: 100, padding},
@@ -50,7 +50,7 @@ describe("getPanelSvg", () => {
                 colormapBias: 0,
                 colormapContrast: 1,
                 thickness: 2,
-                dashMode: 0
+                dashMode: ContourDashMode.Dashed
             },
             contourStores: new Map([[1, {exportVertexData: [new Float32Array([10, 10, 0, 0, 0, 0, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0])], exportIndexOffsets: [new Int32Array([2])]}]]),
             vectorOverlayConfig: {
@@ -108,7 +108,14 @@ describe("getPanelSvg", () => {
 
         expect(panelSvg).not.toBeNull();
         expect(panelSvg?.querySelectorAll("image")).toHaveLength(1);
-        expect(panelSvg?.querySelector("#contours")).not.toBeNull();
+        expect(panelSvg?.querySelector("#contours")).toHaveAttribute("clip-path", "url(#contour-clip-0-0)");
+        const contourClipRect = panelSvg?.querySelector("#contour-clip-0-0 rect");
+        expect(contourClipRect).toHaveAttribute("x", "5");
+        expect(contourClipRect).toHaveAttribute("y", "7");
+        expect(contourClipRect).toHaveAttribute("width", "100");
+        expect(contourClipRect).toHaveAttribute("height", "80");
+        expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-width", "2");
+        expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-dasharray", "24,8");
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
         expect(panelSvg?.querySelector("#catalog-overlay")).not.toBeNull();
     });

@@ -16,7 +16,7 @@ import {renderCatalogToSvg} from "utilities/export/catalogSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 import {renderContoursToSvg} from "utilities/export/contourSvgExport";
 import {renderRegionsToSvg} from "utilities/export/regionSvgExport";
-import {buildSvgDocument, createSvgText, embedRasterAsSvgImage, svgGroupFromLayer} from "utilities/export/svgExport";
+import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, svgGroupFromLayer} from "utilities/export/svgExport";
 import {renderVectorOverlayToSvg} from "utilities/export/vectorOverlaySvgExport";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
@@ -285,9 +285,8 @@ function sampleColormapColor(colorMap: string, fraction: number, bias: number, c
     return `rgba(${color[offset]}, ${color[offset + 1]}, ${color[offset + 2]}, ${(color[offset + 3] ?? 255) / 255})`;
 }
 
-function getContourStrokeWidth(sourceFrame: FrameStore, destinationFrame: FrameStore, pixelRatio: number): number {
-    const zoomScale = destinationFrame.spatialReference ? destinationFrame.spatialReference.zoomLevel * (destinationFrame.spatialTransform?.scale ?? 1) : destinationFrame.zoomLevel;
-    return (pixelRatio * sourceFrame.contourConfig.thickness) / zoomScale;
+function getContourStrokeWidth(sourceFrame: FrameStore, pixelRatio: number): number {
+    return pixelRatio * sourceFrame.contourConfig.thickness;
 }
 
 function getContourDashLength(destinationFrame: FrameStore, dashMode: ContourDashMode, level: number, pixelRatio: number): number {
@@ -296,8 +295,9 @@ function getContourDashLength(destinationFrame: FrameStore, dashMode: ContourDas
     }
 
     const zoomLevel = destinationFrame.spatialReference ? destinationFrame.spatialReference.zoomLevel : destinationFrame.zoomLevel;
+    const zoomScale = destinationFrame.spatialReference ? zoomLevel * (destinationFrame.spatialTransform?.scale ?? 1) : zoomLevel;
     const dashFactor = ceilToPower(1.0 / zoomLevel, 3.0);
-    return pixelRatio * DEFAULT_CONTOUR_DASH_LENGTH * dashFactor;
+    return pixelRatio * DEFAULT_CONTOUR_DASH_LENGTH * dashFactor * zoomScale;
 }
 
 function getContourStrokeColor(frame: FrameStore, level: number, levels: number[]): string {
@@ -422,7 +422,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
                 contourStore.exportIndexOffsets,
                 [level],
                 [getContourStrokeColor(contourFrame, level, levels)],
-                [getContourStrokeWidth(contourFrame, frame, pixelRatio)],
+                [getContourStrokeWidth(contourFrame, pixelRatio)],
                 [getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio)],
                 padding.left * pixelRatio,
                 padding.top * pixelRatio
@@ -591,6 +591,15 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     // 2. Contour — vector SVG from store data
     const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
     if (contoursSvg) {
+        if (rasterCanvas) {
+            const clipId = `contour-clip-${column}-${row}`;
+            const clipPath = createSvgElement("clipPath", {id: clipId});
+            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
+            const defs = createSvgElement("defs", {});
+            defs.appendChild(clipPath);
+            panelGroup.appendChild(defs);
+            contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
+        }
         panelGroup.appendChild(contoursSvg);
     }
 
