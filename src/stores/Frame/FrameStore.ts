@@ -471,6 +471,17 @@ export class FrameStore {
         return undefined;
     }
 
+    @computed get shouldShowBeamForAllChannels(): boolean {
+        const headerEntries = this.frameInfo?.fileInfoExtended?.headerEntries;
+        if (!headerEntries) {
+            return false;
+        }
+
+        const hasStandardBeamHeader = ["BMAJ", "BMIN", "BPA"].some(name => headerEntries.some(entry => entry.name === name));
+        const hasCasaBeamTable = headerEntries.some(entry => entry.name === "CASAMBM" && trimFitsComment(entry.value).trim().toUpperCase() === "T");
+        return hasCasaBeamTable && !hasStandardBeamHeader;
+    }
+
     getBeamProperties(channel: number = this.requiredChannel): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} | null {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);

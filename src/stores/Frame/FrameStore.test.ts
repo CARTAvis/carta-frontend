@@ -148,6 +148,32 @@ describe("FrameStore", () => {
         });
     });
 
+    describe("shouldShowBeamForAllChannels", () => {
+        const createFrameWithHeaders = (...additionalHeaders: CARTA.HeaderEntry.$Properties[]) =>
+            new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                fileInfoExtended: {
+                    ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
+                    headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, ...additionalHeaders]
+                }
+            } as FrameInfo);
+
+        test("returns true for CASA per-channel beam metadata", () => {
+            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(true);
+        });
+
+        test("returns false without the CASA beam table marker", () => {
+            const frame = createFrameWithHeaders();
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
+
+        test.each(["BMAJ", "BMIN", "BPA"])("returns false when %s is present", headerName => {
+            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"}, {name: headerName, value: "1"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
+    });
+
     describe("beamAllChannels", () => {
         test("returns a list of beams from all channels with the current stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
