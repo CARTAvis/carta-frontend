@@ -14,7 +14,7 @@ describe("renderContoursToSvg", () => {
         expect(path).toHaveAttribute("d", "M15.00,27.00L35.00,47.00");
         expect(path).toHaveAttribute("stroke", "#ff0000");
         expect(path).toHaveAttribute("stroke-width", "2");
-        expect(path).toHaveAttribute("stroke-dasharray", "4,4");
+        expect(path).toHaveAttribute("stroke-dasharray", "6,2");
     });
 
     test("does not link separate enclosed contours", () => {
