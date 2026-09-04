@@ -3,38 +3,20 @@ import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
 const SVG_NS = "http://www.w3.org/2000/svg";
 let gradientCounter = 0;
 
-/**
- * Renders the colorbar to SVG with gradient, ticks, labels, and title.
- *
- * The gradient is sampled at 256 stops for perceptually lossless fidelity
- * across all colormap types (including multi-hue and diverging maps).
- */
-export function renderColorbarToSvg(
-    colorscaleArray: (string | number)[],
-    position: string,
-    barX: number,
-    barY: number,
-    barWidth: number,
-    barHeight: number,
-    tickPositions: number[],
-    tickTexts: string[],
-    tickColor: string,
-    tickWidth: number,
-    tickLength: number,
-    textGap: number,
-    numberFont: string,
-    numberFontSize: number,
-    numberColor: string,
-    numberRotation: number,
-    labelText: string,
-    labelFont: string,
-    labelFontSize: number,
-    labelColor: string,
-    labelRotation: number,
-    isBorderVisible: boolean,
-    borderColor: string,
-    borderWidth: number
-): SVGGElement {
+export type ColorbarPosition = "right" | "top" | "bottom";
+
+export interface ColorbarSvgOptions {
+    colorscaleArray: (string | number)[];
+    position: ColorbarPosition;
+    bar: {x: number; y: number; width: number; height: number; gradientVisible: boolean};
+    ticks: {positions: number[]; texts: string[]; visible: boolean; color: string; width: number; length: number};
+    numbers: {visible: boolean; fontFamily: string; fontSize: number; fontStyle: string; fontWeight: number; color: string; rotation: number; gap: number; width: number};
+    label: {text: string; fontFamily: string; fontSize: number; fontStyle: string; fontWeight: number; color: string; rotation: number};
+    border: {visible: boolean; color: string; width: number};
+}
+
+/** Renders the colorbar to SVG with gradient, ticks, labels, and title. */
+export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numbers, label, border}: ColorbarSvgOptions): SVGGElement {
     const group = svgGroupFromLayer("colorbar");
     const defs = document.createElementNS(SVG_NS, "defs");
     group.appendChild(defs);
@@ -45,7 +27,7 @@ export function renderColorbarToSvg(
     const gradientId = `colorbar-gradient-${gradientCounter++}`;
     const gradient = createSvgElement("linearGradient", isVertical ? {id: gradientId, x1: "0%", y1: "100%", x2: "0%", y2: "0%"} : {id: gradientId, x1: "0%", y1: "0%", x2: "100%", y2: "0%"});
 
-    // Sample at evenly-spaced stops for high fidelity
+    // Preserve the supplied colorscale stops.
     if (colorscaleArray && colorscaleArray.length >= 2) {
         const stops: {offset: number; color: string}[] = [];
         for (let i = 0; i < colorscaleArray.length; i += 2) {
@@ -71,108 +53,120 @@ export function renderColorbarToSvg(
     defs.appendChild(gradient);
 
     // Gradient bar
-    const bar = createSvgElement("rect", {
-        x: barX,
-        y: barY,
-        width: barWidth,
-        height: barHeight,
-        fill: `url(#${gradientId})`
+    const barRect = createSvgElement("rect", {
+        x: bar.x,
+        y: bar.y,
+        width: bar.width,
+        height: bar.height,
+        fill: bar.gradientVisible ? `url(#${gradientId})` : "none"
     });
-    group.appendChild(bar);
+    group.appendChild(barRect);
 
     // Border
-    if (isBorderVisible) {
-        const border = createSvgElement("rect", {
-            x: barX,
-            y: barY,
-            width: barWidth,
-            height: barHeight,
+    if (border.visible) {
+        const borderRect = createSvgElement("rect", {
+            x: bar.x,
+            y: bar.y,
+            width: bar.width,
+            height: bar.height,
             fill: "none",
-            stroke: borderColor,
-            "stroke-width": borderWidth
+            stroke: border.color,
+            "stroke-width": border.width
         });
-        group.appendChild(border);
+        group.appendChild(borderRect);
     }
 
     // Ticks and number labels
-    for (let i = 0; i < tickPositions.length; i++) {
-        const pos = tickPositions[i];
-        const text = tickTexts[i] ?? "";
+    for (let i = 0; (ticks.visible || numbers.visible) && i < ticks.positions.length; i++) {
+        const pos = ticks.positions[i];
+        const text = ticks.texts[i] ?? "";
 
         if (isVertical) {
             const tickY = pos;
-            const tickX = barX + barWidth;
-            const tick = createSvgElement("line", {
-                x1: tickX - tickLength,
-                y1: tickY,
-                x2: tickX,
-                y2: tickY,
-                stroke: tickColor,
-                "stroke-width": tickWidth
-            });
-            group.appendChild(tick);
-
-            if (text) {
-                const labelX = tickX + textGap + (numberRotation === 0 ? 0 : numberFontSize / 2);
-                const label = createSvgText(text, labelX, tickY, {
-                    fill: numberColor,
-                    "font-family": numberFont,
-                    "font-size": numberFontSize,
-                    "text-anchor": numberRotation === 0 ? "start" : "middle",
-                    "dominant-baseline": "central",
-                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${labelX},${tickY})` : ""
+            const tickX = bar.x + bar.width;
+            if (ticks.visible) {
+                const tick = createSvgElement("line", {
+                    x1: tickX - ticks.length,
+                    y1: tickY,
+                    x2: tickX,
+                    y2: tickY,
+                    stroke: ticks.color,
+                    "stroke-width": ticks.width
                 });
-                group.appendChild(label);
+                group.appendChild(tick);
+            }
+
+            if (numbers.visible && text) {
+                const labelX = tickX + numbers.gap + (numbers.rotation === 0 ? 0 : numbers.fontSize / 2);
+                const numberLabel = createSvgText(text, labelX, tickY, {
+                    fill: numbers.color,
+                    "font-family": numbers.fontFamily,
+                    "font-size": numbers.fontSize,
+                    "font-style": numbers.fontStyle,
+                    "font-weight": numbers.fontWeight,
+                    "text-anchor": numbers.rotation === 0 ? "start" : "middle",
+                    "dominant-baseline": "central",
+                    ...(numbers.rotation !== 0 ? {transform: `rotate(${numbers.rotation},${labelX},${tickY})`} : {})
+                });
+                group.appendChild(numberLabel);
             }
         } else {
             const tickX = pos;
-            const tickY = position === "top" ? barY : barY + barHeight;
-            const tick = createSvgElement("line", {
-                x1: tickX,
-                y1: tickY + (position === "top" ? tickLength : -tickLength),
-                x2: tickX,
-                y2: tickY,
-                stroke: tickColor,
-                "stroke-width": tickWidth
-            });
-            group.appendChild(tick);
-
-            if (text) {
-                const labelY = position === "top" ? barY - textGap : barY + barHeight + numberFontSize + textGap;
-                const label = createSvgText(text, tickX, labelY, {
-                    fill: numberColor,
-                    "font-family": numberFont,
-                    "font-size": numberFontSize,
-                    "text-anchor": "middle",
-                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${tickX},${labelY})` : ""
+            const tickY = position === "top" ? bar.y : bar.y + bar.height;
+            if (ticks.visible) {
+                const tick = createSvgElement("line", {
+                    x1: tickX,
+                    y1: tickY + (position === "top" ? ticks.length : -ticks.length),
+                    x2: tickX,
+                    y2: tickY,
+                    stroke: ticks.color,
+                    "stroke-width": ticks.width
                 });
-                group.appendChild(label);
+                group.appendChild(tick);
+            }
+
+            if (numbers.visible && text) {
+                const labelY = position === "top" ? bar.y - numbers.gap : bar.y + bar.height + numbers.fontSize + numbers.gap;
+                const numberLabel = createSvgText(text, tickX, labelY, {
+                    fill: numbers.color,
+                    "font-family": numbers.fontFamily,
+                    "font-size": numbers.fontSize,
+                    "font-style": numbers.fontStyle,
+                    "font-weight": numbers.fontWeight,
+                    "text-anchor": "middle"
+                });
+                group.appendChild(numberLabel);
             }
         }
     }
 
     // Label text
-    if (labelText) {
+    if (label.text) {
         if (isVertical) {
-            const labelX = barX + barWidth + numberFontSize + 2 * textGap + (labelRotation === 0 ? 0 : labelFontSize / 2);
-            const labelY = barY + barHeight / 2;
-            const label = createSvgText(labelText, labelX, labelY, {
-                fill: labelColor,
-                "font-family": labelFont,
-                "font-size": labelFontSize,
+            const labelX = bar.x + bar.width + numbers.width + numbers.gap + (label.rotation === 0 ? 0 : label.fontSize / 2);
+            const labelY = bar.y + bar.height / 2;
+            const title = createSvgText(label.text, labelX, labelY, {
+                fill: label.color,
+                "font-family": label.fontFamily,
+                "font-size": label.fontSize,
+                "font-style": label.fontStyle,
+                "font-weight": label.fontWeight,
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
-                transform: `rotate(${labelRotation},${labelX},${labelY})`
+                ...(label.rotation !== 0 ? {transform: `rotate(${label.rotation},${labelX},${labelY})`} : {})
             });
-            group.appendChild(label);
+            group.appendChild(title);
         } else {
-            const label = createSvgText(labelText, barX + barWidth / 2, barY - labelFontSize, {
-                fill: labelColor,
-                "font-family": labelFont,
-                "font-size": labelFontSize,
+            const labelY = position === "top" ? bar.y - numbers.width - numbers.gap : bar.y + bar.height + numbers.width + numbers.gap + label.fontSize;
+            const title = createSvgText(label.text, bar.x + bar.width / 2, labelY, {
+                fill: label.color,
+                "font-family": label.fontFamily,
+                "font-size": label.fontSize,
+                "font-style": label.fontStyle,
+                "font-weight": label.fontWeight,
                 "text-anchor": "middle"
             });
-            group.appendChild(label);
+            group.appendChild(title);
         }
     }
 

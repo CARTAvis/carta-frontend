@@ -3691,7 +3691,7 @@ export class AppStore {
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
                 if (this.activeFrame) {
-                    const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+                    const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
                     if (svgDoc) {
                         const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
                         const filename = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.svg`;

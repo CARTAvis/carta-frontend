@@ -3,10 +3,10 @@ import {Colors, NonIdealState, Spinner} from "@blueprintjs/core";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector} from "components/Shared";
+import {AstFonts, ResizeDetector} from "components/Shared";
 import {BeamType, ContourDashMode, HelpType, ImageType, VectorOverlaySource} from "enums";
 import {type FrameView, type ImageViewItem, type Point2D, Zoom} from "models";
-import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, type OverlayColorbarSettings, type Padding, type WidgetProps} from "stores";
 import {LayoutStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getColorForTheme, getColorsForValues, toFixed} from "utilities";
@@ -202,7 +202,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     return composedCanvas;
 }
 
-export function getImageViewSvg(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
+export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
 
@@ -219,7 +219,7 @@ export function getImageViewSvg(padding: Padding, colorbarPosition: string, back
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelSvg = getPanelSvg(column, row, viewWidth, viewHeight, padding, colorbarPosition, image, backgroundColor);
+        const panelSvg = getPanelSvg(column, row, viewWidth, viewHeight, padding, image, backgroundColor);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
             const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
@@ -607,7 +607,7 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     return group.querySelector("use") ? group : null;
 }
 
-export function getPanelSvg(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, image: ImageViewItem, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGGElement | null {
+export function getPanelSvg(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, image: ImageViewItem, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -653,7 +653,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     // 4. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
     if (colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
-        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, colorbarPosition, viewWidth, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
+        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
         if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
         }
@@ -698,7 +698,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     return panelGroup;
 }
 
-function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosition: string, viewWidth: number, viewHeight: number, padding: Padding, pixelRatio: number, rasterWidth?: number, rasterHeight?: number): SVGGElement | null {
+function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSettings, viewHeight: number, padding: Padding, pixelRatio: number, rasterWidth?: number, rasterHeight?: number): SVGGElement | null {
     const colorbarStore = frame.colorbarStore;
     if (!colorbarStore) {
         return null;
@@ -724,7 +724,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
     } else {
         barX = padding.left * pixelRatio;
         barHeight = barWidth;
-        if (colorbarPosition === "top") {
+        if (colorbarSettings.position === "top") {
             barY = padding.top * pixelRatio - barHeight - offset;
         } else {
             barY = viewHeight - barHeight - offset - appStore.overlaySettings.colorbarHoverInfoHeight * pixelRatio;
@@ -732,10 +732,10 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         barWidth = imageWidth;
     }
 
-    const tickColor = getColorForTheme(colorbarSettings.hasTickCustomColor ? colorbarSettings.tickColor : colorbarSettings.color);
-    const numberColor = getColorForTheme(colorbarSettings.hasNumberCustomColor ? colorbarSettings.numberColor : colorbarSettings.color);
-    const labelColor = getColorForTheme(colorbarSettings.hasLabelCustomColor ? colorbarSettings.labelColor : colorbarSettings.color);
-    const borderColor = getColorForTheme(colorbarSettings.hasBorderCustomColor ? colorbarSettings.borderColor : colorbarSettings.color);
+    const baseColor = colorbarSettings.hasCustomColor ? colorbarSettings.color : appStore.overlaySettings.global.color;
+    const resolveColor = (hasCustomColor: boolean, color: string) => getColorForTheme(hasCustomColor ? color : baseColor);
+    const numberFont = AstFonts[colorbarSettings.numberFont] ?? AstFonts[0];
+    const labelFont = AstFonts[colorbarSettings.labelFont] ?? AstFonts[0];
 
     // Scale tick positions to SVG coordinates
     const scaledPositions = positions.map((p: number) => p * pixelRatio);
@@ -743,32 +743,50 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
     const frameUnit = frame.requiredUnit === undefined || !frame.requiredUnit.length ? "arbitrary units" : frame.requiredUnit;
     const labelText = colorbarSettings.isLabelVisible ? (colorbarSettings.hasLabelCustomText ? (frame.colorbarLabelCustomText ?? "") : frameUnit) : "";
 
-    return renderColorbarToSvg(
+    return renderColorbarToSvg({
         colorscaleArray,
-        colorbarSettings.position,
-        barX,
-        barY,
-        isVertical ? barWidth : imageWidth,
-        isVertical ? barHeight : colorbarSettings.width * pixelRatio,
-        scaledPositions,
-        texts,
-        tickColor,
-        colorbarSettings.tickWidth * pixelRatio,
-        colorbarSettings.tickLen * pixelRatio,
-        colorbarSettings.textGap * pixelRatio,
-        "sans-serif",
-        colorbarSettings.numberFontSize * pixelRatio,
-        numberColor,
-        colorbarSettings.numberRotation,
-        labelText,
-        "sans-serif",
-        colorbarSettings.labelFontSize * pixelRatio,
-        labelColor,
-        colorbarSettings.labelRotation,
-        colorbarSettings.isBorderVisible,
-        borderColor,
-        colorbarSettings.borderWidth * pixelRatio
-    );
+        position: colorbarSettings.position,
+        bar: {
+            x: barX,
+            y: barY,
+            width: isVertical ? barWidth : imageWidth,
+            height: isVertical ? barHeight : colorbarSettings.width * pixelRatio,
+            gradientVisible: colorbarSettings.isGradientVisible
+        },
+        ticks: {
+            positions: scaledPositions,
+            texts,
+            visible: colorbarSettings.isTickVisible,
+            color: resolveColor(colorbarSettings.hasTickCustomColor, colorbarSettings.tickColor),
+            width: colorbarSettings.tickWidth * pixelRatio,
+            length: colorbarSettings.tickLen * pixelRatio
+        },
+        numbers: {
+            visible: colorbarSettings.isNumberVisible,
+            fontFamily: numberFont.family,
+            fontSize: colorbarSettings.numberFontSize * pixelRatio,
+            fontStyle: numberFont.style,
+            fontWeight: numberFont.weight,
+            color: resolveColor(colorbarSettings.hasNumberCustomColor, colorbarSettings.numberColor),
+            rotation: colorbarSettings.numberRotation,
+            gap: colorbarSettings.textGap * pixelRatio,
+            width: colorbarSettings.numberWidth * pixelRatio
+        },
+        label: {
+            text: labelText,
+            fontFamily: labelFont.family,
+            fontSize: colorbarSettings.labelFontSize * pixelRatio,
+            fontStyle: labelFont.style,
+            fontWeight: labelFont.weight,
+            color: resolveColor(colorbarSettings.hasLabelCustomColor, colorbarSettings.labelColor),
+            rotation: colorbarSettings.labelRotation
+        },
+        border: {
+            visible: colorbarSettings.isBorderVisible,
+            color: resolveColor(colorbarSettings.hasBorderCustomColor, colorbarSettings.borderColor),
+            width: colorbarSettings.borderWidth * pixelRatio
+        }
+    });
 }
 
 function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: Point2D): {position: Point2D; a: number; b: number; theta: number; color: string; axisColor: string; strokeWidth: number; isFilled: boolean} | null {
