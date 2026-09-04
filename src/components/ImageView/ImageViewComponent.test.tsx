@@ -1,15 +1,23 @@
 import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
+import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
+import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 
 import {getPanelSvg} from "./ImageViewComponent";
 
 jest.mock("utilities/export/astSvgExport", () => ({
     renderAstOverlayToSvg: jest.fn(() => null)
 }));
+jest.mock("utilities/export/colorbarSvgExport", () => ({
+    renderColorbarToSvg: jest.fn(() => null)
+}));
 
 describe("getPanelSvg", () => {
     const padding = {left: 5, right: 0, top: 7, bottom: 0};
+    const renderAstOverlayToSvgMock = jest.mocked(renderAstOverlayToSvg);
+    const renderColorbarToSvgMock = jest.mocked(renderColorbarToSvg);
     let appStoreSpy: jest.SpyInstance;
+    let mockAppStore: any;
     let frame: any;
 
     beforeEach(() => {
@@ -26,14 +34,23 @@ describe("getPanelSvg", () => {
         document.body.appendChild(panelElement);
 
         frame = {
-            frameInfo: {fileId: 1},
+            frameInfo: {fileId: 1, fileInfoExtended: {depth: 4}},
             renderWidth: 100,
             renderHeight: 80,
             zoomLevel: 2,
             spatialReference: null,
             spatialTransform: null,
             overlayStore: {viewWidth: 120, viewHeight: 100, padding},
-            channelMapOuterOverlayStore: {viewWidth: 120, viewHeight: 100},
+            channelMapOuterOverlayStore: {viewWidth: 120, viewHeight: 100, padding},
+            channelMapInnerOverlayStore: {
+                viewWidth: 65,
+                viewHeight: 60,
+                renderWidth: 50,
+                renderHeight: 40,
+                gapX: 10,
+                gapY: 10,
+                padding: {left: 5, right: 10, top: 7, bottom: 13}
+            },
             requiredFrameView: {xMin: 0, xMax: 100, yMin: 0, yMax: 80},
             renderConfig: {colorscaleArray: []},
             colorbarStore: null,
@@ -52,7 +69,7 @@ describe("getPanelSvg", () => {
                 thickness: 2,
                 dashMode: ContourDashMode.Dashed
             },
-            contourStores: new Map([[1, {exportVertexData: [new Float32Array([10, 10, 0, 0, 0, 0, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0])], exportIndexOffsets: [new Int32Array([2])]}]]),
+            contourStores: new Map([[1, {exportVertexData: [new Float32Array([10, 10, 0, 0, 10, 10, 0, 0, 20, 20, 0, 0, 20, 20, 0, 0])], exportIndexOffsets: [new Int32Array([2])]}]]),
             vectorOverlayConfig: {
                 isVisible: true,
                 thickness: 2,
@@ -77,7 +94,7 @@ describe("getPanelSvg", () => {
             regionSet: {regionsAndAnnotationsForRender: []}
         };
 
-        const mockAppStore = {
+        mockAppStore = {
             pixelRatio: 1,
             channelMapStore: {isChannelMapEnabled: false},
             overlaySettings: {
@@ -96,6 +113,8 @@ describe("getPanelSvg", () => {
             getFrame: jest.fn(() => frame)
         };
 
+        renderAstOverlayToSvgMock.mockReturnValue(null);
+        renderColorbarToSvgMock.mockReturnValue(null);
         appStoreSpy = jest.spyOn(AppStore, "Instance", "get").mockReturnValue(mockAppStore as never);
     });
 
@@ -118,5 +137,84 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-dasharray", "24,8");
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
         expect(panelSvg?.querySelector("#catalog-overlay")).not.toBeNull();
+    });
+
+    test("places coordinate overlays in each channel map cell", () => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
+        mockAppStore.overlaySettings.colorbar = {
+            isVisible: true,
+            position: "right",
+            width: 10,
+            offset: 2,
+            tickCustomColor: true,
+            tickColor: "#fff",
+            tickWidth: 1,
+            tickLen: 4,
+            numberCustomColor: true,
+            numberColor: "#fff",
+            numberFontSize: 12,
+            numberRotation: 0,
+            labelCustomColor: true,
+            labelColor: "#fff",
+            labelVisible: false,
+            labelFontSize: 12,
+            labelRotation: 0,
+            borderCustomColor: true,
+            borderColor: "#fff",
+            borderVisible: false,
+            borderWidth: 1
+        };
+        frame.renderConfig.colorscaleArray = [0, "#000", 1, "#fff"];
+        frame.colorbarStore = {positions: [], texts: []};
+        renderAstOverlayToSvgMock.mockImplementation(() => {
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.id = "ast-overlay";
+            return group;
+        });
+
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, "right", {type: ImageType.FRAME, store: frame} as never);
+        const coordinateViewports = panelSvg?.querySelectorAll("#channel-map-coordinate-overlays > svg");
+
+        expect(coordinateViewports).toHaveLength(4);
+        expect(panelSvg?.querySelectorAll("#channel-map-coordinate-overlays defs > #channel-map-coordinate-source-1")).toHaveLength(1);
+        expect(panelSvg?.querySelectorAll('#channel-map-coordinate-overlays use[href="#channel-map-coordinate-source-1"]')).toHaveLength(4);
+        expect(coordinateViewports?.[0]).toHaveAttribute("x", "0");
+        expect(coordinateViewports?.[0]).toHaveAttribute("y", "0");
+        expect(coordinateViewports?.[0]).toHaveAttribute("width", "65");
+        expect(coordinateViewports?.[0]).toHaveAttribute("height", "47");
+        expect(coordinateViewports?.[0]).toHaveAttribute("viewBox", "0 0 65 47");
+        expect(coordinateViewports?.[1]).toHaveAttribute("x", "65");
+        expect(coordinateViewports?.[1]).toHaveAttribute("viewBox", "5 0 60 47");
+        expect(coordinateViewports?.[2]).toHaveAttribute("y", "50");
+        expect(coordinateViewports?.[2]).toHaveAttribute("height", "60");
+        expect(coordinateViewports?.[3]).toHaveAttribute("x", "65");
+        expect(coordinateViewports?.[3]).toHaveAttribute("y", "50");
+        expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(1, frame.channelMapInnerOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
+        expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(2, frame.channelMapOuterOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
+        expect(renderColorbarToSvgMock).toHaveBeenCalledWith(
+            expect.anything(),
+            "right",
+            107,
+            7,
+            10,
+            80,
+            expect.anything(),
+            expect.anything(),
+            expect.anything(),
+            1,
+            4,
+            expect.anything(),
+            12,
+            expect.anything(),
+            0,
+            "",
+            expect.anything(),
+            12,
+            expect.anything(),
+            0,
+            false,
+            expect.anything(),
+            1
+        );
     });
 });
