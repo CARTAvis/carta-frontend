@@ -75,14 +75,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
-    if (image?.type === ImageType.COLOR_BLENDING) {
-        return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
-    }
-
     if (!image) {
         return <NonIdealState icon={"folder-open"} title={"No image available"} description={"No image data to display"} />;
     }
 
+    const isColorBlending = image.type === ImageType.COLOR_BLENDING;
+    const shouldShowRaster = !isColorBlending || image.store.isRasterVisible;
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const column = index % channelMapStore.numColumns;
         const row = Math.floor(index / channelMapStore.numColumns);
@@ -102,10 +100,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 >
                     {frame?.frameInfo.fileInfoExtended.depth > 1 && (
                         <ChannelMapLabelComponent
-                            image={{
-                                type: ImageType.FRAME,
-                                store: frame
-                            }}
+                            image={image}
                             overlaySettings={overlaySettings}
                             top={top}
                             left={left}
@@ -127,7 +122,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={props.isDocked}
                     />
-                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.isDocked} padding={10} />}
+                    {isCornerOverlay && !isColorBlending && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.isDocked} padding={10} />}
                 </div>
             )
         );
@@ -147,33 +142,37 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         >
             <ChannelMapInnerOverlayComponent frame={frame} docked={props.isDocked} />
             {overlayComponents}
-            <RasterViewComponent
-                key={"raster-view-component-channel-map"}
-                image={image}
-                isDocked={props.isDocked}
-                pixelHighlightValue={channelMapStore.pixelHighlightValue}
-                row={0}
-                column={0}
-                renderWidth={outerRenderWidth}
-                renderHeight={outerRenderHeight}
-                channel={channelMapStore.channelArray}
-            />
-            <CursorOverlayComponent
-                cursorInfo={frame.cursorInfo}
-                cursorValue={frame.cursorInfo?.isInsideImage ? (frame.cursorValue?.value ?? 0) : 0}
-                isValueCurrent={frame.isCursorValueCurrent}
-                spectralInfo={frame.spectralInfo}
-                width={outerViewWidth}
-                left={outerPadding.left}
-                right={outerPadding.right}
-                isDocked={props.isDocked}
-                unit={frame.requiredUnit}
-                top={outerPadding.top}
-                currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
-                hasCursorValueToPercentage={frame.requiredUnit === "%"}
-                isPreview={frame.isPreview}
-                isVisible={isImageToolbarVisible}
-            />
+            {shouldShowRaster && (
+                <RasterViewComponent
+                    key={"raster-view-component-channel-map"}
+                    image={image}
+                    isDocked={props.isDocked}
+                    pixelHighlightValue={channelMapStore.pixelHighlightValue}
+                    row={0}
+                    column={0}
+                    renderWidth={outerRenderWidth}
+                    renderHeight={outerRenderHeight}
+                    channel={channelMapStore.channelArray}
+                />
+            )}
+            {!isColorBlending && (
+                <CursorOverlayComponent
+                    cursorInfo={frame.cursorInfo}
+                    cursorValue={frame.cursorInfo?.isInsideImage ? (frame.cursorValue?.value ?? 0) : 0}
+                    isValueCurrent={frame.isCursorValueCurrent}
+                    spectralInfo={frame.spectralInfo}
+                    width={outerViewWidth}
+                    left={outerPadding.left}
+                    right={outerPadding.right}
+                    isDocked={props.isDocked}
+                    unit={frame.requiredUnit}
+                    top={outerPadding.top}
+                    currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
+                    hasCursorValueToPercentage={frame.requiredUnit === "%"}
+                    isPreview={frame.isPreview}
+                    isVisible={isImageToolbarVisible}
+                />
+            )}
             <ToolbarComponent
                 isDocked={props.isDocked}
                 isVisible={isImageToolbarVisible}
@@ -183,18 +182,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
-            {overlaySettings.colorbar.isVisible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
-            <OverlayComponent
-                key={`overlay-view-component-outer`}
-                image={{
-                    type: ImageType.FRAME,
-                    store: frame
-                }}
-                overlaySettings={overlaySettings}
-                overlayStore={frame.channelMapOuterOverlayStore}
-                isDocked={props.isDocked}
-                isUnscaled={true}
-            />
+            {overlaySettings.colorbar.isVisible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
+            <OverlayComponent key={`overlay-view-component-outer`} image={image} overlaySettings={overlaySettings} overlayStore={frame.channelMapOuterOverlayStore} isDocked={props.isDocked} isUnscaled={true} />
         </div>
     );
 });
