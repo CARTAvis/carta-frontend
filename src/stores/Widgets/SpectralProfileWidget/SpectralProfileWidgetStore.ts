@@ -4,16 +4,44 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
-import {LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, Polarizations, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, type SpectralSystem, TelemetryAction} from "enums";
-import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, type Point2D} from "models";
+import {
+    LineSettings,
+    MomentSelectingMode,
+    MultiProfileCategory,
+    PlotType,
+    Polarizations,
+    RegionId,
+    RegionsType,
+    RestFrameShiftMode,
+    SmoothingType,
+    SpectralProfilerSettingsTabs,
+    type SpectralSystem,
+    SpectralType,
+    type SpectralUnit,
+    TelemetryAction,
+    VelocityConvention
+} from "enums";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, type Point2D} from "models";
 import {TelemetryService} from "services";
-import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
+import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
+import {
+    clamp,
+    convertRestFrameSpectralValue,
+    getColorForTheme,
+    isAutoColor,
+    isRestFrameSpectralType,
+    isValidRedshift,
+    pixelToFluxDensityUnit,
+    redshiftFromRestFrameShift,
+    restFrequencyFactorFromRedshift,
+    velocityFromRedshift
+} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
+type XTransformTarget = "display" | "observed";
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
@@ -45,6 +73,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isHighlighted: boolean = false;
     @observable private spectralLinesMHz: SpectralLine[] = [];
     @observable intensityUnit: string | undefined = undefined;
+    @observable isXAxisRestFrameEnabled: boolean = false;
+    @observable restFrameRedshift: number = 0;
+    @observable restFrameShiftMode: RestFrameShiftMode = PreferenceStore.Instance.spectralProfilerRestFrameShiftMode;
+    @observable restFrameVelocityConvention: VelocityConvention = PreferenceStore.Instance.spectralProfilerRestFrameVelocityConvention;
+    @observable isRestFrameShiftInputValid: boolean = true;
+    @observable isYAxisRestFrameEnabled: boolean = false;
 
     // style settings
     @observable plotType: PlotType = PlotType.STEPS;
@@ -95,13 +129,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
      */
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame?.setSpectralCoordinate(coordStr)) {
-            this.clearXBounds();
+            if (!this.isXAxisRestFrameSupported) {
+                this.isXAxisRestFrameEnabled = false;
+            }
+            this.resetSpectralDisplayState();
         }
     };
 
     @action setSpectralCoordinateSecondary = (coordStr: string) => {
         if (this.effectiveFrame?.setSpectralCoordinateSecondary(coordStr)) {
-            this.clearXBounds();
+            this.resetSpectralDisplayState();
         }
     };
 
@@ -112,7 +149,76 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
      */
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame?.setSpectralSystem(specsys)) {
-            this.clearXBounds();
+            this.resetSpectralDisplayState();
+        }
+    };
+
+    @action setXAxisRestFrameEnabled = (isEnabled: boolean) => {
+        const observedCursorX = this.getObservedCursorX();
+        const isNextEnabled = isEnabled && this.isXAxisRestFrameSupported;
+        if (isNextEnabled !== this.isXAxisRestFrameEnabled) {
+            this.isXAxisRestFrameEnabled = isNextEnabled;
+            this.clearSpectralLines();
+            this.setCursorFromObservedX(observedCursorX);
+            this.resetSpectralDisplayState();
+        }
+    };
+
+    @action setRestFrameRedshift = (redshift: number) => {
+        if (isValidRedshift(redshift) && redshift !== this.restFrameRedshift) {
+            const observedCursorX = this.getObservedCursorX();
+            this.restFrameRedshift = redshift;
+            this.setCursorFromObservedX(observedCursorX);
+            if (this.isRestFrameCorrectionActive) {
+                this.resetSpectralDisplayState();
+            }
+        }
+    };
+
+    @action setRestFrameShiftMode = (mode: RestFrameShiftMode) => {
+        if (Object.values(RestFrameShiftMode).includes(mode)) {
+            this.restFrameShiftMode = mode;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
+    @action setRestFrameVelocityConvention = (convention: VelocityConvention) => {
+        if (Object.values(VelocityConvention).includes(convention) && convention !== this.restFrameVelocityConvention) {
+            this.restFrameVelocityConvention = convention;
+            this.setRestFrameShiftInputValid(true);
+        }
+    };
+
+    @action setRestFrameShiftInputValid = (isValid: boolean) => {
+        if (isValid !== this.isRestFrameShiftInputValid) {
+            const observedCursorX = this.getObservedCursorX();
+            this.isRestFrameShiftInputValid = isValid;
+            this.setCursorFromObservedX(observedCursorX);
+            this.resetSpectralDisplayState();
+        }
+    };
+
+    @action setRestFrameRadialVelocity = (velocityKms: number) => {
+        const redshift = redshiftFromRestFrameShift(velocityKms, RestFrameShiftMode.RADIAL_VELOCITY, this.restFrameVelocityConvention);
+        if (isFinite(redshift)) {
+            this.setRestFrameRedshift(redshift);
+        }
+    };
+
+    @action setRestFrameShift = (value: number): boolean => {
+        const redshift = redshiftFromRestFrameShift(value, this.restFrameShiftMode, this.restFrameVelocityConvention);
+        const isValid = isFinite(redshift);
+        this.setRestFrameShiftInputValid(isValid);
+        if (isValid) {
+            this.setRestFrameRedshift(redshift);
+        }
+        return isValid;
+    };
+
+    @action setYAxisRestFrameEnabled = (isEnabled: boolean) => {
+        const isNextEnabled = isEnabled && this.isYAxisRestFrameSupported;
+        if (isNextEnabled !== this.isYAxisRestFrameEnabled) {
+            this.isYAxisRestFrameEnabled = isNextEnabled;
         }
     };
 
@@ -153,12 +259,24 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectingMode = MomentSelectingMode.NONE;
     };
 
+    @action setSelectedDisplayChannelRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.setSelectedChannelRange(this.convertDisplayXToObserved(min), this.convertDisplayXToObserved(max));
+        }
+    };
+
     @action setSelectedMaskRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
             this.maskRange[0] = min;
             this.maskRange[1] = max;
         }
         this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedDisplayMaskRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.setSelectedMaskRange(this.convertDisplayYToObserved(min), this.convertDisplayYToObserved(max));
+        }
     };
 
     @action private updateRanges = () => {
@@ -288,14 +406,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maxX = undefined;
     };
 
+    private resetSpectralDisplayState = () => {
+        this.clearXBounds();
+        this.fittingStore.reset();
+    };
+
     @action setYBounds = (minVal: number, maxVal: number) => {
         this.minY = minVal;
         this.maxY = maxVal;
     };
 
     @action clearYBounds = () => {
-        this.minX = undefined;
-        this.maxX = undefined;
+        this.minY = undefined;
+        this.maxY = undefined;
     };
 
     @action setXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
@@ -365,6 +488,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
+
+        this.disposers.push(
+            reaction(
+                () => this.yAxisRestFrameScale,
+                () => {
+                    this.clearYBounds();
+                    this.fittingStore.reset();
+                }
+            )
+        );
 
         this.disposers.push(
             reaction(
@@ -468,6 +601,140 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.profileSelectionStore.profiles?.length;
     }
 
+    @computed get displayIntensityUnit(): string | undefined {
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        if (isMultiProfileActive) {
+            const frame = this.effectiveFrame;
+            const hasSelectedUnit = this.intensityUnit && (frame?.intensityConfig.nativeIntensityUnit === this.intensityUnit || GetIntensityConversion(frame?.intensityConfig, this.intensityUnit));
+            return hasSelectedUnit ? this.intensityUnit : frame?.headerUnit;
+        }
+        return this.effectiveFrame?.intensityUnit;
+    }
+
+    @computed get isXAxisRestFrameSupported(): boolean {
+        const frame = this.effectiveFrame;
+        return isRestFrameSpectralType(frame?.spectralType ?? frame?.spectralAxis?.type?.code);
+    }
+
+    private get isRestFrameShiftValid(): boolean {
+        return this.isRestFrameShiftInputValid && isValidRedshift(this.restFrameRedshift);
+    }
+
+    @computed get isXAxisRestFrameActive(): boolean {
+        return this.isRestFrameShiftValid && this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported;
+    }
+
+    @computed get isYAxisRestFrameActive(): boolean {
+        return this.isRestFrameShiftValid && this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported;
+    }
+
+    @computed get isRestFrameCorrectionRequested(): boolean {
+        return (this.isXAxisRestFrameEnabled && this.isXAxisRestFrameSupported) || (this.isYAxisRestFrameEnabled && this.isYAxisRestFrameSupported);
+    }
+
+    @computed get isRestFrameCorrectionActive(): boolean {
+        return this.isXAxisRestFrameActive || this.isYAxisRestFrameActive;
+    }
+
+    @computed get effectiveRestFrameRedshift(): number {
+        return this.isRestFrameShiftInputValid ? this.restFrameRedshift : 0;
+    }
+
+    @computed get redshiftFactor(): number {
+        return this.isRestFrameCorrectionRequested ? restFrequencyFactorFromRedshift(this.effectiveRestFrameRedshift) : 1;
+    }
+
+    @computed get restFrameRadialVelocity(): number {
+        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
+    }
+
+    @computed get isYAxisRestFrameSupported(): boolean {
+        return (
+            this.profileSelectionStore.isSameStatsTypeUnit &&
+            !this.profileSelectionStore.isStatsTypeSumSqOnly &&
+            this.profileSelectionStore.isSameCoordinatesUnit &&
+            !this.profileSelectionStore.isCoordinatesIncludingNonIntensityUnit &&
+            IsFrequencyDensityUnit(this.displayIntensityUnit ?? "")
+        );
+    }
+
+    @computed get yAxisRestFrameScale(): number {
+        return this.isYAxisRestFrameActive ? 1 / this.redshiftFactor : 1;
+    }
+
+    @computed get spectralUnitLabel(): string {
+        const unit = this.effectiveFrame?.spectralUnitStr ?? "";
+        return this.isXAxisRestFrameActive ? `${unit}${unit ? " " : ""}(rest frame)` : unit;
+    }
+
+    @computed get effectiveSecondarySpectralType(): SpectralType {
+        return (this.effectiveFrame?.spectralTypeSecondary ?? this.effectiveFrame?.spectralAxis?.type?.code ?? SpectralType.CHANNEL) as SpectralType;
+    }
+
+    @computed get effectiveSecondarySpectralUnit(): SpectralUnit | null {
+        return (this.effectiveFrame?.spectralUnitSecondary ?? this.effectiveFrame?.spectralAxis?.type?.unit ?? null) as SpectralUnit | null;
+    }
+
+    @computed get secondarySpectralUnitLabel(): string {
+        const unit = this.effectiveSecondarySpectralUnit ?? "";
+        if (!this.isXAxisRestFrameActive) {
+            return unit;
+        }
+
+        const frameLabel = isRestFrameSpectralType(this.effectiveSecondarySpectralType) ? "rest frame" : "observed";
+        return `${unit}${unit ? " " : ""}(${frameLabel})`;
+    }
+
+    @computed get xAxisLabel(): string | undefined {
+        const label = this.effectiveFrame?.spectralLabel;
+        return label && this.isXAxisRestFrameActive ? `${label} (rest frame)` : label;
+    }
+
+    @computed get yUnitLabel(): string | undefined {
+        const unit = this.yUnit;
+        if (!unit) {
+            return undefined;
+        }
+        return this.isYAxisRestFrameActive ? `${unit} (rest frame)` : unit;
+    }
+
+    @computed get yAxisLabel(): string | undefined {
+        const unit = this.yUnit;
+        if (!unit) {
+            return undefined;
+        }
+        return this.isYAxisRestFrameActive ? `Value (${unit}) (rest frame)` : `Value (${unit})`;
+    }
+
+    @computed get restFrameCorrectionExportComments(): string[] {
+        if (!this.isRestFrameCorrectionActive) {
+            return [];
+        }
+        return [
+            `x-axis spectral coordinate: ${this.isXAxisRestFrameActive ? "rest frame" : "observed frame"}`,
+            `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
+            this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (${this.restFrameVelocityConvention}, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
+        ];
+    }
+
+    @computed get displayChannelValueRange(): NumberRange {
+        return [this.convertObservedXToDisplay(this.channelValueRange[0]), this.convertObservedXToDisplay(this.channelValueRange[1])];
+    }
+
+    @computed get displayMaskRange(): NumberRange {
+        return [this.convertObservedYToDisplay(this.maskRange[0]), this.convertObservedYToDisplay(this.maskRange[1])];
+    }
+
+    private getDisplayIntensityValues = (values: Float32Array | Float64Array | null | undefined, intensityConfig: IntensityConfig, intensityUnit: string | undefined): Float32Array | Float64Array | null | undefined => {
+        if (!values) {
+            return values;
+        }
+        const intensityConversion = GetIntensityConversion(intensityConfig, intensityUnit);
+        const convertedValues = intensityConversion ? intensityConversion(values) : values;
+        const scale = this.yAxisRestFrameScale;
+        return scale === 1 ? convertedValues : convertedValues.map(value => value * scale);
+    };
+
     @computed get plotData(): MultiPlotData | null {
         const frame = this.effectiveFrame;
         if (!frame?.channelInfo) {
@@ -504,13 +771,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
 
-                const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
-                const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, shouldComputeMeanRms);
+                const intensityValues = this.getDisplayIntensityValues(profile.data.values, profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
+                const displayChannelValues = this.convertObservedArrayToDisplay(profile.channelValues);
+                const pointsAndProperties = this.getDataPointsAndProperties(displayChannelValues, intensityValues ?? null, shouldComputeMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, (pointsAndProperties?.endIndex ?? NaN) + 1) ?? []);
+                const displaySecondaryChannelValues = this.convertObservedArrayToDisplay(profile.channelSecondaryValues, this.effectiveSecondarySpectralType, this.effectiveSecondarySpectralUnit);
+                secondaryXData.push(displaySecondaryChannelValues.slice(pointsAndProperties?.startIndex, (pointsAndProperties?.endIndex ?? NaN) + 1));
 
                 if (pointsAndProperties) {
                     if (shouldComputeMeanRms) {
@@ -542,9 +810,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         let fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
         if (profiles.length === 1 && dataIndexes.length === 1) {
-            let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
-            const intensityValues = intensityConversion && profiles[0].data?.values ? intensityConversion(profiles[0].data.values) : profiles[0].data?.values;
+            let x = this.convertObservedArrayToDisplay(profiles[0].channelValues).slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
+            const intensityValues = this.getDisplayIntensityValues(profiles[0].data?.values, profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
             let y: Float32Array | Float64Array | undefined = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE && y) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
@@ -610,16 +877,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get selectedRange(): {isHorizontal: boolean; center: number; width: number} | null {
         if (this.isSelectingMomentChannelRange) {
+            const displayRange = this.displayChannelValueRange;
             return {
                 isHorizontal: false,
-                center: (this.channelValueRange[0] + this.channelValueRange[1]) / 2,
-                width: Math.abs(this.channelValueRange[0] - this.channelValueRange[1])
+                center: (displayRange[0] + displayRange[1]) / 2,
+                width: Math.abs(displayRange[0] - displayRange[1])
             };
         } else if (this.isSelectingMomentMaskRange) {
+            const displayRange = this.displayMaskRange;
             return {
                 isHorizontal: true,
-                center: (this.maskRange[0] + this.maskRange[1]) / 2,
-                width: Math.abs(this.maskRange[0] - this.maskRange[1])
+                center: (displayRange[0] + displayRange[1]) / 2,
+                width: Math.abs(displayRange[0] - displayRange[1])
             };
         }
         return null;
@@ -689,8 +958,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && !isPlotDisabled) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
-                if (transformedValue && isFinite(transformedValue)) {
-                    transformedSpectralLines.push({species: spectralLine?.species, value: transformedValue, qn: spectralLine?.qn});
+                if (transformedValue !== undefined && isFinite(transformedValue)) {
+                    const displayValue = this.isXAxisRestFrameActive ? transformedValue : this.convertObservedXToDisplay(transformedValue);
+                    transformedSpectralLines.push({species: spectralLine?.species, value: displayValue, qn: spectralLine?.qn});
                 }
             });
         }
@@ -698,7 +968,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string | undefined {
-        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         if (this.intensityUnit || this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string | undefined;
@@ -707,11 +976,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = isMultiProfileActive
-                        ? GetIntensityConversion(this.effectiveFrame?.intensityConfig, this.intensityUnit) && this.intensityUnit
-                            ? this.intensityUnit
-                            : this.effectiveFrame?.headerUnit
-                        : this.effectiveFrame?.intensityUnit;
+                    unitString = this.displayIntensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
@@ -936,6 +1201,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.maxYVal === "number") {
             this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
         }
+        if (typeof widgetSettings.xAxisRestFrameEnabled === "boolean") {
+            this.isXAxisRestFrameEnabled = widgetSettings.xAxisRestFrameEnabled;
+        }
+        if (typeof widgetSettings.restFrameRedshift === "number" && isValidRedshift(widgetSettings.restFrameRedshift)) {
+            this.restFrameRedshift = widgetSettings.restFrameRedshift;
+        }
+        this.isRestFrameShiftInputValid = true;
+        if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
+            this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
+        }
+        if (typeof widgetSettings.restFrameVelocityConvention === "string" && Object.values(VelocityConvention).includes(widgetSettings.restFrameVelocityConvention as VelocityConvention)) {
+            this.restFrameVelocityConvention = widgetSettings.restFrameVelocityConvention as VelocityConvention;
+        }
+        if (typeof widgetSettings.yAxisRestFrameEnabled === "boolean") {
+            this.isYAxisRestFrameEnabled = widgetSettings.yAxisRestFrameEnabled;
+        }
     };
 
     public selectFrame = (fileId: number) => {
@@ -952,8 +1233,108 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,
             minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal,
+            xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
+            restFrameRedshift: this.restFrameRedshift,
+            restFrameShiftMode: this.restFrameShiftMode,
+            restFrameVelocityConvention: this.restFrameVelocityConvention,
+            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
         };
+    };
+
+    public convertObservedYToDisplay = (value: number): number => {
+        return isFinite(value) ? value * this.yAxisRestFrameScale : NaN;
+    };
+
+    public convertDisplayYToObserved = (value: number): number => {
+        return isFinite(value) ? value / this.yAxisRestFrameScale : NaN;
+    };
+
+    private getObservedCursorX = (): number | undefined => {
+        if (!this.isMouseMoveIntoLinePlots || !isFinite(this.cursorX)) {
+            return undefined;
+        }
+        const observedCursorX = this.convertDisplayXToObserved(this.cursorX);
+        return isFinite(observedCursorX) ? observedCursorX : undefined;
+    };
+
+    private setCursorFromObservedX = (observedCursorX: number | undefined) => {
+        if (observedCursorX !== undefined) {
+            const displayCursorX = this.convertObservedXToDisplay(observedCursorX);
+            this.cursorX = isFinite(displayCursorX) ? displayCursorX : NaN;
+        }
+    };
+
+    private convertXValue = (value: number, target: XTransformTarget, spectralType: SpectralType | string | null | undefined, spectralUnit: SpectralUnit | null | undefined): number => {
+        const redshift = this.effectiveRestFrameRedshift;
+
+        if (spectralType === SpectralType.AWAV) {
+            const frame = this.effectiveFrame;
+            const frequency = frame?.convertSettingWCSToFreqMHz(value, spectralType, spectralUnit ?? null);
+            const frequencyScale = target === "display" ? this.redshiftFactor : 1 / this.redshiftFactor;
+            if (frequency !== undefined && isFinite(frequency)) {
+                const transformedValue = frame?.convertFreqMHzToSettingWCS(frequency * frequencyScale, spectralType, spectralUnit ?? null);
+                if (transformedValue !== undefined && isFinite(transformedValue)) {
+                    return transformedValue;
+                }
+            }
+            return NaN;
+        }
+
+        return convertRestFrameSpectralValue(value, spectralType, spectralUnit, redshift, target === "display" ? "observed-to-rest" : "rest-to-observed");
+    };
+
+    public convertObservedXToDisplay = (
+        value: number,
+        spectralType: SpectralType | string | null | undefined = this.effectiveFrame?.spectralType ?? this.effectiveFrame?.spectralAxis?.type?.code,
+        spectralUnit: SpectralUnit | null | undefined = this.effectiveFrame?.spectralUnit
+    ): number => {
+        if (!isFinite(value)) {
+            return NaN;
+        }
+        if (!this.isXAxisRestFrameActive) {
+            return value;
+        }
+        return this.convertXValue(value, "display", spectralType, spectralUnit);
+    };
+
+    public convertDisplayXToObserved = (
+        value: number,
+        spectralType: SpectralType | string | null | undefined = this.effectiveFrame?.spectralType ?? this.effectiveFrame?.spectralAxis?.type?.code,
+        spectralUnit: SpectralUnit | null | undefined = this.effectiveFrame?.spectralUnit
+    ): number => {
+        if (!isFinite(value)) {
+            return NaN;
+        }
+        if (!this.isXAxisRestFrameActive) {
+            return value;
+        }
+        return this.convertXValue(value, "observed", spectralType, spectralUnit);
+    };
+
+    private convertObservedArrayToDisplay = (values: number[], spectralType?: SpectralType | string | null, spectralUnit?: SpectralUnit | null): number[] => {
+        if (!this.isXAxisRestFrameActive || !values?.length) {
+            return values ?? [];
+        }
+
+        const frame = this.effectiveFrame;
+        const resolvedSpectralType = spectralType ?? frame?.spectralType ?? frame?.spectralAxis?.type?.code;
+        const resolvedSpectralUnit = spectralUnit ?? frame?.spectralUnit;
+        if (resolvedSpectralType === SpectralType.AWAV) {
+            if (!resolvedSpectralUnit) {
+                return values;
+            }
+            const observedFreqMHz = frame?.convertSettingWCSToFreqMHzArray(values, resolvedSpectralType, resolvedSpectralUnit);
+            if (observedFreqMHz) {
+                const restFreqMHz = observedFreqMHz.map(value => value * this.redshiftFactor);
+                const restValues = frame?.convertFreqMHzToSettingWCSArray(restFreqMHz, resolvedSpectralType, resolvedSpectralUnit);
+                if (restValues) {
+                    return restValues;
+                }
+            }
+            return new Array(values.length).fill(NaN);
+        }
+        return values.map(value => this.convertXValue(value, "display", resolvedSpectralType, resolvedSpectralUnit));
     };
 
     private getBoundX = (channelValues: number[]): XBound => {

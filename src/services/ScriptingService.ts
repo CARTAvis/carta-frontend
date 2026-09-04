@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import {toJS} from "mobx";
 
 import {AppStore} from "stores";
+import {isScriptingMap, parseReturnPath, type ReturnPath} from "utilities";
 
 export class ExecutionEntry {
     target: string | null | undefined;
@@ -163,6 +164,55 @@ export class ScriptingService {
         });
     }
 
+    private static selectReturnPath(value: any, returnPath: ReturnPath): any {
+        if (typeof returnPath === "string") {
+            return ScriptingService.getReturnPathValue(value, returnPath);
+        }
+
+        const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path] as const) : Object.entries(returnPath);
+        return Object.fromEntries(paths.map(([key, path]) => [key, ScriptingService.getReturnPathValue(value, path)]));
+    }
+
+    private static applyReturnPath(response: any, returnPath: string): any {
+        const parsedPath = parseReturnPath(returnPath);
+        const selectValue = (value: any) => ScriptingService.selectReturnPath(value, parsedPath);
+
+        if (Array.isArray(response)) {
+            return response.map(selectValue);
+        }
+
+        if (response instanceof Map || isScriptingMap(response)) {
+            const entries = response instanceof Map ? response.entries() : Object.entries(response);
+            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, selectValue(value)]));
+        }
+
+        if (response !== null && typeof response === "object") {
+            return selectValue(response);
+        }
+
+        return response;
+    }
+
+    private static getReturnPathValue(value: any, returnPath: string): any {
+        const hasResponsePath = _.hasIn(value, returnPath);
+        const selectedResponse = _.get(value, returnPath);
+        if (!hasResponsePath) {
+            throw new Error(`Response path not found: ${returnPath}`);
+        }
+        // JSON cannot represent undefined. Preserve the distinction between a
+        // missing path and an existing path without a value by returning null.
+        return selectedResponse === undefined ? null : selectedResponse;
+    }
+
+    private static serializeResponse(response: any): string | undefined {
+        try {
+            return JSON.stringify(toJS(response));
+        } catch (error) {
+            console.error("Failed to serialize scripting response:", error);
+            throw new Error("Response cannot be serialized to JSON because it contains a circular reference or unsupported value. Use return_path to select JSON-serializable fields.");
+        }
+    }
+
     handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {
         const entry = ExecutionEntry.fromScriptingRequest(requestMessage);
         if (!entry.isValid) {
@@ -187,16 +237,7 @@ export class ScriptingService {
                 if (response === null || typeof response !== "object") {
                     throw new Error(`Cannot read response path from a non-object response: ${requestMessage.returnPath}`);
                 }
-                const hasResponsePath = _.hasIn(response, requestMessage.returnPath);
-                response = _.get(response, requestMessage.returnPath);
-                if (!hasResponsePath) {
-                    throw new Error(`Missing response path: ${requestMessage.returnPath}`);
-                }
-                // JSON cannot represent undefined. Preserve the distinction between a
-                // missing path and an existing path without a value by returning null.
-                if (response === undefined) {
-                    response = null;
-                }
+                response = ScriptingService.applyReturnPath(response, requestMessage.returnPath);
             }
 
             if (response === undefined && entry.hasResolvedUndefinedMacro) {
@@ -206,7 +247,7 @@ export class ScriptingService {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(toJS(response))
+                response: ScriptingService.serializeResponse(response)
             };
         } catch (err) {
             console.error(err);
