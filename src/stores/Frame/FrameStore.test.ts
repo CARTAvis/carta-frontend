@@ -138,6 +138,14 @@ describe("FrameStore", () => {
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
             expect(beam).toHaveProperty("angle", 42.576087951660156);
         });
+
+        test("returns the beam for a specified channel", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties(2);
+            expect(beam).toHaveProperty("majorAxis", 0.9315680265426636);
+            expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
+            expect(beam).toHaveProperty("angle", 42.57808303833008);
+        });
     });
 
     describe("beamAllChannels", () => {

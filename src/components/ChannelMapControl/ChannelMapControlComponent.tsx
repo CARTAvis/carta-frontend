@@ -186,6 +186,9 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         )}
                     </div>
                 </FormGroup>
+                <FormGroup className="channel-map-control-label" inline={true} label="Show beam overlay" disabled={!channelMapSettings.isChannelMapEnabled}>
+                    <Switch checked={channelMapSettings.shouldShowBeamOverlay} onChange={ev => channelMapSettings.setShowBeamOverlay(ev.currentTarget.checked)} disabled={!channelMapSettings.isChannelMapEnabled} />
+                </FormGroup>
                 <Collapse isOpen={isChannelMapLabelVisible}>
                     <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font" disabled={!channelMapSettings.isChannelMapEnabled}>
                         {fontSelect(channelMapSettings.isChannelMapEnabled, channelMapSettings.font, channelMapSettings.setFont)}

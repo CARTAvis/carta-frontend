@@ -471,7 +471,7 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} | null {
+    getBeamProperties(channel: number = this.requiredChannel): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} | null {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
 
@@ -480,7 +480,7 @@ export class FrameStore {
             const delta = getHeaderNumericValue(deltaHeader);
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
+                    const beam = this.getBeam(channel, this.requiredStokes);
                     if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
@@ -495,6 +495,10 @@ export class FrameStore {
             }
         }
         return null;
+    }
+
+    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} | null {
+        return this.getBeamProperties();
     }
 
     @computed get beamAllChannels(): CARTA.Beam.$Properties[] {

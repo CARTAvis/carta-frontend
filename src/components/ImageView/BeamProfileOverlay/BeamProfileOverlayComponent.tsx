@@ -17,6 +17,7 @@ interface BeamProfileOverlayComponentProps {
     frame: FrameStore;
     top: number;
     left: number;
+    channel?: number;
     padding?: number;
 }
 
@@ -41,10 +42,6 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
     }
 
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null => {
-        if (!frame.hasVisibleBeam) {
-            return null;
-        }
-
         const id = frame.frameInfo.fileId;
         const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / AppStore.Instance.imageRatio;
         const beamSettings = frame.overlayBeamSettings;
@@ -56,13 +53,14 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
 
-        if (!frame.beamProperties) {
+        const beamProperties = frame.getBeamProperties(frame === this.props.frame ? this.props.channel : undefined);
+        if (!beamProperties || !beamProperties.overlayBeamSettings.isVisible) {
             return null;
         }
 
-        const a = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
-        const b = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
-        let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
+        const a = ((beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
+        const b = ((beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
+        let theta = ((90.0 - beamProperties.angle) * Math.PI) / 180.0;
         if (frame.spatialTransform) {
             theta -= frame.spatialTransform.rotation;
         }
@@ -118,17 +116,13 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
+        const baseBeamPlotProps = this.getPlotProps(baseFrame);
 
-        if (!baseFrame.hasVisibleBeam && !contourFrames?.length) {
+        if (!baseBeamPlotProps && !contourFrames?.length) {
             return null;
         }
 
         appStore.updateLayerPixelRatio(this.layerRef);
-
-        let baseBeamPlotProps: BeamPlotProps | null = null;
-        if (baseFrame.hasVisibleBeam) {
-            baseBeamPlotProps = this.getPlotProps(baseFrame);
-        }
 
         const contourBeams: React.JSX.Element[] = [];
         contourFrames?.forEach(contourFrame => {
