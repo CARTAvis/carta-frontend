@@ -1,6 +1,7 @@
 import {CatalogOverlayShape} from "enums";
 
 import {renderCatalogToSvg} from "./catalogSvgExport";
+import {renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
@@ -88,6 +89,17 @@ describe("renderVectorOverlayToSvg", () => {
         expect(lines[0]).toHaveAttribute("x1", "6.00");
         expect(lines[0]).toHaveAttribute("x2", "14.00");
         expect(lines[1]).toHaveAttribute("stroke", "#ff00ff");
+    });
+});
+
+describe("renderColorbarToSvg", () => {
+    test("uses the colorbar store's absolute tick positions", () => {
+        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], "right", 100, 10, 8, 80, [10, 50, 90], ["high", "mid", "low"], "#fff", 1, 4, "sans-serif", 12, "#fff", 0, "", "sans-serif", 12, "#fff", 0, false, "#fff", 1);
+
+        const ticks = group.querySelectorAll("line");
+        expect(ticks[0]).toHaveAttribute("y1", "10");
+        expect(ticks[1]).toHaveAttribute("y1", "50");
+        expect(ticks[2]).toHaveAttribute("y1", "90");
     });
 });
 

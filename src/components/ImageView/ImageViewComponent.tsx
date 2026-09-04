@@ -566,6 +566,47 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio);
 }
 
+function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: any, pixelRatio: number): SVGGElement | null {
+    const source = renderAstOverlayToSvg(frame.channelMapInnerOverlayStore, image, overlaySettings, pixelRatio);
+    if (!source) {
+        return null;
+    }
+
+    const channelMapStore = AppStore.Instance.channelMapStore;
+    const overlayStore = frame.channelMapInnerOverlayStore;
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const innerPadding = overlayStore.padding;
+    const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+    const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
+    const group = svgGroupFromLayer("channel-map-coordinate-overlays");
+    const sourceId = `channel-map-coordinate-source-${frame.frameInfo.fileId}`;
+    source.setAttribute("id", sourceId);
+    const defs = createSvgElement("defs", {});
+    defs.appendChild(source);
+    group.appendChild(defs);
+
+    channelMapStore.channelArray.forEach((channel, index) => {
+        if (channel >= frame.frameInfo.fileInfoExtended.depth) {
+            return;
+        }
+
+        const column = index % channelMapStore.numColumns;
+        const row = Math.floor(index / channelMapStore.numColumns);
+        const isBottom = row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame);
+        const cropLeft = column === 0 ? 0 : innerPadding.left * pixelRatio;
+        const cropBottom = isBottom ? 0 : innerPadding.bottom * pixelRatio;
+        const x = (outerPadding.left + (overlayStore.renderWidth + overlayStore.gapX) * column - innerPadding.left) * pixelRatio + cropLeft;
+        const y = (outerPadding.top + (overlayStore.renderHeight + overlayStore.gapY) * row - innerPadding.top) * pixelRatio;
+        const width = overlayStore.viewWidth * pixelRatio - cropLeft;
+        const height = overlayStore.viewHeight * pixelRatio - cropBottom;
+        const viewport = createSvgElement("svg", {x, y, width, height, viewBox: `${cropLeft} 0 ${width} ${height}`, overflow: "hidden"});
+        viewport.appendChild(createSvgElement("use", {href: `#${sourceId}`}));
+        group.appendChild(viewport);
+    });
+
+    return group.querySelector("use") ? group : null;
+}
+
 export function getPanelSvg(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, image: ImageViewItem, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
@@ -612,7 +653,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     // 4. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
     if (colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
-        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, colorbarPosition, viewWidth, viewHeight, padding, pixelRatio);
+        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, colorbarPosition, viewWidth, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
         if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
         }
@@ -625,8 +666,12 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     }
 
     // 6. AST overlay — vector SVG via svgcanvas
-    const overlayStore = appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore : frame.overlayStore;
-    const astSvg = renderAstOverlayToSvg(overlayStore, image, appStore.overlaySettings, pixelRatio);
+    const isChannelMap = appStore.channelMapStore.isChannelMapEnabled;
+    const channelMapAstSvg = isChannelMap ? buildChannelMapAstSvg(frame, image, appStore.overlaySettings, pixelRatio) : null;
+    if (channelMapAstSvg) {
+        panelGroup.appendChild(channelMapAstSvg);
+    }
+    const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio);
     if (astSvg) {
         panelGroup.appendChild(astSvg);
     }
@@ -653,7 +698,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     return panelGroup;
 }
 
-function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosition: string, viewWidth: number, viewHeight: number, padding: Padding, pixelRatio: number): SVGGElement | null {
+function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosition: string, viewWidth: number, viewHeight: number, padding: Padding, pixelRatio: number, rasterWidth?: number, rasterHeight?: number): SVGGElement | null {
     const colorbarStore = frame.colorbarStore;
     if (!colorbarStore) {
         return null;
@@ -669,11 +714,13 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
     const offset = colorbarSettings.offset * pixelRatio;
 
     let barX: number, barY: number, barHeight: number;
+    const imageWidth = rasterWidth ?? frame.renderWidth * pixelRatio;
+    const imageHeight = rasterHeight ?? frame.renderHeight * pixelRatio;
 
     if (isVertical) {
-        barX = padding.left * pixelRatio + frame.renderWidth * pixelRatio + offset;
+        barX = padding.left * pixelRatio + imageWidth + offset;
         barY = padding.top * pixelRatio;
-        barHeight = frame.renderHeight * pixelRatio;
+        barHeight = imageHeight;
     } else {
         barX = padding.left * pixelRatio;
         barHeight = barWidth;
@@ -682,7 +729,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         } else {
             barY = viewHeight - barHeight - offset - appStore.overlaySettings.colorbarHoverInfoHeight * pixelRatio;
         }
-        barWidth = frame.renderWidth * pixelRatio;
+        barWidth = imageWidth;
     }
 
     const tickColor = getColorForTheme(colorbarSettings.tickCustomColor ? colorbarSettings.tickColor : colorbarSettings.color);
@@ -701,7 +748,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: any, colorbarPosi
         colorbarSettings.position,
         barX,
         barY,
-        isVertical ? barWidth : frame.renderWidth * pixelRatio,
+        isVertical ? barWidth : imageWidth,
         isVertical ? barHeight : colorbarSettings.width * pixelRatio,
         scaledPositions,
         texts,

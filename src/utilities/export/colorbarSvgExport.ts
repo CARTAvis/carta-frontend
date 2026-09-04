@@ -99,8 +99,7 @@ export function renderColorbarToSvg(
         const text = tickTexts[i] ?? "";
 
         if (isVertical) {
-            // Vertical colorbar (right position)
-            const tickY = barY + barHeight - pos;
+            const tickY = pos;
             const tick = createSvgElement("line", {
                 x1: barX + barWidth,
                 y1: tickY,
@@ -122,8 +121,7 @@ export function renderColorbarToSvg(
                 group.appendChild(label);
             }
         } else {
-            // Horizontal colorbar (top/bottom position)
-            const tickX = barX + pos;
+            const tickX = pos;
             const tick = createSvgElement("line", {
                 x1: tickX,
                 y1: barY + barHeight,
