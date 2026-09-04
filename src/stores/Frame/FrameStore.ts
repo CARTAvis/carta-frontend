@@ -510,6 +510,17 @@ export class FrameStore {
         return undefined;
     }
 
+    @computed get shouldShowBeamForAllChannels(): boolean {
+        const headerEntries = this.frameInfo?.fileInfoExtended?.headerEntries;
+        if (!headerEntries) {
+            return false;
+        }
+
+        const hasStandardBeamHeader = ["BMAJ", "BMIN", "BPA"].some(name => headerEntries.some(entry => entry.name === name));
+        const hasCasaBeamTable = headerEntries.some(entry => entry.name === "CASAMBM" && trimFitsComment(entry.value).trim().toUpperCase() === "T");
+        return hasCasaBeamTable && !hasStandardBeamHeader;
+    }
+
     @computed get beamProperties(): BeamProperties | null {
         return this.getBeamProperties();
     }
