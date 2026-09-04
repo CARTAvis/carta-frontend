@@ -21,6 +21,7 @@ export function renderColorbarToSvg(
     tickColor: string,
     tickWidth: number,
     tickLength: number,
+    textGap: number,
     numberFont: string,
     numberFontSize: number,
     numberColor: string,
@@ -100,10 +101,11 @@ export function renderColorbarToSvg(
 
         if (isVertical) {
             const tickY = pos;
+            const tickX = barX + barWidth;
             const tick = createSvgElement("line", {
-                x1: barX + barWidth,
+                x1: tickX - tickLength,
                 y1: tickY,
-                x2: barX + barWidth + tickLength,
+                x2: tickX,
                 y2: tickY,
                 stroke: tickColor,
                 "stroke-width": tickWidth
@@ -111,34 +113,38 @@ export function renderColorbarToSvg(
             group.appendChild(tick);
 
             if (text) {
-                const label = createSvgText(text, barX + barWidth + tickLength + 4, tickY, {
+                const labelX = tickX + textGap + (numberRotation === 0 ? 0 : numberFontSize / 2);
+                const label = createSvgText(text, labelX, tickY, {
                     fill: numberColor,
                     "font-family": numberFont,
                     "font-size": numberFontSize,
+                    "text-anchor": numberRotation === 0 ? "start" : "middle",
                     "dominant-baseline": "central",
-                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${barX + barWidth + tickLength + 4},${tickY})` : ""
+                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${labelX},${tickY})` : ""
                 });
                 group.appendChild(label);
             }
         } else {
             const tickX = pos;
+            const tickY = position === "top" ? barY : barY + barHeight;
             const tick = createSvgElement("line", {
                 x1: tickX,
-                y1: barY + barHeight,
+                y1: tickY + (position === "top" ? tickLength : -tickLength),
                 x2: tickX,
-                y2: barY + barHeight + tickLength,
+                y2: tickY,
                 stroke: tickColor,
                 "stroke-width": tickWidth
             });
             group.appendChild(tick);
 
             if (text) {
-                const label = createSvgText(text, tickX, barY + barHeight + tickLength + numberFontSize, {
+                const labelY = position === "top" ? barY - textGap : barY + barHeight + numberFontSize + textGap;
+                const label = createSvgText(text, tickX, labelY, {
                     fill: numberColor,
                     "font-family": numberFont,
                     "font-size": numberFontSize,
                     "text-anchor": "middle",
-                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${tickX},${barY + barHeight + tickLength + numberFontSize})` : ""
+                    transform: numberRotation !== 0 ? `rotate(${numberRotation},${tickX},${labelY})` : ""
                 });
                 group.appendChild(label);
             }
@@ -148,7 +154,7 @@ export function renderColorbarToSvg(
     // Label text
     if (labelText) {
         if (isVertical) {
-            const labelX = barX + barWidth + tickLength + numberFontSize + 20;
+            const labelX = barX + barWidth + numberFontSize + 2 * textGap + (labelRotation === 0 ? 0 : labelFontSize / 2);
             const labelY = barY + barHeight / 2;
             const label = createSvgText(labelText, labelX, labelY, {
                 fill: labelColor,

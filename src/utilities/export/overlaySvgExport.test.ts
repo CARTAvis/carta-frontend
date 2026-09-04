@@ -94,12 +94,32 @@ describe("renderVectorOverlayToSvg", () => {
 
 describe("renderColorbarToSvg", () => {
     test("uses the colorbar store's absolute tick positions", () => {
-        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], "right", 100, 10, 8, 80, [10, 50, 90], ["high", "mid", "low"], "#fff", 1, 4, "sans-serif", 12, "#fff", 0, "", "sans-serif", 12, "#fff", 0, false, "#fff", 1);
+        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], "right", 100, 10, 8, 80, [10, 50, 90], ["high", "mid", "low"], "#fff", 1, 4, 10, "sans-serif", 12, "#fff", -90, "Jy/beam", "sans-serif", 12, "#fff", -90, true, "#fff", 1);
 
+        const border = group.querySelectorAll("rect")[1];
         const ticks = group.querySelectorAll("line");
+        const labels = group.querySelectorAll("text");
+        expect(border).toHaveAttribute("stroke", "#fff");
+        expect(ticks[0]).toHaveAttribute("x1", "104");
+        expect(ticks[0]).toHaveAttribute("x2", "108");
         expect(ticks[0]).toHaveAttribute("y1", "10");
         expect(ticks[1]).toHaveAttribute("y1", "50");
         expect(ticks[2]).toHaveAttribute("y1", "90");
+        expect(labels[1]).toHaveAttribute("x", "124");
+        expect(labels[1]).toHaveAttribute("y", ticks[1].getAttribute("y1"));
+        expect(labels[1]).toHaveAttribute("text-anchor", "middle");
+        expect(labels[3]).toHaveAttribute("x", "146");
+    });
+
+    test.each([
+        ["top", "14", "10"],
+        ["bottom", "26", "30"]
+    ])("renders %s ticks inside the bar", (position, expectedY1, expectedY2) => {
+        const group = renderColorbarToSvg([0, "#000", 1, "#fff"], position, 100, 10, 80, 20, [50], [""], "#fff", 1, 4, 5, "sans-serif", 12, "#fff", 0, "", "sans-serif", 12, "#fff", 0, false, "#fff", 1);
+        const tick = group.querySelector("line");
+
+        expect(tick).toHaveAttribute("y1", expectedY1);
+        expect(tick).toHaveAttribute("y2", expectedY2);
     });
 });
 
