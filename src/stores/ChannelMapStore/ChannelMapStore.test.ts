@@ -13,6 +13,22 @@ jest.mock("stores", () => ({
 describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
+    afterEach(() => {
+        jest.useRealTimers();
+        store.setShowBeamOverlay(true);
+    });
+
+    describe("beam overlay", () => {
+        it("is enabled by default", () => {
+            expect(store.shouldShowBeamOverlay).toBe(true);
+        });
+
+        it("can be toggled", () => {
+            store.setShowBeamOverlay(false);
+            expect(store.shouldShowBeamOverlay).toBe(false);
+        });
+    });
+
     describe("setChannelMapEnabled", () => {
         it("updates the channel map mode correctly", () => {
             expect(store.isChannelMapEnabled).toBe(false);

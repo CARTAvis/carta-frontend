@@ -226,6 +226,14 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO);
             expect(frame.beamProperties).toBeNull();
         });
+
+        test("returns the beam for a specified channel", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties(undefined, 2);
+            expect(beam).toHaveProperty("majorAxis", 0.9315680265426636);
+            expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
+            expect(beam).toHaveProperty("angle", 42.57808303833008);
+        });
     });
 
     describe("beamAllChannels", () => {

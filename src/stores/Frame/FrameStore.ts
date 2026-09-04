@@ -514,7 +514,7 @@ export class FrameStore {
         return this.getBeamProperties();
     }
 
-    getBeamProperties = (stokes: number = this.requiredStokes): BeamProperties | null => {
+    getBeamProperties = (stokes: number = this.requiredStokes, channel: number = this.requiredChannel): BeamProperties | null => {
         const pixelUnitSizeArcsec = this.pixelUnitSizeArcsec;
         if (
             !this.isSwappedZ &&
@@ -526,7 +526,7 @@ export class FrameStore {
             this.frameInfo.beamTable &&
             this.frameInfo.beamTable.length > 0
         ) {
-            const beam = this.getBeam(this.requiredChannel, stokes);
+            const beam = this.getBeam(channel, stokes);
             if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
                 const x = beam.majorAxis / pixelUnitSizeArcsec.x;
                 const y = beam.minorAxis / pixelUnitSizeArcsec.y;
