@@ -32,26 +32,34 @@ jest.mock("stores", () => {
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
-                imageViewConfigStore: {
-                    visibleImages: [
-                        {
-                            type: 0,
-                            store: observable.object(
-                                {
-                                    channel: 0,
-                                    requiredChannel: 0,
-                                    frameInfo: {fileInfoExtended: {depth: 12}},
-                                    requiredFrameView: false,
-                                    requiredTiles: [[], {x: 0, y: 0}],
-                                    setChannel: jest.fn()
-                                },
-                                {},
-                                {deep: false}
-                            )
-                        }
-                    ],
-                    visibleFrames: []
-                },
+                imageViewConfigStore: observable.object(
+                    {
+                        visibleImages: [
+                            {
+                                type: 0,
+                                store: observable.object(
+                                    {
+                                        channel: 0,
+                                        stokes: 0,
+                                        requiredChannel: 0,
+                                        frameInfo: {fileId: 1, fileInfoExtended: {depth: 12}},
+                                        requiredFrameView: false,
+                                        requiredTiles: [[], {x: 0, y: 0}],
+                                        spectralSiblings: [],
+                                        wcsInfo3D: {},
+                                        setChannel: jest.fn()
+                                    },
+                                    {},
+                                    {deep: false}
+                                )
+                            }
+                        ],
+                        visibleFrames: []
+                    },
+                    {},
+                    {deep: false}
+                ),
+                spectralMatchingType: "CHANNEL",
                 updateChannels: jest.fn()
             }
         }
@@ -336,6 +344,54 @@ describe("ChannelMapStore", () => {
     describe("totalChannelNum", () => {
         it("returns number of channels of the active image", () => {
             expect(store.totalChannelNum).toBe(12);
+        });
+    });
+
+    describe("color blending", () => {
+        const setDisplayedImage = image => {
+            runInAction(() => {
+                jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages = [image];
+            });
+        };
+
+        it("maps matched layers and leaves cells outside their spectral range empty", () => {
+            const frameImage = jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages[0];
+            const baseFrame = frameImage.store;
+            store.setNumColumns(2);
+            store.setNumRows(2);
+            store.setStartChannel(0);
+            const matchedFrame = {...baseFrame, channel: 1, frameInfo: {fileId: 2, fileInfoExtended: {depth: 3}}, spectralSiblings: [baseFrame]};
+            baseFrame.spectralSiblings = [matchedFrame];
+            setDisplayedImage({type: 1, store: {frames: [baseFrame, matchedFrame]}});
+
+            expect(store.getChannelsForFrame(matchedFrame)).toEqual([0, 1, 2, null]);
+
+            baseFrame.spectralSiblings = [];
+            setDisplayedImage(frameImage);
+        });
+
+        it("repeats an unmatched layer channel and requests it only once", () => {
+            const frameImage = jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages[0];
+            const baseFrame = frameImage.store;
+            store.setNumColumns(2);
+            store.setNumRows(2);
+            store.setStartChannel(0);
+            const unmatchedFrame = {...baseFrame, channel: 7, frameInfo: {fileId: 2, fileInfoExtended: {depth: 12}}, spectralSiblings: []};
+            const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
+            const testStore = store as unknown as {requestDisplayedChannels: () => void};
+            setDisplayedImage({type: 1, store: {frames: [baseFrame, unmatchedFrame]}});
+            store.setChannelMapEnabled(true);
+            requestChannelMapTiles.mockClear();
+
+            expect(store.getChannelsForFrame(unmatchedFrame)).toEqual([7, 7, 7, 7]);
+            testStore.requestDisplayedChannels();
+
+            expect(requestChannelMapTiles).toHaveBeenCalledTimes(2);
+            expect(requestChannelMapTiles.mock.calls[0][4]).toEqual([0, 1, 2, 3]);
+            expect(requestChannelMapTiles.mock.calls[1][4]).toEqual([7]);
+
+            store.setChannelMapEnabled(false);
+            setDisplayedImage(frameImage);
         });
     });
 });

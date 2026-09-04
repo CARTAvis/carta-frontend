@@ -22,7 +22,7 @@ export class RasterViewComponentProps {
     column: number;
     renderWidth?: number;
     renderHeight?: number;
-    channel?: number[];
+    channel?: Array<number | null>;
 }
 
 @observer
@@ -33,7 +33,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvasFrame: number | undefined;
     private static readonly Float32Max = 3.402823466e38;
 
-    @observable private channels: number[] | undefined;
+    @observable private channels: Array<number | null> | undefined;
     @observable private image: ImageItem | undefined;
     @observable private imageStore: FrameStore | undefined;
 
@@ -60,8 +60,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
         }
 
-        this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
+        this.sub = TileService.Instance.tileStream.subscribe(() => {
+            if (this.channels !== undefined || !AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview) {
                 this.scheduleCanvasUpdate();
             }
         });
@@ -100,17 +100,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         });
     };
 
-    private renderMultipleCanvas = (frame: FrameStore) => {
-        const canvas = this.canvas;
-        const channels = this.props.channel;
-        const ctx = canvas.getContext("2d");
-        if (!ctx || !channels) {
-            return;
-        }
-
-        const w = canvas.width;
-        const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+    private renderMultipleCanvas = (frame: FrameStore, channels: Array<number | null>) => {
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
 
         if (!channels.length) {
@@ -124,6 +114,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const gapY = frame.channelMapInnerOverlayStore.gapY;
 
         channels.forEach((channel, index) => {
+            if (channel === null) {
+                return;
+            }
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
             const column = index % channelMapStore.numColumns;
@@ -181,9 +174,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const h = canvas.height;
         let isCanvasCleared = false;
 
-        if (image?.type === ImageType.COLOR_BLENDING) {
-            ctx.globalCompositeOperation = "lighter";
-        }
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = image?.type === ImageType.COLOR_BLENDING ? "lighter" : "source-over";
 
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
         frames.forEach((frame, index) => {
@@ -198,8 +190,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                         isCanvasCleared = true;
                     }
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
-                    if (channel && isFinite((channel as number[]).length)) {
-                        this.renderMultipleCanvas(frame);
+                    if (channel) {
+                        this.renderMultipleCanvas(frame, AppStore.Instance.channelMapStore.getChannelsForFrame(frame));
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
@@ -212,6 +204,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 }
             }
         });
+        ctx.globalAlpha = 1;
     };
 
     private updateCanvasSize(frame: FrameStore, renderWidth: number, renderHeight: number, numImageColumns: number, numImageRows: number) {
@@ -551,6 +544,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
                 };
                 const ratio = appStore.imageRatio;
+                if (this.props.channel) {
+                    const channelMapChannels = appStore.channelMapStore.getChannelsForFrame(frame);
+                }
             }
         }
         if (this.props.image?.type === ImageType.COLOR_BLENDING) {
