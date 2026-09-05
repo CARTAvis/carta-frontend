@@ -10,7 +10,7 @@ import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "mode
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -458,15 +458,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
         let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
-        const tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
+        const tileScaling = {x: mip * spatialRef.effectiveZoomLevel.x, y: mip * spatialRef.effectiveZoomLevel.y};
 
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
             // set origin of rotation to image center
             const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
             const rotationOriginCanvasSpace: Point2D = {
-                x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
-                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin)
+                x: spatialRef.effectiveZoomLevel.x * (rotationOriginImageSpace.x - full.xMin),
+                y: spatialRef.effectiveZoomLevel.y * (rotationOriginImageSpace.y - full.yMin)
             };
             this.gl.uniform2f(shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
             this.gl.uniform1f(shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
@@ -501,7 +501,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         this.gl.uniform1f(shaderUniforms.PixelAspectRatio, aspectRatio);
         // take zoom level into account to convert from image space to canvas space
-        bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
+        bottomLeft = multiply2D(bottomLeft, spatialRef.effectiveZoomLevel);
         this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width ?? 0, rasterTile.height ?? 0);
         this.gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         this.gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
@@ -540,7 +540,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     visibility: frame.renderConfig.isVisible,
                     nanColorHex: appStore.preferenceStore.nanColorHex,
                     pixelGridVisible: appStore.preferenceStore.isPixelGridVisible,
-                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor),
+                    axisZoomX: spatialReference.axisZoomLevel.x,
+                    axisZoomY: spatialReference.axisZoomLevel.y
                 };
                 const ratio = appStore.imageRatio;
             }

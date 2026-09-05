@@ -117,6 +117,37 @@ const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
 
+export function scaleZoomForImageRatio(frame: Pick<FrameStore, "effectiveZoomLevel" | "isAxisZoomable" | "zoomLevel">, imageRatioScale: number): Point2D {
+    const zoom = frame.isAxisZoomable ? frame.effectiveZoomLevel : {x: frame.zoomLevel, y: frame.zoomLevel};
+    return {x: zoom.x * imageRatioScale, y: zoom.y * imageRatioScale};
+}
+
+export function restoreWorkspaceZoom(frame: FrameStore, workspaceZoom: Pick<WorkspaceFile, "axisZoomLevel" | "zoomAxis" | "zoomLevel">) {
+    const zoomFrame = frame.spatialReference ?? frame;
+    const axisZoom = workspaceZoom.axisZoomLevel;
+    if (zoomFrame.isAxisZoomable && axisZoom && typeof axisZoom.x === "number" && typeof axisZoom.y === "number" && axisZoom.x > 0 && axisZoom.y > 0 && isFinite(axisZoom.x) && isFinite(axisZoom.y)) {
+        zoomFrame.setAxisZoom(axisZoom.x, axisZoom.y);
+    } else if (workspaceZoom.zoomLevel && workspaceZoom.zoomLevel > 0) {
+        if (zoomFrame.isAxisZoomable) {
+            zoomFrame.setAxisZoom(workspaceZoom.zoomLevel, workspaceZoom.zoomLevel);
+        } else {
+            frame.zoomLevel = workspaceZoom.zoomLevel;
+        }
+    }
+    if (zoomFrame.isAxisZoomable && (workspaceZoom.zoomAxis === "x" || workspaceZoom.zoomAxis === "y")) {
+        zoomFrame.setZoomAxis(workspaceZoom.zoomAxis);
+    }
+}
+
+function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
+    const zoom = scaleZoomForImageRatio(frame, imageRatioScale);
+    if (frame.isAxisZoomable) {
+        frame.setAxisZoom(zoom.x, zoom.y);
+    } else {
+        frame.setZoom(zoom.x, true);
+    }
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -1792,11 +1823,13 @@ export class AppStore {
     };
 
     @action setImageRatio = (val: number) => {
+        const imageRatioScale = val / this.imageRatio;
         for (const f of this.frames) {
             if (!f.spatialReference) {
-                f.setZoom((f.zoomLevel * val) / this.imageRatio);
+                scaleFrameZoom(f, imageRatioScale);
             }
         }
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, imageRatioScale));
         this.imageRatio = val;
     };
 
@@ -2251,15 +2284,14 @@ export class AppStore {
 
     // update devicePixelRatio and make the image size invariant on screen
     @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
+        const devicePixelRatioScale = devicePixelRatio / prevDevicePixelRatio;
         this.frames.forEach(frame => {
             if (frame === this.spatialReference || !frame.spatialReference) {
-                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+                scaleFrameZoom(frame, devicePixelRatioScale);
             }
         });
 
-        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
-            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
-        });
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, devicePixelRatioScale));
 
         this.devicePixelRatio = devicePixelRatio;
     }
@@ -2826,9 +2858,7 @@ export class AppStore {
                     if (fileInfo.center) {
                         frame.center = fileInfo.center;
                     }
-                    if (fileInfo.zoomLevel) {
-                        frame.zoomLevel = fileInfo.zoomLevel;
-                    }
+                    restoreWorkspaceZoom(frame, fileInfo);
 
                     // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
@@ -2979,6 +3009,11 @@ export class AppStore {
 
             workspaceFile.center = frame.center;
             workspaceFile.zoomLevel = frame.zoomLevel;
+            const zoomFrame = frame.spatialReference ?? frame;
+            if (zoomFrame.isAxisZoomable) {
+                workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
+                workspaceFile.zoomAxis = zoomFrame.zoomAxis;
+            }
             workspaceFile.channel = frame.channel;
             workspaceFile.stokes = frame.stokes;
 

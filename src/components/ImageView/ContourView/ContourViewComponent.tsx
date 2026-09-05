@@ -1,6 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
@@ -15,6 +16,13 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
+}
+
+export function getContourZoomParameters(effectiveZoomLevel: Point2D, frameAspectRatio: number, transformScale: number = 1) {
+    return {
+        pixelAspectRatio: frameAspectRatio * (effectiveZoomLevel.x / effectiveZoomLevel.y),
+        zoomY: effectiveZoomLevel.y * transformScale
+    };
 }
 
 @observer
@@ -117,8 +125,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
         const isActive = frame === baseFrame;
-        let lineThickness: number;
         let dashFactor: number;
+        let transformScale = 1;
 
         if (baseFrame.spatialReference) {
             const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
@@ -145,7 +153,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
 
-            lineThickness = (AppStore.Instance.pixelRatio * frame.contourConfig.thickness) / (baseFrame.spatialReference.zoomLevel * baseFrame.spatialTransform.scale);
+            transformScale = baseFrame.spatialTransform.scale;
             dashFactor = ceilToPower(1.0 / baseFrame.spatialReference.zoomLevel, 3.0);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
@@ -164,9 +172,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.RotationAngle, 0.0);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, 1.0);
 
-            lineThickness = (AppStore.Instance.pixelRatio * frame.contourConfig.thickness) / baseFrame.zoomLevel;
             dashFactor = ceilToPower(1.0 / baseFrame.zoomLevel, 3.0);
         }
+
+        const zoomFrame = baseFrame.spatialReference ?? baseFrame;
+        const contourZoom = getContourZoomParameters(zoomFrame.effectiveZoomLevel, frame.aspectRatio, transformScale);
+        const lineThickness = (AppStore.Instance.pixelRatio * frame.contourConfig.thickness) / contourZoom.zoomY;
 
         if (isActive) {
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapEnabled, 0);
@@ -187,7 +198,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
 
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.LineThickness, lineThickness);
-        this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
+        this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, contourZoom.pixelAspectRatio);
         this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.isColormapEnabled ? 1 : 0);
         this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapInverted, frame.contourConfig.isColormapInverted ? 1 : 0);
         if (frame.contourConfig.isColormapEnabled) {
