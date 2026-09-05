@@ -13,9 +13,10 @@ export const SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX = 5;
 export const SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX = 6;
 export const SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX = 7;
 export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 8;
+export const SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX = 9;
 export const MIN_EDITED_REGION_DIMENSION = 1e-3;
 
-export type SimpleShapeAnchor = "top" | "right" | "bottom" | "left" | "rotator" | "top-left" | "bottom-left" | "top-right" | "bottom-right";
+export type SimpleShapeAnchor = "top" | "right" | "bottom" | "left" | "rotator" | "top-left" | "bottom-left" | "top-right" | "bottom-right" | "inner-radius";
 
 const SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES: Array<[SimpleShapeAnchor, number]> = [
     ["top", SIMPLE_SHAPE_TOP_POINT_INDEX],
@@ -26,7 +27,8 @@ const SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES: Array<[SimpleShapeAnchor, number]> = [
     ["bottom-left", SIMPLE_SHAPE_BOTTOM_LEFT_POINT_INDEX],
     ["top-right", SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX],
     ["bottom-right", SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX],
-    ["rotator", SIMPLE_SHAPE_ROTATION_POINT_INDEX]
+    ["rotator", SIMPLE_SHAPE_ROTATION_POINT_INDEX],
+    ["inner-radius", SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX]
 ];
 
 const SIMPLE_SHAPE_POINT_ANCHOR_NAMES = new Map<number, SimpleShapeAnchor>(SIMPLE_SHAPE_ANCHOR_POINT_ENTRIES.map(([anchor, pointIndex]): [number, SimpleShapeAnchor] => [pointIndex, anchor]));
@@ -133,8 +135,15 @@ export function getSimpleShapeAnchorPointIndex(anchor: string): number {
  * @param shouldIncludeRotator - Whether to append the rotation handle index.
  * @returns Edit point indexes in selection order.
  */
-export function getSimpleShapePointSelectionOrder(shouldIncludeRotator: boolean): number[] {
-    return shouldIncludeRotator ? [...SIMPLE_SHAPE_POINT_SELECTION_ORDER, SIMPLE_SHAPE_ROTATION_POINT_INDEX] : [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
+export function getSimpleShapePointSelectionOrder(shouldIncludeRotator: boolean, isAnnulus = false): number[] {
+    const order = [...SIMPLE_SHAPE_POINT_SELECTION_ORDER];
+    if (isAnnulus) {
+        order.push(SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX);
+    }
+    if (shouldIncludeRotator) {
+        order.push(SIMPLE_SHAPE_ROTATION_POINT_INDEX);
+    }
+    return order;
 }
 
 /**

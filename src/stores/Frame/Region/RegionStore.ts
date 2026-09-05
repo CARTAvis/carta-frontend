@@ -20,6 +20,7 @@ import {
     getSimpleShapePointSelectionOrder,
     isAstBadPoint,
     length2D,
+    MIN_EDITED_REGION_DIMENSION,
     minMax2D,
     rotate2D,
     scale2D,
@@ -39,7 +40,7 @@ export const SIZE_POINT_INDEX = 1;
 
 // New region types should support point selection by default. Add a type here only
 // when selecting individual control points is intentionally unsupported.
-const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT, CARTA.RegionType.ANNULUS]);
+const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT]);
 
 const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
 const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
@@ -109,6 +110,8 @@ export class RegionStore {
                 return "Ellipse";
             case CARTA.RegionType.ANNELLIPSE:
                 return "Ellipse - Ann";
+            case CARTA.RegionType.ANNULUS:
+                return "Annulus";
             case CARTA.RegionType.POLYGON:
                 return "Polygon";
             case CARTA.RegionType.ANNPOLYGON:
@@ -147,6 +150,7 @@ export class RegionStore {
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
             case CARTA.RegionType.ANNRULER:
+            case CARTA.RegionType.ANNULUS:
                 return true;
             default:
                 return false;
@@ -167,6 +171,8 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
                 return "circle";
+            case CARTA.RegionType.ANNULUS:
+                return "annulus";
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
                 return "polygon-filter";
@@ -192,7 +198,8 @@ export class RegionStore {
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
-        [CARTA.RegionType.POLYLINE, "Polyline"]
+        [CARTA.RegionType.POLYLINE, "Polyline"],
+        [CARTA.RegionType.ANNULUS, "Annulus"]
     ]);
 
     public static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
@@ -241,6 +248,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.ANNTEXT:
             case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[SIZE_POINT_INDEX];
@@ -269,6 +277,22 @@ export class RegionStore {
         return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
+    @computed get innerSize(): Point2D {
+        if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
+            return this.controlPoints[2];
+        }
+        return {x: 0, y: 0};
+    }
+
+    @computed get wcsInnerSize(): Point2D {
+        const frame = this.activeFrame;
+        if (!this.innerSize || !frame?.isValidWcs) {
+            return {x: 0, y: 0};
+        }
+        const wcsSize = frame.getWcsSizeInArcsec(this.innerSize);
+        return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
+    }
+
     @computed get boundingBox(): Point2D {
         if (!this.isValid) {
             return {x: 0, y: 0};
@@ -280,6 +304,7 @@ export class RegionStore {
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.ANNCOMPASS:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
@@ -329,6 +354,8 @@ export class RegionStore {
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
+            case CARTA.RegionType.ANNULUS:
+                return this.controlPoints.length === 3 && this.size.x > 0 && this.size.y > 0 && this.innerSize.x > 0 && this.innerSize.y > 0 && this.innerSize.x < this.size.x && this.innerSize.y < this.size.y;
             case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints.length === 2;
             case CARTA.RegionType.POLYGON:
@@ -389,6 +416,9 @@ export class RegionStore {
         if (this.isSimpleShapeRegion) {
             return hasSquarePixels ? 9 : 8;
         }
+        if (this.regionType === CARTA.RegionType.ANNULUS) {
+            return 10;
+        }
         if (this.isRotationSelectableLineLikeRegion) {
             return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
         }
@@ -423,7 +453,7 @@ export class RegionStore {
     }
 
     @computed get rotationPointIndex(): number {
-        if (this.isSimpleShapeRegion) {
+        if (this.isSimpleShapeRegion || this.regionType === CARTA.RegionType.ANNULUS) {
             return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
         }
         if (this.isRotationSelectableLineLikeRegion) {
@@ -446,7 +476,7 @@ export class RegionStore {
             if (this.regionType === CARTA.RegionType.POINT) {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
-            if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
+            if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE || this.regionType === CARTA.RegionType.ANNULUS) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TargetVertexCount);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
                 const halfWidth = this.size.x / 2;
@@ -467,6 +497,13 @@ export class RegionStore {
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
         return approximatePoints;
+    }
+
+    public getAnnulusApproximation(astTransform: AST.Mapping): {outer: Point2D[]; inner: Point2D[]} {
+        return {
+            outer: getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TargetVertexCount),
+            inner: getApproximateEllipsePoints(astTransform, this.center, this.innerSize.y, this.innerSize.x, this.rotation, RegionStore.TargetVertexCount)
+        };
     }
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
@@ -578,8 +615,36 @@ export class RegionStore {
             const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
             const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
+        } else if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
+            // For ANNULUS, scale the inner ring proportionally so both rings maintain the same shape.
+            const oldSizeY = this.size.y;
+            const scaleY = oldSizeY > 0 ? p.y / oldSizeY : 1;
+            const newInnerY = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(p.y * 0.99, this.innerSize.y * scaleY));
+            // Aspect ratio of new outer size
+            const aspect = p.y > 0 ? p.x / p.y : 1;
+            const newInnerX = newInnerY * aspect;
+            this.setControlPoints([this.center, p, {x: newInnerX, y: newInnerY}], shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
+        }
+    };
+
+    @action setInnerSize = (p: Point2D, shouldSkipUpdate = false) => {
+        if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
+            // Enforce same shape as outer ring: inner aspect ratio must match outer aspect ratio.
+            const outerSize = this.size;
+            const aspect = outerSize.y > 0 ? outerSize.x / outerSize.y : 1;
+            const diffX = Math.abs(p.x - this.innerSize.x);
+            const diffY = Math.abs(p.y - this.innerSize.y);
+            if (diffY > diffX) {
+                const clampedY = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(outerSize.y * 0.99, p.y));
+                const constrainedX = clampedY * aspect;
+                this.setControlPoint(2, {x: constrainedX, y: clampedY}, shouldSkipUpdate);
+            } else {
+                const clampedX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(outerSize.x * 0.99, p.x));
+                const constrainedY = clampedX / aspect;
+                this.setControlPoint(2, {x: clampedX, y: constrainedY}, shouldSkipUpdate);
+            }
         }
     };
 
@@ -810,7 +875,7 @@ export class RegionStore {
             return;
         }
 
-        if (this.isSimpleShapeRegion) {
+        if (this.isSimpleShapeRegion || this.regionType === CARTA.RegionType.ANNULUS) {
             this.cycleSimpleShapePointSelection(direction);
             return;
         }
@@ -824,7 +889,7 @@ export class RegionStore {
     };
 
     private cycleSimpleShapePointSelection = (direction: 1 | -1) => {
-        const selectionOrder = getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels);
+        const selectionOrder = getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels, this.regionType === CARTA.RegionType.ANNULUS);
         if (!selectionOrder.length) {
             return;
         }
@@ -849,6 +914,20 @@ export class RegionStore {
         }
 
         if (this.isSimpleShapeRegion) {
+            this.moveSelectedSimpleShapeSide(deltaX, deltaY);
+            return;
+        }
+
+        if (this.regionType === CARTA.RegionType.ANNULUS) {
+            if (this.selectedPointIndex === 9) {
+                const rotation = (this.rotation * Math.PI) / 180.0;
+                const localDelta = rotate2D({x: deltaX, y: deltaY}, -rotation);
+                const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(this.size.x * 0.99, this.innerSize.x + localDelta.y));
+                const ratio = this.size.x > 0 ? this.size.y / this.size.x : 1;
+                const newInnerY = newInnerX * ratio;
+                this.setInnerSize({x: newInnerX, y: newInnerY});
+                return;
+            }
             this.moveSelectedSimpleShapeSide(deltaX, deltaY);
             return;
         }
@@ -878,7 +957,15 @@ export class RegionStore {
             textScale: this.textAnnotationScale
         });
         if (edit) {
-            this.setControlPoints([edit.center, edit.size]);
+            if (this.regionType === CARTA.RegionType.ANNULUS) {
+                const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
+                const newInnerY = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(edit.size.y * 0.99, edit.size.y * ratio));
+                const aspect = edit.size.y > 0 ? edit.size.x / edit.size.y : 1;
+                const newInnerX = newInnerY * aspect;
+                this.setControlPoints([edit.center, edit.size, {x: newInnerX, y: newInnerY}]);
+            } else {
+                this.setControlPoints([edit.center, edit.size]);
+            }
         }
     };
 

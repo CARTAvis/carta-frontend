@@ -12,6 +12,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
 
+import {AnnulusRegionForm} from "./AnnulusRegionForm/AnnulusRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
@@ -120,6 +121,9 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
+                    break;
+                case CARTA.RegionType.ANNULUS:
+                    configurationPanel = <AnnulusRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:

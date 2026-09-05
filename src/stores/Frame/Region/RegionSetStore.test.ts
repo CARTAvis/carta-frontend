@@ -357,4 +357,13 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(first.isLocked).toBe(true);
         expect(second.isLocked).toBe(false);
     });
+
+    test("addAnnulusRegion creates an annulus region with outer and inner radii", () => {
+        const {regionSet} = MakeRegionSet();
+        const annulus = regionSet.addAnnulusRegion({x: 50, y: 50}, 20, 10, 10, 5, true);
+        expect(annulus.regionType).toBe(CARTA.RegionType.ANNULUS);
+        expect(annulus.center).toEqual({x: 50, y: 50});
+        expect(annulus.size).toEqual({x: 10, y: 20});
+        expect(annulus.innerSize).toEqual({x: 5, y: 10});
+    });
 });

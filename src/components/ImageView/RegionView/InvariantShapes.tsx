@@ -143,6 +143,7 @@ interface AnchorProps {
     onClick: (ev) => void;
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
+    isInnerRadius?: boolean;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -170,8 +171,8 @@ export const Anchor = (props: AnchorProps) => {
     // - Secondary-selected anchors: gray fill/stroke
     const isSecondary = props.selectionType === SelectionType.Secondary;
     // Secondary anchors use a slightly darker gray fill for visibility
-    const fillColor = props.isSelected ? SELECTED_ANCHOR_FILL_COLOR : isSecondary ? SECONDARY_ANCHOR_FILL_COLOR : ACTIVE_ANCHOR_FILL_COLOR;
-    const strokeColor = props.isSelected ? SELECTED_ANCHOR_STROKE_COLOR : isSecondary ? SECONDARY_ANCHOR_STROKE_COLOR : ACTIVE_ANCHOR_STROKE_COLOR;
+    const fillColor = props.isInnerRadius && !props.isSelected ? "#ff3333" : props.isSelected ? SELECTED_ANCHOR_FILL_COLOR : isSecondary ? SECONDARY_ANCHOR_FILL_COLOR : ACTIVE_ANCHOR_FILL_COLOR;
+    const strokeColor = props.isInnerRadius && !props.isSelected ? "#880000" : props.isSelected ? SELECTED_ANCHOR_STROKE_COLOR : isSecondary ? SECONDARY_ANCHOR_STROKE_COLOR : ACTIVE_ANCHOR_STROKE_COLOR;
     const strokeWidth = props.isSelected ? 2 : 1;
 
     return (

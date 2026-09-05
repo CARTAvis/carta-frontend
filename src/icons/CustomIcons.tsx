@@ -23,7 +23,8 @@ export declare type CustomIconName =
     | "imageFitting"
     | "lineFitting"
     | "vectorOverlay"
-    | "popout";
+    | "popout"
+    | "annulus";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number; viewBox?: string}> {
     public static readonly SIZE_STANDARD = 16;
@@ -306,6 +307,13 @@ const POPOUT_SVG = (
     </>
 );
 
+const ANNULUS_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="8" cy="8" r="6.5" />
+        <circle cx="8" cy="8" r="3" />
+    </g>
+);
+
 const ICONS = {
     contour: CONTOUR_SVG,
     center: CENTER_SVG,
@@ -324,5 +332,6 @@ const ICONS = {
     imageFitting: IMAGE_FITTING_SVG,
     lineFitting: LINE_FITTING_SVG,
     vectorOverlay: VECTOR_OVERLAY_SVG,
-    popout: POPOUT_SVG
+    popout: POPOUT_SVG,
+    annulus: ANNULUS_SVG
 };
