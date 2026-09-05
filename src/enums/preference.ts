@@ -2,6 +2,10 @@ export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
     SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
+    SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE = "imageViewRestFrameShiftMode",
+    SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION = "imageViewRestFrameVelocityConvention",
+    SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE = "spectralProfilerRestFrameShiftMode",
+    SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION = "spectralProfilerRestFrameVelocityConvention",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",

@@ -99,15 +99,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
         }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+        const value = parseFloat(ev.currentTarget.value);
         const existingValue = this.widgetStore.redshiftInput;
-        if (isFinite(value) && value !== existingValue) {
-            if ((this.widgetStore.redshiftType === RedshiftType.Z && value >= 0) || this.widgetStore.redshiftType === RedshiftType.V) {
-                this.widgetStore.setRedshiftInput(value);
-                this.widgetStore.filter();
-                return;
-            }
+        if (isFinite(value) && value !== existingValue && this.widgetStore.isValidRedshiftInput(value)) {
+            this.widgetStore.setRedshiftInput(value);
+            this.widgetStore.filter();
+            return;
         }
         ev.currentTarget.value = existingValue;
     };
@@ -342,11 +339,19 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         options={[RedshiftType.V, RedshiftType.Z]}
                         value={widgetStore.redshiftType}
                         onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
+                        disabled={widgetStore.isRedshiftInputDisabled}
                         data-testid="spectral-line-query-frequency-shift-reference"
                     />
                 </FormGroup>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} data-testid="spectral-line-query-frequency-shift-input" />
+                    <SafeNumericInput
+                        value={widgetStore.isRedshiftInputDisabled ? 0 : widgetStore.redshiftInput}
+                        buttonPosition="none"
+                        disabled={widgetStore.isRedshiftInputDisabled}
+                        onBlur={this.handleRedshiftChange}
+                        onKeyDown={this.handleRedshiftChange}
+                        data-testid="spectral-line-query-frequency-shift-input"
+                    />
                 </FormGroup>
             </div>
         );

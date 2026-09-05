@@ -151,6 +151,11 @@ export class ImageViewConfigStore {
         }));
     }
 
+    /** Returns the stable IDs of image views matching the requested type, in image list order. */
+    getImageIdsByType = (type: ImageType): number[] => {
+        return this.imageList.filter(imageItem => imageItem.type === type).map(imageItem => imageItem.store.id);
+    };
+
     /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {
         return this.imageList?.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);

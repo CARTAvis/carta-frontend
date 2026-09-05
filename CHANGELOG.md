@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added beam area, number of beams, and pixels in beam to the Statistics widget ([#1509](https://github.com/CARTAvis/carta-frontend/issues/1509)).
 * Added mirror site management with speed testing for online catalog queries ([#2588](https://github.com/CARTAvis/carta-frontend/issues/2588)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
+* Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed Cmd/Ctrl+C copying the selected region instead of highlighted text in widgets such as the File Header ([#2892](https://github.com/CARTAvis/carta-frontend/issues/2892)).
 * Fixed the file browser Size column sorting files by the leading digit instead of the numerical size ([#2859](https://github.com/CARTAvis/carta-frontend/issues/2859)).
 * Fixed persistent scrollbars in the region list and catalog scatter plot, and fixed the catalog plot widget toolbar being clipped without a scrollbar when the widget is too narrow ([#2848](https://github.com/CARTAvis/carta-frontend/issues/2848)).
+* Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
 
 ## [6.0.0]
 
