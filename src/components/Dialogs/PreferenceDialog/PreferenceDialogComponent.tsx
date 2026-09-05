@@ -23,7 +23,7 @@ import {
 } from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
@@ -139,6 +139,7 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.CATALOG:
                 preference.resetCatalogSettings();
+                MirrorSiteStore.Instance.resetAllSettings();
                 break;
             case PreferenceDialogTabs.TELEMETRY:
                 preference.resetTelemetrySettings();
@@ -266,7 +267,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
-                        inverted={false}
+                        inverted={preference.isColormapInverted}
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
@@ -274,6 +275,13 @@ export class PreferenceDialogComponent extends React.Component {
                         onCustomColorStartSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-render-config-invert-colormap-toggle"
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
@@ -372,7 +380,18 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isContourColormapInverted}
+                        selectedColormap={preference.contourColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isContourColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-contour-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -426,7 +445,18 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={preference.isVectorOverlayColormapInverted}
+                        selectedColormap={preference.vectorOverlayColormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Invert colormap">
+                    <Switch
+                        checked={preference.isVectorOverlayColormapInverted}
+                        onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED, ev.currentTarget.checked)}
+                        data-testid="preference-vector-overlay-invert-colormap-toggle"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

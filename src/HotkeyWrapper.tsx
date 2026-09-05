@@ -135,7 +135,17 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    // true when the user has highlighted text somewhere in the document (e.g. in the File Header widget)
+    private static hasTextSelection(): boolean {
+        const selection = window.getSelection();
+        return !!selection && !selection.isCollapsed && selection.toString().length > 0;
+    }
+
     public static copyRegion = (event: KeyboardEvent) => {
+        // let the browser copy highlighted text instead of the focused region
+        if (HotkeyService.hasTextSelection()) {
+            return;
+        }
         if (AppStore.Instance.copySelectedRegion()) {
             event.preventDefault();
             event.stopPropagation();

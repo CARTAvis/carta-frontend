@@ -51,6 +51,7 @@ export function invert(src: FrameSet): FrameSet;
 export function convert(from: FrameSet | Frame, to: Frame | FrameSet, domainList: string): FrameSet;
 export function shiftMap2D(x: number, y: number): Mapping;
 export function scaleMap2D(x: number, y: number): Mapping;
+export function createRestFrameMapping2D(spectralFrame: SpecFrame, spectralAxis: number, frequencyFactor: number): Mapping;
 export function frame(numAxes: number, options: string): Frame;
 export function addFrame(frameSet: FrameSet, index: number, map: Mapping, frame: Frame);
 export function setI(obj: AstObject, attrib: string, value: number): void;
@@ -59,6 +60,9 @@ export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, o
 export function createOffsetFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, pixelOffsetX: number, pixelOffsetY: number, skyRefIs: number);
 // Not exported fillTransformGrid()
 export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
+export function parseDateToMJD(dateString: string, timeScale: string): number;
+export function convertMJD(mjd: number, scaleIn: string, scaleOut: string): number;
+export function formatMJDToDate(mjd: number, timeScale: string, digits: number): string;
 
 // Helper functions
 export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number, formatString?: string, tempFormat?: boolean): {x: string, y: string};

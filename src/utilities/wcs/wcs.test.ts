@@ -1,8 +1,12 @@
+import * as AST from "ast_wrapper";
+
 import {SpectralSystem, SpectralType, SpectralUnit} from "../../enums";
 
 jest.mock("ast_wrapper", () => ({
     __esModule: true,
-    fonts: []
+    fonts: [],
+    transformSpectralPoint: jest.fn(),
+    transformSpectralPointArray: jest.fn()
 }));
 
 jest.mock("models", () => ({
@@ -29,7 +33,63 @@ jest.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
 }));
 
-import {buildSwappedZWcsSettings, getSwappedDirAxisInfo} from "./wcs";
+import {buildSwappedZWcsSettings, convertFreqMHzToSettingWCS, convertFreqMHzToSettingWCSArray, convertSettingWCSToFreqMHz, convertSettingWCSToFreqMHzArray, convertToNativeWCS, getSwappedDirAxisInfo} from "./wcs";
+
+describe("spectral WCS conversion helpers", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test("converts a selected WCS value to native WCS", () => {
+        (AST.transformSpectralPoint as jest.Mock).mockReturnValue(34);
+
+        expect(convertToNativeWCS(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500)).toBe(34);
+        expect(AST.transformSpectralPoint).toHaveBeenCalledWith(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500, false);
+    });
+
+    test("converts frequency in MHz to a selected WCS value", () => {
+        (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+
+        expect(convertFreqMHzToSettingWCS(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 100)).toBe(34);
+        expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 100, false);
+        expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 12);
+    });
+
+    test("preserves zero when converting frequency in MHz to a selected WCS value", () => {
+        (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(0).mockReturnValueOnce(0);
+
+        expect(convertFreqMHzToSettingWCS(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 100)).toBe(0);
+    });
+
+    test("converts selected WCS values to frequency arrays", () => {
+        (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+        expect(convertSettingWCSToFreqMHzArray(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000])).toEqual([34, 68]);
+        expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000], false);
+        expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, new Float64Array([12, 24]));
+    });
+
+    test("converts frequency arrays to a selected WCS", () => {
+        (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+        expect(convertFreqMHzToSettingWCSArray(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [100, 200])).toEqual([34, 68]);
+        expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, [100, 200], false);
+        expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, new Float64Array([12, 24]));
+    });
+
+    test("returns undefined when a scalar AST conversion is invalid", () => {
+        (AST.transformSpectralPoint as jest.Mock).mockReturnValue(NaN);
+
+        expect(convertSettingWCSToFreqMHz(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500)).toBeUndefined();
+    });
+
+    test("returns undefined when an array AST conversion is invalid", () => {
+        (AST.transformSpectralPointArray as jest.Mock).mockReturnValue(new Float64Array([NaN, NaN]));
+
+        expect(convertSettingWCSToFreqMHzArray(1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000])).toBeUndefined();
+        expect(AST.transformSpectralPointArray).toHaveBeenCalledTimes(1);
+    });
+});
 
 describe("getSwappedDirAxisInfo", () => {
     test("returns galactic axis formats for swapped GLON/GLAT axes", () => {

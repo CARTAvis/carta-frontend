@@ -168,6 +168,13 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
     return FindIntensityUnitType(unitStr) !== IntensityUnitType.Unsupported;
 };
 
+export const IsFrequencyDensityUnit = (unitStr: string): boolean => {
+    const unitType = FindIntensityUnitType(unitStr);
+    const normalizedUnitStr = unitStr?.trim().toLowerCase();
+    const isJansky = Jys.some(jy => jy.toLowerCase() === normalizedUnitStr);
+    return isJansky || [IntensityUnitType.JyBeam, IntensityUnitType.JySr, IntensityUnitType.JyArcsec2, IntensityUnitType.JyPixel].includes(unitType);
+};
+
 export type IntensityConfig = {nativeIntensityUnit: string; bmaj?: number[]; bmin?: number[]; cdelta1?: number; cdelta2?: number; freqGHz?: number[]};
 const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitType[] => {
     const options: IntensityUnitType[] = [];

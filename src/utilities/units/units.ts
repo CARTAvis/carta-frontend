@@ -1,7 +1,7 @@
 import {AngularSizeUnit} from "enums";
 import {AngularSize} from "models";
 
-export const SPEED_OF_LIGHT = 299792458;
+import {SPEED_OF_LIGHT} from "../cosmology/cosmology";
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
@@ -38,7 +38,9 @@ export function toExponential(val: number, decimals: number = 0): string {
 // According to MDN, toFixed only works for up to 20 decimals
 export function toFixed(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
-        return val.toFixed(decimals);
+        const fixed = val.toFixed(decimals);
+        // small negative values that round to zero produce "-0", "-0.000", etc.; display them without the sign
+        return /^-0(\.0*)?$/.test(fixed) ? fixed.substring(1) : fixed;
     }
     // leave undefined or non-finite values as is (+- INF, NaN and undefined will still appear properly)
     return String(val);

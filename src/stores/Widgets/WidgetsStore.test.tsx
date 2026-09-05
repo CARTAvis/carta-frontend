@@ -1,28 +1,36 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
+import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetsStore} from "./WidgetsStore";
 
 describe("WidgetsStore PV preview test ids", () => {
+    const originalSelectTab = Actions.selectTab;
     const appStoreMock = {
         activeImage: null,
         isDarkTheme: false,
         imageViewConfigStore: {visibleImages: []}
     };
     const layoutModelMock = {
-        getNodeById: jest.fn()
+        doAction: jest.fn(),
+        getNodeById: jest.fn(),
+        visitNodes: jest.fn()
     };
 
     beforeEach(() => {
+        (Actions as any).selectTab = jest.fn(tabNodeId => ({type: "FlexLayout_SelectTab", data: {tabNode: tabNodeId}}));
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStoreMock as any);
         jest.spyOn(LayoutStore, "Instance", "get").mockReturnValue({layoutModel: layoutModelMock} as any);
         layoutModelMock.getNodeById.mockReset();
+        layoutModelMock.doAction.mockReset();
+        layoutModelMock.visitNodes.mockReset();
     });
 
     afterEach(() => {
+        (Actions as any).selectTab = originalSelectTab;
         jest.restoreAllMocks();
     });
 
@@ -107,5 +115,81 @@ describe("WidgetsStore PV preview test ids", () => {
         const result = widgetsStore.onAction({type: Actions.POPOUT_TABSET, data: {node: "tabset-1"}});
 
         expect(result).toBeUndefined();
+    });
+
+    test("shows a settings button for a docked Animator", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const selectedNode = {
+            getComponent: () => "animator",
+            getId: () => "animator-0",
+            isPoppedOut: () => false
+        };
+        const tabSetNode = {
+            canMaximize: () => false,
+            getSelectedNode: () => selectedNode
+        };
+        const renderValues: {buttons?: React.ReactNode[]} = {};
+
+        widgetsStore.onRenderTabSet(tabSetNode as any, renderValues as any);
+
+        const buttons = (renderValues.buttons || []) as React.ReactElement[];
+        expect(buttons.some(button => button.props["data-testid"] === "animator-0-header-settings-button")).toBe(true);
+    });
+
+    test("selects the canonical docked widget tab", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const createTab = (id: string, isPoppedOut: boolean = false) => ({
+            getComponent: () => "animator",
+            getId: () => id,
+            getType: () => "tab",
+            isPoppedOut: () => isPoppedOut
+        });
+        const nodes = [createTab("animator-2"), createTab("animator-1", true), createTab("animator")];
+        layoutModelMock.visitNodes.mockImplementation(callback => nodes.forEach(callback));
+
+        expect(widgetsStore.selectDockedWidgetTab("animator")).toBe(true);
+        expect(Actions.selectTab).toHaveBeenCalledWith("animator");
+        expect(layoutModelMock.doAction).toHaveBeenCalledWith({type: "FlexLayout_SelectTab", data: {tabNode: "animator"}});
+    });
+
+    test("does not select a widget when only popped-out instances exist", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const poppedOutTab = {
+            getComponent: () => "animator",
+            getId: () => "animator-1",
+            getType: () => "tab",
+            isPoppedOut: () => true
+        };
+        layoutModelMock.visitNodes.mockImplementation(callback => callback(poppedOutTab));
+
+        expect(widgetsStore.selectDockedWidgetTab("animator")).toBe(false);
+        expect(layoutModelMock.doAction).not.toHaveBeenCalled();
+    });
+
+    test("persists Animator time label settings in widget config", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addAnimatorWidget("animator-7", {
+            timeLabelFormat: TimeLabelFormat.RELATIVE,
+            timeZoneMode: TimeZoneMode.IANA,
+            ianaTimeZone: "Pacific/Honolulu",
+            timeScale: TimeScale.TT,
+            isoTimePrecision: IsoTimePrecision.MILLISECOND,
+            numericTimePrecision: 5,
+            relativeTimeReference: RelativeTimeReference.CUSTOM,
+            relativeReferenceMjdUtc: 58000,
+            relativeTimeUnit: RelativeTimeUnit.DAY
+        });
+
+        expect(widgetsStore.toWidgetSettingsConfig("animator", "animator-7")).toEqual({
+            timeLabelFormat: TimeLabelFormat.RELATIVE,
+            timeZoneMode: TimeZoneMode.IANA,
+            ianaTimeZone: "Pacific/Honolulu",
+            timeScale: TimeScale.TT,
+            isoTimePrecision: IsoTimePrecision.MILLISECOND,
+            numericTimePrecision: 5,
+            relativeTimeReference: RelativeTimeReference.CUSTOM,
+            relativeReferenceMjdUtc: 58000,
+            relativeTimeUnit: RelativeTimeUnit.DAY
+        });
     });
 });

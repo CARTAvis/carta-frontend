@@ -125,6 +125,7 @@ addOnPostRun(function () {
     Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
     Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
     Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
+    Module.createRestFrameMapping2D = Module.cwrap("createRestFrameMapping2D", "number", ["number", "number", "number"]);
     Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
     Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
     Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
@@ -135,6 +136,9 @@ addOnPostRun(function () {
     Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
     Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
     Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
+    Module.parseDateToMJD = Module.cwrap("parseDateToMJD", "number", ["string", "string"]);
+    Module.convertMJD = Module.cwrap("convertMJD", "number", ["number", "string", "string"]);
+    Module.formatMJDToDate = Module.cwrap("formatMJDToDate", "string", ["number", "string", "number"]);
 
     // Initialize other data structures that depend on WASM being ready
     Module.currentFormatStrings = [];
@@ -303,10 +307,12 @@ Module.transform3DPoint = function (transformFrameSet: number, xIn: number, yIn:
 };
 
 Module.transformSpectralPoint = function (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: number, forward: boolean = true) {
-    // Return empty array if arguments are invalid
     const N = 1;
     Module.HEAPF64.set(new Float64Array([zIn]), Module.zIn / 8);
-    Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, Module.zIn, forward, Module.zOut);
+    const status = Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, Module.zIn, forward, Module.zOut);
+    if (status !== 0) {
+        return NaN;
+    }
     const zOut = new Float64Array(Module.HEAPF64.buffer, Module.zOut, N);
     return zOut[0];
 };
@@ -323,17 +329,18 @@ Module.transformSpectralPointArray = function (spectralFrameFrom: number | null,
     const zOutPtr = Module._malloc(N * 8);
     Module.HEAPF64.set(zIn, zInPtr / 8);
 
-    // Perform the AST transform
-    Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, zInPtr, forward, zOutPtr);
+    try {
+        const status = Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, zInPtr, forward, zOutPtr);
+        if (status !== 0) {
+            return new Float64Array(N).fill(NaN);
+        }
 
-    // Copy result out to an object
-    const zOut = new Float64Array(Module.HEAPF64.buffer, zOutPtr, N);
-    const result = zOut.slice(0);
-
-    // Free WASM memory
-    Module._free(zInPtr);
-    Module._free(zOutPtr);
-    return result;
+        const zOut = new Float64Array(Module.HEAPF64.buffer, zOutPtr, N);
+        return zOut.slice(0);
+    } finally {
+        Module._free(zInPtr);
+        Module._free(zOutPtr);
+    }
 };
 
 Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {

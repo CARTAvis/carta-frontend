@@ -33,6 +33,7 @@ import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
+    AnimatorWidgetStore,
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
     CatalogWidgetStore,
@@ -142,7 +143,7 @@ export class WidgetsStore {
     @observable layerListWidgets: Map<string, LayerListWidgetStore> = new Map<string, LayerListWidgetStore>();
     @observable logWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
     @observable regionListWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
-    @observable animatorWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable animatorWidgets: Map<string, AnimatorWidgetStore> = new Map<string, AnimatorWidgetStore>();
     @observable channelMapControlWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore> = new Map<string, StokesAnalysisWidgetStore>();
     @observable floatingSettingsWidgets: Map<string, string> = new Map<string, string>();
@@ -158,7 +159,7 @@ export class WidgetsStore {
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
 
-    private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
+    private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list", "animator"];
     private static readonly ImageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
     private static readonly HideHelpButtonWidgets = ["pv-preview"];
 
@@ -499,7 +500,7 @@ export class WidgetsStore {
                 itemId = this.addHistogramWidget(preAssignedId, widgetSettings);
                 break;
             case AnimatorComponent.WidgetConfig.type:
-                itemId = this.addAnimatorWidget(preAssignedId);
+                itemId = this.addAnimatorWidget(preAssignedId, widgetSettings);
                 break;
             case ChannelMapControlComponent.WidgetConfig.type:
                 itemId = this.addChannelMapControlWidget(preAssignedId);
@@ -1099,7 +1100,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | AnimatorWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -1119,11 +1120,47 @@ export class WidgetsStore {
             case CatalogOverlayComponent.WidgetConfig.type:
                 widgetStore = this.catalogWidgets.get(widgetID);
                 break;
+            case AnimatorComponent.WidgetConfig.type:
+                widgetStore = this.animatorWidgets.get(widgetID);
+                break;
             default:
                 break;
         }
 
         return widgetStore?.toConfig?.();
+    };
+
+    /** Selects an existing docked widget tab, preferring the canonical component id when multiple instances exist. */
+    @action selectDockedWidgetTab = (componentType: string): boolean => {
+        const layoutModel = LayoutStore.Instance.layoutModel;
+        if (!layoutModel) {
+            return false;
+        }
+
+        let canonicalTab: TabNode | undefined;
+        let firstTab: TabNode | undefined;
+        layoutModel.visitNodes(node => {
+            if (node.getType() !== "tab") {
+                return;
+            }
+            const tabNode = node as TabNode;
+            if (tabNode.getComponent() !== componentType || tabNode.isPoppedOut()) {
+                return;
+            }
+            if (!firstTab) {
+                firstTab = tabNode;
+            }
+            if (tabNode.getId() === componentType) {
+                canonicalTab = tabNode;
+            }
+        });
+
+        const tab = canonicalTab ?? firstTab;
+        if (!tab) {
+            return false;
+        }
+        layoutModel.doAction(Actions.selectTab(tab.getId()));
+        return true;
     };
 
     @action onCogPinedClick = (node: TabNode) => {
@@ -1139,7 +1176,8 @@ export class WidgetsStore {
             RenderConfigComponent.WidgetConfig.type,
             HistogramComponent.WidgetConfig.type,
             CatalogOverlayComponent.WidgetConfig.type,
-            LayerListComponent.WidgetConfig.type
+            LayerListComponent.WidgetConfig.type,
+            AnimatorComponent.WidgetConfig.type
         ];
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
@@ -1692,13 +1730,17 @@ export class WidgetsStore {
 
     createFloatingAnimatorWidget = () => this.createFloatingWidgetFromStore(() => this.addAnimatorWidget(), AnimatorComponent.WidgetConfig);
 
-    @action addAnimatorWidget(id: string | null = null) {
+    @action addAnimatorWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(AnimatorComponent.WidgetConfig.type);
         }
 
         if (id) {
-            this.animatorWidgets.set(id, new EmptyWidgetStore());
+            const widgetStore = new AnimatorWidgetStore();
+            if (widgetSettings) {
+                widgetStore.init(widgetSettings);
+            }
+            this.animatorWidgets.set(id, widgetStore);
         }
         return id;
     }

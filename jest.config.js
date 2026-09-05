@@ -52,7 +52,6 @@ module.exports = {
         '^enums/(.*)$': '<rootDir>/src/enums/$1',
         '^icons/(.*)$': '<rootDir>/src/icons/$1',
         '^models/(.*)$': '<rootDir>/src/models/$1',
-        '^scripting/(.*)$': '<rootDir>/src/scripting/$1',
         '^services/(.*)$': '<rootDir>/src/services/$1',
         '^stores/(.*)$': '<rootDir>/src/stores/$1',
         '^utilities/(.*)$': '<rootDir>/src/utilities/$1',
@@ -74,7 +73,8 @@ module.exports = {
     // Test match patterns
     testMatch: [
         '<rootDir>/src/**/__tests__/**/*.(js|jsx|ts|tsx)',
-        '<rootDir>/src/**/?(*.)(spec|test).(js|jsx|ts|tsx)'
+        '<rootDir>/src/**/?(*.)(spec|test).(js|jsx|ts|tsx)',
+        '<rootDir>/wasm_src/**/?(*.)(spec|test).(js|jsx|ts|tsx)'
     ],
     
     // Collect coverage from

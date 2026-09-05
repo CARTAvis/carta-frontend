@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 
 import {
     AnimatorComponent,
+    AnimatorSettingsPanelComponent,
     CatalogOverlayComponent,
     CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
@@ -47,7 +48,7 @@ const RenderFloatingSettingsWidget = (Component: React.ComponentType<WidgetProps
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
-    private static readonly FloatingSettingsWidgetTypes = new Set<string>(["stokes", "spectral-profiler", "spatial-profiler", "render-config", "histogram", "catalog-overlay", "layer-list"]);
+    private static readonly FloatingSettingsWidgetTypes = new Set<string>(["stokes", "spectral-profiler", "spatial-profiler", "render-config", "histogram", "catalog-overlay", "layer-list", "animator"]);
 
     private floatingSettingType = "floating-settings";
     private floatingWidgetContentRenderers?: Map<string, FloatingWidgetRenderer>;
@@ -141,7 +142,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [RenderConfigComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RenderConfigSettingsPanelComponent)],
                 [HistogramComponent.WidgetConfig.type, RenderFloatingSettingsWidget(HistogramSettingsPanelComponent)],
                 [CatalogOverlayComponent.WidgetConfig.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
-                [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)]
+                [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)],
+                [AnimatorComponent.WidgetConfig.type, RenderFloatingSettingsWidget(AnimatorSettingsPanelComponent)]
             ]);
         }
 

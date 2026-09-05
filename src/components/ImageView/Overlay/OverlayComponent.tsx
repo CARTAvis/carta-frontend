@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ImageType, SkyRefIs} from "enums";
-import {type ImageItem, SPECTRAL_TYPE_STRING} from "models";
+import {type ImageItem} from "models";
 import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {setAstSystem} from "utilities";
@@ -143,11 +143,18 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
             if (!frame.hasSquarePixels) {
+                const currentWcsIndex = parseInt(AST.getString(tempWcsInfo, "Current"), 10);
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
-                AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
-                AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
+                try {
+                    AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                } finally {
+                    AST.deleteObject(newFrame);
+                    AST.deleteObject(scaleMapping);
+                }
+                const newBaseIndex = parseInt(AST.getString(tempWcsInfo, "Nframe"), 10);
+                AST.setI(tempWcsInfo, "Base", newBaseIndex);
+                AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? newBaseIndex : currentWcsIndex);
             }
 
             // move the ast setting here to ensure ast is updated before plotting
@@ -295,28 +302,23 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const requiredChannel = frame.requiredChannel;
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
-        // Trigger switching AST overlay axis for PV image
-        const spectralAxisSetting =
-            `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
-            `${frame.spectralUnit ? `Unit(${frame.spectral})=${frame.spectralUnit},` : ""}` +
-            `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-            `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-            `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
-        const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+        // Trigger switching AST overlay axis for PV image and swapped Z
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const isRestFrameActive = frame.isRestFrameActive;
+        const restFrameRedshift = frame.restFrameRedshift;
+        const spectralType = frame.spectralType;
+        const spectralUnit = frame.spectralUnit;
+        const spectralSystem = frame.spectralSystem;
+        const restFreqInHz = frame.restFreqStore?.restFreqInHz;
 
-        if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, spectralAxisSetting);
-        } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
-        } else {
+        if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
             // Keep dummy variable reads for MobX dependency tracking
-            /* eslint-disable @typescript-eslint/no-unused-vars */
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStringY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             const isWcsCoordinates = OverlaySettings.Instance.isWcsCoordinates;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
         }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const className = classNames("overlay-canvas", {docked: this.props.isDocked});
 

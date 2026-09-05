@@ -34,6 +34,7 @@ export interface WorkspaceContourConfig {
     smoothingFactor: number;
     color?: RgbaColor;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
@@ -57,6 +58,7 @@ export interface WorkspaceVectorOverlayConfig {
     visible: boolean;
     thickness: number;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     color?: RgbaColor;
     colormap?: string;
     colormapContrast: number;
@@ -92,6 +94,7 @@ export interface WorkspaceFile {
     directory?: string;
     filename: string;
     hdu?: string;
+    timeSeriesMember?: boolean;
     references?: {
         spatial?: number;
         spectral?: number;
@@ -194,7 +197,7 @@ export class WorkspaceConfig {
     }
 
     public static createContourConfig(contourConfig: ContourConfigStore): WorkspaceContourConfig | undefined {
-        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
+        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, isColormapInverted, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
 
         if (!isEnabled) {
             return undefined;
@@ -206,6 +209,7 @@ export class WorkspaceConfig {
             smoothingFactor,
             color,
             colormapEnabled: isColormapEnabled,
+            colormapInverted: isColormapInverted,
             colormap,
             colormapContrast,
             colormapBias,
@@ -231,6 +235,7 @@ export class WorkspaceConfig {
             isVisible,
             thickness,
             isColormapEnabled,
+            isColormapInverted,
             color,
             colormap,
             colormapContrast,
@@ -260,6 +265,7 @@ export class WorkspaceConfig {
             visible: isVisible,
             thickness,
             colormapEnabled: isColormapEnabled,
+            colormapInverted: isColormapInverted,
             color,
             colormap,
             colormapContrast,
