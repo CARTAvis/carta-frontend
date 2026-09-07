@@ -36,6 +36,7 @@ import {
     AnimatorWidgetStore,
     type CatalogPanelLayoutSettings,
     CatalogPanelStore,
+    type CatalogPlotWidgetConfig,
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
     EmptyWidgetStore,
@@ -523,10 +524,10 @@ export class WidgetsStore {
                 itemId = this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId);
                 break;
             case CatalogPlotType.D2Scatter:
-                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId, widgetSettings);
                 break;
             case CatalogPlotType.Histogram:
-                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId);
+                itemId = this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId, widgetSettings);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -557,8 +558,8 @@ export class WidgetsStore {
         return itemId;
     };
 
-    private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null): string | null => {
-        const itemId = this.addCatalogPlotWidget(props, preAssignedId);
+    private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null, widgetSettings: object | null = null): string | null => {
+        const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
             CatalogStore.Instance.setCatalogPlots(componentId, 1, itemId);
@@ -1101,7 +1102,7 @@ export class WidgetsStore {
             return this.catalogPanelWidgets.get(widgetID)?.toLayoutSettings();
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogPlotWidgetStore | AnimatorWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -1117,6 +1118,9 @@ export class WidgetsStore {
                 break;
             case StokesAnalysisComponent.WidgetConfig.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
+                break;
+            case CatalogPlotComponent.WidgetConfig.type:
+                widgetStore = this.catalogPlotWidgets.get(widgetID);
                 break;
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1605,14 +1609,18 @@ export class WidgetsStore {
         return {widgetStoreId, widgetComponentId};
     };
 
-    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string | null = null) {
+    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string | null = null, widgetSettings: object | null = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogPlotComponent.WidgetConfig.type);
         }
 
         if (id) {
-            this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore(props));
+            const widgetStore = new CatalogPlotWidgetStore(props);
+            if (widgetSettings) {
+                widgetStore.applyConfig(widgetSettings as Partial<CatalogPlotWidgetConfig>);
+            }
+            this.catalogPlotWidgets.set(id, widgetStore);
         }
         return id;
     }
