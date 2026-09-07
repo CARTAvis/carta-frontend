@@ -738,7 +738,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramDragStartX: number | undefined;
     private histogramDragCurrentX: number | undefined;
     private histogramPanPrevX: number | undefined;
-    private histogramDragHandled = false;
+    private hasHistogramDragHandled = false;
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
@@ -785,7 +785,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
             const xScale = chart.scales["x"];
             if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
-                this.histogramDragHandled = true;
+                this.hasHistogramDragHandled = true;
                 const x1 = xScale.getValueForPixel(this.histogramDragStartX);
                 const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
                 if (x1 !== undefined && x2 !== undefined) {
@@ -1205,8 +1205,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 },
                 onClick: (_event, elements) => {
                     // Skip if a drag action (zoom/select) was just handled
-                    if (this.histogramDragHandled) {
-                        this.histogramDragHandled = false;
+                    if (this.hasHistogramDragHandled) {
+                        this.hasHistogramDragHandled = false;
                         return;
                     }
                     if (widgetStore.histogramDragMode === "select" && elements.length > 0) {
