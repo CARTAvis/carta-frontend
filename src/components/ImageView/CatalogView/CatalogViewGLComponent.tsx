@@ -67,6 +67,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
+            const catalogSourceRadiusType = catalogWidgetStore.catalogSourceRadiusType;
             const shape = catalogWidgetStore.catalogShape;
             const thickness = catalogWidgetStore.thickness;
             const displayMode = catalogWidgetStore.catalogDisplayMode;
