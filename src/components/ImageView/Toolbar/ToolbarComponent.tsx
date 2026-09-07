@@ -4,6 +4,7 @@ import {AnchorButton, ButtonGroup, Classes, Collapse, FormGroup, type IconName, 
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {Point2D} from "models";
 
 import {ImageViewComponent, OffsetCoordinateControlsComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
@@ -21,7 +22,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number) => void;
+    onRegionViewZoom: (zoom: number | Point2D) => void;
     onZoomToFit: () => void;
 }
 
@@ -54,16 +55,30 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomInClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        const zoom = frame.zoomLevel * 2.0;
-        frame.setZoom(zoom, true);
-        this.props.onRegionViewZoom(zoom);
+        if (frame.isAxisZoomable) {
+            const zoomX = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.x : frame.effectiveZoomLevel.x * 2.0;
+            const zoomY = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.y : frame.effectiveZoomLevel.y * 2.0;
+            frame.setAxisZoom(zoomX, zoomY);
+            this.props.onRegionViewZoom({x: zoomX, y: zoomY});
+        } else {
+            const zoom = frame.zoomLevel * 2.0;
+            frame.setZoom(zoom, true);
+            this.props.onRegionViewZoom(zoom);
+        }
     };
 
     handleZoomOutClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        const zoom = frame.zoomLevel / 2.0;
-        frame.setZoom(zoom, true);
-        this.props.onRegionViewZoom(zoom);
+        if (frame.isAxisZoomable) {
+            const zoomX = frame.zoomAxis === "y" ? frame.effectiveZoomLevel.x : frame.effectiveZoomLevel.x / 2.0;
+            const zoomY = frame.zoomAxis === "x" ? frame.effectiveZoomLevel.y : frame.effectiveZoomLevel.y / 2.0;
+            frame.setAxisZoom(zoomX, zoomY);
+            this.props.onRegionViewZoom({x: zoomX, y: zoomY});
+        } else {
+            const zoom = frame.zoomLevel / 2.0;
+            frame.setZoom(zoom, true);
+            this.props.onRegionViewZoom(zoom);
+        }
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
@@ -130,11 +145,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const className = classNames("image-toolbar", {docked: this.props.isDocked, [Classes.DARK]: appStore.isDarkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const zoomFrame = frame.spatialReference && frame.spatialTransform ? frame.spatialReference : frame;
+        const axisFrame = frame.spatialReference || frame;
+        const zoomAxisDescription = axisFrame.isAxisZoomable ? `${axisFrame.zoomAxis.toUpperCase()} axis` : "";
         const currentZoomSpan = (
             <span>
                 <br />
                 <i>
                     <small>Current: {toFixed(zoomLevel, 2)}x</small>
+                    {axisFrame.isAxisZoomable && Math.abs(zoomFrame.effectiveZoomLevel.x - zoomFrame.effectiveZoomLevel.y) > 1e-4 && (
+                        <small>
+                            <br />
+                            X: {toFixed(zoomFrame.effectiveZoomLevel.x, 2)}x, Y: {toFixed(zoomFrame.effectiveZoomLevel.y, 2)}x
+                        </small>
+                    )}
                 </i>
             </span>
         );
@@ -143,6 +167,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const annotationMenu = (
             <Menu style={{padding: 0}}>
                 <AnnotationMenuComponent handleRegionTypeClicked={this.handleRegionTypeClicked} />
+            </Menu>
+        );
+
+        const zoomAxisMenu = (
+            <Menu>
+                <MenuItem text="X Axis" icon={axisFrame.zoomAxis === "x" ? "tick" : "blank"} onClick={() => axisFrame.setZoomAxis("x")} data-testid="pv-zoom-axis-x" />
+                <MenuItem text="Y Axis" icon={axisFrame.zoomAxis === "y" ? "tick" : "blank"} onClick={() => axisFrame.setZoomAxis("y")} data-testid="pv-zoom-axis-y" />
             </Menu>
         );
 
@@ -369,10 +400,38 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 </Tooltip>
                             </>
                         )}
-                        <Tooltip position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
+                        {axisFrame.isAxisZoomable && (
+                            <PopoverNext content={zoomAxisMenu} placement="top" animation="minimal" arrow={false} shouldReturnFocusOnClose={false}>
+                                <Tooltip
+                                    position={tooltipPosition}
+                                    content={
+                                        <span>
+                                            Zoom {zoomAxisDescription} <br />
+                                        </span>
+                                    }
+                                >
+                                    <AnchorButton icon={<CustomIcon icon={axisFrame.zoomAxis === "y" ? "zoomAxisY" : "zoomAxisX"} />} data-testid="pv-zoom-axis-button" />
+                                </Tooltip>
+                            </PopoverNext>
+                        )}
+                        <Tooltip
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Zoom in {zoomAxisDescription} (scroll wheel up){currentZoomSpan}
+                                </span>
+                            }
+                        >
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} data-testid="zoom-in-button" />
                         </Tooltip>
-                        <Tooltip position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
+                        <Tooltip
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Zoom out {zoomAxisDescription} (scroll wheel down){currentZoomSpan}
+                                </span>
+                            }
+                        >
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} data-testid="zoom-out-button" />
                         </Tooltip>
                         {!frame.isPreview && (

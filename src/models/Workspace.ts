@@ -102,6 +102,8 @@ export interface WorkspaceFile {
     };
     center?: Point2D;
     zoomLevel?: number;
+    axisZoomLevel?: Point2D;
+    zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
 

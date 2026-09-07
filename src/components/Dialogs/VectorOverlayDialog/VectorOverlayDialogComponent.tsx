@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
@@ -442,14 +442,17 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </FormGroup>
                 {!isAngleOnly && this.renderIntensityParameters()}
                 {this.renderLengthParameters()}
-                <ClearableNumericInputComponent
-                    label="Rotation offset"
-                    labelInfo="(deg)"
-                    value={dataSource.vectorOverlayConfig.rotationOffset}
-                    onValueChanged={dataSource.vectorOverlayConfig.setRotationOffset}
-                    onValueCleared={() => dataSource.vectorOverlayConfig.setRotationOffset(0)}
-                    data-testid="vector-field-rotation-offset-input"
-                />
+                <Tooltip content="Current vector overlay is only intensity" disabled={!isIntensityOnly}>
+                    <ClearableNumericInputComponent
+                        label="Rotation offset"
+                        labelInfo="(deg)"
+                        disabled={isIntensityOnly}
+                        value={dataSource.vectorOverlayConfig.rotationOffset}
+                        onValueChanged={dataSource.vectorOverlayConfig.setRotationOffset}
+                        onValueCleared={() => dataSource.vectorOverlayConfig.setRotationOffset(0)}
+                        data-testid="vector-field-rotation-offset-input"
+                    />
+                </Tooltip>
                 <FormGroup inline={true} label="Color mode">
                     <HTMLSelect
                         value={dataSource.vectorOverlayConfig.isColormapEnabled ? 1 : 0}

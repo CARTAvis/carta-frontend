@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 
 import {PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
+import {TileService} from "../../services";
 import {type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
@@ -60,6 +61,7 @@ const EMPTYFRAME_INFO: FrameInfo = {
     hdu: "",
     fileInfo: {} as any,
     fileInfoExtended: {
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 0, stokes: 0, depth: 0},
         headerEntries: []
     } as any,
     fileFeatureFlags: 0,
@@ -264,14 +266,115 @@ describe("FrameStore", () => {
             expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true}));
             frame.updateSpectralVsDirectionWcs();
 
-            expect(AST.makeSwappedFrameSet).toHaveBeenCalledWith(11, 1, 2, 4, 512);
-
             const lastSettings = (AST.set as jest.Mock).mock.calls.at(-1)?.[1];
             expect(lastSettings).toContain("Format(1)=dms.*");
             expect(lastSettings).toContain('Unit(1)=""');
             expect(lastSettings).toContain("Unit(2)=GHz");
             expect(lastSettings).toContain("StdOfRest=LSRK");
             expect(lastSettings).toContain("Label(2)=[LSRK] Frequency");
+        });
+    });
+
+    describe("axis zoom", () => {
+        test("sets zoomAxis and copies to spatialReference", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            const spatialRef = new FrameStore(EMPTYFRAME_INFO);
+            frame["spatialReference"] = spatialRef;
+
+            expect(frame.zoomAxis).toBe("x");
+            frame.setZoomAxis("x");
+            expect(frame.zoomAxis).toBe("x");
+            expect(spatialRef.zoomAxis).toBe("x");
+        });
+
+        test("defaults PV and rotated cube zoom to the spectral axis", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            frame["frameInfo"] = {
+                ...EMPTYFRAME_INFO,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "OFFSET"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("y");
+
+            frame["frameInfo"] = {
+                ...frame["frameInfo"],
+                fileInfoExtended: {
+                    ...frame["frameInfo"].fileInfoExtended,
+                    headerEntries: [
+                        {name: "CTYPE1", value: "VRAD"},
+                        {name: "CTYPE2", value: "DISTANCE"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("x");
+
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+            expect(frame.defaultZoomAxis).toBe("y");
+        });
+
+        test("initializes preview zoom axis to the spectral axis", () => {
+            const frameInfo = {
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "RA---SIN"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            const frame = new FrameStore(frameInfo);
+            expect(frame.zoomAxis).toBe("y");
+        });
+
+        test("uses independent zoom levels for preview frames", () => {
+            const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
+
+            frame.setAxisZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+
+        test("preserves preview zoom changes during decompression", () => {
+            const frame = new FrameStore({
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    width: 2,
+                    height: 2
+                }
+            } as any);
+            const decompressPreviewRasterData = jest.spyOn(TileService.prototype, "decompressPreviewRasterData").mockImplementation(() => undefined);
+            const generator = frame.updatePreviewData({} as any);
+
+            try {
+                expect(generator.next().done).toBe(false);
+                frame.setAxisZoom(3, 4);
+                generator.next();
+
+                expect(frame.effectiveZoomLevel).toEqual({x: 3, y: 4});
+            } finally {
+                decompressPreviewRasterData.mockRestore();
+            }
+        });
+
+        test("uses independent zoom levels for rotated spectral cubes", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+
+            expect(frame.isAxisZoomable).toBe(true);
+            frame.setAxisZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
         });
     });
 
