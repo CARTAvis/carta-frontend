@@ -1,13 +1,13 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun, type IReactionDisposer} from "mobx";
+import {FormGroup, HTMLSelect, Icon, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {HelpType, MultiProfileCategory, PreferenceKeys, RestFrameShiftMode, SpectralProfilerSettingsTabs, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {parseNumber} from "utilities";
+import {parseNumber, restFrameShiftValidationMessage} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
@@ -20,6 +20,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     private floatingSettingsId: string | undefined;
     private cachedWidgetStore: SpectralProfileWidgetStore | null = null;
     private readonly disposers: IReactionDisposer[] = [];
+    @observable private shiftInputIntent: Intent = Intent.NONE;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -54,6 +55,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         super(props);
         this.widgetId = props.id;
         this.floatingSettingsId = props.floatingSettingsId;
+        makeObservable(this);
 
         const appStore = AppStore.Instance;
         this.disposers.push(
@@ -81,6 +83,28 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
+    };
+
+    @action private onShiftChanged = (value: number) => {
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+
+        const isValid = widgetStore.setRestFrameShift(value);
+        this.shiftInputIntent = isValid ? Intent.NONE : Intent.DANGER;
+    };
+
+    @action private onShiftModeChanged = (mode: string) => {
+        this.widgetStore?.setRestFrameShiftMode(mode as RestFrameShiftMode);
+        AppStore.Instance.preferenceStore.setPreference(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, mode as RestFrameShiftMode);
+        this.shiftInputIntent = Intent.NONE;
+    };
+
+    @action private onVelocityConventionChanged = (convention: string) => {
+        this.widgetStore?.setRestFrameVelocityConvention(convention as VelocityConvention);
+        AppStore.Instance.preferenceStore.setPreference(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, convention as VelocityConvention);
+        this.shiftInputIntent = Intent.NONE;
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -196,6 +220,12 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        const isCoordinateSettingDisabled = widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel;
+        const isXAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isXAxisRestFrameSupported;
+        const isYAxisRestFrameInputDisabled = isCoordinateSettingDisabled || !widgetStore.isYAxisRestFrameSupported;
+        const isShiftInputDisabled = isCoordinateSettingDisabled || !widgetStore.isRestFrameCorrectionRequested;
+        const isRadialVelocityMode = widgetStore.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY;
+        const shiftInputError = this.shiftInputIntent === Intent.DANGER ? `${restFrameShiftValidationMessage(widgetStore.restFrameShiftMode, widgetStore.restFrameVelocityConvention)}. Correction is temporarily using z = 0.` : undefined;
         return (
             <ScrollShadow>
                 <div className="spectral-settings">
@@ -213,7 +243,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                             onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                             onSpectralSystemChange={widgetStore.setSpectralSystem}
                                             secondaryAxisCursorInfoVisible={widgetStore.isSecondaryAxisCursorInfoVisible}
-                                            disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                            disable={isCoordinateSettingDisabled}
                                         />
                                     )}
                                     <FormGroup label={"Intensity unit"} inline={true}>
@@ -227,6 +257,88 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     <FormGroup inline={true} label={"Secondary info"}>
                                         <Switch checked={widgetStore.isSecondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                     </FormGroup>
+                                    <FormGroup inline={true} label={"Rest-frame corrections"} className="rest-frame-section" contentClassName="reference-frame-form-content">
+                                        <div className="rest-frame-correction-switches">
+                                            <Switch
+                                                checked={widgetStore.isXAxisRestFrameEnabled}
+                                                disabled={isXAxisRestFrameInputDisabled}
+                                                label="X-axis"
+                                                onChange={event => widgetStore.setXAxisRestFrameEnabled(event.currentTarget.checked)}
+                                                data-testid="spectral-profiler-x-axis-rest-frame-toggle"
+                                            />
+                                            <div className="rest-frame-correction-switch-with-info">
+                                                <Switch
+                                                    checked={widgetStore.isYAxisRestFrameEnabled}
+                                                    disabled={isYAxisRestFrameInputDisabled}
+                                                    label="Y-axis"
+                                                    onChange={event => widgetStore.setYAxisRestFrameEnabled(event.currentTarget.checked)}
+                                                    data-testid="spectral-profiler-y-axis-rest-frame-toggle"
+                                                />
+                                                <Tooltip
+                                                    content={
+                                                        <div className="rest-frame-correction-tooltip">
+                                                            <div>This applies only to rest-frame scaling of flux-density-valued quantities; it does not include a luminosity-distance correction or conversion to luminosity.</div>
+                                                        </div>
+                                                    }
+                                                    position={Position.TOP}
+                                                >
+                                                    <span className="rest-frame-correction-info" aria-label="Y-axis rest-frame correction details" tabIndex={0}>
+                                                        <Icon icon="info-sign" size={12} />
+                                                    </span>
+                                                </Tooltip>
+                                            </div>
+                                        </div>
+                                    </FormGroup>
+                                    {widgetStore.isRestFrameCorrectionRequested && (
+                                        <React.Fragment>
+                                            <FormGroup inline={true} label={"Shift input"} contentClassName="reference-frame-form-content">
+                                                <HTMLSelect
+                                                    disabled={isCoordinateSettingDisabled}
+                                                    value={widgetStore.restFrameShiftMode}
+                                                    options={[
+                                                        {value: RestFrameShiftMode.REDSHIFT, label: "Redshift (z)"},
+                                                        {value: RestFrameShiftMode.RADIAL_VELOCITY, label: "Radial velocity (km/s)"}
+                                                    ]}
+                                                    onChange={event => this.onShiftModeChanged(event.currentTarget.value)}
+                                                    data-testid="spectral-profiler-shift-mode-dropdown"
+                                                />
+                                            </FormGroup>
+                                            {isRadialVelocityMode && (
+                                                <FormGroup inline={true} label="Velocity convention" contentClassName="reference-frame-form-content">
+                                                    <HTMLSelect
+                                                        disabled={isCoordinateSettingDisabled}
+                                                        value={widgetStore.restFrameVelocityConvention}
+                                                        options={[
+                                                            {value: VelocityConvention.RADIO, label: "Radio"},
+                                                            {value: VelocityConvention.OPTICAL, label: "Optical"},
+                                                            {value: VelocityConvention.RELATIVISTIC, label: "Relativistic"}
+                                                        ]}
+                                                        onChange={event => this.onVelocityConventionChanged(event.currentTarget.value)}
+                                                        data-testid="spectral-profiler-velocity-convention-dropdown"
+                                                    />
+                                                </FormGroup>
+                                            )}
+                                            <FormGroup inline={true} label={isRadialVelocityMode ? "Radial velocity (km/s)" : "Redshift (z)"} contentClassName="reference-frame-form-content" helperText={shiftInputError}>
+                                                <SafeNumericInput
+                                                    key={`${widgetStore.restFrameShiftMode}-${widgetStore.restFrameVelocityConvention}`}
+                                                    disabled={isShiftInputDisabled}
+                                                    value={isRadialVelocityMode ? widgetStore.restFrameRadialVelocity : widgetStore.restFrameRedshift}
+                                                    intent={isShiftInputDisabled ? Intent.NONE : this.shiftInputIntent}
+                                                    buttonPosition="none"
+                                                    className="rest-frame-shift-input"
+                                                    onValueChange={this.onShiftChanged}
+                                                    data-testid={isRadialVelocityMode ? "spectral-profiler-radial-velocity-input" : "spectral-profiler-redshift-input"}
+                                                />
+                                            </FormGroup>
+                                            {isRadialVelocityMode && (
+                                                <FormGroup inline={true} label={"Effective redshift (z)"} contentClassName="reference-frame-form-content">
+                                                    <span className="effective-redshift" data-testid="spectral-profiler-effective-redshift">
+                                                        {widgetStore.effectiveRestFrameRedshift}
+                                                    </span>
+                                                </FormGroup>
+                                            )}
+                                        </React.Fragment>
+                                    )}
                                 </React.Fragment>
                             }
                         />

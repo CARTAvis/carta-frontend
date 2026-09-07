@@ -221,7 +221,7 @@ export class SpectralProfileSelectionStore {
                 const pixelSizesArcsec = frame.pixelUnitSizeArcsec;
                 const unitTo = this.getTargetIntensityUnit(frame);
                 const polarization = profileConfig.coordinate === "z" ? undefined : Polarizations[profileConfig.coordinate.slice(0, -1)];
-                const intensityConfig = frame.getIntensityConfig(polarization);
+                const intensityConfig = polarization === undefined ? frame.intensityConfig : frame.getIntensityConfig(polarization);
                 const isFluxDensityDerivedFromSum = requiredStatsType !== profileConfig.statsType;
                 const fluxDensityValues = isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec && unitTo ? GetFluxDensityFromSum(profileData.values, intensityConfig, pixelSizesArcsec, unitTo) : undefined;
                 const data = isFluxDensityDerivedFromSum && profileData ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: fluxDensityValues ?? null} : profileData;

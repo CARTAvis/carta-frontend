@@ -7,7 +7,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {copyToClipboardWithToast, ExportImageMenuComponent} from "components/Shared";
-import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
+import {AnimationMode, BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
 import {ApiService} from "services";
@@ -41,6 +41,31 @@ export class RootMenuComponent extends React.Component {
 
     private handleDashboardClicked = () => {
         window.open(ApiService.runtimeConfig.dashboardAddress, "_blank");
+    };
+
+    private formTimeSeries = () => {
+        const appStore = AppStore.Instance;
+        const eligibleFrames = appStore.frames.filter(appStore.timeSeriesStore.canBeMember);
+        if (eligibleFrames.length < 2 || appStore.timeSeriesStore.elements.length > 1) {
+            return;
+        }
+
+        appStore.animatorStore.stopAnimation();
+        appStore.setTimeSeriesMembers(eligibleFrames, true);
+        appStore.animatorStore.setAnimationMode(AnimationMode.TIME_SERIES);
+
+        const widgetsStore = appStore.widgetsStore;
+        const animatorType = widgetsStore.CARTAWidgets.get(WidgetType.Animator)?.widgetConfig.type;
+        if (!animatorType || widgetsStore.selectDockedWidgetTab(animatorType)) {
+            return;
+        }
+
+        const floatingAnimator = widgetsStore.floatingWidgets.find(widget => widget.type === animatorType);
+        if (floatingAnimator) {
+            widgetsStore.selectFloatingWidget(floatingAnimator.id);
+        } else {
+            widgetsStore.createFloatingAnimatorWidget();
+        }
     };
 
     private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
@@ -251,6 +276,14 @@ export class RootMenuComponent extends React.Component {
             shouldHideImageTooltip = false;
         }
 
+        const multiColorBlendingTooltip = appStore.frameNum < 1 ? "At least one image is required." : "Create a multi-color blending image from spatially matched images.";
+        const eligibleTimeSeriesFrameCount = appStore.frames.filter(appStore.timeSeriesStore.canBeMember).length;
+        const hasTimeSeriesSlider = appStore.timeSeriesStore.elements.length > 1;
+        const formTimeSeriesTooltip = hasTimeSeriesSlider
+            ? "A time series has already been formed."
+            : eligibleTimeSeriesFrameCount < 2
+              ? "At least two images with a valid DATE-OBS or MJD-OBS are required."
+              : "Add all images with a valid DATE-OBS or MJD-OBS to a time series and open Animator.";
         const fileMenu = (
             <Menu>
                 <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.isOpenFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
@@ -264,7 +297,13 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip>
                 <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.isAppendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
-                <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
+                <MenuDivider />
+                <Tooltip content={multiColorBlendingTooltip} position={Position.LEFT}>
+                    <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
+                </Tooltip>
+                <Tooltip content={formTimeSeriesTooltip} position={Position.LEFT}>
+                    <MenuItem text="Form Time Series" disabled={eligibleTimeSeriesFrameCount < 2 || hasTimeSeriesSlider} onClick={this.formTimeSeries} data-testid="root-menu-form-time-series" />
+                </Tooltip>
                 <MenuDivider />
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip

@@ -1,4 +1,6 @@
-import {GetFluxDensityFromSum, ShouldUseSumForFluxDensity} from "./SpectralDefinition";
+import {IntensityUnitType} from "../../enums";
+
+import {FindIntensityUnitType, GetFluxDensityFromSum, IsFrequencyDensityUnit, ShouldUseSumForFluxDensity} from "./SpectralDefinition";
 
 const PIXEL_SIZES_ARCSEC = {x: 2, y: 3};
 const ARCSEC_TO_RAD = Math.PI / 648000;
@@ -50,5 +52,20 @@ describe("ShouldUseSumForFluxDensity", () => {
 
     it("does not derive flux density for unsupported units", () => {
         expect(ShouldUseSumForFluxDensity(GetConfig("Jy/beam"), "counts")).toBe(false);
+    });
+});
+
+describe("spectral intensity units", () => {
+    test.each(["Jy", "JY", "jy", "mJy", "MJY", "uJY"])("recognizes bare Jansky unit %s regardless of case", unit => {
+        expect(IsFrequencyDensityUnit(unit)).toBe(true);
+    });
+
+    test("trims bare Jansky units before classifying them", () => {
+        expect(IsFrequencyDensityUnit(" JY ")).toBe(true);
+    });
+
+    test("does not classify unrelated units as frequency density", () => {
+        expect(FindIntensityUnitType("erg")).toBe(IntensityUnitType.Unsupported);
+        expect(IsFrequencyDensityUnit("erg")).toBe(false);
     });
 });

@@ -1,6 +1,8 @@
 #include <string.h>
 #include <emscripten.h>
 #include <cmath>
+#include <limits>
+#include <string>
 
 extern "C" {
 #include "ast.h"
@@ -30,6 +32,8 @@ using namespace std;
 
 extern "C" {
 
+EMSCRIPTEN_KEEPALIVE double convertMJD(double mjd, const char* scaleIn, const char* scaleOut);
+
 EMSCRIPTEN_KEEPALIVE AstFitsChan* emptyFitsChan()
 {
     return astFitsChan(nullptr, nullptr, "");
@@ -52,7 +56,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitsChan, bo
     }
 
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(frameSet, 1);
-    astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+    if (pixFrame) {
+        astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+        pixFrame = static_cast<AstFrame*>(astAnnul(pixFrame));
+    }
 
     // work around for missing CTYPE1 & CTYPE2
     if (checkSkyDomain) {
@@ -82,6 +89,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         return nullptr;
     }
     AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
+    spectralTemplate = static_cast<AstSpecFrame*>(astAnnul(spectralTemplate));
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
@@ -90,11 +98,15 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
     AstSpecFrame *specFrame = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
     if (!specFrame)
     {
+        found = static_cast<AstFrameSet*>(astAnnul(found));
         cout << "Getting spectral frame failed." << endl;
         return nullptr;
     }
 
-    return static_cast<AstSpecFrame*> astCopy(specFrame);
+    AstSpecFrame* result = static_cast<AstSpecFrame*> astCopy(specFrame);
+    specFrame = static_cast<AstSpecFrame*>(astAnnul(specFrame));
+    found = static_cast<AstFrameSet*>(astAnnul(found));
+    return result;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
@@ -655,10 +667,32 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
 
     AstSpecFrame* specFrameTo = nullptr;
-    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
-    if (!specFrameTo)
-    {
+    AstFrameSet* cvt = nullptr;
+
+    auto cleanup = [&]() {
+        if (cvt) {
+            cvt = static_cast<AstFrameSet*>(astAnnul(cvt));
+        }
+        if (specFrameTo) {
+            specFrameTo = static_cast<AstSpecFrame*>(astAnnul(specFrameTo));
+        }
+    };
+
+    auto fail = [&]() -> int {
+        if (!astOK) {
+            astClearStatus;
+        }
+        cleanup();
+        if (!astOK) {
+            astClearStatus;
+        }
         return 1;
+    };
+
+    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
+    if (!specFrameTo || !astOK)
+    {
+        return fail();
     }
 
     char buffer[128];
@@ -674,17 +708,199 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
         snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
         astSet(specFrameTo, buffer);
     }
+    if (!astOK) {
+        return fail();
+    }
 
-    AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
+    if (!cvt || !astOK) {
+        return fail();
+    }
 
     astTran1(cvt, npoint, zIn, forward, zOut);
     if (!astOK)
     {
+        return fail();
+    }
+    for (int i = 0; i < npoint; i++) {
+        if (zOut[i] == AST__BAD || !std::isfinite(zOut[i])) {
+            // Keep invalid samples local to their input point so one bad
+            // channel does not discard otherwise valid profile data.
+            zOut[i] = std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+
+    cleanup();
+    if (!astOK) {
         astClearStatus;
         return 1;
     }
     return 0;
+}
+
+static bool normalizeUtcLeapSecond(const char* dateString, const char* timeScale, std::string& normalizedDate)
+{
+    if (!dateString || !timeScale || strcmp(timeScale, "UTC") != 0)
+    {
+        return false;
+    }
+
+    normalizedDate = dateString;
+    const size_t timeSeparator = normalizedDate.find('T');
+    const size_t secondsPosition = timeSeparator == std::string::npos ? std::string::npos : timeSeparator + 7;
+    if (secondsPosition == std::string::npos || secondsPosition + 2 > normalizedDate.size() || normalizedDate.compare(timeSeparator + 1, 8, "23:59:60"))
+    {
+        return false;
+    }
+
+    const size_t suffixPosition = secondsPosition + 2;
+    if (suffixPosition < normalizedDate.size())
+    {
+        if (normalizedDate[suffixPosition] != '.' || suffixPosition + 1 == normalizedDate.size())
+        {
+            return false;
+        }
+        for (size_t i = suffixPosition + 1; i < normalizedDate.size(); i++)
+        {
+            if (normalizedDate[i] < '0' || normalizedDate[i] > '9')
+            {
+                return false;
+            }
+        }
+    }
+
+    normalizedDate.replace(secondsPosition, 2, "59");
+    return true;
+}
+
+EMSCRIPTEN_KEEPALIVE double parseDateToMJD(const char* dateString, const char* timeScale)
+{
+    if (!dateString || !strlen(dateString))
+    {
+        return NAN;
+    }
+
+    std::string normalizedDate;
+    const bool isUtcLeapSecond = normalizeUtcLeapSecond(dateString, timeScale, normalizedDate);
+    const char* parsedDateString = isUtcLeapSecond ? normalizedDate.c_str() : dateString;
+
+    astBegin;
+    AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
+    if (timeScale && strlen(timeScale))
+    {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", timeScale);
+        astSet(timeFrame, buffer);
+    }
+
+    double mjd = AST__BAD;
+    int charsRead = astUnformat(timeFrame, 1, parsedDateString, &mjd);
+    astEnd;
+
+    // Reject partial parses so that malformed date strings are not silently truncated
+    if (!astOK || charsRead != (int) strlen(parsedDateString) || mjd == AST__BAD)
+    {
+        astClearStatus;
+        return NAN;
+    }
+
+    if (isUtcLeapSecond)
+    {
+        constexpr double secondsPerDay = 86400.0;
+        const double dayBoundary = floor(mjd) + 1.0;
+        const double taiBeforeBoundary = convertMJD(dayBoundary - 1.0 / secondsPerDay, "UTC", "TAI");
+        const double taiAtBoundary = convertMJD(dayBoundary, "UTC", "TAI");
+        const double boundaryDurationSeconds = (taiAtBoundary - taiBeforeBoundary) * secondsPerDay;
+        if (!isfinite(taiBeforeBoundary) || !isfinite(taiAtBoundary) || fabs(boundaryDurationSeconds - 2.0) > 1e-3)
+        {
+            return NAN;
+        }
+
+        const double taiMjd = convertMJD(mjd, "UTC", "TAI");
+        if (!isfinite(taiMjd))
+        {
+            return NAN;
+        }
+
+        // AST cannot represent the 23:59:60 label directly in UTC MJD. Preserve the
+        // physical one-second transition in TAI, then project it back to AST's UTC MJD.
+        return convertMJD(taiMjd + 1.0 / secondsPerDay, "TAI", "UTC");
+    }
+    return mjd;
+}
+
+EMSCRIPTEN_KEEPALIVE double convertMJD(double mjd, const char* scaleIn, const char* scaleOut)
+{
+    astBegin;
+    char buffer[64];
+    AstTimeFrame* frameIn = astTimeFrame("System=MJD");
+    if (scaleIn && strlen(scaleIn))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", scaleIn);
+        astSet(frameIn, buffer);
+    }
+    AstTimeFrame* frameOut = static_cast<AstTimeFrame*> astCopy(frameIn);
+    if (scaleOut && strlen(scaleOut))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", scaleOut);
+        astSet(frameOut, buffer);
+    }
+
+    double result = AST__BAD;
+    AstFrameSet* cvt = static_cast<AstFrameSet*> astConvert(frameIn, frameOut, "");
+    if (cvt)
+    {
+        astTran1(cvt, 1, &mjd, 1, &result);
+    }
+    astEnd;
+
+    if (!astOK || result == AST__BAD)
+    {
+        astClearStatus;
+        return NAN;
+    }
+    return result;
+}
+
+EMSCRIPTEN_KEEPALIVE const char* formatMJDToDate(double mjd, const char* timeScale, int digits)
+{
+    static std::string formattedValue;
+    formattedValue.clear();
+
+    astBegin;
+    AstTimeFrame* timeFrame = astTimeFrame("System=MJD");
+    char buffer[64];
+    if (timeScale && strlen(timeScale))
+    {
+        snprintf(buffer, sizeof(buffer), "TimeScale=%s", timeScale);
+        astSet(timeFrame, buffer);
+    }
+    if (digits < 0)
+    {
+        digits = 0;
+    }
+    else if (digits > 9)
+    {
+        digits = 9;
+    }
+    snprintf(buffer, sizeof(buffer), "Format(1)=iso.%dT", digits);
+    astSet(timeFrame, buffer);
+
+    const char* formattedVal = astFormat(timeFrame, 1, mjd);
+    const bool formatSucceeded = astOK && formattedVal;
+    if (formatSucceeded)
+    {
+        // astFormat may return storage owned by timeFrame, which is released by astEnd.
+        formattedValue = formattedVal;
+    }
+    astEnd;
+
+    if (!astOK || !formatSucceeded)
+    {
+        astClearStatus;
+        return nullptr;
+    }
+    return formattedValue.c_str();
 }
 
 EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
@@ -745,6 +961,86 @@ EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
 {
     double diags[] = {sx, sy};
     return astMatrixMap(2, 2, 1, diags, "");
+}
+
+EMSCRIPTEN_KEEPALIVE AstCmpMap* createRestFrameMapping2D(AstSpecFrame* observedFrame, int spectralAxis, double frequencyFactor)
+{
+    if (!observedFrame || (spectralAxis != 1 && spectralAxis != 2) || !std::isfinite(frequencyFactor) || frequencyFactor <= 0.0)
+    {
+        return nullptr;
+    }
+
+    AstSpecFrame* frequencyFrame = nullptr;
+    AstFrameSet* observedToFrequency = nullptr;
+    AstFrameSet* frequencyToObserved = nullptr;
+    AstZoomMap* frequencyScale = nullptr;
+    AstCmpMap* scaledFrequency = nullptr;
+    AstCmpMap* spectralMapping = nullptr;
+    AstUnitMap* unitMapping = nullptr;
+    AstCmpMap* result = nullptr;
+
+    auto cleanup = [&]() {
+        if (frequencyToObserved) {
+            frequencyToObserved = static_cast<AstFrameSet*>(astAnnul(frequencyToObserved));
+        }
+        if (observedToFrequency) {
+            observedToFrequency = static_cast<AstFrameSet*>(astAnnul(observedToFrequency));
+        }
+        if (frequencyFrame) {
+            frequencyFrame = static_cast<AstSpecFrame*>(astAnnul(frequencyFrame));
+        }
+        if (scaledFrequency) {
+            scaledFrequency = static_cast<AstCmpMap*>(astAnnul(scaledFrequency));
+        }
+        if (spectralMapping) {
+            spectralMapping = static_cast<AstCmpMap*>(astAnnul(spectralMapping));
+        }
+        if (frequencyScale) {
+            frequencyScale = static_cast<AstZoomMap*>(astAnnul(frequencyScale));
+        }
+        if (unitMapping) {
+            unitMapping = static_cast<AstUnitMap*>(astAnnul(unitMapping));
+        }
+    };
+
+    frequencyFrame = static_cast<AstSpecFrame*>(astCopy(observedFrame));
+    if (!frequencyFrame || !astOK)
+    {
+        cleanup();
+        astClearStatus;
+        return nullptr;
+    }
+
+    astSet(frequencyFrame, "System=FREQ,Unit=Hz");
+    observedToFrequency = static_cast<AstFrameSet*>(astConvert(observedFrame, frequencyFrame, ""));
+    frequencyToObserved = static_cast<AstFrameSet*>(astConvert(frequencyFrame, observedFrame, ""));
+    frequencyScale = astZoomMap(1, frequencyFactor, "");
+    if (frequencyScale && frequencyToObserved) {
+        scaledFrequency = astCmpMap(frequencyScale, frequencyToObserved, 1, "");
+    }
+    if (observedToFrequency && scaledFrequency) {
+        spectralMapping = astCmpMap(observedToFrequency, scaledFrequency, 1, "");
+    }
+
+    unitMapping = astUnitMap(1, "");
+    if (spectralAxis == 1 && spectralMapping && unitMapping) {
+        result = astCmpMap(spectralMapping, unitMapping, 0, "");
+    }
+    else if (spectralAxis == 2 && spectralMapping && unitMapping) {
+        result = astCmpMap(unitMapping, spectralMapping, 0, "");
+    }
+
+    const bool success = astOK && result;
+    cleanup();
+    if (!success)
+    {
+        if (result) {
+            result = static_cast<AstCmpMap*>(astAnnul(result));
+        }
+        astClearStatus;
+        return nullptr;
+    }
+    return result;
 }
 
 EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)

@@ -31,7 +31,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 650;
     @observable height: number = 180;
-    @observable columnWidths = [132, 97, 110, 75, 95];
+    @observable columnWidths = [132, 97, 140, 75, 95];
 
     constructor(props: any) {
         super(props);
@@ -233,7 +233,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: isSpatialReference})}
+                        className={classNames("matching-button", {outlined: isSpatialReference})}
                         variant="minimal"
                         size="small"
                         active={!!frame.spatialReference}
@@ -247,42 +247,94 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let spectralMatchingButton: React.ReactNode;
-        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
-            const isSpectralReference = frame === appStore.spectralReference;
-            let tooltipSubtitle: string;
-            if (isSpectralReference) {
-                tooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
-            } else {
-                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
-            }
-            spectralMatchingButton = (
-                <Tooltip
-                    position={"bottom"}
-                    content={
-                        <span>
-                            Spectral matching
-                            <br />
-                            <i>
-                                <small>{tooltipSubtitle}</small>
-                            </i>
-                        </span>
-                    }
-                >
-                    <AnchorButton
-                        className={classNames({outlined: isSpectralReference})}
-                        variant="minimal"
-                        size="small"
-                        active={!!frame.spectralReference}
-                        intent={frame.spectralReference ? "success" : "none"}
-                        onClick={() => (isSpectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
-                        data-testid={"image-list-" + rowIndex + "-matching-z"}
-                    >
-                        Z
-                    </AnchorButton>
-                </Tooltip>
-            );
+        const hasSpectralAxis = frame.frameInfo.fileInfoExtended.depth > 1;
+        const spectralReference = appStore.spectralReference;
+        let spectralTooltipSubtitle: string;
+        if (!hasSpectralAxis) {
+            spectralTooltipSubtitle = "Spectral matching is unavailable because this image has no Z axis";
+        } else if (!spectralReference) {
+            spectralTooltipSubtitle = "No spectral reference is available";
+        } else if (frame === spectralReference) {
+            spectralTooltipSubtitle = "Click to match or unmatch all matchable cubes to this reference";
+        } else {
+            spectralTooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${spectralReference.filename}`;
         }
+
+        const spectralMatchingButton = (
+            <Tooltip
+                position={"bottom"}
+                content={
+                    <span>
+                        Spectral matching
+                        <br />
+                        <i>
+                            <small>{spectralTooltipSubtitle}</small>
+                        </i>
+                    </span>
+                }
+            >
+                <AnchorButton
+                    className={classNames("matching-button", {outlined: frame === spectralReference})}
+                    variant="minimal"
+                    size="small"
+                    active={!!frame.spectralReference}
+                    intent={frame.spectralReference ? "success" : "none"}
+                    disabled={!hasSpectralAxis || !spectralReference}
+                    onClick={() => (frame === spectralReference ? appStore.matchAllSpectral() : appStore.toggleSpectralMatching(frame))}
+                    data-testid={"image-list-" + rowIndex + "-matching-z"}
+                >
+                    Z
+                </AnchorButton>
+            </Tooltip>
+        );
+
+        const timeSeriesStore = appStore.timeSeriesStore;
+        const isTimeSeriesMember = timeSeriesStore.isMember(frame);
+        const canBeTimeSeriesMember = timeSeriesStore.canBeMember(frame);
+        const isTimeSeriesBulkAnchor = canBeTimeSeriesMember && rowIndex === appStore.activeImageIndex;
+        const eligibleTimeSeriesFrames = isTimeSeriesBulkAnchor ? appStore.frames.filter(timeSeriesStore.canBeMember) : [];
+        const areAllEligibleFramesMembers = isTimeSeriesBulkAnchor && eligibleTimeSeriesFrames.length > 0 && eligibleTimeSeriesFrames.every(timeSeriesStore.isMember);
+        const isTimeSeriesMemberToggleDisabled = !canBeTimeSeriesMember || appStore.animatorStore.isAnimationActive;
+        const timeSeriesTooltipSubtitle = !canBeTimeSeriesMember
+            ? "A valid DATE-OBS or MJD-OBS is required"
+            : appStore.animatorStore.isAnimationActive
+              ? "Stop playback before changing time-series membership"
+              : isTimeSeriesBulkAnchor
+                ? areAllEligibleFramesMembers
+                    ? "Click to remove all images from the time series"
+                    : "Click to add all eligible images to the time series"
+                : `Click to ${isTimeSeriesMember ? "remove this image from" : "add this image to"} the time series`;
+        const timeSeriesMembershipButton = (
+            <Tooltip
+                position={"bottom"}
+                content={
+                    <span>
+                        Time series member
+                        <br />
+                        <i>
+                            <small>{timeSeriesTooltipSubtitle}</small>
+                        </i>
+                    </span>
+                }
+            >
+                <AnchorButton
+                    className={classNames("matching-button", {
+                        outlined: isTimeSeriesBulkAnchor,
+                        "time-series-member-disabled": isTimeSeriesMember && appStore.animatorStore.isAnimationActive
+                    })}
+                    variant="minimal"
+                    size="small"
+                    active={isTimeSeriesMember}
+                    intent={isTimeSeriesMember ? "success" : "none"}
+                    disabled={isTimeSeriesMemberToggleDisabled}
+                    onClick={() => (isTimeSeriesBulkAnchor ? appStore.toggleAllEligibleTimeSeriesMembers(frame) : appStore.toggleTimeSeriesMember(frame))}
+                    aria-label={isTimeSeriesBulkAnchor ? "Toggle all eligible time-series members" : "Toggle time-series membership"}
+                    data-testid={"image-list-" + rowIndex + "-matching-t"}
+                >
+                    T
+                </AnchorButton>
+            </Tooltip>
+        );
 
         let renderConfigMatchingButton: React.ReactNode;
         if (appStore.rasterScalingReference) {
@@ -307,7 +359,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={classNames({outlined: isRasterScalingReference})}
+                        className={classNames("matching-button", {outlined: isRasterScalingReference})}
                         variant="minimal"
                         size="small"
                         active={!!frame.rasterScalingReference}
@@ -324,11 +376,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
         return (
             <Cell className={className}>
-                <React.Fragment>
-                    {spatialMatchingButton}
-                    {spectralMatchingButton}
-                    {renderConfigMatchingButton}
-                </React.Fragment>
+                <div className="matching-controls">
+                    <div className="matching-control-slot">{spatialMatchingButton}</div>
+                    <div className="matching-control-slot">{spectralMatchingButton}</div>
+                    <div className="matching-control-slot">{timeSeriesMembershipButton}</div>
+                    <div className="matching-control-slot">{renderConfigMatchingButton}</div>
+                </div>
             </Cell>
         );
     };
@@ -390,6 +443,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     <Menu>
                         <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
                         <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
+                        <MenuDivider />
+                        <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortImagesByTime()} data-testid="layer-list-sort-images-by-time" />
                     </Menu>
                 );
             } else {
@@ -410,6 +465,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
                             <MenuItem text="Close other images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(frame)} />
                             <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.removeAllFrames()} />
+                            <MenuDivider />
+                            <MenuItem text="Sort images by time" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.sortImagesByTime()} data-testid="layer-list-sort-images-by-time" />
                         </Menu>
                     );
                 }
@@ -449,6 +506,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRasterScalingReference = appStore.rasterScalingReference;
+        const timeSeriesMembership = appStore.frames.map(frame => appStore.timeSeriesStore.isMember(frame));
+        const isAnimationActive = appStore.animatorStore.isAnimationActive;
         const cellRendererDependencies = [
             frameChannels,
             frameStokes,
@@ -464,7 +523,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             f3,
             currentSpectralReference,
             currentSpatialReference,
-            currentRasterScalingReference
+            currentRasterScalingReference,
+            timeSeriesMembership,
+            isAnimationActive
         ];
 
         return (

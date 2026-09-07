@@ -1,7 +1,7 @@
 import {AngularSizeUnit} from "enums";
 import {AngularSize} from "models";
 
-export const SPEED_OF_LIGHT = 299792458;
+import {SPEED_OF_LIGHT} from "../cosmology/cosmology";
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);

@@ -50,7 +50,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable scatterChartArea: ChartArea | undefined = undefined;
     @observable statsType: CARTA.StatsType = CARTA.StatsType.Mean;
     @observable isFractionalPolVisible: boolean = DEFAULTS.fractionalPolVisible;
-    scatterOutRangePointsZIndex: Array<number>;
+    scatterOutRangePointsZIndex: Array<{min: number; max: number}>;
 
     // settings
     @observable plotType: PlotType = PlotType.STEPS;
