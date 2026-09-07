@@ -5,27 +5,27 @@ import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "store
 
 describe("CatalogDisplayStore angular size axis type", () => {
     test("keeps axis mode per catalog and converts radius values to diameters", () => {
-        const diameterWidgetStore = new CatalogDisplayStore(0);
-        const radiusWidgetStore = new CatalogDisplayStore(1);
+        const diameterDisplayStore = new CatalogDisplayStore(0);
+        const radiusDisplayStore = new CatalogDisplayStore(1);
 
-        diameterWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-        radiusWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-        const fixedCatalogSize = radiusWidgetStore.catalogSize;
+        diameterDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        const fixedCatalogSize = radiusDisplayStore.catalogSize;
 
-        radiusWidgetStore.setCatalogSourceRadiusType("radius");
+        radiusDisplayStore.setCatalogSourceRadiusType("radius");
 
-        expect(diameterWidgetStore.catalogSourceRadiusType).toBe("diameter");
-        expect(radiusWidgetStore.catalogSourceRadiusType).toBe("radius");
-        expect(diameterWidgetStore.pixelSizeFactor).toBe(1);
-        expect(radiusWidgetStore.pixelSizeFactor).toBe(2);
-        expect(radiusWidgetStore.catalogSize).toBe(fixedCatalogSize);
+        expect(diameterDisplayStore.catalogSourceRadiusType).toBe("diameter");
+        expect(radiusDisplayStore.catalogSourceRadiusType).toBe("radius");
+        expect(diameterDisplayStore.pixelSizeFactor).toBe(1);
+        expect(radiusDisplayStore.pixelSizeFactor).toBe(2);
+        expect(radiusDisplayStore.catalogSize).toBe(fixedCatalogSize);
 
-        radiusWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
-        radiusWidgetStore.setCanvasSizeUnit(CatalogSizeUnits.ARCSEC);
-        expect(radiusWidgetStore.pixelSizeFactor).toBe(1);
+        radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
+        radiusDisplayStore.setCanvasSizeUnit(CatalogSizeUnits.ARCSEC);
+        expect(radiusDisplayStore.pixelSizeFactor).toBe(1);
 
-        diameterWidgetStore.dispose();
-        radiusWidgetStore.dispose();
+        diameterDisplayStore.dispose();
+        radiusDisplayStore.dispose();
     });
 
     test("applies the mode to an existing mapped overlay", () => {
