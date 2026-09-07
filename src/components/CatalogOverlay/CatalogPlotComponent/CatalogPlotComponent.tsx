@@ -831,8 +831,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private fillPlotBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
-        const isDarkTheme = AppStore.Instance.darkTheme;
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, width, height);
     }
 
@@ -914,7 +914,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         comment += `\n# xLabel: ${xColumnName}`;
         comment += `\n# yLabel: ${yColumnName}`;
 
-        if (widgetStore.showFittingResult && widgetStore.fittingResultString) {
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
             comment += "\n# " + widgetStore.fittingResultString.split("\n").join("\n# ");
         }
 
@@ -965,7 +965,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 selectedIndices={selectedSet}
                 hasSelection={selectedSet.size > 0}
                 pointSize={5}
-                darkMode={AppStore.Instance.darkTheme}
+                darkMode={AppStore.Instance.isDarkTheme}
                 onRef={ref => (this.webglOverlayRef = ref)}
             />
         );
@@ -989,7 +989,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const isDisabled = !this.isPlotButtonEnabled;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
-        const isDarkTheme = AppStore.Instance.darkTheme;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
         const labelColor = isDarkTheme ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = isDarkTheme ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
 
