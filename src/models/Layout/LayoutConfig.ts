@@ -189,8 +189,8 @@ export class LayoutConfig {
             let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
             if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
                 const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
-                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
+                const catalogDisplayStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogDisplayStoreId);
             } else {
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
             }
@@ -227,8 +227,8 @@ export class LayoutConfig {
                 let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
                 if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
                     const catalogFileId = CatalogStore.Instance.catalogProfiles.get(instanceId) ?? NaN;
-                    const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
+                    const catalogDisplayStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogDisplayStoreId);
                 } else {
                     widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 }

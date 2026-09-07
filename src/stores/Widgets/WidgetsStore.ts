@@ -34,9 +34,9 @@ import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "s
 import {
     ACTIVE_FILE_ID,
     AnimatorWidgetStore,
+    CatalogDisplayStore,
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
-    CatalogWidgetStore,
     EmptyWidgetStore,
     HistogramWidgetStore,
     LayerListWidgetStore,
@@ -147,7 +147,7 @@ export class WidgetsStore {
     @observable channelMapControlWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore> = new Map<string, StokesAnalysisWidgetStore>();
     @observable floatingSettingsWidgets: Map<string, string> = new Map<string, string>();
-    @observable catalogWidgets: Map<string, CatalogWidgetStore> = new Map<string, CatalogWidgetStore>();
+    @observable catalogWidgets: Map<string, CatalogDisplayStore> = new Map<string, CatalogDisplayStore>();
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore> = new Map<string, CatalogPlotWidgetStore>();
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore> = new Map<string, SpectralLineQueryWidgetStore>();
     @observable cursorInfoWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
@@ -1100,7 +1100,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | AnimatorWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogDisplayStore | AnimatorWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -1566,7 +1566,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new CatalogWidgetStore(catalogFileId);
+            const widgetStore = new CatalogDisplayStore(catalogFileId);
             if (widgetSettings) {
                 widgetStore.applyConfig(widgetSettings);
             }

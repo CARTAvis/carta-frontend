@@ -2469,7 +2469,7 @@ export class AppStore {
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         const catalogFileId = catalogFilter.fileId;
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-        const catalogWidgetStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
+        const catalogDisplayStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -2482,10 +2482,10 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate && catalogWidgetStoreId) {
-                const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                const xColumn = catalogWidgetStore?.xAxis;
-                const yColumn = catalogWidgetStore?.yAxis;
+            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate && catalogDisplayStoreId) {
+                const catalogDisplayStore = this.widgetsStore.catalogWidgets.get(catalogDisplayStoreId);
+                const xColumn = catalogDisplayStore?.xAxis;
+                const yColumn = catalogDisplayStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
@@ -2502,7 +2502,7 @@ export class AppStore {
                             catalogFilter.subsetEndIndex,
                             catalogFilter.subsetDataSize
                         );
-                        catalogWidgetStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
+                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
                     }
                 }
             }

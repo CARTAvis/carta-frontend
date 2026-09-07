@@ -21,7 +21,7 @@ function getScalingParameter(parameters: Map<FrameScaling, number>, scaling: Fra
     return parameters.get(scaling) ?? getDefaultScalingParameter(scaling);
 }
 
-export class CatalogWidgetStore {
+export class CatalogDisplayStore {
     public static readonly MIN_OVERLAY_SIZE = 1;
     public static readonly MAX_OVERLAY_SIZE = 50;
     public static readonly MAX_AREA_SIZE = 4000;
@@ -126,8 +126,8 @@ export class CatalogWidgetStore {
     @observable orientationMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
     @observable orientationScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable private orientationScalingParameters = createScalingParameters();
-    @observable angleMax: number = CatalogWidgetStore.MAX_ANGLE;
-    @observable angleMin: number = CatalogWidgetStore.MIN_ANGLE;
+    @observable angleMax: number = CatalogDisplayStore.MAX_ANGLE;
+    @observable angleMin: number = CatalogDisplayStore.MIN_ANGLE;
 
     private readonly disposers: IReactionDisposer[] = [];
 
@@ -315,8 +315,8 @@ export class CatalogWidgetStore {
         this.orientationMin = {default: undefined, clipd: undefined};
         this.orientationScalingType = FrameScaling.LINEAR;
         this.orientationScalingParameters = createScalingParameters();
-        this.angleMax = CatalogWidgetStore.MAX_ANGLE;
-        this.angleMin = CatalogWidgetStore.MIN_ANGLE;
+        this.angleMax = CatalogDisplayStore.MAX_ANGLE;
+        this.angleMin = CatalogDisplayStore.MIN_ANGLE;
     }
 
     /**
@@ -324,7 +324,7 @@ export class CatalogWidgetStore {
      * @param max - max degree of orientation
      */
     @action setAngleMax(max: number) {
-        this.angleMax = clamp(max, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
+        this.angleMax = clamp(max, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
     }
 
     /**
@@ -332,7 +332,7 @@ export class CatalogWidgetStore {
      * @param min - min degree of orientation
      */
     @action setAngleMin(min: number) {
-        this.angleMin = clamp(min, CatalogWidgetStore.MIN_ANGLE, CatalogWidgetStore.MAX_ANGLE);
+        this.angleMin = clamp(min, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
     }
 
     /**
@@ -833,11 +833,11 @@ export class CatalogWidgetStore {
     }
 
     @computed get minOverlaySize(): number {
-        return this.overlaySize.get(this.canvasSizeUnit)?.min ?? CatalogWidgetStore.MIN_OVERLAY_SIZE;
+        return this.overlaySize.get(this.canvasSizeUnit)?.min ?? CatalogDisplayStore.MIN_OVERLAY_SIZE;
     }
 
     @computed get maxOverlaySize(): number {
-        return this.overlaySize.get(this.canvasSizeUnit)?.max ?? CatalogWidgetStore.MAX_OVERLAY_SIZE;
+        return this.overlaySize.get(this.canvasSizeUnit)?.max ?? CatalogDisplayStore.MAX_OVERLAY_SIZE;
     }
 
     /**
@@ -928,7 +928,7 @@ export class CatalogWidgetStore {
      * @param val - thickness of catalog source
      */
     @action setThickness(val: number) {
-        this.thickness = clamp(val, CatalogWidgetStore.MIN_THICKNESS, CatalogWidgetStore.MAX_THICKNESS);
+        this.thickness = clamp(val, CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS);
     }
 
     /**
@@ -1103,7 +1103,7 @@ export class CatalogWidgetStore {
             isAreaMode = this.isSizeMinorAreaMode;
         }
         if (isAreaMode) {
-            return CatalogWidgetStore.MAX_AREA_SIZE;
+            return CatalogDisplayStore.MAX_AREA_SIZE;
         } else {
             return this.maxOverlaySize;
         }
@@ -1155,7 +1155,7 @@ export class CatalogWidgetStore {
             this.catalogFileId = catalogFileId;
         }
         const catalogSize = widgetSettings.catalogSize;
-        if (typeof catalogSize === "number" && catalogSize >= CatalogWidgetStore.MIN_OVERLAY_SIZE && catalogSize <= CatalogWidgetStore.MAX_OVERLAY_SIZE) {
+        if (typeof catalogSize === "number" && catalogSize >= CatalogDisplayStore.MIN_OVERLAY_SIZE && catalogSize <= CatalogDisplayStore.MAX_OVERLAY_SIZE) {
             this.catalogSize = catalogSize;
         }
         this.catalogShape = widgetSettings.catalogShape;

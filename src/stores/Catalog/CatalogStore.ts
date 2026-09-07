@@ -5,7 +5,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {type CatalogWidgetStore} from "stores/Widgets";
+import {type CatalogDisplayStore} from "stores/Widgets";
 import {minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
@@ -287,7 +287,7 @@ export class CatalogStore {
     }
 
     // catalog widget store
-    getCatalogWidgetStore(fileId: number): CatalogWidgetStore | undefined {
+    getCatalogDisplayStore(fileId: number): CatalogDisplayStore | undefined {
         const widgetsStore = WidgetsStore.Instance;
         if (this.catalogWidgets.has(fileId)) {
             const widgetStoreId = this.catalogWidgets.get(fileId);

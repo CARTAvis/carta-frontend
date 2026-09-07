@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
+import {CatalogDisplayStore, type ValueClip} from "stores/Widgets";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -37,12 +37,12 @@ const ELLIPSE = <ellipse cx="8" cy="8" rx="4" ry="7" />;
 type CatalogScalingKey = "sizeScalingType" | "sizeMinorScalingType" | "colorScalingType" | "orientationScalingType";
 
 interface CatalogScalingPreviewSession {
-    widgetStore: CatalogWidgetStore;
+    displayStore: CatalogDisplayStore;
     baseScaling: FrameScaling;
 }
 
 interface CatalogColormapPreviewSession {
-    widgetStore: CatalogWidgetStore;
+    displayStore: CatalogDisplayStore;
     baseColormap: string;
 }
 
@@ -85,10 +85,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         };
     }
 
-    @computed get widgetStore(): CatalogWidgetStore | undefined {
+    @computed get displayStore(): CatalogDisplayStore | undefined {
         const catalogFileId = this.catalogFileId;
-        const catalogWidgetStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
-        return catalogWidgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId) : undefined;
+        const catalogDisplayStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
+        return catalogDisplayStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogDisplayStoreId) : undefined;
     }
 
     @computed get catalogFileId() {
@@ -131,9 +131,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 const catalogStore = CatalogStore.Instance;
                 const catalogFileId = this.catalogFileId;
                 if (catalogFileId !== undefined) {
-                    const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                    const catalogDisplayStoreId = catalogStore.catalogWidgets.get(catalogFileId);
                     const activeFiles = catalogStore.activeCatalogFiles;
-                    if (!catalogWidgetStoreId) {
+                    if (!catalogDisplayStoreId) {
                         WidgetsStore.Instance.addCatalogWidget(catalogFileId);
                     }
 
@@ -153,13 +153,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     componentDidUpdate() {
-        const widgetStore = this.widgetStore;
+        const displayStore = this.displayStore;
         for (const [key, session] of this.scalingPreviewSessions) {
-            if (session.widgetStore !== widgetStore) {
+            if (session.displayStore !== displayStore) {
                 this.revertScalingPreview(key);
             }
         }
-        if (this.colormapPreviewSession && this.colormapPreviewSession.widgetStore !== widgetStore) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.displayStore !== displayStore) {
             this.revertColormapPreview();
         }
     }
@@ -170,19 +170,19 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         this.disposers.length = 0;
     }
 
-    private setScaling(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+    private setScaling(displayStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) {
         switch (key) {
             case "sizeScalingType":
-                widgetStore.setSizeScalingType(scaling);
+                displayStore.setSizeScalingType(scaling);
                 break;
             case "sizeMinorScalingType":
-                widgetStore.setSizeMinorScalingType(scaling);
+                displayStore.setSizeMinorScalingType(scaling);
                 break;
             case "colorScalingType":
-                widgetStore.setColorScalingType(scaling);
+                displayStore.setColorScalingType(scaling);
                 break;
             case "orientationScalingType":
-                widgetStore.setOrientationScalingType(scaling);
+                displayStore.setOrientationScalingType(scaling);
                 break;
         }
     }
@@ -190,30 +190,30 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private revertScalingPreview(key: CatalogScalingKey) {
         const session = this.scalingPreviewSessions.get(key);
         this.scalingPreviewSessions.delete(key);
-        if (session && session.widgetStore[key] !== session.baseScaling) {
-            this.setScaling(session.widgetStore, key, session.baseScaling);
+        if (session && session.displayStore[key] !== session.baseScaling) {
+            this.setScaling(session.displayStore, key, session.baseScaling);
         }
     }
 
-    private handleScalingHovered(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+    private handleScalingHovered(displayStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) {
         const session = this.scalingPreviewSessions.get(key);
-        if (session?.widgetStore !== widgetStore) {
+        if (session?.displayStore !== displayStore) {
             this.revertScalingPreview(key);
-            this.scalingPreviewSessions.set(key, {widgetStore, baseScaling: widgetStore[key]});
+            this.scalingPreviewSessions.set(key, {displayStore, baseScaling: displayStore[key]});
         }
-        if (widgetStore[key] !== scaling) {
-            this.setScaling(widgetStore, key, scaling);
+        if (displayStore[key] !== scaling) {
+            this.setScaling(displayStore, key, scaling);
         }
     }
 
-    private handleScalingSelected(widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) {
+    private handleScalingSelected(displayStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) {
         const session = this.scalingPreviewSessions.get(key);
-        if (session && session.widgetStore !== widgetStore) {
+        if (session && session.displayStore !== displayStore) {
             this.revertScalingPreview(key);
         } else {
             this.scalingPreviewSessions.delete(key);
         }
-        this.setScaling(widgetStore, key, scaling);
+        this.setScaling(displayStore, key, scaling);
     }
 
     private handleScalingDropdownOpenChange(key: CatalogScalingKey, isOpen: boolean) {
@@ -225,28 +225,28 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private revertColormapPreview() {
         const session = this.colormapPreviewSession;
         this.colormapPreviewSession = null;
-        if (session && session.widgetStore.colorMap !== session.baseColormap) {
-            session.widgetStore.setColorMap(session.baseColormap);
+        if (session && session.displayStore.colorMap !== session.baseColormap) {
+            session.displayStore.setColorMap(session.baseColormap);
         }
     }
 
-    private handleColormapHovered(widgetStore: CatalogWidgetStore, colormap: string) {
-        if (this.colormapPreviewSession?.widgetStore !== widgetStore) {
+    private handleColormapHovered(displayStore: CatalogDisplayStore, colormap: string) {
+        if (this.colormapPreviewSession?.displayStore !== displayStore) {
             this.revertColormapPreview();
-            this.colormapPreviewSession = {widgetStore, baseColormap: widgetStore.colorMap};
+            this.colormapPreviewSession = {displayStore, baseColormap: displayStore.colorMap};
         }
-        if (widgetStore.colorMap !== colormap) {
-            widgetStore.setColorMap(colormap);
+        if (displayStore.colorMap !== colormap) {
+            displayStore.setColorMap(colormap);
         }
     }
 
-    private handleColormapSelected(widgetStore: CatalogWidgetStore, colormap: string) {
-        if (this.colormapPreviewSession && this.colormapPreviewSession.widgetStore !== widgetStore) {
+    private handleColormapSelected(displayStore: CatalogDisplayStore, colormap: string) {
+        if (this.colormapPreviewSession && this.colormapPreviewSession.displayStore !== displayStore) {
             this.revertColormapPreview();
         } else {
             this.colormapPreviewSession = null;
         }
-        widgetStore.setColorMap(colormap);
+        displayStore.setColorMap(colormap);
     }
 
     private handleColormapDropdownOpenChange(isOpen: boolean) {
@@ -290,8 +290,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const isDarkTheme = AppStore.Instance.isDarkTheme;
 
-        const widgetStore = this.widgetStore;
-        if (!widgetStore) {
+        const displayStore = this.displayStore;
+        if (!displayStore) {
             return null;
         }
 
@@ -310,10 +310,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             activeFileName = `${catalogFileId}: ${fileName}`;
         }
         const isOverlayPanelDisabled = catalogFileIds.length <= 0;
-        const shouldDisableSizeMap = isOverlayPanelDisabled || widgetStore.isSizeMapDisabled;
-        const shouldDisableColorMap = isOverlayPanelDisabled || widgetStore.isColorMapDisabled;
-        const shouldDisableOrientationMap = isOverlayPanelDisabled || widgetStore.isOrientationMapDisabled;
-        const shouldDisableSizeMinorMap = shouldDisableSizeMap || widgetStore.isSizeMinorMapDisabled;
+        const shouldDisableSizeMap = isOverlayPanelDisabled || displayStore.isSizeMapDisabled;
+        const shouldDisableColorMap = isOverlayPanelDisabled || displayStore.isColorMapDisabled;
+        const shouldDisableOrientationMap = isOverlayPanelDisabled || displayStore.isOrientationMapDisabled;
+        const shouldDisableSizeMinorMap = shouldDisableSizeMap || displayStore.isSizeMinorMapDisabled;
 
         const noResults = <MenuItem disabled={true} text="No results" />;
 
@@ -323,7 +323,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setSizeMap(columnName)}
+                        onItemSelect={columnName => displayStore.setSizeMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
                         disabled={isOverlayPanelDisabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -332,64 +332,64 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
+                        <Button text={displayStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMap}>
                         <ScalingSelectComponent
-                            selectedItem={widgetStore.sizeScalingType}
-                            onItemSelect={type => this.handleScalingSelected(widgetStore, "sizeScalingType", type)}
-                            onItemHover={type => this.handleScalingHovered(widgetStore, "sizeScalingType", type)}
+                            selectedItem={displayStore.sizeScalingType}
+                            onItemSelect={type => this.handleScalingSelected(displayStore, "sizeScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(displayStore, "sizeScalingType", type)}
                             onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("sizeScalingType", isOpen)}
                             disabled={shouldDisableSizeMap}
                         />
                     </FormGroup>
-                    {this.renderScalingParameter(widgetStore.sizeScalingType, widgetStore.sizeScalingParameter, value => widgetStore.setSizeScalingParameter(value), shouldDisableSizeMap)}
+                    {this.renderScalingParameter(displayStore.sizeScalingType, displayStore.sizeScalingParameter, value => displayStore.setSizeScalingParameter(value), shouldDisableSizeMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMap}>
                         <ButtonGroup>
-                            <AnchorButton disabled={shouldDisableSizeMap} text={"Diameter"} active={!widgetStore.isSizeAreaMode} onClick={() => widgetStore.setSizeArea(false)} />
-                            <AnchorButton disabled={shouldDisableSizeMap} text={"Area"} active={widgetStore.isSizeAreaMode} onClick={() => widgetStore.setSizeArea(true)} />
+                            <AnchorButton disabled={shouldDisableSizeMap} text={"Diameter"} active={!displayStore.isSizeAreaMode} onClick={() => displayStore.setSizeArea(false)} />
+                            <AnchorButton disabled={shouldDisableSizeMap} text={"Area"} active={displayStore.isSizeAreaMode} onClick={() => displayStore.setSizeArea(true)} />
                         </ButtonGroup>
                     </FormGroup>
                     <div className="numeric-input-lock">
                         <ClearableNumericInputComponent
                             label="Clip min"
-                            max={widgetStore.sizeColumnMax.clipd}
+                            max={displayStore.sizeColumnMax.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeColumnMin.clipd ?? 0}
-                            onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
-                            onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
+                            value={displayStore.sizeColumnMin.clipd ?? 0}
+                            onValueChanged={val => displayStore.setSizeColumnMin(val, "clipd")}
+                            onValueCleared={() => displayStore.resetSizeColumnValue("min")}
                             displayExponential={true}
-                            disabled={shouldDisableSizeMap || widgetStore.isSizeMinorColumnMinLocked}
+                            disabled={shouldDisableSizeMap || displayStore.isSizeMinorColumnMinLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
-                            intent={widgetStore.isSizeColumnMinLocked ? "success" : "none"}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeMinorColumnMinLocked}
+                            icon={displayStore.isSizeColumnMinLocked || displayStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
+                            intent={displayStore.isSizeColumnMinLocked ? "success" : "none"}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeMinorColumnMinLocked}
                             variant="minimal"
-                            onClick={widgetStore.toggleSizeColumnMinLock}
+                            onClick={displayStore.toggleSizeColumnMinLock}
                         />
                     </div>
                     <div className="numeric-input-lock">
                         <ClearableNumericInputComponent
                             label="Clip max"
-                            min={widgetStore.sizeColumnMin.clipd}
+                            min={displayStore.sizeColumnMin.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeColumnMax.clipd ?? 0}
-                            onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
-                            onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
+                            value={displayStore.sizeColumnMax.clipd ?? 0}
+                            onValueChanged={val => displayStore.setSizeColumnMax(val, "clipd")}
+                            onValueCleared={() => displayStore.resetSizeColumnValue("max")}
                             displayExponential={true}
-                            disabled={shouldDisableSizeMap || widgetStore.isSizeMinorColumnMaxLocked}
+                            disabled={shouldDisableSizeMap || displayStore.isSizeMinorColumnMaxLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
-                            intent={widgetStore.isSizeColumnMaxLocked ? "success" : "none"}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeMinorColumnMaxLocked}
+                            icon={displayStore.isSizeColumnMaxLocked || displayStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                            intent={displayStore.isSizeColumnMaxLocked ? "success" : "none"}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeMinorColumnMaxLocked}
                             variant="minimal"
-                            onClick={widgetStore.toggleSizeColumnMaxLock}
+                            onClick={displayStore.toggleSizeColumnMaxLock}
                         />
                     </div>
                     <FormGroup inline={true} label="Size min" disabled={shouldDisableSizeMap}>
@@ -399,53 +399,53 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             placeholder="Min"
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
-                            value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
+                            value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
                             onBlur={ev => this.handleChange(ev, "size-min")}
                             onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
+                        <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
                                     activeItem={null}
-                                    onItemSelect={units => widgetStore.setCanvasSizeUnit(units)}
+                                    onItemSelect={units => displayStore.setCanvasSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
                                     disabled={shouldDisableSizeMap}
                                     popoverProps={{minimal: true}}
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
+                                    <Button text={displayStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
                     </FormGroup>
                     <FormGroup inline={true} label="Size max" disabled={shouldDisableSizeMap}>
-                        <Tooltip content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                        <Tooltip content={`Maximum size ${displayStore.maxPointSizebyType}`}>
                             <SafeNumericInput
                                 allowNumericCharactersOnly={true}
                                 asyncControl={true}
                                 placeholder="Max"
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
-                                value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
+                                value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
                                 onBlur={ev => this.handleChange(ev, "size-max")}
                                 onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
+                        <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
                                     activeItem={null}
-                                    onItemSelect={units => widgetStore.setCanvasSizeUnit(units)}
+                                    onItemSelect={units => displayStore.setCanvasSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
                                     disabled={shouldDisableSizeMap}
                                     popoverProps={{minimal: true}}
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
+                                    <Button text={displayStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -460,7 +460,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setSizeMinorMap(columnName)}
+                        onItemSelect={columnName => displayStore.setSizeMinorMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
                         disabled={isOverlayPanelDisabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -469,64 +469,64 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" />
+                        <Button text={displayStore.sizeMinorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableSizeMinorMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableSizeMinorMap}>
                         <ScalingSelectComponent
-                            selectedItem={widgetStore.sizeMinorScalingType}
-                            onItemSelect={type => this.handleScalingSelected(widgetStore, "sizeMinorScalingType", type)}
-                            onItemHover={type => this.handleScalingHovered(widgetStore, "sizeMinorScalingType", type)}
+                            selectedItem={displayStore.sizeMinorScalingType}
+                            onItemSelect={type => this.handleScalingSelected(displayStore, "sizeMinorScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(displayStore, "sizeMinorScalingType", type)}
                             onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("sizeMinorScalingType", isOpen)}
                             disabled={shouldDisableSizeMinorMap}
                         />
                     </FormGroup>
-                    {this.renderScalingParameter(widgetStore.sizeMinorScalingType, widgetStore.sizeMinorScalingParameter, value => widgetStore.setSizeMinorScalingParameter(value), shouldDisableSizeMinorMap)}
+                    {this.renderScalingParameter(displayStore.sizeMinorScalingType, displayStore.sizeMinorScalingParameter, value => displayStore.setSizeMinorScalingParameter(value), shouldDisableSizeMinorMap)}
                     <FormGroup inline={true} label={"Size mode"} disabled={shouldDisableSizeMinorMap}>
                         <ButtonGroup>
-                            <AnchorButton disabled={shouldDisableSizeMinorMap} text={"Diameter"} active={!widgetStore.isSizeMinorAreaMode} onClick={() => widgetStore.setSizeMinorArea(false)} />
-                            <AnchorButton disabled={shouldDisableSizeMinorMap} text={"Area"} active={widgetStore.isSizeMinorAreaMode} onClick={() => widgetStore.setSizeMinorArea(true)} />
+                            <AnchorButton disabled={shouldDisableSizeMinorMap} text={"Diameter"} active={!displayStore.isSizeMinorAreaMode} onClick={() => displayStore.setSizeMinorArea(false)} />
+                            <AnchorButton disabled={shouldDisableSizeMinorMap} text={"Area"} active={displayStore.isSizeMinorAreaMode} onClick={() => displayStore.setSizeMinorArea(true)} />
                         </ButtonGroup>
                     </FormGroup>
                     <div className="numeric-input-lock">
                         <ClearableNumericInputComponent
                             label="Clip min"
-                            max={widgetStore.sizeMinorColumnMax.clipd}
+                            max={displayStore.sizeMinorColumnMax.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeMinorColumnMin.clipd ?? 0}
-                            onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
-                            onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
+                            value={displayStore.sizeMinorColumnMin.clipd ?? 0}
+                            onValueChanged={val => displayStore.setSizeMinorColumnMin(val, "clipd")}
+                            onValueCleared={() => displayStore.resetSizeMinorColumnValue("min")}
                             displayExponential={true}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMinLocked}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeColumnMinLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.isSizeColumnMinLocked || widgetStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
-                            intent={widgetStore.isSizeMinorColumnMinLocked ? "success" : "none"}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMinLocked}
+                            icon={displayStore.isSizeColumnMinLocked || displayStore.isSizeMinorColumnMinLocked ? "lock" : "unlock"}
+                            intent={displayStore.isSizeMinorColumnMinLocked ? "success" : "none"}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeColumnMinLocked}
                             variant="minimal"
-                            onClick={widgetStore.toggleSizeMinorColumnMinLock}
+                            onClick={displayStore.toggleSizeMinorColumnMinLock}
                         />
                     </div>
                     <div className="numeric-input-lock">
                         <ClearableNumericInputComponent
                             label="Clip max"
-                            min={widgetStore.sizeMinorColumnMin.clipd}
+                            min={displayStore.sizeMinorColumnMin.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeMinorColumnMax.clipd ?? 0}
-                            onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
-                            onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
+                            value={displayStore.sizeMinorColumnMax.clipd ?? 0}
+                            onValueChanged={val => displayStore.setSizeMinorColumnMax(val, "clipd")}
+                            onValueCleared={() => displayStore.resetSizeMinorColumnValue("max")}
                             displayExponential={true}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMaxLocked}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeColumnMaxLocked}
                         />
                         <AnchorButton
                             className="lock-button"
-                            icon={widgetStore.isSizeColumnMaxLocked || widgetStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
-                            intent={widgetStore.isSizeMinorColumnMaxLocked ? "success" : "none"}
-                            disabled={shouldDisableSizeMinorMap || widgetStore.isSizeColumnMaxLocked}
+                            icon={displayStore.isSizeColumnMaxLocked || displayStore.isSizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                            intent={displayStore.isSizeMinorColumnMaxLocked ? "success" : "none"}
+                            disabled={shouldDisableSizeMinorMap || displayStore.isSizeColumnMaxLocked}
                             variant="minimal"
-                            onClick={widgetStore.toggleSizeMinorColumnMaxLock}
+                            onClick={displayStore.toggleSizeMinorColumnMaxLock}
                         />
                     </div>
                     <FormGroup inline={true} label="Size min" disabled={shouldDisableSizeMap}>
@@ -536,53 +536,53 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             placeholder="Min"
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
-                            value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
+                            value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
                             onBlur={ev => this.handleChange(ev, "size-min")}
                             onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
+                        <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
                                     activeItem={null}
-                                    onItemSelect={units => widgetStore.setCanvasSizeUnit(units)}
+                                    onItemSelect={units => displayStore.setCanvasSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
                                     disabled={shouldDisableSizeMap}
                                     popoverProps={{minimal: true}}
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
+                                    <Button text={displayStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
                     </FormGroup>
                     <FormGroup inline={true} label="Size max" disabled={shouldDisableSizeMap}>
-                        <Tooltip content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                        <Tooltip content={`Maximum size ${displayStore.maxPointSizebyType}`}>
                             <SafeNumericInput
                                 allowNumericCharactersOnly={true}
                                 asyncControl={true}
                                 placeholder="Max"
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
-                                value={widgetStore.isSizeMajor ? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
+                                value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
                                 onBlur={ev => this.handleChange(ev, "size-max")}
                                 onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
-                        <Collapse className="select-angular-unit" isOpen={!widgetStore.isSizeAreaMode}>
+                        <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
                                 <Select
                                     items={Object.values(CatalogSizeUnits)}
                                     activeItem={null}
-                                    onItemSelect={units => widgetStore.setCanvasSizeUnit(units)}
+                                    onItemSelect={units => displayStore.setCanvasSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
                                     disabled={shouldDisableSizeMap}
                                     popoverProps={{minimal: true}}
                                     filterable={false}
                                     resetOnSelect={true}
                                 >
-                                    <Button text={widgetStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
+                                    <Button text={displayStore.canvasSizeUnit} disabled={shouldDisableSizeMap} endIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
                         </Collapse>
@@ -594,55 +594,55 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Size" disabled={isOverlayPanelDisabled}>
-                    <Tooltip disabled={isOverlayPanelDisabled || !widgetStore.isSizeMapDisabled} content={`${widgetStore.minOverlaySize} ~ ${widgetStore.maxOverlaySize}`}>
+                    <Tooltip disabled={isOverlayPanelDisabled || !displayStore.isSizeMapDisabled} content={`${displayStore.minOverlaySize} ~ ${displayStore.maxOverlaySize}`}>
                         <SafeNumericInput
                             placeholder="Size"
-                            disabled={isOverlayPanelDisabled || !widgetStore.isSizeMapDisabled}
-                            min={widgetStore.minOverlaySize}
-                            max={widgetStore.maxOverlaySize}
+                            disabled={isOverlayPanelDisabled || !displayStore.isSizeMapDisabled}
+                            min={displayStore.minOverlaySize}
+                            max={displayStore.maxOverlaySize}
                             clampValueOnBlur={true}
-                            value={widgetStore.showedCatalogSize}
+                            value={displayStore.showedCatalogSize}
                             stepSize={0.5}
                             minorStepSize={0.0001}
-                            onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                            onValueChange={(value: number) => displayStore.setCatalogSize(value)}
                             data-testid="catalog-settings-size-input"
                         />
                     </Tooltip>
-                    <Collapse className="select-angular-unit" isOpen={widgetStore.isSizeMapDisabled}>
+                    <Collapse className="select-angular-unit" isOpen={displayStore.isSizeMapDisabled}>
                         <FormGroup inline={true}>
                             <Select
                                 items={Object.values(CatalogSizeUnits)}
                                 activeItem={null}
-                                onItemSelect={units => widgetStore.setCanvasSizeUnit(units)}
+                                onItemSelect={units => displayStore.setCanvasSizeUnit(units)}
                                 itemRenderer={this.renderUnitPopOver}
                                 disabled={isOverlayPanelDisabled}
                                 popoverProps={{minimal: true}}
                                 filterable={false}
                                 resetOnSelect={true}
                             >
-                                <Button text={widgetStore.canvasSizeUnit} disabled={isOverlayPanelDisabled || !widgetStore.isSizeMapDisabled} endIcon="double-caret-vertical" />
+                                <Button text={displayStore.canvasSizeUnit} disabled={isOverlayPanelDisabled || !displayStore.isSizeMapDisabled} endIcon="double-caret-vertical" />
                             </Select>
                         </FormGroup>
                     </Collapse>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={isOverlayPanelDisabled}>
-                    <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
+                    <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogDisplayStore.MIN_THICKNESS} ~ ${CatalogDisplayStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={isOverlayPanelDisabled}
-                            min={CatalogWidgetStore.MIN_THICKNESS}
-                            max={CatalogWidgetStore.MAX_THICKNESS}
+                            min={CatalogDisplayStore.MIN_THICKNESS}
+                            max={CatalogDisplayStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
-                            value={widgetStore.thickness}
+                            value={displayStore.thickness}
                             stepSize={0.5}
-                            onValueChange={(value: number) => widgetStore.setThickness(value)}
+                            onValueChange={(value: number) => displayStore.setThickness(value)}
                             data-testid="catalog-settings-thickness-input"
                         />
                     </Tooltip>
                 </FormGroup>
-                <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
+                <Tabs id="catalogSettings" vertical={false} selectedTabId={displayStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
-                    <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.isSizeMinorTabEnabled} />
+                    <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!displayStore.isSizeMinorTabEnabled} />
                 </Tabs>
             </div>
         );
@@ -653,7 +653,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setSizeMap(columnName)}
+                        onItemSelect={columnName => displayStore.setSizeMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
                         disabled={isOverlayPanelDisabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -662,64 +662,64 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
+                        <Button text={displayStore.sizeMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
-                <FormGroup inline={true} label="Minor" disabled={!widgetStore.isSizeMinorTabEnabled}>
+                <FormGroup inline={true} label="Minor" disabled={!displayStore.isSizeMinorTabEnabled}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setSizeMinorMap(columnName)}
+                        onItemSelect={columnName => displayStore.setSizeMinorMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
-                        disabled={!widgetStore.isSizeMinorTabEnabled}
+                        disabled={!displayStore.isSizeMinorTabEnabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         filterable={true}
                         noResults={noResults}
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.isSizeMinorTabEnabled} endIcon="double-caret-vertical" />
+                        <Button text={displayStore.sizeMinorMapColumn} disabled={!displayStore.isSizeMinorTabEnabled} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Unit">
                     <Select
                         items={Object.values(AngularSizeUnit).filter(item => item !== AngularSizeUnit.MILLIARCSEC)}
                         activeItem={null}
-                        onItemSelect={units => widgetStore.setWorldSizeUnit(units)}
+                        onItemSelect={units => displayStore.setWorldSizeUnit(units)}
                         itemRenderer={this.renderAngularUnitPopOver}
-                        disabled={!widgetStore.isAngularSize}
+                        disabled={!displayStore.isAngularSize}
                         popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} endIcon="double-caret-vertical" />
+                        <Button text={displayStore.worldSizeUnit} disabled={!displayStore.isAngularSize} endIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Axis type">
                     <ButtonGroup>
-                        {Array.from(widgetStore.catalogSourceRadiusTypes.entries()).map(([type, option]) => (
+                        {Array.from(displayStore.catalogSourceRadiusTypes.entries()).map(([type, option]) => (
                             <AnchorButton
                                 key={type}
-                                disabled={isOverlayPanelDisabled || !widgetStore.isAngularSize}
+                                disabled={isOverlayPanelDisabled || !displayStore.isAngularSize}
                                 text={option.label}
-                                active={widgetStore.catalogSourceRadiusType === type}
-                                onClick={() => widgetStore.setCatalogSourceRadiusType(type)}
+                                active={displayStore.catalogSourceRadiusType === type}
+                                onClick={() => displayStore.setCatalogSourceRadiusType(type)}
                                 data-testid={`catalog-settings-axis-type-${type}-button`}
                             />
                         ))}
                     </ButtonGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={isOverlayPanelDisabled}>
-                    <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogWidgetStore.MIN_THICKNESS} ~ ${CatalogWidgetStore.MAX_THICKNESS}`}>
+                    <Tooltip disabled={isOverlayPanelDisabled} content={`${CatalogDisplayStore.MIN_THICKNESS} ~ ${CatalogDisplayStore.MAX_THICKNESS}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={isOverlayPanelDisabled}
-                            min={CatalogWidgetStore.MIN_THICKNESS}
-                            max={CatalogWidgetStore.MAX_THICKNESS}
+                            min={CatalogDisplayStore.MIN_THICKNESS}
+                            max={CatalogDisplayStore.MAX_THICKNESS}
                             clampValueOnBlur={true}
-                            value={widgetStore.thickness}
+                            value={displayStore.thickness}
                             stepSize={0.5}
-                            onValueChange={(value: number) => widgetStore.setThickness(value)}
+                            onValueChange={(value: number) => displayStore.setThickness(value)}
                             data-testid="catalog-settings-thickness-input"
                         />
                     </Tooltip>
@@ -729,23 +729,23 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const colorMap = (
             <div className="panel-container" data-testid="catalog-settings-color-tab">
-                <FormGroup label={"Color"} inline={true} disabled={isOverlayPanelDisabled || !widgetStore.isColorMapDisabled}>
+                <FormGroup label={"Color"} inline={true} disabled={isOverlayPanelDisabled || !displayStore.isColorMapDisabled}>
                     <AutoColorPickerComponent
-                        color={widgetStore.catalogColor}
+                        color={displayStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                            displayStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
                         }}
                         disableAlpha={true}
-                        disabled={isOverlayPanelDisabled || !widgetStore.isColorMapDisabled}
+                        disabled={isOverlayPanelDisabled || !displayStore.isColorMapDisabled}
                     />
                 </FormGroup>
                 <FormGroup label={"Overlay highlight"} inline={true} disabled={isOverlayPanelDisabled}>
                     <AutoColorPickerComponent
-                        color={widgetStore.highlightColor}
+                        color={displayStore.highlightColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                            displayStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
                         }}
                         disableAlpha={true}
                         disabled={isOverlayPanelDisabled}
@@ -755,7 +755,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setColorMapColumn(columnName)}
+                        onItemSelect={columnName => displayStore.setColorMapColumn(columnName)}
                         itemRenderer={this.renderAxisPopOver}
                         disabled={isOverlayPanelDisabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -764,50 +764,50 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.colorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-color-column-dropdown" />
+                        <Button text={displayStore.colorMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-color-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!shouldDisableColorMap}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableColorMap}>
                         <ScalingSelectComponent
-                            selectedItem={widgetStore.colorScalingType}
-                            onItemSelect={type => this.handleScalingSelected(widgetStore, "colorScalingType", type)}
-                            onItemHover={type => this.handleScalingHovered(widgetStore, "colorScalingType", type)}
+                            selectedItem={displayStore.colorScalingType}
+                            onItemSelect={type => this.handleScalingSelected(displayStore, "colorScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(displayStore, "colorScalingType", type)}
                             onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("colorScalingType", isOpen)}
                             disabled={shouldDisableColorMap}
                         />
                     </FormGroup>
-                    {this.renderScalingParameter(widgetStore.colorScalingType, widgetStore.colorScalingParameter, value => widgetStore.setColorScalingParameter(value), shouldDisableColorMap)}
+                    {this.renderScalingParameter(displayStore.colorScalingType, displayStore.colorScalingParameter, value => displayStore.setColorScalingParameter(value), shouldDisableColorMap)}
                     <FormGroup inline={true} label="Colormap" disabled={shouldDisableColorMap}>
                         <ColormapComponent
-                            inverted={widgetStore.isInvertedColorMap}
-                            selectedColormap={widgetStore.colorMap}
-                            onColormapSelect={selected => this.handleColormapSelected(widgetStore, selected)}
-                            onColormapHover={colormap => this.handleColormapHovered(widgetStore, colormap)}
+                            inverted={displayStore.isInvertedColorMap}
+                            selectedColormap={displayStore.colorMap}
+                            onColormapSelect={selected => this.handleColormapSelected(displayStore, selected)}
+                            onColormapHover={colormap => this.handleColormapHovered(displayStore, colormap)}
                             onDropdownOpenChange={isOpen => this.handleColormapDropdownOpenChange(isOpen)}
                             disabled={shouldDisableColorMap}
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true} disabled={shouldDisableColorMap}>
-                        <Switch checked={widgetStore.isInvertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={shouldDisableColorMap} data-testid="catalog-settings-invert-colormap-toggle" />
+                        <Switch checked={displayStore.isInvertedColorMap} onChange={ev => displayStore.setColorMapDirection(ev.currentTarget.checked)} disabled={shouldDisableColorMap} data-testid="catalog-settings-invert-colormap-toggle" />
                     </FormGroup>
                     <ClearableNumericInputComponent
                         label="Clip min"
-                        max={widgetStore.colorColumnMax.clipd}
+                        max={displayStore.colorColumnMax.clipd}
                         integerOnly={false}
-                        value={widgetStore.colorColumnMin.clipd ?? 0}
-                        onValueChanged={val => widgetStore.setColorColumnMin(val, "clipd")}
-                        onValueCleared={() => widgetStore.resetColorColumnValue("min")}
+                        value={displayStore.colorColumnMin.clipd ?? 0}
+                        onValueChanged={val => displayStore.setColorColumnMin(val, "clipd")}
+                        onValueCleared={() => displayStore.resetColorColumnValue("min")}
                         displayExponential={true}
                         disabled={shouldDisableColorMap}
                     />
                     <ClearableNumericInputComponent
                         label="Clip max"
-                        min={widgetStore.colorColumnMin.clipd}
+                        min={displayStore.colorColumnMin.clipd}
                         integerOnly={false}
-                        value={widgetStore.colorColumnMax.clipd ?? 0}
-                        onValueChanged={val => widgetStore.setColorColumnMax(val, "clipd")}
-                        onValueCleared={() => widgetStore.resetColorColumnValue("max")}
+                        value={displayStore.colorColumnMax.clipd ?? 0}
+                        onValueChanged={val => displayStore.setColorColumnMax(val, "clipd")}
+                        onValueCleared={() => displayStore.resetColorColumnValue("max")}
                         displayExponential={true}
                         disabled={shouldDisableColorMap}
                     />
@@ -819,14 +819,14 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             <div className="panel-container">
                 <FormGroup
                     inline={true}
-                    label={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? "P.A." : "Column"}
-                    labelInfo={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? "(deg)" : ""}
+                    label={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? "P.A." : "Column"}
+                    labelInfo={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? "(deg)" : ""}
                     disabled={isOverlayPanelDisabled}
                 >
                     <Select
                         items={this.axisOption}
                         activeItem={null}
-                        onItemSelect={columnName => widgetStore.setOrientationMapColumn(columnName)}
+                        onItemSelect={columnName => displayStore.setOrientationMapColumn(columnName)}
                         itemRenderer={this.renderAxisPopOver}
                         disabled={isOverlayPanelDisabled}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
@@ -835,20 +835,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.orientationMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
+                        <Button text={displayStore.orientationMapColumn} disabled={isOverlayPanelDisabled} endIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
                 </FormGroup>
-                <Collapse isOpen={!shouldDisableOrientationMap && widgetStore.catalogDisplayMode !== CatalogDisplayMode.WORLD}>
+                <Collapse isOpen={!shouldDisableOrientationMap && displayStore.catalogDisplayMode !== CatalogDisplayMode.WORLD}>
                     <FormGroup label={"Scaling"} inline={true} disabled={shouldDisableOrientationMap}>
                         <ScalingSelectComponent
-                            selectedItem={widgetStore.orientationScalingType}
-                            onItemSelect={type => this.handleScalingSelected(widgetStore, "orientationScalingType", type)}
-                            onItemHover={type => this.handleScalingHovered(widgetStore, "orientationScalingType", type)}
+                            selectedItem={displayStore.orientationScalingType}
+                            onItemSelect={type => this.handleScalingSelected(displayStore, "orientationScalingType", type)}
+                            onItemHover={type => this.handleScalingHovered(displayStore, "orientationScalingType", type)}
                             onDropdownOpenChange={isOpen => this.handleScalingDropdownOpenChange("orientationScalingType", isOpen)}
                             disabled={shouldDisableOrientationMap}
                         />
                     </FormGroup>
-                    {this.renderScalingParameter(widgetStore.orientationScalingType, widgetStore.orientationScalingParameter, value => widgetStore.setOrientationScalingParameter(value), shouldDisableOrientationMap)}
+                    {this.renderScalingParameter(displayStore.orientationScalingType, displayStore.orientationScalingParameter, value => displayStore.setOrientationScalingParameter(value), shouldDisableOrientationMap)}
                     <FormGroup inline={true} label="Orientation" labelInfo="(degree)" disabled={shouldDisableOrientationMap}>
                         <div className="parameter-container">
                             <FormGroup inline={true} label="Min">
@@ -858,7 +858,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     placeholder="Min"
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
-                                    value={widgetStore.angleMin}
+                                    value={displayStore.angleMin}
                                     onBlur={ev => this.handleChange(ev, "angle-min")}
                                     onKeyDown={ev => this.handleChange(ev, "angle-min")}
                                 />
@@ -870,7 +870,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     placeholder="Max"
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
-                                    value={widgetStore.angleMax}
+                                    value={displayStore.angleMax}
                                     onBlur={ev => this.handleChange(ev, "angle-max")}
                                     onKeyDown={ev => this.handleChange(ev, "angle-max")}
                                 />
@@ -879,21 +879,21 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </FormGroup>
                     <ClearableNumericInputComponent
                         label="Clip min"
-                        max={widgetStore.orientationMax.clipd}
+                        max={displayStore.orientationMax.clipd}
                         integerOnly={false}
-                        value={widgetStore.orientationMin.clipd ?? 0}
-                        onValueChanged={val => widgetStore.setOrientationMin(val, "clipd")}
-                        onValueCleared={() => widgetStore.resetOrientationValue("min")}
+                        value={displayStore.orientationMin.clipd ?? 0}
+                        onValueChanged={val => displayStore.setOrientationMin(val, "clipd")}
+                        onValueCleared={() => displayStore.resetOrientationValue("min")}
                         displayExponential={true}
                         disabled={shouldDisableOrientationMap}
                     />
                     <ClearableNumericInputComponent
                         label="Clip max"
-                        min={widgetStore.orientationMin.clipd}
+                        min={displayStore.orientationMin.clipd}
                         integerOnly={false}
-                        value={widgetStore.orientationMax.clipd ?? 0}
-                        onValueChanged={val => widgetStore.setOrientationMax(val, "clipd")}
-                        onValueCleared={() => widgetStore.resetOrientationValue("max")}
+                        value={displayStore.orientationMax.clipd ?? 0}
+                        onValueChanged={val => displayStore.setOrientationMax(val, "clipd")}
+                        onValueCleared={() => displayStore.resetOrientationValue("max")}
                         displayExponential={true}
                         disabled={shouldDisableOrientationMap}
                     />
@@ -925,34 +925,36 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={isOverlayPanelDisabled}
                             filterable={false}
                             items={
-                                widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED) : this.catalogOverlayShape
+                                displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD
+                                    ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED)
+                                    : this.catalogOverlayShape
                             }
-                            activeItem={widgetStore.catalogShape}
-                            onItemSelect={item => widgetStore.setCatalogShape(item)}
+                            activeItem={displayStore.catalogShape}
+                            onItemSelect={item => displayStore.setCatalogShape(item)}
                             itemRenderer={this.renderShapePopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button icon={this.getCatalogShape(widgetStore.catalogShape)} endIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} data-testid="catalog-settings-shape-dropdown" />
+                            <Button icon={this.getCatalogShape(displayStore.catalogShape)} endIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} data-testid="catalog-settings-shape-dropdown" />
                         </Select>
                     </FormGroup>
                     <FormGroup className={"file-menu"} inline={true} label="Mode" disabled={isOverlayPanelDisabled}>
                         <ButtonGroup>
                             <AnchorButton
-                                onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS)}
+                                onClick={() => displayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS)}
                                 text={CatalogDisplayMode.CANVAS}
-                                active={widgetStore.catalogDisplayMode === CatalogDisplayMode.CANVAS}
+                                active={displayStore.catalogDisplayMode === CatalogDisplayMode.CANVAS}
                                 disabled={isOverlayPanelDisabled}
                             />
                             <AnchorButton
-                                onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD)}
+                                onClick={() => displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD)}
                                 text={CatalogDisplayMode.WORLD}
-                                active={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD}
+                                active={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD}
                                 disabled={isOverlayPanelDisabled}
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={displayStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
                         <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-color-tab-title" />
                         <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-orientation-tab-title" />
                     </Tabs>
@@ -983,49 +985,49 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             return;
         }
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore;
-        if (!widgetStore) {
+        const displayStore = this.displayStore;
+        if (!displayStore) {
             return;
         }
-        const pointSize = widgetStore.isSizeMajor ? widgetStore.pointSizebyType : widgetStore.minorPointSizebyType;
+        const pointSize = displayStore.isSizeMajor ? displayStore.pointSizebyType : displayStore.minorPointSizebyType;
 
         switch (type) {
             case "size-min":
-                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SIZE_MAP_MIN) {
+                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogDisplayStore.SIZE_MAP_MIN) {
                     const inputVal = val;
-                    if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
-                        widgetStore.setMinorSizeMin(inputVal);
+                    if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
+                        displayStore.setMinorSizeMin(inputVal);
                     } else {
-                        widgetStore.setSizeMin(inputVal);
+                        displayStore.setSizeMin(inputVal);
                     }
                 } else {
                     ev.currentTarget.value = pointSize.min.toString();
                 }
                 break;
             case "size-max":
-                if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= widgetStore.maxPointSizebyType) {
+                if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= displayStore.maxPointSizebyType) {
                     const inputVal = val;
-                    if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
-                        widgetStore.setMinorSizeMax(inputVal);
+                    if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
+                        displayStore.setMinorSizeMax(inputVal);
                     } else {
-                        widgetStore.setSizeMax(inputVal);
+                        displayStore.setSizeMax(inputVal);
                     }
                 } else {
                     ev.currentTarget.value = pointSize.max.toString();
                 }
                 break;
             case "angle-min":
-                if (isFinite(val) && val < widgetStore.angleMax) {
-                    widgetStore.setAngleMin(val);
+                if (isFinite(val) && val < displayStore.angleMax) {
+                    displayStore.setAngleMin(val);
                 } else {
-                    ev.currentTarget.value = widgetStore.angleMin.toString();
+                    ev.currentTarget.value = displayStore.angleMin.toString();
                 }
                 break;
             case "angle-max":
-                if (isFinite(val) && val > widgetStore.angleMin) {
-                    widgetStore.setAngleMax(val);
+                if (isFinite(val) && val > displayStore.angleMin) {
+                    displayStore.setAngleMax(val);
                 } else {
-                    ev.currentTarget.value = widgetStore.angleMax.toString();
+                    ev.currentTarget.value = displayStore.angleMax.toString();
                 }
                 break;
             default:
@@ -1045,16 +1047,16 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleSelectedTabChanged = (newTabId: string | number) => {
-        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.displayStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     private handleSelectedAxisTabChanged = (newTabId: string | number) => {
-        this.widgetStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));
+        this.displayStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));
     };
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
-        const widgetStore = this.widgetStore;
-        const color = widgetStore?.catalogColor ?? Colors.TURQUOISE3;
+        const displayStore = this.displayStore;
+        const color = displayStore?.catalogColor ?? Colors.TURQUOISE3;
         switch (shape) {
             case CatalogOverlayShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color} />;

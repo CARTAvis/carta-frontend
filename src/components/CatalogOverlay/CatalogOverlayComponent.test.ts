@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogProfileStore, CatalogStore, CatalogWidgetStore, WidgetsStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -142,7 +142,7 @@ const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemT
 };
 
 let harnessId = 0;
-const CONSTRUCTED_COMPONENTS: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogWidgetStore}> = [];
+const CONSTRUCTED_COMPONENTS: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogDisplayStore}> = [];
 
 const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
@@ -159,7 +159,7 @@ const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[]
         configurable: true,
         get: () => profileStore
     });
-    Object.defineProperty(component, "widgetStore", {
+    Object.defineProperty(component, "displayStore", {
         configurable: true,
         get: () => widgetStore
     });
@@ -186,7 +186,7 @@ const CreateComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE,
         configurable: true,
         get: () => undefined
     });
-    Object.defineProperty(component, "widgetStore", {
+    Object.defineProperty(component, "displayStore", {
         configurable: true,
         get: () => widgetStore
     });
@@ -205,14 +205,14 @@ const CreateComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE,
 const CreateConstructedComponentHarness = (
     system: CatalogSystemType,
     columns: MockColumn[],
-    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogWidgetStore} = {}
+    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogDisplayStore} = {}
 ) => {
     harnessId += 1;
     const catalogFileId = options.catalogFileId ?? 10_000 + harnessId;
     const componentId = options.componentId ?? `catalog-overlay-reaction-test-${harnessId}`;
     const catalogWidgetId = options.catalogWidgetId ?? `catalog-widget-reaction-test-${harnessId}`;
     const profileStore = options.profileStore ?? CreateCatalogProfileStore(catalogFileId, system, columns);
-    const widgetStore = options.widgetStore ?? new CatalogWidgetStore(catalogFileId);
+    const widgetStore = options.widgetStore ?? new CatalogDisplayStore(catalogFileId);
 
     if (options.catalogPlotType !== undefined) {
         widgetStore.setCatalogPlotType(options.catalogPlotType);

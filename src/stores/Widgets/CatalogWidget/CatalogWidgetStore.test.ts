@@ -1,12 +1,12 @@
 import * as CARTACompute from "carta_computation";
 
 import {CatalogDisplayMode, CatalogSizeUnits} from "enums";
-import {type CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
+import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
 
-describe("CatalogWidgetStore angular size axis type", () => {
+describe("CatalogDisplayStore angular size axis type", () => {
     test("keeps axis mode per catalog and converts radius values to diameters", () => {
-        const diameterWidgetStore = new CatalogWidgetStore(0);
-        const radiusWidgetStore = new CatalogWidgetStore(1);
+        const diameterWidgetStore = new CatalogDisplayStore(0);
+        const radiusWidgetStore = new CatalogDisplayStore(1);
 
         diameterWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
         radiusWidgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
@@ -34,7 +34,7 @@ describe("CatalogWidgetStore angular size axis type", () => {
             get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
         };
         const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
-        const widgetStore = new CatalogWidgetStore(fileId);
+        const widgetStore = new CatalogDisplayStore(fileId);
         const previousProfileStore = CatalogStore.Instance.catalogProfileStores.get(fileId);
         CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
 
