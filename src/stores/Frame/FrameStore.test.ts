@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 
 import {PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
+import {TileService} from "../../services";
 import {type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
@@ -340,6 +341,30 @@ describe("FrameStore", () => {
             frame.setAxisZoom(2, 4);
 
             expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+
+        test("preserves preview zoom changes during decompression", () => {
+            const frame = new FrameStore({
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    width: 2,
+                    height: 2
+                }
+            } as any);
+            const decompressPreviewRasterData = jest.spyOn(TileService.prototype, "decompressPreviewRasterData").mockImplementation(() => undefined);
+            const generator = frame.updatePreviewData({} as any);
+
+            try {
+                expect(generator.next().done).toBe(false);
+                frame.setAxisZoom(3, 4);
+                generator.next();
+
+                expect(frame.effectiveZoomLevel).toEqual({x: 3, y: 4});
+            } finally {
+                decompressPreviewRasterData.mockRestore();
+            }
         });
 
         test("uses independent zoom levels for rotated spectral cubes", () => {

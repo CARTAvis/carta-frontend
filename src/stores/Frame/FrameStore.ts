@@ -3887,11 +3887,12 @@ export class FrameStore {
         const oldAspectRatio = this.aspectRatio;
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
-        const oldZoom = this.effectiveZoomLevel;
 
         // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
         // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.
         yield TileService.Instance.decompressPreviewRasterData(previewData);
+
+        const oldZoom = this.effectiveZoomLevel;
 
         if (previewData.histogram) {
             this.renderConfig.setPreviewHistogramMax(null);
