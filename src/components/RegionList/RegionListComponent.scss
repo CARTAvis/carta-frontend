@@ -4,6 +4,8 @@
     width: 100%;
     height: 100%;
     user-select: none;
+    display: flex;
+    flex-direction: column;
 
     .#{$ns}-popover-target {
         flex: none !important;
@@ -25,9 +27,6 @@
             opacity: 1;
             transition: opacity ease-in-out 400ms;
         }
-    }
-
-    .region-editing {
     }
 
     .region-list-table {

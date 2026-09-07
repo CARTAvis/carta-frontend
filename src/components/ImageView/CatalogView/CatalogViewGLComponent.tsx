@@ -67,6 +67,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
+            const catalogSourceRadiusType = catalogWidgetStore.catalogSourceRadiusType;
             const shape = catalogWidgetStore.catalogShape;
             const thickness = catalogWidgetStore.thickness;
             const displayMode = catalogWidgetStore.catalogDisplayMode;
@@ -211,6 +212,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 if (!sourceFrame) {
                     return;
                 }
+                const zoomFrame = sourceFrame.spatialReference ?? sourceFrame;
+                const effectiveZoomLevel = zoomFrame.effectiveZoomLevel;
+                const frameAspectRatio = sourceFrame.spatialReference?.aspectRatio ?? sourceFrame.aspectRatio;
                 if (sourceFrame.spatialReference) {
                     const baseRequiredView = sourceFrame.spatialReference.requiredFrameView;
                     if (!sourceFrame.spatialTransform) {
@@ -248,8 +252,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
-                this.gl.uniform1f(shaderUniforms.ZoomLevel, sourceFrame?.spatialReference?.zoomLevel ?? sourceFrame?.zoomLevel);
-                this.gl.uniform1f(shaderUniforms.PixelRatio, sourceFrame?.spatialReference?.aspectRatio ?? sourceFrame?.aspectRatio);
+                this.gl.uniform2f(shaderUniforms.ZoomLevel, effectiveZoomLevel.x, effectiveZoomLevel.y);
+                this.gl.uniform1f(shaderUniforms.PixelRatio, frameAspectRatio);
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);

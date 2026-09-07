@@ -1,6 +1,34 @@
-import {getValueFromArcsecString, pixelToFluxDensityUnit} from "./units";
+import {getValueFromArcsecString, pixelToFluxDensityUnit, toFixed} from "./units";
 
 jest.mock("models", () => ({}));
+
+describe("toFixed", () => {
+    it("rounds to the requested number of decimals", () => {
+        expect(toFixed(0.284)).toBe("0");
+        expect(toFixed(-0.5)).toBe("-1");
+        expect(toFixed(-1.2345, 3)).toBe("-1.234");
+        expect(toFixed(1.5, 1)).toBe("1.5");
+    });
+
+    it("does not display negative zero", () => {
+        expect(toFixed(-0.284)).toBe("0");
+        expect(toFixed(-0)).toBe("0");
+        expect(toFixed(-0.0001, 3)).toBe("0.000");
+        expect(toFixed(-0.284, 0)).toBe("0");
+    });
+
+    it("keeps the sign of values that do not round to zero", () => {
+        expect(toFixed(-0.284, 3)).toBe("-0.284");
+        expect(toFixed(-0.06, 1)).toBe("-0.1");
+    });
+
+    it("leaves non-finite values as is", () => {
+        expect(toFixed(NaN)).toBe("NaN");
+        expect(toFixed(Infinity)).toBe("Infinity");
+        expect(toFixed(-Infinity)).toBe("-Infinity");
+        expect(toFixed(1.234, -1)).toBe("1.234");
+    });
+});
 
 describe("pixelToFluxDensityUnit", () => {
     it("removes specific substrings from the pixel unit string", () => {

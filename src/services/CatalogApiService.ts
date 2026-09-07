@@ -5,7 +5,7 @@ import {action, makeObservable} from "mobx";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
 import {TelemetryService} from "./TelemetryService";
@@ -14,10 +14,6 @@ export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
     private static staticInstance: CatalogApiService;
-    private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
-        [CatalogDatabase.SIMBAD, {baseURL: "https://simbad.u-strasbg.fr/simbad/sim-tap/"}],
-        [CatalogDatabase.VIZIER, {baseURL: "https://vizier.cds.unistra.fr/viz-bin/"}]
-    ]);
     private axiosInstanceSimbad: AxiosInstance;
     private axiosInstanceVizier: AxiosInstance;
     private cancelTokenSourceSimbad: CancelTokenSource;
@@ -35,17 +31,16 @@ export class CatalogApiService {
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.SIMBAD)?.baseURL,
             cancelToken: this.cancelTokenSourceSimbad.token
         });
         this.axiosInstanceVizier = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.VIZIER)?.baseURL,
             cancelToken: this.cancelTokenSourceVizier.token
         });
     }
 
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
-        return this.axiosInstanceSimbad.get(`sync?request=doQuery&lang=adql&format=json&query=${query}`);
+        const encoded = encodeURIComponent(query);
+        return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
     };
 
     public cancelQuery(type: CatalogDatabase) {
@@ -55,6 +50,116 @@ export class CatalogApiService {
             this.cancelTokenSourceVizier.cancel("VizieR query canceled by the user.");
         }
     }
+
+    public benchmarkMirror = async (database: CatalogDatabase, mirrorUrl: string, timeoutMs: number = 10000, signal?: AbortSignal): Promise<number | null> => {
+        if (MirrorSiteStore.Instance.isMirrorUnavailable(database, mirrorUrl)) {
+            return null;
+        }
+        const normalized = this.normalizeMirrorUrl(database, mirrorUrl);
+        if (!normalized) {
+            return null;
+        }
+        const path = this.getBenchmarkPath(database);
+        const requestUrl = this.joinUrl(normalized, this.appendCacheBuster(path));
+        const startTime = performance.now();
+        try {
+            await axios.get(requestUrl, {timeout: timeoutMs, signal});
+            return performance.now() - startTime;
+        } catch {
+            return null;
+        }
+    };
+
+    private getFromActiveMirror = (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
+        try {
+            const activeMirrorUrl = this.getActiveMirrorUrl(database);
+            return instance.get(this.joinUrl(activeMirrorUrl, path)).catch(error => {
+                if (axios.isCancel(error)) {
+                    throw error;
+                }
+                throw this.createMirrorRequestError(activeMirrorUrl, error);
+            });
+        } catch (error) {
+            return Promise.reject(error);
+        }
+    };
+
+    private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {
+        let mirrorLabel = mirrorUrl;
+        try {
+            mirrorLabel = new URL(mirrorUrl).host;
+        } catch {
+            // Use the full URL when it cannot be parsed.
+        }
+        const details = error?.message ? ` Details: ${error.message}` : "";
+        return new Error(`Request to mirror ${mirrorLabel} failed. The mirror may be unavailable. Select another mirror site and retry.${details}`);
+    };
+
+    private getActiveMirrorUrl = (database: CatalogDatabase): string => {
+        const activeMirrorUrl = MirrorSiteStore.Instance.getActiveMirror(database);
+        const normalizedMirrorUrl = this.normalizeMirrorUrl(database, activeMirrorUrl);
+        if (!normalizedMirrorUrl) {
+            throw new Error("All mirror sites are unavailable. Enable at least one mirror site and retry.");
+        }
+        return normalizedMirrorUrl;
+    };
+
+    private getBenchmarkPath = (database: CatalogDatabase): string => {
+        if (database === CatalogDatabase.SIMBAD) {
+            const query = encodeURIComponent("select top 1 * from basic");
+            return `sync?request=doQuery&lang=adql&format=json&maxrec=1&query=${query}`;
+        }
+        return "votable?-source=I/239/hip_main&-out.max=1";
+    };
+
+    private appendCacheBuster = (path: string): string => {
+        const cacheBuster = `_=${Date.now()}`;
+        return path.includes("?") ? `${path}&${cacheBuster}` : `${path}?${cacheBuster}`;
+    };
+
+    private normalizeMirrorUrl = (database: CatalogDatabase, url?: string): string | null => {
+        if (!url || typeof url !== "string") {
+            return null;
+        }
+        try {
+            const parsed = new URL(url.trim());
+            if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                return null;
+            }
+
+            const path = parsed.pathname.replace(/\/+$/, "");
+            if (database === CatalogDatabase.VIZIER) {
+                const vizierBase = path.replace(/\/(?:vizier|viz-bin)$/i, "");
+                parsed.pathname = `${vizierBase}/viz-bin/`;
+            } else if (/sim-tap$/i.test(path)) {
+                parsed.pathname = `${path}/`;
+            } else {
+                const simbadBase = /\/simbad(\/|$)/i.test(path) ? path : `${path}/simbad`;
+                parsed.pathname = `${simbadBase}/sim-tap/`;
+            }
+            return parsed.toString();
+        } catch {
+            return null;
+        }
+    };
+
+    private joinUrl = (baseUrl: string, path: string): string => {
+        if (!baseUrl) {
+            return path;
+        }
+        const base = new URL(baseUrl);
+        const request = new URL(path, base);
+        const baseQuery = new URLSearchParams(base.search);
+        const requestQuery = new URLSearchParams(request.search);
+        baseQuery.forEach((value, key) => {
+            if (!requestQuery.has(key)) {
+                requestQuery.append(key, value);
+            }
+        });
+        request.search = requestQuery.toString();
+        request.hash = "";
+        return request.toString();
+    };
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
@@ -69,7 +174,7 @@ export class CatalogApiService {
         }
 
         try {
-            const response = await this.axiosInstanceVizier.get(query);
+            const response = await this.getFromActiveMirror(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.processVizierData(response.data);
             }
@@ -100,7 +205,7 @@ export class CatalogApiService {
         const query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
-            const response = await this.axiosInstanceVizier.get(query);
+            const response = await this.getFromActiveMirror(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.processVizierData(response.data);
             }

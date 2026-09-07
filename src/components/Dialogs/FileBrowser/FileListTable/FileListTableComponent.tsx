@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import globToRegExp from "glob-to-regexp";
+import Long from "long";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import moment from "moment";
@@ -81,6 +82,19 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return FileListTableComponent.CatalogFileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 
+    // 64-bit protobuf fields (file size, date) are decoded as Long objects, which have no valueOf(); comparing two of them
+    // with < or > falls back to comparing their decimal strings, so convert to a plain number before sorting or displaying
+    private static toNumber(value: number | Long | null | undefined): number {
+        if (value === null || value === undefined) {
+            return 0;
+        }
+        return Long.isLong(value) ? value.toNumber() : value;
+    }
+
+    private static compareNumbers(a: number | Long | null | undefined, b: number | Long | null | undefined): number {
+        return FileListTableComponent.toNumber(a) - FileListTableComponent.toNumber(b);
+    }
+
     private static getFileSizeDisplay(sizeInBytes: number): string {
         if (sizeInBytes >= 1e12) {
             return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
@@ -151,10 +165,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     filteredSubdirectories.sort((a, b) => sortingConfig.direction * ((a.name || "").toLowerCase() < (b.name || "").toLowerCase() ? -1 : 1));
                     break;
                 case "size":
-                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * ((a.itemCount || 0) < (b.itemCount || 0) ? -1 : 1));
+                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * FileListTableComponent.compareNumbers(a.itemCount, b.itemCount));
                     break;
                 case "date":
-                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * ((a.date || 0) < (b.date || 0) ? -1 : 1));
+                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * FileListTableComponent.compareNumbers(a.date, b.date));
                     break;
                 default:
                     break;
@@ -165,8 +179,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     entries.push({
                         filename: directory.name || "",
                         typeInfo: FileListTableComponent.getFileTypeDisplay(directory.type),
-                        size: directory.size as number,
-                        date: directory.date as number,
+                        size: FileListTableComponent.toNumber(directory.size),
+                        date: FileListTableComponent.toNumber(directory.date),
                         isDirectory: true,
                         isFile: true,
                         fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
@@ -175,7 +189,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     entries.push({
                         filename: directory.name || "",
                         itemCount: directory.itemCount && directory.itemCount > 0 ? directory.itemCount : undefined,
-                        date: directory.date as number,
+                        date: FileListTableComponent.toNumber(directory.date),
                         isDirectory: true,
                         fileInfo: {name: directory.name}
                     });
@@ -192,10 +206,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.type < b.type ? -1 : 1));
                     break;
                 case "size":
-                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.size < b.size ? -1 : 1));
+                    if (fileBrowserMode === BrowserMode.Catalog) {
+                        (filteredFiles as CARTA.CatalogFileInfo.$Properties[]).sort((a, b) => sortingConfig.direction * FileListTableComponent.compareNumbers(a.fileSize, b.fileSize));
+                    } else {
+                        (filteredFiles as CARTA.FileInfo.$Properties[]).sort((a, b) => sortingConfig.direction * FileListTableComponent.compareNumbers(a.size, b.size));
+                    }
                     break;
                 case "date":
-                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.date < b.date ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * FileListTableComponent.compareNumbers(a.date, b.date));
                     break;
                 default:
                     break;
@@ -206,8 +224,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     entries.push({
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getCatalogFileTypeDisplay(file.type) : undefined,
-                        size: file.fileSize as number,
-                        date: file.date as number,
+                        size: FileListTableComponent.toNumber(file.fileSize),
+                        date: FileListTableComponent.toNumber(file.date),
                         fileInfo: file,
                         isFile: true
                     });
@@ -220,8 +238,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                             entries.push({
                                 filename,
                                 typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
-                                size: file.size as number,
-                                date: file.date as number,
+                                size: FileListTableComponent.toNumber(file.size),
+                                date: FileListTableComponent.toNumber(file.date),
                                 fileInfo: file,
                                 hdu,
                                 isFile: true
@@ -234,8 +252,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     entries.push({
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
-                        size: file.size as number,
-                        date: file.date as number,
+                        size: FileListTableComponent.toNumber(file.size),
+                        date: FileListTableComponent.toNumber(file.date),
                         fileInfo: file,
                         isFile: true
                     });

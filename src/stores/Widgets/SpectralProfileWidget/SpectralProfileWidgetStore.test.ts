@@ -1,0 +1,627 @@
+import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {CARTA} from "carta-protobuf";
+import * as GSL from "gsl_wrapper";
+import {runInAction} from "mobx";
+
+import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
+import {AppStore, PreferenceStore} from "../..";
+
+import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
+
+describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
+    let widgetStore: SpectralProfileWidgetStore | undefined;
+
+    const createWidgetStore = (
+        spectralType: SpectralType = SpectralType.FREQ,
+        spectralUnit: SpectralUnit = SpectralUnit.GHZ,
+        spectralTypeSecondary: SpectralType | null = spectralType,
+        spectralUnitSecondary: SpectralUnit | null = spectralUnit,
+        nativeIntensityUnit: string = "Jy/beam",
+        displayIntensityUnit: string = nativeIntensityUnit,
+        requiredPolarization: Polarizations = Polarizations.I
+    ) => {
+        const intensityConfig = {nativeIntensityUnit};
+        const frame = {
+            channelInfo: {},
+            channelSecondaryValues: [10, 11],
+            channelValues: [100, 110],
+            channelValueBounds: undefined,
+            filename: "test.fits",
+            frameInfo: {fileId: 7},
+            getRegion: jest.fn(),
+            hasStokes: false,
+            headerUnit: nativeIntensityUnit,
+            intensityConfig,
+            intensityUnit: displayIntensityUnit,
+            isCoordChannel: spectralType === SpectralType.CHANNEL,
+            isSpectralChannel: true,
+            regionSet: {focusedRegion: undefined, regions: []},
+            requiredPolarization,
+            requiredUnit: nativeIntensityUnit,
+            spectralType,
+            spectralTypeSecondary,
+            spectralUnit,
+            spectralUnitSecondary,
+            spectralUnitStr: spectralUnit,
+            spectralLabel: `Frequency (${spectralUnit})`,
+            spectralAxis: {type: {code: spectralType, unit: spectralUnit}},
+            convertSettingWCSToFreqMHz: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertFreqMHzToSettingWCS: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertSettingWCSToFreqMHzArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values),
+            convertFreqMHzToSettingWCSArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values)
+        };
+        const appStore = {
+            activeFrame: frame,
+            focusedRegion: undefined,
+            frameNames: [],
+            frames: [frame],
+            getFrame: jest.fn(() => frame),
+            getFrameName: jest.fn(() => "test.fits"),
+            spatialAndSpectalMatchedFileIds: [],
+            spectralProfiles: new Map([
+                [
+                    7,
+                    new Map([
+                        [
+                            0,
+                            {
+                                getProfile: jest.fn(() => ({progress: 1, values: new Float32Array([4, 8])}))
+                            }
+                        ]
+                    ])
+                ]
+            ])
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        widgetStore = new SpectralProfileWidgetStore();
+        return {frame, widgetStore};
+    };
+
+    afterEach(() => {
+        widgetStore?.dispose();
+        jest.restoreAllMocks();
+    });
+
+    test("converts frequency coordinates in both directions without changing the redshift-zero identity", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(200);
+        expect(widgetStore.convertDisplayXToObserved(200)).toBe(100);
+
+        widgetStore.setRestFrameRedshift(0);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+        expect(widgetStore.convertDisplayXToObserved(100)).toBe(100);
+    });
+
+    test("initializes shift input from preferences", () => {
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.REDSHIFT);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.OPTICAL);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.RADIAL_VELOCITY);
+        preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.RELATIVISTIC);
+
+        const {widgetStore} = createWidgetStore();
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.REDSHIFT);
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
+
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+        preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+    });
+
+    test("keeps plotted spectral lines in rest-frame coordinates when X-axis correction is active", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.addSpectralLines([{species: "CO", value: 100, qn: "1-0"}]);
+
+        expect(widgetStore.transformedSpectralLines).toEqual([{species: "CO", value: 100, qn: "1-0"}]);
+    });
+
+    test("reprojects the plot cursor when the rest-frame display transform changes", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setMouseMoveIntoLinePlots(true);
+        widgetStore.setCursor(100);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.cursorX).toBe(200);
+
+        widgetStore.setRestFrameRedshift(2);
+        expect(widgetStore.cursorX).toBe(300);
+
+        widgetStore.setXAxisRestFrameEnabled(false);
+        expect(widgetStore.cursorX).toBe(100);
+    });
+
+    test.each([
+        [SpectralType.VRAD, SpectralUnit.KMS, SPEED_OF_LIGHT_KMS],
+        [SpectralType.VRAD, SpectralUnit.MS, SPEED_OF_LIGHT],
+        [SpectralType.VOPT, SpectralUnit.KMS, SPEED_OF_LIGHT_KMS],
+        [SpectralType.VOPT, SpectralUnit.MS, SPEED_OF_LIGHT]
+    ])("moves the systemic %s coordinate in %s to zero", (spectralType, spectralUnit, speedOfLight) => {
+        const {widgetStore} = createWidgetStore(spectralType, spectralUnit);
+        const redshift = 0.1;
+        const systemicVelocity = spectralType === SpectralType.VRAD ? (speedOfLight * redshift) / (1 + redshift) : speedOfLight * redshift;
+
+        widgetStore.setRestFrameRedshift(redshift);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameSupported).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(systemicVelocity)).toBeCloseTo(0, 6);
+        expect(widgetStore.convertDisplayXToObserved(0)).toBeCloseTo(systemicVelocity, 6);
+    });
+
+    test.each([SpectralType.VRAD, SpectralType.VOPT])("converts %s profile arrays and moment ranges in both directions", spectralType => {
+        const {widgetStore} = createWidgetStore(spectralType, SpectralUnit.KMS);
+        const redshift = 0.1;
+        widgetStore.setRestFrameRedshift(redshift);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        const restFrequencyFactor = 1 + redshift;
+        const expectedDisplayValues =
+            spectralType === SpectralType.VRAD ? [100, 110].map(value => value * restFrequencyFactor - SPEED_OF_LIGHT_KMS * redshift) : [100, 110].map(value => (value - SPEED_OF_LIGHT_KMS * redshift) / restFrequencyFactor);
+        widgetStore.plotData?.data[0].forEach((point, index) => expect(point.x).toBeCloseTo(expectedDisplayValues[index], 10));
+
+        widgetStore.setSelectedDisplayChannelRange(expectedDisplayValues[0], expectedDisplayValues[1]);
+        expect(widgetStore.channelValueRange[0]).toBeCloseTo(100, 10);
+        expect(widgetStore.channelValueRange[1]).toBeCloseTo(110, 10);
+    });
+
+    test("reprojects a velocity cursor without changing its observed coordinate", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setMouseMoveIntoLinePlots(true);
+        widgetStore.setCursor(1000);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.cursorX).toBeCloseTo(widgetStore.convertObservedXToDisplay(1000), 10);
+
+        widgetStore.setRestFrameRedshift(0.2);
+        expect(widgetStore.convertDisplayXToObserved(widgetStore.cursorX)).toBeCloseTo(1000, 10);
+    });
+
+    test("transforms a secondary velocity coordinate using its own convention", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS, SpectralType.VOPT, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        const expectedSecondaryValues = [10, 11].map(value => (value - SPEED_OF_LIGHT_KMS * 0.1) / 1.1);
+        widgetStore.plotData?.secondaryXData[0].forEach((value, index) => expect(value).toBeCloseTo(expectedSecondaryValues[index], 10));
+        expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (rest frame)");
+    });
+
+    test("keeps a spectral line that transforms to zero velocity", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        frame.convertFreqMHzToSettingWCS.mockReturnValue(0);
+        widgetStore.setRestFrameRedshift(0.1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.addSpectralLines([{species: "HI", value: 1420.405751, qn: "1-0"}]);
+
+        expect(widgetStore.transformedSpectralLines).toEqual([{species: "HI", value: 0, qn: "1-0"}]);
+    });
+
+    test("converts wavelength coordinates with the inverse frequency factor", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.convertObservedXToDisplay(1000)).toBe(500);
+        expect(widgetStore.convertDisplayXToObserved(500)).toBe(1000);
+    });
+
+    test.each([SpectralUnit.M_SQUARE, SpectralUnit.MM_SQUARE, SpectralUnit.UM_SQUARE, SpectralUnit.NM_SQUARE, SpectralUnit.ANGSTROM_SQUARE])("converts squared wavelength coordinates in %s with the squared redshift factor", spectralUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.WAVE, spectralUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.convertObservedXToDisplay(1000)).toBe(250);
+        expect(widgetStore.convertDisplayXToObserved(250)).toBe(1000);
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 25, y: 4},
+            {x: 27.5, y: 8}
+        ]);
+    });
+
+    test("converts air wavelength through the frame spectral conversion", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / value);
+        frame.convertFreqMHzToSettingWCS.mockImplementation((value: number) => 300 / value);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.convertObservedXToDisplay(10)).toBe(5);
+        expect(widgetStore.convertDisplayXToObserved(5)).toBe(10);
+        expect(frame.convertSettingWCSToFreqMHz).toHaveBeenCalled();
+        expect(frame.convertFreqMHzToSettingWCS).toHaveBeenCalled();
+    });
+
+    test("converts squared air wavelength through the frame spectral conversion", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        frame.convertSettingWCSToFreqMHz.mockImplementation((value: number) => 300 / Math.sqrt(value));
+        frame.convertFreqMHzToSettingWCS.mockImplementation((value: number) => Math.pow(300 / value, 2));
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        frame.convertSettingWCSToFreqMHz.mockClear();
+        frame.convertFreqMHzToSettingWCS.mockClear();
+
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(25);
+        expect(widgetStore.convertDisplayXToObserved(25)).toBe(100);
+        expect(frame.convertSettingWCSToFreqMHz).toHaveBeenNthCalledWith(1, 100, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertSettingWCSToFreqMHz).toHaveBeenNthCalledWith(2, 25, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(1, 60, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+        expect(frame.convertFreqMHzToSettingWCS).toHaveBeenNthCalledWith(2, 30, SpectralType.AWAV, SpectralUnit.NM_SQUARE);
+    });
+
+    test("batches air-wavelength profile conversion without scalar AST calls", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        frame.convertSettingWCSToFreqMHzArray.mockImplementation((values: number[]) => values.map(value => 300 / value));
+        frame.convertFreqMHzToSettingWCSArray.mockImplementation((values: number[]) => values.map(value => 300 / value));
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0][0]).toEqual({x: 50, y: 4});
+        expect(widgetStore.plotData?.data[0][1].x).toBeCloseTo(55);
+        expect(widgetStore.plotData?.data[0][1].y).toBe(8);
+        expect(frame.convertSettingWCSToFreqMHzArray).toHaveBeenCalledWith([100, 110], SpectralType.AWAV, SpectralUnit.NM);
+        expect(frame.convertFreqMHzToSettingWCSArray).toHaveBeenCalledWith([6, 60 / 11], SpectralType.AWAV, SpectralUnit.NM);
+        expect(frame.convertSettingWCSToFreqMHz).not.toHaveBeenCalled();
+        expect(frame.convertFreqMHzToSettingWCS).not.toHaveBeenCalled();
+    });
+
+    test("fails an air-wavelength profile conversion closed when a batched AST step fails", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        frame.convertSettingWCSToFreqMHzArray.mockReturnValue(undefined);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0].map(point => point.x)).toEqual([NaN, NaN]);
+        expect(frame.convertFreqMHzToSettingWCSArray).not.toHaveBeenCalled();
+    });
+
+    test("does not approximate air wavelength when the AST conversion fails", () => {
+        const {frame, widgetStore} = createWidgetStore(SpectralType.AWAV, SpectralUnit.NM);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        frame.convertSettingWCSToFreqMHz.mockReturnValue(undefined);
+        expect(widgetStore.convertObservedXToDisplay(10)).toBeNaN();
+        expect(widgetStore.convertDisplayXToObserved(5)).toBeNaN();
+
+        frame.convertSettingWCSToFreqMHz.mockReturnValue(30);
+        frame.convertFreqMHzToSettingWCS.mockReturnValue(undefined);
+        expect(widgetStore.convertObservedXToDisplay(10)).toBeNaN();
+        expect(widgetStore.convertDisplayXToObserved(5)).toBeNaN();
+    });
+
+    test("keeps moment ranges native while exposing rest-frame display values", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setSelectedChannelRange(100, 110);
+
+        expect(widgetStore.displayChannelValueRange).toEqual([200, 220]);
+
+        widgetStore.setSelectedDisplayChannelRange(240, 260);
+        expect(widgetStore.channelValueRange).toEqual([120, 130]);
+        expect(widgetStore.displayChannelValueRange).toEqual([240, 260]);
+    });
+
+    test("transforms plot and fitting x coordinates without rescaling intensity values", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 200, y: 4},
+            {x: 220, y: 8}
+        ]);
+        expect(widgetStore.plotData?.fittingData?.x).toEqual([200, 220]);
+        expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([4, 8]);
+    });
+
+    test("applies the optional F_nu Jacobian consistently to plot data, statistics, fitting, labels, and export metadata", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 200, y: 2},
+            {x: 220, y: 4}
+        ]);
+        expect(widgetStore.plotData?.yMean).toBe(3);
+        expect(widgetStore.plotData?.yRms).toBe(1);
+        expect(Array.from(widgetStore.plotData?.fittingData?.y ?? [])).toEqual([2, 4]);
+        expect(widgetStore.xAxisLabel).toBe("Frequency (GHz) (rest frame)");
+        expect(widgetStore.yUnitLabel).toBe("Jy/beam (rest frame)");
+        expect(widgetStore.yAxisLabel).toBe("Value (Jy/beam) (rest frame)");
+        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: rest frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "radial velocity (radio, km/s): 149896.229"]);
+    });
+
+    test("allows the Y-axis rest-frame density mode without enabling the X-axis mode", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameActive).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
+        expect(widgetStore.restFrameCorrectionExportComments).toEqual(["x-axis spectral coordinate: observed frame", "y-axis flux-density transformation: F_nu,rest = F_nu,observed / (1 + z)", "radial velocity (radio, km/s): 149896.229"]);
+    });
+
+    test("labels fitting results and logs with the rest-frame suffix when the Y-axis mode is active", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+        (GSL.fitting as jest.Mock).mockReturnValueOnce({
+            yIntercept: 0,
+            yInterceptError: 0,
+            slope: 0,
+            slopeError: 0,
+            center: new Float64Array([200, 0]),
+            amp: new Float64Array([2, 0]),
+            fwhm: new Float64Array([10, 0]),
+            integral: new Float64Array([20, 0]),
+            residual: new Float64Array([0, 0]),
+            log: "Amplitude = @yUnit\nIntegral = @integralUnit"
+        });
+
+        widgetStore.fittingStore.fitData();
+
+        expect(widgetStore.fittingStore.resultString).toContain("Amplitude = 2.000000 (Jy/beam (rest frame))");
+        expect(widgetStore.fittingStore.resultString).toContain("Integral = 20.000000 (Jy/beam (rest frame) * GHz (rest frame))");
+        expect(widgetStore.fittingStore.resultLog).toBe("Amplitude = (Jy/beam (rest frame))\nIntegral = (Jy/beam (rest frame) * GHz (rest frame))");
+    });
+
+    test("applies the F_nu Jacobian after converting the selected intensity unit", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "mJy/beam", "Jy/beam");
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0][0].y).toBeCloseTo(0.002);
+        expect(widgetStore.plotData?.data[0][1].y).toBeCloseTo(0.004);
+    });
+
+    test("uses the F_nu Jacobian even when the displayed spectral coordinate is wavelength", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.WAVE, SpectralUnit.NM);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.data[0]).toEqual([
+            {x: 50, y: 2},
+            {x: 55, y: 4}
+        ]);
+    });
+
+    test.each(["K", "mK"])("does not enable the F_nu Jacobian for %s intensity", intensityUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test.each(["Jy", "mJy", "uJy", "MJy"])("supports the F_nu Jacobian for bare %s flux-density units", intensityUnit => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, intensityUnit);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([2, 4]);
+    });
+
+    test("does not enable the F_nu Jacobian for SumSq profiles", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.profileSelectionStore.selectStatSingleMode(CARTA.StatsType.SumSq);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test("does not enable the F_nu Jacobian for fractional-polarization profiles", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.FREQ, SpectralUnit.GHZ, "Jy/beam", "Jy/beam", Polarizations.PFtotal);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isYAxisRestFrameSupported).toBe(false);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(false);
+        expect(widgetStore.plotData?.data[0].map(point => point.y)).toEqual([4, 8]);
+    });
+
+    test("converts display mask values back to observed values and resets only affected display state", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setXBounds(90, 120);
+        widgetStore.setYBounds(1, 9);
+        widgetStore.fittingStore.setHasResult(true);
+
+        widgetStore.setYAxisRestFrameEnabled(true);
+        widgetStore.setSelectedDisplayMaskRange(2, 4);
+
+        expect(widgetStore.maskRange).toEqual([4, 8]);
+        expect(widgetStore.minX).toBe(90);
+        expect(widgetStore.maxX).toBe(120);
+        expect(widgetStore.minY).toBeUndefined();
+        expect(widgetStore.maxY).toBeUndefined();
+        expect(widgetStore.fittingStore.hasResult).toBe(false);
+
+        widgetStore.setXYBounds(90, 120, 1, 9);
+        widgetStore.fittingStore.setHasResult(true);
+        widgetStore.setRestFrameRedshift(3);
+
+        expect(widgetStore.minX).toBeUndefined();
+        expect(widgetStore.maxX).toBeUndefined();
+        expect(widgetStore.minY).toBeUndefined();
+        expect(widgetStore.maxY).toBeUndefined();
+        expect(widgetStore.fittingStore.hasResult).toBe(false);
+    });
+
+    test("renders native mask ranges in Jacobian-scaled display coordinates", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setYAxisRestFrameEnabled(true);
+        widgetStore.setSelectedDisplayMaskRange(2, 4);
+        widgetStore.setMomentRangeSelectingMode(MomentSelectingMode.MASK);
+
+        expect(widgetStore.maskRange).toEqual([4, 8]);
+        expect(widgetStore.displayMaskRange).toEqual([2, 4]);
+        expect(widgetStore.selectedRange).toEqual({isHorizontal: true, center: 3, width: 2});
+    });
+
+    test("falls back to the native spectral coordinate for secondary rest-frame values", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, null, null);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.effectiveSecondarySpectralType).toBe(SpectralType.FREQ);
+        expect(widgetStore.effectiveSecondarySpectralUnit).toBe(SpectralUnit.GHZ);
+        expect(widgetStore.plotData?.secondaryXData[0]).toEqual([20, 22]);
+        expect(widgetStore.secondarySpectralUnitLabel).toBe("GHz (rest frame)");
+    });
+
+    test("transforms secondary radio velocity coordinates and labels them as rest frame", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ, SpectralUnit.GHZ, SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.plotData?.secondaryXData[0]).toEqual([20 - SPEED_OF_LIGHT_KMS, 22 - SPEED_OF_LIGHT_KMS]);
+        expect(widgetStore.secondarySpectralUnitLabel).toBe("km/s (rest frame)");
+    });
+
+    test("defaults shift input to radio radial velocity", () => {
+        const {widgetStore} = createWidgetStore();
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(widgetStore.restFrameRadialVelocity).toBe(0);
+    });
+
+    test("enables rest-frame conversion for velocity coordinates", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.VRAD, SpectralUnit.KMS);
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameSupported).toBe(true);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(200 - SPEED_OF_LIGHT_KMS);
+    });
+
+    test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.init({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+
+        widgetStore.setRestFrameRedshift(-1);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("uses relativistic radial velocity as an alternate input while persisting only redshift", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
+        widgetStore.setRestFrameRadialVelocity(-300);
+
+        expect(widgetStore.restFrameRedshift).toBeCloseTo(-0.0010001921, 10);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300, 10);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
+    });
+
+    test.each([
+        [VelocityConvention.RADIO, 300, 300 / (299792.458 - 300)],
+        [VelocityConvention.OPTICAL, 300, 300 / 299792.458]
+    ])("uses %s velocity convention while persisting only redshift", (convention, velocityKms, expectedRedshift) => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameVelocityConvention(convention);
+        widgetStore.setRestFrameRadialVelocity(velocityKms);
+
+        expect(widgetStore.restFrameRedshift).toBeCloseTo(expectedRedshift, 10);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(velocityKms, 10);
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: convention, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
+    });
+
+    test("keeps the previous canonical redshift when either input is invalid", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(0.25);
+
+        widgetStore.setRestFrameRadialVelocity(299792.458);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+
+        widgetStore.setRestFrameRedshift(-1);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("temporarily uses zero redshift without clearing the selected correction toggles", () => {
+        const {widgetStore} = createWidgetStore();
+        widgetStore.setRestFrameRedshift(1);
+        widgetStore.setXAxisRestFrameEnabled(true);
+
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.redshiftFactor).toBe(2);
+
+        widgetStore.setRestFrameShiftInputValid(false);
+
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(false);
+        expect(widgetStore.effectiveRestFrameRedshift).toBe(0);
+        expect(widgetStore.redshiftFactor).toBe(1);
+        expect(widgetStore.convertObservedXToDisplay(100)).toBe(100);
+
+        widgetStore.setRestFrameShiftInputValid(true);
+        expect(widgetStore.isXAxisRestFrameActive).toBe(true);
+        expect(widgetStore.redshiftFactor).toBe(2);
+    });
+
+    test("restores the shift mode while keeping legacy redshift configs valid", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+        expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300.093, 1);
+
+        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
+        expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+    });
+
+    test("restores the velocity convention while defaulting legacy configs to radio", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
+
+        expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
+        expect(widgetStore.restFrameRadialVelocity).toBe(0);
+
+        const {widgetStore: legacyWidgetStore} = createWidgetStore();
+        runInAction(() => legacyWidgetStore.init({restFrameRedshift: 0.25}));
+        expect(legacyWidgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+        expect(legacyWidgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
+    });
+});

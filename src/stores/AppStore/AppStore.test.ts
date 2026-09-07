@@ -1,7 +1,7 @@
 import type {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode} from "enums";
-import {AppStore} from "stores";
+import {AppStore, scaleZoomForImageRatio} from "stores";
 import {ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -284,5 +284,11 @@ describe("AppStore channel-map data streams", () => {
         appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
 
         expect(appStore.regionHistograms.size).toBe(0);
+    });
+});
+
+describe("scaleZoomForImageRatio", () => {
+    test("preserves independent axis zoom while scaling for image export", () => {
+        expect(scaleZoomForImageRatio({effectiveZoomLevel: {x: 2, y: 4}, isAxisZoomable: true, zoomLevel: 4} as any, 2)).toEqual({x: 4, y: 8});
     });
 });

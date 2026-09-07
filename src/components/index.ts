@@ -1,4 +1,5 @@
 export * from "./Animator/AnimatorComponent";
+export * from "./Animator/AnimatorSettingsPanelComponent";
 export * from "./App/UIControllerComponent";
 export * from "./CatalogOverlay/CatalogOverlayComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";

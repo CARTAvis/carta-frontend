@@ -135,7 +135,17 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    // true when the user has highlighted text somewhere in the document (e.g. in the File Header widget)
+    private static hasTextSelection(): boolean {
+        const selection = window.getSelection();
+        return !!selection && !selection.isCollapsed && selection.toString().length > 0;
+    }
+
     public static copyRegion = (event: KeyboardEvent) => {
+        // let the browser copy highlighted text instead of the focused region
+        if (HotkeyService.hasTextSelection()) {
+            return;
+        }
         if (AppStore.Instance.copySelectedRegion()) {
             event.preventDefault();
             event.stopPropagation();
@@ -299,7 +309,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "middle-click + drag", label: "Pan image (ignores regions)"},
             {combo: "middle-click", label: "Center image"},
             {combo: "mod + click", label: "Center image"},
-            {combo: "mouse-wheel", label: "Zoom image"}
+            {combo: "mouse-wheel", label: "Zoom image"},
+            {combo: "shift + mouse-wheel", label: "Zoom other axis (PV)"}
         ];
         return items.map(item => ({...base, ...item}));
     }

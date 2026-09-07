@@ -94,6 +94,7 @@ export interface WorkspaceFile {
     directory?: string;
     filename: string;
     hdu?: string;
+    timeSeriesMember?: boolean;
     references?: {
         spatial?: number;
         spectral?: number;
@@ -101,6 +102,8 @@ export interface WorkspaceFile {
     };
     center?: Point2D;
     zoomLevel?: number;
+    axisZoomLevel?: Point2D;
+    zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
 

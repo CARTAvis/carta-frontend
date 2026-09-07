@@ -15,6 +15,13 @@ import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
 import "./StatsComponent.scss";
 
+type StatsDisplayType = CARTA.StatsType | "BeamArea" | "NumBeams" | "BeamAreaPixels";
+type StatsTableValue = {num: string; unit: string};
+type StatsTableRow = {name: string; type: StatsDisplayType; value: StatsTableValue};
+const NUM_BEAMS_STATS_TYPE = "NumBeams";
+const BEAM_AREA_STATS_TYPE = "BeamArea";
+const BEAM_PIXELS_STATS_TYPE = "BeamAreaPixels";
+
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
@@ -46,12 +53,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            const frame = this.widgetStore.effectiveFrame;
+            const fileId = frame.frameInfo.fileId;
             if (fileId === undefined) {
                 return null;
             }
             const regionId = this.widgetStore.effectiveRegionId;
-            const coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap || !regionId) {
@@ -61,9 +68,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes) || null;
+            return regionMap.get(this.getEffectiveStokes(frame)) || null;
         }
         return null;
     }
@@ -80,8 +85,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private static readonly StatsNameMap = new Map<CARTA.StatsType, string>([
+    private static readonly StatsNameMap = new Map<StatsDisplayType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
+        [NUM_BEAMS_STATS_TYPE, "NumBeams"],
+        [BEAM_AREA_STATS_TYPE, "BeamArea"],
+        [BEAM_PIXELS_STATS_TYPE, "BeamAreaPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.FluxDensity, "FluxDensity"],
         [CARTA.StatsType.Mean, "Mean"],
@@ -166,42 +174,102 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.hideMouseEnterWidget();
     };
 
-    private getTableValue = (index: number, type: CARTA.StatsType) => {
-        let numString = "";
-        let unitString = "";
+    private getEffectiveStokes = (frame = this.widgetStore.effectiveFrame): number => {
+        if (!frame) {
+            return 0;
+        }
+        const coordinate = this.widgetStore.coordinate;
+        const stokesIndex = frame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+        const stokes = stokesIndex >= frame.frameInfo.fileInfoExtended.stokes ? frame.polarizations[stokesIndex] : stokesIndex;
+        return stokes === -1 ? frame.requiredStokes : stokes;
+    };
 
-        if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
-            const frame = this.widgetStore.effectiveFrame;
-            if (frame && frame.headerUnit) {
-                let unit: string;
-                const effectivePolarization = this.widgetStore.effectivePolarization;
-                if (effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization)) {
-                    unit = "%";
-                } else if (effectivePolarization === Polarizations.Pangle) {
-                    unit = "degree";
-                } else {
-                    unit = frame.headerUnit;
-                }
+    private getWidgetBeamProperties = () => {
+        const frame = this.widgetStore.effectiveFrame;
+        return frame ? frame.getBeamProperties(this.getEffectiveStokes(frame)) : null;
+    };
 
-                if (type === CARTA.StatsType.NumPixels) {
-                    unitString = "pixel(s)";
-                } else if (type === CARTA.StatsType.SumSq) {
-                    unitString = `(${unit})^2`;
-                } else if (type === CARTA.StatsType.FluxDensity) {
-                    unitString = pixelToFluxDensityUnit(unit);
-                } else {
-                    unitString = unit;
-                }
-            }
+    private formatTableValue = (value: number | null | undefined, unit: string): StatsTableValue => {
+        return {
+            num: value == null ? "" : toExponential(value, 12),
+            unit: value == null || isFinite(value) ? unit : ""
+        };
+    };
 
-            const value = this.statsData.statistics[index].value;
-            if (value != null) {
-                numString = toExponential(value, 12);
-                unitString = isFinite(value) ? unitString : "";
-            }
+    private formatBeamValue = (value: number | null | undefined, unit: string): StatsTableValue | null => {
+        if (value == null || !isFinite(value) || value <= 0) {
+            return null;
+        }
+        return this.formatTableValue(value, unit);
+    };
+
+    private getNumBeamsValue = (): StatsTableValue | null => {
+        const beamAreaPixels = this.getWidgetBeamProperties()?.beamAreaPixels;
+        const numPixels = this.statsData?.statistics?.find(statistic => statistic.statsType === CARTA.StatsType.NumPixels)?.value;
+        if (numPixels == null || beamAreaPixels == null || !isFinite(numPixels) || !isFinite(beamAreaPixels) || beamAreaPixels <= 0) {
+            return null;
+        }
+        return this.formatTableValue(numPixels / beamAreaPixels, "beam(s)");
+    };
+
+    private getBeamAreaValue = (): StatsTableValue | null => {
+        const beamArea = this.getWidgetBeamProperties()?.beamArea;
+        return this.formatBeamValue(beamArea, "sr");
+    };
+
+    private getBeamPixelsValue = (): StatsTableValue | null => {
+        const beamAreaPixels = this.getWidgetBeamProperties()?.beamAreaPixels;
+        return this.formatBeamValue(beamAreaPixels, "pixel(s)");
+    };
+
+    private getStatisticUnit = (type: CARTA.StatsType): string => {
+        const frame = this.widgetStore.effectiveFrame;
+        if (!frame?.headerUnit) {
+            return "";
         }
 
-        return {num: numString, unit: unitString};
+        const effectivePolarization = this.widgetStore.effectivePolarization;
+        const unit = effectivePolarization && [Polarizations.PFtotal, Polarizations.PFlinear].includes(effectivePolarization) ? "%" : effectivePolarization === Polarizations.Pangle ? "degree" : frame.headerUnit;
+
+        if (type === CARTA.StatsType.NumPixels) {
+            return "pixel(s)";
+        }
+        if (type === CARTA.StatsType.SumSq) {
+            return `(${unit})^2`;
+        }
+        if (type === CARTA.StatsType.FluxDensity) {
+            return pixelToFluxDensityUnit(unit);
+        }
+        return unit;
+    };
+
+    private getTableValue = (type: StatsDisplayType): StatsTableValue | null => {
+        if (type === NUM_BEAMS_STATS_TYPE) {
+            return this.getNumBeamsValue();
+        }
+        if (type === BEAM_PIXELS_STATS_TYPE) {
+            return this.getBeamPixelsValue();
+        }
+        if (type === BEAM_AREA_STATS_TYPE) {
+            return this.getBeamAreaValue();
+        }
+
+        const statistic = this.statsData?.statistics?.find(item => item.statsType === type);
+        if (!statistic) {
+            return null;
+        }
+        return this.formatTableValue(statistic.value, this.getStatisticUnit(type));
+    };
+
+    private getTableRows = (): StatsTableRow[] => {
+        const rows: StatsTableRow[] = [];
+        StatsComponent.StatsNameMap.forEach((name, type) => {
+            const value = this.getTableValue(type);
+            if (value) {
+                rows.push({name, type, value});
+            }
+        });
+        return rows;
     };
 
     exportData = () => {
@@ -226,15 +294,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
-            StatsComponent.StatsNameMap.forEach((name, type) => {
-                if (this.statsData?.statistics) {
-                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
-                    if (index >= 0 && index < this.statsData.statistics.length) {
-                        const value = this.getTableValue(index, type);
-                        value.unit = value.unit === "" ? "N/A" : value.unit;
-                        rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`;
-                    }
-                }
+            this.getTableRows().forEach(({name, value}) => {
+                const unit = value.unit === "" ? "N/A" : value.unit;
+                rows += `${name.padEnd(12)}\t${value.num}\t${unit}\n`;
             });
 
             exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
@@ -265,23 +327,14 @@ export class StatsComponent extends React.Component<WidgetProps> {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
-            const rows: React.JSX.Element[] = [];
-            StatsComponent.StatsNameMap.forEach((name, type) => {
-                if (this.statsData?.statistics) {
-                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
-                    if (index >= 0 && index < this.statsData.statistics.length) {
-                        const value = this.getTableValue(index, type);
-                        rows.push(
-                            <tr key={type}>
-                                <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
-                                <td style={{width: valueWidth}}>
-                                    {value.num} {value.unit}
-                                </td>
-                            </tr>
-                        );
-                    }
-                }
-            });
+            const rows = this.getTableRows().map(({name, type, value}) => (
+                <tr key={type}>
+                    <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
+                    <td style={{width: valueWidth}}>
+                        {value.num} {value.unit}
+                    </td>
+                </tr>
+            ));
 
             formContent = (
                 <HTMLTable data-testid="statistics-table">

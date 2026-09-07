@@ -23,7 +23,7 @@ import {
 } from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
@@ -139,6 +139,7 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.CATALOG:
                 preference.resetCatalogSettings();
+                MirrorSiteStore.Instance.resetAllSettings();
                 break;
             case PreferenceDialogTabs.TELEMETRY:
                 preference.resetTelemetrySettings();

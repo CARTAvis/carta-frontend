@@ -9,6 +9,21 @@ export enum CatalogDatabase {
     VIZIER = "VizieR"
 }
 
+export enum SimbadMirror {
+    STRASBOURG = "simbad.u-strasbg.fr",
+    CFA_HARVARD = "simbad.cfa.harvard.edu"
+}
+
+export enum VizierMirror {
+    CDS = "vizier.cds.unistra.fr",
+    ADAC = "vizier.nao.ac.jp",
+    IUCAA = "vizier.iucaa.in",
+    INASAN = "vizier.inasan.ru",
+    NAOC = "vizier.china-vo.org",
+    CFA_HARVARD = "vizier.cfa.harvard.edu",
+    IDIA = "vizier.idia.ac.za"
+}
+
 export enum DataType {
     CHAR = "CHAR",
     SHORT = "SHORT",
