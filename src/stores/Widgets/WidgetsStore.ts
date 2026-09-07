@@ -1738,7 +1738,7 @@ export class WidgetsStore {
         if (id) {
             const widgetStore = new AnimatorWidgetStore();
             if (widgetSettings) {
-                widgetStore.init(widgetSettings);
+                widgetStore.applyConfig(widgetSettings);
             }
             this.animatorWidgets.set(id, widgetStore);
         }
