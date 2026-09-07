@@ -123,6 +123,7 @@ export class CatalogStore {
 
         // update catalogProfiles fileId
         if (catalogComponentId && associatedCatalogId.length) {
+            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogId[0]);
             this.catalogProfiles.forEach((catalogFileId, componentId) => {
                 if (catalogFileId === fileId) {
                     this.catalogProfiles.set(componentId, associatedCatalogId[0]);
@@ -182,6 +183,7 @@ export class CatalogStore {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
         const activeCatalogFileIds = fileIds ? fileIds : [];
         if (this.catalogProfiles.size && activeCatalogFileIds?.length) {
+            WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
             this.catalogProfiles.forEach((value, componentId) => {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });

@@ -1592,6 +1592,30 @@ export class WidgetsStore {
         }
     };
 
+    /** Replace a catalog only in panels that were showing it. */
+    @action replaceCatalogPanelSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
+        this.catalogPanelWidgets.forEach((panelStore, componentId) => {
+            if (panelStore.selectedCatalogId === catalogFileId) {
+                panelStore.setSelectedCatalogId(replacementCatalogFileId);
+                CatalogStore.Instance.catalogProfiles.set(componentId, replacementCatalogFileId);
+            }
+        });
+    };
+
+    /** Keep panel selections valid when the active image changes. */
+    @action resetCatalogPanelSelections = (activeCatalogFileIds: number[]) => {
+        if (activeCatalogFileIds.length === 0) {
+            return;
+        }
+        const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
+        this.catalogPanelWidgets.forEach((panelStore, componentId) => {
+            if (!activeCatalogFileIdSet.has(panelStore.selectedCatalogId)) {
+                panelStore.setSelectedCatalogId(activeCatalogFileIds[0]);
+                CatalogStore.Instance.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
+            }
+        });
+    };
+
     // endregion
 
     // region Catalog Plot Widgets
