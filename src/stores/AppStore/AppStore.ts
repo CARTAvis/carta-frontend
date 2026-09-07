@@ -1285,11 +1285,15 @@ export class AppStore {
         }
     }
 
-    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties) {
+    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties): number | false {
         if (!this.activeFrame) {
-            return;
+            return false;
         }
-        this.backendService.setCatalogFilterRequest(catalogFilter);
+        const requestId = this.backendService.setCatalogFilterRequest(catalogFilter);
+        if (typeof requestId === "number" && catalogFilter.fileId !== null && catalogFilter.fileId !== undefined) {
+            this.catalogStore.registerCatalogRequest(catalogFilter.fileId, requestId);
+        }
+        return requestId;
     }
 
     /**
@@ -2465,8 +2469,11 @@ export class AppStore {
         }
     };
 
-    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse & {eventId?: number}) => {
         const catalogFileId = catalogFilter.fileId;
+        if (!this.catalogStore.acceptsCatalogResponse(catalogFileId, catalogFilter.eventId)) {
+            return;
+        }
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
 
         const progress = catalogFilter.progress;
@@ -2478,6 +2485,7 @@ export class AppStore {
             if (progress === 1) {
                 catalogProfileStore.setLoadingDataStatus(false);
                 catalogProfileStore.setUpdatingDataStream(false);
+                this.catalogStore.completeCatalogRequest(catalogFileId, catalogFilter.eventId);
             }
 
             if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
