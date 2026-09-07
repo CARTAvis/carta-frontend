@@ -8,7 +8,7 @@ import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "c
 import {HelpType, ImageType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
+import {AppStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 
@@ -96,13 +96,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     private getCatalogOverlaySettingsTab = (parentId: string): number | undefined => {
-        const catalogStore = CatalogStore.Instance;
-        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
-        if (!catalogFileId) {
-            return undefined;
-        }
-
-        return catalogStore.getCatalogDisplayStore(catalogFileId)?.settingsTabId;
+        return AppStore.Instance.widgetsStore.catalogPanelWidgets.get(parentId)?.settingsTabId;
     };
 
     private getSettingsTab = (parentId: string, parentType?: string): number | undefined => {

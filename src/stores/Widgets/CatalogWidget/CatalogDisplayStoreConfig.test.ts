@@ -9,9 +9,9 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogDisplayStore, CatalogPanelStore, CatalogProfileStore, CatalogStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -244,18 +244,20 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("keeps a layout to the catalog it shows and the panel's own geometry", () => {
-        const store = createConfiguredStore();
-        store.setTableSeparatorPosition("40%");
+    test("keeps panel selection and presentation state out of display config", () => {
+        const panel = new CatalogPanelStore(7, "catalog-panel-primary");
+        panel.setTableSeparatorPosition("40%");
+        panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
-        expect(store.toLayoutSettings()).toEqual({
-            catalogFileId: store.catalogFileId,
-            catalogColor: "#112233",
-            highlightColor: "#445566",
-            catalogSize: store.catalogSize,
-            catalogShape: CatalogOverlayShape.BOX_LINED,
+        expect(panel.toLayoutSettings()).toEqual({
+            panelId: "catalog-panel-primary",
             tableSeparatorPosition: "40%",
-            thickness: 4
+            settingsTabId: CatalogSettingsTabs.COLOR
         });
+
+        const restored = new CatalogPanelStore();
+        restored.applyLayoutSettings(panel.toLayoutSettings());
+        expect(restored.selectedCatalogId).toBe(1);
+        expect(restored.toLayoutSettings()).toEqual(panel.toLayoutSettings());
     });
 });

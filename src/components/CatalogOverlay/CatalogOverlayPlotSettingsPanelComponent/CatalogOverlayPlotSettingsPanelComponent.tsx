@@ -7,7 +7,8 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, ValueClip} from "enums";
-import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type CatalogPanelStore} from "stores/Widgets";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -90,7 +91,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
+        return this.panelStore?.selectedCatalogId;
+    }
+
+    @computed get panelStore(): CatalogPanelStore | undefined {
+        return WidgetsStore.Instance.catalogPanelWidgets.get(this.widgetId);
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -130,6 +135,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 const catalogFileId = this.catalogFileId;
                 if (catalogFileId !== undefined) {
                     const activeFiles = catalogStore.activeCatalogFiles;
+                    WidgetsStore.Instance.getCatalogPanelStore(this.widgetId, catalogFileId);
                     catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
 
                     if (activeFiles?.includes(catalogFileId)) {
@@ -258,7 +264,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles?.set(this.widgetId, fileId);
+        WidgetsStore.Instance.setCatalogPanelSelection(this.widgetId, fileId);
     };
 
     private renderScalingParameter(scaling: FrameScaling, value: number, onValueChange: (value: number) => void, isDisabled: boolean): React.ReactNode {
@@ -948,7 +954,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={displayStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.panelStore?.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                         <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
                         <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-color-tab-title" />
                         <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-orientation-tab-title" />
@@ -1042,7 +1048,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleSelectedTabChanged = (newTabId: string | number) => {
-        this.displayStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.panelStore?.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
     };
 
     private handleSelectedAxisTabChanged = (newTabId: string | number) => {

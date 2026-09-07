@@ -1,4 +1,5 @@
 export * from "./AnimatorWidgetStore/AnimatorWidgetStore";
+export * from "./CatalogWidget/CatalogPanelStore";
 export * from "./CatalogWidget/CatalogPlotWidgetStore";
 export * from "./EmptyWidgetStore";
 export * from "./HistogramWidgetStore/HistogramWidgetStore";

@@ -6,7 +6,7 @@ import tinycolor from "tinycolor2";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogOverlayShape, CatalogTextureType, ImageViewLayer} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogStore} from "stores";
+import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {closestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -375,7 +375,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
             if (catalogProfileStore) {
                 const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
-                catalogStore.updateCatalogProfiles(selectedPoint.fileId);
+                WidgetsStore.Instance.updateCatalogPanelSelection(selectedPoint.fileId);
                 const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);
                 catalogDisplayStore?.setCatalogTableAutoScroll(true);

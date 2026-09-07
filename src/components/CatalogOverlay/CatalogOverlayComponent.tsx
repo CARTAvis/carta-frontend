@@ -13,7 +13,7 @@ import {ClearableNumericInputComponent, FilterableTableComponent, type Filterabl
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
-import {type CatalogPlotWidgetStoreProps} from "stores/Widgets";
+import {type CatalogPanelStore, type CatalogPlotWidgetStoreProps} from "stores/Widgets";
 import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
@@ -48,7 +48,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
+        return this.panelStore?.selectedCatalogId;
+    }
+
+    @computed get panelStore(): CatalogPanelStore | undefined {
+        return WidgetsStore.Instance.catalogPanelWidgets.get(this.widgetId);
     }
 
     @computed get displayStore(): CatalogDisplayStore | undefined {
@@ -66,7 +70,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
+        WidgetsStore.Instance.setCatalogPanelSelection(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
@@ -133,9 +137,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         makeObservable(this);
         this.widgetId = props.id;
 
-        if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
-            CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
-        }
+        WidgetsStore.Instance.getCatalogPanelStore(this.widgetId, CatalogStore.Instance.catalogProfiles.get(this.widgetId) ?? 1);
         this.catalogFileNames = new Map<number, string>();
 
         this.disposers.push(
@@ -813,7 +815,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
-            this.displayStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            this.panelStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
 
@@ -827,10 +829,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleHideHeader = () => {
-        const displayStore = this.displayStore;
-        const position = displayStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        const position = this.panelStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
         this.isShowHeader = position === 100 ? false : true;
-        displayStore?.setTableSeparatorPosition(`${position}%`);
+        this.panelStore?.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -858,7 +859,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
-        this.displayStore?.setSettingsTabId(type);
+        this.panelStore?.setSettingsTabId(type);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
 
@@ -1047,7 +1048,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             className={"catalog-overlay-data-container"}
                             minSize={`${CatalogDisplayStore.MIN_TABLE_SEPARATOR_POSITION}%`}
                             maxSize={`${CatalogDisplayStore.MAX_TABLE_SEPARATOR_POSITION}%`}
-                            size={catalogDisplayStore.tableSeparatorPosition}
+                            size={this.panelStore?.tableSeparatorPosition}
                         >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>

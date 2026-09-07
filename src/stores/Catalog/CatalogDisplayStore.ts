@@ -5,7 +5,7 @@ import {action, computed, type IReactionDisposer, makeObservable, observable, re
 import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, type CatalogSystemType, CatalogTextureType, ColorMap, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
 import {clamp, createScalingParameters, getScalingParameter, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
 
 type CatalogSourceRadiusMode = "diameter" | "radius";
@@ -124,9 +124,7 @@ export class CatalogDisplayStore {
     @observable plottedImageOverlayYAxis: string = CatalogOverlay.NONE;
     @observable plottedImageOverlaySystem: CatalogSystemType | undefined = undefined;
     @observable plottedImageOverlayMaxRows: number | undefined = undefined;
-    @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     @observable highlightColor: string = Colors.RED2;
-    @observable settingsTabId: CatalogSettingsTabs = CatalogSettingsTabs.SIZE;
     @observable thickness: number = 2.0;
     @observable catalogDisplayMode: CatalogDisplayMode = CatalogDisplayMode.CANVAS;
     // size map
@@ -960,10 +958,6 @@ export class CatalogDisplayStore {
         this.plottedImageOverlayMaxRows = undefined;
     }
 
-    @action setTableSeparatorPosition(position: string) {
-        this.tableSeparatorPosition = position;
-    }
-
     /**
      * Set the color of highlighted catalog source
      * @param color - color of highlight
@@ -971,11 +965,6 @@ export class CatalogDisplayStore {
     @action setHighlightColor(color: string) {
         this.highlightColor = color;
     }
-
-    @action setSettingsTabId = (tabId: CatalogSettingsTabs) => {
-        this.settingsTabId = tabId;
-        this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
-    };
 
     /**
      * Set the thickness of catalog source
@@ -1377,38 +1366,6 @@ export class CatalogDisplayStore {
      * the panel itself. Everything else a panel displays is display config and belongs to the
      * catalog, not to the layout.
      */
-    public toLayoutSettings = () => {
-        return {
-            catalogFileId: this.catalogFileId,
-            catalogColor: this.catalogColor,
-            highlightColor: this.highlightColor,
-            catalogSize: this.catalogSize,
-            catalogShape: this.catalogShape,
-            tableSeparatorPosition: this.tableSeparatorPosition,
-            thickness: this.thickness
-        };
-    };
-
-    /** Counterpart of {@link toLayoutSettings}, applied when a saved layout is restored. */
-    @action applyLayoutSettings = (widgetSettings): void => {
-        if (!widgetSettings) {
-            return;
-        }
-        const catalogFileId = widgetSettings.catalogFileId;
-        if (typeof catalogFileId === "number" && catalogFileId > 0) {
-            this.catalogFileId = catalogFileId;
-        }
-        const catalogSize = widgetSettings.catalogSize;
-        if (typeof catalogSize === "number" && catalogSize >= CatalogDisplayStore.MIN_OVERLAY_SIZE && catalogSize <= CatalogDisplayStore.MAX_OVERLAY_SIZE) {
-            this.catalogSize = catalogSize;
-        }
-        this.catalogShape = widgetSettings.catalogShape;
-        this.catalogColor = widgetSettings.catalogColor;
-        this.highlightColor = widgetSettings.highlightColor;
-        this.tableSeparatorPosition = widgetSettings.tableSeparatorPosition;
-        this.thickness = widgetSettings.thickness;
-    };
-
     /**
      * The clipped bounds a config asks for. A mapped column with no stated bounds is clipped to the
      * full range of its data, so that the result depends on the config and the data alone, rather
