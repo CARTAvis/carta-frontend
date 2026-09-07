@@ -126,8 +126,7 @@ jobs:
         run: |
           n exec 22 npm test
 
-  carta-python-compatibility:
-    name: Check carta-python API and enum compatibility
+  carta-python:
     runs-on: ubuntu-latest
     needs: format-check
 
@@ -187,7 +186,7 @@ jobs:
   Notify:
     name: Send notifications
     runs-on: ubuntu-latest
-    needs: [format-check, node-v22, node-v24, carta-python-compatibility]
+    needs: [format-check, node-v22, node-v24, carta-python]
     if: always()
     steps:
       - name: Notify Slack
