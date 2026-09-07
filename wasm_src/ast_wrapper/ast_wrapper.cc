@@ -1,6 +1,7 @@
 #include <string.h>
 #include <emscripten.h>
 #include <cmath>
+#include <limits>
 #include <string>
 
 extern "C" {
@@ -55,7 +56,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitsChan, bo
     }
 
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(frameSet, 1);
-    astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+    if (pixFrame) {
+        astSet(pixFrame, "Label(1)=X coordinate,Label(2)=Y coordinate");
+        pixFrame = static_cast<AstFrame*>(astAnnul(pixFrame));
+    }
 
     // work around for missing CTYPE1 & CTYPE2
     if (checkSkyDomain) {
@@ -85,6 +89,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         return nullptr;
     }
     AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
+    spectralTemplate = static_cast<AstSpecFrame*>(astAnnul(spectralTemplate));
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
@@ -93,11 +98,15 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
     AstSpecFrame *specFrame = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
     if (!specFrame)
     {
+        found = static_cast<AstFrameSet*>(astAnnul(found));
         cout << "Getting spectral frame failed." << endl;
         return nullptr;
     }
 
-    return static_cast<AstSpecFrame*> astCopy(specFrame);
+    AstSpecFrame* result = static_cast<AstSpecFrame*> astCopy(specFrame);
+    specFrame = static_cast<AstSpecFrame*>(astAnnul(specFrame));
+    found = static_cast<AstFrameSet*>(astAnnul(found));
+    return result;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
@@ -658,10 +667,32 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
 
     AstSpecFrame* specFrameTo = nullptr;
-    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
-    if (!specFrameTo)
-    {
+    AstFrameSet* cvt = nullptr;
+
+    auto cleanup = [&]() {
+        if (cvt) {
+            cvt = static_cast<AstFrameSet*>(astAnnul(cvt));
+        }
+        if (specFrameTo) {
+            specFrameTo = static_cast<AstSpecFrame*>(astAnnul(specFrameTo));
+        }
+    };
+
+    auto fail = [&]() -> int {
+        if (!astOK) {
+            astClearStatus;
+        }
+        cleanup();
+        if (!astOK) {
+            astClearStatus;
+        }
         return 1;
+    };
+
+    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
+    if (!specFrameTo || !astOK)
+    {
+        return fail();
     }
 
     char buffer[128];
@@ -677,13 +708,30 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
         snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
         astSet(specFrameTo, buffer);
     }
+    if (!astOK) {
+        return fail();
+    }
 
-    AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
+    if (!cvt || !astOK) {
+        return fail();
+    }
 
     astTran1(cvt, npoint, zIn, forward, zOut);
     if (!astOK)
     {
+        return fail();
+    }
+    for (int i = 0; i < npoint; i++) {
+        if (zOut[i] == AST__BAD || !std::isfinite(zOut[i])) {
+            // Keep invalid samples local to their input point so one bad
+            // channel does not discard otherwise valid profile data.
+            zOut[i] = std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+
+    cleanup();
+    if (!astOK) {
         astClearStatus;
         return 1;
     }
@@ -913,6 +961,86 @@ EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
 {
     double diags[] = {sx, sy};
     return astMatrixMap(2, 2, 1, diags, "");
+}
+
+EMSCRIPTEN_KEEPALIVE AstCmpMap* createRestFrameMapping2D(AstSpecFrame* observedFrame, int spectralAxis, double frequencyFactor)
+{
+    if (!observedFrame || (spectralAxis != 1 && spectralAxis != 2) || !std::isfinite(frequencyFactor) || frequencyFactor <= 0.0)
+    {
+        return nullptr;
+    }
+
+    AstSpecFrame* frequencyFrame = nullptr;
+    AstFrameSet* observedToFrequency = nullptr;
+    AstFrameSet* frequencyToObserved = nullptr;
+    AstZoomMap* frequencyScale = nullptr;
+    AstCmpMap* scaledFrequency = nullptr;
+    AstCmpMap* spectralMapping = nullptr;
+    AstUnitMap* unitMapping = nullptr;
+    AstCmpMap* result = nullptr;
+
+    auto cleanup = [&]() {
+        if (frequencyToObserved) {
+            frequencyToObserved = static_cast<AstFrameSet*>(astAnnul(frequencyToObserved));
+        }
+        if (observedToFrequency) {
+            observedToFrequency = static_cast<AstFrameSet*>(astAnnul(observedToFrequency));
+        }
+        if (frequencyFrame) {
+            frequencyFrame = static_cast<AstSpecFrame*>(astAnnul(frequencyFrame));
+        }
+        if (scaledFrequency) {
+            scaledFrequency = static_cast<AstCmpMap*>(astAnnul(scaledFrequency));
+        }
+        if (spectralMapping) {
+            spectralMapping = static_cast<AstCmpMap*>(astAnnul(spectralMapping));
+        }
+        if (frequencyScale) {
+            frequencyScale = static_cast<AstZoomMap*>(astAnnul(frequencyScale));
+        }
+        if (unitMapping) {
+            unitMapping = static_cast<AstUnitMap*>(astAnnul(unitMapping));
+        }
+    };
+
+    frequencyFrame = static_cast<AstSpecFrame*>(astCopy(observedFrame));
+    if (!frequencyFrame || !astOK)
+    {
+        cleanup();
+        astClearStatus;
+        return nullptr;
+    }
+
+    astSet(frequencyFrame, "System=FREQ,Unit=Hz");
+    observedToFrequency = static_cast<AstFrameSet*>(astConvert(observedFrame, frequencyFrame, ""));
+    frequencyToObserved = static_cast<AstFrameSet*>(astConvert(frequencyFrame, observedFrame, ""));
+    frequencyScale = astZoomMap(1, frequencyFactor, "");
+    if (frequencyScale && frequencyToObserved) {
+        scaledFrequency = astCmpMap(frequencyScale, frequencyToObserved, 1, "");
+    }
+    if (observedToFrequency && scaledFrequency) {
+        spectralMapping = astCmpMap(observedToFrequency, scaledFrequency, 1, "");
+    }
+
+    unitMapping = astUnitMap(1, "");
+    if (spectralAxis == 1 && spectralMapping && unitMapping) {
+        result = astCmpMap(spectralMapping, unitMapping, 0, "");
+    }
+    else if (spectralAxis == 2 && spectralMapping && unitMapping) {
+        result = astCmpMap(unitMapping, spectralMapping, 0, "");
+    }
+
+    const bool success = astOK && result;
+    cleanup();
+    if (!success)
+    {
+        if (result) {
+            result = static_cast<AstCmpMap*>(astAnnul(result));
+        }
+        astClearStatus;
+        return nullptr;
+    }
+    return result;
 }
 
 EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)

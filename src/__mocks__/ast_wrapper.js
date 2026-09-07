@@ -35,6 +35,7 @@ const MOCK_AST_WRAPPER = {
     convert: jest.fn(() => 1),
     shiftMap2D: jest.fn(() => 1),
     scaleMap2D: jest.fn(() => 1),
+    createRestFrameMapping2D: jest.fn(() => 1),
     frame: jest.fn(() => 1),
     addFrame: jest.fn(),
     setI: jest.fn(),
@@ -58,7 +59,7 @@ const MOCK_AST_WRAPPER = {
     transformPoint: jest.fn(() => ({x: 0, y: 0})),
     transform3DPoint: jest.fn(() => ({x: 0, y: 0, z: 0})),
     transformSpectralPoint: jest.fn(() => 0),
-    transformSpectralPointArray: jest.fn(() => new Float64Array([0])),
+    transformSpectralPointArray: jest.fn((_spectralFrame, _spectralType, _spectralUnit, _spectralSystem, values) => new Float64Array(values ?? [])),
     normalizeCoordinates: jest.fn(() => ({x: 0, y: 0})),
     getTransformGrid: jest.fn(() => new Float32Array([0])),
 

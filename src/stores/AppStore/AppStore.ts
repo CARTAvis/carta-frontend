@@ -48,7 +48,6 @@ import {
     WorkspaceConfig,
     type WorkspaceFile
 } from "models";
-import {GetEnumSnapshots as getEnumSnapshotsFromRegistry, ListEnumSnapshots as listEnumSnapshotsFromRegistry} from "scripting";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -77,7 +76,20 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {Distinct, exportScreenshot, getColorForTheme, getPasteRegionOffset, GetRequiredTiles, getTimestamp, mapToObject, offsetPointsToAvoidCollision, ProtobufProcessing, type RegionClipboardData, type RegionClipboardItem} from "utilities";
+import {
+    Distinct,
+    exportScreenshot,
+    getColorForTheme,
+    getPasteRegionOffset,
+    GetRequiredTiles,
+    getTimestamp,
+    mapToObject,
+    markAsScriptingMap,
+    offsetPointsToAvoidCollision,
+    ProtobufProcessing,
+    type RegionClipboardData,
+    type RegionClipboardItem
+} from "utilities";
 import * as Utils from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -2931,7 +2943,7 @@ export class AppStore {
             const workspaceFile: WorkspaceFile = {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
-                filename: frame.filename,
+                filename: frame.frameInfo.fileInfo.name,
                 hdu: frame.frameInfo.hdu,
                 timeSeriesMember: this.timeSeriesStore.isMember(frame) || undefined
             };
@@ -3753,20 +3765,11 @@ export class AppStore {
     };
 
     fetchParameter = (val: any) => {
-        if (val && val instanceof Map) {
-            const obj = {};
-            const map = val as Map<any, any>;
-            for (const [key, value] of map) {
-                obj[key] = value;
-            }
-            return obj;
+        if (val instanceof Map) {
+            return markAsScriptingMap(Object.fromEntries(val));
         }
         return val;
     };
-
-    // For carta-python
-    listEnumSnapshots = listEnumSnapshotsFromRegistry;
-    getEnumSnapshots = getEnumSnapshotsFromRegistry;
 
     getFileList = async (directory: string) => {
         return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
