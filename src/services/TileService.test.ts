@@ -32,6 +32,7 @@ type TestTileService = {
             timeout?: ReturnType<typeof setTimeout>;
             desiredStokes?: number;
             confirmedStokes?: number;
+            requestedChannels?: Set<number>;
             generation: number;
         }
     >;
@@ -193,6 +194,7 @@ describe("TileService channel map request queue", () => {
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 1, 0, {}, true, [0, 1, 2]);
+        expect(GetChannelMapState(service)?.requestedChannels).toEqual(new Set([0, 1, 2]));
     });
 
     test("queues the active channel histogram when its tile request is already in flight", () => {
@@ -605,6 +607,24 @@ describe("TileService channel map request queue", () => {
 
         service.resolveChannelMapTile(1, 0, 2, 4);
         expect(service.channelMapRemainingTiles).toBe(0);
+    });
+
+    test("tracks pending channel-map tiles independently across files", () => {
+        const service = CreateService();
+        const tile = {layer: 0, encode: () => 4};
+
+        service.setChannelMapTargetTiles([tile], 1, 0, [0, 1]);
+        service.setChannelMapTargetTiles([tile], 2, 0, [3]);
+
+        expect(service.channelMapPendingTiles).toEqual(new Set(["1_0_0_4", "1_0_1_4", "2_0_3_4"]));
+        expect(service.channelMapRemainingTiles).toBe(3);
+
+        service.setChannelMapTargetTiles([tile], 1, 0, [1]);
+        expect(service.channelMapPendingTiles).toEqual(new Set(["1_0_1_4", "2_0_3_4"]));
+
+        service.cancelChannelMapRequests(1);
+        expect(service.channelMapPendingTiles).toEqual(new Set(["2_0_3_4"]));
+        expect(service.channelMapRemainingTiles).toBe(1);
     });
 
     test("completes a synchronized stream when no requested tiles succeed", () => {

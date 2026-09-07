@@ -125,6 +125,7 @@ interface ChannelMapFileState {
     timeout?: ReturnType<typeof setTimeout>;
     desiredStokes?: number;
     confirmedStokes?: number;
+    requestedChannels?: Set<number>;
     generation: number;
 }
 
@@ -340,7 +341,7 @@ export class TileService {
     }
 
     private setChannelMapTargetTiles(tiles: TileCoordinate[], fileId: number, stokes: number, channels: number[]) {
-        this.channelMapPendingTiles.clear();
+        this.resetChannelMapLoading(fileId);
         for (const channel of channels) {
             for (const tile of tiles) {
                 if (tile.layer < 0) {
@@ -361,9 +362,17 @@ export class TileService {
         }
     }
 
-    private resetChannelMapLoading() {
-        this.channelMapPendingTiles.clear();
-        this.channelMapPendingTileCount = 0;
+    private resetChannelMapLoading(fileId?: number) {
+        if (fileId === undefined) {
+            this.channelMapPendingTiles.clear();
+        } else {
+            this.channelMapPendingTiles.forEach(key => {
+                if (isTileKeyForFile(key, fileId)) {
+                    this.channelMapPendingTiles.delete(key);
+                }
+            });
+        }
+        this.channelMapPendingTileCount = this.channelMapPendingTiles.size;
     }
 
     private setNormalViewTargetTiles(tiles: TileCoordinate[], fileId: number, stokes: number, channel: number) {
@@ -560,6 +569,7 @@ export class TileService {
         const currentTiles = tiles.map(tile => tile.encode());
         const previousStokes = this.fileStateMap.get(fileId)?.stokes;
         const channelMapState = this.getChannelMapState(fileId);
+        channelMapState.requestedChannels = new Set(requestedChannels);
         if (channelMapState.confirmedStokes === undefined) {
             channelMapState.confirmedStokes = previousStokes ?? stokes;
         }
@@ -698,7 +708,7 @@ export class TileService {
             channelMapState.queue = [];
             this.dismissChannelMapTimeoutAlert(request.batchTiming);
             this.clearChannelMapSynchronization(fileId);
-            this.resetChannelMapLoading();
+            this.resetChannelMapLoading(fileId);
         }
     }
 
@@ -725,6 +735,7 @@ export class TileService {
             channelMapState.queue = [];
             this.dismissChannelMapTimeoutAlert(activeRequest.batchTiming);
             this.clearChannelMapSynchronization(fileId);
+            this.resetChannelMapLoading(fileId);
             return;
         }
 
@@ -783,6 +794,7 @@ export class TileService {
         this.clearRequestQueue(fileId);
         channelMapState.queue = [];
         this.clearChannelMapSynchronization(fileId);
+        this.resetChannelMapLoading(fileId);
         const selectedChannels = this.fileStateMap.get(fileId);
         if (selectedChannels?.channel !== null && selectedChannels?.channel !== undefined && selectedChannels.stokes !== null && selectedChannels.stokes !== undefined) {
             this.backendService.setChannels(fileId, selectedChannels.channel, selectedChannels.stokes, {});
@@ -818,6 +830,8 @@ export class TileService {
             channelMapState.activeRequest = undefined;
             channelMapState.desiredStokes = undefined;
             channelMapState.confirmedStokes = undefined;
+            channelMapState.requestedChannels = undefined;
+            this.resetChannelMapLoading(id);
         });
     }
 
@@ -860,6 +874,7 @@ export class TileService {
             state.timeout = undefined;
             state.desiredStokes = undefined;
             state.confirmedStokes = undefined;
+            state.requestedChannels = undefined;
             state.generation++;
         });
         this.pendingRequests.clear();
@@ -919,7 +934,7 @@ export class TileService {
             this.pendingRequests.clear();
         }
 
-        this.resetChannelMapLoading();
+        this.resetChannelMapLoading(fileId);
         this.resetNormalViewLoading(fileId);
     }
 
@@ -1069,7 +1084,9 @@ export class TileService {
             return;
         }
 
-        if (!syncState && appStore.channelMapStore.isChannelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+        const channelMapChannels = this.channelMapStates.get(tileMessage.fileId ?? NaN)?.requestedChannels;
+        const isRequestedChannel = channelMapChannels ? channelMapChannels.has(tileMessage?.channel ?? NaN) : appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN);
+        if (!syncState && appStore.channelMapStore.isChannelMapEnabled && !isRequestedChannel) {
             console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }
@@ -1251,8 +1268,9 @@ export class TileService {
         });
         const currentFileState = this.fileStateMap.get(fileId ?? NaN);
         const appStore = AppStore.Instance;
+        const channelMapChannels = this.channelMapStates.get(fileId ?? NaN)?.requestedChannels;
         const isCurrentView = appStore.channelMapStore.isChannelMapEnabled
-            ? appStore.channelMapStore.channelArray.includes(channel ?? NaN) && currentFileState?.stokes === stokes
+            ? (channelMapChannels ? channelMapChannels.has(channel ?? NaN) : appStore.channelMapStore.channelArray.includes(channel ?? NaN)) && currentFileState?.stokes === stokes
             : currentFileState?.channel === channel && currentFileState?.stokes === stokes;
         const isLatestView = syncState.viewGeneration === this.rasterViewGenerations.get(key) && isCurrentView;
         this.tileStream.next({tileCount, fileId, channel, stokes, flush: isLatestView});

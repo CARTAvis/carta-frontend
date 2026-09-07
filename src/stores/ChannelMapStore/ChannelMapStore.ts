@@ -1,10 +1,11 @@
 import {debounce, throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {ImageType} from "enums";
+import {ImageType, SpectralType} from "enums";
 import {type ImageViewItem} from "models";
 import {TileService} from "services";
 import {AppStore, type FrameStore} from "stores";
+import {getTransformedChannelList} from "utilities";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
@@ -25,19 +26,23 @@ export class ChannelMapStore {
 
         autorun(() => {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
-                /* eslint-disable @typescript-eslint/no-unused-vars */
-                const startChannel = this.startChannel;
-                const numColumns = this.numColumns;
-                const numRows = this.numRows;
-                const endChannel = this.endChannel;
-                const center = this.displayedFrame.center;
-                const requiredFrameView = this.displayedFrame.requiredFrameView;
-                const requiredTiles = this.displayedFrame.requiredTiles;
-                const zoomLevel = this.displayedFrame.zoomLevel;
-                const spatialReference = this.displayedFrame.spatialReference;
-                const channel = this.displayedFrame.channel;
+                // Track every value that can change the tiles required by any displayed layer.
+                void this.channelArray;
+                void this.displayedFrame.spectralSiblings;
+                void AppStore.Instance.spectralMatchingType;
+                this.displayedFrames.forEach(frame => {
+                    void frame.center;
+                    void frame.requiredFrameView;
+                    void frame.requiredTiles;
+                    void frame.zoomLevel;
+                    void frame.spatialReference;
+                    void frame.channel;
+                    void frame.stokes;
+                    void frame.wcsInfo3D;
+                    void frame.frameInfo.fileInfoExtended.depth;
+                });
 
-                this.throttledRequestChannels(this.displayedFrame);
+                this.throttledRequestChannels();
             }
         });
 
@@ -97,30 +102,53 @@ export class ChannelMapStore {
         return AppStore.Instance.animatorStore.step;
     }
 
-    private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+    private requestedFileIds = new Set<number>();
+    private throttledRequestChannels = throttle(() => this.requestDisplayedChannels(), 100);
     private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
      * @param frame - the frame to request tiles for.
      */
-    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
+    handlePolarizationChanged = (frame: FrameStore) => {
+        if (this.displayedFrames.includes(frame)) {
+            this.requestChannels(frame, true);
+        }
+    };
 
     private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
         if (!this.isChannelMapEnabled) {
+            return;
+        }
+        const requestedChannels = Array.from(new Set(this.getChannelsForFrame(frame).filter((channel): channel is number => channel !== null)));
+        if (!requestedChannels.length) {
+            TileService.Instance.cancelChannelMapRequests(frame.frameInfo.fileId);
             return;
         }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray, isPolarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, requestedChannels, isPolarizationChanged);
+    };
+
+    private requestDisplayedChannels = () => {
+        if (!this.isChannelMapEnabled) {
+            return;
+        }
+
+        const displayedFileIds = new Set(this.displayedFrames.map(frame => frame.frameInfo.fileId));
+        this.requestedFileIds.forEach(fileId => {
+            if (!displayedFileIds.has(fileId)) {
+                TileService.Instance.cancelChannelMapRequests(fileId);
+            }
+        });
+        this.requestedFileIds = displayedFileIds;
+        this.displayedFrames.forEach(frame => this.requestChannels(frame));
     };
 
     requestTilesAfterSessionResume = () => {
-        if (this.displayedFrame) {
-            this.requestChannels(this.displayedFrame);
-        }
+        this.requestDisplayedChannels();
     };
 
     /**
@@ -137,6 +165,7 @@ export class ChannelMapStore {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
+            this.requestedFileIds.clear();
             if (isDisablingChannelMap) {
                 const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
                 AppStore.Instance.updateChannels(updates);
@@ -306,18 +335,49 @@ export class ChannelMapStore {
 
     /** The frame of the displayed image in the image view. */
     @computed get displayedFrame(): FrameStore | null {
-        if (!this.displayedImage) {
-            return null;
+        return this.displayedFrames[0] ?? null;
+    }
+
+    /** The frames contributing raster layers to the displayed image. */
+    @computed get displayedFrames(): FrameStore[] {
+        if (this.displayedImage?.type === ImageType.FRAME) {
+            return [this.displayedImage.store];
+        }
+        if (this.displayedImage?.type === ImageType.COLOR_BLENDING) {
+            return this.displayedImage.store.frames;
+        }
+        return [];
+    }
+
+    /**
+     * The channel rendered by a frame in each channel-map cell.
+     * Spectrally matched frames follow the base frame; unmatched frames keep their selected channel.
+     * A null entry means that the matched channel falls outside the frame.
+     */
+    getChannelsForFrame(frame: FrameStore): Array<number | null> {
+        const baseFrame = this.displayedFrame;
+        if (!baseFrame || frame === baseFrame) {
+            return this.channelArray;
+        }
+        if (!baseFrame.spectralSiblings.includes(frame)) {
+            return this.channelArray.map(() => frame.channel);
         }
 
-        const type = this.displayedImage.type;
-        if (type === ImageType.FRAME) {
-            return this.displayedImage.store;
-        } else if (type === ImageType.COLOR_BLENDING) {
-            return this.displayedImage.store.baseFrame;
+        if (AppStore.Instance.spectralMatchingType === SpectralType.CHANNEL) {
+            return this.channelArray.map(channel => (channel < frame.frameInfo.fileInfoExtended.depth ? channel : null));
         }
 
-        return null;
+        const depth = frame.frameInfo.fileInfoExtended.depth;
+        const firstChannel = this.channelArray[0];
+        const lastChannel = this.channelArray[this.channelArray.length - 1];
+        const transformedChannels = getTransformedChannelList(baseFrame.wcsInfo3D, frame.wcsInfo3D, AppStore.Instance.spectralMatchingType, firstChannel, lastChannel);
+        return this.channelArray.map(channel => {
+            const transformedChannel = transformedChannels[channel - firstChannel];
+            if (!isFinite(transformedChannel) || transformedChannel < -0.5 || transformedChannel > depth - 0.5) {
+                return null;
+            }
+            return Math.round(transformedChannel);
+        });
     }
 
     /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */
