@@ -46,6 +46,7 @@ export class ScatterPlotComponentProps {
     graphZoomedY?: (yMin: number, yMax: number) => void;
     graphZoomedXY?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     graphZoomReset?: () => void;
+    graphSelectionReset?: () => void;
     graphCursorMoved?: (x: number, y: number) => void;
     mouseEntered?: (value: boolean) => void;
     shouldScrollZoom?: boolean;
@@ -519,6 +520,12 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageDoubleClick = () => {
+        if (this.props.dragAction === "boxSelect" || this.props.dragAction === "lassoSelect") {
+            if (this.props.graphSelectionReset) {
+                this.props.graphSelectionReset();
+            }
+            return;
+        }
         if (this.props.graphZoomReset) {
             this.props.graphZoomReset();
         }
@@ -528,6 +535,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         // Store event details for later callback use
         const mousePoint: Point2D = {x: ev.evt.offsetX, y: ev.evt.offsetY};
         const mouseButton = ev.evt.button;
+        const nearestPoint = this.props.cursorNearestPoint;
         // Handle double-clicks
         const currentTime = performance.now();
         const delta = currentTime - this.previousClickTime;
@@ -547,8 +555,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     return;
                 }
                 // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseButton === 0 && this.props.cursorNearestPoint && this.props.data) {
-                    this.props.graphClicked(this.props.cursorNearestPoint.x, this.props.cursorNearestPoint.y, this.props.data);
+                if (this.props.graphClicked && mouseButton === 0 && nearestPoint && this.props.data) {
+                    this.props.graphClicked(nearestPoint.x, nearestPoint.y, this.props.data);
                 }
             }, DOUBLE_CLICK_THRESHOLD);
         }

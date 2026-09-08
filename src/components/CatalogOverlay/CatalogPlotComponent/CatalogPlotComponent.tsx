@@ -487,7 +487,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.widgetStore?.setIndicator(nearest);
     };
 
-    private onDoubleClick = () => {
+    private onAutoscale = () => {
         const widgetsStore = this.widgetStore;
         if (!widgetsStore) {
             return;
@@ -504,6 +504,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 widgetsStore.setHistogramXBorder(initBorder);
             }
         }
+    };
+
+    private onDoubleClick = () => {
+        this.onAutoscale();
 
         this.onDeselect();
     };
@@ -1446,6 +1450,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             tickTypeY={TickType.Automatic}
                             graphZoomedXY={this.onScatterZoomedXY}
                             graphZoomReset={this.onDoubleClick}
+                            graphSelectionReset={this.onDeselect}
                             graphCursorMoved={this.onScatterCursorMoved}
                             graphClicked={this.onGraphClicked}
                             pointRadius={0.001}
@@ -1469,10 +1474,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                         <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === "lasso"} onClick={() => widgetStore.setDragMode("lasso")} />
                                     </Tooltip>
                                     <Tooltip content="Zoom">
-                                        <AnchorButton icon="zoom-in" active={widgetStore.dragMode === "zoom"} onClick={() => widgetStore.setDragMode("zoom")} />
+                                        <AnchorButton icon="search" active={widgetStore.dragMode === "zoom"} onClick={() => widgetStore.setDragMode("zoom")} />
                                     </Tooltip>
                                     <Tooltip content="Pan">
                                         <AnchorButton icon="move" active={widgetStore.dragMode === "pan"} onClick={() => widgetStore.setDragMode("pan")} />
+                                    </Tooltip>
+                                    <Tooltip content="Autoscale">
+                                        <AnchorButton icon="zoom-to-fit" onClick={this.onAutoscale} data-testid="catalog-scatter-autoscale-button" />
                                     </Tooltip>
                                 </React.Fragment>
                             }
