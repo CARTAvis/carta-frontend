@@ -103,6 +103,49 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
     });
 
+    test("updates Galactic overlays when coordinate columns have no units", () => {
+        const processedData = new Map<number, unknown>();
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
+            get2DPlotData: jest.fn(() => ({
+                wcsX: [150],
+                wcsY: [2.476567],
+                xHeaderInfo: {units: ""},
+                yHeaderInfo: {units: ""}
+            })),
+            setLoadingDataStatus: jest.fn(),
+            setProgress: jest.fn(),
+            setUpdatingDataStream: jest.fn(),
+            updateCatalogData: jest.fn(),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        const widgetStore = {
+            setPlottedImageOverlayState: jest.fn(),
+            xAxis: "GLON1",
+            yAxis: "GLAT1"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogWidgets.set(1, "widget-1");
+        widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
+
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            fileId: 1,
+            progress: 1,
+            subsetDataSize: 1,
+            subsetEndIndex: 1
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(convertSpy).toHaveBeenCalledWith(1, [150], [2.476567], "wcs", "", "", CatalogSystemType.Galactic, 1, 1);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("GLON1", "GLAT1", CatalogSystemType.Galactic);
+    });
+
     test("does not replot for column-update responses", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {

@@ -6,7 +6,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {type CatalogWidgetStore} from "stores/Widgets";
-import {minMaxArray, setAstSystem} from "utilities";
+import {CATALOG_ARCMIN_UNITS, CATALOG_ARCSEC_UNITS, minMaxArray, normalizeCatalogUnits, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -22,10 +22,6 @@ export class CatalogStore {
         }
         return CatalogStore.staticInstance;
     }
-
-    private static readonly DegreeUnits = ["deg", "degrees"];
-    private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
-    private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
@@ -299,9 +295,10 @@ export class CatalogStore {
     }
 
     private static getFractionFromUnit(unit: string): number {
-        if (CatalogStore.ArcminUnits.includes(unit)) {
+        const normalizedUnit = normalizeCatalogUnits(unit);
+        if (normalizedUnit && CATALOG_ARCMIN_UNITS.includes(normalizedUnit)) {
             return Math.PI / 10800.0;
-        } else if (CatalogStore.ArcsecUnits.includes(unit)) {
+        } else if (normalizedUnit && CATALOG_ARCSEC_UNITS.includes(normalizedUnit)) {
             return Math.PI / 648000.0;
         } else {
             // if unit is null, using deg as default
@@ -314,8 +311,8 @@ export class CatalogStore {
             const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
-            const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
-            const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.getFractionFromUnit(xUnit);
+            const yFraction = CatalogStore.getFractionFromUnit(yUnit);
 
             const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && overlay.isImgCoordinates) {

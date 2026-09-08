@@ -5,13 +5,30 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
+import {filterProcessedColumnData, getCatalogCoordinateFormat, getComparisonOperatorAndValue, getHasFilter, minMaxArray, parseCatalogCoordinateValue, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.CatalogFileInfo.$Properties;
     dataSize: number;
     directory: string;
+}
+
+function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units: string | null | undefined, columnName: string): Array<number> | undefined {
+    if (!column || column.dataType === CARTA.ColumnType.Bool) {
+        return undefined;
+    }
+
+    if (column.dataType !== CARTA.ColumnType.String) {
+        return column.data as Array<number>;
+    }
+
+    const format = getCatalogCoordinateFormat(column.dataType, units, columnName);
+    if (!format) {
+        return undefined;
+    }
+
+    return (column.data as Array<string | null | undefined>).map(value => parseCatalogCoordinateValue(value, format, units));
 }
 
 export abstract class AbstractCatalogProfileStore {
@@ -127,10 +144,10 @@ export abstract class AbstractCatalogProfileStore {
 
         const xColumn = columnsData.get(xHeaderInfo.columnIndex);
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
+        const wcsX = getCatalogCoordinateData(xColumn, xHeaderInfo.units, xColumnName);
+        const wcsY = getCatalogCoordinateData(yColumn, yHeaderInfo.units, yColumnName);
 
-        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsX = xColumn.data as Array<number>;
-            const wcsY = yColumn.data as Array<number>;
+        if (wcsX && wcsY) {
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
             return {xHeaderInfo, yHeaderInfo};

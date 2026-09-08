@@ -8,7 +8,9 @@ import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
 type MockColumn = {
     display?: boolean;
+    dataType?: CARTA.ColumnType;
     name: string;
+    units?: string;
 };
 
 type MockWidgetStore = {
@@ -85,8 +87,9 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 
         return {
             columnIndex: index,
-            dataType: CARTA.ColumnType.Double,
-            name: column.name
+            dataType: column.dataType ?? CARTA.ColumnType.Double,
+            name: column.name,
+            units: column.units
         };
     });
 
@@ -118,7 +121,7 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
 };
 
 const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
-    const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name: column.name}));
+    const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
     const profileStore = new CatalogProfileStore(
         {
             dataSize: 0,
@@ -301,10 +304,89 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.setyAxis).not.toHaveBeenCalled();
         });
 
+        test("keeps ecliptic longitude and latitude candidates on their semantic axes", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.Ecliptic, [
+                {name: "ELON1", dataType: CARTA.ColumnType.String},
+                {name: "ELAT1", dataType: CARTA.ColumnType.String},
+                {name: "ELON2", dataType: CARTA.ColumnType.String, units: "dms"},
+                {name: "ELAT2", dataType: CARTA.ColumnType.String, units: "dms"},
+                {name: "RADEC", dataType: CARTA.ColumnType.String, units: "hmsdms"},
+                {name: "GAL", dataType: CARTA.ColumnType.String, units: "dmsdms"},
+                {name: "ECL", dataType: CARTA.ColumnType.String, units: "dmsdms"}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "ELON1", "ELON2"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ELAT1", "ELAT2"]);
+        });
+
+        test("includes hms and dms columns in the matching coordinate dropdowns", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String},
+                {name: "DEC1", dataType: CARTA.ColumnType.String},
+                {name: "label", dataType: CARTA.ColumnType.String}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RA1"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEC1"]);
+        });
+
+        test("auto-selects hms and dms coordinate columns", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String},
+                {name: "DEC1", dataType: CARTA.ColumnType.String}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test.each([
+            ["Galactic", CatalogSystemType.Galactic, "GLON1", "GLAT1"],
+            ["Ecliptic", CatalogSystemType.Ecliptic, "ELON1", "ELAT1"],
+            ["Pixel0", CatalogSystemType.Pixel0, "xcentroid", "ycentroid"],
+            ["Pixel1", CatalogSystemType.Pixel1, "X_IMAGE", "Y_IMAGE"]
+        ])("includes and auto-selects string %s coordinate columns", (_label, system, xColumn, yColumn) => {
+            const {component, widgetStore} = CreateComponentHarness(system, [
+                {name: xColumn, dataType: CARTA.ColumnType.String},
+                {name: yColumn, dataType: CARTA.ColumnType.String}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, xColumn]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, yColumn]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe(xColumn);
+            expect(widgetStore.yAxis).toBe(yColumn);
+        });
+
+        test("does not include angular columns in pixel coordinate dropdowns", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.Pixel0, [
+                {name: "GLON", dataType: CARTA.ColumnType.Double, units: "deg"},
+                {name: "xcentroid", dataType: CARTA.ColumnType.String},
+                {name: "ycentroid", dataType: CARTA.ColumnType.String}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "xcentroid"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ycentroid"]);
+        });
+
+        test.each([CatalogPlotType.Histogram, CatalogPlotType.D2Scatter])("keeps numeric coordinate columns available for %s plots", catalogPlotType => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "flux"}]);
+            widgetStore.catalogPlotType = catalogPlotType;
+
+            const expectedOptions = [CatalogOverlay.NONE, "ra", "dec", "flux"];
+            expect(component["xAxisOption"]).toEqual(expectedOptions);
+            expect(component["yAxisOption"]).toEqual(expectedOptions);
+        });
+
         test("uses safe defaults when profile store is unavailable", () => {
             const {component, widgetStore} = CreateComponentWithoutProfileStore("ra", "dec");
 
-            expect(component.axisOption).toEqual([CatalogOverlay.NONE]);
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE]);
             expect(component["getAutoSelectableAxisOptions"]()).toEqual([]);
             expect(() => component["autoSelectAxes"]()).not.toThrow();
             expect(widgetStore.xAxis).toBe("ra");

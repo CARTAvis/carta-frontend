@@ -14,7 +14,7 @@ import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType,
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
+import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isCatalogCoordinateDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -302,19 +302,31 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get axisOption(): string[] {
+    @computed get xAxisOption(): string[] {
+        return this.getAxisOptions(this.xAxisLabel);
+    }
+
+    @computed get yAxisOption(): string[] {
+        return this.getAxisOptions(this.yAxisLabel);
+    }
+
+    private getAxisOptions(axis: CatalogOverlay): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [CatalogOverlay.NONE];
         }
+        const isImageOverlay = this.widgetStore?.catalogPlotType === CatalogPlotType.ImageOverlay;
         const axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
         profileStore.catalogControlHeader.forEach((header, columnName) => {
-            if (header?.dataIndex !== undefined) {
-                const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (isCatalogAxisDataType(dataType) && header.display) {
-                    axisOptions.push(columnName);
-                }
+            if (header?.dataIndex === undefined) {
+                return;
+            }
+
+            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
+            const isAxisColumn = isImageOverlay ? isCatalogCoordinateDataType(catalogHeader?.dataType, catalogHeader?.units, axis, columnName) : isCatalogAxisDataType(catalogHeader?.dataType);
+            if (header.display && isAxisColumn) {
+                axisOptions.push(columnName);
             }
         });
         return axisOptions;
@@ -332,8 +344,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 return;
             }
 
-            const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-            if (!isCatalogAxisDataType(dataType) || (!shouldIncludeHidden && !header.display) || isExcludedCoordinateName(columnName)) {
+            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
+            const dataType = catalogHeader?.dataType;
+            const isCoordinateColumn = isCatalogCoordinateDataType(dataType, catalogHeader?.units, this.xAxisLabel, columnName) || isCatalogCoordinateDataType(dataType, catalogHeader?.units, this.yAxisLabel, columnName);
+            if (!isCoordinateColumn || (!shouldIncludeHidden && !header.display) || isExcludedCoordinateName(columnName)) {
                 return;
             }
 
@@ -1080,7 +1094,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.axisOption}
+                                        items={this.xAxisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
@@ -1098,7 +1112,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.axisOption}
+                                        items={this.yAxisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
