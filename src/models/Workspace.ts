@@ -2,7 +2,6 @@ import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 
 import {type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
-import {type ContourConfigStore, type RenderConfigStore, type VectorOverlayConfigStore} from "stores/Frame";
 import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
@@ -172,111 +171,6 @@ export class WorkspaceConfig {
 
                 return {...file, renderConfig};
             })
-        };
-    }
-
-    public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {
-        const {scaling, colorMap, bias, contrast, gamma, alphaLog, alphaPower, alphaSinh, alphaAsinh, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
-
-        return {
-            scaling,
-            colorMap,
-            bias,
-            contrast,
-            gamma,
-            alphaLog,
-            alphaPower,
-            alphaSinh,
-            alphaAsinh,
-            inverted: isInverted,
-            useCubeHistogram: isUsingCubeHistogram,
-            useCubeHistogramContours: isUsingCubeHistogramContours,
-            selectedPercentile,
-            scaleMin,
-            scaleMax,
-            visible: isVisible
-        };
-    }
-
-    public static createContourConfig(contourConfig: ContourConfigStore): WorkspaceContourConfig | undefined {
-        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, isColormapInverted, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
-
-        if (!isEnabled) {
-            return undefined;
-        }
-
-        return {
-            levels,
-            smoothingMode,
-            smoothingFactor,
-            color,
-            colormapEnabled: isColormapEnabled,
-            colormapInverted: isColormapInverted,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            dashMode,
-            thickness,
-            visible: isVisible
-        };
-    }
-
-    public static createVectorOverlayConfig(vectorOverlayConfig: VectorOverlayConfigStore): WorkspaceVectorOverlayConfig | undefined {
-        const {
-            isEnabled,
-            angularSource,
-            intensitySource,
-            isFractionalIntensity,
-            pixelAveraging,
-            isThresholdEnabled,
-            threshold,
-            isDebiasing,
-            qError,
-            uError,
-            thresholdOption,
-            isVisible,
-            thickness,
-            isColormapEnabled,
-            isColormapInverted,
-            color,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            lengthMin,
-            lengthMax,
-            intensityMin,
-            intensityMax,
-            rotationOffset
-        } = vectorOverlayConfig;
-
-        if (!isEnabled) {
-            return undefined;
-        }
-
-        return {
-            angularSource,
-            intensitySource,
-            fractionalIntensity: isFractionalIntensity,
-            pixelAveraging,
-            thresholdEnabled: isThresholdEnabled,
-            threshold,
-            debiasing: isDebiasing,
-            qError,
-            uError,
-            thresholdOption,
-            visible: isVisible,
-            thickness,
-            colormapEnabled: isColormapEnabled,
-            colormapInverted: isColormapInverted,
-            color,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            lengthMin,
-            lengthMax,
-            intensityMin,
-            intensityMax,
-            rotationOffset
         };
     }
 }

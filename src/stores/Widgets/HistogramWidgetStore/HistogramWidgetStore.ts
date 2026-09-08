@@ -410,7 +410,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.cachedNumBins = numBins;
     };
 
-    public init = (widgetSettings): void => {
+    public applyConfig = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

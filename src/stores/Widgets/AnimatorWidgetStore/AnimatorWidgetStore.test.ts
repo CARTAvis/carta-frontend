@@ -19,7 +19,7 @@ describe("AnimatorWidgetStore", () => {
 
     test("restores valid settings from a layout config", () => {
         const store = new AnimatorWidgetStore();
-        store.init({
+        store.applyConfig({
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Asia/Taipei",
@@ -46,7 +46,7 @@ describe("AnimatorWidgetStore", () => {
 
     test("ignores invalid persisted values", () => {
         const store = new AnimatorWidgetStore();
-        store.init({
+        store.applyConfig({
             timeLabelFormat: "invalid",
             timeZoneMode: "invalid",
             timeScale: "invalid",
@@ -72,7 +72,7 @@ describe("AnimatorWidgetStore", () => {
 
     test("restores a time-series image reference", () => {
         const store = new AnimatorWidgetStore();
-        store.init({
+        store.applyConfig({
             relativeTimeReference: RelativeTimeReference.IMAGE,
             relativeReferenceMjdUtc: 59000
         });
@@ -83,7 +83,7 @@ describe("AnimatorWidgetStore", () => {
 
     test("preserves an explicitly configured UTC IANA time zone", () => {
         const store = new AnimatorWidgetStore();
-        store.init({timeZoneMode: TimeZoneMode.IANA, ianaTimeZone: "UTC"});
+        store.applyConfig({timeZoneMode: TimeZoneMode.IANA, ianaTimeZone: "UTC"});
 
         store.setIanaTimeZoneIfUnset("Asia/Taipei");
 
