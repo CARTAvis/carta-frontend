@@ -6,8 +6,8 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable} from 
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
-import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type ValueClip, type WidgetProps} from "stores";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, ValueClip} from "enums";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -395,8 +395,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
                             value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
-                            onBlur={ev => this.handleChange(ev, "size-min")}
-                            onKeyDown={ev => this.handleChange(ev, "size-min")}
+                            onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
+                            onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
                         />
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
@@ -424,8 +424,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
                                 value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
-                                onBlur={ev => this.handleChange(ev, "size-max")}
-                                onKeyDown={ev => this.handleChange(ev, "size-max")}
+                                onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
+                                onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
                             />
                         </Tooltip>
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
@@ -532,8 +532,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
                             value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
-                            onBlur={ev => this.handleChange(ev, "size-min")}
-                            onKeyDown={ev => this.handleChange(ev, "size-min")}
+                            onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
+                            onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
                         />
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
@@ -561,8 +561,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
                                 value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
-                                onBlur={ev => this.handleChange(ev, "size-max")}
-                                onKeyDown={ev => this.handleChange(ev, "size-max")}
+                                onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
+                                onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
                             />
                         </Tooltip>
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
@@ -854,8 +854,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
                                     value={displayStore.angleMin}
-                                    onBlur={ev => this.handleChange(ev, "angle-min")}
-                                    onKeyDown={ev => this.handleChange(ev, "angle-min")}
+                                    onBlur={ev => this.handleChange(ev, ValueClip.ANGLE_MIN)}
+                                    onKeyDown={ev => this.handleChange(ev, ValueClip.ANGLE_MIN)}
                                 />
                             </FormGroup>
                             <FormGroup inline={true} label="Max">
@@ -866,8 +866,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
                                     value={displayStore.angleMax}
-                                    onBlur={ev => this.handleChange(ev, "angle-max")}
-                                    onKeyDown={ev => this.handleChange(ev, "angle-max")}
+                                    onBlur={ev => this.handleChange(ev, ValueClip.ANGLE_MAX)}
+                                    onKeyDown={ev => this.handleChange(ev, ValueClip.ANGLE_MAX)}
                                 />
                             </FormGroup>
                         </div>
@@ -987,7 +987,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const pointSize = displayStore.isSizeMajor ? displayStore.pointSizebyType : displayStore.minorPointSizebyType;
 
         switch (type) {
-            case "size-min":
+            case ValueClip.SIZE_MIN:
                 if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogDisplayStore.SIZE_MAP_MIN) {
                     const inputVal = val;
                     if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
@@ -999,7 +999,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     ev.currentTarget.value = pointSize.min.toString();
                 }
                 break;
-            case "size-max":
+            case ValueClip.SIZE_MAX:
                 if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= displayStore.maxPointSizebyType) {
                     const inputVal = val;
                     if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
@@ -1011,14 +1011,14 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     ev.currentTarget.value = pointSize.max.toString();
                 }
                 break;
-            case "angle-min":
+            case ValueClip.ANGLE_MIN:
                 if (isFinite(val) && val < displayStore.angleMax) {
                     displayStore.setAngleMin(val);
                 } else {
                     ev.currentTarget.value = displayStore.angleMin.toString();
                 }
                 break;
-            case "angle-max":
+            case ValueClip.ANGLE_MAX:
                 if (isFinite(val) && val > displayStore.angleMin) {
                     displayStore.setAngleMax(val);
                 } else {

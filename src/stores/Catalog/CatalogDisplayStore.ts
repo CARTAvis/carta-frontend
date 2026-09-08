@@ -8,7 +8,6 @@ import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {clamp, getDefaultScalingParameter, minMaxArray, sanitizeScalingParameter} from "utilities";
 
-export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 type CatalogSourceRadiusMode = "diameter" | "radius";
 
 const PARAMETERIZED_SCALINGS = [FrameScaling.LOG, FrameScaling.GAMMA, FrameScaling.POWER, FrameScaling.SINH, FrameScaling.ASINH];
