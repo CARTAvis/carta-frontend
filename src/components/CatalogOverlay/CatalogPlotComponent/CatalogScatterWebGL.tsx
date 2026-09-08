@@ -26,7 +26,7 @@ void main() {
     pixel.y = uViewport.y + (1.0 - normalized.y) * uViewport.w;
     pixel.y = uCanvasSize.y - pixel.y;
     vec2 clip = (pixel / uCanvasSize) * 2.0 - 1.0;
-    gl_Position = vec4(clip, 0.0, 1.0);
+    gl_Position = vec4(clip, aSelected > 0.5 ? -1.0 : 0.0, 1.0);
     gl_PointSize = uPointSize;
 }`;
 
@@ -181,11 +181,13 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.viewport(0, 0, canvas.width, canvas.height);
 
         gl.clearColor(0, 0, 0, 0);
-        gl.clear(GL2.COLOR_BUFFER_BIT);
+        gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
         gl.useProgram(shaderProgram);
 
         gl.enable(GL2.BLEND);
         gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
+        gl.enable(GL2.DEPTH_TEST);
+        gl.depthFunc(GL2.LEQUAL);
 
         const numPoints = Math.min(xData.length, yData.length);
         if (this.positionData.length !== numPoints * 2) {
@@ -238,6 +240,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
         gl.disable(GL2.SCISSOR_TEST);
         gl.disable(GL2.BLEND);
+        gl.disable(GL2.DEPTH_TEST);
         gl.finish();
     }
 

@@ -67,6 +67,7 @@ export class ScatterPlotComponentProps {
     cursorNearestPoint?: {x: number; y: number};
     updateChartArea?: (chartArea: ChartArea) => void;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    shouldAlignChartAreaRight?: boolean;
     dragAction?: "zoom" | "boxSelect" | "lassoSelect" | "pan";
     onBoxSelected?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     onLassoSelected?: (polygonGraphCoords: Point2D[]) => void;
@@ -338,7 +339,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     const y = Math.floor(yPixelValue) + 0.5 * devicePixelRatio;
                     indicator.push(this.genXline("scatter-indicator-x-hovered-nearest", markerColor, markerOpacity, x));
                     indicator.push(this.genYline("scatter-indicator-y-hovered-nearest", markerColor, markerOpacity, y));
-                    indicator.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor, x, y));
                 }
             }
         }

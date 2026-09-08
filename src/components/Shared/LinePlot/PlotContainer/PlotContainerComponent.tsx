@@ -50,6 +50,7 @@ export class PlotContainerProps {
     borderWidth?: number;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    shouldAlignChartAreaRight?: boolean;
     extraPluginOptions?: ChartOptions<"scatter">["plugins"];
 }
 
@@ -93,6 +94,17 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
+        }
+
+        if (this.props.shouldAlignChartAreaRight) {
+            const xScale = chart.scales["x"];
+            if (xScale) {
+                const right = chart.width - 1;
+                chart.chartArea.right = right;
+                xScale.right = right;
+                xScale.width = xScale.right - xScale.left;
+                xScale["_length"] = xScale.width;
+            }
         }
 
         if (!_.isEqual(chart.chartArea, this.chartArea)) {

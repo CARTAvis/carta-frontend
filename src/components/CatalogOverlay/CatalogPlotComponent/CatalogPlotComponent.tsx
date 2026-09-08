@@ -1451,6 +1451,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             pointRadius={0.001}
                             shouldScrollZoom={true}
                             multiPlotPropsMap={scatterMultiPlotMap}
+                            shouldAlignChartAreaRight={true}
                             dragAction={this.getScatterDragAction()}
                             onBoxSelected={this.onBoxSelected}
                             onLassoSelected={this.onLassoSelected}
