@@ -18,9 +18,9 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {ScatterPlotComponent} from "components/Shared/ScatterPlot/ScatterPlotComponent";
 import {CatalogPlotType, CatalogUpdateMode, DragMode, PlotType, TickType} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type XBorder} from "stores/Widgets";
-import {closestPointIndexToCursor, computeHistogramBins, exportTsvFile, getTimestamp, minMaxArray, pointInPolygon, toExponential, toFixed, type TypedArray} from "utilities";
+import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
+import {computeHistogramBins, exportTsvFile, getTimestamp, minMaxArray, pointInPolygon, toExponential, toFixed, type TypedArray} from "utilities";
 
 import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
 
@@ -46,6 +46,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private widgetId: string;
     private histogramPlotRef: Chart<"bar"> | null = null;
+    private scatterChartArea: ChartArea | undefined;
     private cursorNearestScatterPoint: {x: number; y: number} | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
     private webglOverlayRef: CatalogScatterWebGL | null = null;
@@ -178,9 +179,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
-    @computed get catalogWidgetStore(): CatalogWidgetStore | undefined {
-        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        return widgetStoreId !== undefined ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
+    @computed get catalogDisplayStore(): CatalogDisplayStore | undefined {
+        return CatalogStore.Instance.getCatalogDisplayStore(this.catalogFileId);
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -462,11 +462,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const widgetsStore = this.widgetStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
+        const catalogDisplayStore = this.catalogDisplayStore;
         const isChecked = changeEvent.target.checked;
-        if (widgetsStore && catalogWidgetStore) {
-            catalogWidgetStore.setShowSelectedData(isChecked);
-            catalogWidgetStore.setCatalogTableAutoScroll(true);
+        if (widgetsStore && catalogDisplayStore) {
+            catalogDisplayStore.setShowSelectedData(isChecked);
+            catalogDisplayStore.setCatalogTableAutoScroll(true);
         }
     };
 
@@ -475,14 +475,55 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.widgetStore?.setLogScaleY(isLogScaleY);
     };
 
+    @action private updateScatterChartArea = (chartArea: ChartArea) => {
+        this.scatterChartArea = chartArea;
+    };
+
+    private getNearestScatterPointIndex = (x: number, y: number) => {
+        const scatter = this.scatterData;
+        const widgetStore = this.widgetStore;
+        const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
+        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        if (!border || numPoints === 0) {
+            return -1;
+        }
+
+        const xRange = border.xMax - border.xMin;
+        const yRange = border.yMax - border.yMin;
+        if (!Number.isFinite(xRange) || !Number.isFinite(yRange) || xRange <= 0 || yRange <= 0) {
+            return -1;
+        }
+
+        const chartArea = this.scatterChartArea;
+        const chartWidth = chartArea ? chartArea.right - chartArea.left : 1;
+        const chartHeight = chartArea ? chartArea.bottom - chartArea.top : 1;
+        let nearestIndex = -1;
+        let minDistance = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < numPoints; i++) {
+            const pointX = scatter.xData[i];
+            const pointY = scatter.yData[i];
+            if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
+                continue;
+            }
+            const deltaX = ((pointX - x) * chartWidth) / xRange;
+            const deltaY = ((pointY - y) * chartHeight) / yRange;
+            const distance = deltaX * deltaX + deltaY * deltaY;
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestIndex = i;
+            }
+        }
+        return nearestIndex;
+    };
+
     private onScatterCursorMoved = (x: number, y: number) => {
         const scatter = this.scatterData;
-        if (scatter.xData.length === 0) {
+        const nearestIndex = this.getNearestScatterPointIndex(x, y);
+        if (nearestIndex < 0) {
             this.cursorNearestScatterPoint = undefined;
             return;
         }
-        const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
-        const nearest = points[closestPointIndexToCursor({x, y}, points)];
+        const nearest = {x: scatter.xData[nearestIndex], y: scatter.yData[nearestIndex]};
         this.cursorNearestScatterPoint = nearest;
         this.widgetStore?.setIndicator(nearest);
     };
@@ -514,13 +555,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private selectCatalogPoints(rawIndices: number[]) {
         const profileStore = this.profileStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
-        if (!rawIndices.length || !profileStore || !catalogWidgetStore) {
+        const catalogDisplayStore = this.catalogDisplayStore;
+        if (!rawIndices.length || !profileStore || !catalogDisplayStore) {
             return;
         }
         CatalogStore.Instance.updateCatalogProfiles(profileStore.catalogInfo.fileId);
         profileStore.setSelectedPointIndices(profileStore.getOriginIndices(rawIndices), true);
-        catalogWidgetStore.setCatalogTableAutoScroll(true);
+        catalogDisplayStore.setCatalogTableAutoScroll(true);
     }
 
     private onScatterZoomedXY = (xMin: number, xMax: number, yMin: number, yMax: number) => {
@@ -564,12 +605,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!isInDragmode) {
             return;
         }
-        const scatter = this.scatterData;
-        if (!scatter.xData.length) {
+        const nearestIndex = this.getNearestScatterPointIndex(x, y);
+        if (nearestIndex < 0) {
             return;
         }
-        const points: Point2D[] = scatter.xData.map((xVal, i) => ({x: xVal, y: scatter.yData[i]}));
-        const nearestIndex = closestPointIndexToCursor({x, y}, points);
         this.selectCatalogPoints([nearestIndex]);
     };
 
@@ -588,10 +627,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
+        const catalogDisplayStore = this.catalogDisplayStore;
         catalogStore.updateCatalogProfiles(this.catalogFileId);
         profileStore?.setSelectedPointIndices([], false);
-        catalogWidgetStore?.setShowSelectedData(false);
+        catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
         widgetsStore?.initStatistic();
         this.updateStatistic();
@@ -790,7 +829,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.histogramDragCurrentX = undefined;
     };
 
-    private onHistogramDoubleClick = () => {
+    private onHistogramDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        const target = event.target as Element | null;
+        if (target?.closest(".profiler-toolbar")) {
+            return;
+        }
         if (this.widgetStore?.histogramDragMode === DragMode.Select) {
             this.onDeselect();
             return;
@@ -969,9 +1012,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     public render() {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
-        const catalogWidgetStore = this.catalogWidgetStore;
+        const catalogDisplayStore = this.catalogDisplayStore;
         const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-        if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
+        if (!widgetStore || !profileStore || !catalogDisplayStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"} />;
@@ -1209,7 +1252,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (histData.binIndices[binIndex]?.length) {
                             const matched = profileStore.getOriginIndices(histData.binIndices[binIndex]);
                             profileStore.setSelectedPointIndices(matched, true);
-                            this.catalogWidgetStore?.setCatalogTableAutoScroll(true);
+                            this.catalogDisplayStore?.setCatalogTableAutoScroll(true);
                         }
                     }
                 },
@@ -1356,7 +1399,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                                 <Tooltip content={"Show only selected sources at image and table viewer"}>
                                     <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
-                                        <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
+                                        <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
                                     </FormGroup>
                                 </Tooltip>
                                 <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
@@ -1445,6 +1488,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             graphZoomReset={this.onDoubleClick}
                             graphSelectionReset={this.onDeselect}
                             graphCursorMoved={this.onScatterCursorMoved}
+                            updateChartArea={this.updateScatterChartArea}
                             graphClicked={this.onGraphClicked}
                             pointRadius={0.001}
                             shouldScrollZoom={true}
@@ -1486,7 +1530,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
                                 <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
-                                    <Switch checked={catalogWidgetStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
+                                    <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
                                 </FormGroup>
                             </Tooltip>
                             {renderLinearRegressionButton}
