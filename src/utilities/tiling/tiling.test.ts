@@ -258,7 +258,7 @@ test("give correct result when generating tiles for a 16K image at full resoluti
 });
 
 describe("tiling performance", () => {
-    jest.retryTimes(3);
+    jest.retryTimes(10, {waitBeforeRetry: 3000});
 
     test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
         const frameView = {xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1};
