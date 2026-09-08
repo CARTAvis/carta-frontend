@@ -12,8 +12,8 @@ import type * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {CatalogPlotType, CatalogUpdateMode} from "enums";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, type CatalogDisplayStore, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type DragMode, type XBorder} from "stores/Widgets";
+import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
@@ -165,8 +165,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogDisplayStore(): CatalogDisplayStore | undefined {
-        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        return widgetStoreId !== undefined ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
+        return CatalogStore.Instance.getCatalogDisplayStore(this.catalogFileId);
     }
 
     @action handleCatalogFileChange = (fileId: number) => {

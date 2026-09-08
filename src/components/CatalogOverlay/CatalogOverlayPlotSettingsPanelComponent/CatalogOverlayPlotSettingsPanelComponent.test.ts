@@ -1,5 +1,5 @@
 import {FrameScaling} from "enums";
-import {type CatalogDisplayStore} from "stores/Widgets";
+import {type CatalogDisplayStore} from "stores";
 
 import {CatalogOverlayPlotSettingsPanelComponent} from "./CatalogOverlayPlotSettingsPanelComponent";
 

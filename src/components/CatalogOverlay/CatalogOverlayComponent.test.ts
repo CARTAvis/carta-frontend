@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -142,7 +142,7 @@ const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemT
 };
 
 let harnessId = 0;
-const CONSTRUCTED_COMPONENTS: Array<{catalogFileId: number; catalogWidgetId: string; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogDisplayStore}> = [];
+const CONSTRUCTED_COMPONENTS: Array<{catalogFileId: number; component: CatalogOverlayComponent; componentId: string; widgetStore: CatalogDisplayStore}> = [];
 
 const CreateComponentHarness = (system: CatalogSystemType, columns: MockColumn[], xAxis: string = CatalogOverlay.NONE, yAxis: string = CatalogOverlay.NONE, options: {autoSelectEnabled?: boolean; widgetStore?: MockWidgetStore} = {}) => {
     // These unit tests exercise isolated instance methods, so we bypass the real constructor
@@ -205,12 +205,11 @@ const CreateComponentWithoutProfileStore = (xAxis: string = CatalogOverlay.NONE,
 const CreateConstructedComponentHarness = (
     system: CatalogSystemType,
     columns: MockColumn[],
-    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; catalogWidgetId?: string; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogDisplayStore} = {}
+    options: {catalogFileId?: number; catalogPlotType?: CatalogPlotType; componentId?: string; profileStore?: CatalogProfileStore; widgetStore?: CatalogDisplayStore} = {}
 ) => {
     harnessId += 1;
     const catalogFileId = options.catalogFileId ?? 10_000 + harnessId;
     const componentId = options.componentId ?? `catalog-overlay-reaction-test-${harnessId}`;
-    const catalogWidgetId = options.catalogWidgetId ?? `catalog-widget-reaction-test-${harnessId}`;
     const profileStore = options.profileStore ?? CreateCatalogProfileStore(catalogFileId, system, columns);
     const widgetStore = options.widgetStore ?? new CatalogDisplayStore(catalogFileId);
 
@@ -221,25 +220,23 @@ const CreateConstructedComponentHarness = (
     runInAction(() => {
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore);
-        CatalogStore.Instance.catalogWidgets.set(catalogFileId, catalogWidgetId);
-        WidgetsStore.Instance.catalogWidgets.set(catalogWidgetId, widgetStore);
+        CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, widgetStore);
     });
 
     const component = new CatalogOverlayComponent({id: componentId, docked: false});
-    CONSTRUCTED_COMPONENTS.push({catalogFileId, catalogWidgetId, component, componentId, widgetStore});
+    CONSTRUCTED_COMPONENTS.push({catalogFileId, component, componentId, widgetStore});
 
-    return {catalogFileId, catalogWidgetId, component, componentId, profileStore, widgetStore};
+    return {catalogFileId, component, componentId, profileStore, widgetStore};
 };
 
 afterEach(() => {
-    CONSTRUCTED_COMPONENTS.forEach(({catalogFileId, catalogWidgetId, component, componentId, widgetStore}) => {
+    CONSTRUCTED_COMPONENTS.forEach(({catalogFileId, component, componentId, widgetStore}) => {
         component.componentWillUnmount();
         widgetStore.dispose();
         runInAction(() => {
             CatalogStore.Instance.catalogProfiles.delete(componentId);
             CatalogStore.Instance.catalogProfileStores.delete(catalogFileId);
-            CatalogStore.Instance.catalogWidgets.delete(catalogFileId);
-            WidgetsStore.Instance.catalogWidgets.delete(catalogWidgetId);
+            CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
         });
     });
     CONSTRUCTED_COMPONENTS.length = 0;
@@ -459,7 +456,6 @@ describe("CatalogOverlayComponent", () => {
 
             CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}], {
                 catalogFileId: firstHarness.catalogFileId,
-                catalogWidgetId: firstHarness.catalogWidgetId,
                 profileStore: firstHarness.profileStore,
                 widgetStore: firstHarness.widgetStore
             });

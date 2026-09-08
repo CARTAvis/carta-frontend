@@ -3,9 +3,8 @@ import {action, computed, makeObservable, observable, ObservableMap} from "mobx"
 
 import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {type CatalogDisplayStore} from "stores/Widgets";
 import {minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
@@ -37,8 +36,8 @@ export class CatalogStore {
     @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
-    // catalog file Id : catalog widget storeId
-    @observable catalogWidgets: Map<number, string> = new Map();
+    // catalog file Id : catalog display store
+    @observable catalogDisplayStores: Map<number, CatalogDisplayStore> = new Map();
 
     private constructor() {
         makeObservable(this);
@@ -207,11 +206,8 @@ export class CatalogStore {
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
             catalogFileIds.forEach(catalogFileId => {
-                const widgetId = this.catalogWidgets.get(catalogFileId);
-                if (widgetId) {
-                    appStore.widgetsStore.catalogWidgets.get(widgetId)?.resetMaps();
-                    appStore.removeCatalog(catalogFileId, widgetId);
-                }
+                this.getCatalogDisplayStore(catalogFileId)?.resetMaps();
+                appStore.removeCatalog(catalogFileId);
             });
             this.imageAssociatedCatalogId.delete(imageFileId);
         }
@@ -286,16 +282,25 @@ export class CatalogStore {
         return fileList;
     }
 
-    // catalog widget store
+    /** The display store of a catalog, or undefined when the catalog has none. */
     getCatalogDisplayStore(fileId: number): CatalogDisplayStore | undefined {
-        const widgetsStore = WidgetsStore.Instance;
-        if (this.catalogWidgets.has(fileId)) {
-            const widgetStoreId = this.catalogWidgets.get(fileId);
-            return widgetStoreId ? widgetsStore.catalogWidgets.get(widgetStoreId) : undefined;
-        } else {
-            const widgetId = widgetsStore.addCatalogWidget(fileId);
-            return widgetId ? widgetsStore.catalogWidgets.get(widgetId) : undefined;
+        return this.catalogDisplayStores.get(fileId);
+    }
+
+    /** As {@link getCatalogDisplayStore}, but creates the display store when the catalog has none. */
+    @action getOrCreateCatalogDisplayStore(fileId: number): CatalogDisplayStore {
+        let displayStore = this.catalogDisplayStores.get(fileId);
+        if (!displayStore) {
+            displayStore = new CatalogDisplayStore(fileId);
+            this.catalogDisplayStores.set(fileId, displayStore);
         }
+        return displayStore;
+    }
+
+    /** Releases the display store of a catalog that is being closed. */
+    @action removeCatalogDisplayStore(fileId: number) {
+        this.catalogDisplayStores.get(fileId)?.dispose();
+        this.catalogDisplayStores.delete(fileId);
     }
 
     private static getFractionFromUnit(unit: string): number {

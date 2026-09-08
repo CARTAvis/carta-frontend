@@ -6,7 +6,7 @@ import tinycolor from "tinycolor2";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogOverlayShape, CatalogTextureType, ImageViewLayer} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {closestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -57,7 +57,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const catalogStore = appStore.catalogStore;
         const catalogFileIds = catalogStore.visibleCatalogFiles.get(baseFrame);
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
             if (!catalogDisplayStore) {
                 return;
             }
@@ -187,7 +187,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const destinationFrame = this.props.frame;
         catalogStore.visibleCatalogFiles.get(destinationFrame)?.forEach(fileId => {
             const catalog = catalogStore.catalogGLData.get(fileId);
-            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
             const count = catalogStore.catalogCounts.get(fileId);
             if (catalog && catalogDisplayStore && count && count > 0) {
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
@@ -373,9 +373,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
-            const widgetStoreId = catalogStore.catalogWidgets.get(selectedPoint.fileId);
-            if (catalogProfileStore && widgetStoreId) {
-                const catalogDisplayStore = WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+            if (catalogProfileStore) {
+                const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
                 catalogStore.updateCatalogProfiles(selectedPoint.fileId);
                 const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);

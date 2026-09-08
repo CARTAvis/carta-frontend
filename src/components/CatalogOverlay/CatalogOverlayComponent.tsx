@@ -12,8 +12,8 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
-import {CatalogDisplayStore, type CatalogPlotWidgetStoreProps} from "stores/Widgets";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {type CatalogPlotWidgetStoreProps} from "stores/Widgets";
 import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
@@ -53,8 +53,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @computed get displayStore(): CatalogDisplayStore | undefined {
         const catalogFileId = this.catalogFileId;
-        const displayStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
-        return displayStoreId ? WidgetsStore.Instance.catalogWidgets.get(displayStoreId) : undefined;
+        return catalogFileId !== undefined ? CatalogStore.Instance.getCatalogDisplayStore(catalogFileId) : undefined;
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -75,11 +74,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogDisplayStore = this.displayStore;
         const catalogFileId = this.catalogFileId;
         if (catalogFileId !== undefined) {
-            const widgetId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-            if (!widgetId) {
-                return;
-            }
-            appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
+            appStore.removeCatalog(catalogFileId, this.widgetId);
             catalogDisplayStore?.resetMaps();
         }
     };

@@ -7,8 +7,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {CatalogDisplayStore, type ValueClip} from "stores/Widgets";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type ValueClip, type WidgetProps} from "stores";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -87,8 +86,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get displayStore(): CatalogDisplayStore | undefined {
         const catalogFileId = this.catalogFileId;
-        const catalogDisplayStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
-        return catalogDisplayStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogDisplayStoreId) : undefined;
+        return catalogFileId !== undefined ? CatalogStore.Instance.getCatalogDisplayStore(catalogFileId) : undefined;
     }
 
     @computed get catalogFileId() {
@@ -131,11 +129,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 const catalogStore = CatalogStore.Instance;
                 const catalogFileId = this.catalogFileId;
                 if (catalogFileId !== undefined) {
-                    const catalogDisplayStoreId = catalogStore.catalogWidgets.get(catalogFileId);
                     const activeFiles = catalogStore.activeCatalogFiles;
-                    if (!catalogDisplayStoreId) {
-                        WidgetsStore.Instance.addCatalogWidget(catalogFileId);
-                    }
+                    catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
 
                     if (activeFiles?.includes(catalogFileId)) {
                         const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
