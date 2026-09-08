@@ -244,20 +244,21 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("keeps panel selection and presentation state out of display config", () => {
+    test("round-trips panel selection and presentation state through layout config", () => {
         const panel = new CatalogPanelStore(7, "catalog-panel-primary");
         panel.setTableSeparatorPosition("40%");
         panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
         expect(panel.toLayoutSettings()).toEqual({
             panelId: "catalog-panel-primary",
+            catalogFileId: 7,
             tableSeparatorPosition: "40%",
             settingsTabId: CatalogSettingsTabs.COLOR
         });
 
         const restored = new CatalogPanelStore();
         restored.applyLayoutSettings(panel.toLayoutSettings());
-        expect(restored.selectedCatalogId).toBe(1);
+        expect(restored.selectedCatalogId).toBe(7);
         expect(restored.toLayoutSettings()).toEqual(panel.toLayoutSettings());
     });
 });

@@ -42,6 +42,7 @@ export class CatalogPanelStore {
 
     public toLayoutSettings = (): CatalogPanelLayoutSettings => ({
         ...(this.panelId ? {panelId: this.panelId} : {}),
+        catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
         settingsTabId: this.settingsTabId
     });
@@ -52,6 +53,9 @@ export class CatalogPanelStore {
         }
         if (typeof settings.panelId === "string" && settings.panelId) {
             this.panelId = settings.panelId;
+        }
+        if (typeof settings.catalogFileId === "number") {
+            this.selectedCatalogId = settings.catalogFileId;
         }
         if (typeof settings.tableSeparatorPosition === "string") {
             this.tableSeparatorPosition = settings.tableSeparatorPosition;

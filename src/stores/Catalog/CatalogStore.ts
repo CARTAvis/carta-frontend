@@ -40,7 +40,6 @@ export class CatalogStore {
     @observable catalogDisplayStores: Map<number, CatalogDisplayStore> = new Map();
     /** Latest filter request per catalog; streamed responses from older requests are discarded. */
     private readonly catalogRequestIds: Map<number, number> = new Map();
-    private readonly staleCatalogRequestIds: Map<number, Set<number>> = new Map();
 
     private constructor() {
         makeObservable(this);
@@ -134,15 +133,6 @@ export class CatalogStore {
 
     /** Associate a catalog filter request with the catalog it updates. */
     @action registerCatalogRequest = (catalogFileId: number, requestId: number) => {
-        const previousRequestId = this.catalogRequestIds.get(catalogFileId);
-        if (previousRequestId !== undefined && previousRequestId !== requestId) {
-            let staleRequestIds = this.staleCatalogRequestIds.get(catalogFileId);
-            if (!staleRequestIds) {
-                staleRequestIds = new Set<number>();
-                this.staleCatalogRequestIds.set(catalogFileId, staleRequestIds);
-            }
-            staleRequestIds.add(previousRequestId);
-        }
         this.catalogRequestIds.set(catalogFileId, requestId);
     };
 
@@ -151,11 +141,8 @@ export class CatalogStore {
         if (requestId === undefined) {
             return true;
         }
-        if (this.staleCatalogRequestIds.get(catalogFileId)?.has(requestId)) {
-            return false;
-        }
         const currentRequestId = this.catalogRequestIds.get(catalogFileId);
-        return currentRequestId === undefined || currentRequestId === requestId;
+        return currentRequestId === requestId;
     };
 
     /** Mark the current request as finished so late responses cannot mutate the catalog. */
@@ -163,14 +150,6 @@ export class CatalogStore {
         const currentRequestId = this.catalogRequestIds.get(catalogFileId);
         if (requestId !== undefined && currentRequestId !== requestId) {
             return;
-        }
-        if (currentRequestId !== undefined) {
-            let staleRequestIds = this.staleCatalogRequestIds.get(catalogFileId);
-            if (!staleRequestIds) {
-                staleRequestIds = new Set<number>();
-                this.staleCatalogRequestIds.set(catalogFileId, staleRequestIds);
-            }
-            staleRequestIds.add(currentRequestId);
         }
         this.catalogRequestIds.delete(catalogFileId);
     };

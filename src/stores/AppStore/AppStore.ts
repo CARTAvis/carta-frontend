@@ -1239,7 +1239,7 @@ export class AppStore {
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
-        const catalogComponentSize = catalogStore.catalogProfiles.size;
+        const catalogComponentSize = this.widgetsStore.catalogPanelWidgets.size;
         const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;
@@ -1259,10 +1259,7 @@ export class AppStore {
             catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
             catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
-            catalogComponentId = catalogStore.catalogProfiles.keys().next().value;
-            if (catalogComponentId) {
-                catalogStore.catalogProfiles.set(catalogComponentId, fileId);
-            }
+            catalogComponentId = this.widgetsStore.updateCatalogPanelSelection(fileId);
         }
         return catalogComponentId;
     };

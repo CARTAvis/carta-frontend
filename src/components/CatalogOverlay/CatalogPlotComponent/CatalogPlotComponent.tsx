@@ -588,7 +588,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
-            const catalogStore = CatalogStore.Instance;
             const profileStore = this.profileStore;
             const catalogDisplayStore = this.catalogDisplayStore;
             const widgetStore = this.widgetStore;
@@ -596,7 +595,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return;
             }
             const catalogFileId = profileStore.catalogInfo.fileId;
-            catalogStore.updateCatalogProfiles(catalogFileId);
+            WidgetsStore.Instance.updateCatalogPanelSelection(catalogFileId);
 
             let selectedPointIndices;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
@@ -633,11 +632,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onDeselect = () => {
-        const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        catalogStore.updateCatalogProfiles(this.catalogFileId);
+        WidgetsStore.Instance.updateCatalogPanelSelection(this.catalogFileId);
         profileStore?.setSelectedPointIndices([], false);
         catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
@@ -653,9 +651,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.catalogDisplayStore;
         if (event?.points?.length > 0 && isInDragMode && profileStore && catalogDisplayStore) {
-            const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
-            catalogStore.updateCatalogProfiles(catalogFileId);
+            WidgetsStore.Instance.updateCatalogPanelSelection(catalogFileId);
             let selectedPointIndex: number[] = [];
             const selectedPoint = event.points[0] as any;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {

@@ -7,11 +7,28 @@ import {ProtobufProcessing} from "utilities";
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
+    const widgetsStore = appStore.widgetsStore;
 
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.clear();
+        catalogStore.catalogProfiles.clear();
+        catalogStore.imageAssociatedCatalogId.clear();
+        widgetsStore.catalogPanelWidgets.clear();
+    });
+
+    test("updates an existing panel when loading a catalog after the panel store exists", () => {
+        const panel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-0", 1);
+        catalogStore.imageAssociatedCatalogId.set(100, [1]);
+
+        jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
+
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
+        expect(panel.selectedCatalogId).toBe(2);
     });
 
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {

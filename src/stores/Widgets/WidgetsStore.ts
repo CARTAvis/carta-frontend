@@ -1580,16 +1580,17 @@ export class WidgetsStore {
         return true;
     };
 
-    /** Select a catalog in the first panel when an image-view interaction identifies it. */
-    @action updateCatalogPanelSelection = (catalogFileId: number) => {
-        const panel = Array.from(this.catalogPanelWidgets.values()).find(panelStore => panelStore.selectedCatalogId === catalogFileId) ?? Array.from(this.catalogPanelWidgets.values())[0];
-        if (panel) {
-            panel.setSelectedCatalogId(catalogFileId);
-            const componentId = Array.from(this.catalogPanelWidgets.entries()).find(([, panelStore]) => panelStore === panel)?.[0];
-            if (componentId) {
-                CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
-            }
+    /** Select a catalog in the first panel when an image-view interaction identifies it, and return that panel's ID. */
+    @action updateCatalogPanelSelection = (catalogFileId: number): string | undefined => {
+        const panels = Array.from(this.catalogPanelWidgets.entries());
+        const panel = panels.find(([, panelStore]) => panelStore.selectedCatalogId === catalogFileId) ?? panels[0];
+        if (!panel) {
+            return undefined;
         }
+        const [componentId, panelStore] = panel;
+        panelStore.setSelectedCatalogId(catalogFileId);
+        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        return componentId;
     };
 
     /** Replace a catalog only in panels that were showing it. */

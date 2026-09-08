@@ -18,6 +18,14 @@ describe("CatalogStore request tracking", () => {
         expect(catalogStore.acceptsCatalogResponse(catalogFileId, 12)).toBe(true);
     });
 
+    test("rejects a response that was not registered for the catalog", () => {
+        expect(catalogStore.acceptsCatalogResponse(catalogFileId, 10)).toBe(false);
+
+        catalogStore.registerCatalogRequest(catalogFileId, 11);
+
+        expect(catalogStore.acceptsCatalogResponse(catalogFileId, 10)).toBe(false);
+    });
+
     test("rejects responses after the current request is complete", () => {
         catalogStore.registerCatalogRequest(catalogFileId, 21);
         catalogStore.completeCatalogRequest(catalogFileId, 21);
