@@ -700,7 +700,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const currentMin = xScale.min;
         const currentMax = xScale.max;
         const range = currentMax - currentMin;
-        const zoomFactor = event.deltaY > 0 ? 0.1 : -0.1;
+        const zoomFactor = event.deltaY > 0 ? -0.02 : 0.02;
         const mouseX = xScale.getValueForPixel(event.nativeEvent.offsetX) ?? currentMin + range / 2;
         const fraction = (mouseX - currentMin) / range;
         const newMin = currentMin + range * zoomFactor * fraction;
@@ -788,6 +788,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
         this.histogramDragStartX = undefined;
         this.histogramDragCurrentX = undefined;
+    };
+
+    private onHistogramDoubleClick = () => {
+        if (this.widgetStore?.histogramDragMode === DragMode.Select) {
+            this.onDeselect();
+            return;
+        }
+        this.onDoubleClick();
     };
 
     private exportHistogramImage = () => {
@@ -1245,7 +1253,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     ctx.save();
                     ctx.strokeStyle = lineColor;
                     ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 4]);
                     // Vertical line
                     ctx.beginPath();
                     ctx.moveTo(x, chartArea.top);
@@ -1324,7 +1331,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             onMouseDown={this.onHistogramMouseDown}
                             onMouseMove={this.onHistogramMouseMove}
                             onMouseUp={this.onHistogramMouseUp}
-                            onDoubleClick={this.onDoubleClick}
+                            onDoubleClick={this.onHistogramDoubleClick}
                         >
                             <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
                             <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
@@ -1332,10 +1339,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                     <AnchorButton icon="widget" active={widgetStore.histogramDragMode === DragMode.Select} onClick={() => widgetStore.setHistogramDragMode(DragMode.Select)} />
                                 </Tooltip>
                                 <Tooltip content="Zoom">
-                                    <AnchorButton icon="zoom-in" active={widgetStore.histogramDragMode === DragMode.Zoom} onClick={() => widgetStore.setHistogramDragMode(DragMode.Zoom)} />
+                                    <AnchorButton icon="search" active={widgetStore.histogramDragMode === DragMode.Zoom} onClick={() => widgetStore.setHistogramDragMode(DragMode.Zoom)} />
                                 </Tooltip>
                                 <Tooltip content="Pan">
                                     <AnchorButton icon="move" active={widgetStore.histogramDragMode === DragMode.Pan} onClick={() => widgetStore.setHistogramDragMode(DragMode.Pan)} />
+                                </Tooltip>
+                                <Tooltip content="Autoscale">
+                                    <AnchorButton icon="zoom-to-fit" onClick={this.onAutoscale} data-testid="catalog-histogram-autoscale-button" />
                                 </Tooltip>
                             </ToolbarComponent>
                         </div>
