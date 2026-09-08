@@ -16,10 +16,10 @@ import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} f
 import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ScatterPlotComponent} from "components/Shared/ScatterPlot/ScatterPlotComponent";
-import {CatalogPlotType, CatalogUpdateMode, PlotType, TickType} from "enums";
+import {CatalogPlotType, CatalogUpdateMode, DragMode, PlotType, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type XBorder} from "stores/Widgets";
 import {closestPointIndexToCursor, computeHistogramBins, exportTsvFile, getTimestamp, minMaxArray, pointInPolygon, toExponential, toFixed, type TypedArray} from "utilities";
 
 import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
@@ -558,9 +558,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onGraphClicked = (x: number, y: number, _data: {x: number; y: number; z?: number}[]) => {
-        const selectionMode: DragMode[] = ["select", "lasso"];
+        const selectionMode: DragMode[] = [DragMode.Select, DragMode.Lasso];
         const widgetStore = this.widgetStore;
-        const isInDragmode = widgetStore && selectionMode.includes(widgetStore.dragMode);
+        const isInDragmode = widgetStore && widgetStore.dragMode !== false && selectionMode.includes(widgetStore.dragMode);
         if (!isInDragmode) {
             return;
         }
@@ -666,23 +666,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getScatterDragAction = (): "boxSelect" | "lassoSelect" | "zoom" | "pan" => {
-        const dragmode = this.widgetStore?.dragMode;
-        if (dragmode === "lasso") {
-            return "lassoSelect";
-        }
-        if (dragmode === "select") {
-            return "boxSelect";
-        }
-        if (dragmode === "zoom") {
-            return "zoom";
-        }
-        if (dragmode === "pan") {
-            return "pan";
-        }
-        return "boxSelect";
-    };
-
     @action private updateHistogramChartArea = (chart: Chart) => {
         if (chart.chartArea) {
             this.histogramChartArea = chart.chartArea;
@@ -747,7 +730,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
             const widgetStore = this.widgetStore;
-            if (widgetStore?.histogramDragMode === "pan") {
+            if (widgetStore?.histogramDragMode === DragMode.Pan) {
                 this.histogramPanPrevX = event.nativeEvent.offsetX;
             } else {
                 this.histogramDragStartX = event.nativeEvent.offsetX;
@@ -795,7 +778,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 if (x1 !== undefined && x2 !== undefined) {
                     const newMin = Math.min(x1, x2);
                     const newMax = Math.max(x1, x2);
-                    if (widgetStore.histogramDragMode === "select") {
+                    if (widgetStore.histogramDragMode === DragMode.Select) {
                         this.selectHistogramBinsInRange(newMin, newMax);
                     } else {
                         widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
@@ -1213,7 +1196,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         this.hasHistogramDragHandled = false;
                         return;
                     }
-                    if (widgetStore.histogramDragMode === "select" && elements.length > 0) {
+                    if (widgetStore.histogramDragMode === DragMode.Select && elements.length > 0) {
                         const binIndex = elements[0].index;
                         if (histData.binIndices[binIndex]?.length) {
                             const matched = profileStore.getOriginIndices(histData.binIndices[binIndex]);
@@ -1346,13 +1329,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
                             <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
                                 <Tooltip content="Box select">
-                                    <AnchorButton icon="widget" active={widgetStore.histogramDragMode === "select"} onClick={() => widgetStore.setHistogramDragMode("select")} />
+                                    <AnchorButton icon="widget" active={widgetStore.histogramDragMode === DragMode.Select} onClick={() => widgetStore.setHistogramDragMode(DragMode.Select)} />
                                 </Tooltip>
                                 <Tooltip content="Zoom">
-                                    <AnchorButton icon="zoom-in" active={widgetStore.histogramDragMode === "zoom"} onClick={() => widgetStore.setHistogramDragMode("zoom")} />
+                                    <AnchorButton icon="zoom-in" active={widgetStore.histogramDragMode === DragMode.Zoom} onClick={() => widgetStore.setHistogramDragMode(DragMode.Zoom)} />
                                 </Tooltip>
                                 <Tooltip content="Pan">
-                                    <AnchorButton icon="move" active={widgetStore.histogramDragMode === "pan"} onClick={() => widgetStore.setHistogramDragMode("pan")} />
+                                    <AnchorButton icon="move" active={widgetStore.histogramDragMode === DragMode.Pan} onClick={() => widgetStore.setHistogramDragMode(DragMode.Pan)} />
                                 </Tooltip>
                             </ToolbarComponent>
                         </div>
@@ -1457,7 +1440,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             shouldScrollZoom={true}
                             multiPlotPropsMap={scatterMultiPlotMap}
                             shouldAlignChartAreaRight={true}
-                            dragAction={this.getScatterDragAction()}
+                            dragAction={widgetStore.dragMode}
                             onBoxSelected={this.onBoxSelected}
                             onLassoSelected={this.onLassoSelected}
                             renderOverlay={this.renderWebGLOverlay}
@@ -1468,16 +1451,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             toolbarChildren={
                                 <React.Fragment>
                                     <Tooltip content="Box select">
-                                        <AnchorButton icon="widget" active={widgetStore.dragMode === "select"} onClick={() => widgetStore.setDragMode("select")} />
+                                        <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} />
                                     </Tooltip>
                                     <Tooltip content="Lasso select">
-                                        <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === "lasso"} onClick={() => widgetStore.setDragMode("lasso")} />
+                                        <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} />
                                     </Tooltip>
                                     <Tooltip content="Zoom">
-                                        <AnchorButton icon="search" active={widgetStore.dragMode === "zoom"} onClick={() => widgetStore.setDragMode("zoom")} />
+                                        <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} />
                                     </Tooltip>
                                     <Tooltip content="Pan">
-                                        <AnchorButton icon="move" active={widgetStore.dragMode === "pan"} onClick={() => widgetStore.setDragMode("pan")} />
+                                        <AnchorButton icon="move" active={widgetStore.dragMode === DragMode.Pan} onClick={() => widgetStore.setDragMode(DragMode.Pan)} />
                                     </Tooltip>
                                     <Tooltip content="Autoscale">
                                         <AnchorButton icon="zoom-to-fit" onClick={this.onAutoscale} data-testid="catalog-scatter-autoscale-button" />

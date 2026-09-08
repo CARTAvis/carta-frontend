@@ -5,6 +5,13 @@ export enum ZoomMode {
     XY
 }
 
+export enum DragMode {
+    Zoom = "zoom",
+    Pan = "pan",
+    Select = "select",
+    Lasso = "lasso"
+}
+
 export enum InteractionMode {
     NONE,
     SELECTING,

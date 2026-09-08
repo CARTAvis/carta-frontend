@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {type MultiPlotProps, PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
+import {DragMode, InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
@@ -69,7 +69,7 @@ export class ScatterPlotComponentProps {
     updateChartArea?: (chartArea: ChartArea) => void;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
     shouldAlignChartAreaRight?: boolean;
-    dragAction?: "zoom" | "boxSelect" | "lassoSelect" | "pan";
+    dragAction?: DragMode | false;
     onBoxSelected?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     onLassoSelected?: (polygonGraphCoords: Point2D[]) => void;
     renderOverlay?: (width: number, height: number, chartArea: ChartArea | undefined) => React.ReactNode;
@@ -510,9 +510,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
         const isModifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (isModifierPressed || this.props.dragAction === "pan") {
+        if (isModifierPressed || this.props.dragAction === DragMode.Pan) {
             this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
-        } else if (this.props.dragAction === "lassoSelect") {
+        } else if (this.props.dragAction === DragMode.Lasso) {
             this.startLassoSelection(mouseEvent.offsetX, mouseEvent.offsetY);
         } else {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
@@ -520,7 +520,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageDoubleClick = () => {
-        if (this.props.dragAction === "boxSelect" || this.props.dragAction === "lassoSelect") {
+        if (this.props.dragAction === DragMode.Select || this.props.dragAction === DragMode.Lasso) {
             if (this.props.graphSelectionReset) {
                 this.props.graphSelectionReset();
             }
@@ -583,7 +583,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     if (polygonGraph.length >= 3) {
                         this.props.onLassoSelected(polygonGraph);
                     }
-                } else if (this.isSelecting && this.props.dragAction === "boxSelect" && this.props.onBoxSelected) {
+                } else if (this.isSelecting && this.props.dragAction === DragMode.Select && this.props.onBoxSelected) {
                     const minX = this.getValueForPixelX(Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x));
                     const maxX = this.getValueForPixelX(Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x));
                     const minY = this.getValueForPixelY(Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y));
@@ -708,8 +708,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             return [<Line key={"lasso"} points={this.lassoPoints} stroke={Colors.GRAY3} strokeWidth={2} closed={false} dash={[5, 5]} fill={Colors.GRAY3} fillEnabled={true} opacity={0.2} />];
         }
 
-        // Box selection for dragAction === "boxSelect"
-        if (this.isSelecting && this.props.dragAction === "boxSelect" && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
+        // Box selection for dragAction === DragMode.Select
+        if (this.isSelecting && this.props.dragAction === DragMode.Select && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
             selectionRect = [<Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y} stroke={Colors.GRAY3} strokeWidth={1} />];
         }
 

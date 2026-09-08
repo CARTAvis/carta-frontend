@@ -1,7 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
-import {CatalogOverlay, type CatalogPlotType} from "enums";
+import {CatalogOverlay, type CatalogPlotType, DragMode} from "enums";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -12,8 +12,7 @@ export interface CatalogPlotWidgetStoreProps {
 
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
-export type DragMode = "zoom" | "pan" | "select" | "lasso" | false;
-export type HistogramDragMode = "zoom" | "pan" | "select";
+export type HistogramDragMode = Exclude<DragMode, DragMode.Lasso>;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
@@ -22,8 +21,8 @@ export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterBorder: Border | undefined = undefined;
-    @observable dragMode: DragMode = "select";
-    @observable histogramDragMode: HistogramDragMode = "zoom";
+    @observable dragMode: DragMode | false = DragMode.Select;
+    @observable histogramDragMode: HistogramDragMode = DragMode.Zoom;
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
@@ -70,7 +69,7 @@ export class CatalogPlotWidgetStore {
         this.histogramBorder = xborder;
     }
 
-    @action setDragMode(mode: DragMode) {
+    @action setDragMode(mode: DragMode | false) {
         this.dragMode = mode;
     }
 
