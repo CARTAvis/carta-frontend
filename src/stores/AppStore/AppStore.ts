@@ -1212,17 +1212,16 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
-                const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-                if (catalogWidgetId) {
+                const catalogComponentId = this.updateCatalogProfile(fileId, frame);
+                if (catalogComponentId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                     this.catalogStore.addCatalog(fileId, ack.dataSize);
                     this.fileBrowserStore.hideFileBrowser();
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                     return fileId;
                 } else {
-                    throw new Error("No catalog widget ID");
+                    throw new Error("No catalog panel");
                 }
             } else {
                 throw new Error("No catalog file loaded");
@@ -1235,8 +1234,8 @@ export class AppStore {
         }
     }
 
-    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
-        let catalogWidgetId;
+    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string | undefined => {
+        let catalogComponentId: string | undefined;
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
@@ -1255,26 +1254,26 @@ export class AppStore {
             catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
         }
 
+        catalogStore.getOrCreateCatalogDisplayStore(fileId);
         if (catalogComponentSize === 0) {
-            const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-            catalogWidgetId = catalog.widgetStoreId;
-            catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
+            catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
+            catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
-            catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
-            const key = catalogStore.catalogProfiles.keys().next().value;
-            catalogStore.catalogProfiles.set(key, fileId);
+            catalogComponentId = catalogStore.catalogProfiles.keys().next().value;
+            if (catalogComponentId) {
+                catalogStore.catalogProfiles.set(catalogComponentId, fileId);
+            }
         }
-        return catalogWidgetId;
+        return catalogComponentId;
     };
 
-    @action removeCatalog(fileId: number, catalogWidgetId: string, catalogComponentId?: string) {
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             const catalogStore = CatalogStore.Instance;
             // close all associated catalog plots widgets
             catalogStore.clearCatalogPlotsByFileId(fileId);
-            // remove catalog overlay widget store
-            this.catalogStore.catalogWidgets.delete(fileId);
-            this.widgetsStore.catalogWidgets.delete(catalogWidgetId);
+            // remove catalog overlay display store
+            catalogStore.removeCatalogDisplayStore(fileId);
             // remove overlay
             catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
@@ -2469,7 +2468,6 @@ export class AppStore {
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         const catalogFileId = catalogFilter.fileId;
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-        const catalogWidgetStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -2482,10 +2480,10 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate && catalogWidgetStoreId) {
-                const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                const xColumn = catalogWidgetStore?.xAxis;
-                const yColumn = catalogWidgetStore?.yAxis;
+            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
+                const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
+                const xColumn = catalogDisplayStore?.xAxis;
+                const yColumn = catalogDisplayStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
@@ -2502,7 +2500,7 @@ export class AppStore {
                             catalogFilter.subsetEndIndex,
                             catalogFilter.subsetDataSize
                         );
-                        catalogWidgetStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
+                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
                     }
                 }
             }
