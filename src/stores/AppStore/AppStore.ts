@@ -45,7 +45,6 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
-    WorkspaceConfig,
     type WorkspaceFile
 } from "models";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
@@ -2830,7 +2829,7 @@ export class AppStore {
                     }
 
                     if (fileInfo.renderConfig) {
-                        frame.renderConfig.updateFromWorkspace(fileInfo.renderConfig);
+                        frame.renderConfig.applyConfig(fileInfo.renderConfig);
                     }
 
                     if (workspace.references && fileInfo.references) {
@@ -2846,11 +2845,11 @@ export class AppStore {
                     }
 
                     if (fileInfo.contourConfig) {
-                        frame.contourConfig.updateFromWorkspace(fileInfo.contourConfig);
+                        frame.contourConfig.applyConfig(fileInfo.contourConfig);
                         frame.applyContours();
                     }
                     if (fileInfo.vectorOverlayConfig) {
-                        frame.vectorOverlayConfig.updateFromWorkspace(fileInfo.vectorOverlayConfig);
+                        frame.vectorOverlayConfig.applyConfig(fileInfo.vectorOverlayConfig);
                         frame.applyVectorOverlay();
                     }
 
@@ -3025,14 +3024,14 @@ export class AppStore {
             }
 
             // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            workspaceFile.renderConfig = WorkspaceConfig.createRenderConfig(frame.renderConfig);
+            workspaceFile.renderConfig = frame.renderConfig.toConfig();
 
-            const contourConfig = WorkspaceConfig.createContourConfig(frame.contourConfig);
+            const contourConfig = frame.contourConfig.toConfig();
             if (contourConfig) {
                 workspaceFile.contourConfig = contourConfig;
             }
 
-            const vectorOverlayConfig = WorkspaceConfig.createVectorOverlayConfig(frame.vectorOverlayConfig);
+            const vectorOverlayConfig = frame.vectorOverlayConfig.toConfig();
             if (vectorOverlayConfig) {
                 workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
             }

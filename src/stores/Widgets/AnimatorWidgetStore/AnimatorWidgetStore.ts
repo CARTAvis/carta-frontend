@@ -93,7 +93,7 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
         this.relativeTimeUnit = unit;
     };
 
-    @action init = (config: PersistedAnimatorWidgetConfig) => {
+    @action applyConfig = (config: PersistedAnimatorWidgetConfig) => {
         if (isEnumValue(TimeLabelFormat, config.timeLabelFormat)) {
             this.timeLabelFormat = config.timeLabelFormat;
         }
