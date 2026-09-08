@@ -3,6 +3,7 @@ import {Actions} from "flexlayout-react";
 
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
+import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetsStore} from "./WidgetsStore";
@@ -191,5 +192,35 @@ describe("WidgetsStore PV preview test ids", () => {
             relativeReferenceMjdUtc: 58000,
             relativeTimeUnit: RelativeTimeUnit.DAY
         });
+    });
+
+    test("persists catalog display settings alongside panel layout settings", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const panelStore = widgetsStore.getCatalogPanelStore("catalog-overlay-7", 7);
+        const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
+        const displayStore = {toConfig: () => displayConfig};
+
+        CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toEqual({
+            ...displayConfig,
+            ...panelStore.toLayoutSettings()
+        });
+
+        CatalogStore.Instance.catalogDisplayStores.delete(7);
+    });
+
+    test("applies catalog display settings while restoring a catalog panel", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfig: jest.fn()};
+        const widgetSettings = {catalogFileId: 7, color: "#123456", shape: "circle"};
+
+        CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
+
+        expect((widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7")).toBe("catalog-overlay-7");
+        expect(displayStore.applyConfig).toHaveBeenCalledWith(widgetSettings);
+
+        CatalogStore.Instance.catalogDisplayStores.delete(7);
+        CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");
     });
 });

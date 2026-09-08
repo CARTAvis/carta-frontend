@@ -1245,9 +1245,7 @@ export class AppStore {
             associatedCatalogFiles = currentAssociatedCatalogFile;
         } else {
             // new image append
-            catalogStore.catalogProfiles.forEach((value, componentId) => {
-                catalogStore.catalogProfiles.set(componentId, fileId);
-            });
+            this.widgetsStore.resetCatalogPanelSelections([fileId]);
         }
         associatedCatalogFiles.push(fileId);
         if (AppStore.Instance.activeFrame) {

@@ -31,6 +31,18 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(panel.selectedCatalogId).toBe(2);
     });
 
+    test("updates every panel when the first catalog is loaded for a new image", () => {
+        const firstPanel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-0", 1);
+        const secondPanel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-1", 1);
+        catalogStore.imageAssociatedCatalogId.set(101, []);
+
+        const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(firstPanel.selectedCatalogId).toBe(3);
+        expect(secondPanel.selectedCatalogId).toBe(3);
+    });
+
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
