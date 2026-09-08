@@ -860,6 +860,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.panelStore?.setSettingsTabId(type);
+        this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
 

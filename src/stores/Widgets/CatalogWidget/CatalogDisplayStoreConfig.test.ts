@@ -201,6 +201,18 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
+    test("retries deferred layout config when catalog data becomes available", () => {
+        const store = createStoreWithoutData();
+        const catalogFileId = store.catalogFileId;
+
+        expect(store.applyConfigWhenReady({color: "#123456"})).toEqual({success: false, errors: ["The catalog data has not been loaded"]});
+        expect(store.catalogColor).not.toBe("#123456");
+
+        runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
+
+        expect(store.catalogColor).toBe("#123456");
+    });
+
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
         const store = createStore();
         const before = store.toConfig();

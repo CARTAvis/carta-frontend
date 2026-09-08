@@ -212,13 +212,41 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("applies catalog display settings while restoring a catalog panel", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const displayStore = {applyConfig: jest.fn()};
-        const widgetSettings = {catalogFileId: 7, color: "#123456", shape: "circle"};
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {catalogFileId: 7, catalogColor: "#123456", catalogShape: "circle", catalogSize: 14, panelPosition: "top"};
 
         CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
 
         expect((widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7")).toBe("catalog-overlay-7");
-        expect(displayStore.applyConfig).toHaveBeenCalledWith(widgetSettings);
+        expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith({
+            ...widgetSettings,
+            color: "#123456",
+            shape: "circle",
+            size: 14
+        });
+
+        CatalogStore.Instance.catalogDisplayStores.delete(7);
+        CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");
+    });
+
+    test("prefers current catalog display fields over legacy fields when restoring", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {
+            catalogFileId: 7,
+            catalogColor: "#123456",
+            catalogShape: "circle",
+            catalogSize: 14,
+            color: "#abcdef",
+            shape: "box",
+            size: 9
+        };
+
+        CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+
+        expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith(widgetSettings);
 
         CatalogStore.Instance.catalogDisplayStores.delete(7);
         CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");

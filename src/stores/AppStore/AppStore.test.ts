@@ -174,6 +174,21 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });
+
+    test("completes a request when its profile store was removed before the final response", () => {
+        catalogStore.registerCatalogRequest(7, 42);
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            eventId: 42,
+            fileId: 7,
+            progress: 1,
+            subsetDataSize: 0,
+            subsetEndIndex: 0
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(catalogStore.acceptsCatalogResponse(7, 42)).toBe(false);
+    });
 });
 
 describe("scaleZoomForImageRatio", () => {

@@ -161,9 +161,29 @@ export class CatalogStore {
     @action resetActiveCatalogFile(imageFileId: number) {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
         const activeCatalogFileIds = fileIds ? fileIds : [];
-        if (this.catalogProfiles.size && activeCatalogFileIds?.length) {
+        if (!activeCatalogFileIds.length) {
+            return;
+        }
+
+        // CatalogPanelStore is the source of truth for the refactored catalog panels.
+        // Keep the legacy map synchronized while it remains for compatibility with
+        // callers that have not migrated yet.
+        if (WidgetsStore.Instance.catalogPanelWidgets.size) {
             WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
-            this.catalogProfiles.forEach((value, componentId) => {
+            this.catalogProfiles.forEach((_value, componentId) => {
+                if (!WidgetsStore.Instance.catalogPanelWidgets.has(componentId)) {
+                    this.catalogProfiles.delete(componentId);
+                }
+            });
+            WidgetsStore.Instance.catalogPanelWidgets.forEach((panelStore, componentId) => {
+                this.catalogProfiles.set(componentId, panelStore.selectedCatalogId);
+            });
+            return;
+        }
+
+        // Legacy-only callers still need the previous behavior during migration.
+        if (this.catalogProfiles.size) {
+            this.catalogProfiles.forEach((_value, componentId) => {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });
         }

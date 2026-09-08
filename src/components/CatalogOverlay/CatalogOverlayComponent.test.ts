@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -584,6 +584,18 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.xAxis).toBe("_RAJ2000");
             expect(widgetStore.yAxis).toBe("_DEJ2000");
         });
+    });
+
+    test("resets the size-axis tab when a settings shortcut is opened", () => {
+        const {component, componentId, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const panelStore = WidgetsStore.Instance.catalogPanelWidgets.get(componentId);
+        widgetStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+        jest.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(jest.fn());
+
+        component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
+
+        expect(panelStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widgetStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
     });
 
     describe("isImageOverlaySelectionDirty", () => {

@@ -2472,6 +2472,9 @@ export class AppStore {
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
 
         const progress = catalogFilter.progress;
+        if (progress === 1) {
+            this.catalogStore.completeCatalogRequest(catalogFileId, catalogFilter.eventId);
+        }
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
             const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
@@ -2480,7 +2483,6 @@ export class AppStore {
             if (progress === 1) {
                 catalogProfileStore.setLoadingDataStatus(false);
                 catalogProfileStore.setUpdatingDataStream(false);
-                this.catalogStore.completeCatalogRequest(catalogFileId, catalogFilter.eventId);
             }
 
             if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {

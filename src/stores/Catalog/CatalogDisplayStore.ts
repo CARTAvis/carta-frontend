@@ -178,10 +178,28 @@ export class CatalogDisplayStore {
      * data range; a clip that came from a config outlives that reset.
      */
     private readonly pendingClipRestore = new Map<ClipGroup, ClipRestore>();
+    /** Layout display settings waiting for the catalog data they validate against. */
+    private pendingConfig: WorkspaceCatalogConfig | undefined;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
+
+        this.disposers.push(
+            reaction(
+                () => {
+                    const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+                    return Boolean(profileStore && !profileStore.isLoadingOntoImage);
+                },
+                isReady => {
+                    if (isReady && this.pendingConfig) {
+                        const config = this.pendingConfig;
+                        this.pendingConfig = undefined;
+                        this.applyConfig(config);
+                    }
+                }
+            )
+        );
 
         this.disposers.push(
             reaction(
@@ -1301,6 +1319,15 @@ export class CatalogDisplayStore {
         this.isSizeMinorColumnMaxLocked = sizeMinorAxis.columnMaxLocked;
 
         return {success: true, errors: []};
+    };
+
+    /** Apply layout settings now, or retry them once the catalog data is ready. */
+    @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        const shouldDefer = !profileStore || profileStore.isLoadingOntoImage;
+        const result = this.applyConfig(config);
+        this.pendingConfig = shouldDefer ? config : undefined;
+        return result;
     };
 
     public toConfig = (): WorkspaceCatalogConfig => {

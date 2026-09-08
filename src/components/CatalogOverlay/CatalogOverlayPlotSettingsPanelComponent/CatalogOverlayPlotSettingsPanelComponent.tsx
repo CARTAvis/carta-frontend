@@ -1047,9 +1047,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return <MenuItem icon={shapeItem} key={shape} text={""} onClick={itemProps.handleClick} active={itemProps.modifiers.active} data-testid={"catalog-settings-shape-" + CatalogOverlayShape[shape].toLowerCase().replaceAll("_", "-")} />;
     };
 
-    private handleSelectedTabChanged = (newTabId: string | number) => {
+    private handleSelectedTabChanged(newTabId: string | number) {
         this.panelStore?.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
-    };
+        this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
+    }
 
     private handleSelectedAxisTabChanged = (newTabId: string | number) => {
         this.displayStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));
