@@ -48,12 +48,6 @@
         margin-bottom: 65px;
         position: relative;
         padding-right: 10px;
-
-        &[data-testid="catalog-scatter-plot"] {
-            .scatter-plot-component {
-                width: calc(100% + 10px);
-            }
-        }
     }
 
     .#{$ns}-dialog-footer {
