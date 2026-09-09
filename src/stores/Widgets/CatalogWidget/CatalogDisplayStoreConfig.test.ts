@@ -265,12 +265,44 @@ describe("CatalogDisplayStore display config", () => {
             panelId: "catalog-panel-primary",
             catalogFileId: 7,
             tableSeparatorPosition: "40%",
-            settingsTabId: CatalogSettingsTabs.COLOR
+            settingsTabIdByCatalog: {"7": CatalogSettingsTabs.COLOR}
         });
 
         const restored = new CatalogPanelStore();
         restored.applyLayoutSettings(panel.toLayoutSettings());
         expect(restored.selectedCatalogId).toBe(7);
+        expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
         expect(restored.toLayoutSettings()).toEqual(panel.toLayoutSettings());
+    });
+
+    test("remembers the settings section of each catalog the panel has shown", () => {
+        const panel = new CatalogPanelStore(1, "catalog-panel-primary");
+        panel.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
+
+        panel.setSelectedCatalogId(2);
+        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
+        panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
+
+        panel.setSelectedCatalogId(1);
+        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        panel.setSelectedCatalogId(2);
+        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+    });
+
+    test("keeps the settings section of each panel separate", () => {
+        const first = new CatalogPanelStore(7, "catalog-panel-primary");
+        const second = new CatalogPanelStore(7, "catalog-panel-secondary");
+
+        first.setSettingsTabId(CatalogSettingsTabs.COLOR);
+
+        expect(second.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
+    });
+
+    test("restores the settings section from a layout written before it was kept per catalog", () => {
+        const restored = new CatalogPanelStore();
+        restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION});
+
+        expect(restored.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(restored.toLayoutSettings().settingsTabIdByCatalog).toEqual({"3": CatalogSettingsTabs.ORIENTATION});
     });
 });
