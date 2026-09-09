@@ -257,25 +257,31 @@ test("give correct result when generating tiles for a 16K image at full resoluti
     expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
-describe("tiling performance", () => {
-    jest.retryTimes(3);
-
-    test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
-        const frameView = {xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1};
-        const imageSize = {x: 16384, y: 16384};
-
-        GetRequiredTiles(frameView, imageSize, TILE256);
-
+/** Timings under Jest's parallel workers are noisy in one direction only, so the fastest
+ *  run of several is the stable estimate; the first runs are also JIT warm-up. */
+function fastestRun(run: () => void, samples = 5): number {
+    run(); // warm up
+    let best = Infinity;
+    for (let i = 0; i < samples; i++) {
         const tStart = performance.now();
-        const result = GetRequiredTiles(frameView, imageSize, TILE256);
-        const tEnd = performance.now();
+        run();
+        best = Math.min(best, performance.now() - tStart);
+    }
+    return best;
+}
 
-        const runTime = tEnd - tStart;
+test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
+    const frameView = {xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1};
+    const imageSize = {x: 16384, y: 16384};
+    let result: TileCoordinate[] = [];
 
-        expect(Array.isArray(result)).toBe(true);
-        expect(result.length).toBe(64 * 64);
-        expect(runTime).toBeLessThan(2);
+    const runTime = fastestRun(() => {
+        result = GetRequiredTiles(frameView, imageSize, TILE256);
     });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(64 * 64);
+    expect(runTime).toBeLessThan(2);
 });
 
 test("round trip mip -> layer -> mip", () => {
