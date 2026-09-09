@@ -29,6 +29,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
+            getIntensityConfig: jest.fn(() => intensityConfig),
             getRegion: jest.fn(),
             hasStokes: false,
             headerUnit: nativeIntensityUnit,

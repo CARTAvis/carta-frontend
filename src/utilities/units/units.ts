@@ -183,6 +183,8 @@ export function getValueFromArcsecString(formattedString: string): number | null
 export function pixelToFluxDensityUnit(pixelUnit: string): string {
     if (pixelUnit === "K") {
         return "K*arcsec^2";
+    } else if (pixelUnit === "mK") {
+        return "mK*arcsec^2";
     }
     return pixelUnit.replace(/\/beam|\/arcsec\^2|\/arcsec2|\/sr|\/pixel/i, "");
 }
