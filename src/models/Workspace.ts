@@ -72,9 +72,9 @@ export interface WorkspaceVectorOverlayConfig {
 /** One catalog size axis: the major axis, or the minor axis of an ellipse. */
 export interface WorkspaceCatalogSizeAxisConfig {
     mapColumn?: string;
-    /** Lower end of the mapped data range, as clipped by the user. */
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMinClip?: number;
-    /** Upper end of the mapped data range, as clipped by the user. */
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMaxClip?: number;
     min?: {area: number; diameter: number};
     max?: {area: number; diameter: number};
@@ -89,7 +89,9 @@ export interface WorkspaceCatalogSizeAxisConfig {
 
 export interface WorkspaceCatalogColorAxisConfig {
     mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMaxClip?: number;
     colorMap?: string;
     inverted?: boolean;
@@ -99,7 +101,9 @@ export interface WorkspaceCatalogColorAxisConfig {
 
 export interface WorkspaceCatalogOrientationAxisConfig {
     mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMaxClip?: number;
     /** Lower end of the angle range the mapped data is spread over, in degrees. */
     angleMin?: number;

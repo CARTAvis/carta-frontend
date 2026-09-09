@@ -1,7 +1,7 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -227,6 +227,34 @@ describe("WidgetsStore PV preview test ids", () => {
 
         CatalogStore.Instance.catalogDisplayStores.delete(7);
         CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");
+    });
+
+    test("keeps a restored plot with the catalog it was saved against", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag", catalogFileId: 3};
+
+        const widgetStoreId = (widgetsStore as any).initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", widgetSettings);
+        const {catalogFileId, catalogPlotComponentId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
+
+        expect(catalogFileId).toBe(3);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetStoreId)).toEqual({
+            ...widgetsStore.catalogPlotWidgets.get(widgetStoreId)?.toConfig(),
+            catalogFileId: 3
+        });
+
+        CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
+    });
+
+    test("restores a plot from a layout written before the catalog association was saved", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag"};
+
+        const widgetStoreId = (widgetsStore as any).initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", widgetSettings);
+        const {catalogFileId, catalogPlotComponentId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
+
+        expect(catalogFileId).toBe(1);
+
+        CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
     });
 
     test("prefers current catalog display fields over legacy fields when restoring", () => {

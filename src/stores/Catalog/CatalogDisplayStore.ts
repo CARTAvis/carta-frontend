@@ -1,5 +1,6 @@
 import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
+import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, type CatalogSystemType, CatalogTextureType, ColorMap, FrameScaling} from "enums";
@@ -62,6 +63,25 @@ function normalizeOrientationAxis(axis: WorkspaceCatalogOrientationAxisConfig | 
         scalingType: axis?.scalingType ?? FrameScaling.LINEAR,
         scalingParameters: scalingParametersFromConfig(axis?.scalingParameters)
     };
+}
+
+/**
+ * Whether the clipped bounds a config asks for are the config's own. An unmapped column has no
+ * bounds, and a config that states bounds authored them, so both survive a recompute. A mapped
+ * column with no stated bounds asks for the bounds of the catalog data instead, which the store
+ * recomputes for itself, so those must not be held across the recompute.
+ */
+function configDefinesClip(axis: {mapColumn: string; columnMinClip?: number; columnMaxClip?: number}): boolean {
+    return axis.mapColumn === CatalogOverlay.NONE || axis.columnMinClip !== undefined || axis.columnMaxClip !== undefined;
+}
+
+/**
+ * The clipped bound worth keeping in a config. Until the user clips a bound it holds the range of
+ * the catalog data, which the store recomputes whenever that data changes, so only a bound that
+ * differs from its data-derived default was authored by the user and belongs in a config.
+ */
+function authoredClip(bound: {default: number | undefined; clipd: number | undefined}): number | undefined {
+    return bound.clipd === bound.default ? undefined : bound.clipd;
 }
 
 export class CatalogDisplayStore {
@@ -1235,7 +1255,7 @@ export class CatalogDisplayStore {
         const colorAxis = normalizeColorAxis(config?.colorAxis);
         const orientationAxis = normalizeOrientationAxis(config?.orientationAxis);
 
-        const errors = [
+        const mappedColumnErrors = [
             ["size", sizeAxis.mapColumn],
             ["minor size", sizeMinorAxis.mapColumn],
             ["color", colorAxis.mapColumn],
@@ -1252,6 +1272,30 @@ export class CatalogDisplayStore {
                 return undefined;
             })
             .filter((error): error is string => error !== undefined);
+
+        // The image overlay dereferences its x and y columns' headers directly, so a config naming
+        // a column this catalog does not have, or one that cannot hold a coordinate, is rejected
+        // rather than left to fail when the overlay is drawn. Unlike a mapped column, the data
+        // itself need not be loaded yet: the overlay is plotted from whatever streams in later.
+        const overlayColumnErrors = [
+            ["x", config?.xAxis ?? CatalogOverlay.NONE],
+            ["y", config?.yAxis ?? CatalogOverlay.NONE]
+        ]
+            .filter(([, column]) => column !== CatalogOverlay.NONE)
+            .map(([axis, column]) => {
+                const controlHeader = profileStore.catalogControlHeader.get(column);
+                const header = profileStore.catalogHeader[controlHeader?.dataIndex ?? NaN];
+                if (!header) {
+                    return `The ${axis} axis is set to "${column}", which this catalog does not have`;
+                }
+                if (header.dataType === CARTA.ColumnType.String || header.dataType === CARTA.ColumnType.Bool) {
+                    return `The ${axis} axis is set to "${column}", which is not a numeric column`;
+                }
+                return undefined;
+            })
+            .filter((error): error is string => error !== undefined);
+
+        const errors = [...mappedColumnErrors, ...overlayColumnErrors];
         if (errors.length) {
             return {success: false, errors};
         }
@@ -1307,10 +1351,10 @@ export class CatalogDisplayStore {
         this.angleMin = orientationAxis.angleMin;
         this.angleMax = orientationAxis.angleMax;
 
-        this.setClip("sizeMajor", this.resolveClip(profileStore, sizeAxis), hasSizeColumnChanged);
-        this.setClip("sizeMinor", this.resolveClip(profileStore, sizeMinorAxis), hasSizeMinorColumnChanged);
-        this.setClip("color", this.resolveClip(profileStore, colorAxis), hasColorColumnChanged);
-        this.setClip("orientation", this.resolveClip(profileStore, orientationAxis), hasOrientationColumnChanged);
+        this.setClip("sizeMajor", this.resolveClip(profileStore, sizeAxis), hasSizeColumnChanged && configDefinesClip(sizeAxis));
+        this.setClip("sizeMinor", this.resolveClip(profileStore, sizeMinorAxis), hasSizeMinorColumnChanged && configDefinesClip(sizeMinorAxis));
+        this.setClip("color", this.resolveClip(profileStore, colorAxis), hasColorColumnChanged && configDefinesClip(colorAxis));
+        this.setClip("orientation", this.resolveClip(profileStore, orientationAxis), hasOrientationColumnChanged && configDefinesClip(orientationAxis));
 
         // 4. locks last
         this.isSizeColumnMinLocked = sizeAxis.columnMinLocked;
@@ -1345,8 +1389,8 @@ export class CatalogDisplayStore {
             yAxis: this.yAxis,
             sizeAxis: {
                 mapColumn: this.sizeMapColumn,
-                columnMinClip: this.sizeColumnMin.clipd,
-                columnMaxClip: this.sizeColumnMax.clipd,
+                columnMinClip: authoredClip(this.sizeColumnMin),
+                columnMaxClip: authoredClip(this.sizeColumnMax),
                 min: {...this.sizeMin},
                 max: {...this.sizeMax},
                 areaMode: this.isSizeAreaMode,
@@ -1357,8 +1401,8 @@ export class CatalogDisplayStore {
             },
             sizeMinorAxis: {
                 mapColumn: this.sizeMinorMapColumn,
-                columnMinClip: this.sizeMinorColumnMin.clipd,
-                columnMaxClip: this.sizeMinorColumnMax.clipd,
+                columnMinClip: authoredClip(this.sizeMinorColumnMin),
+                columnMaxClip: authoredClip(this.sizeMinorColumnMax),
                 min: {...this.sizeMinorMin},
                 max: {...this.sizeMinorMax},
                 areaMode: this.isSizeMinorAreaMode,
@@ -1369,8 +1413,8 @@ export class CatalogDisplayStore {
             },
             colorAxis: {
                 mapColumn: this.colorMapColumn,
-                columnMinClip: this.colorColumnMin.clipd,
-                columnMaxClip: this.colorColumnMax.clipd,
+                columnMinClip: authoredClip(this.colorColumnMin),
+                columnMaxClip: authoredClip(this.colorColumnMax),
                 colorMap: this.colorMap,
                 inverted: this.isInvertedColorMap,
                 scalingType: this.colorScalingType,
@@ -1378,8 +1422,8 @@ export class CatalogDisplayStore {
             },
             orientationAxis: {
                 mapColumn: this.orientationMapColumn,
-                columnMinClip: this.orientationMin.clipd,
-                columnMaxClip: this.orientationMax.clipd,
+                columnMinClip: authoredClip(this.orientationMin),
+                columnMaxClip: authoredClip(this.orientationMax),
                 angleMin: this.angleMin,
                 angleMax: this.angleMax,
                 scalingType: this.orientationScalingType,
@@ -1415,10 +1459,10 @@ export class CatalogDisplayStore {
     }
 
     /**
-     * Set the clipped bounds of one mapped column. When the column itself has just changed, the
-     * bounds are also held for the data-derived defaults to recompute against.
+     * Set the clipped bounds of one mapped column. Bounds a config authored are also held while the
+     * column's data-derived defaults recompute, so that the recompute does not overwrite them.
      */
-    private setClip(group: ClipGroup, clip: ClipRestore, hasColumnChanged: boolean) {
+    private setClip(group: ClipGroup, clip: ClipRestore, shouldHoldForRecompute: boolean) {
         const {min, max} = clip;
         switch (group) {
             case "sizeMajor":
@@ -1439,7 +1483,7 @@ export class CatalogDisplayStore {
                 break;
         }
 
-        if (hasColumnChanged) {
+        if (shouldHoldForRecompute) {
             this.pendingClipRestore.set(group, clip);
         } else {
             this.pendingClipRestore.delete(group);

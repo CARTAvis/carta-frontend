@@ -570,7 +570,11 @@ export class WidgetsStore {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            CatalogStore.Instance.setCatalogPlots(componentId, 1, itemId);
+            // The restored columns belong to the catalog the plot was saved against, so the plot is
+            // registered under that catalog. Layouts written before the association was saved fall
+            // back to the first catalog.
+            const savedCatalogFileId = widgetSettings?.["catalogFileId"];
+            CatalogStore.Instance.setCatalogPlots(componentId, typeof savedCatalogFileId === "number" ? savedCatalogFileId : 1, itemId);
         }
         return itemId;
     };
@@ -1117,7 +1121,7 @@ export class WidgetsStore {
             };
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogPlotWidgetStore | AnimatorWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -1134,9 +1138,16 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WidgetConfig.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
-            case CatalogPlotComponent.WidgetConfig.type:
-                widgetStore = this.catalogPlotWidgets.get(widgetID);
-                break;
+            case CatalogPlotComponent.WidgetConfig.type: {
+                const plotStore = this.catalogPlotWidgets.get(widgetID);
+                if (!plotStore) {
+                    return undefined;
+                }
+                // The catalog association lives in CatalogStore rather than in the plot store, but
+                // without it the restored columns cannot be matched back to their catalog.
+                const {catalogFileId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetID);
+                return {...plotStore.toConfig(), ...(typeof catalogFileId === "number" ? {catalogFileId} : {})};
+            }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
                 break;

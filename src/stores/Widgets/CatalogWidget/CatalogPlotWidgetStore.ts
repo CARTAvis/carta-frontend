@@ -16,6 +16,8 @@ export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntabl
 
 export interface CatalogPlotWidgetConfig {
     plotType: CatalogPlotType;
+    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
+    catalogFileId?: number;
     xColumnName: string;
     yColumnName?: string;
     statisticColumnName?: string;
