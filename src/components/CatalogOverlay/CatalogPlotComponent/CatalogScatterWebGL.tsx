@@ -56,7 +56,6 @@ interface CatalogScatterWebGLProps {
     selectedIndices: Set<number>;
     hasSelection: boolean;
     pointSize?: number;
-    darkMode?: boolean;
     onRef?: (ref: CatalogScatterWebGL | null) => void;
 }
 

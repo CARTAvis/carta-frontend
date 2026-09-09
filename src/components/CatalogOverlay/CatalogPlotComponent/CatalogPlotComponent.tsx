@@ -286,9 +286,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
         const xBounds = minMaxArray(xArray);
+        const xPadding = xBounds.minVal === xBounds.maxVal ? (xBounds.maxVal === 0 ? 1 : Math.abs(xBounds.maxVal * 0.05)) : 0;
         return {
-            xMin: xBounds.minVal,
-            xMax: xBounds.maxVal
+            xMin: xBounds.minVal - xPadding,
+            xMax: xBounds.maxVal + xPadding
         };
     }
 
@@ -847,7 +848,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
         if (this.histogramPanPrevX !== undefined) {
-            this.stopHistogramMouseTracking(true);
+            this.stopHistogramMouseTracking();
             return;
         }
         const chart = this.histogramPlotRef;
@@ -869,7 +870,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
         }
-        this.stopHistogramMouseTracking(true);
+        this.stopHistogramMouseTracking(chart?.canvas === event.target);
     };
 
     private onHistogramDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -1046,7 +1047,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 selectedIndices={selectedSet}
                 hasSelection={selectedSet.size > 0}
                 pointSize={5}
-                darkMode={AppStore.Instance.isDarkTheme}
                 onRef={ref => (this.webglOverlayRef = ref)}
             />
         );
