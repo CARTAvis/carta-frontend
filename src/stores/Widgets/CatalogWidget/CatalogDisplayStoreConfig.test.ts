@@ -1,3 +1,5 @@
+import {afterEach, describe, expect, jest, test} from "@jest/globals";
+
 jest.mock("services/CatalogWebGLService", () => ({
     CatalogWebGLService: {
         Instance: {
@@ -9,56 +11,44 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {CatalogDisplayStore, CatalogPanelStore, CatalogProfileStore, CatalogStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
 const COLUMNS: ReadonlyArray<{name: string; values: number[]}> = [
+    {name: "RA", values: [10.1, 10.2, 10.3, 10.4]},
+    {name: "DEC", values: [-20.1, -20.2, -20.3, -20.4]},
     {name: "Fmag", values: [1, 4, 7, 10]},
     {name: "Bmag", values: [2, 5, 8, 11]},
     {name: "Vmag", values: [3, 6, 9, 12]},
-    {name: "PA", values: [0, 45, 90, 135]},
-    {name: "RA", values: [10, 20, 30, 40]},
-    {name: "DEC", values: [-10, -5, 0, 5]}
+    {name: "PA", values: [0, 45, 90, 135]}
 ];
 
-/** A column no axis can be plotted against, for configs that name the wrong kind of column. */
-const STRING_COLUMN = "Name";
-
 let nextCatalogFileId = 0;
-const CREATED_STORES: CatalogDisplayStore[] = [];
+const CREATED_DISPLAY_STORES: CatalogDisplayStore[] = [];
 
-function createProfileStore(catalogFileId: number, scale: number = 1): CatalogProfileStore {
+function createProfileStore(catalogFileId: number, extraValues: number[] = []): CatalogProfileStore {
     const catalogHeader = COLUMNS.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name: column.name}));
-    const catalogData = new Map<number, ProcessedColumnData>(COLUMNS.map((column, index) => [index, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(column.values.map(value => value * scale))}]));
+    const catalogData = new Map<number, ProcessedColumnData>(COLUMNS.map((column, index) => [index, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([...column.values, ...extraValues])}]));
 
-    catalogHeader.push(new CARTA.CatalogHeader({columnIndex: COLUMNS.length, dataType: CARTA.ColumnType.String, name: STRING_COLUMN}));
-    catalogData.set(COLUMNS.length, {dataType: CARTA.ColumnType.String, data: ["a", "b", "c", "d"]});
-
-    return new CatalogProfileStore({dataSize: COLUMNS[0].values.length, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData, CatalogType.FILE);
+    return new CatalogProfileStore({dataSize: COLUMNS[0].values.length + extraValues.length, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData, CatalogType.FILE);
 }
 
-/**
- * A store whose catalog data is loaded, as {@link CatalogDisplayStore.applyConfig} requires. The
- * scale multiplies every column, for a catalog holding the same columns over a different range.
- */
-function createStore(scale: number = 1): CatalogDisplayStore {
+/** What a later batch of rows looks like: the same columns, over a wider range. */
+function deliverMoreRows(store: CatalogDisplayStore, extraValues: number[] = [0, 20]): void {
+    runInAction(() => CatalogStore.Instance.catalogProfileStores.set(store.catalogFileId, createProfileStore(store.catalogFileId, extraValues)));
+}
+
+/** A store whose catalog data is loaded, as {@link CatalogDisplayStore.applyConfig} requires. */
+function createStore(): CatalogDisplayStore {
     nextCatalogFileId += 1;
     const catalogFileId = nextCatalogFileId;
-    runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId, scale)));
+    runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
 
     const store = new CatalogDisplayStore(catalogFileId);
-    CREATED_STORES.push(store);
-    return store;
-}
-
-/** A store with no catalog data behind it. */
-function createStoreWithoutData(): CatalogDisplayStore {
-    nextCatalogFileId += 1;
-    const store = new CatalogDisplayStore(nextCatalogFileId);
-    CREATED_STORES.push(store);
+    CREATED_DISPLAY_STORES.push(store);
     return store;
 }
 
@@ -106,19 +96,52 @@ function createConfiguredStore(): CatalogDisplayStore {
 }
 
 afterEach(() => {
-    CREATED_STORES.forEach(store => store.dispose());
-    CREATED_STORES.length = 0;
+    CREATED_DISPLAY_STORES.forEach(store => store.dispose());
+    CREATED_DISPLAY_STORES.length = 0;
     runInAction(() => CatalogStore.Instance.catalogProfileStores.clear());
 });
 
 describe("CatalogDisplayStore display config", () => {
     test("round-trips a configured store through another store", () => {
-        const config = createConfiguredStore().toConfig();
+        const store = createConfiguredStore();
+        store.setHeaderTableColumnWidths([160, 80, 70, 110, 240]);
+        const config = store.toConfig();
 
         const restored = createStore();
         expect(restored.applyConfig(config)).toEqual({success: true, errors: []});
 
         expect(restored.toConfig()).toEqual(config);
+    });
+
+    test("leaves which rows and columns the catalog holds to its profile store", () => {
+        const store = createConfiguredStore();
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId) as CatalogProfileStore;
+        profileStore.setHeaderDisplay(false, "Bmag");
+        profileStore.setMaxRows(3);
+        profileStore.setColumnFilter("> 2", "Fmag");
+        profileStore.setTableColumnWidth(180, "Fmag");
+        profileStore.setSortingInfo("Fmag", CARTA.SortingType.Descending);
+
+        const displayConfig = store.toConfig() as Record<string, unknown>;
+        expect(displayConfig.displayedColumns).toBeUndefined();
+        expect(displayConfig.maxRows).toBeUndefined();
+        expect(displayConfig.columnSettings).toBeUndefined();
+        expect(displayConfig.sorting).toBeUndefined();
+
+        const tableConfig = profileStore.toTableConfig();
+        expect(tableConfig).toEqual({
+            displayedColumns: ["RA", "DEC", "Fmag", "Vmag", "PA"],
+            maxRows: 3,
+            columnSettings: {Fmag: {filter: "> 2", width: 180}},
+            sorting: {columnName: "Fmag", sortingType: CARTA.SortingType.Descending}
+        });
+
+        const restoredProfile = createProfileStore(nextCatalogFileId + 100);
+        restoredProfile.applyTableConfig(tableConfig);
+
+        expect(restoredProfile.toTableConfig()).toEqual(tableConfig);
+        expect(restoredProfile.catalogFilterRequest.sortColumn).toBe("Fmag");
+        expect(restoredProfile.catalogFilterRequest.filterConfigs).toHaveLength(1);
     });
 
     test("returns fields the config leaves out to their defaults", () => {
@@ -133,7 +156,9 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.catalogPlotType).toBe(CatalogPlotType.ImageOverlay);
         expect(store.xAxis).toBe(CatalogOverlay.NONE);
         expect(store.sizeMapColumn).toBe(CatalogOverlay.NONE);
-        expect(store.sizeColumnMin.clipd).toBeUndefined();
+        // Nothing is mapped, so the bounds are back under the data's control and carry no clip.
+        expect(store.sizeColumnMin.isExplicit).toBe(false);
+        expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
         expect(store.isSizeAreaMode).toBe(false);
         expect(store.sizeScalingType).toBe(FrameScaling.LINEAR);
         expect(store.sizeMinorMapColumn).toBe(CatalogOverlay.NONE);
@@ -143,6 +168,18 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.orientationMapColumn).toBe(CatalogOverlay.NONE);
         expect(store.angleMin).toBe(CatalogDisplayStore.MIN_ANGLE);
         expect(store.angleMax).toBe(CatalogDisplayStore.MAX_ANGLE);
+    });
+
+    test("keeps numeric defaults when world mode has no mapped data", () => {
+        const store = createStore();
+
+        store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+
+        expect(store.toConfig()).toMatchObject({
+            sizeAxis: {min: {area: 100, diameter: 5}, max: {area: 200, diameter: 20}},
+            sizeMinorAxis: {min: {area: 100, diameter: 5}, max: {area: 200, diameter: 20}},
+            orientationAxis: {angleMin: CatalogDisplayStore.MIN_ANGLE, angleMax: CatalogDisplayStore.MAX_ANGLE}
+        });
     });
 
     test("keeps the clipped bounds a config carries when the mapped column changes", () => {
@@ -184,49 +221,6 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeColumnMax.clipd).toBe(10);
     });
 
-    test("leaves out the clipped bounds of a column the user has not clipped", () => {
-        const store = createStore();
-
-        store.applyConfig({sizeAxis: {mapColumn: "Fmag"}, colorAxis: {mapColumn: "Vmag"}});
-
-        // The bounds hold the full data range, which the store recomputes from the data itself.
-        expect(store.sizeColumnMin.clipd).toBe(1);
-        expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
-        expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
-        expect(store.toConfig().colorAxis?.columnMinClip).toBeUndefined();
-        expect(store.toConfig().colorAxis?.columnMaxClip).toBeUndefined();
-
-        store.setSizeColumnMin(2, "clipd");
-
-        expect(store.toConfig().sizeAxis?.columnMinClip).toBe(2);
-        expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
-    });
-
-    test("clips to the data of the catalog a config is restored onto, rather than the data it was written from", () => {
-        const source = createStore();
-        source.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
-
-        // The same columns, over ten times the range.
-        const target = createStore(10);
-        expect(target.applyConfig(source.toConfig())).toEqual({success: true, errors: []});
-
-        expect(target.sizeColumnMin.clipd).toBe(10);
-        expect(target.sizeColumnMax.clipd).toBe(100);
-    });
-
-    test("keeps a clip the user authored when the data behind it differs", () => {
-        const source = createStore();
-        source.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
-        source.setSizeColumnMin(2, "clipd");
-        source.setSizeColumnMax(8, "clipd");
-
-        const target = createStore(10);
-        target.applyConfig(source.toConfig());
-
-        expect(target.sizeColumnMin.clipd).toBe(2);
-        expect(target.sizeColumnMax.clipd).toBe(8);
-    });
-
     test("restores both size axes when the major axis is locked", () => {
         const store = createStore();
         const config: WorkspaceCatalogConfig = {
@@ -244,27 +238,22 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeMinorColumnMax.clipd).toBe(8);
     });
 
-    test("rejects a config when the catalog data is not loaded, without changing anything", () => {
-        const store = createStoreWithoutData();
-        const before = store.toConfig();
+    test("accepts a valid mapping before the catalog rows have arrived", () => {
+        nextCatalogFileId += 1;
+        const profileStore = createProfileStore(nextCatalogFileId);
+        runInAction(() => {
+            profileStore.clearData();
+            profileStore.setLoadingDataStatus(true);
+            CatalogStore.Instance.catalogProfileStores.set(nextCatalogFileId, profileStore);
+        });
+        const store = new CatalogDisplayStore(nextCatalogFileId);
+        CREATED_DISPLAY_STORES.push(store);
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
 
-        expect(result.success).toBe(false);
-        expect(result.errors).toEqual(["The catalog data has not been loaded"]);
-        expect(store.toConfig()).toEqual(before);
-    });
-
-    test("retries deferred layout config when catalog data becomes available", () => {
-        const store = createStoreWithoutData();
-        const catalogFileId = store.catalogFileId;
-
-        expect(store.applyConfigWhenReady({color: "#123456"})).toEqual({success: false, errors: ["The catalog data has not been loaded"]});
-        expect(store.catalogColor).not.toBe("#123456");
-
-        runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
-
+        expect(result).toEqual({success: true, errors: []});
         expect(store.catalogColor).toBe("#123456");
+        expect(store.sizeMapColumn).toBe("Fmag");
     });
 
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
@@ -278,40 +267,8 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("rejects a config whose image overlay axis the catalog does not have, without changing anything", () => {
+    test("accepts a config while the catalog data is reloading", () => {
         const store = createStore();
-        const before = store.toConfig();
-
-        const result = store.applyConfig({color: "#123456", xAxis: "RA", yAxis: "Missing"});
-
-        expect(result.success).toBe(false);
-        expect(result.errors).toEqual(['The y axis is set to "Missing", which this catalog does not have']);
-        expect(store.toConfig()).toEqual(before);
-    });
-
-    test("rejects a config whose image overlay axis cannot hold a coordinate, without changing anything", () => {
-        const store = createStore();
-        const before = store.toConfig();
-
-        const result = store.applyConfig({color: "#123456", xAxis: STRING_COLUMN, yAxis: "DEC"});
-
-        expect(result.success).toBe(false);
-        expect(result.errors).toEqual([`The x axis is set to "${STRING_COLUMN}", which is not a numeric column`]);
-        expect(store.toConfig()).toEqual(before);
-    });
-
-    test("restores image overlay axes the catalog has", () => {
-        const store = createStore();
-
-        expect(store.applyConfig({xAxis: "RA", yAxis: "DEC"})).toEqual({success: true, errors: []});
-
-        expect(store.xAxis).toBe("RA");
-        expect(store.yAxis).toBe("DEC");
-    });
-
-    test("rejects a config while the catalog data is reloading, without changing anything", () => {
-        const store = createStore();
-        const before = store.toConfig();
 
         // A filter change clears the rows and puts the catalog back into loading; the headers stay,
         // so the columns a config names still look resolvable.
@@ -319,26 +276,179 @@ describe("CatalogDisplayStore display config", () => {
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
 
+        expect(result).toEqual({success: true, errors: []});
+        expect(store.catalogColor).toBe("#123456");
+    });
+
+    test("records the overlay that is drawn, not the plot controls it has been left on", () => {
+        const store = createStore();
+        store.setxAxis("RA");
+        store.setyAxis("DEC");
+        store.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS, 4);
+
+        // The panel is then moved on to a histogram of another column, which does not take the
+        // overlay down.
+        store.setCatalogPlotType(CatalogPlotType.Histogram);
+        store.setxAxis("Fmag");
+
+        const config = store.toConfig();
+
+        expect(config.imageOverlay).toEqual({xAxis: "RA", yAxis: "DEC", system: CatalogSystemType.ICRS, maxRows: 4});
+        expect(config.plotType).toBe(CatalogPlotType.Histogram);
+        expect(config.xAxis).toBe("Fmag");
+    });
+
+    test("records the system the overlay was drawn in, not the one the coordinate control has been left on", () => {
+        const store = createStore();
+        store.setxAxis("RA");
+        store.setyAxis("DEC");
+        store.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS, 4);
+
+        // Changing the coordinate control does not redraw the overlay, so the overlay is still the
+        // one that was drawn in ICRS.
+        CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId)?.setCatalogCoordinateSystem(CatalogSystemType.Galactic);
+
+        expect(store.toConfig().imageOverlay?.system).toBe(CatalogSystemType.ICRS);
+    });
+
+    test("records no overlay for a catalog that has none drawn", () => {
+        const store = createStore();
+        store.setxAxis("RA");
+        store.setyAxis("DEC");
+
+        expect(store.toConfig().imageOverlay).toBeUndefined();
+    });
+
+    test("rejects a config whose position column the catalog no longer has", () => {
+        const store = createStore();
+        const before = store.toConfig();
+
+        const result = store.applyConfig({xAxis: "RA", yAxis: "Declination"});
+
         expect(result.success).toBe(false);
-        expect(result.errors).toEqual(["The catalog data is still loading"]);
+        expect(result.errors).toEqual(['The y axis is mapped to "Declination", which this catalog does not have']);
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("rejects a config mapped to a column with no data, without changing anything", () => {
+    test("rejects a config mapped to a non-numeric column", () => {
         const store = createStore();
         const before = store.toConfig();
 
         const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId);
         runInAction(() => {
-            profileStore?.clearData();
-            profileStore?.setLoadingDataStatus(false);
+            profileStore?.catalogHeader.push(new CARTA.CatalogHeader({columnIndex: 6, dataType: CARTA.ColumnType.String, name: "Name"}));
+            profileStore?.catalogControlHeader.set("Name", {columnIndex: 6, dataIndex: 6, display: true, filter: "", columnWidth: null});
         });
 
-        const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag"}});
+        const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Name"}});
 
         expect(result.success).toBe(false);
-        expect(result.errors).toEqual(['The size axis is mapped to "Fmag", which has no data to map']);
+        expect(result.errors).toEqual(['The size axis is mapped to "Name", which is not numeric']);
         expect(store.toConfig()).toEqual(before);
+    });
+
+    test("keeps a deliberately clipped bound when more rows arrive", () => {
+        const store = createStore();
+        store.applyConfig({sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
+
+        deliverMoreRows(store);
+
+        expect(store.sizeColumnMin.clipd).toBe(2);
+        expect(store.sizeColumnMax.clipd).toBe(8);
+        // The bounds the data implies still follow it, so the user can reset back to them.
+        expect(store.sizeColumnMin.default).toBe(0);
+        expect(store.sizeColumnMax.default).toBe(20);
+    });
+
+    test.each([
+        ["sizeAxis", "setSizeColumnMin", "setSizeColumnMax", "resetSizeColumnValue", "sizeColumnMin", "sizeColumnMax"],
+        ["sizeMinorAxis", "setSizeMinorColumnMin", "setSizeMinorColumnMax", "resetSizeMinorColumnValue", "sizeMinorColumnMin", "sizeMinorColumnMax"],
+        ["colorAxis", "setColorColumnMin", "setColorColumnMax", "resetColorColumnValue", "colorColumnMin", "colorColumnMax"],
+        ["orientationAxis", "setOrientationMin", "setOrientationMax", "resetOrientationValue", "orientationMin", "orientationMax"]
+    ] as const)("resets %s bounds to follow streamed data", (axis, setMin, setMax, reset, min, max) => {
+        const store = createStore();
+        store.applyConfig({[axis]: {mapColumn: "Fmag"}});
+        store[setMin](2, "clipd");
+        store[setMax](8, "clipd");
+
+        deliverMoreRows(store);
+
+        expect(store[min]).toEqual({default: 0, clipd: 2, isExplicit: true});
+        expect(store[max]).toEqual({default: 20, clipd: 8, isExplicit: true});
+
+        store[reset]("min");
+
+        expect(store[min]).toEqual({default: 0, clipd: 0, isExplicit: false});
+        expect(store[max]).toEqual({default: 20, clipd: 8, isExplicit: true});
+        expect(store.toConfig()[axis]?.columnMinClip).toBeUndefined();
+        expect(store.toConfig()[axis]?.columnMaxClip).toBe(8);
+
+        store[reset]("max");
+        deliverMoreRows(store, [-5, 30]);
+
+        expect(store[min]).toEqual({default: -5, clipd: -5, isExplicit: false});
+        expect(store[max]).toEqual({default: 30, clipd: 30, isExplicit: false});
+        expect(store.toConfig()[axis]?.columnMinClip).toBeUndefined();
+        expect(store.toConfig()[axis]?.columnMaxClip).toBeUndefined();
+    });
+
+    test("keeps a chosen bound that happens to equal the bound the previous column implied", () => {
+        const store = createStore();
+        // Fmag spans 1 to 10, so its lower bound settles on 1.
+        store.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
+        expect(store.sizeColumnMin.clipd).toBe(1);
+
+        // Bmag spans 2 to 11. The chosen lower bound of 1 is not the one Fmag implied by accident;
+        // it was asked for, and switching columns must not take it as an automatic bound.
+        const config: WorkspaceCatalogConfig = {sizeAxis: {mapColumn: "Bmag", columnMinClip: 1, columnMaxClip: 8}};
+        store.applyConfig(config);
+
+        expect(store.sizeColumnMin.clipd).toBe(1);
+        expect(store.sizeColumnMax.clipd).toBe(8);
+        expect(store.sizeColumnMin.default).toBe(2);
+        expect(store.sizeColumnMax.default).toBe(11);
+
+        // And the same config applied again lands in the same place.
+        store.applyConfig(config);
+
+        expect(store.sizeColumnMin.clipd).toBe(1);
+        expect(store.sizeColumnMax.clipd).toBe(8);
+    });
+
+    test("carries the chosen state of a bound across a lock, so it survives being saved", () => {
+        const store = createStore();
+        // Fmag spans 1 to 10 and Bmag spans 2 to 11, both taken from the data.
+        store.applyConfig({sizeAxis: {mapColumn: "Fmag"}, sizeMinorAxis: {mapColumn: "Bmag"}});
+        expect(store.sizeColumnMin.isExplicit).toBe(false);
+        expect(store.sizeMinorColumnMin.isExplicit).toBe(false);
+
+        store.toggleSizeColumnMinLock();
+        store.setSizeColumnMin(2, "clipd");
+        store.toggleSizeColumnMinLock();
+
+        expect(store.sizeMinorColumnMin.clipd).toBe(2);
+        expect(store.sizeMinorColumnMin.isExplicit).toBe(true);
+
+        // Which is what makes the minor bound survive a round trip rather than falling back to the
+        // bound its own column implies.
+        const config = store.toConfig();
+        expect(config.sizeMinorAxis?.columnMinClip).toBe(2);
+
+        const restored = createStore();
+        restored.applyConfig(config);
+        expect(restored.sizeMinorColumnMin.clipd).toBe(2);
+    });
+
+    test("lets a bound that was tracking the data follow it when more rows arrive", () => {
+        const store = createStore();
+        store.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
+        expect(store.sizeColumnMin.clipd).toBe(1);
+        expect(store.sizeColumnMax.clipd).toBe(10);
+
+        deliverMoreRows(store);
+
+        expect(store.sizeColumnMin.clipd).toBe(0);
+        expect(store.sizeColumnMax.clipd).toBe(20);
     });
 
     test("round-trips panel selection and presentation state through layout config", () => {

@@ -6,8 +6,8 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable} from 
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, ValueClip} from "enums";
-import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType} from "enums";
+import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type ValueClip, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPanelStore} from "stores/Widgets";
 import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
 
@@ -91,11 +91,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @computed get catalogFileId() {
-        return this.panelStore?.selectedCatalogId;
+        return this.panelStore.selectedCatalogId;
     }
 
-    @computed get panelStore(): CatalogPanelStore | undefined {
-        return WidgetsStore.Instance.catalogPanelWidgets.get(this.widgetId);
+    @computed get panelStore(): CatalogPanelStore {
+        return WidgetsStore.Instance.getCatalogPanelStore(this.widgetId);
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -135,8 +135,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 const catalogFileId = this.catalogFileId;
                 if (catalogFileId !== undefined) {
                     const activeFiles = catalogStore.activeCatalogFiles;
-                    WidgetsStore.Instance.getCatalogPanelStore(this.widgetId, catalogFileId);
-                    catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+                    if (!catalogStore.getCatalogDisplayStore(catalogFileId) && catalogStore.catalogProfileStores.has(catalogFileId)) {
+                        catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+                    }
 
                     if (activeFiles?.includes(catalogFileId)) {
                         const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
@@ -401,8 +402,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
                             value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
-                            onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
-                            onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
+                            onBlur={ev => this.handleChange(ev, "size-min")}
+                            onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
@@ -430,8 +431,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
                                 value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
-                                onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
-                                onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
+                                onBlur={ev => this.handleChange(ev, "size-max")}
+                                onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
@@ -538,8 +539,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={shouldDisableSizeMap}
                             buttonPosition={"none"}
                             value={displayStore.isSizeMajor ? displayStore.pointSizebyType.min : displayStore.minorPointSizebyType.min}
-                            onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
-                            onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MIN)}
+                            onBlur={ev => this.handleChange(ev, "size-min")}
+                            onKeyDown={ev => this.handleChange(ev, "size-min")}
                         />
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
                             <FormGroup inline={true}>
@@ -567,8 +568,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 disabled={shouldDisableSizeMap}
                                 buttonPosition={"none"}
                                 value={displayStore.isSizeMajor ? displayStore.pointSizebyType.max : displayStore.minorPointSizebyType.max}
-                                onBlur={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
-                                onKeyDown={ev => this.handleChange(ev, ValueClip.SIZE_MAX)}
+                                onBlur={ev => this.handleChange(ev, "size-max")}
+                                onKeyDown={ev => this.handleChange(ev, "size-max")}
                             />
                         </Tooltip>
                         <Collapse className="select-angular-unit" isOpen={!displayStore.isSizeAreaMode}>
@@ -860,8 +861,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
                                     value={displayStore.angleMin}
-                                    onBlur={ev => this.handleChange(ev, ValueClip.ANGLE_MIN)}
-                                    onKeyDown={ev => this.handleChange(ev, ValueClip.ANGLE_MIN)}
+                                    onBlur={ev => this.handleChange(ev, "angle-min")}
+                                    onKeyDown={ev => this.handleChange(ev, "angle-min")}
                                 />
                             </FormGroup>
                             <FormGroup inline={true} label="Max">
@@ -872,8 +873,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                     disabled={shouldDisableOrientationMap}
                                     buttonPosition={"none"}
                                     value={displayStore.angleMax}
-                                    onBlur={ev => this.handleChange(ev, ValueClip.ANGLE_MAX)}
-                                    onKeyDown={ev => this.handleChange(ev, ValueClip.ANGLE_MAX)}
+                                    onBlur={ev => this.handleChange(ev, "angle-max")}
+                                    onKeyDown={ev => this.handleChange(ev, "angle-max")}
                                 />
                             </FormGroup>
                         </div>
@@ -954,7 +955,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.panelStore?.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.panelStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                         <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
                         <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-color-tab-title" />
                         <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-orientation-tab-title" />
@@ -993,7 +994,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const pointSize = displayStore.isSizeMajor ? displayStore.pointSizebyType : displayStore.minorPointSizebyType;
 
         switch (type) {
-            case ValueClip.SIZE_MIN:
+            case "size-min":
                 if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogDisplayStore.SIZE_MAP_MIN) {
                     const inputVal = val;
                     if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
@@ -1005,7 +1006,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     ev.currentTarget.value = pointSize.min.toString();
                 }
                 break;
-            case ValueClip.SIZE_MAX:
+            case "size-max":
                 if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= displayStore.maxPointSizebyType) {
                     const inputVal = val;
                     if (displayStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
@@ -1017,14 +1018,14 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     ev.currentTarget.value = pointSize.max.toString();
                 }
                 break;
-            case ValueClip.ANGLE_MIN:
+            case "angle-min":
                 if (isFinite(val) && val < displayStore.angleMax) {
                     displayStore.setAngleMin(val);
                 } else {
                     ev.currentTarget.value = displayStore.angleMin.toString();
                 }
                 break;
-            case ValueClip.ANGLE_MAX:
+            case "angle-max":
                 if (isFinite(val) && val > displayStore.angleMin) {
                     displayStore.setAngleMax(val);
                 } else {
@@ -1047,10 +1048,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return <MenuItem icon={shapeItem} key={shape} text={""} onClick={itemProps.handleClick} active={itemProps.modifiers.active} data-testid={"catalog-settings-shape-" + CatalogOverlayShape[shape].toLowerCase().replaceAll("_", "-")} />;
     };
 
-    private handleSelectedTabChanged(newTabId: string | number) {
-        this.panelStore?.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
-        this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
-    }
+    private handleSelectedTabChanged = (newTabId: string | number) => {
+        this.panelStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    };
 
     private handleSelectedAxisTabChanged = (newTabId: string | number) => {
         this.displayStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));

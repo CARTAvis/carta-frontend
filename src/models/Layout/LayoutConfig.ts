@@ -78,6 +78,35 @@ export class LayoutConfig {
         }
     };
 
+    /**
+     * Upgrade and validate a layout without changing the caller's object.
+     *
+     * Layout validation applies defaults, so validating a workspace's embedded layout in place
+     * would mutate the workspace and make it possible to clear the current layout before a bad
+     * config is rejected. Keep this operation as the single preparation step for callers that
+     * are about to replace a live layout.
+     */
+    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null): any | undefined => {
+        if (!layout) {
+            return undefined;
+        }
+
+        let candidate: any;
+        try {
+            candidate = JSON.parse(JSON.stringify(layout));
+        } catch (err) {
+            console.error("Layout preparation failed:", err);
+            return undefined;
+        }
+
+        LayoutConfig.upgradeLayout(candidate);
+        if (!LayoutConfig.layoutValidator(candidate)) {
+            console.error("Layout validation failed:", LayoutConfig.layoutValidator.errors);
+            return undefined;
+        }
+        return candidate;
+    };
+
     // Note: layoutConfig is formalized(modified) during validation if valid
     public static isUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
         if (!layoutName || !layoutConfig) {
@@ -152,8 +181,13 @@ export class LayoutConfig {
 
     /**
      * Creates the abstract config from the current FlexLayout model for saving.
+     *
+     * @param shouldIncludeWorkspaceBindings - whether the arrangement may name the session's images and
+     *        catalogs. A workspace carries its own copy of the layout alongside those items, so it
+     *        can; a saved layout is meant to be reused against whatever happens to be open, where
+     *        an ID from the session it was saved in would name something unrelated.
      */
-    public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
+    public static createConfigToSave = (appStore: AppStore, modelJson: any, shouldIncludeWorkspaceBindings: boolean = false) => {
         if (!appStore || !modelJson) {
             return null;
         }
@@ -168,7 +202,7 @@ export class LayoutConfig {
         };
 
         // Enrich docked widgets with widget settings
-        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
+        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked, shouldIncludeWorkspaceBindings);
 
         // Handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
@@ -185,14 +219,18 @@ export class LayoutConfig {
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id, shouldIncludeWorkspaceBindings);
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
             // add plot type
-            const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
-            if (plotWidget) {
-                floatingConfig.plotType = plotWidget.plotType;
+            if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
+                floatingConfig.plotType = widgetSettingsConfig.plotType;
+            } else {
+                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+                if (plotWidget) {
+                    floatingConfig.plotType = plotWidget.plotType;
+                }
             }
             configToSave.floating.push(floatingConfig);
         });
@@ -203,26 +241,30 @@ export class LayoutConfig {
     /**
      * Recursively enriches the abstract config with widget settings from current widget stores.
      */
-    private static enrichSaveConfig = (appStore: AppStore, node: any) => {
+    private static enrichSaveConfig = (appStore: AppStore, node: any, shouldIncludeWorkspaceBindings: boolean) => {
         if (!node || !node.content) {
             return;
         }
 
         for (const child of node.content) {
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                LayoutConfig.enrichSaveConfig(appStore, child);
+                LayoutConfig.enrichSaveConfig(appStore, child, shouldIncludeWorkspaceBindings);
             } else if (child.type === "component" && child.id) {
                 // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
                 // since child.id is the collapsed base type (e.g. "catalog-plot")
                 const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
+                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId, shouldIncludeWorkspaceBindings);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
                 }
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
-                if (plotWidget) {
-                    child.plotType = plotWidget.plotType;
+                if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
+                    child.plotType = widgetSettingsConfig.plotType;
+                } else {
+                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
+                    if (plotWidget) {
+                        child.plotType = plotWidget.plotType;
+                    }
                 }
                 // Clean up internal field so it doesn't persist in saved layouts
                 delete child._instanceId;

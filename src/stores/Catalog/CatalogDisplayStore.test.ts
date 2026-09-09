@@ -1,3 +1,13 @@
+import {describe, expect, jest, test} from "@jest/globals";
+
+jest.mock("services/CatalogWebGLService", () => ({
+    CatalogWebGLService: {
+        Instance: {
+            updateDataTexture: jest.fn()
+        }
+    }
+}));
+
 import * as CARTACompute from "carta_computation";
 
 import {CatalogDisplayMode, CatalogSizeUnits} from "enums";
@@ -34,29 +44,29 @@ describe("CatalogDisplayStore angular size axis type", () => {
             get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
         };
         const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
-        const widgetStore = new CatalogDisplayStore(fileId);
+        const displayStore = new CatalogDisplayStore(fileId);
         const previousProfileStore = CatalogStore.Instance.catalogProfileStores.get(fileId);
         CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
 
         try {
-            widgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-            widgetStore.setSizeMap("size");
-            widgetStore.setSizeColumnMin(2, "default");
-            widgetStore.setSizeColumnMax(4, "default");
-            const fixedCatalogSize = widgetStore.catalogSize;
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+            displayStore.setSizeMap("size");
+            displayStore.setSizeColumnMin(2, "default");
+            displayStore.setSizeColumnMax(4, "default");
+            const fixedCatalogSize = displayStore.catalogSize;
             calculateCatalogSize.mockClear();
 
-            widgetStore.sizeArray();
+            displayStore.sizeArray();
             const diameterCall = calculateCatalogSize.mock.calls[calculateCatalogSize.mock.calls.length - 1];
-            widgetStore.setCatalogSourceRadiusType("radius");
-            widgetStore.sizeArray();
+            displayStore.setCatalogSourceRadiusType("radius");
+            displayStore.sizeArray();
             const radiusCall = calculateCatalogSize.mock.calls[calculateCatalogSize.mock.calls.length - 1];
 
             expect(diameterCall?.[7]).toBe(1);
             expect(radiusCall?.[7]).toBe(2);
-            expect(widgetStore.catalogSize).toBe(fixedCatalogSize);
+            expect(displayStore.catalogSize).toBe(fixedCatalogSize);
         } finally {
-            widgetStore.dispose();
+            displayStore.dispose();
             if (previousProfileStore) {
                 CatalogStore.Instance.catalogProfileStores.set(fileId, previousProfileStore);
             } else {

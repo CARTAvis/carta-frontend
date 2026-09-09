@@ -48,11 +48,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return this.panelStore?.selectedCatalogId;
+        return this.panelStore.selectedCatalogId;
     }
 
-    @computed get panelStore(): CatalogPanelStore | undefined {
-        return WidgetsStore.Instance.catalogPanelWidgets.get(this.widgetId);
+    @computed get panelStore(): CatalogPanelStore {
+        return WidgetsStore.Instance.getCatalogPanelStore(this.widgetId);
     }
 
     @computed get displayStore(): CatalogDisplayStore | undefined {
@@ -78,8 +78,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogDisplayStore = this.displayStore;
         const catalogFileId = this.catalogFileId;
         if (catalogFileId !== undefined) {
-            appStore.removeCatalog(catalogFileId, this.widgetId);
-            catalogDisplayStore?.resetMaps();
+            if (!catalogDisplayStore) {
+                return;
+            }
+            appStore.removeCatalog(catalogFileId);
         }
     };
 
@@ -137,7 +139,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         makeObservable(this);
         this.widgetId = props.id;
 
-        WidgetsStore.Instance.getCatalogPanelStore(this.widgetId, CatalogStore.Instance.catalogProfiles.get(this.widgetId) ?? 1);
+        WidgetsStore.Instance.getCatalogPanelStore(this.widgetId);
         this.catalogFileNames = new Map<number, string>();
 
         this.disposers.push(
@@ -409,43 +411,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private applyImageOverlayPlot() {
-        const profileStore = this.profileStore;
-        const appStore = AppStore.Instance;
-        const catalogStore = CatalogStore.Instance;
-        const catalogDisplayStore = this.displayStore;
-        const catalogFileId = this.catalogFileId;
-
-        if (
-            !profileStore ||
-            !catalogDisplayStore ||
-            catalogFileId === undefined ||
-            catalogDisplayStore.catalogPlotType !== CatalogPlotType.ImageOverlay ||
-            catalogDisplayStore.xAxis === CatalogOverlay.NONE ||
-            catalogDisplayStore.yAxis === CatalogOverlay.NONE
-        ) {
-            return;
-        }
-
-        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
-        if (frame) {
-            catalogDisplayStore.setPlottedImageOverlayState(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
-            const imageCoords = profileStore.get2DPlotData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
-            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-            catalogStore.clearImageCoordsData(catalogFileId);
-            if (imageCoords.wcsX && imageCoords.wcsY) {
-                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem.system, 0, 0);
-            }
-            profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
-        }
-        if (profileStore.shouldUpdateData) {
-            profileStore.setUpdatingDataStream(true);
-            const catalogFilter = profileStore.updateRequestDataSize;
-            appStore.sendCatalogFilter(catalogFilter);
-        }
-    }
-
     @action private handleCatalogSystemChange(system: CatalogSystemType) {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.displayStore;
@@ -574,26 +539,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
-        const widgetsStore = this.displayStore;
-        if (!widgetsStore) {
+        const displayStore = this.displayStore;
+        if (!displayStore) {
             return;
         }
 
         // Ensure the array exists and has the correct length (5 columns)
         const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
-        if (!widgetsStore.headerTableColumnWidths) {
-            widgetsStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
-        } else if (widgetsStore.headerTableColumnWidths.length !== expectedColumnCount) {
+        if (!displayStore.headerTableColumnWidths) {
+            displayStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
+        } else if (displayStore.headerTableColumnWidths.length !== expectedColumnCount) {
             // Resize array to match expected column count
             const newArray = new Array(expectedColumnCount).fill(undefined);
-            for (let i = 0; i < Math.min(widgetsStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
-                newArray[i] = widgetsStore.headerTableColumnWidths[i];
+            for (let i = 0; i < Math.min(displayStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
+                newArray[i] = displayStore.headerTableColumnWidths[i];
             }
-            widgetsStore.headerTableColumnWidths = newArray;
+            displayStore.headerTableColumnWidths = newArray;
         }
 
-        if (index >= 0 && index < widgetsStore.headerTableColumnWidths.length) {
-            widgetsStore.headerTableColumnWidths[index] = size;
+        if (index >= 0 && index < displayStore.headerTableColumnWidths.length) {
+            displayStore.headerTableColumnWidths[index] = size;
         }
     };
 
@@ -728,7 +693,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // init plot data
         switch (catalogDisplayStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
-                this.applyImageOverlayPlot();
+                CatalogStore.Instance.plotImageOverlay(catalogFileId);
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
@@ -815,7 +780,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
-            this.panelStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            this.panelStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
 
@@ -829,9 +794,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleHideHeader = () => {
-        const position = this.panelStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        const position = this.panelStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
         this.isShowHeader = position === 100 ? false : true;
-        this.panelStore?.setTableSeparatorPosition(`${position}%`);
+        this.panelStore.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -859,7 +824,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
-        this.panelStore?.setSettingsTabId(type);
+        this.panelStore.setSettingsTabId(type);
         this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
@@ -1049,7 +1014,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             className={"catalog-overlay-data-container"}
                             minSize={`${CatalogDisplayStore.MIN_TABLE_SEPARATOR_POSITION}%`}
                             maxSize={`${CatalogDisplayStore.MAX_TABLE_SEPARATOR_POSITION}%`}
-                            size={this.panelStore?.tableSeparatorPosition}
+                            size={this.panelStore.tableSeparatorPosition}
                         >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>

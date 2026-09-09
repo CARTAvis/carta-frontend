@@ -1,16 +1,42 @@
 import * as AST from "ast_wrapper";
-import {action, computed, makeObservable, observable, ObservableMap} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
-import {CatalogSystemType} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode, WorkspaceItemKind} from "enums";
+import {type WorkspaceCatalogImageOverlay, type WorkspaceCatalogSelection} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {minMaxArray, setAstSystem} from "utilities";
+import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
+import {minMaxArray, PendingRequestTracker, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
     y: Float32Array;
 };
+
+/**
+ * What one catalog plot component is showing: the catalog it is pointed at, and the plot it keeps
+ * for each catalog it has been pointed at.
+ *
+ * The selection lives here rather than beside the plots, so that "which catalog this component is
+ * showing" has one answer. The component that draws it reads this rather than holding its own copy,
+ * which is what lets a workspace restore move a plot onto its catalog after the fact.
+ */
+export class CatalogPlotComponentState {
+    /** The catalog this component is showing, or 0 while it has none. */
+    @observable activeCatalogFileId: number;
+    /** Catalog file ID : the ID of the plot widget store kept for that catalog. */
+    readonly plotWidgetIds = observable.map<number, string>();
+
+    constructor(activeCatalogFileId: number) {
+        this.activeCatalogFileId = activeCatalogFileId;
+        makeObservable(this);
+    }
+
+    @action setActiveCatalogFileId = (catalogFileId: number | undefined) => {
+        this.activeCatalogFileId = catalogFileId ?? 0;
+    };
+}
 
 export class CatalogStore {
     private static staticInstance: CatalogStore;
@@ -30,16 +56,31 @@ export class CatalogStore {
     @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
-    // catalog component Id : catalog file Id
-    @observable catalogProfiles: Map<string, number> = new Map();
-    // catalog plot component Id : catalog file Id and associated catalog plot widget id
-    @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
+    // catalog plot component Id : what that component is showing
+    @observable catalogPlots: Map<string, CatalogPlotComponentState> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
-    // catalog file Id : catalog display store
+    // Catalog display state is scoped to the catalog, not to an overlay panel.
     @observable catalogDisplayStores: Map<number, CatalogDisplayStore> = new Map();
-    /** Latest filter request per catalog; streamed responses from older requests are discarded. */
-    private readonly catalogRequestIds: Map<number, number> = new Map();
+    private static readonly CatalogRestoreTimeout = 30_000;
+    /**
+     * The catalog requests whose rows are still arriving, keyed by catalog file ID.
+     *
+     * A catalog answers with a run of responses rather than a reply, so whoever asked has to be
+     * told when the last one has come, when none is coming, and when another request has taken
+     * over. That is the same bookkeeping for any streamed request, so a tracker keeps it rather
+     * than this store.
+     */
+    public readonly catalogRequests = new PendingRequestTracker<number>({
+        timeoutMs: CatalogStore.CatalogRestoreTimeout,
+        timeoutMessage: "Timed out waiting for catalog data",
+        supersededMessage: "The catalog restore was superseded",
+        onFailure: catalogFileId => {
+            const profileStore = this.catalogProfileStores.get(catalogFileId);
+            profileStore?.setLoadingDataStatus(false);
+            profileStore?.setUpdatingDataStream(false);
+        }
+    });
 
     private constructor() {
         makeObservable(this);
@@ -50,6 +91,9 @@ export class CatalogStore {
     }
 
     @action addCatalog(fileId: number, size: number) {
+        // A catalog is given the ID a workspace will know it by as soon as it is opened, so that
+        // saving only has to read it back.
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, fileId);
         this.catalogGLData.set(fileId, {
             x: new Float32Array(size),
             y: new Float32Array(size)
@@ -57,30 +101,47 @@ export class CatalogStore {
         this.catalogCounts.set(fileId, 0);
     }
 
-    @action convertToImageCoordinate(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType, subsetEndIndex: number, subsetDataSize: number) {
+    @action convertToImageCoordinate(
+        fileId: number,
+        xData: Array<number>,
+        yData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogFrame: CatalogSystemType,
+        subsetEndIndex: number,
+        subsetDataSize: number,
+        maxRows?: number
+    ) {
         const catalog = this.catalogGLData.get(fileId);
-        const position = new Float32Array(xData.length * 2);
         if (catalog && xData && yData) {
-            const startIndex = subsetEndIndex - subsetDataSize;
+            const startIndex = Math.max(0, subsetEndIndex - subsetDataSize);
+            const rowLimit = maxRows === undefined ? xData.length : Math.max(0, maxRows - startIndex);
+            const plottedXData = xData.slice(0, rowLimit);
+            const plottedYData = yData.slice(0, rowLimit);
+            if (!plottedXData.length) {
+                return;
+            }
+            const position = new Float32Array(plottedXData.length * 2);
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
-                    for (let i = 0; i < xData.length; i++) {
-                        catalog.x[startIndex + i] = xData[i];
-                        catalog.y[startIndex + i] = yData[i];
-                        position[i * 2] = xData[i];
-                        position[i * 2 + 1] = yData[i];
+                    for (let i = 0; i < plottedXData.length; i++) {
+                        catalog.x[startIndex + i] = plottedXData[i];
+                        catalog.y[startIndex + i] = plottedYData[i];
+                        position[i * 2] = plottedXData[i];
+                        position[i * 2 + 1] = plottedYData[i];
                     }
                     break;
                 case CatalogSystemType.Pixel1:
-                    for (let i = 0; i < xData.length; i++) {
-                        catalog.x[startIndex + i] = xData[i] - 1;
-                        catalog.y[startIndex + i] = yData[i] - 1;
-                        position[i * 2] = xData[i] - 1;
-                        position[i * 2 + 1] = yData[i] - 1;
+                    for (let i = 0; i < plottedXData.length; i++) {
+                        catalog.x[startIndex + i] = plottedXData[i] - 1;
+                        catalog.y[startIndex + i] = plottedYData[i] - 1;
+                        position[i * 2] = plottedXData[i] - 1;
+                        position[i * 2 + 1] = plottedYData[i] - 1;
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    const pixelData = CatalogStore.transformCatalogData(plottedXData, plottedYData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalog.x[startIndex + i] = pixelData.xImageCoords[i];
                         catalog.y[startIndex + i] = pixelData.yImageCoords[i];
@@ -89,7 +150,7 @@ export class CatalogStore {
                     }
                     break;
             }
-            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + xData.length);
+            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + plottedXData.length);
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }
@@ -105,53 +166,49 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(fileId: number, catalogComponentId?: string) {
-        this.completeCatalogRequest(fileId);
+    @action removeCatalog(fileId: number) {
+        this.catalogRequests.finish(fileId, false, "The catalog was closed before restoration completed");
+        this.removeCatalogDisplayStore(fileId);
+        WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
+        this.catalogRequests.forget(fileId);
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
         const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(fileId));
         const fileIds = frame ? this.imageAssociatedCatalogId.get(frame.frameInfo.fileId) : undefined;
-        let associatedCatalogId: number[] = [];
+        let associatedCatalogIds: number[] = [];
         if (frame && fileIds) {
-            associatedCatalogId = fileIds.filter(catalogFileId => {
-                return catalogFileId !== fileId;
-            });
-            this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogId);
+            associatedCatalogIds = fileIds.filter(catalogFileId => catalogFileId !== fileId);
+            this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogIds);
         }
 
-        // update catalogProfiles fileId
-        if (catalogComponentId && associatedCatalogId.length) {
-            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogId[0]);
-            this.catalogProfiles.forEach((catalogFileId, componentId) => {
-                if (catalogFileId === fileId) {
-                    this.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                }
-            });
+        if (associatedCatalogIds.length) {
+            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogIds[0]);
         }
     }
 
-    /** Associate a catalog filter request with the catalog it updates. */
-    @action registerCatalogRequest = (catalogFileId: number, requestId: number) => {
-        this.catalogRequestIds.set(catalogFileId, requestId);
-    };
+    /** Move a plot widget onto another catalog, discarding whichever plot that catalog held in the same component. */
+    @action rebindCatalogPlot = (catalogPlotWidgetId: string, catalogFileId: number): boolean => {
+        for (const componentState of this.catalogPlots.values()) {
+            for (const [currentCatalogFileId, widgetId] of componentState.plotWidgetIds.entries()) {
+                if (widgetId !== catalogPlotWidgetId) {
+                    continue;
+                }
+                if (currentCatalogFileId === catalogFileId) {
+                    return false;
+                }
 
-    /** Return false for a response belonging to a superseded or completed request. */
-    public acceptsCatalogResponse = (catalogFileId: number, requestId?: number): boolean => {
-        if (requestId === undefined) {
-            return true;
+                const replacedWidgetId = componentState.plotWidgetIds.get(catalogFileId);
+                if (replacedWidgetId && replacedWidgetId !== catalogPlotWidgetId) {
+                    WidgetsStore.Instance.deleteCatalogPlotWidget(replacedWidgetId);
+                }
+                componentState.plotWidgetIds.delete(currentCatalogFileId);
+                componentState.plotWidgetIds.set(catalogFileId, catalogPlotWidgetId);
+                componentState.setActiveCatalogFileId(catalogFileId);
+                return true;
+            }
         }
-        const currentRequestId = this.catalogRequestIds.get(catalogFileId);
-        return currentRequestId === requestId;
-    };
-
-    /** Mark the current request as finished so late responses cannot mutate the catalog. */
-    @action completeCatalogRequest = (catalogFileId: number, requestId?: number) => {
-        const currentRequestId = this.catalogRequestIds.get(catalogFileId);
-        if (requestId !== undefined && currentRequestId !== requestId) {
-            return;
-        }
-        this.catalogRequestIds.delete(catalogFileId);
+        return false;
     };
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -160,44 +217,29 @@ export class CatalogStore {
 
     @action resetActiveCatalogFile(imageFileId: number) {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
-        const activeCatalogFileIds = fileIds ? fileIds : [];
-        if (!activeCatalogFileIds.length) {
-            return;
-        }
-
-        // CatalogPanelStore is the source of truth for the refactored catalog panels.
-        // Keep the legacy map synchronized while it remains for compatibility with
-        // callers that have not migrated yet.
-        if (WidgetsStore.Instance.catalogPanelWidgets.size) {
+        const activeCatalogFileIds = fileIds ?? [];
+        if (activeCatalogFileIds.length) {
             WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
-            this.catalogProfiles.forEach((_value, componentId) => {
-                if (!WidgetsStore.Instance.catalogPanelWidgets.has(componentId)) {
-                    this.catalogProfiles.delete(componentId);
-                }
-            });
-            WidgetsStore.Instance.catalogPanelWidgets.forEach((panelStore, componentId) => {
-                this.catalogProfiles.set(componentId, panelStore.selectedCatalogId);
-            });
-            return;
-        }
-
-        // Legacy-only callers still need the previous behavior during migration.
-        if (this.catalogProfiles.size) {
-            this.catalogProfiles.forEach((_value, componentId) => {
-                this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
-            });
+            this.resetCatalogPlotSelections(activeCatalogFileIds);
         }
     }
 
-    // update associated catalogProfile fileId
-    @action updateCatalogProfiles = (catalogFileId: number) => {
-        if (this.catalogProfiles.size > 0) {
-            const componentIds = Array.from(this.catalogProfiles.keys());
-            const fileIds = Array.from(this.catalogProfiles.values());
-            if (!fileIds.includes(catalogFileId)) {
-                this.catalogProfiles.set(componentIds[0], catalogFileId);
-            }
+    /**
+     * Keep every plot component showing a catalog that is actually on the image now in front.
+     *
+     * A component holds its own selection, so this is the one place that moves it when the catalog
+     * it was showing is no longer one of the choices.
+     */
+    @action resetCatalogPlotSelections = (activeCatalogFileIds: number[]) => {
+        if (!activeCatalogFileIds.length) {
+            return;
         }
+        const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
+        this.catalogPlots.forEach(componentState => {
+            if (!activeCatalogFileIdSet.has(componentState.activeCatalogFileId)) {
+                componentState.setActiveCatalogFileId(activeCatalogFileIds[0]);
+            }
+        });
     };
 
     getImageIdByCatalog(catalogFileId: number): number | undefined {
@@ -210,34 +252,64 @@ export class CatalogStore {
         return imageFileId;
     }
 
-    @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
-        let catalogWidgetMap = this.catalogPlots.get(componentId);
-        if (catalogWidgetMap) {
-            catalogWidgetMap.set(fileId, widgetId);
-        } else {
-            catalogWidgetMap = new ObservableMap<number, string>();
-            catalogWidgetMap.set(fileId, widgetId);
-            this.catalogPlots.set(componentId, catalogWidgetMap);
+    /** The catalog a plot component is showing, if it has one. */
+    getActiveCatalogPlotFile = (componentId: string): number | undefined => {
+        return this.catalogPlots.get(componentId)?.activeCatalogFileId;
+    };
+
+    /** The plot a component keeps for one catalog, if it has been pointed at that catalog. */
+    getCatalogPlotWidgetId = (componentId: string, catalogFileId: number | undefined): string | undefined => {
+        return catalogFileId === undefined ? undefined : this.catalogPlots.get(componentId)?.plotWidgetIds.get(catalogFileId);
+    };
+
+    /**
+     * Show the catalog a user picked in a plot component.
+     *
+     * A plot restored while its catalog was absent keeps that catalog's workspace ID so a later save
+     * still names it, but a catalog the user picked replaces it: the plot now belongs to the catalog
+     * it is showing, not to the one it was restored for.
+     */
+    @action selectCatalogPlotFile = (componentId: string, catalogFileId: number) => {
+        this.catalogPlots.get(componentId)?.setActiveCatalogFileId(catalogFileId);
+        if (!this.catalogProfileStores.has(catalogFileId)) {
+            return;
         }
+        const widgetId = this.getCatalogPlotWidgetId(componentId, catalogFileId);
+        const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
+        const workspaceCatalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
+        if (workspaceCatalogId !== undefined) {
+            plotStore?.setWorkspaceCatalogId(workspaceCatalogId);
+        }
+    };
+
+    @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
+        let componentState = this.catalogPlots.get(componentId);
+        if (!componentState) {
+            componentState = new CatalogPlotComponentState(fileId);
+            this.catalogPlots.set(componentId, componentState);
+        }
+        componentState.plotWidgetIds.set(fileId, widgetId);
     }
 
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
-        this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {
-            const widgetId = catalogWidgetMap.get(fileId);
+        this.catalogPlots.forEach(componentState => {
+            const widgetId = componentState.plotWidgetIds.get(fileId);
             if (widgetId) {
-                WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
+                WidgetsStore.Instance.deleteCatalogPlotWidget(widgetId);
             }
-            catalogWidgetMap.delete(fileId);
+            componentState.plotWidgetIds.delete(fileId);
+            if (componentState.activeCatalogFileId === fileId) {
+                const remainingFile = componentState.plotWidgetIds.keys().next().value;
+                componentState.setActiveCatalogFileId(remainingFile ?? undefined);
+            }
         });
     }
 
     @action clearCatalogPlotsByComponentId(componentId: string) {
-        const catalogWidgetMap = this.catalogPlots.get(componentId);
-        if (catalogWidgetMap) {
-            catalogWidgetMap.forEach((widgetId, _catalogFileId) => {
-                WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
-            });
+        const componentState = this.catalogPlots.get(componentId);
+        if (componentState) {
+            componentState.plotWidgetIds.forEach(widgetId => WidgetsStore.Instance.deleteCatalogPlotWidget(widgetId));
             this.catalogPlots.delete(componentId);
         }
     }
@@ -254,8 +326,9 @@ export class CatalogStore {
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
             catalogFileIds.forEach(catalogFileId => {
-                this.getCatalogDisplayStore(catalogFileId)?.resetMaps();
-                appStore.removeCatalog(catalogFileId);
+                if (this.catalogDisplayStores.has(catalogFileId)) {
+                    appStore.removeCatalog(catalogFileId);
+                }
             });
             this.imageAssociatedCatalogId.delete(imageFileId);
         }
@@ -292,6 +365,23 @@ export class CatalogStore {
         return visibleCatalogMap;
     }
 
+    /**
+     * The catalogs whose rows are still arriving, named as the user sees them.
+     *
+     * A catalog holds only part of its rows while a request is in flight, and each column is
+     * allocated to the full requested size with the rows that have not arrived left empty, so what
+     * is read off it in that state describes neither what was asked for nor what is there.
+     */
+    @computed get streamingCatalogNames(): string[] {
+        const names: string[] = [];
+        this.catalogProfileStores.forEach(profileStore => {
+            if (profileStore.isLoadingOntoImage) {
+                names.push(profileStore.catalogInfo.fileInfo.name || `catalog ${profileStore.catalogInfo.fileId}`);
+            }
+        });
+        return names;
+    }
+
     getFrameIdByCatalogId(catalogId: number): number {
         let frameId = -1;
         this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
@@ -305,8 +395,8 @@ export class CatalogStore {
     getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string; catalogFileId: number} {
         let catalogPlotComponentId;
         let catalogFileId;
-        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
-            catalogWidgetMap.forEach((widgetId, fileId) => {
+        this.catalogPlots.forEach((componentState, componentId) => {
+            componentState.plotWidgetIds.forEach((widgetId, fileId) => {
                 if (widgetId === catalogPlotWidgetId) {
                     catalogPlotComponentId = componentId;
                     catalogFileId = fileId;
@@ -330,9 +420,144 @@ export class CatalogStore {
         return fileList;
     }
 
+    /**
+     * Draw a catalog over the image it is associated with, from the columns its display config
+     * names as the position axes.
+     *
+     * @returns whether the overlay could be drawn.
+     */
+    @action plotImageOverlay(catalogFileId: number, overlay?: WorkspaceCatalogImageOverlay): boolean {
+        const appStore = AppStore.Instance;
+        const profileStore = this.catalogProfileStores.get(catalogFileId);
+
+        if (!profileStore) {
+            return false;
+        }
+        const displayStore = this.getOrCreateCatalogDisplayStore(catalogFileId);
+        const {xAxis, yAxis} = overlay ?? displayStore;
+        if (!overlay && displayStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return false;
+        }
+        if (xAxis === CatalogOverlay.NONE || yAxis === CatalogOverlay.NONE) {
+            return false;
+        }
+        const system = overlay?.system ?? profileStore.catalogCoordinateSystem.system;
+        const maxRows = this.getOverlayMaxRows(profileStore, overlay?.maxRows);
+
+        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+        const frame = appStore.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+        if (frame) {
+            displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
+            const imageCoords = profileStore.get2DPlotData(xAxis, yAxis, profileStore.catalogData);
+            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
+            this.clearImageCoordsData(catalogFileId);
+            if (imageCoords.wcsX && imageCoords.wcsY) {
+                this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", system, 0, 0, maxRows);
+            }
+            profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
+        }
+        if (profileStore.shouldUpdateData) {
+            // A saved config can map columns that this catalog does not display by default, and the
+            // rows still to be streamed would arrive without them.
+            profileStore.ensureColumnsRequested([xAxis, yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
+            profileStore.setUpdatingDataStream(true);
+            appStore.sendCatalogFilter(profileStore.updateRequestDataSize);
+        }
+        return true;
+    }
+
+    /**
+     * Bring a catalog back to the rows a workspace saved, once its display config has been applied,
+     * and draw the overlay it was saved with.
+     *
+     * A file-based catalog opens with a preview of its first rows, read before the saved filters,
+     * sorting and columns existed. The preview is dropped and the catalog is asked for again from
+     * its first row, so that neither the table nor the overlay is left holding preview rows the
+     * saved query would not have selected. The overlay is set up before the request goes out,
+     * because each batch of rows is drawn as it arrives.
+     *
+     * @returns whether the catalog could be restored as saved.
+     */
+    @action restoreCatalogFromWorkspace(catalogFileId: number, overlay?: WorkspaceCatalogImageOverlay, isWaitingForCompletion: boolean = false, selection?: WorkspaceCatalogSelection): boolean {
+        if (isWaitingForCompletion) {
+            this.catalogRequests.start(catalogFileId);
+        }
+
+        const profileStore = this.catalogProfileStores.get(catalogFileId);
+        if (!profileStore) {
+            this.catalogRequests.finish(catalogFileId, false, "The catalog is not loaded");
+            return false;
+        }
+
+        // An online catalog holds all of its rows already, and applying its display config has just
+        // filtered and sorted them in place, so there is nothing to ask the backend for.
+        if (!profileStore.isFileBasedCatalog) {
+            const isSuccess = overlay ? this.plotImageOverlay(catalogFileId, overlay) : true;
+            this.catalogRequests.finish(catalogFileId, isSuccess, isSuccess ? undefined : "The online catalog overlay could not be drawn");
+            return isSuccess;
+        }
+
+        const displayStore = this.getOrCreateCatalogDisplayStore(catalogFileId);
+        const hasOverlay = !!overlay && overlay.xAxis !== CatalogOverlay.NONE && overlay.yAxis !== CatalogOverlay.NONE;
+        const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+        if (overlay && (!hasOverlay || !frame)) {
+            this.catalogRequests.finish(catalogFileId, false, "The saved overlay has no usable image or position axes");
+            return false;
+        }
+
+        if (overlay && hasOverlay) {
+            // Rows that stream in only carry the columns that were asked for, so a column the
+            // overlay is mapped from has to be requested even when the table does not show it.
+            profileStore.ensureColumnsRequested([overlay.xAxis, overlay.yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
+            displayStore.setPlottedImageOverlayState(overlay.xAxis, overlay.yAxis, overlay.system, this.getOverlayMaxRows(profileStore, overlay.maxRows));
+            this.clearImageCoordsData(catalogFileId);
+        }
+
+        const selectionColumnIndices = selection?.columns.map(columnName => profileStore.catalogControlHeader.get(columnName)?.columnIndex).filter((columnIndex): columnIndex is number => columnIndex !== undefined) ?? [];
+        profileStore.resetFilterRequest();
+        profileStore.setUpdateMode(hasOverlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate);
+
+        const filter = profileStore.updateRequestDataSize;
+        filter.filterConfigs = profileStore.getUserFilters();
+        filter.sortColumn = profileStore.sortingInfo.columnName;
+        filter.sortingType = profileStore.sortingInfo.sortingType;
+        filter.columnIndices = [...new Set([...profileStore.columnIndices, ...selectionColumnIndices])];
+        if (selection) {
+            const searchRows = Math.min(profileStore.catalogInfo.dataSize, selection.searchRows ?? profileStore.maxRows);
+            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, searchRows);
+        }
+        if (overlay && hasOverlay) {
+            // The table limit controls the number of visible rows, but the overlay may need more
+            // rows from the same filtered/sorted result. The profile's normal request-size getter
+            // only knows about the table limit, so widen this one request without changing it.
+            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, this.getOverlayMaxRows(profileStore, overlay.maxRows));
+        }
+        profileStore.setUpdatingDataStream(true);
+        const requestId = AppStore.Instance.sendCatalogFilter(filter);
+        if (requestId === false) {
+            this.catalogRequests.finish(catalogFileId, false, "The catalog request could not be sent");
+            return false;
+        }
+        if (typeof requestId === "number") {
+            this.catalogRequests.attach(catalogFileId, requestId);
+        }
+        return true;
+    }
+
+    private getOverlayMaxRows(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, maxRows: number | undefined): number {
+        const requestedRows = maxRows ?? profileStore.maxRows;
+        return Number.isFinite(requestedRows) ? Math.max(0, Math.min(profileStore.catalogInfo.dataSize, requestedRows)) : 0;
+    }
+
     /** The display store of a catalog, or undefined when the catalog has none. */
     getCatalogDisplayStore(fileId: number): CatalogDisplayStore | undefined {
         return this.catalogDisplayStores.get(fileId);
+    }
+
+    /** Releases the display store of a catalog that is being closed. */
+    @action removeCatalogDisplayStore(fileId: number) {
+        this.catalogDisplayStores.get(fileId)?.dispose();
+        this.catalogDisplayStores.delete(fileId);
     }
 
     /** As {@link getCatalogDisplayStore}, but creates the display store when the catalog has none. */
@@ -343,12 +568,6 @@ export class CatalogStore {
             this.catalogDisplayStores.set(fileId, displayStore);
         }
         return displayStore;
-    }
-
-    /** Releases the display store of a catalog that is being closed. */
-    @action removeCatalogDisplayStore(fileId: number) {
-        this.catalogDisplayStores.get(fileId)?.dispose();
-        this.catalogDisplayStores.delete(fileId);
     }
 
     private static getFractionFromUnit(unit: string): number {

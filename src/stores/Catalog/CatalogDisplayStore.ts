@@ -9,15 +9,58 @@ import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
 import {clamp, createScalingParameters, getScalingParameter, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
 
+export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 type CatalogSourceRadiusMode = "diameter" | "radius";
 
-/** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
-interface ClipRestore {
-    min: number | undefined;
-    max: number | undefined;
+/** One end of the range a mapped column is spread over. */
+interface ColumnBound {
+    /** The bound the loaded data implies. */
+    default: number | undefined;
+    /** The bound actually in use. */
+    clipd: number | undefined;
+    /**
+     * Whether the bound in use was chosen rather than taken from the data. A chosen bound is kept
+     * when the data changes; one taken from the data follows it. The two cannot be told apart by
+     * value, because a chosen bound may happen to equal the one the data implies.
+     */
+    isExplicit: boolean;
 }
 
-type ClipGroup = "sizeMajor" | "sizeMinor" | "color" | "orientation";
+function createColumnBound(): ColumnBound {
+    return {default: undefined, clipd: undefined, isExplicit: false};
+}
+
+function updateColumnBound(bound: ColumnBound, value: number, type: "default" | "clipd"): void {
+    if (!Number.isFinite(value)) {
+        return;
+    }
+    if (type === "default") {
+        bound.default = value;
+        if (!bound.isExplicit) {
+            bound.clipd = value;
+        }
+    } else {
+        bound.clipd = value;
+        bound.isExplicit = true;
+    }
+}
+
+function resetColumnBound(bound: ColumnBound): void {
+    bound.clipd = bound.default;
+    bound.isExplicit = false;
+}
+
+/** A bound to put in place, and whether it was chosen or taken from the data. */
+interface ClipValue {
+    value: number | undefined;
+    isExplicit: boolean;
+}
+
+/** The clipped bounds of one mapped column. */
+interface ColumnClip {
+    min: ClipValue;
+    max: ClipValue;
+}
 
 /** Outcome of applying a display config. A rejected config leaves the store untouched. */
 export interface CatalogConfigApplyResult {
@@ -63,25 +106,6 @@ function normalizeOrientationAxis(axis: WorkspaceCatalogOrientationAxisConfig | 
         scalingType: axis?.scalingType ?? FrameScaling.LINEAR,
         scalingParameters: scalingParametersFromConfig(axis?.scalingParameters)
     };
-}
-
-/**
- * Whether the clipped bounds a config asks for are the config's own. An unmapped column has no
- * bounds, and a config that states bounds authored them, so both survive a recompute. A mapped
- * column with no stated bounds asks for the bounds of the catalog data instead, which the store
- * recomputes for itself, so those must not be held across the recompute.
- */
-function configDefinesClip(axis: {mapColumn: string; columnMinClip?: number; columnMaxClip?: number}): boolean {
-    return axis.mapColumn === CatalogOverlay.NONE || axis.columnMinClip !== undefined || axis.columnMaxClip !== undefined;
-}
-
-/**
- * The clipped bound worth keeping in a config. Until the user clips a bound it holds the range of
- * the catalog data, which the store recomputes whenever that data changes, so only a bound that
- * differs from its data-derived default was authored by the user and belongs in a config.
- */
-function authoredClip(bound: {default: number | undefined; clipd: number | undefined}): number | undefined {
-    return bound.clipd === bound.default ? undefined : bound.clipd;
 }
 
 export class CatalogDisplayStore {
@@ -149,8 +173,8 @@ export class CatalogDisplayStore {
     @observable catalogDisplayMode: CatalogDisplayMode = CatalogDisplayMode.CANVAS;
     // size map
     @observable sizeMapColumn: string = CatalogOverlay.NONE;
-    @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable sizeColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable sizeColumnMax: ColumnBound = createColumnBound();
+    @observable sizeColumnMin: ColumnBound = createColumnBound();
     @observable sizeMax: {area: number; diameter: number} = {area: 200, diameter: 20};
     @observable sizeMin: {area: number; diameter: number} = {area: 100, diameter: 5};
     @observable isSizeAreaMode: boolean = false;
@@ -164,8 +188,8 @@ export class CatalogDisplayStore {
     @observable catalogSourceRadiusType: CatalogSourceRadiusMode = "diameter";
     // size map minor
     @observable sizeMinorMapColumn: string = CatalogOverlay.NONE;
-    @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable sizeMinorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable sizeMinorColumnMax: ColumnBound = createColumnBound();
+    @observable sizeMinorColumnMin: ColumnBound = createColumnBound();
     @observable sizeMinorMax: {area: number; diameter: number} = {area: 200, diameter: 20};
     @observable sizeMinorMin: {area: number; diameter: number} = {area: 100, diameter: 5};
     @observable isSizeMinorAreaMode: boolean = false;
@@ -175,16 +199,16 @@ export class CatalogDisplayStore {
     @observable isSizeMinorColumnMaxLocked: boolean = false;
     // color map
     @observable colorMapColumn: string = CatalogOverlay.NONE;
-    @observable colorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable colorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable colorColumnMax: ColumnBound = createColumnBound();
+    @observable colorColumnMin: ColumnBound = createColumnBound();
     @observable colorMap: string = ColorMap.Viridis;
     @observable colorScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable private colorScalingParameters = createScalingParameters();
     @observable isInvertedColorMap: boolean = false;
     // orientation
     @observable orientationMapColumn: string = CatalogOverlay.NONE;
-    @observable orientationMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable orientationMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable orientationMax: ColumnBound = createColumnBound();
+    @observable orientationMin: ColumnBound = createColumnBound();
     @observable orientationScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable private orientationScalingParameters = createScalingParameters();
     @observable angleMax: number = CatalogDisplayStore.MAX_ANGLE;
@@ -192,34 +216,9 @@ export class CatalogDisplayStore {
 
     private readonly disposers: IReactionDisposer[] = [];
 
-    /**
-     * Clipped bounds supplied by {@link applyConfig} for a column that has just changed. Changing a
-     * mapped column makes the data-derived defaults recompute, which resets the clip to the full
-     * data range; a clip that came from a config outlives that reset.
-     */
-    private readonly pendingClipRestore = new Map<ClipGroup, ClipRestore>();
-    /** Layout display settings waiting for the catalog data they validate against. */
-    private pendingConfig: WorkspaceCatalogConfig | undefined;
-
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
-
-        this.disposers.push(
-            reaction(
-                () => {
-                    const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-                    return Boolean(profileStore && !profileStore.isLoadingOntoImage);
-                },
-                isReady => {
-                    if (isReady && this.pendingConfig) {
-                        const config = this.pendingConfig;
-                        this.pendingConfig = undefined;
-                        this.applyConfig(config);
-                    }
-                }
-            )
-        );
 
         this.disposers.push(
             reaction(
@@ -228,7 +227,6 @@ export class CatalogDisplayStore {
                     const result = minMaxArray(column);
                     this.setSizeColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                     this.setSizeColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
-                    this.restorePendingClip("sizeMajor");
                 }
             )
         );
@@ -246,10 +244,11 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeColumnMin.clipd,
+                () => ({clipd: this.sizeColumnMin.clipd, isExplicit: this.sizeColumnMin.isExplicit}),
                 sizeColumnMin => {
                     if (this.isSizeColumnMinLocked) {
-                        this.sizeMinorColumnMin.clipd = sizeColumnMin;
+                        this.sizeMinorColumnMin.clipd = sizeColumnMin.clipd;
+                        this.sizeMinorColumnMin.isExplicit = sizeColumnMin.isExplicit;
                     }
                 }
             )
@@ -257,10 +256,11 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeColumnMax.clipd,
+                () => ({clipd: this.sizeColumnMax.clipd, isExplicit: this.sizeColumnMax.isExplicit}),
                 sizeColumnMax => {
                     if (this.isSizeColumnMaxLocked) {
-                        this.sizeMinorColumnMax.clipd = sizeColumnMax;
+                        this.sizeMinorColumnMax.clipd = sizeColumnMax.clipd;
+                        this.sizeMinorColumnMax.isExplicit = sizeColumnMax.isExplicit;
                     }
                 }
             )
@@ -273,7 +273,6 @@ export class CatalogDisplayStore {
                     const result = minMaxArray(column);
                     this.setSizeMinorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                     this.setSizeMinorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
-                    this.restorePendingClip("sizeMinor");
                 }
             )
         );
@@ -291,10 +290,11 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeMinorColumnMin.clipd,
+                () => ({clipd: this.sizeMinorColumnMin.clipd, isExplicit: this.sizeMinorColumnMin.isExplicit}),
                 sizeMinorColumnMin => {
                     if (this.isSizeMinorColumnMinLocked) {
-                        this.sizeColumnMin.clipd = sizeMinorColumnMin;
+                        this.sizeColumnMin.clipd = sizeMinorColumnMin.clipd;
+                        this.sizeColumnMin.isExplicit = sizeMinorColumnMin.isExplicit;
                     }
                 }
             )
@@ -302,10 +302,11 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeMinorColumnMax.clipd,
+                () => ({clipd: this.sizeMinorColumnMax.clipd, isExplicit: this.sizeMinorColumnMax.isExplicit}),
                 sizeMinorColumnMax => {
                     if (this.isSizeMinorColumnMaxLocked) {
-                        this.sizeColumnMax.clipd = sizeMinorColumnMax;
+                        this.sizeColumnMax.clipd = sizeMinorColumnMax.clipd;
+                        this.sizeColumnMax.isExplicit = sizeMinorColumnMax.isExplicit;
                     }
                 }
             )
@@ -318,7 +319,6 @@ export class CatalogDisplayStore {
                     const result = minMaxArray(column);
                     this.setColorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                     this.setColorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
-                    this.restorePendingClip("color");
                 }
             )
         );
@@ -341,7 +341,6 @@ export class CatalogDisplayStore {
                     const result = minMaxArray(column);
                     this.setOrientationMin(isFinite(result.minVal) ? result.minVal : 0, "default");
                     this.setOrientationMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
-                    this.restorePendingClip("orientation");
                 }
             )
         );
@@ -375,8 +374,8 @@ export class CatalogDisplayStore {
         this.sizeScalingParameters = createScalingParameters();
         this.sizeMin = {area: 50, diameter: 5};
         this.sizeMax = {area: 200, diameter: 20};
-        this.sizeColumnMin = {default: undefined, clipd: undefined};
-        this.sizeColumnMax = {default: undefined, clipd: undefined};
+        this.sizeColumnMin = createColumnBound();
+        this.sizeColumnMax = createColumnBound();
         this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
         this.isSizeColumnMinLocked = false;
         this.isSizeColumnMaxLocked = false;
@@ -387,22 +386,22 @@ export class CatalogDisplayStore {
         this.sizeMinorScalingParameters = createScalingParameters();
         this.sizeMinorMin = {area: 50, diameter: 5};
         this.sizeMinorMax = {area: 200, diameter: 20};
-        this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
-        this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+        this.sizeMinorColumnMin = createColumnBound();
+        this.sizeMinorColumnMax = createColumnBound();
         this.isSizeMinorColumnMinLocked = false;
         this.isSizeMinorColumnMaxLocked = false;
         // color
         this.colorMapColumn = CatalogOverlay.NONE;
-        this.colorColumnMax = {default: undefined, clipd: undefined};
-        this.colorColumnMin = {default: undefined, clipd: undefined};
+        this.colorColumnMax = createColumnBound();
+        this.colorColumnMin = createColumnBound();
         this.colorMap = ColorMap.Jet;
         this.colorScalingType = FrameScaling.LINEAR;
         this.colorScalingParameters = createScalingParameters();
         this.isInvertedColorMap = false;
         // orientation
         this.orientationMapColumn = CatalogOverlay.NONE;
-        this.orientationMax = {default: undefined, clipd: undefined};
-        this.orientationMin = {default: undefined, clipd: undefined};
+        this.orientationMax = createColumnBound();
+        this.orientationMin = createColumnBound();
         this.orientationScalingType = FrameScaling.LINEAR;
         this.orientationScalingParameters = createScalingParameters();
         this.angleMax = CatalogDisplayStore.MAX_ANGLE;
@@ -414,7 +413,9 @@ export class CatalogDisplayStore {
      * @param max - max degree of orientation
      */
     @action setAngleMax(max: number) {
-        this.angleMax = clamp(max, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
+        if (Number.isFinite(max)) {
+            this.angleMax = clamp(max, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
+        }
     }
 
     /**
@@ -422,7 +423,9 @@ export class CatalogDisplayStore {
      * @param min - min degree of orientation
      */
     @action setAngleMin(min: number) {
-        this.angleMin = clamp(min, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
+        if (Number.isFinite(min)) {
+            this.angleMin = clamp(min, CatalogDisplayStore.MIN_ANGLE, CatalogDisplayStore.MAX_ANGLE);
+        }
     }
 
     /**
@@ -431,12 +434,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setOrientationMax(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.orientationMax.default = val;
-            this.orientationMax.clipd = val;
-        } else {
-            this.orientationMax.clipd = val;
-        }
+        updateColumnBound(this.orientationMax, val, type);
     }
 
     /**
@@ -445,12 +443,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setOrientationMin(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.orientationMin.default = val;
-            this.orientationMin.clipd = val;
-        } else {
-            this.orientationMin.clipd = val;
-        }
+        updateColumnBound(this.orientationMin, val, type);
     }
 
     /**
@@ -458,11 +451,7 @@ export class CatalogDisplayStore {
      * @param type - "min" or "max"
      */
     @action resetOrientationValue(type: "min" | "max") {
-        if (type === "min") {
-            this.orientationMin.clipd = this.orientationMin.default;
-        } else {
-            this.orientationMax.clipd = this.orientationMax.default;
-        }
+        resetColumnBound(type === "min" ? this.orientationMin : this.orientationMax);
     }
 
     /**
@@ -472,8 +461,8 @@ export class CatalogDisplayStore {
     @action setOrientationMapColumn(column: string) {
         if (this.orientationMapColumn !== column) {
             this.orientationMapColumn = column;
-            this.orientationMin = {default: undefined, clipd: undefined};
-            this.orientationMax = {default: undefined, clipd: undefined};
+            this.orientationMin = createColumnBound();
+            this.orientationMax = createColumnBound();
 
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.orientationMapData);
@@ -513,12 +502,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.colorColumnMax.default = val;
-            this.colorColumnMax.clipd = val;
-        } else {
-            this.colorColumnMax.clipd = val;
-        }
+        updateColumnBound(this.colorColumnMax, val, type);
     }
 
     /**
@@ -527,12 +511,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setColorColumnMin(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.colorColumnMin.default = val;
-            this.colorColumnMin.clipd = val;
-        } else {
-            this.colorColumnMin.clipd = val;
-        }
+        updateColumnBound(this.colorColumnMin, val, type);
     }
 
     /**
@@ -540,11 +519,7 @@ export class CatalogDisplayStore {
      * @param type - "min" or "max"
      */
     @action resetColorColumnValue(type: "min" | "max") {
-        if (type === "min") {
-            this.colorColumnMin.clipd = this.colorColumnMin.default;
-        } else {
-            this.colorColumnMax.clipd = this.colorColumnMax.default;
-        }
+        resetColumnBound(type === "min" ? this.colorColumnMin : this.colorColumnMax);
     }
 
     /**
@@ -554,8 +529,8 @@ export class CatalogDisplayStore {
     @action setColorMapColumn(column: string) {
         if (this.colorMapColumn !== column) {
             this.colorMapColumn = column;
-            this.colorColumnMin = {default: undefined, clipd: undefined};
-            this.colorColumnMax = {default: undefined, clipd: undefined};
+            this.colorColumnMin = createColumnBound();
+            this.colorColumnMax = createColumnBound();
         }
     }
 
@@ -588,6 +563,9 @@ export class CatalogDisplayStore {
      * @param val - maximum size of catalog source in pixel or square pixel
      */
     @action setSizeMax(val: number) {
+        if (!Number.isFinite(val)) {
+            return;
+        }
         const isAreaMode = this.isSizeAreaMode;
         if (isAreaMode) {
             this.sizeMax.area = val;
@@ -603,6 +581,9 @@ export class CatalogDisplayStore {
      * @param val - minimum size of catalog source in pixel or square pixel
      */
     @action setSizeMin(val: number) {
+        if (!Number.isFinite(val)) {
+            return;
+        }
         const isAreaMode = this.isSizeAreaMode;
         if (isAreaMode) {
             this.sizeMin.area = val;
@@ -629,12 +610,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setSizeColumnMax(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.sizeColumnMax.default = val;
-            this.sizeColumnMax.clipd = val;
-        } else {
-            this.sizeColumnMax.clipd = val;
-        }
+        updateColumnBound(this.sizeColumnMax, val, type);
     }
 
     /**
@@ -643,12 +619,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setSizeColumnMin(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.sizeColumnMin.default = val;
-            this.sizeColumnMin.clipd = val;
-        } else {
-            this.sizeColumnMin.clipd = val;
-        }
+        updateColumnBound(this.sizeColumnMin, val, type);
     }
 
     /**
@@ -656,11 +627,7 @@ export class CatalogDisplayStore {
      * @param type - "min" or "max"
      */
     @action resetSizeColumnValue(type: "min" | "max") {
-        if (type === "min") {
-            this.sizeColumnMin.clipd = this.sizeColumnMin.default;
-        } else {
-            this.sizeColumnMax.clipd = this.sizeColumnMax.default;
-        }
+        resetColumnBound(type === "min" ? this.sizeColumnMin : this.sizeColumnMax);
     }
 
     /**
@@ -694,8 +661,8 @@ export class CatalogDisplayStore {
     @action setSizeMap(column: string) {
         if (this.sizeMapColumn !== column) {
             this.sizeMapColumn = column;
-            this.sizeColumnMin = {default: undefined, clipd: undefined};
-            this.sizeColumnMax = {default: undefined, clipd: undefined};
+            this.sizeColumnMin = createColumnBound();
+            this.sizeColumnMax = createColumnBound();
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMapData);
                 this.setSizeMax(result.maxVal);
@@ -721,6 +688,9 @@ export class CatalogDisplayStore {
      * @param val - maximum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMax(val: number) {
+        if (!Number.isFinite(val)) {
+            return;
+        }
         const isAreaMode = this.isSizeMinorAreaMode;
         if (isAreaMode) {
             this.sizeMinorMax.area = val;
@@ -734,6 +704,9 @@ export class CatalogDisplayStore {
      * @param val - minimum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMin(val: number) {
+        if (!Number.isFinite(val)) {
+            return;
+        }
         const isAreaMode = this.isSizeMinorAreaMode;
         if (isAreaMode) {
             this.sizeMinorMin.area = val;
@@ -748,12 +721,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setSizeMinorColumnMax(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.sizeMinorColumnMax.default = val;
-            this.sizeMinorColumnMax.clipd = val;
-        } else {
-            this.sizeMinorColumnMax.clipd = val;
-        }
+        updateColumnBound(this.sizeMinorColumnMax, val, type);
     }
 
     /**
@@ -762,12 +730,7 @@ export class CatalogDisplayStore {
      * @param type - "default" or "clipd"
      */
     @action setSizeMinorColumnMin(val: number, type: "default" | "clipd") {
-        if (type === "default") {
-            this.sizeMinorColumnMin.default = val;
-            this.sizeMinorColumnMin.clipd = val;
-        } else {
-            this.sizeMinorColumnMin.clipd = val;
-        }
+        updateColumnBound(this.sizeMinorColumnMin, val, type);
     }
 
     /**
@@ -775,17 +738,14 @@ export class CatalogDisplayStore {
      * @param type - "min" or "max"
      */
     @action resetSizeMinorColumnValue(type: "min" | "max") {
-        if (type === "min") {
-            this.sizeMinorColumnMin.clipd = this.sizeMinorColumnMin.default;
-        } else {
-            this.sizeMinorColumnMax.clipd = this.sizeMinorColumnMax.default;
-        }
+        resetColumnBound(type === "min" ? this.sizeMinorColumnMin : this.sizeMinorColumnMax);
     }
 
     @action toggleSizeColumnMinLock = () => {
         this.isSizeColumnMinLocked = !this.isSizeColumnMinLocked;
         if (this.isSizeColumnMinLocked) {
             this.sizeMinorColumnMin.clipd = this.sizeColumnMin.clipd;
+            this.sizeMinorColumnMin.isExplicit = this.sizeColumnMin.isExplicit;
         }
     };
 
@@ -793,6 +753,7 @@ export class CatalogDisplayStore {
         this.isSizeColumnMaxLocked = !this.isSizeColumnMaxLocked;
         if (this.isSizeColumnMaxLocked) {
             this.sizeMinorColumnMax.clipd = this.sizeColumnMax.clipd;
+            this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
         }
     };
 
@@ -800,6 +761,7 @@ export class CatalogDisplayStore {
         this.isSizeMinorColumnMinLocked = !this.isSizeMinorColumnMinLocked;
         if (this.isSizeMinorColumnMinLocked) {
             this.sizeColumnMin.clipd = this.sizeMinorColumnMin.clipd;
+            this.sizeColumnMin.isExplicit = this.sizeMinorColumnMin.isExplicit;
         }
     };
 
@@ -807,6 +769,7 @@ export class CatalogDisplayStore {
         this.isSizeMinorColumnMaxLocked = !this.isSizeMinorColumnMaxLocked;
         if (this.isSizeMinorColumnMaxLocked) {
             this.sizeColumnMax.clipd = this.sizeMinorColumnMax.clipd;
+            this.sizeColumnMax.isExplicit = this.sizeMinorColumnMax.isExplicit;
         }
     };
 
@@ -841,8 +804,8 @@ export class CatalogDisplayStore {
     @action setSizeMinorMap(column: string) {
         if (this.sizeMinorMapColumn !== column) {
             this.sizeMinorMapColumn = column;
-            this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
-            this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+            this.sizeMinorColumnMin = createColumnBound();
+            this.sizeMinorColumnMax = createColumnBound();
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMinorMapData);
                 this.setMinorSizeMax(result.maxVal);
@@ -1009,7 +972,9 @@ export class CatalogDisplayStore {
      * @param val - thickness of catalog source
      */
     @action setThickness(val: number) {
-        this.thickness = clamp(val, CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS);
+        if (Number.isFinite(val)) {
+            this.thickness = clamp(val, CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS);
+        }
     }
 
     /**
@@ -1231,6 +1196,9 @@ export class CatalogDisplayStore {
      * Set the display config to exactly what `config` describes. Anything the config leaves out
      * returns to its default, so the same config always produces the same overlay.
      *
+     * Only how the catalog is drawn: which rows and columns it holds belongs to its profile store,
+     * and getting the rows to match belongs to the restore flow.
+     *
      * The order the fields are set in is deliberate and load bearing:
      *
      * 1. display mode and size units, because the allowed source size depends on both
@@ -1246,60 +1214,42 @@ export class CatalogDisplayStore {
         if (!profileStore) {
             return {success: false, errors: ["The catalog data has not been loaded"]};
         }
-        if (profileStore.isLoadingOntoImage) {
-            return {success: false, errors: ["The catalog data is still loading"]};
-        }
 
         const sizeAxis = normalizeSizeAxis(config?.sizeAxis);
         const sizeMinorAxis = normalizeSizeAxis(config?.sizeMinorAxis);
         const colorAxis = normalizeColorAxis(config?.colorAxis);
         const orientationAxis = normalizeOrientationAxis(config?.orientationAxis);
 
-        const mappedColumnErrors = [
+        const mappedColumns = [
+            ["x", config?.xAxis ?? CatalogOverlay.NONE],
+            ["y", config?.yAxis ?? CatalogOverlay.NONE],
+            ["plotted x", config?.imageOverlay?.xAxis ?? CatalogOverlay.NONE],
+            ["plotted y", config?.imageOverlay?.yAxis ?? CatalogOverlay.NONE],
             ["size", sizeAxis.mapColumn],
             ["minor size", sizeMinorAxis.mapColumn],
             ["color", colorAxis.mapColumn],
             ["orientation", orientationAxis.mapColumn]
-        ]
-            .filter(([, column]) => column !== CatalogOverlay.NONE)
-            .map(([axis, column]) => {
-                if (!profileStore.catalogControlHeader.has(column)) {
-                    return `The ${axis} axis is mapped to "${column}", which this catalog does not have`;
-                }
-                if (!profileStore.get1DPlotData(column).wcsData?.length) {
-                    return `The ${axis} axis is mapped to "${column}", which has no data to map`;
-                }
-                return undefined;
-            })
-            .filter((error): error is string => error !== undefined);
-
-        // The image overlay dereferences its x and y columns' headers directly, so a config naming
-        // a column this catalog does not have, or one that cannot hold a coordinate, is rejected
-        // rather than left to fail when the overlay is drawn. Unlike a mapped column, the data
-        // itself need not be loaded yet: the overlay is plotted from whatever streams in later.
-        const overlayColumnErrors = [
-            ["x", config?.xAxis ?? CatalogOverlay.NONE],
-            ["y", config?.yAxis ?? CatalogOverlay.NONE]
-        ]
-            .filter(([, column]) => column !== CatalogOverlay.NONE)
-            .map(([axis, column]) => {
-                const controlHeader = profileStore.catalogControlHeader.get(column);
-                const header = profileStore.catalogHeader[controlHeader?.dataIndex ?? NaN];
-                if (!header) {
-                    return `The ${axis} axis is set to "${column}", which this catalog does not have`;
-                }
-                if (header.dataType === CARTA.ColumnType.String || header.dataType === CARTA.ColumnType.Bool) {
-                    return `The ${axis} axis is set to "${column}", which is not a numeric column`;
-                }
-                return undefined;
-            })
-            .filter((error): error is string => error !== undefined);
-
-        const errors = [...mappedColumnErrors, ...overlayColumnErrors];
+        ];
+        const errors: string[] = [];
+        for (const [axis, column] of mappedColumns) {
+            if (column === CatalogOverlay.NONE) {
+                continue;
+            }
+            const controlHeader = profileStore.catalogControlHeader.get(column);
+            const header = controlHeader?.dataIndex === undefined ? undefined : profileStore.catalogHeader[controlHeader.dataIndex];
+            if (!controlHeader || !header) {
+                errors.push(`The ${axis} axis is mapped to "${column}", which this catalog does not have`);
+                continue;
+            }
+            if (header.dataType === CARTA.ColumnType.String || header.dataType === CARTA.ColumnType.Bool || header.dataType === CARTA.ColumnType.UnsupportedType) {
+                errors.push(`The ${axis} axis is mapped to "${column}", which is not numeric`);
+            }
+        }
         if (errors.length) {
             return {success: false, errors};
         }
 
+        // 1. display mode and units first: the source size is validated against them
         this.catalogDisplayMode = config?.displayMode ?? CatalogDisplayMode.CANVAS;
         this.canvasSizeUnit = config?.canvasSizeUnit ?? CatalogSizeUnits.SCREENPIXEL;
         this.worldSizeUnit = config?.worldSizeUnit ?? AngularSizeUnit.ARCSEC;
@@ -1311,21 +1261,21 @@ export class CatalogDisplayStore {
         this.thickness = clamp(config?.thickness ?? 2.0, CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS);
         this.xAxis = config?.xAxis ?? CatalogOverlay.NONE;
         this.yAxis = config?.yAxis ?? CatalogOverlay.NONE;
+        if (config?.headerTableColumnWidths?.length === this.headerTableColumnWidths.length && config.headerTableColumnWidths.every(width => Number.isFinite(width))) {
+            this.setHeaderTableColumnWidths(config.headerTableColumnWidths);
+        }
 
         const showedCatalogSize = clamp(config?.size ?? 10.0, this.minOverlaySize, this.maxOverlaySize);
         this.showedCatalogSize = showedCatalogSize;
         this.catalogSize = showedCatalogSize * this.pixelSizeFactor;
 
-        const hasSizeColumnChanged = this.sizeMapColumn !== sizeAxis.mapColumn;
-        const hasSizeMinorColumnChanged = this.sizeMinorMapColumn !== sizeMinorAxis.mapColumn;
-        const hasColorColumnChanged = this.colorMapColumn !== colorAxis.mapColumn;
-        const hasOrientationColumnChanged = this.orientationMapColumn !== orientationAxis.mapColumn;
-
+        // 2. mapped columns
         this.sizeMapColumn = sizeAxis.mapColumn;
         this.sizeMinorMapColumn = sizeMinorAxis.mapColumn;
         this.colorMapColumn = colorAxis.mapColumn;
         this.orientationMapColumn = orientationAxis.mapColumn;
 
+        // 3. scaling, sizes and clipped bounds
         this.isSizeAreaMode = sizeAxis.areaMode;
         this.sizeScalingType = sizeAxis.scalingType;
         this.sizeScalingParameters = sizeAxis.scalingParameters;
@@ -1348,26 +1298,18 @@ export class CatalogDisplayStore {
         this.angleMin = orientationAxis.angleMin;
         this.angleMax = orientationAxis.angleMax;
 
-        this.setClip("sizeMajor", this.resolveClip(profileStore, sizeAxis), hasSizeColumnChanged && configDefinesClip(sizeAxis));
-        this.setClip("sizeMinor", this.resolveClip(profileStore, sizeMinorAxis), hasSizeMinorColumnChanged && configDefinesClip(sizeMinorAxis));
-        this.setClip("color", this.resolveClip(profileStore, colorAxis), hasColorColumnChanged && configDefinesClip(colorAxis));
-        this.setClip("orientation", this.resolveClip(profileStore, orientationAxis), hasOrientationColumnChanged && configDefinesClip(orientationAxis));
+        this.setClip(this.sizeColumnMin, this.sizeColumnMax, this.resolveClip(profileStore, sizeAxis));
+        this.setClip(this.sizeMinorColumnMin, this.sizeMinorColumnMax, this.resolveClip(profileStore, sizeMinorAxis));
+        this.setClip(this.colorColumnMin, this.colorColumnMax, this.resolveClip(profileStore, colorAxis));
+        this.setClip(this.orientationMin, this.orientationMax, this.resolveClip(profileStore, orientationAxis));
 
+        // 4. locks last
         this.isSizeColumnMinLocked = sizeAxis.columnMinLocked;
         this.isSizeColumnMaxLocked = sizeAxis.columnMaxLocked;
         this.isSizeMinorColumnMinLocked = sizeMinorAxis.columnMinLocked;
         this.isSizeMinorColumnMaxLocked = sizeMinorAxis.columnMaxLocked;
 
         return {success: true, errors: []};
-    };
-
-    /** Apply catalog display settings now, or retry them once the catalog data is ready. */
-    @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
-        const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        const shouldDefer = !profileStore || profileStore.isLoadingOntoImage;
-        const result = this.applyConfig(config);
-        this.pendingConfig = shouldDefer ? config : undefined;
-        return result;
     };
 
     public toConfig = (): WorkspaceCatalogConfig => {
@@ -1383,10 +1325,20 @@ export class CatalogDisplayStore {
             plotType: this.catalogPlotType,
             xAxis: this.xAxis,
             yAxis: this.yAxis,
+            headerTableColumnWidths: this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? [...this.headerTableColumnWidths] : undefined,
+            imageOverlay:
+                this.hasPlottedImageOverlay && this.plottedImageOverlaySystem !== undefined
+                    ? {
+                          xAxis: this.plottedImageOverlayXAxis,
+                          yAxis: this.plottedImageOverlayYAxis,
+                          system: this.plottedImageOverlaySystem,
+                          maxRows: this.plottedImageOverlayMaxRows
+                      }
+                    : undefined,
             sizeAxis: {
                 mapColumn: this.sizeMapColumn,
-                columnMinClip: authoredClip(this.sizeColumnMin),
-                columnMaxClip: authoredClip(this.sizeColumnMax),
+                columnMinClip: this.sizeColumnMin.isExplicit ? this.sizeColumnMin.clipd : undefined,
+                columnMaxClip: this.sizeColumnMax.isExplicit ? this.sizeColumnMax.clipd : undefined,
                 min: {...this.sizeMin},
                 max: {...this.sizeMax},
                 areaMode: this.isSizeAreaMode,
@@ -1397,8 +1349,8 @@ export class CatalogDisplayStore {
             },
             sizeMinorAxis: {
                 mapColumn: this.sizeMinorMapColumn,
-                columnMinClip: authoredClip(this.sizeMinorColumnMin),
-                columnMaxClip: authoredClip(this.sizeMinorColumnMax),
+                columnMinClip: this.sizeMinorColumnMin.isExplicit ? this.sizeMinorColumnMin.clipd : undefined,
+                columnMaxClip: this.sizeMinorColumnMax.isExplicit ? this.sizeMinorColumnMax.clipd : undefined,
                 min: {...this.sizeMinorMin},
                 max: {...this.sizeMinorMax},
                 areaMode: this.isSizeMinorAreaMode,
@@ -1409,8 +1361,8 @@ export class CatalogDisplayStore {
             },
             colorAxis: {
                 mapColumn: this.colorMapColumn,
-                columnMinClip: authoredClip(this.colorColumnMin),
-                columnMaxClip: authoredClip(this.colorColumnMax),
+                columnMinClip: this.colorColumnMin.isExplicit ? this.colorColumnMin.clipd : undefined,
+                columnMaxClip: this.colorColumnMax.isExplicit ? this.colorColumnMax.clipd : undefined,
                 colorMap: this.colorMap,
                 inverted: this.isInvertedColorMap,
                 scalingType: this.colorScalingType,
@@ -1418,8 +1370,8 @@ export class CatalogDisplayStore {
             },
             orientationAxis: {
                 mapColumn: this.orientationMapColumn,
-                columnMinClip: authoredClip(this.orientationMin),
-                columnMaxClip: authoredClip(this.orientationMax),
+                columnMinClip: this.orientationMin.isExplicit ? this.orientationMin.clipd : undefined,
+                columnMaxClip: this.orientationMax.isExplicit ? this.orientationMax.clipd : undefined,
                 angleMin: this.angleMin,
                 angleMax: this.angleMax,
                 scalingType: this.orientationScalingType,
@@ -1433,78 +1385,30 @@ export class CatalogDisplayStore {
      * full range of its data, so that the result depends on the config and the data alone, rather
      * than on whether a reaction happened to fill the bounds in.
      */
-    private resolveClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: {mapColumn: string; columnMinClip?: number; columnMaxClip?: number}): ClipRestore {
+    private resolveClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: {mapColumn: string; columnMinClip?: number; columnMaxClip?: number}): ColumnClip {
         if (axis.mapColumn === CatalogOverlay.NONE) {
-            return {min: undefined, max: undefined};
+            return {min: {value: undefined, isExplicit: false}, max: {value: undefined, isExplicit: false}};
         }
         if (axis.columnMinClip !== undefined && axis.columnMaxClip !== undefined) {
-            return {min: axis.columnMinClip, max: axis.columnMaxClip};
+            return {min: {value: axis.columnMinClip, isExplicit: true}, max: {value: axis.columnMaxClip, isExplicit: true}};
         }
 
         // applyConfig has already established that a mapped column carries data.
         const range = minMaxArray(profileStore.get1DPlotData(axis.mapColumn).wcsData ?? new Float32Array(0));
-        return {
-            min: axis.columnMinClip ?? (isFinite(range.minVal) ? range.minVal : 0),
-            max: axis.columnMaxClip ?? (isFinite(range.maxVal) ? range.maxVal : 0)
-        };
+        function resolveBound(configValue: number | undefined, dataValue: number): ClipValue {
+            if (configValue !== undefined) {
+                return {value: configValue, isExplicit: true};
+            }
+            return {value: isFinite(dataValue) ? dataValue : 0, isExplicit: false};
+        }
+        return {min: resolveBound(axis.columnMinClip, range.minVal), max: resolveBound(axis.columnMaxClip, range.maxVal)};
     }
 
-    /**
-     * Set the clipped bounds of one mapped column. Bounds a config authored are also held while the
-     * column's data-derived defaults recompute, so that the recompute does not overwrite them.
-     */
-    private setClip(group: ClipGroup, clip: ClipRestore, shouldHoldForRecompute: boolean) {
-        const {min, max} = clip;
-        switch (group) {
-            case "sizeMajor":
-                this.sizeColumnMin.clipd = min;
-                this.sizeColumnMax.clipd = max;
-                break;
-            case "sizeMinor":
-                this.sizeMinorColumnMin.clipd = min;
-                this.sizeMinorColumnMax.clipd = max;
-                break;
-            case "color":
-                this.colorColumnMin.clipd = min;
-                this.colorColumnMax.clipd = max;
-                break;
-            case "orientation":
-                this.orientationMin.clipd = min;
-                this.orientationMax.clipd = max;
-                break;
-        }
-
-        if (shouldHoldForRecompute) {
-            this.pendingClipRestore.set(group, clip);
-        } else {
-            this.pendingClipRestore.delete(group);
-        }
-    }
-
-    @action private restorePendingClip(group: ClipGroup) {
-        const pending = this.pendingClipRestore.get(group);
-        if (!pending) {
-            return;
-        }
-        this.pendingClipRestore.delete(group);
-
-        switch (group) {
-            case "sizeMajor":
-                this.sizeColumnMin.clipd = pending.min;
-                this.sizeColumnMax.clipd = pending.max;
-                break;
-            case "sizeMinor":
-                this.sizeMinorColumnMin.clipd = pending.min;
-                this.sizeMinorColumnMax.clipd = pending.max;
-                break;
-            case "color":
-                this.colorColumnMin.clipd = pending.min;
-                this.colorColumnMax.clipd = pending.max;
-                break;
-            case "orientation":
-                this.orientationMin.clipd = pending.min;
-                this.orientationMax.clipd = pending.max;
-                break;
-        }
+    /** Set the clipped bounds of one mapped column. */
+    private setClip(min: ColumnBound, max: ColumnBound, clip: ColumnClip): void {
+        min.clipd = clip.min.value;
+        min.isExplicit = clip.min.isExplicit;
+        max.clipd = clip.max.value;
+        max.isExplicit = clip.max.isExplicit;
     }
 }

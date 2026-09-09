@@ -29,3 +29,6 @@ export * from "./SpectralProfileStore/SpectralProfileStore";
 export * from "./TimeSeriesStore/TimeSeriesStore";
 export * from "./Widgets";
 export * from "./Widgets/WidgetsStore";
+export * from "./Workspace/WorkspaceIdRegistry";
+export * from "./Workspace/WorkspaceRestorer";
+export * from "./Workspace/WorkspaceSnapshotter";

@@ -388,9 +388,9 @@ export class CatalogQueryComponent extends React.Component {
         if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
             // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-            const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+            const query = CatalogOnlineQueryConfigStore.simbadQuery({x: Number(centerCoord.x), y: Number(centerCoord.y)}, configStore.radiusAsDeg, configStore.maxObject);
             configStore.setQueryStatus(true);
-            const dataSize = await CatalogApiService.Instance.appendSimbadCatalog(query);
+            const {dataSize} = await CatalogApiService.Instance.appendSimbadCatalog(query);
             configStore.setQueryStatus(false);
             this.setResultSize(dataSize);
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
@@ -414,9 +414,10 @@ export class CatalogQueryComponent extends React.Component {
         const sources = configStore.selectedVizierSource.filter(source => source !== undefined);
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
         if (centerCoord.x && centerCoord.y) {
+            const querySource = CatalogApiService.captureQuery("vizier");
             configStore.setQueryStatus(true);
             const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-            CatalogApiService.Instance.appendVizierCatalog(resources);
+            CatalogApiService.Instance.appendVizierCatalog(resources, undefined, querySource);
             configStore.setQueryStatus(false);
         }
     };

@@ -7,11 +7,14 @@ import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
 import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
 
+import {type WorkspaceCatalogQuerySource, type WorkspaceCatalogTableConfig} from "../Workspace";
+
 export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.CatalogFileInfo.$Properties;
     dataSize: number;
     directory: string;
+    query?: WorkspaceCatalogQuerySource;
 }
 
 export abstract class AbstractCatalogProfileStore {
@@ -31,6 +34,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract get shouldUpdateData(): boolean;
     abstract resetCatalogFilterRequest(): void;
     abstract get isLoadingOntoImage(): boolean;
+    abstract get maxRows(): number;
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
@@ -54,7 +58,12 @@ export abstract class AbstractCatalogProfileStore {
     @observable filterIndexMap: number[] = [];
     @observable isUpdateColumnMode: boolean = false;
 
-    private _catalogData: Map<number, ProcessedColumnData>;
+    /**
+     * Shallow so that replacing a column marks the data as changed. Rows stream in a batch at a
+     * time, and anything computed from a column has to see them; the column arrays themselves stay
+     * plain, since they can hold millions of values.
+     */
+    @observable.shallow private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
@@ -125,15 +134,15 @@ export abstract class AbstractCatalogProfileStore {
         const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
         const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
 
-        const xColumn = columnsData.get(xHeaderInfo.columnIndex);
-        const yColumn = columnsData.get(yHeaderInfo.columnIndex);
+        const xColumn = xHeaderInfo ? columnsData.get(xHeaderInfo.columnIndex) : undefined;
+        const yColumn = yHeaderInfo ? columnsData.get(yHeaderInfo.columnIndex) : undefined;
 
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsX = xColumn.data as Array<number>;
             const wcsY = yColumn.data as Array<number>;
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
-            return {xHeaderInfo, yHeaderInfo};
+            return {xHeaderInfo: xHeaderInfo ?? {}, yHeaderInfo: yHeaderInfo ?? {}};
         }
     }
 
@@ -141,12 +150,12 @@ export abstract class AbstractCatalogProfileStore {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
-        const xColumn = this.catalogData.get(headerInfo.columnIndex);
+        const xColumn = headerInfo ? this.catalogData.get(headerInfo.columnIndex) : undefined;
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
-            return {headerInfo};
+            return {headerInfo: headerInfo ?? {}};
         }
     }
 
@@ -201,6 +210,39 @@ export abstract class AbstractCatalogProfileStore {
 
     @computed get regionSelected(): number {
         return this.selectedPointIndices.length;
+    }
+
+    /** The columns the backend is asked to send. A column is only sent while it is displayed. */
+    @computed get columnIndices(): Array<number> {
+        const indices: number[] = [];
+        this.catalogControlHeader.forEach(header => {
+            if (header.display && header.columnIndex !== undefined) {
+                indices.push(header.columnIndex);
+            }
+        });
+        return indices;
+    }
+
+    /**
+     * Make sure the given columns are among the ones the backend is asked for. Rows that stream in
+     * later only carry the requested columns, so a column that is mapped but not displayed leaves
+     * those rows unusable.
+     *
+     * @returns whether any column had to be added.
+     */
+    @action ensureColumnsRequested(columnNames: string[]): boolean {
+        let hasChanged = false;
+        for (const columnName of columnNames) {
+            const header = this.catalogControlHeader.get(columnName);
+            if (header && !header.display) {
+                header.display = true;
+                hasChanged = true;
+            }
+        }
+        if (hasChanged) {
+            this.catalogFilterRequest.columnIndices = this.columnIndices;
+        }
+        return hasChanged;
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -287,6 +329,74 @@ export abstract class AbstractCatalogProfileStore {
         const header = this.catalogControlHeader.get(columnName);
         if (header) {
             header.display = isVisible;
+        }
+    }
+
+    /** Restore the columns shown in the catalog table from a workspace config. */
+    @action setDisplayedColumns(columnNames: string[]) {
+        const displayedColumns = new Set(columnNames);
+        this.catalogControlHeader.forEach((header, columnName) => {
+            header.display = displayedColumns.has(columnName);
+        });
+        this.catalogFilterRequest.columnIndices = this.columnIndices;
+    }
+
+    /** The table state a workspace saves: which rows and columns the catalog holds, and how its
+     * table shows them. */
+    public toTableConfig(): WorkspaceCatalogTableConfig {
+        const columnSettings: NonNullable<WorkspaceCatalogTableConfig["columnSettings"]> = {};
+        for (const [columnName, header] of this.catalogControlHeader) {
+            if (header.filter || Number.isFinite(header.columnWidth)) {
+                columnSettings[columnName] = {
+                    filter: header.filter || undefined,
+                    width: Number.isFinite(header.columnWidth) ? (header.columnWidth as number) : undefined
+                };
+            }
+        }
+
+        return {
+            displayedColumns: this.displayedColumnHeaders.map(header => header.name),
+            maxRows: this.isFileBasedCatalog ? this.maxRows : undefined,
+            columnSettings: Object.keys(columnSettings).length ? columnSettings : undefined,
+            sorting: this.sortingInfo.columnName && this.sortingInfo.sortingType !== null ? {columnName: this.sortingInfo.columnName, sortingType: this.sortingInfo.sortingType} : undefined
+        };
+    }
+
+    /**
+     * Put a saved table state back.
+     *
+     * This records what the table and the query behind it should be. A file-based catalog's rows
+     * then have to be asked for again, which is the restore flow's job; an online catalog holds all
+     * of its rows already, so applying the query means filtering them here and now.
+     */
+    @action applyTableConfig(config: WorkspaceCatalogTableConfig | undefined | null): void {
+        if (config?.displayedColumns) {
+            this.setDisplayedColumns(config.displayedColumns);
+        }
+        if (this.isFileBasedCatalog && typeof config?.maxRows === "number" && Number.isFinite(config.maxRows)) {
+            this.setMaxRows(Math.max(0, Math.min(this.catalogInfo.dataSize, config.maxRows)));
+        }
+        if (config?.columnSettings) {
+            Object.entries(config.columnSettings).forEach(([columnName, columnConfig]) => {
+                if (typeof columnConfig?.filter === "string") {
+                    this.setColumnFilter(columnConfig.filter, columnName);
+                }
+                if (Number.isFinite(columnConfig?.width)) {
+                    this.setTableColumnWidth(columnConfig.width as number, columnName);
+                }
+            });
+        }
+        if (config?.sorting && this.catalogControlHeader.has(config.sorting.columnName)) {
+            this.setSortingInfo(config.sorting.columnName, config.sorting.sortingType);
+        }
+
+        this.catalogFilterRequest.filterConfigs = this.getUserFilters();
+        this.catalogFilterRequest.sortColumn = this.sortingInfo.columnName;
+        this.catalogFilterRequest.sortingType = this.sortingInfo.sortingType;
+        this.catalogFilterRequest.columnIndices = this.columnIndices;
+
+        if (!this.isFileBasedCatalog) {
+            this.resetFilterRequest(this.getUserFilters());
         }
     }
 

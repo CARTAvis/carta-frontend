@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import type * as Plotly from "plotly.js";
 
@@ -26,7 +26,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable height: number = 400;
     @observable toolbarHeight: number = 40;
     @observable profileId: string = "";
-    @observable catalogFileId: number = 0;
     @observable componentId: string = "";
     private plotType: CatalogPlotType;
     private histogramY: {yMin?: number; yMax?: number};
@@ -56,9 +55,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         this.widgetId = props.id;
         this.histogramY = {yMin: undefined, yMax: undefined};
-        const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId);
-        this.componentId = catalogPlot.catalogPlotComponentId;
-        this.catalogFileId = catalogPlot.catalogFileId;
+        this.componentId = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId).catalogPlotComponentId;
         this.catalogFileNames = new Map<number, string>();
 
         makeObservable(this);
@@ -68,11 +65,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 const profileStore = this.profileStore;
                 const widgetStore = this.widgetStore;
                 const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-                if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                    runInAction(() => {
-                        this.catalogFileId = catalogFileIds[0];
-                    });
-                }
                 if (widgetStore) {
                     this.plotType = widgetStore.plotType;
                 }
@@ -116,6 +108,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             )
         );
+
+        this.disposers.push(
+            reaction(
+                () => ({
+                    enabled: this.widgetStore?.isFittingEnabled,
+                    profileStore: this.profileStore,
+                    selectedPointIndices: this.profileStore?.selectedPointIndices.slice(),
+                    xColumnName: this.widgetStore?.xColumnName,
+                    yColumnName: this.widgetStore?.yColumnName
+                }),
+                ({enabled: isEnabled, profileStore, selectedPointIndices}) => {
+                    if (isEnabled) {
+                        this.handleFittingClick(profileStore?.getSortedIndices(selectedPointIndices ?? []) ?? []);
+                    }
+                },
+                {fireImmediately: true}
+            )
+        );
     }
 
     componentWillUnmount() {
@@ -147,12 +157,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.toolbarHeight = toolbarHeight;
     };
 
+    /** The catalog this component is showing, which a workspace restore can move out from under it. */
+    @computed get catalogFileId(): number {
+        return CatalogStore.Instance.getActiveCatalogPlotFile(this.componentId) ?? 0;
+    }
+
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
-        const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
-        if (!catalogWidgetMap) {
+        if (!CatalogStore.Instance.catalogPlots.has(this.componentId)) {
             return undefined;
         }
-        let widgetStoreId = catalogWidgetMap.get(this.catalogFileId);
+        let widgetStoreId = CatalogStore.Instance.getCatalogPlotWidgetId(this.componentId, this.catalogFileId);
         if (!widgetStoreId) {
             widgetStoreId = this.addNewWidgetStore();
         }
@@ -169,15 +183,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        this.catalogFileId = fileId;
         const widgetStore = WidgetsStore.Instance;
         const catalogStore = CatalogStore.Instance;
-        const catalogWidgetMap = catalogStore.catalogPlots.get(this.componentId);
-        if (!catalogWidgetMap) {
+        // An explicit choice, so the plot is saved against the catalog it now shows even if it was
+        // restored holding the ID of a catalog that was unavailable.
+        catalogStore.selectCatalogPlotFile(this.componentId, fileId);
+        if (!catalogStore.catalogPlots.has(this.componentId)) {
             this.addNewWidgetStore();
             return;
         }
-        const plotWidgetStoreId = catalogWidgetMap.get(fileId);
+        const plotWidgetStoreId = catalogStore.getCatalogPlotWidgetId(this.componentId, fileId);
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);

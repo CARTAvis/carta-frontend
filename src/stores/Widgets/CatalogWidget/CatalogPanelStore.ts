@@ -1,7 +1,8 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {CatalogSettingsTabs} from "enums";
+import {CatalogSettingsTabs, WorkspaceItemKind} from "enums";
 import {PreferenceStore} from "stores";
+import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 
 /** State owned by one catalog panel rather than by the catalog it displays. */
 export interface CatalogPanelLayoutSettings {
@@ -18,6 +19,7 @@ export interface CatalogPanelLayoutSettings {
 export class CatalogPanelStore {
     @observable panelId: string;
     @observable selectedCatalogId: number = 1;
+    @observable unavailableWorkspaceCatalogId: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
      * The settings section for each catalog this panel has shown. The section belongs to the panel,
@@ -38,6 +40,28 @@ export class CatalogPanelStore {
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
         this.selectedCatalogId = catalogFileId;
+        this.releaseUnavailableWorkspaceCatalogId();
+    };
+
+    /**
+     * Keep naming a catalog a workspace could not bring back.
+     *
+     * The ID stays spoken for while the panel holds it, so that a catalog opened afterwards is not
+     * handed the ID this panel would then be pointing at.
+     */
+    @action setUnavailableWorkspaceCatalogId = (workspaceCatalogId: number) => {
+        this.releaseUnavailableWorkspaceCatalogId();
+        this.unavailableWorkspaceCatalogId = workspaceCatalogId;
+        WorkspaceIdRegistry.Instance.reserve(WorkspaceItemKind.Catalog, workspaceCatalogId);
+    };
+
+    /** Stop holding the ID of a catalog that was unavailable, whether the panel moved on or went away. */
+    @action releaseUnavailableWorkspaceCatalogId = () => {
+        if (this.unavailableWorkspaceCatalogId === undefined) {
+            return;
+        }
+        WorkspaceIdRegistry.Instance.releaseReservation(WorkspaceItemKind.Catalog, this.unavailableWorkspaceCatalogId);
+        this.unavailableWorkspaceCatalogId = undefined;
     };
 
     @action setTableSeparatorPosition = (position: string) => {

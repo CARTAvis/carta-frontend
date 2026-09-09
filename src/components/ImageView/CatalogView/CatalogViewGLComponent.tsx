@@ -57,7 +57,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const catalogStore = appStore.catalogStore;
         const catalogFileIds = catalogStore.visibleCatalogFiles.get(baseFrame);
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
             if (!catalogDisplayStore) {
                 return;
             }
@@ -187,7 +187,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const destinationFrame = this.props.frame;
         catalogStore.visibleCatalogFiles.get(destinationFrame)?.forEach(fileId => {
             const catalog = catalogStore.catalogGLData.get(fileId);
-            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
             const count = catalogStore.catalogCounts.get(fileId);
             if (catalog && catalogDisplayStore && count && count > 0) {
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
@@ -373,8 +373,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
-            if (catalogProfileStore) {
-                const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
+            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
+            if (catalogProfileStore && catalogDisplayStore) {
                 WidgetsStore.Instance.updateCatalogPanelSelection(selectedPoint.fileId);
                 const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);

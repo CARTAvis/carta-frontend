@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
 import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
@@ -51,6 +51,7 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
+import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {smoothStepOffset} from "utilities";
 
 export type {DefaultWidgetConfig} from "models";
@@ -149,6 +150,7 @@ export class WidgetsStore {
     @observable channelMapControlWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore> = new Map<string, StokesAnalysisWidgetStore>();
     @observable floatingSettingsWidgets: Map<string, string> = new Map<string, string>();
+    // Panel state is keyed by the catalog overlay component, not by the catalog file.
     @observable catalogPanelWidgets: Map<string, CatalogPanelStore> = new Map<string, CatalogPanelStore>();
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore> = new Map<string, CatalogPlotWidgetStore>();
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore> = new Map<string, SpectralLineQueryWidgetStore>();
@@ -378,8 +380,8 @@ export class WidgetsStore {
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
-    private getNextId = (defaultId: string) => {
-        const widgets = this.widgetsMap.get(defaultId);
+    private getNextId = (defaultId: string, widgetMap?: Map<string, any>) => {
+        const widgets = widgetMap ?? this.widgetsMap.get(defaultId);
         if (!widgets) {
             return null;
         }
@@ -466,7 +468,7 @@ export class WidgetsStore {
 
     private removeCatalogAssociations = (widgetId: string, widgetType: string) => {
         if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
-            CatalogStore.Instance.catalogProfiles.delete(widgetId);
+            this.deleteCatalogPanelWidget(widgetId);
         } else if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
             CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
         }
@@ -541,42 +543,47 @@ export class WidgetsStore {
     };
 
     private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
-        if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
-            const catalogFileId = widgetSettings["catalogFileId"];
-            const selectedCatalogId = typeof catalogFileId === "number" ? catalogFileId : 1;
-            const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
-            this.getCatalogPanelStore(componentId, selectedCatalogId).applyLayoutSettings(widgetSettings as CatalogPanelLayoutSettings);
-            // Ensure catalogProfiles is set to the saved fileId so the component can look
-            // up the correct file (the component constructor only defaults to fileId 1).
-            CatalogStore.Instance.catalogProfiles.set(componentId, selectedCatalogId);
-            // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
-            // them at the restore boundary while allowing the current workspace names to take precedence.
-            const displaySettings = {
-                ...widgetSettings,
-                color: widgetSettings["color"] ?? widgetSettings["catalogColor"],
-                shape: widgetSettings["shape"] ?? widgetSettings["catalogShape"],
-                size: widgetSettings["size"] ?? widgetSettings["catalogSize"]
-            };
-            CatalogStore.Instance.getOrCreateCatalogDisplayStore(selectedCatalogId).applyConfigWhenReady(displaySettings);
-            return componentId;
+        const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
+        const settings = widgetSettings as CatalogPanelLayoutSettings | null;
+        const activeCatalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+        const legacyCatalogFileId = settings?.catalogFileId;
+        const selectedCatalogId = (legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0]) ?? 1;
+        const panelStore = this.getCatalogPanelStore(componentId, selectedCatalogId);
+        panelStore.applyLayoutSettings(settings);
+        this.ensureCatalogPanelIdUnique(componentId, panelStore);
+
+        // Layout V2 used a session-local catalog file ID. Keep it working when the catalog is
+        // still active, but never let an obsolete ID select an unrelated catalog after reload.
+        panelStore.setSelectedCatalogId(selectedCatalogId);
+
+        // Catalog display state is catalog-scoped and may not exist yet when a layout is restored.
+        // It will be created by updateCatalogProfile once the catalog is loaded.
+        if (panelStore.selectedCatalogId > 0 && CatalogStore.Instance.catalogProfileStores.has(panelStore.selectedCatalogId)) {
+            CatalogStore.Instance.getOrCreateCatalogDisplayStore(panelStore.selectedCatalogId);
         }
-        const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
-        this.getCatalogPanelStore(itemId);
-        CatalogStore.Instance.catalogProfiles.set(itemId, 1);
-        return itemId;
+        return componentId;
     };
 
     private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null, widgetSettings: object | null = null): string | null => {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            // The restored columns belong to the catalog the plot was saved against, so the plot is
-            // registered under that catalog. Layouts written before the association was saved fall
-            // back to the first catalog.
-            const savedCatalogFileId = widgetSettings?.["catalogFileId"];
-            CatalogStore.Instance.setCatalogPlots(componentId, typeof savedCatalogFileId === "number" ? savedCatalogFileId : 1, itemId);
+            CatalogStore.Instance.setCatalogPlots(componentId, this.getRestoredCatalogPlotFileId(itemId), itemId);
         }
         return itemId;
+    };
+
+    /**
+     * The catalog a restored plot belongs to: the one it was saved against when that catalog is already
+     * loaded, and otherwise the first catalog of the active image. A layout is usually applied before a
+     * workspace loads its catalogs, in which case CatalogPlotComponent binds the plot once they arrive.
+     */
+    private getRestoredCatalogPlotFileId = (widgetId: string): number => {
+        const catalogStore = CatalogStore.Instance;
+        const activeCatalogFileIds = catalogStore.activeCatalogFiles;
+        const workspaceCatalogId = this.catalogPlotWidgets.get(widgetId)?.workspaceCatalogId;
+        const savedCatalogFileId = WorkspaceIdRegistry.Instance.sessionIdOf(WorkspaceItemKind.Catalog, workspaceCatalogId);
+        return (savedCatalogFileId !== undefined && activeCatalogFileIds.includes(savedCatalogFileId) ? savedCatalogFileId : activeCatalogFileIds[0]) ?? 1;
     };
 
     public removeFloatingWidgets = () => {
@@ -1085,7 +1092,7 @@ export class WidgetsStore {
                             this.removeWidget(id, component);
                         }
                         if (isCatalogTable) {
-                            this.catalogPanelWidgets.delete(id);
+                            this.deleteCatalogPanelWidget(id);
                             this.removeAssociatedFloatingSetting(id);
                         }
                         if (isCatalogPlot) {
@@ -1103,22 +1110,15 @@ export class WidgetsStore {
         return action;
     };
 
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
+    /**
+     * A widget's saved settings.
+     *
+     * @param shouldIncludeWorkspaceBindings - whether the settings may name the session's catalogs. Only
+     *        the layout a workspace carries alongside them can; see {@link LayoutConfig.createConfigToSave}.
+     */
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined, shouldIncludeWorkspaceBindings: boolean = false) => {
         if (!widgetType || !widgetID) {
             return null;
-        }
-
-        if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
-            const panelStore = this.catalogPanelWidgets.get(widgetID);
-            if (!panelStore) {
-                return undefined;
-            }
-            const catalogDisplayStore = CatalogStore.Instance.getCatalogDisplayStore(panelStore.selectedCatalogId);
-            // Keep the legacy flat layout shape until workspace persistence owns display state.
-            return {
-                ...(catalogDisplayStore?.toConfig() ?? {}),
-                ...panelStore.toLayoutSettings()
-            };
         }
 
         let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
@@ -1138,15 +1138,11 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WidgetConfig.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
+            case CatalogOverlayComponent.WidgetConfig.type: {
+                return this.catalogPanelWidgets.get(widgetID)?.toLayoutSettings();
+            }
             case CatalogPlotComponent.WidgetConfig.type: {
-                const plotStore = this.catalogPlotWidgets.get(widgetID);
-                if (!plotStore) {
-                    return undefined;
-                }
-                // The catalog association lives in CatalogStore rather than in the plot store, but
-                // without it the restored columns cannot be matched back to their catalog.
-                const {catalogFileId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetID);
-                return {...plotStore.toConfig(), ...(typeof catalogFileId === "number" ? {catalogFileId} : {})};
+                return this.toCatalogPlotSettingsConfig(widgetID, shouldIncludeWorkspaceBindings);
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1156,6 +1152,38 @@ export class WidgetsStore {
         }
 
         return widgetStore?.toConfig?.();
+    };
+
+    /** A catalog plot's settings, naming its catalog by the workspace-stable ID rather than the session's
+     * catalog file ID, which is reassigned when the catalog is loaded again. */
+    private toCatalogPlotSettingsConfig = (widgetID: string, shouldIncludeWorkspaceBindings: boolean): CatalogPlotWidgetConfig | undefined => {
+        const catalogStore = CatalogStore.Instance;
+        const {catalogPlotComponentId, catalogFileId} = catalogStore.getAssociatedIdByWidgetId(widgetID);
+
+        // A component keeps a plot per catalog it has been pointed at, but only the one it is
+        // showing is what the layout should come back to.
+        const shownCatalogFileId = catalogStore.getActiveCatalogPlotFile(catalogPlotComponentId) ?? catalogFileId;
+        const shownWidgetId = catalogStore.getCatalogPlotWidgetId(catalogPlotComponentId, shownCatalogFileId);
+        const isShownWidgetLoaded = !!shownWidgetId && this.catalogPlotWidgets.has(shownWidgetId);
+        const activeCatalogFileId = isShownWidgetLoaded ? shownCatalogFileId : catalogFileId;
+        const activeWidgetStore = isShownWidgetLoaded ? this.catalogPlotWidgets.get(shownWidgetId) : this.catalogPlotWidgets.get(widgetID);
+
+        if (!activeWidgetStore) {
+            return undefined;
+        }
+
+        const config = activeWidgetStore.toConfig();
+        if (!shouldIncludeWorkspaceBindings) {
+            // A saved layout is reused against whatever is open, so it must not name a catalog of
+            // the session it was saved in.
+            delete config.catalogId;
+            return config;
+        }
+        // A plot restored while its catalog was absent keeps the ID it was saved with.
+        if (config.catalogId === undefined && activeCatalogFileId !== undefined && catalogStore.catalogProfileStores.has(activeCatalogFileId)) {
+            config.catalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, activeCatalogFileId);
+        }
+        return config;
     };
 
     /** Selects an existing docked widget tab, preferring the canonical component id when multiple instances exist. */
@@ -1538,35 +1566,91 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
+    private getUniqueCatalogPanelId = (preferredPanelId: string, componentId: string): string => {
+        const usedPanelIds = new Set<string>();
+        this.catalogPanelWidgets.forEach((panelStore, existingComponentId) => {
+            if (existingComponentId !== componentId && panelStore.panelId) {
+                usedPanelIds.add(panelStore.panelId);
+            }
+        });
+        if (preferredPanelId && !usedPanelIds.has(preferredPanelId)) {
+            return preferredPanelId;
+        }
+        if (!usedPanelIds.has(componentId)) {
+            return componentId;
+        }
+
+        let suffix = 0;
+        let panelId = `${componentId}-${suffix}`;
+        while (usedPanelIds.has(panelId)) {
+            suffix++;
+            panelId = `${componentId}-${suffix}`;
+        }
+        return panelId;
+    };
+
+    private ensureCatalogPanelIdUnique = (componentId: string, panelStore: CatalogPanelStore) => {
+        const uniquePanelId = this.getUniqueCatalogPanelId(panelStore.panelId, componentId);
+        if (panelStore.panelId !== uniquePanelId) {
+            panelStore.setPanelId(uniquePanelId);
+        }
+    };
+
     private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
-        const componentIds: string[] = [];
+        const componentIds = new Set<string>();
 
         if (config.type === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.catalogPlots.forEach((_v, componentId) => componentIds.push(componentId));
+            CatalogStore.Instance.catalogPlots.forEach((_value, componentId) => componentIds.add(componentId));
         } else if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
-            this.catalogPanelWidgets.forEach((_v, componentId) => componentIds.push(componentId));
+            this.catalogPanelWidgets.forEach((_value, componentId) => componentIds.add(componentId));
         }
 
         while (true) {
             const nextId = `${config.componentId}-${nextIndex}`;
-            if (!componentIds.includes(nextId)) {
+            if (!componentIds.has(nextId)) {
                 return nextId;
             }
             nextIndex++;
         }
     };
 
-    createFloatingCatalogWidget = (catalogFileId: number): string => {
-        CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId);
+    private createFloatingCatalogPanel = (selectedCatalogId: number = 1, panelId?: string): {widgetComponentId: string} => {
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
-        this.getCatalogPanelStore(widgetComponentId, catalogFileId);
+        const panelStore = this.getCatalogPanelStore(widgetComponentId, selectedCatalogId);
+        if (panelId) {
+            panelStore.setPanelId(panelId);
+            this.ensureCatalogPanelIdUnique(widgetComponentId, panelStore);
+        }
         const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = widgetComponentId;
-        CatalogStore.Instance.catalogProfiles.set(widgetComponentId, catalogFileId);
         this.addFloatingWidget(config);
-        return widgetComponentId;
+        return {widgetComponentId};
+    };
+
+    createFloatingCatalogWidget = (catalogFileId: number): {widgetComponentId: string} => {
+        CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId);
+        return this.createFloatingCatalogPanel(catalogFileId);
+    };
+
+    @action restoreCatalogPanels = (panelIds: string[]) => {
+        const existingPanelIds = new Set<string>();
+        this.catalogPanelWidgets.forEach(panelStore => {
+            if (panelStore.panelId) {
+                existingPanelIds.add(panelStore.panelId);
+            }
+        });
+
+        for (const panelId of panelIds) {
+            if (panelId && !existingPanelIds.has(panelId)) {
+                const {widgetComponentId} = this.createFloatingCatalogPanel(1, panelId);
+                const restoredPanelId = this.catalogPanelWidgets.get(widgetComponentId)?.panelId;
+                if (restoredPanelId) {
+                    existingPanelIds.add(restoredPanelId);
+                }
+            }
+        }
     };
 
     reloadFloatingCatalogWidget = () => {
@@ -1577,68 +1661,90 @@ export class WidgetsStore {
         config.componentId = componentId;
         if (catalogFileNum) {
             this.getCatalogPanelStore(componentId, catalogFileNum);
-            CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
         }
         this.addFloatingWidget(config);
+    };
+
+    /** Drop a catalog plot's state, letting go of the catalog ID it was naming. */
+    @action deleteCatalogPlotWidget = (widgetId: string) => {
+        this.catalogPlotWidgets.get(widgetId)?.releaseWorkspaceCatalogId();
+        this.catalogPlotWidgets.delete(widgetId);
+    };
+
+    /** Drop a catalog panel's state, letting go of the catalog ID it was naming. */
+    @action deleteCatalogPanelWidget = (componentId: string) => {
+        this.catalogPanelWidgets.get(componentId)?.releaseUnavailableWorkspaceCatalogId();
+        this.catalogPanelWidgets.delete(componentId);
     };
 
     /** Get or create the panel-scoped state for one catalog overlay component. */
     @action getCatalogPanelStore = (componentId: string, selectedCatalogId: number = 1): CatalogPanelStore => {
         let panelStore = this.catalogPanelWidgets.get(componentId);
         if (!panelStore) {
-            panelStore = new CatalogPanelStore(selectedCatalogId, componentId);
+            panelStore = new CatalogPanelStore(selectedCatalogId, this.getUniqueCatalogPanelId(componentId, componentId));
             this.catalogPanelWidgets.set(componentId, panelStore);
         }
         return panelStore;
     };
 
-    /** Select a loaded catalog in one panel by its component ID. */
+    /** Select a loaded catalog in one panel by its runtime component ID. */
     @action setCatalogPanelSelection = (componentId: string, catalogFileId: number): boolean => {
         if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
             return false;
         }
+
         const panelStore = this.catalogPanelWidgets.get(componentId);
         if (!panelStore) {
             return false;
         }
         panelStore.setSelectedCatalogId(catalogFileId);
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         return true;
     };
 
-    /** Select a catalog in the first panel when an image-view interaction identifies it, and return that panel's ID. */
-    @action updateCatalogPanelSelection = (catalogFileId: number): string | undefined => {
-        const panels = Array.from(this.catalogPanelWidgets.entries());
-        const panel = panels.find(([, panelStore]) => panelStore.selectedCatalogId === catalogFileId) ?? panels[0];
-        if (!panel) {
-            return undefined;
+    /** Restore a loaded catalog in one panel by its stable persistence ID. */
+    @action setCatalogPanelSelectionByPanelId = (panelId: string, catalogFileId: number): boolean => {
+        if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
+            return false;
         }
-        const [componentId, panelStore] = panel;
-        panelStore.setSelectedCatalogId(catalogFileId);
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
-        return componentId;
+
+        const matchingPanels = Array.from(this.catalogPanelWidgets.values()).filter(panelStore => panelStore.panelId === panelId);
+        if (matchingPanels.length !== 1) {
+            return false;
+        }
+        matchingPanels[0].setSelectedCatalogId(catalogFileId);
+        return true;
     };
 
-    /** Replace a catalog only in panels that were showing it. */
-    @action replaceCatalogPanelSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
-        this.catalogPanelWidgets.forEach((panelStore, componentId) => {
-            if (panelStore.selectedCatalogId === catalogFileId) {
-                panelStore.setSelectedCatalogId(replacementCatalogFileId);
-                CatalogStore.Instance.catalogProfiles.set(componentId, replacementCatalogFileId);
-            }
-        });
-    };
-
-    /** Keep panel selections valid when the active image changes. */
+    /** Keep a panel selection valid when the active image changes. */
     @action resetCatalogPanelSelections = (activeCatalogFileIds: number[]) => {
         if (activeCatalogFileIds.length === 0) {
             return;
         }
         const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
-        this.catalogPanelWidgets.forEach((panelStore, componentId) => {
+        this.catalogPanelWidgets.forEach(panelStore => {
             if (!activeCatalogFileIdSet.has(panelStore.selectedCatalogId)) {
                 panelStore.setSelectedCatalogId(activeCatalogFileIds[0]);
-                CatalogStore.Instance.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
+            }
+        });
+    };
+
+    /** Make the first panel show a catalog selected from a plot or overlay click if needed. */
+    @action updateCatalogPanelSelection = (catalogFileId: number) => {
+        const panelStores = Array.from(this.catalogPanelWidgets.values());
+        if (panelStores.some(panelStore => panelStore.selectedCatalogId === catalogFileId)) {
+            return;
+        }
+        const firstPanelStore = panelStores[0];
+        if (firstPanelStore) {
+            firstPanelStore.setSelectedCatalogId(catalogFileId);
+        }
+    };
+
+    /** Replace a removed catalog only in panels that were showing it. */
+    @action replaceCatalogPanelSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
+        this.catalogPanelWidgets.forEach(panelStore => {
+            if (panelStore.selectedCatalogId === catalogFileId) {
+                panelStore.setSelectedCatalogId(replacementCatalogFileId);
             }
         });
     };

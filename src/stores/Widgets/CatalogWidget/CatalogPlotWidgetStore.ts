@@ -1,7 +1,8 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
-import {CatalogOverlay, type CatalogPlotType} from "enums";
+import {CatalogOverlay, type CatalogPlotType, WorkspaceItemKind} from "enums";
+import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -15,9 +16,8 @@ export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 export interface CatalogPlotWidgetConfig {
+    catalogId?: number;
     plotType: CatalogPlotType;
-    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
-    catalogFileId?: number;
     xColumnName: string;
     yColumnName?: string;
     statisticColumnName?: string;
@@ -26,6 +26,8 @@ export interface CatalogPlotWidgetConfig {
     dragMode?: DragMode;
     scatterBorder?: Border;
     histogramBorder?: XBorder;
+    isFittingEnabled?: boolean;
+    fittingRange?: {minVal: number; maxVal: number};
 }
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
@@ -43,9 +45,11 @@ export class CatalogPlotWidgetStore {
     @observable xColumnName: string;
     @observable yColumnName: string | undefined;
     @observable fitting: Fitting | null = null;
+    @observable isFittingEnabled: boolean = false;
     @observable minMaxX: {minVal: number; maxVal: number} | null = null;
     @observable statisticColumnName: string = CatalogOverlay.NONE;
     @observable statistic: Statistic | null = null;
+    @observable workspaceCatalogId: number | undefined = undefined;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         this.plotType = props.plotType;
@@ -55,6 +59,7 @@ export class CatalogPlotWidgetStore {
     }
 
     public toConfig = (): CatalogPlotWidgetConfig => ({
+        catalogId: this.workspaceCatalogId,
         plotType: this.plotType,
         xColumnName: this.xColumnName,
         yColumnName: this.yColumnName,
@@ -63,10 +68,15 @@ export class CatalogPlotWidgetStore {
         nBinX: this.nBinX,
         dragMode: this.dragMode,
         scatterBorder: this.scatterBorder,
-        histogramBorder: this.histogramBorder
+        histogramBorder: this.histogramBorder,
+        isFittingEnabled: this.isFittingEnabled,
+        fittingRange: this.minMaxX ?? undefined
     });
 
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
+        if (typeof config.catalogId === "number" && Number.isInteger(config.catalogId)) {
+            this.setWorkspaceCatalogId(config.catalogId);
+        }
         if (typeof config.xColumnName === "string") {
             this.xColumnName = config.xColumnName;
         }
@@ -91,6 +101,36 @@ export class CatalogPlotWidgetStore {
         if (config.histogramBorder) {
             this.histogramBorder = config.histogramBorder;
         }
+        if (typeof config.isFittingEnabled === "boolean") {
+            this.isFittingEnabled = config.isFittingEnabled;
+        }
+        if (Number.isFinite(config.fittingRange?.minVal) && Number.isFinite(config.fittingRange?.maxVal)) {
+            this.minMaxX = config.fittingRange as {minVal: number; maxVal: number};
+        }
+    }
+
+    /**
+     * Name the catalog this plot is saved against.
+     *
+     * The ID stays spoken for while the plot holds it, so that a catalog opened afterwards is not
+     * handed the ID this plot would then be pointing at.
+     */
+    @action setWorkspaceCatalogId(workspaceCatalogId: number) {
+        if (this.workspaceCatalogId === workspaceCatalogId) {
+            return;
+        }
+        this.releaseWorkspaceCatalogId();
+        this.workspaceCatalogId = workspaceCatalogId;
+        WorkspaceIdRegistry.Instance.reserve(WorkspaceItemKind.Catalog, workspaceCatalogId);
+    }
+
+    /** Stop holding the catalog ID this plot names, now that it is going away. */
+    @action releaseWorkspaceCatalogId() {
+        if (this.workspaceCatalogId === undefined) {
+            return;
+        }
+        WorkspaceIdRegistry.Instance.releaseReservation(WorkspaceItemKind.Catalog, this.workspaceCatalogId);
+        this.workspaceCatalogId = undefined;
     }
 
     @action setStatisticColumn(columnName: string) {
@@ -135,6 +175,9 @@ export class CatalogPlotWidgetStore {
 
     @action setFitting(value: Fitting | null) {
         this.fitting = value;
+        if (value) {
+            this.isFittingEnabled = true;
+        }
     }
 
     @action setMinMaxX(value: {minVal: number; maxVal: number} | null) {
@@ -142,6 +185,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @action initLinearFitting = () => {
+        this.isFittingEnabled = false;
         this.setFitting(null);
         this.setMinMaxX(null);
     };

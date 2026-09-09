@@ -9,6 +9,8 @@ describe("CatalogPlotWidgetStore config", () => {
         store.setNumBinsX(25);
         store.setDragMode("zoom");
         store.setScatterborder({xMin: 1, xMax: 10, yMin: 2, yMax: 11});
+        store.setFitting({intercept: 1, slope: 2, cov00: 3, cov01: 4, cov11: 5, rss: 6});
+        store.setMinMaxX({minVal: 2, maxVal: 8});
 
         const restored = new CatalogPlotWidgetStore({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter});
         restored.applyConfig(store.toConfig());
