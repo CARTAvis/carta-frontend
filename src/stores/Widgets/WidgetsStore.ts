@@ -459,8 +459,8 @@ export class WidgetsStore {
                     console.error(`Failed to dispose widget store (type=${widgetType}, id=${widgetId})`, err);
                 }
             }
-            widgets.delete(widgetId);
             this.removeCatalogAssociations(widgetId, widgetType);
+            widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id
         this.floatingSettingsWidgets.delete(widgetId);

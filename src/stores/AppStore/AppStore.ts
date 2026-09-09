@@ -339,9 +339,6 @@ export class AppStore {
                 console.error(err);
             }
         }
-        // Whatever became of it, nothing is waiting on the starting workspace any more.
-        this.setWorkspaceRestorePending(false);
-
         let fileList: string[] = [];
         if (url.searchParams.has("files")) {
             let filesString = url.searchParams.get("files") ?? "";
@@ -384,17 +381,6 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
-    /**
-     * Whether a workspace is still to be restored. Armed as soon as the session knows it has one to
-     * open and only cleared once the restore is over, so that widgets a layout brings back can tell
-     * "the catalog has not arrived yet" from "it is not coming". `isLoadingWorkspace` covers the
-     * load itself, which starts after the layout has already created those widgets.
-     */
-    @observable isWorkspaceRestorePending: boolean = false;
-
-    @action setWorkspaceRestorePending = (isPending: boolean) => {
-        this.isWorkspaceRestorePending = isPending;
-    };
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1983,9 +1969,6 @@ export class AppStore {
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                // Arm before the layout is applied: the widgets it restores are the ones that wait
-                // for the workspace, and the load itself only starts further down.
-                this.setWorkspaceRestorePending(!!AppStore.startingWorkspace());
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
@@ -2828,7 +2811,6 @@ export class AppStore {
     @flow.bound
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
-        this.isWorkspaceRestorePending = true;
 
         try {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
@@ -2858,7 +2840,6 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
-        this.isWorkspaceRestorePending = false;
     };
 
     @flow.bound

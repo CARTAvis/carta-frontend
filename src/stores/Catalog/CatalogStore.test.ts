@@ -66,6 +66,7 @@ describe("CatalogStore workspace catalog IDs", () => {
 
     beforeEach(() => {
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        CatalogStore.Instance.catalogPlots.clear();
         widgetsStore.catalogPlotWidgets.clear();
         widgetsStore.catalogPanelWidgets.clear();
     });
@@ -85,6 +86,23 @@ describe("CatalogStore workspace catalog IDs", () => {
 
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(3);
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 12)).toBe(4);
+    });
+
+    test("releases an unavailable catalog ID when its panel is removed", () => {
+        widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(1);
+
+        widgetsStore.removeWidget("catalog-overlay-0", "catalog-overlay");
+
+        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(1);
+    });
+
+    test("releases a catalog ID when its plot is removed", () => {
+        widgetsStore.addCatalogPlotWidget({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 1});
+        CatalogStore.Instance.setCatalogPlots("catalog-plot-component-0", 5, "catalog-plot-0");
+
+        widgetsStore.removeWidget("catalog-plot-0", "catalog-plot");
+
+        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(1);
     });
 });
 
@@ -728,6 +746,18 @@ describe("Catalog plot component selection", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-1");
         catalogStore.setCatalogPlots("catalog-plot-component-0", 5, "catalog-plot-0");
         catalogStore.setCatalogPlots("catalog-plot-component-0", 6, "catalog-plot-1");
+
+        catalogStore.clearCatalogPlotsByFileId(5);
+
+        expect(catalogStore.getActiveCatalogPlotFile("catalog-plot-component-0")).toBe(6);
+    });
+
+    test("moves onto another loaded catalog even when it does not have a plot store yet", () => {
+        widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
+        catalogStore.setCatalogPlots("catalog-plot-component-0", 5, "catalog-plot-0");
+        catalogStore.imageAssociatedCatalogId.set(7, [5, 6]);
+        catalogStore.catalogProfileStores.set(5, {} as any);
+        catalogStore.catalogProfileStores.set(6, {} as any);
 
         catalogStore.clearCatalogPlotsByFileId(5);
 

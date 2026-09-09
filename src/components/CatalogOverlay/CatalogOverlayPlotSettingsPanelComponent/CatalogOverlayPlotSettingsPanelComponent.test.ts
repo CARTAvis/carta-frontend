@@ -1,5 +1,7 @@
 import {FrameScaling} from "enums";
+import {CatalogSettingsTabs} from "enums/tab";
 import {type CatalogDisplayStore} from "stores";
+import {type CatalogPanelStore} from "stores/Widgets";
 
 import {CatalogOverlayPlotSettingsPanelComponent} from "./CatalogOverlayPlotSettingsPanelComponent";
 
@@ -14,6 +16,7 @@ interface TestableCatalogSettingsComponent {
     handleColormapHovered: (widgetStore: CatalogDisplayStore, colormap: string) => void;
     handleColormapSelected: (widgetStore: CatalogDisplayStore, colormap: string) => void;
     handleColormapDropdownOpenChange: (isOpen: boolean) => void;
+    handleSelectedTabChanged: (newTabId: string | number) => void;
     renderScalingParameter: (
         scaling: FrameScaling,
         value: number,
@@ -124,5 +127,20 @@ describe("CatalogOverlayPlotSettingsPanelComponent colormap preview", () => {
         component.handleColormapDropdownOpenChange(false);
 
         expect(widgetStore.colorMap).toBe("magma");
+    });
+});
+
+describe("CatalogOverlayPlotSettingsPanelComponent settings tabs", () => {
+    test("returns to the major size axis when the top-level tab changes", () => {
+        const displayStore = {setSizeAxisTab: jest.fn()} as unknown as CatalogDisplayStore;
+        const panelStore = {setSettingsTabId: jest.fn()} as unknown as CatalogPanelStore;
+        const component = createComponent();
+        Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
+        Object.defineProperty(component, "panelStore", {configurable: true, get: () => panelStore});
+
+        component.handleSelectedTabChanged(CatalogSettingsTabs.COLOR);
+
+        expect(panelStore.setSettingsTabId).toHaveBeenCalledWith(CatalogSettingsTabs.COLOR);
+        expect(displayStore.setSizeAxisTab).toHaveBeenCalledWith(CatalogSettingsTabs.SIZE_MAJOR);
     });
 });

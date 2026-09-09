@@ -296,6 +296,8 @@ export class CatalogStore {
 
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
+        const imageFileId = this.getImageIdByCatalog(fileId);
+        const availableFileIds = (imageFileId === undefined ? [] : (this.imageAssociatedCatalogId.get(imageFileId) ?? [])).filter(candidateFileId => candidateFileId !== fileId && this.catalogProfileStores.has(candidateFileId));
         this.catalogPlots.forEach(componentState => {
             const widgetId = componentState.plotWidgetIds.get(fileId);
             if (widgetId) {
@@ -303,7 +305,7 @@ export class CatalogStore {
             }
             componentState.plotWidgetIds.delete(fileId);
             if (componentState.activeCatalogFileId === fileId) {
-                const remainingFile = componentState.plotWidgetIds.keys().next().value;
+                const remainingFile = availableFileIds.find(candidateFileId => componentState.plotWidgetIds.has(candidateFileId)) ?? availableFileIds[0] ?? componentState.plotWidgetIds.keys().next().value;
                 componentState.setActiveCatalogFileId(remainingFile ?? undefined);
             }
         });
