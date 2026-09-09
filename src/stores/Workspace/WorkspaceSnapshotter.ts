@@ -98,7 +98,12 @@ export class WorkspaceSnapshotter {
 
     /** The ID this workspace knows an image by: the one it was given when it was opened. */
     private imageIdOf(frame: FrameStore | undefined | null): number | undefined {
-        return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, frame?.frameInfo.fileId);
+        return this.imageIdOfFile(frame?.frameInfo.fileId);
+    }
+
+    /** The same ID, for an image named only by the file ID this session gave it. */
+    private imageIdOfFile(imageFileId: number | undefined): number | undefined {
+        return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, imageFileId);
     }
 
     /** The ID this workspace knows a catalog by: the one it was given when it was opened. */
@@ -223,9 +228,16 @@ export class WorkspaceSnapshotter {
     /** Stage 3: every loaded catalog, with the image it is overlaid on and how it is drawn. */
     private captureCatalogs(): void {
         const catalogs: WorkspaceCatalog[] = [];
+        // A catalog names its image by the ID this workspace knows the image by. The association is
+        // held under the session file ID of the image, which is handed out again to another file
+        // once this one is closed, and is not what the restorer looks an image up by.
         const imageOfCatalog = new Map<number, number>();
         this.appStore.catalogStore.imageAssociatedCatalogId.forEach((catalogFileIds, imageFileId) => {
-            catalogFileIds.forEach(catalogFileId => imageOfCatalog.set(catalogFileId, imageFileId));
+            const workspaceImageId = this.imageIdOfFile(imageFileId);
+            if (workspaceImageId === undefined) {
+                return;
+            }
+            catalogFileIds.forEach(catalogFileId => imageOfCatalog.set(catalogFileId, workspaceImageId));
         });
 
         this.appStore.catalogStore.catalogProfileStores.forEach((profileStore, catalogFileId) => {

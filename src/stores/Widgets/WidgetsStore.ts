@@ -1139,7 +1139,7 @@ export class WidgetsStore {
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             case CatalogOverlayComponent.WidgetConfig.type: {
-                return this.catalogPanelWidgets.get(widgetID)?.toLayoutSettings();
+                return this.catalogPanelWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings);
             }
             case CatalogPlotComponent.WidgetConfig.type: {
                 return this.toCatalogPlotSettingsConfig(widgetID, shouldIncludeWorkspaceBindings);

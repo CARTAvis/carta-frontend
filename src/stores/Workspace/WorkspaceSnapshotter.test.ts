@@ -49,27 +49,29 @@ function createCatalog() {
 
 /** A session for the snapshotter to capture, holding one image and one catalog overlaid on it. */
 function createSession(overrides: Record<string, any> = {}) {
-    const frame = createFrame(1);
+    // A session hands out file IDs from 0 while workspace IDs start at 1, so the fixture keeps the
+    // two apart rather than letting an image's file ID pass for the ID the workspace knows it by.
+    const frame = createFrame(0);
     const profileStore = createCatalog();
     const displayStore = {isShowingSelectedData: false, toConfig: jest.fn(() => ({color: "#ff0000", shape: 0}))};
 
     // The session gives an item its workspace ID when it opens it; saving only reads it back.
     WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
     WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
-    WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+    WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 0);
     WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 10);
 
     const appStore = {
         frames: [frame],
         activeFrame: frame,
-        activeFrameFileId: 1,
+        activeFrameFileId: 0,
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
         timeSeriesStore: {isMember: jest.fn(() => false)},
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
-            imageAssociatedCatalogId: new Map([[1, [10]]]),
+            imageAssociatedCatalogId: new Map([[0, [10]]]),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore)
         },
@@ -104,7 +106,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.files).toHaveLength(1);
         expect(workspace.files?.[0]).toMatchObject({
             id: 1,
-            source: {type: "file", directory: "/data", filename: "image1.fits"},
+            source: {type: "file", directory: "/data", filename: "image0.fits"},
             center: {x: 10, y: 20},
             zoomLevel: 2,
             channel: 3,

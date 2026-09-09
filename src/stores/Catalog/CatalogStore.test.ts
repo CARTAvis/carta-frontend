@@ -590,6 +590,22 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         expect(isSettled).toBe(true);
     });
 
+    test("keeps refusing a closed catalog's responses once its file ID is opened again", () => {
+        jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue(undefined as any);
+        jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
+        openFileCatalog(200);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, true)).toBe(true);
+        catalogStore.catalogRequests.attach(1, 4);
+
+        catalogStore.removeCatalog(1);
+        // The lowest free file ID is handed to the next catalog opened, which has not yet asked for
+        // anything of its own.
+        openFileCatalog(200);
+
+        expect(catalogStore.catalogRequests.accepts(1, 4)).toBe(false);
+        catalogStore.catalogRequests.failAll("test cleanup");
+    });
+
     test("cleans loading state when a restore fails", async () => {
         const profileStore = openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(1);

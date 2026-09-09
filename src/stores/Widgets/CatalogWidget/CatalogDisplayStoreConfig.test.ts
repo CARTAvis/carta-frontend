@@ -11,9 +11,9 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, ColorMap, FrameScaling, WorkspaceItemKind} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {CatalogDisplayStore, CatalogPanelStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogDisplayStore, CatalogPanelStore, CatalogProfileStore, CatalogStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -491,6 +491,30 @@ describe("CatalogDisplayStore display config", () => {
         first.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
         expect(second.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
+    });
+
+    test("names the catalog of each remembered settings section by the workspace's own ID", () => {
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 7, 3);
+        const panel = new CatalogPanelStore(7, "catalog-panel-primary");
+        panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
+
+        const workspaceSettings = panel.toLayoutSettings(true);
+
+        expect(workspaceSettings.settingsTabIdByWorkspaceCatalog).toEqual({"3": CatalogSettingsTabs.COLOR});
+        expect(workspaceSettings.settingsTabIdByCatalog).toBeUndefined();
+
+        // The workspace opens the catalog again under whichever file ID is free, which is the one
+        // the panel has to remember the section against.
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 9, 3);
+        const restored = new CatalogPanelStore(9, "catalog-panel-primary");
+        restored.applyLayoutSettings(workspaceSettings);
+        // The panel is put back on the catalog the workspace says it was showing, the way the
+        // restorer does once the layout has been applied.
+        restored.setSelectedCatalogId(9);
+
+        expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
     });
 
     test("restores the settings section from a layout written before it was kept per catalog", () => {

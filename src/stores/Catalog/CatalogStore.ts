@@ -167,10 +167,13 @@ export class CatalogStore {
     }
 
     @action removeCatalog(fileId: number) {
+        // Drop the catalog's earlier requests before ending the one still in flight, so that the
+        // request being ended is left marked stale: a response arriving after this file ID has been
+        // handed to the next catalog opened must not be taken for an answer about that one.
+        this.catalogRequests.forget(fileId);
         this.catalogRequests.finish(fileId, false, "The catalog was closed before restoration completed");
         this.removeCatalogDisplayStore(fileId);
         WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
-        this.catalogRequests.forget(fileId);
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
