@@ -955,7 +955,7 @@ function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         return null;
     }
 
-    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio);
+    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
 }
 
 @observer
