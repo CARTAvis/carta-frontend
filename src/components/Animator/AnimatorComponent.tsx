@@ -1,6 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
+import {throttle} from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -13,6 +14,8 @@ import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
+    private static readonly ChannelChangeThrottleTime = 50;
+
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "animator",
@@ -55,13 +58,27 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         this.numericInputType = type;
     };
 
-    onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            const depth = frame.frameInfo.fileInfoExtended.depth;
-            frame.setChannel(this.wrapIndex(val, depth));
-        }
-    };
+    onChannelChanged = throttle(
+        (val: number) => {
+            const frame = AppStore.Instance.activeFrame;
+            if (frame) {
+                const depth = frame.frameInfo.fileInfoExtended.depth;
+                if (val < 0) {
+                    val += depth;
+                }
+                if (val >= depth) {
+                    val = 0;
+                }
+                frame.setChannel(val);
+            }
+        },
+        AnimatorComponent.ChannelChangeThrottleTime,
+        {trailing: false}
+    );
+
+    componentWillUnmount() {
+        this.onChannelChanged.cancel();
+    }
 
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;

@@ -52,7 +52,7 @@ export class ChannelMapStore {
         );
 
         reaction(
-            () => this.displayedFrame?.channel,
+            () => this.displayedFrame?.requiredChannel,
             channel => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
@@ -102,11 +102,20 @@ export class ChannelMapStore {
     handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
     private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
+        if (!this.isChannelMapEnabled) {
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray, isPolarizationChanged);
+    };
+
+    requestTilesAfterSessionResume = () => {
+        if (this.displayedFrame) {
+            this.requestChannels(this.displayedFrame);
+        }
     };
 
     /**
@@ -114,7 +123,20 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        if (isEnabled && !this.isChannelMapEnabled) {
+            AppStore.Instance.animatorStore.stopAnimation();
+        }
+        const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
+        if (!isEnabled) {
+            this.throttledRequestChannels.cancel();
+            this.debouncedSetActiveChannel.cancel();
+            TileService.Instance.cancelChannelMapRequests();
+            if (isDisablingChannelMap) {
+                const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
+                AppStore.Instance.updateChannels(updates);
+            }
+        }
     };
 
     /**
@@ -127,6 +149,11 @@ export class ChannelMapStore {
             return;
         }
         this.startChannel = startChannel;
+        const frame = this.displayedFrame;
+        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+            frame.setChannel(startChannel);
+            frame.channel = startChannel;
+        }
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */
