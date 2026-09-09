@@ -48,7 +48,7 @@ function fastestRun(run: () => void, samples = 5): number {
     return best;
 }
 
-test("encodes 10000 coordinates in less than 5 ms", () => {
+test("encodes 1M coordinates in less than 20 ms", () => {
     const layer = 12;
     let encodedVal = 0;
     const dt = fastestRun(() => {
