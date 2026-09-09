@@ -35,30 +35,40 @@ test("returns identical round trip coordinates", () => {
     }
 });
 
-describe("TileCoordinate performance", () => {
-    jest.retryTimes(10);
-
-    test("encodes 10000 coordinates in less than 5 ms", () => {
-        const layer = 12;
-        let encodedVal = 0;
+/** Timings under Jest's parallel workers are noisy in one direction only, so the fastest
+ *  run of several is the stable estimate; the first runs are also JIT warm-up. */
+function fastestRun(run: () => void, samples = 5): number {
+    run(); // warm up
+    let best = Infinity;
+    for (let i = 0; i < samples; i++) {
         const tStart = performance.now();
+        run();
+        best = Math.min(best, performance.now() - tStart);
+    }
+    return best;
+}
+
+test("encodes 10000 coordinates in less than 5 ms", () => {
+    const layer = 12;
+    let encodedVal = 0;
+    const dt = fastestRun(() => {
+        encodedVal = 0;
         for (let i = 0; i < 1000; i++) {
             for (let j = 0; j < 1000; j++) {
                 encodedVal += TileCoordinate.encode(i, j, layer);
             }
         }
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
-        expect(encodedVal).toBe(203373043500000);
-        expect(dt).toBeLessThan(20);
     });
+    expect(encodedVal).toBe(203373043500000);
+    expect(dt).toBeLessThan(20);
+});
 
-    test("decodes 1M coordinates in less than 20 ms", () => {
-        const layer = 12;
-        const layerWidth = 2 ** layer;
-        let counter = 0;
-        const tStart = performance.now();
-
+test("decodes 1M coordinates in less than 20 ms", () => {
+    const layer = 12;
+    const layerWidth = 2 ** layer;
+    let counter = 0;
+    const dt = fastestRun(() => {
+        counter = 0;
         let encVal = TileCoordinate.encode(0, 0, layer);
         for (let i = 0; i < 1000; i++) {
             for (let j = 0; j < 1000; j++) {
@@ -67,9 +77,7 @@ describe("TileCoordinate performance", () => {
             }
             encVal += layerWidth;
         }
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
-        expect(counter).toBe(2046486240);
-        expect(dt).toBeLessThan(20);
     });
+    expect(counter).toBe(2046486240);
+    expect(dt).toBeLessThan(20);
 });
