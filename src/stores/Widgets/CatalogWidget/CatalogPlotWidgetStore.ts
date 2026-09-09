@@ -22,7 +22,7 @@ export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterBorder: Border | undefined = undefined;
     @observable dragMode: DragMode | false = DragMode.Select;
-    @observable histogramDragMode: HistogramDragMode = DragMode.Zoom;
+    @observable histogramDragMode: HistogramDragMode = DragMode.Select;
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
