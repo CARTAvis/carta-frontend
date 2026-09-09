@@ -78,6 +78,9 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
     private positionData: Float32Array = new Float32Array(0);
     private selectedData: Float32Array = new Float32Array(0);
+    private previousXData: number[] | undefined;
+    private previousYData: number[] | undefined;
+    private previousSelectedIndices: Set<number> | undefined;
 
     componentDidMount() {
         const canvas = this.canvasRef.current;
@@ -88,6 +91,23 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.initGL();
         this.draw();
         this.props.onRef?.(this);
+    }
+
+    shouldComponentUpdate(nextProps: CatalogScatterWebGLProps) {
+        return (
+            this.props.width !== nextProps.width ||
+            this.props.height !== nextProps.height ||
+            this.props.chartArea !== nextProps.chartArea ||
+            this.props.xData !== nextProps.xData ||
+            this.props.yData !== nextProps.yData ||
+            this.props.xMin !== nextProps.xMin ||
+            this.props.xMax !== nextProps.xMax ||
+            this.props.yMin !== nextProps.yMin ||
+            this.props.yMax !== nextProps.yMax ||
+            this.props.hasSelection !== nextProps.hasSelection ||
+            this.props.pointSize !== nextProps.pointSize ||
+            !this.hasSameSelectedIndices(nextProps.selectedIndices)
+        );
     }
 
     componentDidUpdate() {
@@ -160,7 +180,25 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
         this.positionBuffer = gl.createBuffer();
         this.selectedBuffer = gl.createBuffer();
+        this.positionData = new Float32Array(0);
+        this.selectedData = new Float32Array(0);
+        this.previousXData = undefined;
+        this.previousYData = undefined;
+        this.previousSelectedIndices = undefined;
     }
+
+    private hasSameSelectedIndices = (selectedIndices: Set<number>) => {
+        const previous = this.previousSelectedIndices;
+        if (!previous || previous.size !== selectedIndices.size) {
+            return false;
+        }
+        for (const index of selectedIndices) {
+            if (!previous.has(index)) {
+                return false;
+            }
+        }
+        return true;
+    };
 
     public draw() {
         const {gl, shaderProgram} = this;
@@ -190,26 +228,37 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.depthFunc(GL2.LEQUAL);
 
         const numPoints = Math.min(xData.length, yData.length);
-        if (this.positionData.length !== numPoints * 2) {
+        const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData || this.positionData.length !== numPoints * 2;
+        if (isPositionChanged) {
             this.positionData = new Float32Array(numPoints * 2);
-        }
-        if (this.selectedData.length !== numPoints) {
-            this.selectedData = new Float32Array(numPoints);
-        }
-        for (let i = 0; i < numPoints; i++) {
-            this.positionData[i * 2] = xData[i];
-            this.positionData[i * 2 + 1] = yData[i];
-            this.selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
+            for (let i = 0; i < numPoints; i++) {
+                this.positionData[i * 2] = xData[i];
+                this.positionData[i * 2 + 1] = yData[i];
+            }
+            this.previousXData = xData;
+            this.previousYData = yData;
         }
 
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(GL2.ARRAY_BUFFER, this.positionData, GL2.DYNAMIC_DRAW);
+        if (isPositionChanged) {
+            gl.bufferData(GL2.ARRAY_BUFFER, this.positionData, GL2.DYNAMIC_DRAW);
+        }
         const posLoc = gl.getAttribLocation(shaderProgram, "aPosition");
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
+        const isSelectionChanged = !this.hasSameSelectedIndices(selectedIndices) || this.selectedData.length !== numPoints;
+        if (isSelectionChanged) {
+            this.selectedData = new Float32Array(numPoints);
+            for (let i = 0; i < numPoints; i++) {
+                this.selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
+            }
+            this.previousSelectedIndices = new Set(selectedIndices);
+        }
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.selectedBuffer);
-        gl.bufferData(GL2.ARRAY_BUFFER, this.selectedData, GL2.DYNAMIC_DRAW);
+        if (isSelectionChanged) {
+            gl.bufferData(GL2.ARRAY_BUFFER, this.selectedData, GL2.DYNAMIC_DRAW);
+        }
         const selLoc = gl.getAttribLocation(shaderProgram, "aSelected");
         gl.enableVertexAttribArray(selLoc);
         gl.vertexAttribPointer(selLoc, 1, GL2.FLOAT, false, 0, 0);
@@ -241,7 +290,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.disable(GL2.SCISSOR_TEST);
         gl.disable(GL2.BLEND);
         gl.disable(GL2.DEPTH_TEST);
-        gl.finish();
     }
 
     render() {

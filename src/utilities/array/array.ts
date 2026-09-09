@@ -9,9 +9,11 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
 
     let minVal = Number.MAX_VALUE;
     let maxVal = -Number.MAX_VALUE;
+    let hasValidValue = false;
     for (let i = 0; i < data.length; i++) {
         const val = data[i];
         if (!isNaN(val)) {
+            hasValidValue = true;
             if (val < minVal) {
                 minVal = val;
             }
@@ -21,7 +23,7 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
         }
     }
 
-    if (!isFinite(minVal) || !isFinite(maxVal)) {
+    if (!hasValidValue || !isFinite(minVal) || !isFinite(maxVal)) {
         return {bins: [], binSize: 0, start: 0, binIndices: []};
     }
 

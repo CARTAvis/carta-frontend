@@ -1,4 +1,4 @@
-import {doesLineSegmentIntersectRect, getPathSegments, getRectFromPoints, getRotatedBoxPoints, isPointInPolygon, lineSegmentsIntersect, type Rect2D} from "./math2d";
+import {doesLineSegmentIntersectRect, getPathSegments, getRectFromPoints, getRotatedBoxPoints, isPointInPolygon, lineSegmentsIntersect, pointInPolygon, type Rect2D} from "./math2d";
 
 describe("math2d selection geometry helpers", () => {
     describe("lineSegmentsIntersect", () => {
@@ -40,6 +40,18 @@ describe("math2d selection geometry helpers", () => {
 
         expect(isPointInPolygon({x: 5, y: 5}, polygon)).toBe(true);
         expect(isPointInPolygon({x: 11, y: 5}, polygon)).toBe(false);
+    });
+
+    test("supports catalog polygon selection", () => {
+        const polygon = [
+            {x: 0, y: 0},
+            {x: 10, y: 0},
+            {x: 10, y: 10},
+            {x: 0, y: 10}
+        ];
+
+        expect(pointInPolygon({x: 5, y: 5}, polygon)).toBe(true);
+        expect(pointInPolygon({x: 11, y: 5}, polygon)).toBe(false);
     });
 
     test("returns path segments for open and closed paths", () => {

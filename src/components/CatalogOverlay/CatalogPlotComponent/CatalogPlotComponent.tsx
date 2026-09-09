@@ -138,6 +138,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.disposers.length = 0;
         this.toolbarResizeObserver?.disconnect();
         this.toolbarResizeObserver = undefined;
+        window.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -267,11 +268,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private getScatterBorder(xArray: number[], yArray: number[]): Border {
         const xBounds = minMaxArray(xArray);
         const yBounds = minMaxArray(yArray);
+        const xPadding = xBounds.minVal === xBounds.maxVal ? (xBounds.maxVal === 0 ? 1 : Math.abs(xBounds.maxVal * 0.05)) : 0;
+        const yPadding = yBounds.minVal === yBounds.maxVal ? (yBounds.maxVal === 0 ? 1 : Math.abs(yBounds.maxVal * 0.05)) : 0;
         return {
-            xMin: xBounds.minVal,
-            xMax: xBounds.maxVal,
-            yMin: yBounds.minVal,
-            yMax: yBounds.maxVal
+            xMin: xBounds.minVal - xPadding,
+            xMax: xBounds.maxVal + xPadding,
+            yMin: yBounds.minVal - yPadding,
+            yMax: yBounds.maxVal + yPadding
         };
     }
 
@@ -766,8 +769,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramPanPrevX: number | undefined;
     private hasHistogramDragHandled = false;
 
+    private stopHistogramMouseTracking = (shouldPreserveDragHandled = false) => {
+        this.histogramDragStartX = undefined;
+        this.histogramDragCurrentX = undefined;
+        this.histogramPanPrevX = undefined;
+        if (!shouldPreserveDragHandled) {
+            this.hasHistogramDragHandled = false;
+        }
+        window.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
+    };
+
+    private onHistogramWindowMouseUp = () => {
+        this.stopHistogramMouseTracking();
+        this.histogramPlotRef?.draw();
+    };
+
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.button === 0) {
+            window.addEventListener("mouseup", this.onHistogramWindowMouseUp);
             const widgetStore = this.widgetStore;
             if (widgetStore?.histogramDragMode === DragMode.Pan) {
                 this.histogramPanPrevX = event.nativeEvent.offsetX;
@@ -803,7 +822,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
         if (this.histogramPanPrevX !== undefined) {
-            this.histogramPanPrevX = undefined;
+            this.stopHistogramMouseTracking(true);
             return;
         }
         const chart = this.histogramPlotRef;
@@ -825,8 +844,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
         }
-        this.histogramDragStartX = undefined;
-        this.histogramDragCurrentX = undefined;
+        this.stopHistogramMouseTracking(true);
     };
 
     private onHistogramDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -1250,9 +1268,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     if (widgetStore.histogramDragMode === DragMode.Select && elements.length > 0) {
                         const binIndex = elements[0].index;
                         if (histData.binIndices[binIndex]?.length) {
-                            const matched = profileStore.getOriginIndices(histData.binIndices[binIndex]);
-                            profileStore.setSelectedPointIndices(matched, true);
-                            this.catalogDisplayStore?.setCatalogTableAutoScroll(true);
+                            this.selectCatalogPoints(histData.binIndices[binIndex]);
                         }
                     }
                 },
