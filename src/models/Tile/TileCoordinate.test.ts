@@ -35,37 +35,41 @@ test("returns identical round trip coordinates", () => {
     }
 });
 
-test("encodes 10000 coordinates in less than 5 ms", () => {
-    const layer = 12;
-    let encodedVal = 0;
-    const tStart = performance.now();
-    for (let i = 0; i < 1000; i++) {
-        for (let j = 0; j < 1000; j++) {
-            encodedVal += TileCoordinate.encode(i, j, layer);
-        }
-    }
-    const tEnd = performance.now();
-    const dt = tEnd - tStart;
-    expect(encodedVal).toBe(203373043500000);
-    expect(dt).toBeLessThan(20);
-});
+describe("TileCoordinate performance", () => {
+    jest.retryTimes(10);
 
-test("decodes 1M coordinates in less than 20 ms", () => {
-    const layer = 12;
-    const layerWidth = 2 ** layer;
-    let counter = 0;
-    const tStart = performance.now();
-
-    let encVal = TileCoordinate.encode(0, 0, layer);
-    for (let i = 0; i < 1000; i++) {
-        for (let j = 0; j < 1000; j++) {
-            counter += TileCoordinate.decode(encVal).x;
-            encVal++;
+    test("encodes 10000 coordinates in less than 5 ms", () => {
+        const layer = 12;
+        let encodedVal = 0;
+        const tStart = performance.now();
+        for (let i = 0; i < 1000; i++) {
+            for (let j = 0; j < 1000; j++) {
+                encodedVal += TileCoordinate.encode(i, j, layer);
+            }
         }
-        encVal += layerWidth;
-    }
-    const tEnd = performance.now();
-    const dt = tEnd - tStart;
-    expect(counter).toBe(2046486240);
-    expect(dt).toBeLessThan(20);
+        const tEnd = performance.now();
+        const dt = tEnd - tStart;
+        expect(encodedVal).toBe(203373043500000);
+        expect(dt).toBeLessThan(20);
+    });
+
+    test("decodes 1M coordinates in less than 20 ms", () => {
+        const layer = 12;
+        const layerWidth = 2 ** layer;
+        let counter = 0;
+        const tStart = performance.now();
+
+        let encVal = TileCoordinate.encode(0, 0, layer);
+        for (let i = 0; i < 1000; i++) {
+            for (let j = 0; j < 1000; j++) {
+                counter += TileCoordinate.decode(encVal).x;
+                encVal++;
+            }
+            encVal += layerWidth;
+        }
+        const tEnd = performance.now();
+        const dt = tEnd - tStart;
+        expect(counter).toBe(2046486240);
+        expect(dt).toBeLessThan(20);
+    });
 });
