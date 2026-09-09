@@ -540,7 +540,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
 
     catalogFileIds.forEach(fileId => {
         const catalog = AppStore.Instance.catalogStore.catalogGLData.get(fileId);
-        const catalogWidgetStore = AppStore.Instance.catalogStore.getCatalogWidgetStore(fileId);
+        const catalogWidgetStore = AppStore.Instance.catalogStore.getCatalogDisplayStore(fileId);
         const count = AppStore.Instance.catalogStore.catalogCounts.get(fileId) ?? 0;
         const sourceFrame = AppStore.Instance.getFrame(AppStore.Instance.catalogStore.getFrameIdByCatalogId(fileId));
         if (!catalog || !catalogWidgetStore || !count || !sourceFrame) {

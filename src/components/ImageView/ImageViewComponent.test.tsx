@@ -110,7 +110,7 @@ describe("getPanelSvg", () => {
                 visibleCatalogFiles: new Map([[frame, [11]]]),
                 catalogGLData: new Map([[11, {x: new Float32Array([30]), y: new Float32Array([40])}]]),
                 catalogCounts: new Map([[11, 1]]),
-                getCatalogWidgetStore: jest.fn(() => ({catalogShape: 3, catalogSize: 6, catalogColor: "#00ff00", isImagePixelSize: false, shapeSettings: {diameterBase: 0}})),
+                getCatalogDisplayStore: jest.fn(() => ({catalogShape: 3, catalogSize: 6, catalogColor: "#00ff00", isImagePixelSize: false, shapeSettings: {diameterBase: 0}})),
                 getFrameIdByCatalogId: jest.fn(() => 1)
             },
             getFrame: jest.fn(() => frame)
