@@ -1,6 +1,7 @@
 export * from "./AlertStore/AlertStore";
 export * from "./AnimatorStore/AnimatorStore";
 export * from "./AppStore/AppStore";
+export * from "./Catalog/CatalogDisplayStore";
 export * from "./Catalog/CatalogProfileStore";
 export * from "./Catalog/CatalogStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryConfigStore";

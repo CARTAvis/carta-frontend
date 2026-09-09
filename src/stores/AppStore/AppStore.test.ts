@@ -7,13 +7,11 @@ import {ProtobufProcessing} from "utilities";
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
-    const widgetsStore = appStore.widgetsStore;
 
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
-        catalogStore.catalogWidgets.clear();
-        widgetsStore.catalogWidgets.clear();
+        catalogStore.catalogDisplayStores.clear();
     });
 
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {
@@ -34,8 +32,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         };
 
         catalogStore.catalogProfileStores.set(1, profileStore as any);
-        catalogStore.catalogWidgets.set(1, "widget-1");
-        widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
@@ -80,8 +77,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const frame = {isValidWcs: true, wcsInfo: "wcs"} as any;
 
         catalogStore.catalogProfileStores.set(1, profileStore as any);
-        catalogStore.catalogWidgets.set(1, "widget-1");
-        widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
@@ -129,8 +125,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         };
 
         catalogStore.catalogProfileStores.set(1, profileStore as any);
-        catalogStore.catalogWidgets.set(1, "widget-1");
-        widgetsStore.catalogWidgets.set("widget-1", widgetStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);

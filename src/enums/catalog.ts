@@ -122,6 +122,13 @@ export enum CatalogSizeUnits {
     DEG = "deg"
 }
 
+export enum ValueClip {
+    SIZE_MIN = "size-min",
+    SIZE_MAX = "size-max",
+    ANGLE_MIN = "angle-min",
+    ANGLE_MAX = "angle-max"
+}
+
 export enum HeaderTableColumnName {
     Name = "Name",
     Unit = "Unit",
