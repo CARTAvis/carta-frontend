@@ -141,6 +141,25 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#catalog-overlay")).not.toBeNull();
     });
 
+    test("maps spatial contours into the reference frame before exporting", () => {
+        frame.spatialReference = {
+            requiredFrameView: {xMin: 0, xMax: 100, yMin: 0, yMax: 80},
+            zoomLevel: 2
+        };
+        frame.spatialTransform = {
+            transformCoordinate: jest.fn(({x, y}: {x: number; y: number}) => ({x: x + 10, y: y + 20})),
+            scale: 1
+        };
+        frame.vectorOverlayConfig.isVisible = false;
+        mockAppStore.catalogStore.visibleCatalogFiles = new Map();
+
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const path = panelSvg?.querySelector("#contours path");
+
+        expect(path).toHaveAttribute("d", "M24.50,57.50L34.50,47.50");
+        expect(frame.spatialTransform.transformCoordinate).toHaveBeenCalledWith({x: 9.5, y: 9.5}, true);
+    });
+
     test("places coordinate overlays in each channel map cell", () => {
         mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
         mockAppStore.overlaySettings.colorbar = {

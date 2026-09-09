@@ -361,6 +361,19 @@ function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinat
     return controlMap.transformPoint(point);
 }
 
+function transformContourPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
+    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame);
+    if (!transformedPoint) {
+        return null;
+    }
+
+    if (destinationFrame.spatialReference) {
+        return destinationFrame.spatialTransform?.transformCoordinate(transformedPoint, true) ?? null;
+    }
+
+    return transformedPoint;
+}
+
 function transformContourVertexData(vertexDataArrays: (Float32Array | null)[], sourceFrame: FrameStore, destinationFrame: FrameStore, frameView: FrameView, layerWidth: number, layerHeight: number): (Float32Array | null)[] {
     return vertexDataArrays.map(vertexData => {
         if (!vertexData) {
@@ -382,7 +395,7 @@ function transformContourVertexData(vertexDataArrays: (Float32Array | null)[], s
                 continue;
             }
 
-            const transformedPoint = transformOverlayPoint({x: transformed[index], y: transformed[index + 1]}, sourceFrame, destinationFrame);
+            const transformedPoint = transformContourPoint({x: transformed[index] - 0.5, y: transformed[index + 1] - 0.5}, sourceFrame, destinationFrame);
             if (!transformedPoint) {
                 transformed[index] = Number.NaN;
                 transformed[index + 1] = Number.NaN;
