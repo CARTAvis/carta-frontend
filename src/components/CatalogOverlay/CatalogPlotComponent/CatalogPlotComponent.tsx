@@ -48,6 +48,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramPlotRef: Chart<"bar"> | null = null;
     private scatterChartArea: ChartArea | undefined;
     private cursorNearestScatterPoint: {x: number; y: number} | undefined;
+    private cursorNearestScatterPointIndex: number | undefined;
+    private pendingScatterCursor: {x: number; y: number} | undefined;
+    private scatterCursorFrame: number | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
     private webglOverlayRef: CatalogScatterWebGL | null = null;
 
@@ -139,6 +142,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.toolbarResizeObserver?.disconnect();
         this.toolbarResizeObserver = undefined;
         window.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
+        if (this.scatterCursorFrame !== undefined) {
+            window.cancelAnimationFrame(this.scatterCursorFrame);
+        }
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -519,16 +525,35 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return nearestIndex;
     };
 
-    private onScatterCursorMoved = (x: number, y: number) => {
-        const scatter = this.scatterData;
-        const nearestIndex = this.getNearestScatterPointIndex(x, y);
-        if (nearestIndex < 0) {
-            this.cursorNearestScatterPoint = undefined;
+    private updateScatterCursor = () => {
+        this.scatterCursorFrame = undefined;
+        const cursor = this.pendingScatterCursor;
+        this.pendingScatterCursor = undefined;
+        if (!cursor) {
             return;
         }
+
+        const scatter = this.scatterData;
+        const nearestIndex = this.getNearestScatterPointIndex(cursor.x, cursor.y);
+        if (nearestIndex < 0) {
+            this.cursorNearestScatterPoint = undefined;
+            this.cursorNearestScatterPointIndex = undefined;
+            return;
+        }
+        if (nearestIndex === this.cursorNearestScatterPointIndex) {
+            return;
+        }
+        this.cursorNearestScatterPointIndex = nearestIndex;
         const nearest = {x: scatter.xData[nearestIndex], y: scatter.yData[nearestIndex]};
         this.cursorNearestScatterPoint = nearest;
         this.widgetStore?.setIndicator(nearest);
+    };
+
+    private onScatterCursorMoved = (x: number, y: number) => {
+        this.pendingScatterCursor = {x, y};
+        if (this.scatterCursorFrame === undefined) {
+            this.scatterCursorFrame = window.requestAnimationFrame(this.updateScatterCursor);
+        }
     };
 
     private onAutoscale = () => {
@@ -1507,6 +1532,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             updateChartArea={this.updateScatterChartArea}
                             graphClicked={this.onGraphClicked}
                             pointRadius={0.001}
+                            cursorHitRadius={5}
                             shouldScrollZoom={true}
                             multiPlotPropsMap={scatterMultiPlotMap}
                             shouldAlignChartAreaRight={true}

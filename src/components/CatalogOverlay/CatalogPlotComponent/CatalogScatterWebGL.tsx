@@ -10,8 +10,6 @@ precision highp float;
 in vec2 aPosition;
 in float aSelected;
 
-uniform vec2 uRangeMin;
-uniform vec2 uRangeMax;
 uniform vec4 uViewport;
 uniform vec2 uCanvasSize;
 uniform float uPointSize;
@@ -20,7 +18,7 @@ out float vSelected;
 
 void main() {
     vSelected = aSelected;
-    vec2 normalized = (aPosition - uRangeMin) / (uRangeMax - uRangeMin);
+    vec2 normalized = aPosition;
     vec2 pixel;
     pixel.x = uViewport.x + normalized.x * uViewport.z;
     pixel.y = uViewport.y + (1.0 - normalized.y) * uViewport.w;
@@ -80,6 +78,10 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private selectedData: Float32Array = new Float32Array(0);
     private previousXData: number[] | undefined;
     private previousYData: number[] | undefined;
+    private previousXMin: number | undefined;
+    private previousYMin: number | undefined;
+    private previousXMax: number | undefined;
+    private previousYMax: number | undefined;
     private previousSelectedIndices: Set<number> | undefined;
 
     componentDidMount() {
@@ -169,8 +171,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.useProgram(this.shaderProgram);
 
         this.uniforms = {
-            uRangeMin: gl.getUniformLocation(this.shaderProgram, "uRangeMin"),
-            uRangeMax: gl.getUniformLocation(this.shaderProgram, "uRangeMax"),
             uViewport: gl.getUniformLocation(this.shaderProgram, "uViewport"),
             uCanvasSize: gl.getUniformLocation(this.shaderProgram, "uCanvasSize"),
             uPointSize: gl.getUniformLocation(this.shaderProgram, "uPointSize"),
@@ -184,6 +184,10 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.selectedData = new Float32Array(0);
         this.previousXData = undefined;
         this.previousYData = undefined;
+        this.previousXMin = undefined;
+        this.previousYMin = undefined;
+        this.previousXMax = undefined;
+        this.previousYMax = undefined;
         this.previousSelectedIndices = undefined;
     }
 
@@ -227,16 +231,27 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enable(GL2.DEPTH_TEST);
         gl.depthFunc(GL2.LEQUAL);
 
+        const xRange = xMax - xMin;
+        const yRange = yMax - yMin;
+        if (!Number.isFinite(xRange) || !Number.isFinite(yRange) || xRange <= 0 || yRange <= 0) {
+            return;
+        }
+
         const numPoints = Math.min(xData.length, yData.length);
-        const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData || this.positionData.length !== numPoints * 2;
+        const isPositionChanged =
+            this.previousXData !== xData || this.previousYData !== yData || this.previousXMin !== xMin || this.previousYMin !== yMin || this.previousXMax !== xMax || this.previousYMax !== yMax || this.positionData.length !== numPoints * 2;
         if (isPositionChanged) {
             this.positionData = new Float32Array(numPoints * 2);
             for (let i = 0; i < numPoints; i++) {
-                this.positionData[i * 2] = xData[i];
-                this.positionData[i * 2 + 1] = yData[i];
+                this.positionData[i * 2] = (xData[i] - xMin) / xRange;
+                this.positionData[i * 2 + 1] = (yData[i] - yMin) / yRange;
             }
             this.previousXData = xData;
             this.previousYData = yData;
+            this.previousXMin = xMin;
+            this.previousYMin = yMin;
+            this.previousXMax = xMax;
+            this.previousYMax = yMax;
         }
 
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.positionBuffer);
@@ -262,9 +277,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         const selLoc = gl.getAttribLocation(shaderProgram, "aSelected");
         gl.enableVertexAttribArray(selLoc);
         gl.vertexAttribPointer(selLoc, 1, GL2.FLOAT, false, 0, 0);
-
-        gl.uniform2f(this.uniforms.uRangeMin, xMin, yMin);
-        gl.uniform2f(this.uniforms.uRangeMax, xMax, yMax);
 
         const viewLeft = chartArea.left * dpr;
         const viewTop = chartArea.top * dpr;
