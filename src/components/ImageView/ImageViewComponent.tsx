@@ -831,8 +831,11 @@ function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: 
 
     const isFilled = beamSettings.type === BeamType.Solid;
 
+    // A supplied base position is already in SVG coordinates. It is used to
+    // keep contour beams aligned with the base beam, while the default
+    // position above is in the frame's logical pixel coordinates.
     return {
-        position: {x: positionX * pixelRatio, y: positionY * pixelRatio},
+        position: basePosition ? {x: basePosition.x, y: basePosition.y} : {x: positionX * pixelRatio, y: positionY * pixelRatio},
         a: a * pixelRatio,
         b: b * pixelRatio,
         theta,
@@ -852,8 +855,21 @@ function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number):
     }
 
     const group = svgGroupFromLayer("beams");
-    // Offset the beam group by padding (beam renders inside the image area)
-    group.setAttribute("transform", `translate(${padding.left * pixelRatio},${padding.top * pixelRatio})`);
+    // Channel-map beam overlays are rendered in the bottom-left channel tile.
+    // The regular image view has one image area, so its beam only needs the
+    // image padding offset.
+    let beamPadding = padding;
+    let beamOffsetY = 0;
+    if (appStore.channelMapStore.isChannelMapEnabled) {
+        const outerOverlay = frame.channelMapOuterOverlayStore;
+        const innerOverlay = frame.channelMapInnerOverlayStore;
+        const channelMapStore = appStore.channelMapStore;
+        const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+
+        beamPadding = outerOverlay.padding;
+        beamOffsetY = lastRow * (innerOverlay.renderHeight + innerOverlay.gapY);
+    }
+    group.setAttribute("transform", `translate(${beamPadding.left * pixelRatio},${(beamPadding.top + beamOffsetY) * pixelRatio})`);
 
     // Base frame beam
     const basePlot = frame.hasVisibleBeam ? getBeamPlotProps(frame, pixelRatio) : null;

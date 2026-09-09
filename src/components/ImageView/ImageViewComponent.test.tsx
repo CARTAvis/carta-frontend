@@ -213,4 +213,16 @@ describe("getPanelSvg", () => {
             border: {visible: false, color: "#4C90F0", width: 1}
         });
     });
+
+    test("places the beam in the bottom-left channel map cell", () => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 10, y: 6, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const beams = panelSvg?.querySelector("#beams");
+
+        expect(beams).toHaveAttribute("transform", "translate(5,57)");
+    });
 });
