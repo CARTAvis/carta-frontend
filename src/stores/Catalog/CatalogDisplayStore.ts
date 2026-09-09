@@ -1300,7 +1300,6 @@ export class CatalogDisplayStore {
             return {success: false, errors};
         }
 
-        // 1. display mode and units first: the source size is validated against them
         this.catalogDisplayMode = config?.displayMode ?? CatalogDisplayMode.CANVAS;
         this.canvasSizeUnit = config?.canvasSizeUnit ?? CatalogSizeUnits.SCREENPIXEL;
         this.worldSizeUnit = config?.worldSizeUnit ?? AngularSizeUnit.ARCSEC;
@@ -1317,7 +1316,6 @@ export class CatalogDisplayStore {
         this.showedCatalogSize = showedCatalogSize;
         this.catalogSize = showedCatalogSize * this.pixelSizeFactor;
 
-        // 2. mapped columns
         const hasSizeColumnChanged = this.sizeMapColumn !== sizeAxis.mapColumn;
         const hasSizeMinorColumnChanged = this.sizeMinorMapColumn !== sizeMinorAxis.mapColumn;
         const hasColorColumnChanged = this.colorMapColumn !== colorAxis.mapColumn;
@@ -1328,7 +1326,6 @@ export class CatalogDisplayStore {
         this.colorMapColumn = colorAxis.mapColumn;
         this.orientationMapColumn = orientationAxis.mapColumn;
 
-        // 3. scaling, sizes and clipped bounds
         this.isSizeAreaMode = sizeAxis.areaMode;
         this.sizeScalingType = sizeAxis.scalingType;
         this.sizeScalingParameters = sizeAxis.scalingParameters;
@@ -1356,7 +1353,6 @@ export class CatalogDisplayStore {
         this.setClip("color", this.resolveClip(profileStore, colorAxis), hasColorColumnChanged && configDefinesClip(colorAxis));
         this.setClip("orientation", this.resolveClip(profileStore, orientationAxis), hasOrientationColumnChanged && configDefinesClip(orientationAxis));
 
-        // 4. locks last
         this.isSizeColumnMinLocked = sizeAxis.columnMinLocked;
         this.isSizeColumnMaxLocked = sizeAxis.columnMaxLocked;
         this.isSizeMinorColumnMinLocked = sizeMinorAxis.columnMinLocked;
@@ -1365,7 +1361,7 @@ export class CatalogDisplayStore {
         return {success: true, errors: []};
     };
 
-    /** Apply layout settings now, or retry them once the catalog data is ready. */
+    /** Apply catalog display settings now, or retry them once the catalog data is ready. */
     @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
         const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         const shouldDefer = !profileStore || profileStore.isLoadingOntoImage;
@@ -1432,11 +1428,6 @@ export class CatalogDisplayStore {
         };
     };
 
-    /**
-     * The slice of a catalog panel that a layout keeps: which catalog it shows, and the geometry of
-     * the panel itself. Everything else a panel displays is display config and belongs to the
-     * catalog, not to the layout.
-     */
     /**
      * The clipped bounds a config asks for. A mapped column with no stated bounds is clipped to the
      * full range of its data, so that the result depends on the config and the data alone, rather

@@ -549,8 +549,8 @@ export class WidgetsStore {
             // Ensure catalogProfiles is set to the saved fileId so the component can look
             // up the correct file (the component constructor only defaults to fileId 1).
             CatalogStore.Instance.catalogProfiles.set(componentId, selectedCatalogId);
-            // PR2 stored display settings with catalog-prefixed names. Normalize them at the
-            // restore boundary while allowing the current workspace names to take precedence.
+            // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
+            // them at the restore boundary while allowing the current workspace names to take precedence.
             const displaySettings = {
                 ...widgetSettings,
                 color: widgetSettings["color"] ?? widgetSettings["catalogColor"],
