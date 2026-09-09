@@ -97,6 +97,7 @@ describe("getPanelSvg", () => {
 
         mockAppStore = {
             pixelRatio: 1,
+            imageRatio: 1,
             channelMapStore: {isChannelMapEnabled: false},
             overlaySettings: {
                 colorbar: {isVisible: false, position: "right"},
@@ -243,5 +244,21 @@ describe("getPanelSvg", () => {
         const beams = panelSvg?.querySelector("#beams");
 
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
+    });
+
+    test("scales beam geometry once for SVG output", () => {
+        mockAppStore.pixelRatio = 2;
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 10, y: 6, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const beam = panelSvg?.querySelector("#beam-profile ellipse");
+
+        expect(panelSvg?.querySelector("#beams")).toHaveAttribute("transform", "translate(10,14)");
+        expect(beam).toHaveAttribute("cx", "32");
+        expect(beam).toHaveAttribute("cy", "120");
+        expect(beam).toHaveAttribute("rx", "20");
+        expect(beam).toHaveAttribute("ry", "12");
     });
 });

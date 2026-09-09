@@ -9,9 +9,9 @@ import {type FrameView, type ImageViewItem, type Point2D, Zoom} from "models";
 import {AppStore, type DefaultWidgetConfig, type OverlayColorbarSettings, type Padding, type WidgetProps} from "stores";
 import {LayoutStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, getColorForTheme, getColorsForValues, toFixed} from "utilities";
+import {ceilToPower, getChannelMapCell, getColorForTheme, getColorsForValues, toFixed} from "utilities";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
-import {renderBeamToSvg} from "utilities/export/beamSvgExport";
+import {type BeamPlotProps, renderBeamToSvg} from "utilities/export/beamSvgExport";
 import {renderCatalogToSvg} from "utilities/export/catalogSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 import {renderContoursToSvg} from "utilities/export/contourSvgExport";
@@ -589,8 +589,16 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     const overlayStore = frame.channelMapInnerOverlayStore;
     const outerPadding = frame.channelMapOuterOverlayStore.padding;
     const innerPadding = overlayStore.padding;
-    const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
-    const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
+    const channelMapLayout = {
+        numColumns: channelMapStore.numColumns,
+        outerPadding,
+        tileWidth: overlayStore.renderWidth,
+        tileHeight: overlayStore.renderHeight,
+        gapX: overlayStore.gapX,
+        gapY: overlayStore.gapY
+    };
+    const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
+    const {row: lastRow, column: columnOfLastFrame} = lastCell;
     const group = svgGroupFromLayer("channel-map-coordinate-overlays");
     const sourceId = `channel-map-coordinate-source-${frame.frameInfo.fileId}`;
     source.setAttribute("id", sourceId);
@@ -603,13 +611,12 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
             return;
         }
 
-        const column = index % channelMapStore.numColumns;
-        const row = Math.floor(index / channelMapStore.numColumns);
+        const {column, row, left, top} = getChannelMapCell(index, channelMapLayout);
         const isBottom = row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame);
         const cropLeft = column === 0 ? 0 : innerPadding.left * pixelRatio;
         const cropBottom = isBottom ? 0 : innerPadding.bottom * pixelRatio;
-        const x = (outerPadding.left + (overlayStore.renderWidth + overlayStore.gapX) * column - innerPadding.left) * pixelRatio + cropLeft;
-        const y = (outerPadding.top + (overlayStore.renderHeight + overlayStore.gapY) * row - innerPadding.top) * pixelRatio;
+        const x = (left - innerPadding.left) * pixelRatio + cropLeft;
+        const y = (top - innerPadding.top) * pixelRatio;
         const width = overlayStore.viewWidth * pixelRatio - cropLeft;
         const height = overlayStore.viewHeight * pixelRatio - cropBottom;
         const viewport = createSvgElement("svg", {x, y, width, height, viewBox: `${cropLeft} 0 ${width} ${height}`, overflow: "hidden"});
@@ -802,7 +809,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSe
     });
 }
 
-function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: Point2D): {position: Point2D; a: number; b: number; theta: number; color: string; axisColor: string; strokeWidth: number; isFilled: boolean} | null {
+function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null {
     if (!frame.hasVisibleBeam || !frame.beamProperties || !frame.overlayBeamSettings?.isVisible) {
         return null;
     }
@@ -814,8 +821,8 @@ function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: 
     const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
     const strokeWidth = beamSettings.width;
 
-    const a = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
-    const b = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
+    const semiMajor = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
+    const semiMinor = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
     let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
     if (frame.spatialTransform) {
         theta -= frame.spatialTransform.rotation;
@@ -824,37 +831,28 @@ function getBeamPlotProps(frame: FrameStore, pixelRatio: number, basePosition?: 
     const sinTheta = Math.sin(theta);
     const cosTheta = Math.cos(theta);
     const boundingBox = {
-        x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
-        y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
+        x: 2 * Math.sqrt(semiMajor * semiMajor * cosTheta * cosTheta + semiMinor * semiMinor * sinTheta * sinTheta),
+        y: 2 * Math.sqrt(semiMajor * semiMajor * sinTheta * sinTheta + semiMinor * semiMinor * cosTheta * cosTheta)
     };
 
     // Match the original BeamProfileOverlayComponent: padding prop is 10, scaled by devicePixelRatio
     const beamPadding = 10;
     const paddingOffset = beamPadding * devicePixelRatio;
-    let positionX = basePosition ? basePosition.x : boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX;
-    const rightMost = frame.renderWidth - boundingBox.x / 2.0;
-    if (positionX > rightMost) {
-        positionX = rightMost;
-    }
-    let positionY = basePosition ? basePosition.y : frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY;
-    const upMost = boundingBox.y / 2.0;
-    if (positionY < upMost) {
-        positionY = upMost;
-    }
+    const position = basePosition ?? {
+        x: Math.min(frame.renderWidth - boundingBox.x / 2.0, boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX),
+        y: Math.max(boundingBox.y / 2.0, frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY)
+    };
 
     const isFilled = beamSettings.type === BeamType.Solid;
 
-    // A supplied base position is already in SVG coordinates. It is used to
-    // keep contour beams aligned with the base beam, while the default
-    // position above is in the frame's logical pixel coordinates.
     return {
-        position: basePosition ? {x: basePosition.x, y: basePosition.y} : {x: positionX * pixelRatio, y: positionY * pixelRatio},
-        a: a * pixelRatio,
-        b: b * pixelRatio,
-        theta,
+        position,
+        semiMajor,
+        semiMinor,
+        rotationDegrees: (theta * 180.0) / Math.PI,
         color,
         axisColor,
-        strokeWidth: strokeWidth * pixelRatio,
+        strokeWidth,
         isFilled
     };
 }
@@ -877,26 +875,32 @@ function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number):
         const outerOverlay = frame.channelMapOuterOverlayStore;
         const innerOverlay = frame.channelMapInnerOverlayStore;
         const channelMapStore = appStore.channelMapStore;
-        const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+        const channelMapLayout = {
+            numColumns: channelMapStore.numColumns,
+            outerPadding: outerOverlay.padding,
+            tileWidth: innerOverlay.renderWidth,
+            tileHeight: innerOverlay.renderHeight,
+            gapX: innerOverlay.gapX,
+            gapY: innerOverlay.gapY
+        };
+        const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
 
         beamPadding = outerOverlay.padding;
-        beamOffsetY = lastRow * (innerOverlay.renderHeight + innerOverlay.gapY);
+        beamOffsetY = lastCell.top - beamPadding.top;
     }
     group.setAttribute("transform", `translate(${beamPadding.left * pixelRatio},${(beamPadding.top + beamOffsetY) * pixelRatio})`);
 
     // Base frame beam
-    const basePlot = frame.hasVisibleBeam ? getBeamPlotProps(frame, pixelRatio) : null;
+    const basePlot = frame.hasVisibleBeam ? getBeamPlotProps(frame) : null;
     if (basePlot) {
-        const beamSvg = renderBeamToSvg(basePlot.position.x, basePlot.position.y, basePlot.a, basePlot.b, (basePlot.theta * 180.0) / Math.PI, basePlot.color, basePlot.axisColor, basePlot.strokeWidth, basePlot.isFilled);
-        group.appendChild(beamSvg);
+        group.appendChild(renderBeamToSvg(basePlot, pixelRatio));
     }
 
     // Contour frame beams (positioned at the same location as the base beam)
     contourFrames?.forEach(contourFrame => {
-        const plotProps = getBeamPlotProps(contourFrame, pixelRatio, basePlot?.position);
+        const plotProps = getBeamPlotProps(contourFrame, basePlot?.position);
         if (plotProps) {
-            const beamSvg = renderBeamToSvg(plotProps.position.x, plotProps.position.y, plotProps.a, plotProps.b, (plotProps.theta * 180.0) / Math.PI, plotProps.color, plotProps.axisColor, plotProps.strokeWidth, plotProps.isFilled);
-            group.appendChild(beamSvg);
+            group.appendChild(renderBeamToSvg(plotProps, pixelRatio));
         }
     });
 
