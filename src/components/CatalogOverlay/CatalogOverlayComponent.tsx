@@ -379,7 +379,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return [CatalogOverlay.NONE, ...rankCatalogAxisColumns(axis, selectableColumns, profileStore.catalogCoordinateSystem.system)];
     }
 
-    private getAutoSelectableAxisOptions(shouldIncludeHidden = false): string[] {
+    /**
+     * @param shouldIncludeUnknown - also offer columns whose values have not been fetched, so their
+     * format is still unknown. Only a last resort: the name is all there is to go on, and a wrong
+     * guess costs a round trip. It degrades safely, because a column that turns out not to be a
+     * coordinate yields no data and simply leaves the overlay unplotted.
+     */
+    private getAutoSelectableAxisOptions(shouldIncludeHidden = false, shouldIncludeUnknown = false): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [];
@@ -393,9 +399,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
             const catalogHeader = profileStore.catalogHeader[header.dataIndex];
             const sampleData = this.getColumnSampleData(catalogHeader?.columnIndex);
-            // Unknown columns are offered in the menu but never auto-selected: guessing on a column
-            // whose values have not been seen is how a catalog ends up silently misplaced.
-            if (getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData).status === CatalogAxisEligibility.Eligible) {
+            const status = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData).status;
+            if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
                 axisOptions.push(columnName);
             }
         });
@@ -459,13 +464,24 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
         }
 
+        // Widening passes: the columns already on screen, then the hidden ones whose units or
+        // values identify them, and only then the hidden ones nothing but their name suggests.
         const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
         if (selected.didSelectX && selected.didSelectY) {
             return;
         }
 
         const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
-        if (fallback.enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
+        let didEnableHiddenColumns = fallback.enabledHiddenColumns;
+
+        const isXAxisUnfilled = !selected.didSelectX && !fallback.didSelectX;
+        const isYAxisUnfilled = !selected.didSelectY && !fallback.didSelectY;
+        if (isXAxisUnfilled || isYAxisUnfilled) {
+            const unknownFallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true, true), isXAxisUnfilled, isYAxisUnfilled, true);
+            didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
+        }
+
+        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added an option to interpret catalog overlay angular-size columns as either diameters or radii ([#2679](https://github.com/CARTAvis/carta-frontend/issues/2679)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
+* Catalog files now display their coordinate columns on load, alongside the first N columns, instead of relying on those columns happening to fall within the first N ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Added support for using string-type coordinate columns in catalog overlays, covering sexagesimal, decimal degree, decimal hour, radian, compact HHMMSS, CASA dot-separated, and Unicode angle formats, detected from the column units or from its values ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 ### Fixed
 * Fixed catalog overlay sources with a latitude beyond a pole being plotted at an arbitrary position instead of being dropped ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).

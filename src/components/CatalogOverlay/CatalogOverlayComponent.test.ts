@@ -370,10 +370,39 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe("DEC1");
         });
 
-        test("does not auto-select a string column whose values have not been loaded", () => {
+        test("falls back to a string column whose values have not been loaded", () => {
+            // Nothing but the name says these are coordinates. Selecting them costs a round trip
+            // and may be wrong, so it happens only once every better-evidenced option is exhausted.
             const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
                 {name: "RA1", dataType: CARTA.ColumnType.String},
                 {name: "DEC1", dataType: CARTA.ColumnType.String}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("prefers a column identified by its values over one identified only by its name", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RAJ2000", dataType: CARTA.ColumnType.String},
+                {name: "DEJ2000", dataType: CARTA.ColumnType.String},
+                {name: "ra", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: "dec", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
+            ]);
+
+            // "RAJ2000" ranks above "ra", but it is Unknown, so the eligible pair wins the pass.
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+        });
+
+        test("does not fall back to a column whose values rule it out", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, data: ["Taurus", "Monoceros"]}
             ]);
 
             component["autoSelectAxes"]();
