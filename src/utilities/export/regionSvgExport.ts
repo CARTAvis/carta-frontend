@@ -31,6 +31,32 @@ function imageSizeToCanvas(sizeX: number, sizeY: number, frameView: FrameView, l
     };
 }
 
+function transformedImageToCanvas(point: Point2D, frame: FrameStore | undefined, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
+    if (frame?.spatialReference && frame.spatialTransformAST && frame.spatialTransform) {
+        const secondaryPoint = transformImagePoint(frame.spatialTransformAST, point, false);
+        return secondaryImageToCanvas(secondaryPoint, frame, frameView, layerWidth, layerHeight);
+    }
+    return imageToCanvas(point.x, point.y, frameView, layerWidth, layerHeight);
+}
+
+function secondaryImageToCanvas(point: Point2D, frame: FrameStore | undefined, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
+    if (frame?.spatialReference && frame.spatialTransform) {
+        const referencePoint = frame.spatialTransform.transformCoordinate(point, true);
+        return imageToCanvas(referencePoint.x, referencePoint.y, frameView, layerWidth, layerHeight);
+    }
+    return imageToCanvas(point.x, point.y, frameView, layerWidth, layerHeight);
+}
+
+function getSpatialRegionCanvasPoints(region: RegionStore, frame: FrameStore, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D[] | null {
+    if (!frame.spatialReference || !frame.spatialTransformAST || !frame.spatialTransform) {
+        return null;
+    }
+
+    return region.getRegionApproximation(frame.spatialTransformAST).map(point => {
+        return secondaryImageToCanvas(point, frame, frameView, layerWidth, layerHeight);
+    });
+}
+
 function getStrokeAttrs(region: RegionStore): Record<string, string | number> {
     const attrs: Record<string, string | number> = {
         stroke: region.color,
@@ -180,10 +206,10 @@ interface RegionSvgOptions {
     pixelRatio: number;
 }
 
-function toCanvasPoints(points: number[], frameView: FrameView, layerWidth: number, layerHeight: number): Point2D[] {
+function toCanvasPoints(points: number[], frameView: FrameView, layerWidth: number, layerHeight: number, frame?: FrameStore): Point2D[] {
     const canvasPoints: Point2D[] = [];
     for (let i = 0; i + 1 < points.length; i += 2) {
-        canvasPoints.push(imageToCanvas(points[i], points[i + 1], frameView, layerWidth, layerHeight));
+        canvasPoints.push(secondaryImageToCanvas({x: points[i], y: points[i + 1]}, frame, frameView, layerWidth, layerHeight));
     }
     return canvasPoints;
 }
@@ -205,8 +231,8 @@ function pointAtDistance(start: Point2D, points: Point2D[], distance: number): P
     return previous;
 }
 
-function getAnnotationPath(origin: Point2D, approximatePoints: number[], frameView: FrameView, layerWidth: number, layerHeight: number, length: number): [Point2D, Point2D] {
-    const points = toCanvasPoints(approximatePoints, frameView, layerWidth, layerHeight);
+function getAnnotationPath(origin: Point2D, approximatePoints: number[], frameView: FrameView, layerWidth: number, layerHeight: number, length: number, frame?: FrameStore): [Point2D, Point2D] {
+    const points = toCanvasPoints(approximatePoints, frameView, layerWidth, layerHeight, frame);
     return [origin, pointAtDistance(origin, points, length)];
 }
 
@@ -241,7 +267,7 @@ function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassA
 function renderCompassAnnotation(region: CompassAnnotationStore, frameView: FrameView, layerWidth: number, layerHeight: number, defsElement: SVGDefsElement, options: RegionSvgOptions): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     const originImage = options.frame?.spatialReference && options.frame.spatialTransformAST ? transformImagePoint(options.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
-    const origin = imageToCanvas(originImage.x, originImage.y, frameView, layerWidth, layerHeight);
+    const origin = secondaryImageToCanvas(originImage, options.frame, frameView, layerWidth, layerHeight);
     const length = region.length * options.pixelRatio;
     let northEnd: Point2D;
     let eastEnd: Point2D;
@@ -249,8 +275,8 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     if (options.frame?.isValidWcs) {
         try {
             const approx = region.getCompassApproximation(options.frame.wcsInfoForTransformation, Boolean(options.frame.spatialReference), options.frame.spatialTransformAST || undefined);
-            [, northEnd] = getAnnotationPath(origin, approx.northApproximatePoints, frameView, layerWidth, layerHeight, length);
-            [, eastEnd] = getAnnotationPath(origin, approx.eastApproximatePoints, frameView, layerWidth, layerHeight, length);
+            [, northEnd] = getAnnotationPath(origin, approx.northApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
+            [, eastEnd] = getAnnotationPath(origin, approx.eastApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
         } catch {
             northEnd = {x: origin.x, y: origin.y - length};
             eastEnd = {x: origin.x - length, y: origin.y};
@@ -318,9 +344,9 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     let xDistanceText = "";
     let yDistanceText = "";
 
-    const startCanvas = imageToCanvas(start.x, start.y, frameView, layerWidth, layerHeight);
-    const finishCanvas = imageToCanvas(finish.x, finish.y, frameView, layerWidth, layerHeight);
-    const cornerCanvas = imageToCanvas(corner.x, corner.y, frameView, layerWidth, layerHeight);
+    const startCanvas = transformedImageToCanvas(start, options.frame, frameView, layerWidth, layerHeight);
+    const finishCanvas = transformedImageToCanvas(finish, options.frame, frameView, layerWidth, layerHeight);
+    const cornerCanvas = transformedImageToCanvas(corner, options.frame, frameView, layerWidth, layerHeight);
     let xPoints: Point2D[] = [startCanvas, cornerCanvas];
     let yPoints: Point2D[] = [cornerCanvas, finishCanvas];
     let hypotenusePoints: Point2D[] = [startCanvas, finishCanvas];
@@ -331,9 +357,9 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
             const selectedWcsInfo = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
             const wcsInfo = (frame.isValidWcs ? selectedWcsInfo : undefined) ?? frame.wcsInfo;
             const approx = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
-            xPoints = toCanvasPoints(approx.xApproximatePoints, frameView, layerWidth, layerHeight);
-            yPoints = toCanvasPoints(approx.yApproximatePoints, frameView, layerWidth, layerHeight);
-            hypotenusePoints = toCanvasPoints(approx.hypotenuseApproximatePoints, frameView, layerWidth, layerHeight);
+            xPoints = toCanvasPoints(approx.xApproximatePoints, frameView, layerWidth, layerHeight, frame);
+            yPoints = toCanvasPoints(approx.yApproximatePoints, frameView, layerWidth, layerHeight, frame);
+            hypotenusePoints = toCanvasPoints(approx.hypotenuseApproximatePoints, frameView, layerWidth, layerHeight, frame);
             corner = approx.corner;
             const transformedStart = frame.spatialReference && frame.spatialTransformAST ? transformImagePoint(frame.spatialTransformAST, start, false) : start;
             const transformedFinish = frame.spatialReference && frame.spatialTransformAST ? transformImagePoint(frame.spatialTransformAST, finish, false) : finish;
@@ -370,7 +396,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     return group;
 }
 
-function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStore, pixelRatio: number): SVGElement {
+function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStore, pixelRatio: number, rotation = region.rotation): SVGElement {
     const textRegion = region as RegionStore & {text?: string; fontSize?: number; font?: string; fontStyle?: string; position?: CARTA.TextAnnotationPosition};
     const textContent = textRegion.text ?? "";
     const attrs: Record<string, string | number> = {
@@ -414,8 +440,8 @@ function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStor
     if (attrs["dominant-baseline"] === "text-before-edge") textY -= size.y / 2;
     if (attrs["dominant-baseline"] === "text-after-edge") textY += size.y / 2;
     const text = createSvgText(textContent, textX, textY, attrs);
-    if (region.rotation !== 0) {
-        text.setAttribute("transform", `rotate(${-region.rotation},${center.x},${center.y})`);
+    if (rotation !== 0) {
+        text.setAttribute("transform", `rotate(${-rotation},${center.x},${center.y})`);
     }
     return text;
 }
@@ -447,50 +473,61 @@ export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView,
 
 function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidth: number, layerHeight: number, defsElement: SVGDefsElement, options: RegionSvgOptions): SVGElement | null {
     const cp = region.controlPoints;
+    const frame = options.frame;
+    const spatialPoints = frame ? getSpatialRegionCanvasPoints(region, frame, frameView, layerWidth, layerHeight) : null;
 
     switch (region.regionType) {
         case CARTA.RegionType.POINT:
         case CARTA.RegionType.ANNPOINT: {
-            const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
+            const center = spatialPoints?.[0] ?? transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
             return renderPointRegion(center, region, options.pixelRatio);
         }
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE: {
-            const start = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
-            const end = imageToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
+            const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
+            const start = points[0];
+            const end = points[1];
             return renderLineRegion(start, end, region);
         }
         case CARTA.RegionType.RECTANGLE:
         case CARTA.RegionType.ANNRECTANGLE: {
+            if (spatialPoints) {
+                return renderPolygonRegion(spatialPoints, region, true);
+            }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
             return renderRectangleRegion(center, size, region.rotation, region);
         }
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE: {
+            if (spatialPoints) {
+                return renderPolygonRegion(spatialPoints, region, true);
+            }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
             return renderEllipseRegion(center, size, region.rotation, region);
         }
         case CARTA.RegionType.POLYGON:
         case CARTA.RegionType.ANNPOLYGON: {
-            const points = cp.map(p => imageToCanvas(p.x, p.y, frameView, layerWidth, layerHeight));
+            const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
             return renderPolygonRegion(points, region, true);
         }
         case CARTA.RegionType.POLYLINE:
         case CARTA.RegionType.ANNPOLYLINE: {
-            const points = cp.map(p => imageToCanvas(p.x, p.y, frameView, layerWidth, layerHeight));
+            const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
             return renderPolygonRegion(points, region, false);
         }
         case CARTA.RegionType.ANNVECTOR: {
-            const start = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
-            const end = imageToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
+            const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
+            const start = points[0];
+            const end = points[points.length - 1];
             return renderVectorAnnotation(start, end, region, defsElement);
         }
         case CARTA.RegionType.ANNTEXT: {
-            const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
+            const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
-            return renderTextAnnotation(center, size, region, options.pixelRatio);
+            const rotation = frame?.spatialReference && frame.spatialTransform ? region.rotation + (frame.spatialTransform.rotation * 180) / Math.PI : region.rotation;
+            return renderTextAnnotation(center, size, region, options.pixelRatio, rotation);
         }
         case CARTA.RegionType.ANNCOMPASS:
             return renderCompassAnnotation(region as CompassAnnotationStore, frameView, layerWidth, layerHeight, defsElement, options);
