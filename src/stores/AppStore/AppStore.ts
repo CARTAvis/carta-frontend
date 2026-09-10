@@ -3725,7 +3725,7 @@ export class AppStore {
         }
     };
 
-    exportSvgImage = () => {
+    exportSvgImage = (imageRatio: number = 1) => {
         if (this.activeFrame) {
             const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
@@ -3733,7 +3733,7 @@ export class AppStore {
             }
 
             this.setIsExportingImage(true);
-            this.setImageRatio(1);
+            this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
                 if (this.activeFrame) {

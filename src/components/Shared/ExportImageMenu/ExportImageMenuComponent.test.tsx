@@ -17,7 +17,7 @@ describe("ExportImageMenuComponent", () => {
         mockExportSvgImage = jest.spyOn(AppStore.Instance, "exportSvgImage");
     });
 
-    test("renders two menu dividers and four menu items", () => {
+    test("renders two menu dividers and six menu items", () => {
         render(<ExportImageMenuComponent />);
 
         const separators = screen.getAllByRole("separator");
@@ -26,23 +26,30 @@ describe("ExportImageMenuComponent", () => {
         expect(separators[1]).toHaveTextContent(/^SVG$/);
 
         const menuitems = screen.getAllByRole("menuitem");
-        expect(menuitems?.length).toEqual(4);
+        expect(menuitems?.length).toEqual(6);
         expect(menuitems?.[0]).toHaveTextContent(/^Normal \(100%\)ctrl \+ E$/);
         expect(menuitems?.[1]).toHaveTextContent(/^High \(200%\)$/);
         expect(menuitems?.[2]).toHaveTextContent(/^Highest \(400%\)$/);
-        expect(menuitems?.[3]).toHaveTextContent(/^Export as SVG$/);
+        expect(menuitems?.[3]).toHaveTextContent(/^Normal \(100%\)$/);
+        expect(menuitems?.[4]).toHaveTextContent(/^High \(200%\)$/);
+        expect(menuitems?.[5]).toHaveTextContent(/^Highest \(400%\)$/);
     });
 
     test("calls the expected export method when clicked", () => {
         render(<ExportImageMenuComponent />);
+        const menuitems = screen.getAllByRole("menuitem");
 
-        fireEvent.click(screen.getByText(/Normal /));
+        fireEvent.click(menuitems[0]);
         expect(mockExportImage).toHaveBeenCalledWith(1);
-        fireEvent.click(screen.getByText(/High /));
+        fireEvent.click(menuitems[1]);
         expect(mockExportImage).toHaveBeenCalledWith(2);
-        fireEvent.click(screen.getByText(/Highest /));
+        fireEvent.click(menuitems[2]);
         expect(mockExportImage).toHaveBeenCalledWith(4);
-        fireEvent.click(screen.getByText(/Export as SVG/));
-        expect(mockExportSvgImage).toHaveBeenCalled();
+        fireEvent.click(menuitems[3]);
+        expect(mockExportSvgImage).toHaveBeenCalledWith(1);
+        fireEvent.click(menuitems[4]);
+        expect(mockExportSvgImage).toHaveBeenCalledWith(2);
+        fireEvent.click(menuitems[5]);
+        expect(mockExportSvgImage).toHaveBeenCalledWith(4);
     });
 });

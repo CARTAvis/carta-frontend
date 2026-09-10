@@ -15,7 +15,9 @@ export class ExportImageMenuComponent extends React.Component {
                 <MenuItem text="High (200%)" onClick={() => appStore.exportImage(2)} />
                 <MenuItem text="Highest (400%)" onClick={() => appStore.exportImage(4)} />
                 <MenuDivider title="SVG" />
-                <MenuItem text="Export as SVG" onClick={() => appStore.exportSvgImage()} />
+                <MenuItem text="Normal (100%)" onClick={() => appStore.exportSvgImage(1)} />
+                <MenuItem text="High (200%)" onClick={() => appStore.exportSvgImage(2)} />
+                <MenuItem text="Highest (400%)" onClick={() => appStore.exportSvgImage(4)} />
             </React.Fragment>
         );
     }
