@@ -11,7 +11,7 @@ import {runInAction} from "mobx";
 
 import {AngularSizeUnit, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {CatalogDisplayStore, CatalogPanelStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -342,18 +342,18 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("round-trips panel selection and presentation state through layout config", () => {
-        const panel = new CatalogPanelStore(7, "catalog-panel-primary");
+        const panel = new CatalogWidgetStore(7, "catalog-panel-primary");
         panel.setTableSeparatorPosition("40%");
         panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
         expect(panel.toLayoutSettings()).toEqual({
-            panelId: "catalog-panel-primary",
+            widgetId: "catalog-panel-primary",
             catalogFileId: 7,
             tableSeparatorPosition: "40%",
             settingsTabIdByCatalog: {"7": CatalogSettingsTabs.COLOR}
         });
 
-        const restored = new CatalogPanelStore();
+        const restored = new CatalogWidgetStore();
         restored.applyLayoutSettings(panel.toLayoutSettings());
         expect(restored.selectedCatalogId).toBe(7);
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
@@ -361,7 +361,7 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("remembers the settings section of each catalog the panel has shown", () => {
-        const panel = new CatalogPanelStore(1, "catalog-panel-primary");
+        const panel = new CatalogWidgetStore(1, "catalog-panel-primary");
         panel.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
 
         panel.setSelectedCatalogId(2);
@@ -375,8 +375,8 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("keeps the settings section of each panel separate", () => {
-        const first = new CatalogPanelStore(7, "catalog-panel-primary");
-        const second = new CatalogPanelStore(7, "catalog-panel-secondary");
+        const first = new CatalogWidgetStore(7, "catalog-panel-primary");
+        const second = new CatalogWidgetStore(7, "catalog-panel-secondary");
 
         first.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
@@ -384,7 +384,7 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("restores the settings section from a layout written before it was kept per catalog", () => {
-        const restored = new CatalogPanelStore();
+        const restored = new CatalogWidgetStore();
         restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION});
 
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);

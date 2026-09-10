@@ -165,18 +165,18 @@ export class CatalogStore {
             return;
         }
 
-        // CatalogPanelStore is the source of truth for the refactored catalog panels.
+        // CatalogWidgetStore is the source of truth for the refactored catalog panels.
         // Keep the legacy map synchronized while it remains for compatibility with
         // callers that have not migrated yet.
-        if (WidgetsStore.Instance.catalogPanelWidgets.size) {
+        if (WidgetsStore.Instance.catalogWidgets.size) {
             WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
             this.catalogProfiles.forEach((_value, componentId) => {
-                if (!WidgetsStore.Instance.catalogPanelWidgets.has(componentId)) {
+                if (!WidgetsStore.Instance.catalogWidgets.has(componentId)) {
                     this.catalogProfiles.delete(componentId);
                 }
             });
-            WidgetsStore.Instance.catalogPanelWidgets.forEach((panelStore, componentId) => {
-                this.catalogProfiles.set(componentId, panelStore.selectedCatalogId);
+            WidgetsStore.Instance.catalogWidgets.forEach((widgetStore, componentId) => {
+                this.catalogProfiles.set(componentId, widgetStore.selectedCatalogId);
             });
             return;
         }

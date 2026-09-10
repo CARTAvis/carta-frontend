@@ -5,7 +5,7 @@ import {CatalogPlotComponent} from "./CatalogPlotComponent";
 
 describe("CatalogPlotComponent catalog selection", () => {
     afterEach(() => {
-        WidgetsStore.Instance.catalogPanelWidgets.clear();
+        WidgetsStore.Instance.catalogWidgets.clear();
         jest.restoreAllMocks();
     });
 
@@ -28,7 +28,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         catalogStore.setCatalogPlots("catalog-plot-component-0", 7, "catalog-plot-0");
         widgetsStore.catalogPlotWidgets.set("catalog-plot-0", widgetStore as any);
         catalogStore.catalogDisplayStores.set(7, catalogDisplayStore as any);
-        const panel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-0", 1);
+        const panel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
 
         component["onLassoSelected"]({points: [{pointIndex: 3}]} as any);

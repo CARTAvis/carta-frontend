@@ -4,8 +4,8 @@ import {CatalogSettingsTabs} from "enums";
 import {PreferenceStore} from "stores";
 
 /** State owned by one catalog panel rather than by the catalog it displays. */
-export interface CatalogPanelLayoutSettings {
-    panelId?: string;
+export interface CatalogWidgetLayoutSettings {
+    widgetId?: string;
     /** Kept for layouts written before panel state was separated from display state. */
     catalogFileId?: number;
     tableSeparatorPosition?: string;
@@ -15,8 +15,8 @@ export interface CatalogPanelLayoutSettings {
     settingsTabId?: CatalogSettingsTabs;
 }
 
-export class CatalogPanelStore {
-    @observable panelId: string;
+export class CatalogWidgetStore {
+    @observable widgetId: string;
     @observable selectedCatalogId: number = 1;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
@@ -26,14 +26,14 @@ export class CatalogPanelStore {
      */
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
 
-    constructor(selectedCatalogId: number = 1, panelId: string = "") {
+    constructor(selectedCatalogId: number = 1, widgetId: string = "") {
         this.selectedCatalogId = selectedCatalogId;
-        this.panelId = panelId;
+        this.widgetId = widgetId;
         makeObservable(this);
     }
 
-    @action setPanelId = (panelId: string) => {
-        this.panelId = panelId;
+    @action setWidgetId = (widgetId: string) => {
+        this.widgetId = widgetId;
     };
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
@@ -52,19 +52,19 @@ export class CatalogPanelStore {
         this.settingsTabIdByCatalog.set(this.selectedCatalogId, tabId);
     };
 
-    public toLayoutSettings = (): CatalogPanelLayoutSettings => ({
-        ...(this.panelId ? {panelId: this.panelId} : {}),
+    public toLayoutSettings = (): CatalogWidgetLayoutSettings => ({
+        ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
         settingsTabIdByCatalog: Object.fromEntries(Array.from(this.settingsTabIdByCatalog, ([catalogFileId, tabId]) => [String(catalogFileId), tabId]))
     });
 
-    @action applyLayoutSettings = (settings: CatalogPanelLayoutSettings | null | undefined) => {
+    @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {
         if (!settings) {
             return;
         }
-        if (typeof settings.panelId === "string" && settings.panelId) {
-            this.panelId = settings.panelId;
+        if (typeof settings.widgetId === "string" && settings.widgetId) {
+            this.widgetId = settings.widgetId;
         }
         if (typeof settings.catalogFileId === "number") {
             this.selectedCatalogId = settings.catalogFileId;

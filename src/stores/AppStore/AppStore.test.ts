@@ -15,11 +15,11 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogDisplayStores.clear();
         catalogStore.catalogProfiles.clear();
         catalogStore.imageAssociatedCatalogId.clear();
-        widgetsStore.catalogPanelWidgets.clear();
+        widgetsStore.catalogWidgets.clear();
     });
 
     test("updates an existing panel when loading a catalog after the panel store exists", () => {
-        const panel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-0", 1);
+        const panel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         catalogStore.imageAssociatedCatalogId.set(100, [1]);
 
         jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
@@ -32,8 +32,8 @@ describe("AppStore.handleCatalogFilterStream", () => {
     });
 
     test("updates every panel when the first catalog is loaded for a new image", () => {
-        const firstPanel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-0", 1);
-        const secondPanel = widgetsStore.getCatalogPanelStore("catalog-overlay-component-1", 1);
+        const firstPanel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        const secondPanel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
         catalogStore.imageAssociatedCatalogId.set(101, []);
 
         const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);

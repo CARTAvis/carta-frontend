@@ -1239,7 +1239,7 @@ export class AppStore {
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
-        const catalogComponentSize = this.widgetsStore.catalogPanelWidgets.size;
+        const catalogComponentSize = this.widgetsStore.catalogWidgets.size;
         const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;

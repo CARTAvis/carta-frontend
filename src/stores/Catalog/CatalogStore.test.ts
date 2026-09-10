@@ -7,12 +7,12 @@ describe("CatalogStore panel selection compatibility", () => {
     afterEach(() => {
         catalogStore.imageAssociatedCatalogId.clear();
         catalogStore.catalogProfiles.clear();
-        widgetsStore.catalogPanelWidgets.clear();
+        widgetsStore.catalogWidgets.clear();
     });
 
     test("resets panel selections even when the legacy map is empty", () => {
         catalogStore.updateImageAssociatedCatalogId(101, [7, 8]);
-        const panel = widgetsStore.getCatalogPanelStore("catalog-panel-0", 99);
+        const panel = widgetsStore.getCatalogWidgetStore("catalog-panel-0", 99);
 
         catalogStore.resetActiveCatalogFile(101);
 
@@ -22,8 +22,8 @@ describe("CatalogStore panel selection compatibility", () => {
 
     test("removes stale legacy entries and mirrors every live panel", () => {
         catalogStore.updateImageAssociatedCatalogId(102, [7, 8]);
-        const firstPanel = widgetsStore.getCatalogPanelStore("catalog-panel-0", 7);
-        const secondPanel = widgetsStore.getCatalogPanelStore("catalog-panel-1", 8);
+        const firstPanel = widgetsStore.getCatalogWidgetStore("catalog-panel-0", 7);
+        const secondPanel = widgetsStore.getCatalogWidgetStore("catalog-panel-1", 8);
         catalogStore.catalogProfiles.set("catalog-panel-0", 99);
         catalogStore.catalogProfiles.set("closed-panel", 8);
 

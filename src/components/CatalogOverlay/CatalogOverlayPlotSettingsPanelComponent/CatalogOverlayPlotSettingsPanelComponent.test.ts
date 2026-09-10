@@ -1,5 +1,5 @@
 import {CatalogSettingsTabs, FrameScaling} from "enums";
-import {type CatalogDisplayStore, type CatalogPanelStore} from "stores";
+import {type CatalogDisplayStore, type CatalogWidgetStore} from "stores";
 
 import {CatalogOverlayPlotSettingsPanelComponent} from "./CatalogOverlayPlotSettingsPanelComponent";
 
@@ -131,14 +131,14 @@ describe("CatalogOverlayPlotSettingsPanelComponent colormap preview", () => {
 describe("CatalogOverlayPlotSettingsPanelComponent settings tabs", () => {
     test("returns to the major size axis when the top-level tab changes", () => {
         const displayStore = {setSizeAxisTab: jest.fn()} as unknown as CatalogDisplayStore;
-        const panelStore = {setSettingsTabId: jest.fn()} as unknown as CatalogPanelStore;
+        const widgetStore = {setSettingsTabId: jest.fn()} as unknown as CatalogWidgetStore;
         const component = createComponent();
         Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
-        Object.defineProperty(component, "panelStore", {configurable: true, get: () => panelStore});
+        Object.defineProperty(component, "widgetStore", {configurable: true, get: () => widgetStore});
 
         component.handleSelectedTabChanged(CatalogSettingsTabs.COLOR);
 
-        expect(panelStore.setSettingsTabId).toHaveBeenCalledWith(CatalogSettingsTabs.COLOR);
+        expect(widgetStore.setSettingsTabId).toHaveBeenCalledWith(CatalogSettingsTabs.COLOR);
         expect(displayStore.setSizeAxisTab).toHaveBeenCalledWith(CatalogSettingsTabs.SIZE_MAJOR);
     });
 });

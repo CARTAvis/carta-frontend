@@ -588,13 +588,13 @@ describe("CatalogOverlayComponent", () => {
 
     test("resets the size-axis tab when a settings shortcut is opened", () => {
         const {component, componentId, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
-        const panelStore = WidgetsStore.Instance.catalogPanelWidgets.get(componentId);
+        const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);
         widgetStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
         jest.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(jest.fn());
 
         component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
 
-        expect(panelStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widgetStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
         expect(widgetStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
     });
 

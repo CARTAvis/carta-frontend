@@ -196,7 +196,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("persists catalog display settings alongside panel layout settings", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const panelStore = widgetsStore.getCatalogPanelStore("catalog-overlay-7", 7);
+        const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
         const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
         const displayStore = {toConfig: () => displayConfig};
 
@@ -204,7 +204,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
         expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toEqual({
             ...displayConfig,
-            ...panelStore.toLayoutSettings()
+            ...widgetStore.toLayoutSettings()
         });
 
         CatalogStore.Instance.catalogDisplayStores.delete(7);
