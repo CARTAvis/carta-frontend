@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogType, PreferenceKeys} from "enums";
+import {CatalogSystemType, CatalogType, PreferenceKeys} from "enums";
 import {PreferenceStore} from "stores";
 
 import {CatalogProfileStore} from "./CatalogProfileStore";
@@ -95,5 +95,53 @@ describe("CatalogProfileStore initial column display", () => {
     test("promotes nothing when no name looks like a coordinate", () => {
         const store = CreateProfileStore([{name: "id"}, {name: "flux"}, {name: "mag"}, {name: "note"}, {name: "comment"}]);
         expect(DisplayedColumnNames(store)).toEqual(["id", "flux", "mag"]);
+    });
+});
+
+describe("CatalogProfileStore coordinate system", () => {
+    const systemOf = (system: string | undefined) => CreateProfileStore([{name: "RAJ2000"}, {name: "DEJ2000"}], system).catalogCoordinateSystem.system;
+
+    // VOTable 1.4, section 3.4.
+    test.each([
+        ["ICRS", CatalogSystemType.ICRS],
+        ["eq_FK5", CatalogSystemType.FK5],
+        ["eq_FK4", CatalogSystemType.FK4],
+        ["ecl_FK5", CatalogSystemType.Ecliptic],
+        ["ecl_FK4", CatalogSystemType.Ecliptic],
+        ["galactic", CatalogSystemType.Galactic]
+    ])("reads the standard VOTable COOSYS value %s", (system, expected) => {
+        expect(systemOf(system)).toBe(expected);
+    });
+
+    test("does not let the equatorial spellings swallow the ecliptic ones", () => {
+        // "ecl_FK5" contains "FK5". Read as FK5, the x axis becomes RA, and an ecliptic longitude
+        // written sexagesimally is then scaled by fifteen.
+        expect(systemOf("ecl_FK5")).not.toBe(CatalogSystemType.FK5);
+        expect(systemOf("ecl_FK4")).not.toBe(CatalogSystemType.FK4);
+    });
+
+    test("is case and whitespace insensitive", () => {
+        expect(systemOf("  ECL_FK5  ")).toBe(CatalogSystemType.Ecliptic);
+        expect(systemOf("Eq_Fk4")).toBe(CatalogSystemType.FK4);
+    });
+
+    test.each([
+        ["ECLIPTIC", CatalogSystemType.Ecliptic],
+        ["GALACTIC", CatalogSystemType.Galactic],
+        ["FK5", CatalogSystemType.FK5],
+        ["FK4", CatalogSystemType.FK4],
+        ["PIX0", CatalogSystemType.Pixel0],
+        ["PIX1", CatalogSystemType.Pixel1]
+    ])("still accepts the looser spelling %s", (system, expected) => {
+        expect(systemOf(system)).toBe(expected);
+    });
+
+    test.each([["xy"], ["barycentric"], ["geo_app"], ["nonsense"], [""], [undefined]])("falls back to ICRS for %s", system => {
+        expect(systemOf(system as string)).toBe(CatalogSystemType.ICRS);
+    });
+
+    test("an ecliptic file gets ecliptic axes, not equatorial ones", () => {
+        const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK5");
+        expect(store.activedSystem).toEqual({x: "ELON", y: "ELAT"});
     });
 });

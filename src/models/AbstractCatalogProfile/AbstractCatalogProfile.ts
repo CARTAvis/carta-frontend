@@ -148,15 +148,50 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogData.clear();
     }
 
+    /**
+     * The values VOTable 1.4 section 3.4 allows for COOSYS/\@system. Matched exactly, because the
+     * ecliptic spellings contain the equatorial ones: a substring test reads "ecl_FK5" as FK5,
+     * which silently turns an ecliptic longitude into a right ascension and scales it by fifteen.
+     */
+    private static readonly VotableCoordinateSystems = new Map<string, CatalogSystemType>([
+        ["icrs", CatalogSystemType.ICRS],
+        ["eq_fk5", CatalogSystemType.FK5],
+        ["eq_fk4", CatalogSystemType.FK4],
+        ["ecl_fk5", CatalogSystemType.Ecliptic],
+        ["ecl_fk4", CatalogSystemType.Ecliptic],
+        ["galactic", CatalogSystemType.Galactic]
+    ]);
+
+    /**
+     * Looser spellings, for files that do not follow the enumeration and for CARTA's own pixel
+     * systems. Ordered most specific first and matched on the first hit, so "ecl_" cannot fall
+     * through to the equatorial keywords.
+     *
+     * "supergalactic" is a standard VOTable value that CARTA has no system for; it lands on
+     * Galactic here, as it always has.
+     */
+    private static readonly CoordinateSystemKeywords: ReadonlyArray<[string, CatalogSystemType]> = [
+        ["ecl", CatalogSystemType.Ecliptic],
+        ["galactic", CatalogSystemType.Galactic],
+        ["icrs", CatalogSystemType.ICRS],
+        ["fk5", CatalogSystemType.FK5],
+        ["fk4", CatalogSystemType.FK4],
+        ["pix0", CatalogSystemType.Pixel0],
+        ["pix1", CatalogSystemType.Pixel1]
+    ];
+
     public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
-        let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME;
-        systemMap.forEach((value, key) => {
-            if (system?.toUpperCase().includes(value.toUpperCase())) {
-                catalogSystem = key;
-            }
-        });
-        return catalogSystem;
+        const normalizedSystem = system?.trim().toLowerCase();
+        if (!normalizedSystem) {
+            return CatalogSystemType.ICRS;
+        }
+
+        const declaredSystem = AbstractCatalogProfileStore.VotableCoordinateSystems.get(normalizedSystem);
+        if (declaredSystem !== undefined) {
+            return declaredSystem;
+        }
+
+        return AbstractCatalogProfileStore.CoordinateSystemKeywords.find(([keyword]) => normalizedSystem.includes(keyword))?.[1] ?? CatalogSystemType.ICRS;
     }
 
     public get2DPlotData(
