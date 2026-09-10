@@ -11,6 +11,8 @@ type MockColumn = {
     dataType?: CARTA.ColumnType;
     name: string;
     units?: string;
+    /** Sample values. A unitless string column without them is Unknown, not eligible. */
+    data?: Array<string | number | null>;
 };
 
 type MockWidgetStore = {
@@ -32,6 +34,7 @@ type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
+    catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
     isFileBasedCatalog: boolean;
     maxRows: number;
@@ -78,6 +81,7 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
 
 const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): MockProfileStore => {
     const catalogControlHeader = new Map<string, {dataIndex: number; display: boolean; filter: string}>();
+    const catalogData = new Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>();
     const catalogHeader = columns.map((column, index) => {
         catalogControlHeader.set(column.name, {
             dataIndex: index,
@@ -85,9 +89,14 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
             filter: ""
         });
 
+        const dataType = column.dataType ?? CARTA.ColumnType.Double;
+        if (column.data) {
+            catalogData.set(index, {dataType, data: column.data});
+        }
+
         return {
             columnIndex: index,
-            dataType: column.dataType ?? CARTA.ColumnType.Double,
+            dataType,
             name: column.name,
             units: column.units
         };
@@ -97,6 +106,7 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
+        catalogData,
         catalogHeader,
         isFileBasedCatalog: false,
         maxRows: 100,
@@ -301,33 +311,66 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.setyAxis).not.toHaveBeenCalled();
         });
 
-        test("keeps ecliptic longitude and latitude candidates on their semantic axes", () => {
+        test("ranks ecliptic longitude and latitude candidates onto their semantic axes", () => {
             const {component} = CreateComponentHarness(CatalogSystemType.Ecliptic, [
-                {name: "ELON1", dataType: CARTA.ColumnType.String},
-                {name: "ELAT1", dataType: CARTA.ColumnType.String},
+                {name: "ELON1", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: "ELAT1", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]},
                 {name: "ELON2", dataType: CARTA.ColumnType.String, units: "dms"},
-                {name: "ELAT2", dataType: CARTA.ColumnType.String, units: "dms"},
-                {name: "RADEC", dataType: CARTA.ColumnType.String, units: "hmsdms"},
-                {name: "GAL", dataType: CARTA.ColumnType.String, units: "dmsdms"},
-                {name: "ECL", dataType: CARTA.ColumnType.String, units: "dmsdms"}
+                {name: "ELAT2", dataType: CARTA.ColumnType.String, units: "dms"}
             ]);
 
-            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "ELON1", "ELON2"]);
-            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ELAT1", "ELAT2"]);
+            // Every column stays reachable; only the order differs between the two axes.
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "ELON1", "ELON2", "ELAT1", "ELAT2"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ELAT1", "ELAT2", "ELON1", "ELON2"]);
         });
 
-        test("includes hms and dms columns in the matching coordinate dropdowns", () => {
+        test("drops string columns whose values are not coordinates", () => {
             const {component} = CreateComponentHarness(CatalogSystemType.ICRS, [
-                {name: "RA1", dataType: CARTA.ColumnType.String},
-                {name: "DEC1", dataType: CARTA.ColumnType.String},
-                {name: "label", dataType: CARTA.ColumnType.String}
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, units: "dms"},
+                {name: "label", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]}
             ]);
 
-            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RA1"]);
-            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEC1"]);
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RA1", "DEC1"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEC1", "RA1"]);
+        });
+
+        test("offers a unitless string column but marks it unknown until its values are loaded", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "note", dataType: CARTA.ColumnType.String}
+            ]);
+
+            expect(component["xAxisOption"]).toContain("note");
+            expect(component["axisColumnEligibility"].get("note")?.status).toBe("unknown");
+            expect(component["axisColumnEligibility"].get("note")?.reason).toBeTruthy();
         });
 
         test("auto-selects hms and dms coordinate columns", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, units: "dms"}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("auto-selects a unitless string column once its values can be sniffed", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, data: ["12:30:00", "10:15:30"]},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "+02:28:35"]}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("does not auto-select a string column whose values have not been loaded", () => {
             const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
                 {name: "RA1", dataType: CARTA.ColumnType.String},
                 {name: "DEC1", dataType: CARTA.ColumnType.String}
@@ -335,8 +378,8 @@ describe("CatalogOverlayComponent", () => {
 
             component["autoSelectAxes"]();
 
-            expect(widgetStore.xAxis).toBe("RA1");
-            expect(widgetStore.yAxis).toBe("DEC1");
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
         });
 
         test.each([
@@ -346,12 +389,12 @@ describe("CatalogOverlayComponent", () => {
             ["Pixel1", CatalogSystemType.Pixel1, "X_IMAGE", "Y_IMAGE"]
         ])("includes and auto-selects string %s coordinate columns", (_label, system, xColumn, yColumn) => {
             const {component, widgetStore} = CreateComponentHarness(system, [
-                {name: xColumn, dataType: CARTA.ColumnType.String},
-                {name: yColumn, dataType: CARTA.ColumnType.String}
+                {name: xColumn, dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: yColumn, dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
             ]);
 
-            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, xColumn]);
-            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, yColumn]);
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, xColumn, yColumn]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, yColumn, xColumn]);
 
             component["autoSelectAxes"]();
 
@@ -359,15 +402,15 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe(yColumn);
         });
 
-        test("does not include angular columns in pixel coordinate dropdowns", () => {
+        test("ranks an angular column below the pixel candidates without hiding it", () => {
             const {component} = CreateComponentHarness(CatalogSystemType.Pixel0, [
                 {name: "GLON", dataType: CARTA.ColumnType.Double, units: "deg"},
-                {name: "xcentroid", dataType: CARTA.ColumnType.String},
-                {name: "ycentroid", dataType: CARTA.ColumnType.String}
+                {name: "xcentroid", dataType: CARTA.ColumnType.String, data: ["512.25"]},
+                {name: "ycentroid", dataType: CARTA.ColumnType.String, data: ["256.75"]}
             ]);
 
-            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "xcentroid"]);
-            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ycentroid"]);
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "xcentroid", "GLON", "ycentroid"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ycentroid", "GLON", "xcentroid"]);
         });
 
         test.each([CatalogPlotType.Histogram, CatalogPlotType.D2Scatter])("keeps numeric coordinate columns available for %s plots", catalogPlotType => {

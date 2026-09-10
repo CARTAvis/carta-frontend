@@ -5,7 +5,21 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
-import {filterProcessedColumnData, getCatalogCoordinateFormat, getComparisonOperatorAndValue, getHasFilter, minMaxArray, parseCatalogCoordinateValue, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
+import {
+    CatalogAxisEligibility,
+    filterProcessedColumnData,
+    getCatalogAxisEligibility,
+    getComparisonOperatorAndValue,
+    getHasFilter,
+    isCatalogLatitudeAxis,
+    minMaxArray,
+    parseCoordinateValue,
+    type ProcessedColumnData,
+    rejectOutOfRangeLatitude,
+    resolveDescriptorForAxis,
+    transformPoint,
+    type TypedArray
+} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -14,21 +28,35 @@ export interface CatalogInfo {
     directory: string;
 }
 
-function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units: string | null | undefined, columnName: string): Array<number> | undefined {
-    if (!column || column.dataType === CARTA.ColumnType.Bool) {
+/**
+ * Converts a column to numeric coordinates for the axis it has been bound to. This is the one
+ * place where an ambiguous format (a bare "12:30:00", which is hours on RA and degrees elsewhere)
+ * is resolved, because it is the first point at which the axis is known.
+ */
+function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
+    if (!column) {
         return undefined;
     }
 
-    if (column.dataType !== CARTA.ColumnType.String) {
-        return column.data as Array<number>;
-    }
-
-    const format = getCatalogCoordinateFormat(column.dataType, units, columnName);
-    if (!format) {
+    const eligibility = getCatalogAxisEligibility(column.dataType, units, column.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined);
+    if (eligibility.status !== CatalogAxisEligibility.Eligible) {
         return undefined;
     }
 
-    return (column.data as Array<string | null | undefined>).map(value => parseCatalogCoordinateValue(value, format, units));
+    // Applied to numeric columns too: a declination of -91 breaks the transform the same way
+    // whether it arrived as a number or as a string.
+    const isLatitude = isCatalogLatitudeAxis(axis);
+
+    if (!eligibility.descriptor) {
+        const numericData = column.data as Array<number>;
+        return isLatitude ? numericData.map(rejectOutOfRangeLatitude) : numericData;
+    }
+
+    const descriptor = resolveDescriptorForAxis(eligibility.descriptor, axis);
+    return (column.data as Array<string | null | undefined>).map(value => {
+        const degrees = parseCoordinateValue(value, descriptor);
+        return isLatitude ? rejectOutOfRangeLatitude(degrees) : degrees;
+    });
 }
 
 export abstract class AbstractCatalogProfileStore {
@@ -144,8 +172,8 @@ export abstract class AbstractCatalogProfileStore {
 
         const xColumn = columnsData.get(xHeaderInfo.columnIndex);
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
-        const wcsX = getCatalogCoordinateData(xColumn, xHeaderInfo.units, xColumnName);
-        const wcsY = getCatalogCoordinateData(yColumn, yHeaderInfo.units, yColumnName);
+        const wcsX = getCatalogCoordinateData(xColumn, xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
+        const wcsY = getCatalogCoordinateData(yColumn, yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
 
         if (wcsX && wcsY) {
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
