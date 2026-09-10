@@ -587,15 +587,15 @@ describe("CatalogOverlayComponent", () => {
     });
 
     test("resets the size-axis tab when a settings shortcut is opened", () => {
-        const {component, componentId, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const {component, componentId, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
         const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);
-        widgetStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+        displayStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
         jest.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(jest.fn());
 
         component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
 
         expect(widgetStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
-        expect(widgetStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
+        expect(displayStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
     });
 
     describe("isImageOverlaySelectionDirty", () => {
