@@ -117,6 +117,32 @@ const OBS_TIME_FRAME_INFO: FrameInfo = {
     } as any
 };
 
+// SDSS MaNGA LOGCUBE: log-wavelength spectral axis, no SPECSYS, no RESTFRQ (issue #2890)
+const LOG_WAVELENGTH_CUBEFRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["1"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
+        dimensions: 3,
+        width: 2,
+        height: 2,
+        depth: 3,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 3, stokes: 0, depth: 3},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---TAN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--TAN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "CTYPE3", value: "WAVE-LOG"},
+            {name: "CRVAL3", value: "3621.59598486", entryType: 1, numericValue: 3621.59598486},
+            {name: "CD3_3", value: "0.833903304339", entryType: 1, numericValue: 0.833903304339},
+            {name: "CRPIX3", value: "1", entryType: 1, numericValue: 1},
+            {name: "CUNIT3", value: "Angstrom"},
+            {name: "BUNIT", value: "1E-17 erg/s/cm^2/Angstrom/spaxel"}
+        ]
+    } as any
+};
+
 describe("FrameStore", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -239,6 +265,35 @@ describe("FrameStore", () => {
             expect(config["bmaj"]).toEqual([0.9315811991691589, 0.9315744042396545, 0.9315680265426636]);
             expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);
             expect(config["freqGHz"]).toEqual([90.73634849111, 90.73631797353188, 90.73628745595375]);
+        });
+    });
+
+    describe("spectral axis with a non-linear algorithm code", () => {
+        test("recognizes a WAVE-LOG axis as a vacuum wavelength axis", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, specsys: ""}));
+            expect(frame.nativeSpectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+            expect(frame.spectralType).toBe(SpectralType.WAVE);
+            expect(frame.isSpectralCoordinateConvertible).toBe(true);
+        });
+
+        test("offers wavelength and frequency coordinates but no velocity or system conversion without RESTFRQ and SPECSYS", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            const coordinates = Array.from(frame.spectralCoordsSupported?.keys() ?? []);
+            expect(coordinates).toEqual(expect.arrayContaining(["Vacuum wavelength (Angstrom)", "Frequency (GHz)", "Air wavelength (nm)", "Channel"]));
+            expect(coordinates).not.toEqual(expect.arrayContaining(["Radio velocity (km/s)"]));
+            expect(frame.spectralSystemsSupported).toEqual([]);
+            expect(frame.isSpectralSystemConvertible).toBe(false);
+        });
+
+        test("omits the missing spectral system from the cursor info", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
+            try {
+                const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+                expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
         });
     });
 

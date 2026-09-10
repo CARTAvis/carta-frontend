@@ -33,7 +33,7 @@ export class SpectralSettingsComponent extends React.Component<{
                 ? frame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system, key: system};
                   })
-                : [{value: frame?.spectralAxis?.specsys ?? "", label: frame?.spectralAxis?.specsys ?? ""}];
+                : [{value: frame?.spectralAxis?.specsys || "", label: frame?.spectralAxis?.specsys || "Unknown"}];
         const shouldDisableCoordinateSetting = this.props.disable;
         const shouldDisableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 

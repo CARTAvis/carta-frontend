@@ -15,6 +15,7 @@ import {
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
     GetFreqInGHz,
+    GetSpectralTypeCode,
     type IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
@@ -729,7 +730,8 @@ export class FrameStore {
         if (!spectralType || !this.channelInfo) {
             return {spectralString: "", velocityString: "", freqString: ""};
         }
-        result.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
+        const specsys = this.spectralAxis?.specsys;
+        result.spectralString = `${spectralType.name}${specsys ? ` (${specsys})` : ""}: ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
         if (spectralType.code === "FREQ") {
             const freqVal = this.channelInfo.values[channel];
             // convert frequency value to unit in GHz
@@ -996,7 +998,8 @@ export class FrameStore {
             if (this.spectralNumber > 0) {
                 const spectralHeader = entries.find(entry => entry.name?.includes(`CTYPE${this.spectralNumber}`));
                 const spectralValue = spectralHeader?.value?.trim().toUpperCase();
-                const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
+                const spectralTypeCode = GetSpectralTypeCode(spectralValue);
+                const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralTypeCode === type.code);
                 const valueHeader = entries.find(entry => entry.name?.includes(`CRVAL${this.spectralNumber}`));
                 const unitHeader = entries.find(entry => entry.name?.includes(`CUNIT${this.spectralNumber}`));
                 const specSysHeader = entries.find(entry => entry.name?.includes("SPECSYS"));

@@ -20,6 +20,20 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "BETA", name: "Beta", unit: ""}
 ];
 
+// Non-linear spectral algorithm codes (Table 26 of V4.0 of "Definition of the Flexible Image Transport System"), e.g. WAVE-LOG or FREQ-F2W.
+// "TAB" is left out: the lookup table of such an axis is not available to the frontend, so it cannot be converted.
+const SPECTRAL_ALGORITHM_CODES = ["LOG", "F2W", "F2V", "F2A", "W2F", "W2V", "W2A", "V2F", "V2W", "V2A", "A2F", "A2W", "A2V", "GRI", "GRA"];
+
+/**
+ * Get the spectral coordinate type code of a CTYPE value, without its non-linear algorithm code (e.g. "WAVE" for "WAVE-LOG")
+ * @param ctype - CTYPE value of the spectral axis
+ */
+export const GetSpectralTypeCode = (ctype: string | undefined): string => {
+    const value = ctype?.trim().toUpperCase() ?? "";
+    const match = value.match(/^([A-Z]{4})-([A-Z0-9]{3})$/);
+    return match && SPECTRAL_ALGORITHM_CODES.includes(match[2]) ? match[1] : value;
+};
+
 // Channel is not a valid standalone spectral type
 export const IsSpectralTypeSupported = (typeStr: string): boolean => {
     const normalizedStr = typeStr?.toUpperCase();
