@@ -8,6 +8,14 @@ function renderRegion(region: Record<string, unknown>, pixelRatio = 1): SVGGElem
     return renderRegionsToSvg([region as any], FRAME_VIEW, 1000, 1000, 0, 0, {pixelRatio});
 }
 
+function matchedFrame(): Record<string, unknown> {
+    return {
+        spatialReference: {},
+        spatialTransformAST: {},
+        spatialTransform: {transformCoordinate: (point: {x: number; y: number}) => point}
+    };
+}
+
 function baseRegion(regionType: CARTA.RegionType, controlPoints: {x: number; y: number}[]): Record<string, unknown> {
     return {
         regionId: 1,
@@ -63,6 +71,38 @@ describe("renderRegionsToSvg", () => {
 
         expect(text?.textContent).toBe("label");
         expect(text?.getAttribute("font-size")).toBe("24");
+    });
+
+    it("preserves matched-frame line and vector approximation points", () => {
+        const approximation = [
+            {x: 10, y: 10},
+            {x: 20, y: 30},
+            {x: 40, y: 20}
+        ];
+        const line = {
+            ...baseRegion(CARTA.RegionType.LINE, [
+                {x: 10, y: 10},
+                {x: 40, y: 20}
+            ]),
+            getRegionApproximation: () => approximation
+        };
+        const vector = {
+            ...baseRegion(CARTA.RegionType.ANNVECTOR, [
+                {x: 10, y: 10},
+                {x: 40, y: 20}
+            ]),
+            getRegionApproximation: () => approximation,
+            pointerWidth: 6,
+            pointerLength: 8
+        };
+
+        const group = renderRegionsToSvg([line as any, vector as any], FRAME_VIEW, 1000, 1000, 0, 0, {frame: matchedFrame() as any});
+        const polylines = group.querySelectorAll("polyline");
+
+        expect(polylines).toHaveLength(2);
+        expect(polylines[0].getAttribute("points")).toBe("100.00,900.00 200.00,700.00 400.00,800.00");
+        expect(polylines[1].getAttribute("points")).toBe("100,900 200,700 400,800");
+        expect(polylines[1].getAttribute("marker-end")).toContain("arrowhead-");
     });
 
     it("exports compass and ruler annotations", () => {

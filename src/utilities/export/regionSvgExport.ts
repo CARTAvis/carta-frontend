@@ -169,7 +169,7 @@ function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: b
     });
 }
 
-function renderVectorAnnotation(start: Point2D, end: Point2D, region: RegionStore, defsElement: SVGDefsElement): SVGGElement {
+function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     const markerId = `arrowhead-${region.regionId}`;
 
@@ -189,11 +189,8 @@ function renderVectorAnnotation(start: Point2D, end: Point2D, region: RegionStor
     marker.appendChild(arrowPath);
     defsElement.appendChild(marker);
 
-    const line = createSvgElement("line", {
-        x1: start.x,
-        y1: start.y,
-        x2: end.x,
-        y2: end.y,
+    const line = createSvgElement("polyline", {
+        points: points.map(point => `${point.x},${point.y}`).join(" "),
         "marker-end": `url(#${markerId})`,
         ...getStrokeAttrs(region)
     });
@@ -485,9 +482,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            const start = points[0];
-            const end = points[1];
-            return renderLineRegion(start, end, region);
+            return spatialPoints ? renderPolygonRegion(points, region, false) : renderLineRegion(points[0], points[1], region);
         }
         case CARTA.RegionType.RECTANGLE:
         case CARTA.RegionType.ANNRECTANGLE: {
@@ -519,9 +514,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         }
         case CARTA.RegionType.ANNVECTOR: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            const start = points[0];
-            const end = points[points.length - 1];
-            return renderVectorAnnotation(start, end, region, defsElement);
+            return renderVectorAnnotation(points, region, defsElement);
         }
         case CARTA.RegionType.ANNTEXT: {
             const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
