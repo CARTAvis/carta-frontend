@@ -79,6 +79,7 @@ import {
     Distinct,
     exportScreenshot,
     getColorForTheme,
+    GetExportBackgroundColor,
     getPasteRegionOffset,
     GetRequiredTiles,
     getTimestamp,
@@ -3703,7 +3704,7 @@ export class AppStore {
             this.setIsExportingImage(true);
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
                 if (this.activeFrame) {
                     const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                     if (composedCanvas) {
@@ -3734,7 +3735,7 @@ export class AppStore {
             this.setIsExportingImage(true);
             this.setImageRatio(1);
             this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
                 if (this.activeFrame) {
                     const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
                     if (svgDoc) {

@@ -21,7 +21,7 @@ import {
     ScalingSelectComponent,
     ScrollShadow
 } from "components/Shared";
-import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
+import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, ExportBackgroundColor, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
@@ -310,6 +310,14 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed bias/contrast">
                     <Switch checked={preference.shouldUseSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Export background">
+                    <HTMLSelect value={preference.exportBackgroundColor} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_EXPORT_BACKGROUND_COLOR, ev.currentTarget.value)}>
+                        <option value={ExportBackgroundColor.AUTO}>Auto</option>
+                        <option value={ExportBackgroundColor.BLACK}>Black</option>
+                        <option value={ExportBackgroundColor.WHITE}>White</option>
+                        <option value={ExportBackgroundColor.TRANSPARENT}>Transparent</option>
+                    </HTMLSelect>
                 </FormGroup>
             </React.Fragment>
         );

@@ -7,6 +7,7 @@ import {
     ColorMap,
     ContourGeneratorType,
     CursorInfoVisibility,
+    ExportBackgroundColor,
     FileFilteringType,
     FileFilterMode,
     FrameScaling,
@@ -66,7 +67,8 @@ const DEFAULTS = {
         colormapHexStart: "#000000",
         percentile: 99.9,
         nanColorHex: "#137CBD",
-        useSmoothedBiasContrast: true
+        useSmoothedBiasContrast: true,
+        backgroundColor: ExportBackgroundColor.AUTO
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -274,6 +276,14 @@ export class PreferenceStore {
 
     @computed get hasTransparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    }
+
+    @computed get exportBackgroundColor(): ExportBackgroundColor {
+        const backgroundColor = this.preferences.get(PreferenceKeys.RENDER_CONFIG_EXPORT_BACKGROUND_COLOR);
+        if (Object.values(ExportBackgroundColor).includes(backgroundColor)) {
+            return backgroundColor;
+        }
+        return this.hasTransparentImageBackground ? ExportBackgroundColor.TRANSPARENT : DEFAULTS.RENDER_CONFIG.backgroundColor;
     }
 
     @computed get isCodeSnippetsEnabled(): boolean {
@@ -844,7 +854,8 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
-            PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
+            PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST,
+            PreferenceKeys.RENDER_CONFIG_EXPORT_BACKGROUND_COLOR
         ]);
     };
 

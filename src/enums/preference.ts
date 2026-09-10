@@ -37,6 +37,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_CONTRAST = "renderConfigContrast",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
     RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
+    RENDER_CONFIG_EXPORT_BACKGROUND_COLOR = "exportBackgroundColor",
 
     CONTOUR_CONFIG_GENERATOR_TYPE = "contourGeneratorType",
     CONTOUR_CONFIG_SMOOTHING_MODE = "contourSmoothingMode",
