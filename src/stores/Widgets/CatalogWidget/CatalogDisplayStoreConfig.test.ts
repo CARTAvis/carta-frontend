@@ -11,7 +11,7 @@ import {runInAction} from "mobx";
 
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
+import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -123,6 +123,7 @@ afterEach(() => {
     CREATED_STORES.forEach(store => store.dispose());
     CREATED_STORES.length = 0;
     runInAction(() => CatalogStore.Instance.catalogProfileStores.clear());
+    jest.restoreAllMocks();
 });
 
 describe("CatalogDisplayStore display config", () => {
@@ -441,6 +442,58 @@ describe("CatalogDisplayStore display config", () => {
         // The minor bounds track the major axis rather than their own column's range.
         expect(store.sizeMinorColumnMin.clipd).toBe(store.sizeColumnMin.clipd);
         expect(store.sizeMinorColumnMax.clipd).toBe(store.sizeColumnMax.clipd);
+    });
+
+    test("does not mistake a column whose range is inexact in float32 for one the user clipped", () => {
+        const store = createStore();
+        loadRows(profileStoreOf(store), [1.1, 4.3, 7.7, 10.9]);
+
+        const config: WorkspaceCatalogConfig = {sizeAxis: {mapColumn: "Fmag"}};
+        store.applyConfig(config);
+        // The second apply finds the column already mapped, so nothing recomputes the bounds for it.
+        store.applyConfig(config);
+
+        expect(store.sizeColumnMin.clipd).toBe(store.sizeColumnMin.default);
+        expect(store.sizeColumnMax.clipd).toBe(store.sizeColumnMax.default);
+        expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
+        expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
+    });
+
+    test("reports settings it will not restore instead of dropping them silently", () => {
+        const store = createStoreWithoutData();
+        const catalogFileId = store.catalogFileId;
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+
+        // Deferred until the catalog arrives, which is not yet a failure worth reporting.
+        expect(store.applyConfigWhenReady({colorAxis: {mapColumn: "Missing"}}).success).toBe(false);
+        expect(addWarning).not.toHaveBeenCalled();
+
+        // The catalog arrives, and the retry finds the column is not one it has.
+        runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(addWarning.mock.calls[0][0]).toContain('The color axis is mapped to "Missing"');
+        expect(addWarning.mock.calls[0][0]).toContain("test-catalog");
+        expect(addWarning.mock.calls[0][1]).toEqual(["catalog"]);
+    });
+
+    test("reports a config rejected outright, which is not deferred for a retry", () => {
+        const store = createStore();
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+
+        expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "Missing"}).success).toBe(false);
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(addWarning.mock.calls[0][0]).toContain('The y axis is set to "Missing"');
+    });
+
+    test("says nothing when a config applies", () => {
+        const store = createStore();
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+
+        expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "DEC"})).toEqual({success: true, errors: []});
+
+        expect(addWarning).not.toHaveBeenCalled();
     });
 
     test("round-trips panel presentation without persisting a session-local catalog selection", () => {

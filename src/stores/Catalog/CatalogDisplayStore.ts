@@ -230,7 +230,7 @@ export class CatalogDisplayStore {
                     if (isReady && this.pendingConfig) {
                         const config = this.pendingConfig;
                         this.pendingConfig = undefined;
-                        this.applyConfig(config);
+                        this.reportRejectedConfig(this.applyConfig(config));
                     }
                 }
             )
@@ -1407,8 +1407,24 @@ export class CatalogDisplayStore {
         const shouldDefer = !profileStore || profileStore.isLoadingOntoImage;
         const result = this.applyConfig(config);
         this.pendingConfig = shouldDefer ? config : undefined;
+        if (!shouldDefer) {
+            this.reportRejectedConfig(result);
+        }
         return result;
     };
+
+    /**
+     * Report settings that will not be applied. A config is only rejected for a reason waiting will
+     * not resolve — a column the catalog does not have, or one that cannot carry the axis — so the
+     * settings are dropped rather than retried, and the user is told which ones and why.
+     */
+    private reportRejectedConfig(result: CatalogConfigApplyResult) {
+        if (result.success) {
+            return;
+        }
+        const catalogName = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId)?.catalogInfo.fileInfo.name ?? `catalog ${this.catalogFileId}`;
+        AppStore.Instance.logStore.addWarning(`Display settings for ${catalogName} were not restored: ${result.errors.join("; ")}`, ["catalog"]);
+    }
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {
