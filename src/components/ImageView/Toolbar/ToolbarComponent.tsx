@@ -262,7 +262,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         const exportImageMenu = (
-            <Menu style={{minWidth: 120}}>
+            <Menu style={{minWidth: 100}}>
                 <ExportImageMenuComponent />
             </Menu>
         );

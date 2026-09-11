@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, MenuDivider, Radio, RadioGroup} from "@blueprintjs/core";
+import {Button, ButtonGroup, H6, Radio, RadioGroup} from "@blueprintjs/core";
 
 import {AppStore} from "stores";
 
@@ -9,8 +9,8 @@ export const ExportImageMenuComponent = () => {
 
     return (
         <React.Fragment>
-            <MenuDivider title="Resolution" />
-            <RadioGroup selectedValue={String(imageRatio)} onChange={event => setImageRatio(Number(event.currentTarget.value))}>
+            <H6 style={{padding: "2px 0 0 2px"}}> Resolution </H6>
+            <RadioGroup selectedValue={String(imageRatio)} onChange={event => setImageRatio(Number(event.currentTarget.value))} style={{paddingLeft: "4px"}}>
                 <Radio label="100%" value="1" />
                 <Radio label="200%" value="2" />
                 <Radio label="400%" value="4" />

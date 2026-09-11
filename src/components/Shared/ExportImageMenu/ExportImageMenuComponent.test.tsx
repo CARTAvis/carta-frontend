@@ -17,9 +17,7 @@ describe("ExportImageMenuComponent", () => {
     test("renders resolution radios and PNG/SVG buttons", () => {
         render(<ExportImageMenuComponent />);
 
-        const separators = screen.getAllByRole("separator");
-        expect(separators).toHaveLength(1);
-        expect(separators[0]).toHaveTextContent(/^Resolution$/);
+        expect(screen.getByRole("heading", {name: "Resolution"})).toBeInTheDocument();
 
         const radios = screen.getAllByRole("radio");
         expect(radios).toHaveLength(3);
