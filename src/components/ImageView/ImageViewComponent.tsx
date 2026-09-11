@@ -580,7 +580,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
                 minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
                 color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
                 rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
-                lineWidth: catalogWidgetStore.thickness * (catalogWidgetStore.shapeSettings?.thicknessBase ?? 1) * pixelRatio
+                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * (catalogWidgetStore.shapeSettings?.thicknessBase ?? 1) * pixelRatio : undefined
             });
         }
         positionArrays.set(fileId, points.subarray(0, pointCount * 2));
