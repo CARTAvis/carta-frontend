@@ -126,7 +126,7 @@ describe("getPanelSvg", () => {
     });
 
     test("keeps only the raster layer embedded as an image while vectorizing overlays", () => {
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panelSvg).not.toBeNull();
         expect(panelSvg?.querySelectorAll("image")).toHaveLength(1);
@@ -154,7 +154,7 @@ describe("getPanelSvg", () => {
         frame.vectorOverlayConfig.isVisible = false;
         mockAppStore.catalogStore.visibleCatalogFiles = new Map();
 
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
         const path = panelSvg?.querySelector("#contours path");
 
         expect(path).toHaveAttribute("d", "M24.50,57.50L34.50,47.50");
@@ -204,7 +204,7 @@ describe("getPanelSvg", () => {
             return group;
         });
 
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
         const coordinateViewports = panelSvg?.querySelectorAll("#channel-map-coordinate-overlays > svg");
 
         expect(coordinateViewports).toHaveLength(4);
@@ -240,7 +240,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
         const beams = panelSvg?.querySelector("#beams");
 
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
@@ -252,7 +252,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 120, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
         const beam = panelSvg?.querySelector("#beam-profile ellipse");
 
         expect(panelSvg?.querySelector("#beams")).toHaveAttribute("transform", "translate(10,14)");

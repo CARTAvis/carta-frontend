@@ -217,9 +217,8 @@ export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgb
         }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelSvg = getPanelSvg(column, row, viewWidth, viewHeight, padding, image, backgroundColor);
+        const panelSvg = getPanelSvg(column, row, viewHeight, padding, image);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
             const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
@@ -646,7 +645,7 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     return group.querySelector("use") ? group : null;
 }
 
-export function getPanelSvg(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, image: ImageViewItem, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGGElement | null {
+export function getPanelSvg(column: number, row: number, viewHeight: number, padding: Padding, image: ImageViewItem): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
