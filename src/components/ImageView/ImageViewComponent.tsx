@@ -432,11 +432,9 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
         contourFrame.contourStores.forEach((contourStore, level) => {
             const contourSvg = renderContoursToSvg(
                 transformContourVertexData(contourStore.exportVertexData, contourFrame, frame, frameView, layerWidth, layerHeight),
-                contourStore.exportIndexOffsets,
-                [level],
-                [getContourStrokeColor(contourFrame, level, levels)],
-                [getContourStrokeWidth(contourFrame, pixelRatio)],
-                [getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio)],
+                getContourStrokeColor(contourFrame, level, levels),
+                getContourStrokeWidth(contourFrame, pixelRatio),
+                getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio),
                 padding.left * pixelRatio,
                 padding.top * pixelRatio
             );

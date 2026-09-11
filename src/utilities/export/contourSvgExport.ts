@@ -10,16 +10,7 @@ const VERTEX_DATA_ELEMENTS = 8;
  * Separate polylines (enclosed contours) within a level get individual
  * sub-paths (M commands) so they are not linked together.
  */
-export function renderContoursToSvg(
-    vertexDataArrays: (Float32Array | null)[],
-    _indexOffsetsArrays: Int32Array[],
-    levels: number[],
-    colors: string[],
-    lineWidths: number[],
-    dashLengths: number[],
-    offsetX: number,
-    offsetY: number
-): SVGGElement {
+export function renderContoursToSvg(vertexDataArrays: (Float32Array | null)[], color: string, lineWidth: number, dashLength: number, offsetX: number, offsetY: number): SVGGElement {
     const group = svgGroupFromLayer("contours");
 
     for (let chunkIndex = 0; chunkIndex < vertexDataArrays.length; chunkIndex++) {
@@ -55,12 +46,6 @@ export function renderContoursToSvg(
         if (!pathData) {
             continue;
         }
-
-        // Use levelIndex 0 for styling — buildContoursSvg passes single-element arrays
-        const levelIndex = 0;
-        const color = colors[levelIndex % colors.length] ?? "#ffffff";
-        const lineWidth = lineWidths[levelIndex % lineWidths.length] ?? 1;
-        const dashLength = dashLengths[levelIndex % dashLengths.length] ?? 0;
 
         const attrs: Record<string, string | number> = {
             d: pathData,

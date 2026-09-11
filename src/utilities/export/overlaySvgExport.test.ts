@@ -8,7 +8,7 @@ import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 describe("renderContoursToSvg", () => {
     test("renders contour paths with the supplied stroke styling", () => {
         const vertexData = new Float32Array([10, 20, 0, 0, 0, 0, 0, 0, 30, 40, 0, 0, 0, 0, 0, 0]);
-        const group = renderContoursToSvg([vertexData], [new Int32Array([0])], [1], ["#ff0000"], [2], [4], 5, 7);
+        const group = renderContoursToSvg([vertexData], "#ff0000", 2, 4, 5, 7);
 
         const path = group.querySelector("path");
         expect(path).not.toBeNull();
@@ -69,7 +69,7 @@ describe("renderContoursToSvg", () => {
             -28.28,
             0
         ]);
-        const group = renderContoursToSvg([vertexData], [new Int32Array([0, 4])], [1], ["#ffffff"], [1], [0], 0, 0);
+        const group = renderContoursToSvg([vertexData], "#ffffff", 1, 0, 0, 0);
 
         const path = group.querySelector("path");
         expect(path).not.toBeNull();
