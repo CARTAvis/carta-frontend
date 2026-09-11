@@ -21,7 +21,22 @@ import {
     ScalingSelectComponent,
     ScrollShadow
 } from "components/Shared";
-import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, ExportBackgroundColor, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
+import {
+    BeamType,
+    ContourGeneratorType,
+    ConvertToGB,
+    CursorInfoVisibility,
+    DialogId,
+    ExportBackgroundColor,
+    FileFilterMode,
+    FrameScaling,
+    HelpType,
+    PasteOffsetUnit,
+    PreferenceDialogTabs,
+    PreferenceKeys,
+    TelemetryMode,
+    VectorGraphicFormat
+} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
@@ -317,6 +332,12 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={ExportBackgroundColor.BLACK}>Black</option>
                         <option value={ExportBackgroundColor.WHITE}>White</option>
                         <option value={ExportBackgroundColor.TRANSPARENT}>Transparent</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Vector graphic format">
+                    <HTMLSelect value={preference.vectorGraphicFormat} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT, ev.currentTarget.value)}>
+                        <option value={VectorGraphicFormat.SVG}>SVG</option>
+                        <option value={VectorGraphicFormat.PDF}>PDF</option>
                     </HTMLSelect>
                 </FormGroup>
             </React.Fragment>

@@ -1,11 +1,14 @@
 import * as React from "react";
 import {Button, ButtonGroup, H6, Radio, RadioGroup} from "@blueprintjs/core";
+import {observer} from "mobx-react";
 
+import {VectorGraphicFormat} from "enums";
 import {AppStore} from "stores";
 
-export const ExportImageMenuComponent = () => {
+export const ExportImageMenuComponent = observer(() => {
     const [imageRatio, setImageRatio] = React.useState(1);
     const appStore = AppStore.Instance;
+    const vectorGraphicFormat = appStore.preferenceStore.vectorGraphicFormat;
 
     return (
         <React.Fragment>
@@ -17,8 +20,8 @@ export const ExportImageMenuComponent = () => {
             </RadioGroup>
             <ButtonGroup fill={true} vertical={true}>
                 <Button text="PNG" onClick={() => appStore.exportImage(imageRatio)} />
-                <Button text="SVG" onClick={() => appStore.exportSvgImage(imageRatio)} />
+                {vectorGraphicFormat === VectorGraphicFormat.SVG ? <Button text="SVG" onClick={() => appStore.exportSvgImage(imageRatio)} /> : <Button text="PDF" onClick={() => appStore.exportPdfImage(imageRatio)} />}
             </ButtonGroup>
         </React.Fragment>
     );
-};
+});

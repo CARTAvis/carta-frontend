@@ -17,6 +17,7 @@ import {
     RestFrameShiftMode,
     SpectralType,
     TelemetryMode,
+    VectorGraphicFormat,
     VelocityConvention,
     WCSMatchingType
 } from "enums";
@@ -68,7 +69,8 @@ const DEFAULTS = {
         percentile: 99.9,
         nanColorHex: "#137CBD",
         useSmoothedBiasContrast: true,
-        backgroundColor: ExportBackgroundColor.AUTO
+        backgroundColor: ExportBackgroundColor.AUTO,
+        vectorGraphicFormat: VectorGraphicFormat.PDF
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -284,6 +286,11 @@ export class PreferenceStore {
             return backgroundColor;
         }
         return this.hasTransparentImageBackground ? ExportBackgroundColor.TRANSPARENT : DEFAULTS.RENDER_CONFIG.backgroundColor;
+    }
+
+    @computed get vectorGraphicFormat(): VectorGraphicFormat {
+        const format = this.preferences.get(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT);
+        return Object.values(VectorGraphicFormat).includes(format) ? format : DEFAULTS.RENDER_CONFIG.vectorGraphicFormat;
     }
 
     @computed get isCodeSnippetsEnabled(): boolean {
@@ -855,7 +862,8 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
             PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST,
-            PreferenceKeys.RENDER_CONFIG_EXPORT_BACKGROUND_COLOR
+            PreferenceKeys.RENDER_CONFIG_EXPORT_BACKGROUND_COLOR,
+            PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT
         ]);
     };
 

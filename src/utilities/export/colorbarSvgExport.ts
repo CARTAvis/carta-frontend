@@ -15,6 +15,24 @@ export interface ColorbarSvgOptions {
     border: {visible: boolean; color: string; width: number};
 }
 
+function normalizeGradientColor(color: string): string {
+    const match = color.match(/^rgba?\(([^)]+)\)$/i);
+    if (!match) {
+        return color;
+    }
+
+    const components = match[1].split(",").map(component => component.trim());
+    if (components.length === 3) {
+        return `rgb(${components.join(", ")})`;
+    }
+    if (components.length === 4) {
+        const alpha = Number(components[3]);
+        const normalizedAlpha = Number.isFinite(alpha) && alpha > 1 ? alpha / 255 : alpha;
+        return `rgba(${components.slice(0, 3).join(", ")}, ${normalizedAlpha})`;
+    }
+    return color;
+}
+
 /** Renders the colorbar to SVG with gradient, ticks, labels, and title. */
 export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numbers, label, border}: ColorbarSvgOptions): SVGGElement {
     const group = svgGroupFromLayer("colorbar");
@@ -25,7 +43,10 @@ export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numb
     // colorscaleArray is [offset, "rgb(...)", offset, "rgb(...)", ...]
     const isVertical = position === "right";
     const gradientId = `colorbar-gradient-${gradientCounter++}`;
-    const gradient = createSvgElement("linearGradient", isVertical ? {id: gradientId, x1: "0%", y1: "100%", x2: "0%", y2: "0%"} : {id: gradientId, x1: "0%", y1: "0%", x2: "100%", y2: "0%"});
+    const gradient = createSvgElement(
+        "linearGradient",
+        isVertical ? {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y + bar.height, x2: bar.x, y2: bar.y} : {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y, x2: bar.x + bar.width, y2: bar.y}
+    );
 
     // Preserve the supplied colorscale stops.
     if (colorscaleArray && colorscaleArray.length >= 2) {
@@ -45,7 +66,7 @@ export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numb
         for (const stopData of stops) {
             const stop = createSvgElement("stop", {
                 offset: `${(stopData.offset * 100).toFixed(2)}%`,
-                "stop-color": stopData.color
+                "stop-color": normalizeGradientColor(stopData.color)
             });
             gradient.appendChild(stop);
         }

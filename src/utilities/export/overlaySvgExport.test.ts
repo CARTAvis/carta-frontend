@@ -106,9 +106,11 @@ describe("renderColorbarToSvg", () => {
     test("uses the colorbar store's absolute tick positions", () => {
         const group = renderColorbarToSvg(createOptions());
 
+        const gradient = group.querySelector("linearGradient");
         const border = group.querySelectorAll("rect")[1];
         const ticks = group.querySelectorAll("line");
         const labels = group.querySelectorAll("text");
+        expect(gradient).toHaveAttribute("gradientUnits", "userSpaceOnUse");
         expect(border).toHaveAttribute("stroke", "#fff");
         expect(ticks[0]).toHaveAttribute("x1", "104");
         expect(ticks[0]).toHaveAttribute("x2", "108");
@@ -136,6 +138,16 @@ describe("renderColorbarToSvg", () => {
         expect(group.querySelector("rect")).toHaveAttribute("fill", "none");
         expect(group.querySelector("line")).toBeNull();
         expect(group.querySelector("text")).toBeNull();
+    });
+
+    test("normalizes RGBA colors for SVG gradients", () => {
+        const options = createOptions();
+        options.colorscaleArray = [0, "rgb(0, 0, 3, 255)", 1, "rgb(255, 255, 0, 128)"];
+
+        const stops = renderColorbarToSvg(options).querySelectorAll("stop");
+
+        expect(stops[0]).toHaveAttribute("stop-color", "rgba(0, 0, 3, 1)");
+        expect(stops[1]).toHaveAttribute("stop-color", "rgba(255, 255, 0, 0.5019607843137255)");
     });
 
     test.each([

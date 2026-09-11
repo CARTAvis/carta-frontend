@@ -91,6 +91,7 @@ import {
     type RegionClipboardItem
 } from "utilities";
 import * as Utils from "utilities";
+import {downloadPdf} from "utilities/export/pdfExport";
 import {downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
@@ -3745,6 +3746,33 @@ export class AppStore {
                     }
                 }
                 this.setIsExportingImage(false);
+            });
+        }
+    };
+
+    exportPdfImage = (imageRatio: number = 1) => {
+        if (this.activeFrame) {
+            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
+            if (index === -1) {
+                return;
+            }
+
+            this.setIsExportingImage(true);
+            this.setImageRatio(imageRatio);
+            this.waitForImageData().then(async () => {
+                try {
+                    const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
+                    if (this.activeFrame) {
+                        const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
+                        if (svgDoc) {
+                            const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+                            const filename = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.pdf`;
+                            await downloadPdf(svgDoc, filename);
+                        }
+                    }
+                } finally {
+                    this.setIsExportingImage(false);
+                }
             });
         }
     };
