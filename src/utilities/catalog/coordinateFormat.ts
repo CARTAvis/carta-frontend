@@ -225,8 +225,16 @@ export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | numb
  * are consulted; the column name is deliberately not an input here, because a name states intent
  * and intent is the ranking layer's business, not the parser's.
  *
- * Returns undefined when a sample cannot be recognized, when the samples disagree, or when there
- * was nothing to inspect. The caller separates the last case from the first two with
+ * A format is a property of the column, not of every row in it, so a minority of unreadable
+ * values does not overturn what the rest plainly are: catalogs write a missing coordinate as a
+ * placeholder ("--", "N/A"), and parseCoordinateValue already drops such a row as NaN once the
+ * format is settled. Letting one of them veto the column instead removed it from the axis menu
+ * altogether, where the user had no way to say otherwise. Recognized values must still be a
+ * strict majority, and must still all agree -- two formats in one column is a genuine ambiguity
+ * that guessing cannot resolve.
+ *
+ * Returns undefined when the recognized values disagree or fail to carry the majority, and when
+ * there was nothing to inspect. The caller separates that last case from the others with
  * {@link hasCoordinateValuesToInspect}: only values that were read and rejected are evidence that
  * a column is not a coordinate.
  */
@@ -237,6 +245,7 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
 
     let descriptor: CoordinateDescriptor | undefined;
     let inspectedCount = 0;
+    let recognizedCount = 0;
     const scanLimit = getSniffScanLimit(values.length, sampleSize);
 
     for (let index = 0; index < scanLimit; index++) {
@@ -251,7 +260,7 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
 
         const recognized = recognizeCoordinateString(value);
         if (!recognized) {
-            return undefined;
+            continue;
         }
 
         const candidate: CoordinateDescriptor = {
@@ -260,16 +269,16 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
             source: "sniffed"
         };
 
-        if (!descriptor) {
-            descriptor = candidate;
-            continue;
-        }
-        if (descriptor.kind !== candidate.kind || descriptor.fieldUnit !== candidate.fieldUnit) {
+        if (descriptor && (descriptor.kind !== candidate.kind || descriptor.fieldUnit !== candidate.fieldUnit)) {
             return undefined;
         }
+        descriptor = candidate;
+        recognizedCount++;
     }
 
-    return inspectedCount > 0 ? descriptor : undefined;
+    // A strict majority, so a column of names with a few numeric entries in it cannot pass as a
+    // coordinate: more than half its values would have to read as one coordinate format first.
+    return recognizedCount * 2 > inspectedCount ? descriptor : undefined;
 }
 
 /**

@@ -114,10 +114,25 @@ describe("coordinate format", () => {
             expect(sniffCoordinateDescriptor(["\u0000", "12:30:00"])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
         });
 
+        test("does not let a stray placeholder overturn the rest of the column", () => {
+            // Catalogs write a missing coordinate as a placeholder. Vetoing the column on one of
+            // them dropped it from the axis menu, where the user could not say otherwise; the row
+            // itself is still discarded later, when parseCoordinateValue reads it as NaN.
+            expect(sniffCoordinateDescriptor(["12:30:00", "--", "10:15:30", "11:00:00"])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+            expect(sniffCoordinateDescriptor(["N/A", "187.5", "12.25", "190.0"])).toEqual({kind: "decimal", fieldUnit: "degree", source: "sniffed"});
+        });
+
+        test("needs a strict majority, so a column of names cannot pass as a coordinate", () => {
+            expect(sniffCoordinateDescriptor(["12:30:00", "banana", "rhubarb"])).toBeUndefined();
+            // A tie is not a majority: half the column disagreeing is not evidence of a format.
+            expect(sniffCoordinateDescriptor(["12:30:00", "banana"])).toBeUndefined();
+        });
+
         test("gives up rather than guessing", () => {
             expect(sniffCoordinateDescriptor(["banana"])).toBeUndefined();
-            expect(sniffCoordinateDescriptor(["12:30:00", "banana"])).toBeUndefined();
+            // Two formats in one column is a real ambiguity, so it is fatal however few disagree.
             expect(sniffCoordinateDescriptor(["12:30:00", "187.5"])).toBeUndefined();
+            expect(sniffCoordinateDescriptor(["12:30:00", "10:15:30", "187.5"])).toBeUndefined();
             expect(sniffCoordinateDescriptor([])).toBeUndefined();
             expect(sniffCoordinateDescriptor([null, ""])).toBeUndefined();
             expect(sniffCoordinateDescriptor(undefined)).toBeUndefined();
