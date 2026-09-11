@@ -257,6 +257,23 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
     });
 
+    test("clears both catalog associations when a docked catalog tab is closed", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
+        CatalogStore.Instance.catalogProfiles.set("catalog-overlay-7", 7);
+
+        layoutModelMock.getNodeById.mockReturnValue({
+            getType: () => "tab",
+            getComponent: () => "catalog-overlay",
+            getId: () => "catalog-overlay-7"
+        });
+
+        widgetsStore.onAction({type: Actions.DELETE_TAB, data: {node: "catalog-overlay-7"}});
+
+        expect(widgetsStore.catalogWidgets.has("catalog-overlay-7")).toBe(false);
+        expect(CatalogStore.Instance.catalogProfiles.has("catalog-overlay-7")).toBe(false);
+    });
+
     test("prefers current catalog display fields over legacy fields when restoring", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const displayStore = {applyConfigWhenReady: jest.fn()};

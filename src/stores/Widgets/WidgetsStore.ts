@@ -1086,6 +1086,7 @@ export class WidgetsStore {
                         }
                         if (isCatalogTable) {
                             this.catalogWidgets.delete(id);
+                            CatalogStore.Instance.catalogProfiles.delete(id);
                             this.removeAssociatedFloatingSetting(id);
                         }
                         if (isCatalogPlot) {
