@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed persistent scrollbars in the region list and catalog scatter plot, and fixed the catalog plot widget toolbar being clipped without a scrollbar when the widget is too narrow ([#2848](https://github.com/CARTAvis/carta-frontend/issues/2848)).
 * Fixed incorrect color mapping in the Stokes QU scatter plot after applying data smoothing ([#2851](https://github.com/CARTAvis/carta-frontend/issues/2851)).
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
+* Fixed missing spectral coordinate conversions for images with a non-linear spectral axis such as `WAVE-LOG` in SDSS MaNGA cubes ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 

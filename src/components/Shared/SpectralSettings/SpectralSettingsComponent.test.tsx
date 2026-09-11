@@ -9,13 +9,15 @@ import "stores";
 
 import {SpectralSettingsComponent} from "./SpectralSettingsComponent";
 
-const MakeFrame = (specsys: string, spectralSystemsSupported: string[]) =>
+const MakeFrame = (specsys: string, spectralSystemsSupported: string[], nativeSpectralCoordinateLabel: string = "Vacuum wavelength (Angstrom)") =>
     ({
-        spectralAxis: {valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, specsys, value: 3621.6},
+        spectralAxis: {valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, ctype: "WAVE-LOG", specsys, value: 3621.6},
         nativeSpectralCoordinate: "Vacuum wavelength (Angstrom)",
+        nativeSpectralCoordinateLabel,
         spectralCoordinate: "Vacuum wavelength (Angstrom)",
         spectralCoordsSupported: new Map([
             ["Vacuum wavelength (Angstrom)", {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
+            ["Frequency (GHz)", {type: SpectralType.FREQ, unit: SpectralUnit.GHZ}],
             ["Channel", {type: SpectralType.CHANNEL, unit: null}]
         ]),
         spectralSystemsSupported,
@@ -23,12 +25,26 @@ const MakeFrame = (specsys: string, spectralSystemsSupported: string[]) =>
         isSpectralSystemConvertible: spectralSystemsSupported.length > 0
     }) as unknown as FrameStore;
 
-const RenderSystemSelect = (frame: FrameStore): HTMLSelectElement => {
+const RenderSelects = (frame: FrameStore): {coordinateSelect: HTMLSelectElement; systemSelect: HTMLSelectElement} => {
     const {container} = render(<SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={jest.fn()} onSpectralSystemChange={jest.fn()} disable={false} />);
     const selects = container.querySelectorAll("select");
     expect(selects).toHaveLength(2);
-    return selects[1] as HTMLSelectElement;
+    return {coordinateSelect: selects[0] as HTMLSelectElement, systemSelect: selects[1] as HTMLSelectElement};
 };
+
+const RenderSystemSelect = (frame: FrameStore): HTMLSelectElement => RenderSelects(frame).systemSelect;
+
+describe("SpectralSettingsComponent coordinate dropdown", () => {
+    test("labels the native entry with the CTYPE value as it is", () => {
+        const {coordinateSelect} = RenderSelects(MakeFrame("", [], "WAVE-LOG (Angstrom)"));
+        expect(Array.from(coordinateSelect.options).map(option => [option.value, option.text])).toEqual([
+            ["Vacuum wavelength (Angstrom)", "WAVE-LOG (Angstrom) (Native WCS)"],
+            ["Frequency (GHz)", "Frequency (GHz)"],
+            ["Channel", "Channel"]
+        ]);
+        expect(coordinateSelect.value).toBe("Vacuum wavelength (Angstrom)");
+    });
+});
 
 describe("SpectralSettingsComponent system dropdown", () => {
     test("labels a missing SPECSYS as Unknown in a disabled dropdown", () => {

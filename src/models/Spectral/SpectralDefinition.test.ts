@@ -1,6 +1,22 @@
-import {IntensityUnitType} from "../../enums";
+import {IntensityUnitType, SpectralType, SpectralUnit} from "../../enums";
 
-import {FindIntensityUnitType, GetSpectralTypeCode, IsFrequencyDensityUnit} from "./SpectralDefinition";
+import {FindIntensityUnitType, GetInitialSpectralUnit, GetSpectralTypeCode, IsFrequencyDensityUnit} from "./SpectralDefinition";
+
+describe("initial spectral unit", () => {
+    test.each([
+        [SpectralType.WAVE, "Angstrom", SpectralUnit.ANGSTROM],
+        [SpectralType.AWAV, "um", SpectralUnit.UM],
+        [SpectralType.WAVE, "m", SpectralUnit.MM],
+        [SpectralType.FREQ, "Hz", SpectralUnit.GHZ],
+        [SpectralType.FREQ, "MHz", SpectralUnit.MHZ],
+        [SpectralType.VRAD, "m/s", SpectralUnit.KMS],
+        [SpectralType.VOPT, "km/s", SpectralUnit.KMS],
+        [SpectralType.WAVE, "micron", SpectralUnit.MM],
+        [SpectralType.FREQ, undefined, SpectralUnit.GHZ]
+    ])("opens a %s axis in %j as %s", (type, headerUnit, expected) => {
+        expect(GetInitialSpectralUnit(type, headerUnit)).toBe(expected);
+    });
+});
 
 describe("spectral type codes", () => {
     test.each([
