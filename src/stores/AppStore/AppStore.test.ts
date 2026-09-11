@@ -1,7 +1,7 @@
 import type {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode} from "enums";
-import {AppStore, scaleZoomForImageRatio} from "stores";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
+import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
 import {ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -14,8 +14,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.clear();
         catalogStore.catalogProfiles.clear();
+        catalogStore.catalogPlots.clear();
         catalogStore.imageAssociatedCatalogId.clear();
         widgetsStore.catalogWidgets.clear();
+        widgetsStore.catalogPlotWidgets.clear();
     });
 
     test("updates an existing panel when loading a catalog after the panel store exists", () => {
@@ -41,6 +43,16 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(componentId).toBe("catalog-overlay-component-0");
         expect(firstPanel.selectedCatalogId).toBe(3);
         expect(secondPanel.selectedCatalogId).toBe(3);
+    });
+
+    test("binds restored catalog plots when this session loads its first catalog", () => {
+        const widgetStoreId = widgetsStore.addCatalogPlotWidget({plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag"});
+        catalogStore.setCatalogPlots("catalog-plot-component-0", CatalogStore.PENDING_CATALOG_FILE_ID, widgetStoreId!);
+        catalogStore.imageAssociatedCatalogId.set(102, []);
+
+        appStore.updateCatalogProfile(4, {frameInfo: {fileId: 102}} as any);
+
+        expect(catalogStore.getAssociatedIdByWidgetId(widgetStoreId!).catalogFileId).toBe(4);
     });
 
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {

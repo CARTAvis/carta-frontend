@@ -541,13 +541,18 @@ export class WidgetsStore {
     };
 
     private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
-        if (widgetSettings && widgetSettings["catalogFileId"] !== undefined) {
-            const catalogFileId = widgetSettings["catalogFileId"];
-            const selectedCatalogId = typeof catalogFileId === "number" ? catalogFileId : 1;
+        if (widgetSettings) {
+            const savedCatalogFileId = widgetSettings["catalogFileId"];
+            const selectedCatalogId = CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID;
             const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
-            this.getCatalogWidgetStore(componentId, selectedCatalogId).applyLayoutSettings(widgetSettings as CatalogWidgetLayoutSettings);
-            // Ensure catalogProfiles is set to the saved fileId so the component can look
-            // up the correct file (the component constructor only defaults to fileId 1).
+            const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
+            const savedSettingsTabId = widgetSettings["settingsTabId"] ?? (typeof savedCatalogFileId === "number" ? widgetSettings["settingsTabIdByCatalog"]?.[String(savedCatalogFileId)] : undefined);
+            widgetStore.applyLayoutSettings({
+                ...(widgetSettings as CatalogWidgetLayoutSettings),
+                catalogFileId: selectedCatalogId,
+                settingsTabIdByCatalog: undefined,
+                settingsTabId: savedSettingsTabId
+            });
             CatalogStore.Instance.catalogProfiles.set(componentId, selectedCatalogId);
             // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
             // them at the restore boundary while allowing the current workspace names to take precedence.
@@ -557,7 +562,10 @@ export class WidgetsStore {
                 shape: widgetSettings["shape"] ?? widgetSettings["catalogShape"],
                 size: widgetSettings["size"] ?? widgetSettings["catalogSize"]
             };
-            CatalogStore.Instance.getOrCreateCatalogDisplayStore(selectedCatalogId).applyConfigWhenReady(displaySettings);
+            widgetStore.setPendingDisplayConfig(displaySettings);
+            if (selectedCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
+                this.applyPendingCatalogDisplayConfig(componentId, selectedCatalogId);
+            }
             return componentId;
         }
         const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
@@ -570,11 +578,10 @@ export class WidgetsStore {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            // The restored columns belong to the catalog the plot was saved against, so the plot is
-            // registered under that catalog. Layouts written before the association was saved fall
-            // back to the first catalog.
-            const savedCatalogFileId = widgetSettings?.["catalogFileId"];
-            CatalogStore.Instance.setCatalogPlots(componentId, typeof savedCatalogFileId === "number" ? savedCatalogFileId : 1, itemId);
+            // Catalog IDs are assigned by the backend for each session. Keep restored plot settings
+            // unbound until this session selects a catalog, instead of trusting a persisted ID.
+            const selectedCatalogId = CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+            CatalogStore.Instance.setCatalogPlots(componentId, selectedCatalogId, itemId);
         }
         return itemId;
     };
@@ -1144,10 +1151,7 @@ export class WidgetsStore {
                 if (!plotStore) {
                     return undefined;
                 }
-                // The catalog association lives in CatalogStore rather than in the plot store, but
-                // without it the restored columns cannot be matched back to their catalog.
-                const {catalogFileId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetID);
-                return {...plotStore.toConfig(), ...(typeof catalogFileId === "number" ? {catalogFileId} : {})};
+                return plotStore.toConfig();
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1604,7 +1608,15 @@ export class WidgetsStore {
         }
         widgetStore.setSelectedCatalogId(catalogFileId);
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return true;
+    };
+
+    private applyPendingCatalogDisplayConfig = (componentId: string, catalogFileId: number) => {
+        const config = this.catalogWidgets.get(componentId)?.takePendingDisplayConfig();
+        if (config) {
+            CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId).applyConfigWhenReady(config);
+        }
     };
 
     /** Select a catalog in the first panel when an image-view interaction identifies it, and return that panel's ID. */
@@ -1617,6 +1629,7 @@ export class WidgetsStore {
         const [componentId, widgetStore] = panel;
         widgetStore.setSelectedCatalogId(catalogFileId);
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return componentId;
     };
 

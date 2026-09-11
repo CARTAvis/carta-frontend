@@ -150,8 +150,8 @@ describe("CatalogDisplayStore display config", () => {
         const store = createStore();
         store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
         store.setWorldSizeUnit(AngularSizeUnit.ARCSEC);
-        store.setCatalogSourceRadiusType("radius");
         store.setCatalogSize(12);
+        store.setCatalogSourceRadiusType("radius");
 
         const config = store.toConfig();
         expect(config.sourceRadiusType).toBe("radius");
@@ -372,21 +372,20 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("round-trips panel selection and presentation state through layout config", () => {
+    test("round-trips panel presentation without persisting a session-local catalog selection", () => {
         const panel = new CatalogWidgetStore(7, "catalog-panel-primary");
         panel.setTableSeparatorPosition("40%");
         panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
         expect(panel.toLayoutSettings()).toEqual({
             widgetId: "catalog-panel-primary",
-            catalogFileId: 7,
             tableSeparatorPosition: "40%",
-            settingsTabIdByCatalog: {"7": CatalogSettingsTabs.COLOR}
+            settingsTabId: CatalogSettingsTabs.COLOR
         });
 
         const restored = new CatalogWidgetStore();
         restored.applyLayoutSettings(panel.toLayoutSettings());
-        expect(restored.selectedCatalogId).toBe(7);
+        expect(restored.selectedCatalogId).toBe(1);
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
         expect(restored.toLayoutSettings()).toEqual(panel.toLayoutSettings());
     });
@@ -419,6 +418,6 @@ describe("CatalogDisplayStore display config", () => {
         restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION});
 
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
-        expect(restored.toLayoutSettings().settingsTabIdByCatalog).toEqual({"3": CatalogSettingsTabs.ORIENTATION});
+        expect(restored.toLayoutSettings().settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
     });
 });

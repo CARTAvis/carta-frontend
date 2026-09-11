@@ -13,6 +13,9 @@ type CatalogOverlayCoords = {
 };
 
 export class CatalogStore {
+    /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
+    public static readonly PENDING_CATALOG_FILE_ID = 0;
+
     private static staticInstance: CatalogStore;
 
     public static get Instance() {
@@ -219,6 +222,17 @@ export class CatalogStore {
             catalogWidgetMap.set(fileId, widgetId);
             this.catalogPlots.set(componentId, catalogWidgetMap);
         }
+    }
+
+    /** Attach restored plot stores to the first catalog selected in this session. */
+    @action bindPendingCatalogPlots(fileId: number) {
+        this.catalogPlots.forEach(catalogWidgetMap => {
+            const pendingWidgetId = catalogWidgetMap.get(CatalogStore.PENDING_CATALOG_FILE_ID);
+            if (pendingWidgetId && !catalogWidgetMap.has(fileId)) {
+                catalogWidgetMap.set(fileId, pendingWidgetId);
+                catalogWidgetMap.delete(CatalogStore.PENDING_CATALOG_FILE_ID);
+            }
+        });
     }
 
     // remove catalog plot widget, keep placeholder

@@ -1,17 +1,18 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {CatalogSettingsTabs} from "enums";
+import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {PreferenceStore} from "stores";
 
 /** State owned by one catalog panel rather than by the catalog it displays. */
 export interface CatalogWidgetLayoutSettings {
     widgetId?: string;
-    /** Kept for layouts written before panel state was separated from display state. */
+    /** Legacy session-local association. Read for migration, but no longer persisted. */
     catalogFileId?: number;
     tableSeparatorPosition?: string;
-    /** The settings section this panel was left on, per catalog file ID. */
+    /** Legacy settings sections keyed by session-local catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
-    /** Kept for layouts written while the settings section belonged to the panel alone. */
+    /** The settings section this panel was left on. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
@@ -25,6 +26,8 @@ export class CatalogWidgetStore {
      * panel returning to a catalog returns to the section that catalog was left on.
      */
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
+    /** Display settings restored before a session-local catalog has been selected. */
+    private pendingDisplayConfig: WorkspaceCatalogConfig | undefined;
 
     constructor(selectedCatalogId: number = 1, widgetId: string = "") {
         this.selectedCatalogId = selectedCatalogId;
@@ -38,6 +41,17 @@ export class CatalogWidgetStore {
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
         this.selectedCatalogId = catalogFileId;
+    };
+
+    public setPendingDisplayConfig = (config: WorkspaceCatalogConfig) => {
+        this.pendingDisplayConfig = config;
+    };
+
+    /** Return restored display settings exactly once, when this panel selects a real catalog. */
+    public takePendingDisplayConfig = (): WorkspaceCatalogConfig | undefined => {
+        const config = this.pendingDisplayConfig;
+        this.pendingDisplayConfig = undefined;
+        return config;
     };
 
     @action setTableSeparatorPosition = (position: string) => {
@@ -54,9 +68,8 @@ export class CatalogWidgetStore {
 
     public toLayoutSettings = (): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
-        catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
-        settingsTabIdByCatalog: Object.fromEntries(Array.from(this.settingsTabIdByCatalog, ([catalogFileId, tabId]) => [String(catalogFileId), tabId]))
+        settingsTabId: this.settingsTabId
     });
 
     @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {

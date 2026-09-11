@@ -895,6 +895,7 @@ export class CatalogDisplayStore {
         } else {
             this.resetSize();
         }
+        this.setCatalogSize(this.showedCatalogSize);
     }
 
     /**
@@ -912,6 +913,7 @@ export class CatalogDisplayStore {
      */
     @action setWorldSizeUnit(unit: AngularSizeUnit) {
         this.worldSizeUnit = unit;
+        this.setCatalogSize(this.showedCatalogSize);
     }
 
     @action setHeaderTableColumnWidths(vals: Array<number>) {
@@ -956,6 +958,7 @@ export class CatalogDisplayStore {
     @action setCatalogSourceRadiusType(type: CatalogSourceRadiusMode) {
         if (this.catalogSourceRadiusTypes.has(type)) {
             this.catalogSourceRadiusType = type;
+            this.setCatalogSize(this.showedCatalogSize);
         }
     }
 
