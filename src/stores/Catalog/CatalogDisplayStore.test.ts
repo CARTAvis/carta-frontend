@@ -153,4 +153,40 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
         expect(displayStore.sizeColumnMax.default).toBe(30);
         expect(updateDataTexture).toHaveBeenLastCalledWith(fileId, Float32Array.from([20, 30]), CatalogTextureType.Size);
     });
+
+    test("keeps the canvas size range when the sources are replotted", () => {
+        displayStore.setSizeMap("FLUX");
+        displayStore.setSizeMax(30);
+        displayStore.setSizeMin(8);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([8, 30]);
+    });
+
+    // In world mode the columns are used as they are: the output range has to follow the data range (PR #2965 review)
+    test("keeps the angular size range equal to the data range when the sources are replotted", () => {
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        displayStore.setSizeMap("MAJOR_AXIS");
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([10, 40]);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.sizeColumnMin.clipd, displayStore.sizeColumnMax.clipd]).toEqual([20, 30]);
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([20, 30]);
+        expect(CARTACompute.CalculateCatalogSize).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything(), expect.anything(), expect.anything());
+    });
+
+    test("keeps the position angle range equal to the data range when the sources are replotted", () => {
+        jest.spyOn(CARTACompute, "CalculateCatalogOrientation").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        displayStore.setOrientationMapColumn("PA");
+        expect([displayStore.angleMin, displayStore.angleMax]).toEqual([10, 40]);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.orientationMin.clipd, displayStore.orientationMax.clipd]).toEqual([20, 30]);
+        expect([displayStore.angleMin, displayStore.angleMax]).toEqual([20, 30]);
+        expect(CARTACompute.CalculateCatalogOrientation).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything());
+    });
 });

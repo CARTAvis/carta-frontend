@@ -139,16 +139,23 @@ export class CatalogDisplayStore {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
 
+        // In world (angular size) mode the size and orientation columns are used as they are: the output ranges are kept equal to the
+        // data range, as when the column is selected, so that the mapping stays an identity when the data changes (e.g. a filter)
         this.disposers.push(
             reaction(
                 () => this.sizeMapData,
                 column => {
                     const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.sizeColumnMin.default || maxVal !== this.sizeColumnMax.default;
                     if (minVal !== this.sizeColumnMin.default) {
                         this.setSizeColumnMin(minVal, "default");
                     }
                     if (maxVal !== this.sizeColumnMax.default) {
                         this.setSizeColumnMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setSizeMax(maxVal);
+                        this.setSizeMin(minVal);
                     }
                 }
             )
@@ -192,11 +199,16 @@ export class CatalogDisplayStore {
                 () => this.sizeMinorMapData,
                 column => {
                     const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.sizeMinorColumnMin.default || maxVal !== this.sizeMinorColumnMax.default;
                     if (minVal !== this.sizeMinorColumnMin.default) {
                         this.setSizeMinorColumnMin(minVal, "default");
                     }
                     if (maxVal !== this.sizeMinorColumnMax.default) {
                         this.setSizeMinorColumnMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setMinorSizeMax(maxVal);
+                        this.setMinorSizeMin(minVal);
                     }
                 }
             )
@@ -266,11 +278,16 @@ export class CatalogDisplayStore {
                 () => this.orientationMapData,
                 column => {
                     const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.orientationMin.default || maxVal !== this.orientationMax.default;
                     if (minVal !== this.orientationMin.default) {
                         this.setOrientationMin(minVal, "default");
                     }
                     if (maxVal !== this.orientationMax.default) {
                         this.setOrientationMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setAngleMax(maxVal);
+                        this.setAngleMin(minVal);
                     }
                 }
             )
