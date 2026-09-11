@@ -710,7 +710,7 @@ export function getPanelSvg(column: number, row: number, viewWidth: number, view
     }
 
     // 9. Regions — vector SVG from store data
-    const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio);
+    const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio, `panel-${column}-${row}-`);
     if (regionsSvg) {
         panelGroup.appendChild(regionsSvg);
     }
@@ -944,7 +944,7 @@ function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanEleme
     return group;
 }
 
-function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number, idPrefix = ""): SVGGElement | null {
     const regions = frame.regionSet?.regionsAndAnnotationsForRender;
     if (!regions?.length) {
         return null;
@@ -955,7 +955,7 @@ function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         return null;
     }
 
-    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
+    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio, idPrefix});
 }
 
 @observer

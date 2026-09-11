@@ -170,9 +170,9 @@ function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: b
     });
 }
 
-function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement, pixelRatio: number): SVGGElement {
+function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement, pixelRatio: number, idPrefix = ""): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
-    const markerId = `arrowhead-${region.regionId}`;
+    const markerId = `${idPrefix}arrowhead-${region.regionId}`;
     const vector = region as RegionStore & {pointerLength?: number; pointerWidth?: number};
     const markerWidth = (vector.pointerLength ?? 10) * pixelRatio;
     const markerHeight = (vector.pointerWidth ?? 7) * pixelRatio;
@@ -206,6 +206,7 @@ function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElem
 interface RegionSvgOptions {
     frame?: FrameStore;
     pixelRatio: number;
+    idPrefix?: string;
 }
 
 function toCanvasPoints(points: number[], frameView: FrameView, layerWidth: number, layerHeight: number, frame?: FrameStore): Point2D[] {
@@ -291,7 +292,7 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     const addArrow = (start: Point2D, end: Point2D, hasArrowhead: boolean, markerSuffix: string) => {
         const lineAttrs = {x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...getStrokeAttrs(region, options.pixelRatio)};
         if (hasArrowhead) {
-            const markerId = `compass-${region.regionId}-${markerSuffix}`;
+            const markerId = `compass-${options.idPrefix ?? ""}${region.regionId}-${markerSuffix}`;
             const marker = createSvgElement("marker", {
                 id: markerId,
                 markerWidth: region.pointerLength * options.pixelRatio,
@@ -519,7 +520,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         }
         case CARTA.RegionType.ANNVECTOR: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return renderVectorAnnotation(points, region, defsElement, options.pixelRatio);
+            return renderVectorAnnotation(points, region, defsElement, options.pixelRatio, options.idPrefix);
         }
         case CARTA.RegionType.ANNTEXT: {
             const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
