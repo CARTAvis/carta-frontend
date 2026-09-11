@@ -1,8 +1,3 @@
-export enum ExportImageFormat {
-    PNG = "png",
-    SVG = "svg"
-}
-
 export enum VectorGraphicFormat {
     SVG = "svg",
     PDF = "pdf"
