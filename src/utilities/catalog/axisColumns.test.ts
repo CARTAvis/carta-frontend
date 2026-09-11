@@ -46,6 +46,20 @@ describe("catalog axis columns", () => {
             expect(result.reason).toBeTruthy();
         });
 
+        test("is unknown when the rows that have arrived are all blank", () => {
+            // An early page of empty cells is not evidence about the format. Calling it ineligible
+            // would drop the column from the axis menu before its first real value ever loads.
+            expect(getCatalogAxisEligibility(CARTA.ColumnType.String, "", ["", "", ""]).status).toBe(CatalogAxisEligibility.Unknown);
+            expect(getCatalogAxisEligibility(CARTA.ColumnType.String, "", [null, undefined]).status).toBe(CatalogAxisEligibility.Unknown);
+            expect(getCatalogAxisEligibility(CARTA.ColumnType.String, "", ["  ", "\t"]).status).toBe(CatalogAxisEligibility.Unknown);
+        });
+
+        test("reads a padded empty cell as a gap, not as a disqualifying value", () => {
+            const result = getCatalogAxisEligibility(CARTA.ColumnType.String, "", ["12:30:00", "   ", "10:15:30"]);
+            expect(result.status).toBe(CatalogAxisEligibility.Eligible);
+            expect(result.descriptor).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+        });
+
         test("rejects string columns whose values are not coordinates", () => {
             const result = getCatalogAxisEligibility(CARTA.ColumnType.String, "", ["NGC 1333", "NGC 2264"]);
             expect(result.status).toBe(CatalogAxisEligibility.Ineligible);

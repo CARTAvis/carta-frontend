@@ -80,11 +80,7 @@ function normalizeCoordinateNotation(text: string): string {
  * value: "205405.689" is 20h54m05.689s or 205405.689 degrees, and only the metadata can say which.
  */
 export function recognizeCoordinateString(value: string | number | null | undefined, expectedKind?: CoordinateFormatKind): RecognizedCoordinate | undefined {
-    if (value === null || value === undefined || value === "") {
-        return undefined;
-    }
-
-    const text = normalizeCoordinateNotation(String(value).replace(/\0/g, "").trim());
+    const text = normalizeCoordinateNotation(trimCoordinateValue(value));
     if (!text) {
         return undefined;
     }
@@ -195,12 +191,44 @@ export const COORDINATE_SNIFF_SAMPLE_SIZE = 100;
 const EMPTY_VALUE_SCAN_FACTOR = 10;
 
 /**
+ * Bounds the scan itself, not just the number of values inspected: a column that is empty for its
+ * first million rows would otherwise be walked in full on every call.
+ */
+function getSniffScanLimit(valueCount: number, sampleSize: number): number {
+    return Math.min(valueCount, sampleSize * EMPTY_VALUE_SCAN_FACTOR);
+}
+
+/**
+ * Whether a sample holds anything a descriptor could be derived from.
+ *
+ * A column whose loaded rows are all blank has not been ruled out as a coordinate -- it has not
+ * been read yet, which is a different answer for the caller than "these values were read and are
+ * not coordinates". Only the rows the sniffer would actually reach are considered, so this agrees
+ * with {@link sniffCoordinateDescriptor} about what counts as having been looked at.
+ */
+export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): boolean {
+    if (!values?.length) {
+        return false;
+    }
+
+    const scanLimit = getSniffScanLimit(values.length, sampleSize);
+    for (let index = 0; index < scanLimit; index++) {
+        if (!isBlankCoordinateValue(values[index])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Derives a descriptor from the data itself, for columns that declare no units. Only the values
  * are consulted; the column name is deliberately not an input here, because a name states intent
  * and intent is the ranking layer's business, not the parser's.
  *
- * Returns undefined when no sample can be recognized or the samples disagree, which the caller
- * reports as ineligible rather than guessing.
+ * Returns undefined when a sample cannot be recognized, when the samples disagree, or when there
+ * was nothing to inspect. The caller separates the last case from the first two with
+ * {@link hasCoordinateValuesToInspect}: only values that were read and rejected are evidence that
+ * a column is not a coordinate.
  */
 export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): CoordinateDescriptor | undefined {
     if (!values?.length) {
@@ -209,13 +237,11 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
 
     let descriptor: CoordinateDescriptor | undefined;
     let inspectedCount = 0;
-    // Bound the scan itself, not just the number of values inspected: a column that is empty for
-    // its first million rows would otherwise be walked in full on every call.
-    const scanLimit = Math.min(values.length, sampleSize * EMPTY_VALUE_SCAN_FACTOR);
+    const scanLimit = getSniffScanLimit(values.length, sampleSize);
 
     for (let index = 0; index < scanLimit; index++) {
         const value = values[index];
-        if (value === null || value === undefined || value === "") {
+        if (isBlankCoordinateValue(value)) {
             continue;
         }
         if (inspectedCount >= sampleSize) {
@@ -326,6 +352,20 @@ export function getDegreesPerCatalogUnit(units: string | null | undefined): numb
 
 export function isStringColumnType(dataType: CARTA.ColumnType | null | undefined): boolean {
     return dataType === CARTA.ColumnType.String;
+}
+
+/** The value with the padding and NUL bytes that carry no meaning stripped. An absent value is "". */
+function trimCoordinateValue(value: string | number | null | undefined): string {
+    return value === null || value === undefined ? "" : String(value).replace(/\0/g, "").trim();
+}
+
+/**
+ * Whether a value is one of the spellings of "no value here". A padded empty cell ("  ") means
+ * exactly what an empty one does, and fixed-width tables write missing coordinates that way, so
+ * it must not be mistaken for a value that was read and found not to be a coordinate.
+ */
+function isBlankCoordinateValue(value: string | number | null | undefined): boolean {
+    return trimCoordinateValue(value) === "";
 }
 
 function isValidSexagesimalFields(fields: number[]): boolean {

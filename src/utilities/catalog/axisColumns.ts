@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogSystemType} from "enums";
 
-import {type CoordinateDescriptor, getCoordinateDescriptorFromUnits, isStringColumnType, sniffCoordinateDescriptor} from "./coordinateFormat";
+import {type CoordinateDescriptor, getCoordinateDescriptorFromUnits, hasCoordinateValuesToInspect, isStringColumnType, sniffCoordinateDescriptor} from "./coordinateFormat";
 
 /**
  * Whether a column can be turned into a numeric coordinate for a given axis.
@@ -10,8 +10,10 @@ import {type CoordinateDescriptor, getCoordinateDescriptorFromUnits, isStringCol
  * Deliberately name-blind: a column called "dec_deg" is a perfectly valid thing to drop into the
  * RA slot when a catalog is mislabelled, so names only influence {@link rankCatalogAxisColumns}.
  *
- * `Unknown` covers string columns that declare no units and whose data has not been fetched yet —
- * only displayed columns are sent by the backend, so there is nothing local to sniff.
+ * `Unknown` covers string columns that declare no units and have nothing local to read yet: only
+ * displayed columns are sent by the backend, and the rows that have arrived may all be blank. It
+ * is not a verdict, so it must not be confused with `Ineligible` — values that were read and are
+ * not coordinates.
  */
 export enum CatalogAxisEligibility {
     Eligible = "eligible",
@@ -128,7 +130,8 @@ export function isCatalogNumericDataType(dataType: CARTA.ColumnType | null | und
 
 /**
  * @param sampleData - values from the column, when its data has already been fetched. Passing
- * nothing is what makes a unitless string column `Unknown` rather than `Ineligible`.
+ * nothing — or only blanks — is what makes a unitless string column `Unknown` rather than
+ * `Ineligible`.
  */
 export function getCatalogAxisEligibility(dataType: CARTA.ColumnType | null | undefined, units: string | null | undefined, sampleData?: ReadonlyArray<string | number | null | undefined>): CatalogAxisEligibilityResult {
     if (isCatalogNumericDataType(dataType)) {
@@ -144,7 +147,10 @@ export function getCatalogAxisEligibility(dataType: CARTA.ColumnType | null | un
         return {status: CatalogAxisEligibility.Eligible, descriptor: unitDescriptor};
     }
 
-    if (!sampleData?.length) {
+    // A column whose loaded rows are all blank has not been read, only skimmed: an early page of
+    // empty cells says nothing about the format, and calling it ineligible would drop the column
+    // from the axis menu for good, with no way for the user to say otherwise.
+    if (!hasCoordinateValuesToInspect(sampleData)) {
         return {status: CatalogAxisEligibility.Unknown, reason: "Column declares no coordinate units. Select it to load its values and check the format."};
     }
 

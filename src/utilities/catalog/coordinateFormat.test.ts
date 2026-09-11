@@ -3,6 +3,7 @@ import {CatalogOverlay} from "enums";
 import {
     type CoordinateDescriptor,
     getCoordinateDescriptorFromUnits,
+    hasCoordinateValuesToInspect,
     normalizeCatalogUnits,
     parseCoordinateValue,
     recognizeCoordinateString,
@@ -105,6 +106,14 @@ describe("coordinate format", () => {
             expect(sniffCoordinateDescriptor([null, "", "12:30:00", undefined])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
         });
 
+        test("reads a padded empty cell as empty, not as an unrecognized value", () => {
+            // Fixed-width tables write a missing coordinate as spaces. Failing on one would throw
+            // away every other row's evidence and declare the column unreadable.
+            expect(sniffCoordinateDescriptor(["12:30:00", "   ", "10:15:30"])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+            expect(sniffCoordinateDescriptor(["\t", "12:30:00"])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+            expect(sniffCoordinateDescriptor(["\u0000", "12:30:00"])).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+        });
+
         test("gives up rather than guessing", () => {
             expect(sniffCoordinateDescriptor(["banana"])).toBeUndefined();
             expect(sniffCoordinateDescriptor(["12:30:00", "banana"])).toBeUndefined();
@@ -117,6 +126,25 @@ describe("coordinate format", () => {
         test("only inspects up to the sample size", () => {
             const values = ["12:30:00", ...new Array(500).fill("banana")];
             expect(sniffCoordinateDescriptor(values, 1)).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+        });
+    });
+
+    describe("hasCoordinateValuesToInspect", () => {
+        test("separates a sample with nothing in it from one that was read and rejected", () => {
+            expect(hasCoordinateValuesToInspect(["banana"])).toBe(true);
+            expect(hasCoordinateValuesToInspect([null, "", "12:30:00"])).toBe(true);
+            expect(hasCoordinateValuesToInspect([0])).toBe(true);
+
+            expect(hasCoordinateValuesToInspect([])).toBe(false);
+            expect(hasCoordinateValuesToInspect(undefined)).toBe(false);
+            expect(hasCoordinateValuesToInspect([null, undefined, ""])).toBe(false);
+            expect(hasCoordinateValuesToInspect(["  ", "\t", "\u0000"])).toBe(false);
+        });
+
+        test("looks no further than the sniffer would", () => {
+            const values = [...new Array(500).fill(""), "12:30:00"];
+            expect(hasCoordinateValuesToInspect(values, 1)).toBe(false);
+            expect(hasCoordinateValuesToInspect(values, 100)).toBe(true);
         });
     });
 
