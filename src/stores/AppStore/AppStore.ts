@@ -3695,87 +3695,76 @@ export class AppStore {
         this.shouldMatchMoment = !this.shouldMatchMoment;
     };
 
+    private getExportFilename = (extension: string): string => {
+        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+        return `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.${extension}`;
+    };
+
+    private canExportActiveImage = (): boolean => {
+        return Boolean(this.activeFrame && this.imageViewConfigStore.visibleFrames.includes(this.activeFrame));
+    };
+
     exportImage = (imageRatio: number) => {
-        if (this.activeFrame) {
-            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
-            if (index === -1) {
-                return;
-            }
+        if (!this.canExportActiveImage()) return;
 
-            this.setIsExportingImage(true);
-            this.setImageRatio(imageRatio);
-            this.waitForImageData().then(() => {
-                const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
-                if (this.activeFrame) {
-                    const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
-                    if (composedCanvas) {
-                        composedCanvas.toBlob(blob => {
-                            if (blob) {
-                                const link = document.createElement("a") as HTMLAnchorElement;
-                                const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                                // Trim filename before timestamp to 200 characters to prevent browser errors
-                                link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
-                                link.href = URL.createObjectURL(blob);
-                                link.dispatchEvent(new MouseEvent("click"));
-                            }
-                        }, "image/png");
-                    }
-                }
-                this.setIsExportingImage(false);
-            });
-        }
-    };
-
-    exportSvgImage = (imageRatio: number = 1) => {
-        if (this.activeFrame) {
-            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
-            if (index === -1) {
-                return;
-            }
-
-            this.setIsExportingImage(true);
-            this.setImageRatio(imageRatio);
-            this.waitForImageData().then(() => {
-                const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
-                if (this.activeFrame) {
-                    const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
-                    if (svgDoc) {
-                        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                        const filename = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.svg`;
-                        downloadSvg(svgDoc, filename);
-                    }
-                }
-                this.setIsExportingImage(false);
-            });
-        }
-    };
-
-    exportPdfImage = (imageRatio: number = 1) => {
-        if (this.activeFrame) {
-            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
-            if (index === -1) {
-                return;
-            }
-
-            this.setIsExportingImage(true);
-            this.setImageRatio(imageRatio);
-            this.waitForImageData().then(async () => {
+        this.setIsExportingImage(true);
+        this.setImageRatio(imageRatio);
+        this.waitForImageData().then(
+            () => {
                 try {
                     const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
                     if (this.activeFrame) {
-                        const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
-                        if (svgDoc) {
-                            const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                            const filename = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.pdf`;
-                            await downloadPdf(svgDoc, filename);
+                        const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+                        if (composedCanvas) {
+                            composedCanvas.toBlob(blob => {
+                                if (blob) {
+                                    const link = document.createElement("a") as HTMLAnchorElement;
+                                    link.download = this.getExportFilename("png");
+                                    link.href = URL.createObjectURL(blob);
+                                    link.dispatchEvent(new MouseEvent("click"));
+                                }
+                            }, "image/png");
                         }
                     }
                 } finally {
                     this.setIsExportingImage(false);
                 }
-            });
-        }
+            },
+            () => this.setIsExportingImage(false)
+        );
     };
+
+    private exportVectorImage = (imageRatio: number, format: "svg" | "pdf") => {
+        if (!this.canExportActiveImage()) return;
+
+        this.setIsExportingImage(true);
+        this.setImageRatio(imageRatio);
+        this.waitForImageData().then(
+            async () => {
+                try {
+                    const backgroundColor = GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme);
+                    if (this.activeFrame) {
+                        const svgDoc = getImageViewSvg(this.activeFrame.overlayStore.padding, backgroundColor);
+                        if (svgDoc) {
+                            const filename = this.getExportFilename(format);
+                            if (format === "svg") {
+                                downloadSvg(svgDoc, filename);
+                            } else {
+                                await downloadPdf(svgDoc, filename);
+                            }
+                        }
+                    }
+                } finally {
+                    this.setIsExportingImage(false);
+                }
+            },
+            () => this.setIsExportingImage(false)
+        );
+    };
+
+    exportSvgImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "svg");
+
+    exportPdfImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "pdf");
 
     updateLayerPixelRatio = layerRef => {
         const canvas = layerRef?.current?.getCanvas();
