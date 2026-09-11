@@ -1,6 +1,6 @@
 import * as CARTACompute from "carta_computation";
 
-import {CatalogDisplayMode, CatalogSizeUnits} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogSizeUnits} from "enums";
 import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
 
 describe("CatalogDisplayStore angular size axis type", () => {
@@ -10,15 +10,13 @@ describe("CatalogDisplayStore angular size axis type", () => {
 
         diameterDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
         radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-        const fixedCatalogSize = radiusDisplayStore.catalogSize;
-
         radiusDisplayStore.setCatalogSourceRadiusType("radius");
 
         expect(diameterDisplayStore.catalogSourceRadiusType).toBe("diameter");
         expect(radiusDisplayStore.catalogSourceRadiusType).toBe("radius");
         expect(diameterDisplayStore.pixelSizeFactor).toBe(1);
         expect(radiusDisplayStore.pixelSizeFactor).toBe(2);
-        expect(radiusDisplayStore.catalogSize).toBe(fixedCatalogSize);
+        expect(radiusDisplayStore.catalogSize).toBe(radiusDisplayStore.showedCatalogSize * 2);
 
         radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
         radiusDisplayStore.setCanvasSizeUnit(CatalogSizeUnits.ARCSEC);
@@ -43,7 +41,6 @@ describe("CatalogDisplayStore angular size axis type", () => {
             widgetStore.setSizeMap("size");
             widgetStore.setSizeColumnMin(2, "default");
             widgetStore.setSizeColumnMax(4, "default");
-            const fixedCatalogSize = widgetStore.catalogSize;
             calculateCatalogSize.mockClear();
 
             widgetStore.sizeArray();
@@ -54,7 +51,7 @@ describe("CatalogDisplayStore angular size axis type", () => {
 
             expect(diameterCall?.[7]).toBe(1);
             expect(radiusCall?.[7]).toBe(2);
-            expect(widgetStore.catalogSize).toBe(fixedCatalogSize);
+            expect(widgetStore.catalogSize).toBe(widgetStore.showedCatalogSize * 2);
         } finally {
             widgetStore.dispose();
             if (previousProfileStore) {
@@ -64,5 +61,23 @@ describe("CatalogDisplayStore angular size axis type", () => {
             }
             calculateCatalogSize.mockRestore();
         }
+    });
+
+    test("recomputes a fixed angular size when its world unit changes", () => {
+        const displayStore = new CatalogDisplayStore(0);
+
+        displayStore.setCatalogSourceRadiusType("radius");
+        displayStore.setCatalogSize(12);
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+
+        expect(displayStore.catalogSize).toBe(24);
+
+        displayStore.setWorldSizeUnit(AngularSizeUnit.ARCMIN);
+
+        expect(displayStore.showedCatalogSize).toBe(12);
+        expect(displayStore.pixelSizeFactor).toBe(120);
+        expect(displayStore.catalogSize).toBe(1440);
+
+        displayStore.dispose();
     });
 });

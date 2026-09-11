@@ -13,6 +13,9 @@ type CatalogOverlayCoords = {
 };
 
 export class CatalogStore {
+    /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
+    public static readonly PENDING_CATALOG_FILE_ID = 0;
+
     private static staticInstance: CatalogStore;
 
     public static get Instance() {
@@ -38,6 +41,8 @@ export class CatalogStore {
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // catalog file Id : catalog display store
     @observable catalogDisplayStores: Map<number, CatalogDisplayStore> = new Map();
+    /** Latest filter request per catalog; streamed responses from older requests are discarded. */
+    private readonly catalogRequestIds: Map<number, number> = new Map();
 
     private constructor() {
         makeObservable(this);
@@ -104,6 +109,7 @@ export class CatalogStore {
     }
 
     @action removeCatalog(fileId: number, catalogComponentId?: string) {
+        this.completeCatalogRequest(fileId);
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
@@ -119,6 +125,7 @@ export class CatalogStore {
 
         // update catalogProfiles fileId
         if (catalogComponentId && associatedCatalogId.length) {
+            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogId[0]);
             this.catalogProfiles.forEach((catalogFileId, componentId) => {
                 if (catalogFileId === fileId) {
                     this.catalogProfiles.set(componentId, associatedCatalogId[0]);
@@ -127,6 +134,29 @@ export class CatalogStore {
         }
     }
 
+    /** Associate a catalog filter request with the catalog it updates. */
+    @action registerCatalogRequest = (catalogFileId: number, requestId: number) => {
+        this.catalogRequestIds.set(catalogFileId, requestId);
+    };
+
+    /** Return false for a response belonging to a superseded or completed request. */
+    public acceptsCatalogResponse = (catalogFileId: number, requestId?: number): boolean => {
+        if (requestId === undefined) {
+            return true;
+        }
+        const currentRequestId = this.catalogRequestIds.get(catalogFileId);
+        return currentRequestId === requestId;
+    };
+
+    /** Mark the current request as finished so late responses cannot mutate the catalog. */
+    @action completeCatalogRequest = (catalogFileId: number, requestId?: number) => {
+        const currentRequestId = this.catalogRequestIds.get(catalogFileId);
+        if (requestId !== undefined && currentRequestId !== requestId) {
+            return;
+        }
+        this.catalogRequestIds.delete(catalogFileId);
+    };
+
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
         this.imageAssociatedCatalogId.set(activeFrameIndex, associatedCatalogFiles);
     }
@@ -134,8 +164,29 @@ export class CatalogStore {
     @action resetActiveCatalogFile(imageFileId: number) {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
         const activeCatalogFileIds = fileIds ? fileIds : [];
-        if (this.catalogProfiles.size && activeCatalogFileIds?.length) {
-            this.catalogProfiles.forEach((value, componentId) => {
+        if (!activeCatalogFileIds.length) {
+            return;
+        }
+
+        // CatalogWidgetStore is the source of truth for the refactored catalog panels.
+        // Keep the legacy map synchronized while it remains for compatibility with
+        // callers that have not migrated yet.
+        if (WidgetsStore.Instance.catalogWidgets.size) {
+            WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
+            this.catalogProfiles.forEach((_value, componentId) => {
+                if (!WidgetsStore.Instance.catalogWidgets.has(componentId)) {
+                    this.catalogProfiles.delete(componentId);
+                }
+            });
+            WidgetsStore.Instance.catalogWidgets.forEach((widgetStore, componentId) => {
+                this.catalogProfiles.set(componentId, widgetStore.selectedCatalogId);
+            });
+            return;
+        }
+
+        // Legacy-only callers still need the previous behavior during migration.
+        if (this.catalogProfiles.size) {
+            this.catalogProfiles.forEach((_value, componentId) => {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });
         }
@@ -171,6 +222,17 @@ export class CatalogStore {
             catalogWidgetMap.set(fileId, widgetId);
             this.catalogPlots.set(componentId, catalogWidgetMap);
         }
+    }
+
+    /** Attach restored plot stores to the first catalog selected in this session. */
+    @action bindPendingCatalogPlots(fileId: number) {
+        this.catalogPlots.forEach(catalogWidgetMap => {
+            const pendingWidgetId = catalogWidgetMap.get(CatalogStore.PENDING_CATALOG_FILE_ID);
+            if (pendingWidgetId && !catalogWidgetMap.has(fileId)) {
+                catalogWidgetMap.set(fileId, pendingWidgetId);
+                catalogWidgetMap.delete(CatalogStore.PENDING_CATALOG_FILE_ID);
+            }
+        });
     }
 
     // remove catalog plot widget, keep placeholder

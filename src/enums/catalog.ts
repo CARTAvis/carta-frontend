@@ -113,6 +113,9 @@ export enum CatalogDisplayMode {
     WORLD = "Angular size"
 }
 
+/** Whether an authored angular size is the source's radius or its full diameter. */
+export type CatalogSourceRadiusMode = "diameter" | "radius";
+
 export enum CatalogSizeUnits {
     SCREENPIXEL = "screen px",
     IMAGEPIXEL = "image px",

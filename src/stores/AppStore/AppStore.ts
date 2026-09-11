@@ -1239,15 +1239,13 @@ export class AppStore {
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
-        const catalogComponentSize = catalogStore.catalogProfiles.size;
+        const catalogComponentSize = this.widgetsStore.catalogWidgets.size;
         const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;
         } else {
             // new image append
-            catalogStore.catalogProfiles.forEach((value, componentId) => {
-                catalogStore.catalogProfiles.set(componentId, fileId);
-            });
+            this.widgetsStore.resetCatalogPanelSelections([fileId]);
         }
         associatedCatalogFiles.push(fileId);
         if (AppStore.Instance.activeFrame) {
@@ -1255,14 +1253,12 @@ export class AppStore {
         }
 
         catalogStore.getOrCreateCatalogDisplayStore(fileId);
+        catalogStore.bindPendingCatalogPlots(fileId);
         if (catalogComponentSize === 0) {
             catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
             catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
-            catalogComponentId = catalogStore.catalogProfiles.keys().next().value;
-            if (catalogComponentId) {
-                catalogStore.catalogProfiles.set(catalogComponentId, fileId);
-            }
+            catalogComponentId = this.widgetsStore.updateCatalogPanelSelection(fileId);
         }
         return catalogComponentId;
     };
@@ -1285,11 +1281,15 @@ export class AppStore {
         }
     }
 
-    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties) {
+    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties): number | false {
         if (!this.activeFrame) {
-            return;
+            return false;
         }
-        this.backendService.setCatalogFilterRequest(catalogFilter);
+        const requestId = this.backendService.setCatalogFilterRequest(catalogFilter);
+        if (typeof requestId === "number" && catalogFilter.fileId !== null && catalogFilter.fileId !== undefined) {
+            this.catalogStore.registerCatalogRequest(catalogFilter.fileId, requestId);
+        }
+        return requestId;
     }
 
     /**
@@ -2465,11 +2465,17 @@ export class AppStore {
         }
     };
 
-    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse & {eventId?: number}) => {
         const catalogFileId = catalogFilter.fileId;
+        if (!this.catalogStore.acceptsCatalogResponse(catalogFileId, catalogFilter.eventId)) {
+            return;
+        }
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
 
         const progress = catalogFilter.progress;
+        if (progress === 1) {
+            this.catalogStore.completeCatalogRequest(catalogFileId, catalogFilter.eventId);
+        }
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
             const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);

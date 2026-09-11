@@ -1,8 +1,8 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 
-import {type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
-import {sanitizeScalingParameter} from "utilities/scaling/scaling";
+import {type AngularSizeUnit, type CatalogDisplayMode, type CatalogOverlayShape, type CatalogPlotType, type CatalogSizeUnits, type CatalogSourceRadiusMode, type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
+import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
 
@@ -67,6 +67,75 @@ export interface WorkspaceVectorOverlayConfig {
     intensityMin: number | undefined;
     intensityMax: number | undefined;
     rotationOffset: number;
+}
+
+/** One catalog size axis: the major axis, or the minor axis of an ellipse. */
+export interface WorkspaceCatalogSizeAxisConfig {
+    mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMaxClip?: number;
+    min?: {area: number; diameter: number};
+    max?: {area: number; diameter: number};
+    areaMode?: boolean;
+    scalingType?: FrameScaling;
+    scalingParameters?: ScalingParameters;
+    /** Whether the minor axis follows this axis at the lower end. */
+    columnMinLocked?: boolean;
+    /** Whether the minor axis follows this axis at the upper end. */
+    columnMaxLocked?: boolean;
+}
+
+export interface WorkspaceCatalogColorAxisConfig {
+    mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMaxClip?: number;
+    colorMap?: string;
+    inverted?: boolean;
+    scalingType?: FrameScaling;
+    scalingParameters?: ScalingParameters;
+}
+
+export interface WorkspaceCatalogOrientationAxisConfig {
+    mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMaxClip?: number;
+    /** Lower end of the angle range the mapped data is spread over, in degrees. */
+    angleMin?: number;
+    /** Upper end of the angle range the mapped data is spread over, in degrees. */
+    angleMax?: number;
+    scalingType?: FrameScaling;
+    scalingParameters?: ScalingParameters;
+}
+
+/**
+ * How one catalog is drawn. Holds only what the user authored: the state a panel keeps for its
+ * own presentation, and the values recomputed from the catalog data, are deliberately absent.
+ */
+export interface WorkspaceCatalogConfig {
+    color?: string;
+    highlightColor?: string;
+    shape?: CatalogOverlayShape;
+    /** Source size in the current size unit, as entered by the user. */
+    size?: number;
+    thickness?: number;
+    displayMode?: CatalogDisplayMode;
+    canvasSizeUnit?: CatalogSizeUnits;
+    worldSizeUnit?: AngularSizeUnit;
+    /** Whether an authored angular size is the source's radius or its full diameter. */
+    sourceRadiusType?: CatalogSourceRadiusMode;
+    plotType?: CatalogPlotType;
+    xAxis?: string;
+    yAxis?: string;
+    sizeAxis?: WorkspaceCatalogSizeAxisConfig;
+    sizeMinorAxis?: WorkspaceCatalogSizeAxisConfig;
+    colorAxis?: WorkspaceCatalogColorAxisConfig;
+    orientationAxis?: WorkspaceCatalogOrientationAxisConfig;
 }
 
 export interface WorkspaceRegion {

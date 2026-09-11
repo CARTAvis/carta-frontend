@@ -14,6 +14,20 @@ export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
+export interface CatalogPlotWidgetConfig {
+    plotType: CatalogPlotType;
+    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
+    catalogFileId?: number;
+    xColumnName: string;
+    yColumnName?: string;
+    statisticColumnName?: string;
+    isLogScaleY?: boolean;
+    nBinX?: number;
+    dragMode?: DragMode;
+    scatterBorder?: Border;
+    histogramBorder?: XBorder;
+}
+
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
 
@@ -38,6 +52,45 @@ export class CatalogPlotWidgetStore {
         this.xColumnName = props.xColumnName;
         this.yColumnName = props.yColumnName;
         makeObservable(this);
+    }
+
+    public toConfig = (): CatalogPlotWidgetConfig => ({
+        plotType: this.plotType,
+        xColumnName: this.xColumnName,
+        yColumnName: this.yColumnName,
+        statisticColumnName: this.statisticColumnName,
+        isLogScaleY: this.isLogScaleY,
+        nBinX: this.nBinX,
+        dragMode: this.dragMode,
+        scatterBorder: this.scatterBorder,
+        histogramBorder: this.histogramBorder
+    });
+
+    @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
+        if (typeof config.xColumnName === "string") {
+            this.xColumnName = config.xColumnName;
+        }
+        if (typeof config.yColumnName === "string") {
+            this.yColumnName = config.yColumnName;
+        }
+        if (typeof config.statisticColumnName === "string") {
+            this.statisticColumnName = config.statisticColumnName;
+        }
+        if (typeof config.isLogScaleY === "boolean") {
+            this.isLogScaleY = config.isLogScaleY;
+        }
+        if (Number.isInteger(config.nBinX) && (config.nBinX as number) > 0) {
+            this.nBinX = config.nBinX;
+        }
+        if (config.dragMode !== undefined) {
+            this.dragMode = config.dragMode;
+        }
+        if (config.scatterBorder) {
+            this.scatterBorder = config.scatterBorder;
+        }
+        if (config.histogramBorder) {
+            this.histogramBorder = config.histogramBorder;
+        }
     }
 
     @action setStatisticColumn(columnName: string) {
