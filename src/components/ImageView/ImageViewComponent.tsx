@@ -474,7 +474,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 const center = {x: tile.vertexData[offset], y: tile.vertexData[offset + 1]};
                 const intensity = tile.vertexData[offset + 2];
                 const rawAngleDegrees = tile.vertexData[offset + 3];
-                const lineLength = getVectorLineLengthInImageSpace(frame, intensity, pixelRatio);
+                const lineLength = getVectorLineLengthInImageSpace(vectorFrame, intensity, pixelRatio);
                 if (lineLength <= 0) {
                     continue;
                 }
