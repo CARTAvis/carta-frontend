@@ -29,3 +29,9 @@ export const CATALOG_MIRRORS_BY_DATABASE: {
     [CatalogDatabase.SIMBAD]: [SimbadMirror.STRASBOURG, SimbadMirror.CFA_HARVARD],
     [CatalogDatabase.VIZIER]: [VizierMirror.CDS, VizierMirror.ADAC, VizierMirror.IUCAA, VizierMirror.INASAN, VizierMirror.NAOC, VizierMirror.CFA_HARVARD, VizierMirror.IDIA]
 };
+
+export const CATALOG_DEGREE_UNITS = ["d", "deg", "degree", "degrees"];
+export const CATALOG_ARCMIN_UNITS = ["arcmin", "arcminute", "arcminutes"];
+export const CATALOG_ARCSEC_UNITS = ["arcsec", "arcsecond", "arcseconds"];
+export const CATALOG_RADIAN_UNITS = ["rad", "radian", "radians"];
+export const CATALOG_HOUR_UNITS = ["h", "hr", "hour", "hours"];

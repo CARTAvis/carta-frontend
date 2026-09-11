@@ -2486,16 +2486,16 @@ export class AppStore {
                 const yColumn = catalogDisplayStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
-                    const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
+                    const coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-                    if (coords.wcsX && coords.wcsY && coords.xHeaderInfo.units && coords.yHeaderInfo.units) {
+                    if (coords.wcsX && coords.wcsY) {
                         this.catalogStore.convertToImageCoordinate(
                             catalogFileId,
                             coords.wcsX,
                             coords.wcsY,
                             wcs,
-                            coords.xHeaderInfo.units,
-                            coords.yHeaderInfo.units,
+                            coords.xHeaderInfo.units ?? "",
+                            coords.yHeaderInfo.units ?? "",
                             catalogProfileStore.catalogCoordinateSystem.system,
                             catalogFilter.subsetEndIndex,
                             catalogFilter.subsetDataSize

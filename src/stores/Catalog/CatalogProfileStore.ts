@@ -1,20 +1,16 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
-import type {ProcessedColumnData} from "utilities";
 
 import {CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
 import {PreferenceStore} from "stores";
+import {CatalogAxisEligibility, getAutoSelectedCatalogAxisColumn, getCatalogAxisEligibility, type ProcessedColumnData} from "utilities";
 
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
-    private readonly initialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
-    private readonly initialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
-    private initialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
-    private initialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
@@ -177,17 +173,38 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const catalogHeader = this.catalogHeader;
 
         if (catalogHeader.length) {
+            // Which columns land in the first N is an accident of their order in the file, so the
+            // ones the image overlay is going to need are displayed alongside them. Their values
+            // then arrive with the first data request, which is what lets a string coordinate
+            // column that declares no units be recognized at all.
+            const coordinateColumnNames = this.initialCoordinateColumnNames;
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let shouldDisplay = false;
-                if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
-                    shouldDisplay = true;
-                }
+                const shouldDisplay = index < PreferenceStore.Instance.catalogDisplayedColumnSize || coordinateColumnNames.has(header.name);
                 const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: shouldDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
         return controlHeaders;
+    }
+
+    /**
+     * The best-named candidate for each of the image overlay axes this catalog's coordinate system
+     * uses. Names only nominate here: whether a column is actually usable is still decided from its
+     * units or its values, once there are values to look at.
+     */
+    @computed private get initialCoordinateColumnNames(): Set<string> {
+        const system = AbstractCatalogProfileStore.getCatalogSystem(this.catalogInfo.fileInfo.coosys?.[0]?.system);
+        const axes = this.systemCoordinateMap.get(system);
+        if (!axes) {
+            return new Set<string>();
+        }
+
+        // A column that could never hold a number is not worth a slot, however it is named.
+        const candidates = this.catalogHeader.filter(header => getCatalogAxisEligibility(header.dataType, header.units).status !== CatalogAxisEligibility.Ineligible).map(header => header.name);
+
+        const nominated = [getAutoSelectedCatalogAxisColumn(axes.x, candidates, system), getAutoSelectedCatalogAxisColumn(axes.y, candidates, system)];
+        return new Set<string>(nominated.filter((name): name is string => name !== undefined));
     }
 
     @action setMaxRows(maxRows: number) {
@@ -257,35 +274,5 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             }
         });
         return indices;
-    }
-
-    private findKeywords(val: string): boolean {
-        const keyWords = this.initialedColumnsKeyWords;
-        const raKeywords = this.initialedRAColumnsKeyWords;
-        const decKeywords = this.initialedDECColumnsKeyWords;
-        const excludeKeywords = this.initialedExcludeColumnsKeyWords;
-        const description = val.toUpperCase();
-        for (let index = 0; index < keyWords.length; index++) {
-            const subString = keyWords[index];
-            if (description.includes(subString)) {
-                return true;
-            }
-        }
-        if (description.includes(excludeKeywords[0]) || description.includes(excludeKeywords[1])) {
-            return false;
-        }
-        for (let index = 0; index < raKeywords.length; index++) {
-            const ra = raKeywords[index];
-            if (description.includes(ra)) {
-                return true;
-            }
-        }
-        for (let index = 0; index < decKeywords.length; index++) {
-            const dec = decKeywords[index];
-            if (description.includes(dec)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

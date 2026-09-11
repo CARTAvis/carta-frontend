@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingParameterControlComponent, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, ValueClip} from "enums";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
+import {getColorForTheme, getScalingParameterConfig, isCatalogNumericDataType, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -105,7 +105,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         profileStore?.catalogControlHeader?.forEach((header, columnName) => {
             if (header.dataIndex !== undefined) {
                 const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (isCatalogAxisDataType(dataType) && header.display) {
+                if (isCatalogNumericDataType(dataType) && header.display) {
                     axisOptions.push(columnName);
                 }
             }

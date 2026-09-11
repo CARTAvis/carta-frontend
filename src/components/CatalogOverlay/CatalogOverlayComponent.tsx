@@ -4,7 +4,7 @@ import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import type {CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -14,7 +14,18 @@ import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType,
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps} from "stores/Widgets";
-import {clamp, findAutoSelectedCatalogAxisColumn, getCatalogDataTypeDisplayName, isCatalogAxisDataType, isExcludedCoordinateName, type ProcessedColumnData, toFixed} from "utilities";
+import {
+    CatalogAxisEligibility,
+    type CatalogAxisEligibilityResult,
+    clamp,
+    getAutoSelectedCatalogAxisColumn,
+    getCatalogAxisEligibility,
+    getCatalogDataTypeDisplayName,
+    isCatalogNumericDataType,
+    type ProcessedColumnData,
+    rankCatalogAxisColumns,
+    toFixed
+} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -297,25 +308,84 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get axisOption(): string[] {
+    /**
+     * Values to sniff a string column's format from, or undefined when the column's data has not
+     * been fetched. Only displayed columns are requested from the backend, so this is routinely
+     * empty for a column the user has not switched on yet.
+     */
+    private getColumnSampleData(columnIndex: number | undefined): Array<string | null | undefined> | undefined {
+        if (columnIndex === undefined) {
+            return undefined;
+        }
+        const columnData = this.profileStore?.catalogData?.get(columnIndex);
+        return columnData?.dataType === CARTA.ColumnType.String ? (columnData.data as Array<string | null | undefined>) : undefined;
+    }
+
+    /**
+     * Eligibility is per column, not per axis: whether a column can be read as a number has
+     * nothing to do with which slot it lands in. Only the ordering below is axis-specific.
+     */
+    @computed get axisColumnEligibility(): Map<string, CatalogAxisEligibilityResult> {
+        const eligibility = new Map<string, CatalogAxisEligibilityResult>();
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return eligibility;
+        }
+
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined || !header.display) {
+                return;
+            }
+            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
+            const sampleData = this.getColumnSampleData(catalogHeader?.columnIndex);
+            eligibility.set(columnName, getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData));
+        });
+        return eligibility;
+    }
+
+    @computed get xAxisOption(): string[] {
+        return this.getAxisOptions(this.xAxisLabel);
+    }
+
+    @computed get yAxisOption(): string[] {
+        return this.getAxisOptions(this.yAxisLabel);
+    }
+
+    private getAxisOptions(axis: CatalogOverlay): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [CatalogOverlay.NONE];
         }
-        const axisOptions: string[] = [];
-        axisOptions.push(CatalogOverlay.NONE);
-        profileStore.catalogControlHeader.forEach((header, columnName) => {
-            if (header?.dataIndex !== undefined) {
-                const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (isCatalogAxisDataType(dataType) && header.display) {
-                    axisOptions.push(columnName);
+
+        if (this.displayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            const numericOptions: string[] = [];
+            profileStore.catalogControlHeader.forEach((header, columnName) => {
+                if (header?.dataIndex !== undefined && header.display && isCatalogNumericDataType(profileStore.catalogHeader[header.dataIndex]?.dataType)) {
+                    numericOptions.push(columnName);
                 }
+            });
+            return [CatalogOverlay.NONE, ...numericOptions];
+        }
+
+        // Anything that can become a number stays selectable; ranking pushes the unlikely
+        // candidates down the list rather than hiding them, so a mislabelled catalog is still usable.
+        const selectableColumns: string[] = [];
+        this.axisColumnEligibility.forEach((result, columnName) => {
+            if (result.status !== CatalogAxisEligibility.Ineligible) {
+                selectableColumns.push(columnName);
             }
         });
-        return axisOptions;
+
+        return [CatalogOverlay.NONE, ...rankCatalogAxisColumns(axis, selectableColumns, profileStore.catalogCoordinateSystem.system)];
     }
 
-    private getAutoSelectableAxisOptions(shouldIncludeHidden = false): string[] {
+    /**
+     * @param shouldIncludeUnknown - also offer columns whose values have not been fetched, so their
+     * format is still unknown. Only a last resort: the name is all there is to go on, and a wrong
+     * guess costs a round trip. It degrades safely, because a column that turns out not to be a
+     * coordinate yields no data and simply leaves the overlay unplotted.
+     */
+    private getAutoSelectableAxisOptions(shouldIncludeHidden = false, shouldIncludeUnknown = false): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [];
@@ -323,16 +393,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         const axisOptions: string[] = [];
         profileStore.catalogControlHeader.forEach((header, columnName) => {
-            if (header?.dataIndex === undefined) {
+            if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
                 return;
             }
 
-            const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-            if (!isCatalogAxisDataType(dataType) || (!shouldIncludeHidden && !header.display) || isExcludedCoordinateName(columnName)) {
-                return;
+            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
+            const sampleData = this.getColumnSampleData(catalogHeader?.columnIndex);
+            const status = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData).status;
+            if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
+                axisOptions.push(columnName);
             }
-
-            axisOptions.push(columnName);
         });
         return axisOptions;
     }
@@ -364,8 +434,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const system = this.profileStore?.catalogCoordinateSystem.system;
-        const xColumnName = shouldSelectXAxis ? findAutoSelectedCatalogAxisColumn(this.xAxisLabel, catalogDisplayStore.xAxis, axisOptions, system) : undefined;
-        const yColumnName = shouldSelectYAxis ? findAutoSelectedCatalogAxisColumn(this.yAxisLabel, catalogDisplayStore.yAxis, axisOptions, system) : undefined;
+        const xColumnName = shouldSelectXAxis && catalogDisplayStore.xAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.xAxisLabel, axisOptions, system) : undefined;
+        const yColumnName = shouldSelectYAxis && catalogDisplayStore.yAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.yAxisLabel, axisOptions, system) : undefined;
 
         let areHiddenColumnsEnabled = false;
         if (shouldEnableHiddenColumns) {
@@ -394,13 +464,24 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
         }
 
+        // Widening passes: the columns already on screen, then the hidden ones whose units or
+        // values identify them, and only then the hidden ones nothing but their name suggests.
         const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
         if (selected.didSelectX && selected.didSelectY) {
             return;
         }
 
         const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
-        if (fallback.enabledHiddenColumns && profileStore?.isFileBasedCatalog) {
+        let didEnableHiddenColumns = fallback.enabledHiddenColumns;
+
+        const isXAxisUnfilled = !selected.didSelectX && !fallback.didSelectX;
+        const isYAxisUnfilled = !selected.didSelectY && !fallback.didSelectY;
+        if (isXAxisUnfilled || isYAxisUnfilled) {
+            const unknownFallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true, true), isXAxisUnfilled, isYAxisUnfilled, true);
+            didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
+        }
+
+        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
@@ -429,7 +510,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
             catalogDisplayStore.setPlottedImageOverlayState(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
-            const imageCoords = profileStore.get2DPlotData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
+            const imageCoords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
@@ -466,7 +547,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
-        return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
+        const reason = this.axisColumnEligibility.get(catalogName)?.reason;
+        return <MenuItem key={catalogName} text={catalogName} label={reason ? "?" : undefined} title={reason} onClick={itemProps.handleClick} />;
     };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
@@ -609,7 +691,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        const coords = profileStore.get2DPlotData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
+        const coords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
         return Boolean(coords.wcsX && coords.wcsY);
     }
 
@@ -1075,7 +1157,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.axisOption}
+                                        items={this.xAxisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogDisplayStore.setxAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
@@ -1093,7 +1175,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.axisOption}
+                                        items={this.yAxisOption}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogDisplayStore.setyAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}

@@ -5,13 +5,82 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
+import {
+    CatalogAxisEligibility,
+    type CatalogAxisEligibilityResult,
+    filterProcessedColumnData,
+    getCatalogAxisEligibility,
+    getComparisonOperatorAndValue,
+    getDegreesPerCatalogUnit,
+    getHasFilter,
+    isCatalogLatitudeAxis,
+    isCatalogNumericDataType,
+    minMaxArray,
+    parseCoordinateValue,
+    type ProcessedColumnData,
+    rejectOutOfRangeLatitude,
+    resolveDescriptorForAxis,
+    transformPoint,
+    type TypedArray
+} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.CatalogFileInfo.$Properties;
     dataSize: number;
     directory: string;
+}
+
+/**
+ * Converts a column to numeric coordinates for the axis it has been bound to. This is the one
+ * place where an ambiguous format (a bare "12:30:00", which is hours on RA and degrees elsewhere)
+ * is resolved, because it is the first point at which the axis is known.
+ *
+ * Values come back in the column's declared units, not in degrees: the sky transform scales them
+ * on its way into AST, and converting here as well would apply that scaling twice.
+ */
+function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligibility: CatalogAxisEligibilityResult, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
+    if (!column || eligibility.status !== CatalogAxisEligibility.Eligible) {
+        return undefined;
+    }
+
+    // Applied to numeric columns too: a declination of -91 breaks the transform the same way
+    // whether it arrived as a number or as a string.
+    const isLatitude = isCatalogLatitudeAxis(axis);
+    const degreesPerUnit = getDegreesPerCatalogUnit(units);
+
+    if (!eligibility.descriptor) {
+        const numericData = column.data as ArrayLike<number>;
+        return isLatitude ? rejectOutOfRangeLatitudes(numericData, degreesPerUnit) : (numericData as Array<number>);
+    }
+
+    const descriptor = resolveDescriptorForAxis(eligibility.descriptor, axis);
+    // Parsed values are in the column's units too, so one scale covers both paths: the parser
+    // resolves only what the units cannot express as a multiplier, which is the sexagesimal
+    // notation, and getDegreesPerCatalogUnit reports 1 for exactly those units.
+    const parsedData = (column.data as Array<string | null | undefined>).map(value => parseCoordinateValue(value, descriptor));
+    return isLatitude ? rejectOutOfRangeLatitudes(parsedData, degreesPerUnit) : parsedData;
+}
+
+/**
+ * Drops the latitudes that lie beyond a pole, leaving the values that survive in their original
+ * units. The bound is a number of degrees, so each value is scaled for the comparison only.
+ */
+function rejectOutOfRangeLatitudes(values: ArrayLike<number>, degreesPerUnit: number): Array<number> {
+    // Built element by element rather than with `values.map`: a numeric column arrives as a typed
+    // array, and mapping an integer one writes the result back through its own element type, which
+    // turns a rejected NaN into a source at latitude zero.
+    const checked = new Array<number>(values.length);
+    for (let index = 0; index < values.length; index++) {
+        const value = values[index];
+        checked[index] = isNaN(rejectOutOfRangeLatitude(value * degreesPerUnit)) ? NaN : value;
+    }
+    return checked;
+}
+
+/** Raw values of a numeric column, for a plot that reads them as plain numbers. */
+function getNumericPlotData(column: ProcessedColumnData | undefined): Array<number> | undefined {
+    return column && isCatalogNumericDataType(column.dataType) ? (column.data as Array<number>) : undefined;
 }
 
 export abstract class AbstractCatalogProfileStore {
@@ -55,6 +124,8 @@ export abstract class AbstractCatalogProfileStore {
     @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
+    /** Backing store for {@link getCoordinateEligibility}, by column name. */
+    private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
@@ -103,38 +174,139 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogData.clear();
     }
 
+    /**
+     * The values VOTable 1.4 section 3.4 allows for COOSYS/\@system. Matched exactly, because the
+     * ecliptic spellings contain the equatorial ones: a substring test reads "ecl_FK5" as FK5,
+     * which silently turns an ecliptic longitude into a right ascension and scales it by fifteen.
+     */
+    private static readonly VotableCoordinateSystems = new Map<string, CatalogSystemType>([
+        ["icrs", CatalogSystemType.ICRS],
+        ["eq_fk5", CatalogSystemType.FK5],
+        ["eq_fk4", CatalogSystemType.FK4],
+        ["ecl_fk5", CatalogSystemType.Ecliptic],
+        ["ecl_fk4", CatalogSystemType.Ecliptic],
+        ["galactic", CatalogSystemType.Galactic]
+    ]);
+
+    /**
+     * Looser spellings, for files that do not follow the enumeration and for CARTA's own pixel
+     * systems. Ordered most specific first and matched on the first hit, so "ecl_" cannot fall
+     * through to the equatorial keywords.
+     *
+     * "supergalactic" is a standard VOTable value that CARTA has no system for; it lands on
+     * Galactic here, as it always has.
+     */
+    private static readonly CoordinateSystemKeywords: ReadonlyArray<[string, CatalogSystemType]> = [
+        ["ecl", CatalogSystemType.Ecliptic],
+        ["galactic", CatalogSystemType.Galactic],
+        ["icrs", CatalogSystemType.ICRS],
+        ["fk5", CatalogSystemType.FK5],
+        ["fk4", CatalogSystemType.FK4],
+        ["pix0", CatalogSystemType.Pixel0],
+        ["pix1", CatalogSystemType.Pixel1]
+    ];
+
     public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
-        let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = AbstractCatalogProfileStore.COORDINATE_SYSTEM_NAME;
-        systemMap.forEach((value, key) => {
-            if (system?.toUpperCase().includes(value.toUpperCase())) {
-                catalogSystem = key;
-            }
-        });
-        return catalogSystem;
+        const normalizedSystem = system?.trim().toLowerCase();
+        if (!normalizedSystem) {
+            return CatalogSystemType.ICRS;
+        }
+
+        const declaredSystem = AbstractCatalogProfileStore.VotableCoordinateSystems.get(normalizedSystem);
+        if (declaredSystem !== undefined) {
+            return declaredSystem;
+        }
+
+        return AbstractCatalogProfileStore.CoordinateSystemKeywords.find(([keyword]) => normalizedSystem.includes(keyword))?.[1] ?? CatalogSystemType.ICRS;
     }
 
+    /**
+     * Values for a scatter plot of any two columns. The axes carry no coordinate meaning here --
+     * a flux against a velocity is as valid a pair as a longitude against a latitude -- so the
+     * values are read as plain numbers, with none of the parsing or range checks that
+     * {@link get2DCoordinateData} applies.
+     */
     public get2DPlotData(
         xColumnName: string,
         yColumnName: string,
         columnsData: Map<number, ProcessedColumnData>
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
+        const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
+        const wcsX = getNumericPlotData(xColumn);
+        const wcsY = getNumericPlotData(yColumn);
+
+        if (wcsX && wcsY) {
+            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
+        } else {
+            return {xHeaderInfo, yHeaderInfo};
+        }
+    }
+
+    /**
+     * Values for the image overlay, read as coordinates of the active system: string formats are
+     * parsed, and a latitude beyond a pole is dropped. Only here, where the columns are known to
+     * be feeding a sky transform, is that interpretation warranted.
+     */
+    public get2DCoordinateData(
+        xColumnName: string,
+        yColumnName: string,
+        columnsData: Map<number, ProcessedColumnData>
+    ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
+        const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName, xHeaderInfo), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName, yHeaderInfo), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
+
+        if (wcsX && wcsY) {
+            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
+        } else {
+            return {xHeaderInfo, yHeaderInfo};
+        }
+    }
+
+    /**
+     * Whether a column can be read as a coordinate, and how. Settled once and then reused for the
+     * life of the store.
+     *
+     * A filter response carries only its own chunk of rows, so deciding this afresh on every call
+     * lets a chunk of blanks -- or one stray unparseable value -- declare the whole column
+     * unreadable. That is not just a chunk of missing sources: the overlay is written at absolute
+     * row offsets, so a skipped chunk leaves its slots at the image origin and counts every later
+     * chunk short. A column's format is a property of the column, not of the rows that happen to
+     * have arrived, so once it is known the rows that do not fit it are read as NaN and dropped
+     * individually.
+     *
+     * The evidence is the store's own accumulated data rather than the rows passed in, which is
+     * always at least as much to go on.
+     */
+    private getCoordinateEligibility(columnName: string, headerInfo: CARTA.CatalogHeader.$Properties): CatalogAxisEligibilityResult {
+        const settled = this._coordinateEligibility.get(columnName);
+        if (settled) {
+            return settled;
+        }
+
+        const column = this.catalogOriginalData.get(headerInfo?.columnIndex ?? NaN);
+        const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
+        const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
+        // Only an answer counts as settled: a column with nothing readable in it yet is a question
+        // the rows still to arrive may well answer.
+        if (eligibility.status === CatalogAxisEligibility.Eligible) {
+            this._coordinateEligibility.set(columnName, eligibility);
+        }
+        return eligibility;
+    }
+
+    private getPlotColumns(
+        xColumnName: string,
+        yColumnName: string,
+        columnsData: Map<number, ProcessedColumnData>
+    ): {xColumn?: ProcessedColumnData; yColumn?: ProcessedColumnData; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(xColumnName);
         const yHeader = controlHeader.get(yColumnName);
         const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
         const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
 
-        const xColumn = columnsData.get(xHeaderInfo.columnIndex);
-        const yColumn = columnsData.get(yHeaderInfo.columnIndex);
-
-        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsX = xColumn.data as Array<number>;
-            const wcsY = yColumn.data as Array<number>;
-            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
-        } else {
-            return {xHeaderInfo, yHeaderInfo};
-        }
+        return {xColumn: columnsData.get(xHeaderInfo.columnIndex), yColumn: columnsData.get(yHeaderInfo.columnIndex), xHeaderInfo, yHeaderInfo};
     }
 
     public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.CatalogHeader.$Properties} {

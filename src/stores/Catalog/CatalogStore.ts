@@ -5,7 +5,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {minMaxArray, setAstSystem} from "utilities";
+import {getDegreesPerCatalogUnit, minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -21,10 +21,6 @@ export class CatalogStore {
         }
         return CatalogStore.staticInstance;
     }
-
-    private static readonly DegreeUnits = ["deg", "degrees"];
-    private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
-    private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
@@ -303,15 +299,9 @@ export class CatalogStore {
         this.catalogDisplayStores.delete(fileId);
     }
 
+    /** Radians per unit of the column's declared units, for AST. Unknown units are degrees. */
     private static getFractionFromUnit(unit: string): number {
-        if (CatalogStore.ArcminUnits.includes(unit)) {
-            return Math.PI / 10800.0;
-        } else if (CatalogStore.ArcsecUnits.includes(unit)) {
-            return Math.PI / 648000.0;
-        } else {
-            // if unit is null, using deg as default
-            return Math.PI / 180.0;
-        }
+        return (getDegreesPerCatalogUnit(unit) * Math.PI) / 180.0;
     }
 
     private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
@@ -319,8 +309,8 @@ export class CatalogStore {
             const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
-            const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
-            const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.getFractionFromUnit(xUnit);
+            const yFraction = CatalogStore.getFractionFromUnit(yUnit);
 
             const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && overlay.isImgCoordinates) {
