@@ -91,7 +91,6 @@ import {
     type RegionClipboardItem
 } from "utilities";
 import * as Utils from "utilities";
-import {downloadPdf} from "utilities/export/pdfExport";
 import {downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
@@ -3750,6 +3749,7 @@ export class AppStore {
                             if (format === "svg") {
                                 downloadSvg(svgDoc, filename);
                             } else {
+                                const {downloadPdf} = await import("utilities/export/pdfExport");
                                 await downloadPdf(svgDoc, filename);
                             }
                         }
