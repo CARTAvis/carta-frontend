@@ -12,7 +12,7 @@ import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme, getColorsForValues, toFixed} from "utilities";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "utilities/export/beamSvgExport";
-import {renderCatalogToSvg} from "utilities/export/catalogSvgExport";
+import {type CatalogPointStyle, renderCatalogToSvg} from "utilities/export/catalogSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 import {renderContoursToSvg} from "utilities/export/contourSvgExport";
 import {renderRegionsToSvg} from "utilities/export/regionSvgExport";
@@ -537,6 +537,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     const shapes = new Map<number, string | number>();
     const sizes = new Map<number, number>();
     const colors = new Map<number, string>();
+    const styles = new Map<number, CatalogPointStyle[]>();
 
     catalogFileIds.forEach(fileId => {
         const catalog = AppStore.Instance.catalogStore.catalogGLData.get(fileId);
@@ -548,6 +549,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         }
 
         const points = new Float32Array(count * 2);
+        const exportedIndices: number[] = [];
         let pointCount = 0;
         for (let index = 0; index < count; index++) {
             const transformedPoint = transformOverlayPoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
@@ -558,6 +560,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
             const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
             points[pointCount * 2] = canvasPoint.x;
             points[pointCount * 2 + 1] = canvasPoint.y;
+            exportedIndices.push(index);
             pointCount++;
         }
 
@@ -566,17 +569,35 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         }
 
         const shapeSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + (catalogWidgetStore.shapeSettings?.diameterBase ?? 0);
+        const mappedSizes = catalogWidgetStore.sizeArray?.() ?? new Float32Array();
+        const mappedMinorSizes = catalogWidgetStore.sizeMinorArray?.() ?? new Float32Array();
+        const mappedColors = catalogWidgetStore.colorArray?.() ?? new Float32Array();
+        const mappedOrientations = catalogWidgetStore.orientationArray?.() ?? new Float32Array();
+        const pointStyles: CatalogPointStyle[] = [];
+        for (const index of exportedIndices) {
+            const pointSize = mappedSizes[index];
+            const minorSize = mappedMinorSizes[index];
+            const mappedColor = mappedColors[index];
+            pointStyles.push({
+                size: isFinite(pointSize) && pointSize > 0 ? getCatalogPointSize(frame, pointSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
+                minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
+                color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
+                rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
+                lineWidth: catalogWidgetStore.thickness * (catalogWidgetStore.shapeSettings?.thicknessBase ?? 1) * pixelRatio
+            });
+        }
         positionArrays.set(fileId, points.subarray(0, pointCount * 2));
         shapes.set(fileId, catalogWidgetStore.catalogShape);
         sizes.set(fileId, getCatalogPointSize(frame, shapeSize, catalogWidgetStore.isImagePixelSize, pixelRatio));
         colors.set(fileId, catalogWidgetStore.catalogColor);
+        styles.set(fileId, pointStyles);
     });
 
     if (!positionArrays.size) {
         return null;
     }
 
-    return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio);
+    return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio, styles);
 }
 
 function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: any, pixelRatio: number): SVGGElement | null {

@@ -2,11 +2,27 @@ import {CatalogOverlayShape} from "enums";
 
 import {createSvgElement, svgGroupFromLayer} from "./svgExport";
 
+export interface CatalogPointStyle {
+    size?: number;
+    minorSize?: number;
+    color?: string;
+    rotation?: number;
+    lineWidth?: number;
+}
+
 /**
  * Converts catalog overlay data to SVG elements.
  * Catalog positions are stored as Float32Array pairs (x, y) in canvas pixel space.
  */
-export function renderCatalogToSvg(positionArrays: Map<number, Float32Array>, shapes: Map<number, string | CatalogOverlayShape>, sizes: Map<number, number>, colors: Map<number, string>, offsetX: number, offsetY: number): SVGGElement {
+export function renderCatalogToSvg(
+    positionArrays: Map<number, Float32Array>,
+    shapes: Map<number, string | CatalogOverlayShape>,
+    sizes: Map<number, number>,
+    colors: Map<number, string>,
+    offsetX: number,
+    offsetY: number,
+    styles?: Map<number, CatalogPointStyle[]>
+): SVGGElement {
     const group = svgGroupFromLayer("catalog-overlay");
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
@@ -26,7 +42,8 @@ export function renderCatalogToSvg(positionArrays: Map<number, Float32Array>, sh
                 continue;
             }
 
-            const element = renderCatalogShape(x, y, size, color, shape);
+            const style = styles?.get(fileId)?.[i];
+            const element = renderCatalogShape(x, y, style?.size ?? size, style?.color ?? color, shape, style?.minorSize, style?.rotation, style?.lineWidth);
             if (element) {
                 group.appendChild(element);
             }
@@ -36,7 +53,12 @@ export function renderCatalogToSvg(positionArrays: Map<number, Float32Array>, sh
     return group;
 }
 
-function renderCatalogShape(x: number, y: number, size: number, color: string, shape: string | CatalogOverlayShape): SVGElement | null {
+function createRotatedElement(element: SVGElement, x: number, y: number, rotation: number): SVGElement {
+    if (rotation) element.setAttribute("transform", `rotate(${(-rotation * 180) / Math.PI},${x},${y})`);
+    return element;
+}
+
+function renderCatalogShape(x: number, y: number, size: number, color: string, shape: string | CatalogOverlayShape, minorSize?: number, rotation = 0, lineWidth = 1): SVGElement | null {
     const halfSize = size / 2;
     const shapeName = typeof shape === "number" ? CatalogOverlayShape[shape] : shape;
 
@@ -46,25 +68,25 @@ function renderCatalogShape(x: number, y: number, size: number, color: string, s
             return createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: color, stroke: "none"});
         case "CircleLined":
         case "CIRCLE_LINED":
-            return createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: "none", stroke: color, "stroke-width": 1});
+            return createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: "none", stroke: color, "stroke-width": lineWidth});
         case "BoxFilled":
             return createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: color, stroke: "none"});
         case "BoxLined":
         case "BOX_LINED":
-            return createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: "none", stroke: color, "stroke-width": 1});
+            return createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: "none", stroke: color, "stroke-width": lineWidth});
         case "EllipseFilled":
-            return createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: halfSize * 0.6, fill: color, stroke: "none"});
+            return createRotatedElement(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: color, stroke: "none"}), x, y, rotation);
         case "EllipseLined":
         case "ELLIPSE_LINED":
-            return createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: halfSize * 0.6, fill: "none", stroke: color, "stroke-width": 1});
+            return createRotatedElement(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y, rotation);
         case "Cross":
         case "CROSS_FILLED":
         case "CROSS_LINED":
-            return createCrossShape(x, y, halfSize, color);
+            return createCrossShape(x, y, halfSize, color, lineWidth);
         case "X":
         case "X_FILLED":
         case "X_LINED":
-            return createXShape(x, y, halfSize, color);
+            return createXShape(x, y, halfSize, color, lineWidth);
         case "TriangleFilled":
             return createTriangle(x, y, halfSize, color, true);
         case "TriangleLined":
@@ -85,26 +107,26 @@ function renderCatalogShape(x: number, y: number, size: number, color: string, s
             return createRhomb(x, y, halfSize, color, false);
         case "LineSegment":
         case "LineSegment_FILLED":
-            return createSvgElement("line", {x1: x - halfSize, y1: y, x2: x + halfSize, y2: y, stroke: color, "stroke-width": 1});
+            return createSvgElement("line", {x1: x - halfSize, y1: y, x2: x + halfSize, y2: y, stroke: color, "stroke-width": lineWidth});
         default:
             return createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: color, stroke: "none"});
     }
 }
 
-function createCrossShape(x: number, y: number, halfSize: number, color: string): SVGElement {
+function createCrossShape(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
     return createSvgElement("path", {
         d: `M${x - halfSize},${y}L${x + halfSize},${y}M${x},${y - halfSize}L${x},${y + halfSize}`,
         stroke: color,
-        "stroke-width": 1,
+        "stroke-width": lineWidth,
         fill: "none"
     });
 }
 
-function createXShape(x: number, y: number, halfSize: number, color: string): SVGElement {
+function createXShape(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
     return createSvgElement("path", {
         d: `M${x - halfSize},${y - halfSize}L${x + halfSize},${y + halfSize}M${x + halfSize},${y - halfSize}L${x - halfSize},${y + halfSize}`,
         stroke: color,
-        "stroke-width": 1,
+        "stroke-width": lineWidth,
         fill: "none"
     });
 }
