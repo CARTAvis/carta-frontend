@@ -5,7 +5,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {CATALOG_ARCMIN_UNITS, CATALOG_ARCSEC_UNITS, minMaxArray, normalizeCatalogUnits, setAstSystem} from "utilities";
+import {getDegreesPerCatalogUnit, minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -299,16 +299,9 @@ export class CatalogStore {
         this.catalogDisplayStores.delete(fileId);
     }
 
+    /** Radians per unit of the column's declared units, for AST. Unknown units are degrees. */
     private static getFractionFromUnit(unit: string): number {
-        const normalizedUnit = normalizeCatalogUnits(unit);
-        if (normalizedUnit && CATALOG_ARCMIN_UNITS.includes(normalizedUnit)) {
-            return Math.PI / 10800.0;
-        } else if (normalizedUnit && CATALOG_ARCSEC_UNITS.includes(normalizedUnit)) {
-            return Math.PI / 648000.0;
-        } else {
-            // if unit is null, using deg as default
-            return Math.PI / 180.0;
-        }
+        return (getDegreesPerCatalogUnit(unit) * Math.PI) / 180.0;
     }
 
     private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {

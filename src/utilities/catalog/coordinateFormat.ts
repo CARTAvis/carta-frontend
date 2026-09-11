@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay} from "enums";
 
-import {CATALOG_DEGREE_UNITS, CATALOG_HOUR_UNITS, CATALOG_RADIAN_UNITS} from "./constants";
+import {CATALOG_ARCMIN_UNITS, CATALOG_ARCSEC_UNITS, CATALOG_DEGREE_UNITS, CATALOG_HOUR_UNITS, CATALOG_RADIAN_UNITS} from "./constants";
 
 /**
  * How the first sexagesimal field is scaled. `Ambiguous` means the evidence available at
@@ -294,6 +294,27 @@ export function rejectOutOfRangeLatitude(degrees: number): number {
 
 export function normalizeCatalogUnits(units: string | null | undefined): string | undefined {
     return units?.toLowerCase().replace(/[^a-z]/g, "");
+}
+
+/**
+ * How many degrees one unit of a column's declared units is worth. Only the angular units that
+ * survive as a plain number are listed: a column whose units already decide the format (`hms`,
+ * `rad`, `h`) is converted by {@link parseCoordinateValue}, and is worth one degree per unit here
+ * so that the two conversions can never both apply.
+ *
+ * This is the same scale the sky transform applies on its way into AST, and it is shared with it so
+ * the two cannot drift: a range check that disagreed with the transform would drop valid sources.
+ * Unknown units fall back to degrees, as the transform does.
+ */
+export function getDegreesPerCatalogUnit(units: string | null | undefined): number {
+    const normalizedUnits = normalizeCatalogUnits(units);
+    if (normalizedUnits && CATALOG_ARCMIN_UNITS.includes(normalizedUnits)) {
+        return 1 / 60;
+    }
+    if (normalizedUnits && CATALOG_ARCSEC_UNITS.includes(normalizedUnits)) {
+        return 1 / 3600;
+    }
+    return 1;
 }
 
 export function isStringColumnType(dataType: CARTA.ColumnType | null | undefined): boolean {

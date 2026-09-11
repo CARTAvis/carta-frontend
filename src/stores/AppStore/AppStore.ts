@@ -2486,7 +2486,7 @@ export class AppStore {
                 const yColumn = catalogDisplayStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
-                    const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
+                    const coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
                     if (coords.wcsX && coords.wcsY) {
                         this.catalogStore.convertToImageCoordinate(

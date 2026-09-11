@@ -10,8 +10,10 @@ import {
     filterProcessedColumnData,
     getCatalogAxisEligibility,
     getComparisonOperatorAndValue,
+    getDegreesPerCatalogUnit,
     getHasFilter,
     isCatalogLatitudeAxis,
+    isCatalogNumericDataType,
     minMaxArray,
     parseCoordinateValue,
     type ProcessedColumnData,
@@ -32,6 +34,9 @@ export interface CatalogInfo {
  * Converts a column to numeric coordinates for the axis it has been bound to. This is the one
  * place where an ambiguous format (a bare "12:30:00", which is hours on RA and degrees elsewhere)
  * is resolved, because it is the first point at which the axis is known.
+ *
+ * Values come back in the column's declared units, not in degrees: the sky transform scales them
+ * on its way into AST, and converting here as well would apply that scaling twice.
  */
 function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
     if (!column) {
@@ -46,17 +51,40 @@ function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units
     // Applied to numeric columns too: a declination of -91 breaks the transform the same way
     // whether it arrived as a number or as a string.
     const isLatitude = isCatalogLatitudeAxis(axis);
+    const degreesPerUnit = getDegreesPerCatalogUnit(units);
 
     if (!eligibility.descriptor) {
-        const numericData = column.data as Array<number>;
-        return isLatitude ? numericData.map(rejectOutOfRangeLatitude) : numericData;
+        const numericData = column.data as ArrayLike<number>;
+        return isLatitude ? rejectOutOfRangeLatitudes(numericData, degreesPerUnit) : (numericData as Array<number>);
     }
 
     const descriptor = resolveDescriptorForAxis(eligibility.descriptor, axis);
-    return (column.data as Array<string | null | undefined>).map(value => {
-        const degrees = parseCoordinateValue(value, descriptor);
-        return isLatitude ? rejectOutOfRangeLatitude(degrees) : degrees;
-    });
+    const parsedData = (column.data as Array<string | null | undefined>).map(value => parseCoordinateValue(value, descriptor));
+    // A descriptor derived from the units has already consumed them, and one derived from the
+    // values only ever comes from units the transform reads as a plain angle, so the same scale
+    // applies to both paths.
+    return isLatitude ? rejectOutOfRangeLatitudes(parsedData, degreesPerUnit) : parsedData;
+}
+
+/**
+ * Drops the latitudes that lie beyond a pole, leaving the values that survive in their original
+ * units. The bound is a number of degrees, so each value is scaled for the comparison only.
+ */
+function rejectOutOfRangeLatitudes(values: ArrayLike<number>, degreesPerUnit: number): Array<number> {
+    // Built element by element rather than with `values.map`: a numeric column arrives as a typed
+    // array, and mapping an integer one writes the result back through its own element type, which
+    // turns a rejected NaN into a source at latitude zero.
+    const checked = new Array<number>(values.length);
+    for (let index = 0; index < values.length; index++) {
+        const value = values[index];
+        checked[index] = isNaN(rejectOutOfRangeLatitude(value * degreesPerUnit)) ? NaN : value;
+    }
+    return checked;
+}
+
+/** Raw values of a numeric column, for a plot that reads them as plain numbers. */
+function getNumericPlotData(column: ProcessedColumnData | undefined): Array<number> | undefined {
+    return column && isCatalogNumericDataType(column.dataType) ? (column.data as Array<number>) : undefined;
 }
 
 export abstract class AbstractCatalogProfileStore {
@@ -194,19 +222,39 @@ export abstract class AbstractCatalogProfileStore {
         return AbstractCatalogProfileStore.CoordinateSystemKeywords.find(([keyword]) => normalizedSystem.includes(keyword))?.[1] ?? CatalogSystemType.ICRS;
     }
 
+    /**
+     * Values for a scatter plot of any two columns. The axes carry no coordinate meaning here --
+     * a flux against a velocity is as valid a pair as a longitude against a latitude -- so the
+     * values are read as plain numbers, with none of the parsing or range checks that
+     * {@link get2DCoordinateData} applies.
+     */
     public get2DPlotData(
         xColumnName: string,
         yColumnName: string,
         columnsData: Map<number, ProcessedColumnData>
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
-        const controlHeader = this.catalogControlHeader;
-        const xHeader = controlHeader.get(xColumnName);
-        const yHeader = controlHeader.get(yColumnName);
-        const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
-        const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
+        const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
+        const wcsX = getNumericPlotData(xColumn);
+        const wcsY = getNumericPlotData(yColumn);
 
-        const xColumn = columnsData.get(xHeaderInfo.columnIndex);
-        const yColumn = columnsData.get(yHeaderInfo.columnIndex);
+        if (wcsX && wcsY) {
+            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
+        } else {
+            return {xHeaderInfo, yHeaderInfo};
+        }
+    }
+
+    /**
+     * Values for the image overlay, read as coordinates of the active system: string formats are
+     * parsed, and a latitude beyond a pole is dropped. Only here, where the columns are known to
+     * be feeding a sky transform, is that interpretation warranted.
+     */
+    public get2DCoordinateData(
+        xColumnName: string,
+        yColumnName: string,
+        columnsData: Map<number, ProcessedColumnData>
+    ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
+        const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
         const wcsX = getCatalogCoordinateData(xColumn, xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
         const wcsY = getCatalogCoordinateData(yColumn, yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
 
@@ -215,6 +263,20 @@ export abstract class AbstractCatalogProfileStore {
         } else {
             return {xHeaderInfo, yHeaderInfo};
         }
+    }
+
+    private getPlotColumns(
+        xColumnName: string,
+        yColumnName: string,
+        columnsData: Map<number, ProcessedColumnData>
+    ): {xColumn?: ProcessedColumnData; yColumn?: ProcessedColumnData; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
+        const controlHeader = this.catalogControlHeader;
+        const xHeader = controlHeader.get(xColumnName);
+        const yHeader = controlHeader.get(yColumnName);
+        const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
+        const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
+
+        return {xColumn: columnsData.get(xHeaderInfo.columnIndex), yColumn: columnsData.get(yHeaderInfo.columnIndex), xHeaderInfo, yHeaderInfo};
     }
 
     public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.CatalogHeader.$Properties} {

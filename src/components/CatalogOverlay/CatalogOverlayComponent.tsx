@@ -510,7 +510,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
             catalogDisplayStore.setPlottedImageOverlayState(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
-            const imageCoords = profileStore.get2DPlotData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
+            const imageCoords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
@@ -691,7 +691,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        const coords = profileStore.get2DPlotData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
+        const coords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
         return Boolean(coords.wcsX && coords.wcsY);
     }
 

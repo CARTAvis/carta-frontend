@@ -18,7 +18,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.ICRS},
-            get2DPlotData: jest.fn(),
+            get2DCoordinateData: jest.fn(),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
@@ -48,7 +48,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });
@@ -57,7 +57,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: jest.fn(() => ({
+            get2DCoordinateData: jest.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
@@ -92,7 +92,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             subsetEndIndex: 1
         } as unknown as CARTA.CatalogFilterResponse);
 
-        expect(profileStore.get2DPlotData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", CatalogSystemType.FK5, 1, 1);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
@@ -103,7 +103,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
-            get2DPlotData: jest.fn(() => ({
+            get2DCoordinateData: jest.fn(() => ({
                 wcsX: [150],
                 wcsY: [2.476567],
                 xHeaderInfo: {units: ""},
@@ -145,7 +145,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: jest.fn(() => ({
+            get2DCoordinateData: jest.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
@@ -183,7 +183,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });

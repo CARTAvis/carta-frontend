@@ -2,15 +2,22 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogSystemType, CatalogType, PreferenceKeys} from "enums";
 import {PreferenceStore} from "stores";
+import {type ProcessedColumnData} from "utilities";
 
 import {CatalogProfileStore} from "./CatalogProfileStore";
 
 const DISPLAYED_COLUMN_SIZE = 3;
 
-type ColumnSpec = {name: string; dataType?: CARTA.ColumnType; units?: string};
+type ColumnSpec = {name: string; dataType?: CARTA.ColumnType; units?: string; data?: ProcessedColumnData["data"]};
 
 const CreateProfileStore = (columns: ColumnSpec[], system?: string): CatalogProfileStore => {
     const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
+    const catalogData = new Map<number, ProcessedColumnData>();
+    columns.forEach((column, index) => {
+        if (column.data) {
+            catalogData.set(index, {dataType: column.dataType ?? CARTA.ColumnType.Double, data: column.data});
+        }
+    });
 
     return new CatalogProfileStore(
         {
@@ -20,7 +27,7 @@ const CreateProfileStore = (columns: ColumnSpec[], system?: string): CatalogProf
             fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog", coosys: system ? [new CARTA.Coosys({system})] : undefined})
         },
         catalogHeader,
-        new Map(),
+        catalogData,
         CatalogType.FILE
     );
 };
@@ -143,5 +150,79 @@ describe("CatalogProfileStore coordinate system", () => {
     test("an ecliptic file gets ecliptic axes, not equatorial ones", () => {
         const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK5");
         expect(store.activedSystem).toEqual({x: "ELON", y: "ELAT"});
+    });
+});
+
+describe("CatalogProfileStore plot data", () => {
+    // The default system is ICRS, so the y axis of the image overlay is a declination. A scatter
+    // plot of two arbitrary columns goes through the same store and must not inherit that.
+    test("reads scatter columns as plain numbers, whatever the overlay axes mean", () => {
+        const store = CreateProfileStore([
+            {name: "velocity", data: new Float64Array([120, -430])},
+            {name: "flux", data: new Float64Array([1500, 91])}
+        ]);
+
+        const coords = store.get2DPlotData("velocity", "flux", store.catalogData);
+        expect(Array.from(coords.wcsX ?? [])).toEqual([120, -430]);
+        expect(Array.from(coords.wcsY ?? [])).toEqual([1500, 91]);
+    });
+
+    test("offers no scatter data for a column that is not numeric", () => {
+        const store = CreateProfileStore([
+            {name: "flux", data: new Float64Array([1, 2])},
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00", "13:00:00"]}
+        ]);
+
+        const coords = store.get2DPlotData("flux", "RAJ2000", store.catalogData);
+        expect(coords.wcsX).toBeUndefined();
+        expect(coords.wcsY).toBeUndefined();
+    });
+
+    test("drops a declination beyond a pole from the overlay", () => {
+        const store = CreateProfileStore([
+            {name: "RAJ2000", data: new Float64Array([10, 20])},
+            {name: "DEJ2000", data: new Float64Array([45, 91])}
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        expect(coords.wcsY?.[0]).toBe(45);
+        expect(coords.wcsY?.[1]).toBeNaN();
+    });
+
+    test("measures that bound in degrees, not in the column's own units", () => {
+        // The transform scales arcsec and arcmin columns itself, so the values stay unscaled here;
+        // only the comparison is converted. 3600 arcsec is one degree, nowhere near a pole.
+        const store = CreateProfileStore([
+            {name: "RAJ2000", units: "arcsec", data: new Float64Array([36000, 72000])},
+            {name: "DEJ2000", units: "arcsec", data: new Float64Array([3600, 400000])}
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        expect(coords.wcsY?.[0]).toBe(3600);
+        expect(coords.wcsY?.[1]).toBeNaN();
+    });
+
+    test("drops a rejected latitude from an integer column instead of moving it to the equator", () => {
+        // An integer typed array cannot hold NaN, so a rejected source would otherwise be plotted
+        // at latitude zero.
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.Int32, data: new Int32Array([10, 20])},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.Int32, data: new Int32Array([45, 100])}
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        expect(coords.wcsY?.[0]).toBe(45);
+        expect(coords.wcsY?.[1]).toBeNaN();
+    });
+
+    test("parses a string coordinate column for the overlay", () => {
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00"]},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15.4625"]}
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
+        expect(coords.wcsY?.[0]).toBeCloseTo(-21.954295, 6);
     });
 });
