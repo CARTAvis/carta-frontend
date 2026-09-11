@@ -31,6 +31,9 @@ interface ClipRestore {
 
 type ClipGroup = "sizeMajor" | "sizeMinor" | "color" | "orientation";
 
+/** One end of a mapped column's range: the bound derived from the data, and the one in force. */
+type ClipBound = {default: number | undefined; clipd: number | undefined};
+
 /** Outcome of applying a display config. A rejected config leaves the store untouched. */
 export interface CatalogConfigApplyResult {
     success: boolean;
@@ -228,6 +231,25 @@ export class CatalogDisplayStore {
                         const config = this.pendingConfig;
                         this.pendingConfig = undefined;
                         this.applyConfig(config);
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            // A catalog carries only its preview rows when it is first loaded, and the rest arrive
+            // only once the user plots it or scrolls the table. The bounds a config derives from the
+            // data therefore cover that preview subset alone, so they are recomputed whenever a batch
+            // of rows finishes arriving. Bounds are held while a batch streams, to recompute once per
+            // batch rather than once per chunk.
+            reaction(
+                () => {
+                    const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+                    return profileStore && !profileStore.isLoadingOntoImage ? profileStore.numVisibleRows : undefined;
+                },
+                numVisibleRows => {
+                    if (numVisibleRows !== undefined) {
+                        this.refreshDataDerivedClips();
                     }
                 }
             )
@@ -1461,11 +1483,60 @@ export class CatalogDisplayStore {
         }
 
         // applyConfig has already established that a mapped column carries data.
-        const range = minMaxArray(profileStore.get1DPlotData(axis.mapColumn).wcsData ?? new Float32Array(0));
+        const range = this.columnRange(profileStore, axis.mapColumn);
         return {
-            min: axis.columnMinClip ?? (isFinite(range.minVal) ? range.minVal : 0),
-            max: axis.columnMaxClip ?? (isFinite(range.maxVal) ? range.maxVal : 0)
+            min: axis.columnMinClip ?? range.min,
+            max: axis.columnMaxClip ?? range.max
         };
+    }
+
+    /**
+     * The range of the rows of one column loaded so far. The column is read the same way
+     * {@link sizeMapData} and its siblings read it, so that a bound derived here and one derived by
+     * the reaction on those is the same number, and a bound that still follows the data stays
+     * recognisable as one.
+     */
+    private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string): {min: number; max: number} {
+        const data = profileStore.catalogControlHeader.has(column) ? profileStore.get1DPlotData(column).wcsData : undefined;
+        const range = minMaxArray(data ? Float32Array.from(data) : new Float32Array(0));
+        return {
+            min: isFinite(range.minVal) ? range.minVal : 0,
+            max: isFinite(range.maxVal) ? range.maxVal : 0
+        };
+    }
+
+    /**
+     * Widen the data-derived bounds of every mapped column to the rows loaded so far. A bound the
+     * user has clipped away from its default is theirs to keep, so only its default follows the
+     * data; the rest are moved with it.
+     */
+    @action private refreshDataDerivedClips() {
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        if (!profileStore) {
+            return;
+        }
+        this.refreshDataDerivedClip(profileStore, "sizeMajor", this.sizeMapColumn, this.sizeColumnMin, this.sizeColumnMax);
+        // A locked minor bound follows the major axis rather than its own column.
+        this.refreshDataDerivedClip(profileStore, "sizeMinor", this.sizeMinorMapColumn, this.sizeMinorColumnMin, this.sizeMinorColumnMax, this.isSizeColumnMinLocked, this.isSizeColumnMaxLocked);
+        this.refreshDataDerivedClip(profileStore, "color", this.colorMapColumn, this.colorColumnMin, this.colorColumnMax);
+        this.refreshDataDerivedClip(profileStore, "orientation", this.orientationMapColumn, this.orientationMin, this.orientationMax);
+    }
+
+    private refreshDataDerivedClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, group: ClipGroup, column: string, min: ClipBound, max: ClipBound, isMinLocked: boolean = false, isMaxLocked: boolean = false) {
+        // A clip a config authored is restored by the reaction that is still to run; leave it to it.
+        if (column === CatalogOverlay.NONE || this.pendingClipRestore.has(group)) {
+            return;
+        }
+
+        const range = this.columnRange(profileStore, column);
+        if (!isMinLocked && min.clipd === min.default) {
+            min.clipd = range.min;
+        }
+        min.default = range.min;
+        if (!isMaxLocked && max.clipd === max.default) {
+            max.clipd = range.max;
+        }
+        max.default = range.max;
     }
 
     /**

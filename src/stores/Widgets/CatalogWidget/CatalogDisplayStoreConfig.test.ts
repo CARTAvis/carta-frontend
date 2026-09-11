@@ -106,6 +106,19 @@ function createConfiguredStore(): CatalogDisplayStore {
     return store;
 }
 
+/** The file-based profile store behind a display store, for tests that grow its loaded rows. */
+function profileStoreOf(store: CatalogDisplayStore): CatalogProfileStore {
+    return CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId) as CatalogProfileStore;
+}
+
+/** Replace the rows loaded for the first column, the way a streamed catalog batch does. */
+function loadRows(profileStore: CatalogProfileStore, values: number[]) {
+    runInAction(() => {
+        profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(values)});
+        profileStore.setNumVisibleRows(values.length);
+    });
+}
+
 afterEach(() => {
     CREATED_STORES.forEach(store => store.dispose());
     CREATED_STORES.length = 0;
@@ -370,6 +383,64 @@ describe("CatalogDisplayStore display config", () => {
         expect(result.success).toBe(false);
         expect(result.errors).toEqual(['The size axis is mapped to "Fmag", which has no data to map']);
         expect(store.toConfig()).toEqual(before);
+    });
+
+    test("widens a data-derived clip when the rest of the catalog rows arrive", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+
+        // A catalog carries only its preview rows when a restored config is applied to it.
+        loadRows(profileStore, [1, 4]);
+
+        expect(store.applyConfig({sizeAxis: {mapColumn: "Fmag"}})).toEqual({success: true, errors: []});
+        expect(store.sizeColumnMax.clipd).toBe(4);
+
+        // The remaining rows stream in once the user plots the catalog or scrolls the table.
+        loadRows(profileStore, [1, 4, 7, 10]);
+
+        expect(store.sizeColumnMin.clipd).toBe(1);
+        expect(store.sizeColumnMax.clipd).toBe(10);
+        expect(store.sizeColumnMax.default).toBe(10);
+        // The bounds still follow the data, so they are not written out as a clip the user authored.
+        expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
+        expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
+    });
+
+    test("keeps a clip the user authored when the rest of the catalog rows arrive", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+
+        loadRows(profileStore, [1, 4]);
+
+        expect(store.applyConfig({sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 3}})).toEqual({success: true, errors: []});
+
+        loadRows(profileStore, [1, 4, 7, 10]);
+
+        expect(store.sizeColumnMin.clipd).toBe(2);
+        expect(store.sizeColumnMax.clipd).toBe(3);
+        expect(store.sizeColumnMax.default).toBe(10);
+        expect(store.toConfig().sizeAxis?.columnMinClip).toBe(2);
+        expect(store.toConfig().sizeAxis?.columnMaxClip).toBe(3);
+    });
+
+    test("leaves a locked minor size bound following the major axis as rows arrive", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+
+        loadRows(profileStore, [1, 4]);
+
+        expect(
+            store.applyConfig({
+                sizeAxis: {mapColumn: "Fmag", columnMinLocked: true, columnMaxLocked: true},
+                sizeMinorAxis: {mapColumn: "Bmag"}
+            })
+        ).toEqual({success: true, errors: []});
+
+        loadRows(profileStore, [1, 4, 7, 10]);
+
+        // The minor bounds track the major axis rather than their own column's range.
+        expect(store.sizeMinorColumnMin.clipd).toBe(store.sizeColumnMin.clipd);
+        expect(store.sizeMinorColumnMax.clipd).toBe(store.sizeColumnMax.clipd);
     });
 
     test("round-trips panel presentation without persisting a session-local catalog selection", () => {
