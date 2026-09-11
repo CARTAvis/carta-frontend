@@ -57,14 +57,15 @@ function getSpatialRegionCanvasPoints(region: RegionStore, frame: FrameStore, fr
     });
 }
 
-function getStrokeAttrs(region: RegionStore): Record<string, string | number> {
+function getStrokeAttrs(region: RegionStore, pixelRatio = 1): Record<string, string | number> {
     const attrs: Record<string, string | number> = {
         stroke: region.color,
-        "stroke-width": region.lineWidth,
+        "stroke-width": region.lineWidth * pixelRatio,
         fill: "none"
     };
     if (region.dashLength > 0) {
-        attrs["stroke-dasharray"] = `${region.dashLength},${region.dashLength}`;
+        const dashLength = region.dashLength * pixelRatio;
+        attrs["stroke-dasharray"] = `${dashLength},${dashLength}`;
     }
     return attrs;
 }
@@ -75,7 +76,7 @@ function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: num
     const halfWidth = width / 2;
     const shape = point.pointShape ?? CARTA.PointAnnotationShape.SQUARE;
     const isLined = shape === CARTA.PointAnnotationShape.BOX || shape === CARTA.PointAnnotationShape.CIRCLE_LINED || shape === CARTA.PointAnnotationShape.DIAMOND_LINED;
-    const strokeAttrs = {stroke: region.color, "stroke-width": region.lineWidth, fill: isLined ? "none" : region.color};
+    const strokeAttrs = {stroke: region.color, "stroke-width": region.lineWidth * pixelRatio, fill: isLined ? "none" : region.color};
     let element: SVGElement;
 
     switch (shape) {
@@ -114,30 +115,30 @@ function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: num
             break;
         case CARTA.PointAnnotationShape.SQUARE:
         default:
-            element = createSvgElement("rect", {x: center.x - halfWidth, y: center.y - halfWidth, width, height: width, fill: region.color, stroke: region.color, "stroke-width": region.lineWidth});
+            element = createSvgElement("rect", {x: center.x - halfWidth, y: center.y - halfWidth, width, height: width, fill: region.color, stroke: region.color, "stroke-width": region.lineWidth * pixelRatio});
             break;
     }
 
     return element;
 }
 
-function renderLineRegion(start: Point2D, end: Point2D, region: RegionStore): SVGElement {
+function renderLineRegion(start: Point2D, end: Point2D, region: RegionStore, pixelRatio: number): SVGElement {
     return createSvgElement("line", {
         x1: start.x,
         y1: start.y,
         x2: end.x,
         y2: end.y,
-        ...getStrokeAttrs(region)
+        ...getStrokeAttrs(region, pixelRatio)
     });
 }
 
-function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore): SVGElement {
+function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number): SVGElement {
     const rect = createSvgElement("rect", {
         x: center.x - size.x / 2,
         y: center.y - size.y / 2,
         width: size.x,
         height: size.y,
-        ...getStrokeAttrs(region)
+        ...getStrokeAttrs(region, pixelRatio)
     });
     if (rotation !== 0) {
         rect.setAttribute("transform", `rotate(${-rotation},${center.x},${center.y})`);
@@ -145,7 +146,7 @@ function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number,
     return rect;
 }
 
-function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore): SVGElement {
+function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number): SVGElement {
     const ellipse = createSvgElement("ellipse", {
         cx: center.x,
         cy: center.y,
@@ -153,7 +154,7 @@ function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, r
         // semi-major radius in y, while SVG names the horizontal radius rx.
         rx: size.y,
         ry: size.x,
-        ...getStrokeAttrs(region)
+        ...getStrokeAttrs(region, pixelRatio)
     });
     if (rotation !== 0) {
         ellipse.setAttribute("transform", `rotate(${-rotation},${center.x},${center.y})`);
@@ -161,29 +162,33 @@ function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, r
     return ellipse;
 }
 
-function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: boolean): SVGElement {
+function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: boolean, pixelRatio: number): SVGElement {
     const pointsStr = points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
     return createSvgElement(isClosed ? "polygon" : "polyline", {
         points: pointsStr,
-        ...getStrokeAttrs(region)
+        ...getStrokeAttrs(region, pixelRatio)
     });
 }
 
-function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement): SVGGElement {
+function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement, pixelRatio: number): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     const markerId = `arrowhead-${region.regionId}`;
+    const vector = region as RegionStore & {pointerLength?: number; pointerWidth?: number};
+    const markerWidth = (vector.pointerLength ?? 10) * pixelRatio;
+    const markerHeight = (vector.pointerWidth ?? 7) * pixelRatio;
 
     // Create arrowhead marker
     const marker = createSvgElement("marker", {
         id: markerId,
-        markerWidth: 10,
-        markerHeight: 7,
-        refX: 10,
-        refY: 3.5,
+        markerWidth,
+        markerHeight,
+        refX: markerWidth,
+        refY: markerHeight / 2,
+        markerUnits: "userSpaceOnUse",
         orient: "auto"
     });
     const arrowPath = createSvgElement("polygon", {
-        points: "0 0, 10 3.5, 0 7",
+        points: `0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`,
         fill: region.color
     });
     marker.appendChild(arrowPath);
@@ -192,7 +197,7 @@ function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElem
     const line = createSvgElement("polyline", {
         points: points.map(point => `${point.x},${point.y}`).join(" "),
         "marker-end": `url(#${markerId})`,
-        ...getStrokeAttrs(region)
+        ...getStrokeAttrs(region, pixelRatio)
     });
     group.appendChild(line);
     return group;
@@ -284,7 +289,7 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     }
 
     const addArrow = (start: Point2D, end: Point2D, hasArrowhead: boolean, markerSuffix: string) => {
-        const lineAttrs = {x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...getStrokeAttrs(region)};
+        const lineAttrs = {x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...getStrokeAttrs(region, options.pixelRatio)};
         if (hasArrowhead) {
             const markerId = `compass-${region.regionId}-${markerSuffix}`;
             const marker = createSvgElement("marker", {
@@ -371,7 +376,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     }
 
     const line = (points: Point2D[], dashLength: number, opacity = 1) => {
-        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region), opacity};
+        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio), opacity};
         if (dashLength > 0) attrs["stroke-dasharray"] = `${dashLength * options.pixelRatio},${dashLength * options.pixelRatio}`;
         return createSvgElement("polyline", attrs);
     };
@@ -482,39 +487,39 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return spatialPoints ? renderPolygonRegion(points, region, false) : renderLineRegion(points[0], points[1], region);
+            return spatialPoints ? renderPolygonRegion(points, region, false, options.pixelRatio) : renderLineRegion(points[0], points[1], region, options.pixelRatio);
         }
         case CARTA.RegionType.RECTANGLE:
         case CARTA.RegionType.ANNRECTANGLE: {
             if (spatialPoints) {
-                return renderPolygonRegion(spatialPoints, region, true);
+                return renderPolygonRegion(spatialPoints, region, true, options.pixelRatio);
             }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
-            return renderRectangleRegion(center, size, region.rotation, region);
+            return renderRectangleRegion(center, size, region.rotation, region, options.pixelRatio);
         }
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE: {
             if (spatialPoints) {
-                return renderPolygonRegion(spatialPoints, region, true);
+                return renderPolygonRegion(spatialPoints, region, true, options.pixelRatio);
             }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
-            return renderEllipseRegion(center, size, region.rotation, region);
+            return renderEllipseRegion(center, size, region.rotation, region, options.pixelRatio);
         }
         case CARTA.RegionType.POLYGON:
         case CARTA.RegionType.ANNPOLYGON: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return renderPolygonRegion(points, region, true);
+            return renderPolygonRegion(points, region, true, options.pixelRatio);
         }
         case CARTA.RegionType.POLYLINE:
         case CARTA.RegionType.ANNPOLYLINE: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return renderPolygonRegion(points, region, false);
+            return renderPolygonRegion(points, region, false, options.pixelRatio);
         }
         case CARTA.RegionType.ANNVECTOR: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return renderVectorAnnotation(points, region, defsElement);
+            return renderVectorAnnotation(points, region, defsElement, options.pixelRatio);
         }
         case CARTA.RegionType.ANNTEXT: {
             const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
