@@ -143,12 +143,20 @@ const LOG_WAVELENGTH_CUBEFRAME_INFO: FrameInfo = {
     } as any
 };
 
-// The log-wavelength cube with its CTYPE3 card replaced (or removed when undefined)
-const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | undefined): FrameInfo => ({
+// The log-wavelength cube with its CTYPE3 (and optionally CUNIT3) card replaced, or removed when undefined
+const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | undefined, cunitEntry?: {name: string; value: string}): FrameInfo => ({
     ...LOG_WAVELENGTH_CUBEFRAME_INFO,
     fileInfoExtended: {
         ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended,
-        headerEntries: LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries.flatMap(entry => (entry.name === "CTYPE3" ? (ctypeEntry ? [ctypeEntry] : []) : [entry]))
+        headerEntries: LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries.flatMap(entry => {
+            if (entry.name === "CTYPE3") {
+                return ctypeEntry ? [ctypeEntry] : [];
+            }
+            if (entry.name === "CUNIT3" && cunitEntry) {
+                return [cunitEntry];
+            }
+            return [entry];
+        })
     } as any
 });
 
@@ -337,6 +345,42 @@ describe("FrameStore", () => {
             expect(frame.spectralCoordinate).toBe("Channel");
             expect(frame.spectralUnitStr).toBe("Channel");
             expect(frame.isCoordChannel).toBe(true);
+        });
+
+        test("keeps the native values for a spectral axis without CTYPE that is not the depth axis", () => {
+            const mockIsSpectralChannel = jest.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
+            try {
+                const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: ""}));
+                expect(frame.spectralType).toBeNull();
+                expect(frame.isCoordChannel).toBe(false);
+                expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toContain("Channel");
+                expect(Array.from(frame.channelValues)).toEqual([3621.59598486, 3622.4300286, 3623.264263]);
+            } finally {
+                mockIsSpectralChannel.mockRestore();
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("falls back to the default unit when the header unit does not belong to the spectral type", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "Hz"}));
+            expect(frame.spectralUnit).toBe(SpectralUnit.KMS);
+            expect(frame.spectralCoordinate).toBe("Radio velocity (km/s)");
+            expect(frame.spectralCoordsSupported?.has(frame.spectralCoordinate)).toBe(true);
+        });
+
+        test("omits the missing spectral system from the converted cursor info of frequency and velocity axes", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
+            try {
+                // FREQ in Hz and VRAD in m/s take the conversion branches (unit differs from the default), with no SPECSYS to name
+                const frequencyFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+                expect(frequencyFrame.spectralSystem).toBeNull();
+                expect(frequencyFrame.getFreqWithChannel(0).spectralString).toMatch(/^Frequency: /);
+                const velocityFrame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "m/s"}));
+                expect(velocityFrame.getFreqWithChannel(0).spectralString).toMatch(/^Velocity: /);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
         });
 
         test("shows the CTYPE value as it is and omits the missing spectral system in the cursor info", () => {

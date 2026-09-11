@@ -88,20 +88,6 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
-/**
- * Get the initial unit of a spectral coordinate: the header unit if it is supported and not the standard base unit of the type
- * (e.g. Angstrom for a wavelength axis), otherwise the default unit of the type (e.g. GHz for a frequency axis in Hz)
- * @param type - spectral type of the axis
- * @param headerUnit - CUNIT value of the axis
- */
-export const GetInitialSpectralUnit = (type: SpectralType, headerUnit: string | undefined): SpectralUnit | null => {
-    const standardUnit = STANDARD_SPECTRAL_TYPE_SETS.find(set => set.code === type)?.unit;
-    if (headerUnit && headerUnit !== standardUnit && IsSpectralUnitSupported(headerUnit)) {
-        return headerUnit as SpectralUnit;
-    }
-    return SPECTRAL_DEFAULT_UNIT.get(type) ?? null;
-};
-
 export const GenCoordinateLabel = (type: SpectralType | null, unit: SpectralUnit | null): string => {
     return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
@@ -137,6 +123,20 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM_SQUARE}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
+
+/**
+ * Get the initial unit of a spectral coordinate: the header unit if it is a supported unit of the type and not the standard base
+ * unit of the type (e.g. Angstrom for a wavelength axis), otherwise the default unit of the type (e.g. GHz for a frequency axis in Hz)
+ * @param type - spectral type of the axis
+ * @param headerUnit - CUNIT value of the axis
+ */
+export const GetInitialSpectralUnit = (type: SpectralType, headerUnit: string | undefined): SpectralUnit | null => {
+    const standardUnit = STANDARD_SPECTRAL_TYPE_SETS.find(set => set.code === type)?.unit;
+    if (headerUnit && headerUnit !== standardUnit && SPECTRAL_COORDS_SUPPORTED.has(GenCoordinateLabel(type, headerUnit as SpectralUnit))) {
+        return headerUnit as SpectralUnit;
+    }
+    return SPECTRAL_DEFAULT_UNIT.get(type) ?? null;
+};
 
 enum Jansky {
     MJy = "MJy",

@@ -732,6 +732,7 @@ export class FrameStore {
             return {spectralString: "", velocityString: "", freqString: ""};
         }
         const specsys = this.spectralAxis?.specsys;
+        const spectralSystemSuffix = this.spectralSystem ? ` (${this.spectralSystem})` : "";
         result.spectralString = `${this.nativeSpectralTypeName ?? spectralType.name}${specsys ? ` (${specsys})` : ""}: ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
         if (spectralType.code === "FREQ") {
             const freqVal = this.channelInfo.values[channel];
@@ -739,7 +740,7 @@ export class FrameStore {
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                 const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
                 if (freqGHz !== undefined && isFinite(freqGHz)) {
-                    result.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
+                    result.spectralString = `Frequency${spectralSystemSuffix}: ${formattedFrequency(freqGHz)}`;
                 }
             }
             // convert frequency to velocity
@@ -753,7 +754,7 @@ export class FrameStore {
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                 const velocityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
                 if (velocityKMS !== undefined && isFinite(velocityKMS)) {
-                    result.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(velocityKMS, 4)} km/s`;
+                    result.spectralString = `Velocity${spectralSystemSuffix}: ${toFixed(velocityKMS, 4)} km/s`;
                 }
             }
             // convert velocity to frequency
@@ -1595,8 +1596,8 @@ export class FrameStore {
                 this.spectralUnit = GetInitialSpectralUnit(this.spectralType, this.spectralAxis.type.unit);
             }
             this.spectralUnitSecondary = this.spectralUnit;
-        } else if (this.spectralAxis && !this.spectralAxis.ctype) {
-            // a spectral axis without a CTYPE is shown as channel
+        } else if (this.spectralAxis && !this.spectralAxis.ctype && this.isSpectralChannel) {
+            // a depth axis without a CTYPE is shown as channel (the channel coordinate is only defined for the depth axis)
             this.spectralType = SpectralType.CHANNEL;
             this.spectralTypeSecondary = SpectralType.CHANNEL;
         }
@@ -2849,12 +2850,13 @@ export class FrameStore {
 
     @action private initSupportedSpectralConversion = () => {
         if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
-            // an unknown spectral type is shown as it is; an empty CTYPE is shown as channel only
+            // an unknown spectral type is shown as it is; an empty CTYPE is shown as channel only when the spectral axis is the depth axis
+            const isChannelOnly = !this.spectralAxis.ctype && this.isSpectralChannel;
             const coords: [string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}][] = [[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]];
-            if (this.spectralAxis.ctype) {
+            if (!isChannelOnly) {
                 coords.unshift([this.nativeSpectralCoordinate, {type: null, unit: null}]);
             }
-            this.setChannelValues(this.spectralAxis.ctype ? this.channelInfo.values : this.channelInfo.indexes);
+            this.setChannelValues(isChannelOnly ? this.channelInfo.indexes : this.channelInfo.values);
             this.spectralCoordsSupported = new Map(coords);
             this.spectralSystemsSupported = [];
             return;

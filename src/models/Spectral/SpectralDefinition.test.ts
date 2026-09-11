@@ -12,6 +12,8 @@ describe("initial spectral unit", () => {
         [SpectralType.VRAD, "m/s", SpectralUnit.KMS],
         [SpectralType.VOPT, "km/s", SpectralUnit.KMS],
         [SpectralType.WAVE, "micron", SpectralUnit.MM],
+        [SpectralType.VRAD, "Hz", SpectralUnit.KMS],
+        [SpectralType.FREQ, "km/s", SpectralUnit.GHZ],
         [SpectralType.FREQ, undefined, SpectralUnit.GHZ]
     ])("opens a %s axis in %j as %s", (type, headerUnit, expected) => {
         expect(GetInitialSpectralUnit(type, headerUnit)).toBe(expected);
