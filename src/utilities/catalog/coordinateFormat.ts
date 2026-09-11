@@ -50,6 +50,7 @@ const COMPACT_SEXAGESIMAL_PATTERN = /^([+-]?)(\d{6,7})(\.\d+)?$/;
 const SEXAGESIMAL_SEPARATOR_PATTERN = /\s*:\s*|\s+/;
 const HOUR_MARKER_PATTERN = /h/i;
 const DEGREE_MARKER_PATTERN = /d/i;
+const SIGN_PATTERN = /^[+-]/;
 
 const HOUR_AXES = new Set<CatalogOverlay>([CatalogOverlay.RA]);
 const LATITUDE_AXES = new Set<CatalogOverlay>([CatalogOverlay.DEC, CatalogOverlay.GLAT, CatalogOverlay.ELAT]);
@@ -115,6 +116,12 @@ export function recognizeCoordinateString(value: string | number | null | undefi
     // AST reads those positionally; we would read them as a different coordinate entirely, so
     // they are rejected rather than quietly given a second meaning.
     if (parts.some(part => part === "")) {
+        return undefined;
+    }
+    // The sign belongs to the coordinate as a whole, so only the leading field may carry one.
+    // "12:-30:00" is malformed, not 12.5: the fields are summed by magnitude, so a sign further
+    // along would otherwise be discarded and the value plotted half a degree from where it reads.
+    if (parts.slice(1).some(part => SIGN_PATTERN.test(part))) {
         return undefined;
     }
 
@@ -325,6 +332,9 @@ function isValidSexagesimalFields(fields: number[]): boolean {
     if (fields.some(field => !isFinite(field))) {
         return false;
     }
-    // Only the trailing fields are bounded; the leading one is an hour or degree count.
-    return fields.slice(1).every(field => Math.abs(field) < 60);
+    // Only the trailing fields are bounded; the leading one is an hour or degree count. They are
+    // unsigned by the time they get here -- the compact and dot forms match digits only, and a
+    // sign on a trailing field is rejected where the value is split -- and the bound is applied
+    // to the value itself so that no later caller can reintroduce one.
+    return fields.slice(1).every(field => field >= 0 && field < 60);
 }

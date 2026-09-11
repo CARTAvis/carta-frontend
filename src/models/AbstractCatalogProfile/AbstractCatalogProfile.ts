@@ -7,6 +7,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, type ControlHeader} from "stores";
 import {
     CatalogAxisEligibility,
+    type CatalogAxisEligibilityResult,
     filterProcessedColumnData,
     getCatalogAxisEligibility,
     getComparisonOperatorAndValue,
@@ -38,13 +39,8 @@ export interface CatalogInfo {
  * Values come back in the column's declared units, not in degrees: the sky transform scales them
  * on its way into AST, and converting here as well would apply that scaling twice.
  */
-function getCatalogCoordinateData(column: ProcessedColumnData | undefined, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
-    if (!column) {
-        return undefined;
-    }
-
-    const eligibility = getCatalogAxisEligibility(column.dataType, units, column.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined);
-    if (eligibility.status !== CatalogAxisEligibility.Eligible) {
+function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligibility: CatalogAxisEligibilityResult, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
+    if (!column || eligibility.status !== CatalogAxisEligibility.Eligible) {
         return undefined;
     }
 
@@ -128,6 +124,8 @@ export abstract class AbstractCatalogProfileStore {
     @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
+    /** Backing store for {@link getCoordinateEligibility}, by column name. */
+    private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
@@ -255,14 +253,46 @@ export abstract class AbstractCatalogProfileStore {
         columnsData: Map<number, ProcessedColumnData>
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
-        const wcsX = getCatalogCoordinateData(xColumn, xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
-        const wcsY = getCatalogCoordinateData(yColumn, yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName, xHeaderInfo), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName, yHeaderInfo), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
 
         if (wcsX && wcsY) {
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
             return {xHeaderInfo, yHeaderInfo};
         }
+    }
+
+    /**
+     * Whether a column can be read as a coordinate, and how. Settled once and then reused for the
+     * life of the store.
+     *
+     * A filter response carries only its own chunk of rows, so deciding this afresh on every call
+     * lets a chunk of blanks -- or one stray unparseable value -- declare the whole column
+     * unreadable. That is not just a chunk of missing sources: the overlay is written at absolute
+     * row offsets, so a skipped chunk leaves its slots at the image origin and counts every later
+     * chunk short. A column's format is a property of the column, not of the rows that happen to
+     * have arrived, so once it is known the rows that do not fit it are read as NaN and dropped
+     * individually.
+     *
+     * The evidence is the store's own accumulated data rather than the rows passed in, which is
+     * always at least as much to go on.
+     */
+    private getCoordinateEligibility(columnName: string, headerInfo: CARTA.CatalogHeader.$Properties): CatalogAxisEligibilityResult {
+        const settled = this._coordinateEligibility.get(columnName);
+        if (settled) {
+            return settled;
+        }
+
+        const column = this.catalogOriginalData.get(headerInfo?.columnIndex ?? NaN);
+        const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
+        const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
+        // Only an answer counts as settled: a column with nothing readable in it yet is a question
+        // the rows still to arrive may well answer.
+        if (eligibility.status === CatalogAxisEligibility.Eligible) {
+            this._coordinateEligibility.set(columnName, eligibility);
+        }
+        return eligibility;
     }
 
     private getPlotColumns(

@@ -215,6 +215,45 @@ describe("CatalogProfileStore plot data", () => {
         expect(coords.wcsY?.[1]).toBeNaN();
     });
 
+    test("keeps reading a column the same way once its format is known", () => {
+        // A filter response carries only its own chunk of rows. Re-deciding the format from a
+        // chunk of blanks would declare the column unreadable and drop the chunk, and since the
+        // overlay is written at absolute row offsets that shifts every chunk after it.
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00", "13:00:00"]},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "-22:00:00"]}
+        ]);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData).wcsX).toBeDefined();
+
+        const blankChunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["", ""]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["", ""]}]
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk);
+        expect(coords.wcsX).toHaveLength(2);
+        expect(coords.wcsY).toHaveLength(2);
+        expect(coords.wcsX?.every(isNaN)).toBe(true);
+    });
+
+    test("drops the rows it cannot read, not the chunk they arrived in", () => {
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
+        ]);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData).wcsX).toBeDefined();
+
+        const chunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "---"]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "---"]}]
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", chunk);
+        expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
+        expect(coords.wcsX?.[1]).toBeNaN();
+        expect(coords.wcsY?.[1]).toBeNaN();
+    });
+
     test("parses a string coordinate column for the overlay", () => {
         const store = CreateProfileStore([
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00"]},

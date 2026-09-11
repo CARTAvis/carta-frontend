@@ -72,6 +72,22 @@ describe("coordinate format", () => {
             expect(recognizeCoordinateString("")).toBeUndefined();
             expect(recognizeCoordinateString(null)).toBeUndefined();
         });
+
+        test("lets only the leading field carry a sign", () => {
+            // The fields are summed by magnitude, so a sign further along would be dropped and
+            // "12:-30:00" would read as 12.5 -- a plausible-looking half degree from nowhere.
+            expect(recognizeCoordinateString("12:-30:00")).toBeUndefined();
+            expect(recognizeCoordinateString("12:30:-00.5")).toBeUndefined();
+            expect(recognizeCoordinateString("12 -30 00")).toBeUndefined();
+            expect(recognizeCoordinateString("12:+30:00")).toBeUndefined();
+            expect(recognizeCoordinateString("12:-0:30")).toBeUndefined();
+            expect(recognizeCoordinateString("12h-30m00s")).toBeUndefined();
+        });
+
+        test("still accepts a sign on the leading field", () => {
+            expect(recognizeCoordinateString("-12:30:00")).toMatchObject({isNegative: true});
+            expect(recognizeCoordinateString("+12:30:00")).toMatchObject({isNegative: false});
+        });
     });
 
     describe("sniffCoordinateDescriptor", () => {
@@ -154,6 +170,7 @@ describe("coordinate format", () => {
         test("returns NaN for anything it cannot read", () => {
             expect(parseCoordinateValue("invalid", DEGREE_DESCRIPTOR)).toBeNaN();
             expect(parseCoordinateValue("12:70:00", DEGREE_DESCRIPTOR)).toBeNaN();
+            expect(parseCoordinateValue("12:-30:00", DEGREE_DESCRIPTOR)).toBeNaN();
             expect(parseCoordinateValue(null, DEGREE_DESCRIPTOR)).toBeNaN();
             expect(parseCoordinateValue("", DEGREE_DESCRIPTOR)).toBeNaN();
         });
