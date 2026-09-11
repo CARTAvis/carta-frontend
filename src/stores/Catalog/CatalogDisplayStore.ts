@@ -3,13 +3,25 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogMapType, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, type CatalogSystemType, CatalogTextureType, ColorMap, FrameScaling} from "enums";
+import {
+    AngularSizeUnit,
+    CatalogDisplayMode,
+    CatalogMapType,
+    CatalogOverlay,
+    CatalogOverlayShape,
+    CatalogPlotType,
+    CatalogSettingsTabs,
+    CatalogSizeUnits,
+    type CatalogSourceRadiusMode,
+    type CatalogSystemType,
+    CatalogTextureType,
+    ColorMap,
+    FrameScaling
+} from "enums";
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
 import {clamp, createScalingParameters, getScalingParameter, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
-
-type CatalogSourceRadiusMode = "diameter" | "radius";
 
 /** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
 interface ClipRestore {
@@ -1303,6 +1315,9 @@ export class CatalogDisplayStore {
         this.catalogDisplayMode = config?.displayMode ?? CatalogDisplayMode.CANVAS;
         this.canvasSizeUnit = config?.canvasSizeUnit ?? CatalogSizeUnits.SCREENPIXEL;
         this.worldSizeUnit = config?.worldSizeUnit ?? AngularSizeUnit.ARCSEC;
+        // Restored before the size below, which is scaled by the radius type through pixelSizeFactor.
+        const sourceRadiusType = config?.sourceRadiusType;
+        this.catalogSourceRadiusType = sourceRadiusType && this.catalogSourceRadiusTypes.has(sourceRadiusType) ? sourceRadiusType : "diameter";
 
         this.catalogPlotType = config?.plotType ?? CatalogPlotType.ImageOverlay;
         this.catalogColor = config?.color ?? Colors.TURQUOISE3;
@@ -1380,6 +1395,7 @@ export class CatalogDisplayStore {
             displayMode: this.catalogDisplayMode,
             canvasSizeUnit: this.canvasSizeUnit,
             worldSizeUnit: this.worldSizeUnit,
+            sourceRadiusType: this.catalogSourceRadiusType,
             plotType: this.catalogPlotType,
             xAxis: this.xAxis,
             yAxis: this.yAxis,

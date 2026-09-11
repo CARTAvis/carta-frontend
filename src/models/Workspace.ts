@@ -1,7 +1,7 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 
-import {type AngularSizeUnit, type CatalogDisplayMode, type CatalogOverlayShape, type CatalogPlotType, type CatalogSizeUnits, type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
+import {type AngularSizeUnit, type CatalogDisplayMode, type CatalogOverlayShape, type CatalogPlotType, type CatalogSizeUnits, type CatalogSourceRadiusMode, type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
@@ -127,6 +127,8 @@ export interface WorkspaceCatalogConfig {
     displayMode?: CatalogDisplayMode;
     canvasSizeUnit?: CatalogSizeUnits;
     worldSizeUnit?: AngularSizeUnit;
+    /** Whether an authored angular size is the source's radius or its full diameter. */
+    sourceRadiusType?: CatalogSourceRadiusMode;
     plotType?: CatalogPlotType;
     xAxis?: string;
     yAxis?: string;

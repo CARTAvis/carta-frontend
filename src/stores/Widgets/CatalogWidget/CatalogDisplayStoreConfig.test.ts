@@ -9,7 +9,7 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
@@ -73,6 +73,7 @@ function createConfiguredStore(): CatalogDisplayStore {
     store.setThickness(4);
     store.setCatalogPlotType(CatalogPlotType.D2Scatter);
     store.setWorldSizeUnit(AngularSizeUnit.ARCMIN);
+    store.setCatalogSourceRadiusType("radius");
     store.setxAxis("RA");
     store.setyAxis("DEC");
 
@@ -143,6 +144,36 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.orientationMapColumn).toBe(CatalogOverlay.NONE);
         expect(store.angleMin).toBe(CatalogDisplayStore.MIN_ANGLE);
         expect(store.angleMax).toBe(CatalogDisplayStore.MAX_ANGLE);
+    });
+
+    test("restores the angular axis type, which scales the source size", () => {
+        const store = createStore();
+        store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        store.setWorldSizeUnit(AngularSizeUnit.ARCSEC);
+        store.setCatalogSourceRadiusType("radius");
+        store.setCatalogSize(12);
+
+        const config = store.toConfig();
+        expect(config.sourceRadiusType).toBe("radius");
+
+        const restored = createStore();
+        expect(restored.applyConfig(config)).toEqual({success: true, errors: []});
+
+        expect(restored.catalogSourceRadiusType).toBe("radius");
+        expect(restored.pixelSizeFactor).toBe(2);
+        expect(restored.showedCatalogSize).toBe(12);
+        expect(restored.catalogSize).toBe(store.catalogSize);
+    });
+
+    test("returns the angular axis type to diameter when the config leaves it out", () => {
+        const store = createStore();
+        store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        store.setCatalogSourceRadiusType("radius");
+
+        store.applyConfig({displayMode: CatalogDisplayMode.WORLD});
+
+        expect(store.catalogSourceRadiusType).toBe("diameter");
+        expect(store.pixelSizeFactor).toBe(1);
     });
 
     test("keeps the clipped bounds a config carries when the mapped column changes", () => {
