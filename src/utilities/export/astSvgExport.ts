@@ -36,6 +36,7 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
 
         // Create a temporary hidden canvas for AST.setCanvas (it extracts the 2D context)
         // Then monkey-patch Module.gridContext with our SVG context
+        const originalGridContext = (AST as any).gridContext;
         const tempCanvas = document.createElement("canvas");
         tempCanvas.width = viewWidth;
         tempCanvas.height = viewHeight;
@@ -50,9 +51,6 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
         if (realCtx) {
             svgCtx.font = realCtx.font;
         }
-
-        // Store the original context reference and replace with our SVG context
-        const originalGridContext = (AST as any).gridContext;
 
         // Create a proxy to forward missing properties/methods to the real context
         // because svgcanvas might lack some advanced Canvas2D methods used by AST
@@ -96,9 +94,14 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
             if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
-                AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
-                AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", overlaySettings.isImgCoordinates ? 3 : 2);
+                try {
+                    AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                    AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
+                    AST.setI(tempWcsInfo, "Current", overlaySettings.isImgCoordinates ? 3 : 2);
+                } finally {
+                    AST.deleteObject(scaleMapping);
+                    AST.deleteObject(newFrame);
+                }
             }
 
             if (frame.isOffsetCoord && overlaySettings.isWcsCoordinates) {
@@ -189,9 +192,7 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
             AST.clearLastErrorMessage();
 
             // Restore original context
-            if (originalGridContext !== undefined) {
-                (AST as any).gridContext = originalGridContext;
-            }
+            (AST as any).gridContext = originalGridContext;
         }
 
         // Extract SVG content from svgcanvas and wrap in a group
