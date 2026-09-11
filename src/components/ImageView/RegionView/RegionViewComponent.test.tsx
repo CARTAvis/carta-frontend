@@ -67,7 +67,8 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
         (component as any).stageRef = {
             current: {
                 getPosition: () => ({x: 0, y: 0}),
-                scaleX: () => 1
+                scaleX: () => 1,
+                scaleY: () => 1
             }
         };
     });

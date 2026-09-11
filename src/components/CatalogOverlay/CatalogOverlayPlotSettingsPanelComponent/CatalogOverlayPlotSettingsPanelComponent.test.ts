@@ -1,5 +1,5 @@
 import {FrameScaling} from "enums";
-import {type CatalogWidgetStore} from "stores/Widgets";
+import {type CatalogDisplayStore} from "stores";
 
 import {CatalogOverlayPlotSettingsPanelComponent} from "./CatalogOverlayPlotSettingsPanelComponent";
 
@@ -8,11 +8,11 @@ type CatalogScalingKey = "sizeScalingType" | "sizeMinorScalingType" | "colorScal
 interface TestableCatalogSettingsComponent {
     scalingPreviewSessions: Map<CatalogScalingKey, unknown>;
     colormapPreviewSession: unknown;
-    handleScalingHovered: (widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) => void;
-    handleScalingSelected: (widgetStore: CatalogWidgetStore, key: CatalogScalingKey, scaling: FrameScaling) => void;
+    handleScalingHovered: (widgetStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) => void;
+    handleScalingSelected: (widgetStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) => void;
     handleScalingDropdownOpenChange: (key: CatalogScalingKey, isOpen: boolean) => void;
-    handleColormapHovered: (widgetStore: CatalogWidgetStore, colormap: string) => void;
-    handleColormapSelected: (widgetStore: CatalogWidgetStore, colormap: string) => void;
+    handleColormapHovered: (widgetStore: CatalogDisplayStore, colormap: string) => void;
+    handleColormapSelected: (widgetStore: CatalogDisplayStore, colormap: string) => void;
     handleColormapDropdownOpenChange: (isOpen: boolean) => void;
     renderScalingParameter: (
         scaling: FrameScaling,
@@ -28,7 +28,7 @@ interface TestableCatalogSettingsComponent {
     };
 }
 
-function createWidgetStore(): CatalogWidgetStore {
+function createWidgetStore(): CatalogDisplayStore {
     const widgetStore = {
         sizeScalingType: FrameScaling.LINEAR,
         sizeMinorScalingType: FrameScaling.LINEAR,
@@ -41,7 +41,7 @@ function createWidgetStore(): CatalogWidgetStore {
         setOrientationScalingType: jest.fn((scaling: FrameScaling) => (widgetStore.orientationScalingType = scaling)),
         setColorMap: jest.fn((colormap: string) => (widgetStore.colorMap = colormap))
     };
-    return widgetStore as unknown as CatalogWidgetStore;
+    return widgetStore as unknown as CatalogDisplayStore;
 }
 
 function createComponent(): TestableCatalogSettingsComponent {

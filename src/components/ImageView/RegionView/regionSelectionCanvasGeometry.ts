@@ -3,9 +3,9 @@ import {CARTA} from "carta-protobuf";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getInterpolatedPathAtDistance, getRegionSelectionPoints, getRegionSelectionSegments, getRotatedBoxPoints, type Rect2D, transformPoint} from "utilities";
+import {doSelectionRectAndRegionPointsIntersect, doSelectionRectAndRulerPathsIntersect, getRegionSelectionPoints, getRegionSelectionSegments, type Rect2D, transformPoint} from "utilities";
 
-import {transformedImageToCanvasPos} from "./shared";
+import {getCanvasPathAtScreenDistance, getZoomInvariantCanvasOffset, transformedImageToCanvasPos} from "./shared";
 
 interface RegionSelectionGeometryContext {
     frame: FrameStore;
@@ -22,24 +22,31 @@ function imagePointToSelectionCanvas(point: Point2D, context: RegionSelectionGeo
 
 function getTextSelectionCanvasPoints(region: RegionStore, context: RegionSelectionGeometryContext): Point2D[] {
     const {frame, layerWidth, layerHeight, stage} = context;
-    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const transformScale = frame.spatialTransform?.scale ?? 1;
-    const halfWidth = (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
-    const halfHeight = (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale);
-    const rotation = (region.rotation * Math.PI) / 180.0;
+    const halfWidth = ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2;
+    const halfHeight = region.size.y / devicePixelRatio / 2;
+    const rotation = frame.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation;
     const center = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.center, false) : region.center;
-    return getRotatedBoxPoints(center, halfWidth, halfHeight, rotation).map(point => transformedImageToCanvasPos(point, frame, layerWidth, layerHeight, stage));
+    const centerCanvas = transformedImageToCanvasPos(center, frame, layerWidth, layerHeight, stage);
+    return [
+        {x: -halfWidth, y: -halfHeight},
+        {x: halfWidth, y: -halfHeight},
+        {x: halfWidth, y: halfHeight},
+        {x: -halfWidth, y: halfHeight}
+    ].map(offset => {
+        const canvasOffset = getZoomInvariantCanvasOffset(offset, stage, rotation);
+        return {x: centerCanvas.x + canvasOffset.x, y: centerCanvas.y + canvasOffset.y};
+    });
 }
 
 function getCompassSelectionCanvasPoints(region: CompassAnnotationStore, context: RegionSelectionGeometryContext): Point2D[] {
     const {frame, layerWidth, layerHeight, stage} = context;
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoint = transformedImageToCanvasPos(controlPoint, frame, layerWidth, layerHeight, stage);
-    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const targetStageLength = (region.length * AppStore.Instance.imageRatio) / zoomLevel;
 
     if (!frame.isValidWcs) {
-        return [originPoint, {x: originPoint.x, y: originPoint.y - targetStageLength}, {x: originPoint.x - targetStageLength, y: originPoint.y}];
+        const northOffset = getZoomInvariantCanvasOffset({x: 0, y: -region.length}, stage);
+        const eastOffset = getZoomInvariantCanvasOffset({x: -region.length, y: 0}, stage);
+        return [originPoint, {x: originPoint.x + northOffset.x, y: originPoint.y + northOffset.y}, {x: originPoint.x + eastOffset.x, y: originPoint.y + eastOffset.y}];
     }
 
     const getCompassEndpoint = (approxPoints: number[]): Point2D => {
@@ -49,7 +56,7 @@ function getCompassSelectionCanvasPoints(region: CompassAnnotationStore, context
             canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, layerWidth, layerHeight, stage));
         }
 
-        const path = getInterpolatedPathAtDistance(originPoint, canvasPoints, targetStageLength);
+        const path = getCanvasPathAtScreenDistance(originPoint, canvasPoints, region.length, stage);
         return path[path.length - 1];
     };
 

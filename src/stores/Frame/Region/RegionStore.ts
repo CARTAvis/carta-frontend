@@ -882,18 +882,24 @@ export class RegionStore {
         }
     };
 
-    private get textAnnotationScale(): number {
-        const zoomLevel = this.activeFrame?.spatialReference?.zoomLevel || this.activeFrame?.zoomLevel || 1;
-        return AppStore.Instance.imageRatio / zoomLevel;
+    private get textAnnotationScale(): Point2D {
+        const zoom = (this.activeFrame?.spatialReference ?? this.activeFrame)?.effectiveZoomLevel ?? {x: 1, y: 1};
+        return {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y};
     }
 
     @action focusCenter = () => {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
 
-            if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
-                const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
-                this.activeFrame.setZoom(zoomLevel);
+            const zoomFrame = this.activeFrame.spatialReference ?? this.activeFrame;
+            const zoom = zoomFrame.effectiveZoomLevel;
+            if (this.activeFrame.renderWidth < zoom.x * this.boundingBox.x || this.activeFrame.renderHeight < zoom.y * this.boundingBox.y) {
+                const fitScale = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / (zoom.x * this.boundingBox.x), this.activeFrame.renderHeight / (zoom.y * this.boundingBox.y));
+                if (zoomFrame.isAxisZoomable) {
+                    zoomFrame.setAxisZoom(zoom.x * fitScale, zoom.y * fitScale);
+                } else {
+                    this.activeFrame.setZoom(zoom.x * fitScale);
+                }
             }
         }
     };

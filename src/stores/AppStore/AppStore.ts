@@ -45,7 +45,6 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
-    WorkspaceConfig,
     type WorkspaceFile
 } from "models";
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
@@ -116,6 +115,37 @@ interface ChannelUpdate {
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
+
+export function scaleZoomForImageRatio(frame: Pick<FrameStore, "effectiveZoomLevel" | "isAxisZoomable" | "zoomLevel">, imageRatioScale: number): Point2D {
+    const zoom = frame.isAxisZoomable ? frame.effectiveZoomLevel : {x: frame.zoomLevel, y: frame.zoomLevel};
+    return {x: zoom.x * imageRatioScale, y: zoom.y * imageRatioScale};
+}
+
+export function restoreWorkspaceZoom(frame: FrameStore, workspaceZoom: Pick<WorkspaceFile, "axisZoomLevel" | "zoomAxis" | "zoomLevel">) {
+    const zoomFrame = frame.spatialReference ?? frame;
+    const axisZoom = workspaceZoom.axisZoomLevel;
+    if (zoomFrame.isAxisZoomable && axisZoom && typeof axisZoom.x === "number" && typeof axisZoom.y === "number" && axisZoom.x > 0 && axisZoom.y > 0 && isFinite(axisZoom.x) && isFinite(axisZoom.y)) {
+        zoomFrame.setAxisZoom(axisZoom.x, axisZoom.y);
+    } else if (workspaceZoom.zoomLevel && workspaceZoom.zoomLevel > 0) {
+        if (zoomFrame.isAxisZoomable) {
+            zoomFrame.setAxisZoom(workspaceZoom.zoomLevel, workspaceZoom.zoomLevel);
+        } else {
+            frame.zoomLevel = workspaceZoom.zoomLevel;
+        }
+    }
+    if (zoomFrame.isAxisZoomable && (workspaceZoom.zoomAxis === "x" || workspaceZoom.zoomAxis === "y")) {
+        zoomFrame.setZoomAxis(workspaceZoom.zoomAxis);
+    }
+}
+
+function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
+    const zoom = scaleZoomForImageRatio(frame, imageRatioScale);
+    if (frame.isAxisZoomable) {
+        frame.setAxisZoom(zoom.x, zoom.y);
+    } else {
+        frame.setZoom(zoom.x, true);
+    }
+}
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -1182,17 +1212,16 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
-                const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-                if (catalogWidgetId) {
+                const catalogComponentId = this.updateCatalogProfile(fileId, frame);
+                if (catalogComponentId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                     this.catalogStore.addCatalog(fileId, ack.dataSize);
                     this.fileBrowserStore.hideFileBrowser();
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                     return fileId;
                 } else {
-                    throw new Error("No catalog widget ID");
+                    throw new Error("No catalog panel");
                 }
             } else {
                 throw new Error("No catalog file loaded");
@@ -1205,8 +1234,8 @@ export class AppStore {
         }
     }
 
-    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
-        let catalogWidgetId;
+    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string | undefined => {
+        let catalogComponentId: string | undefined;
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
@@ -1225,26 +1254,26 @@ export class AppStore {
             catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
         }
 
+        catalogStore.getOrCreateCatalogDisplayStore(fileId);
         if (catalogComponentSize === 0) {
-            const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-            catalogWidgetId = catalog.widgetStoreId;
-            catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
+            catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
+            catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
-            catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
-            const key = catalogStore.catalogProfiles.keys().next().value;
-            catalogStore.catalogProfiles.set(key, fileId);
+            catalogComponentId = catalogStore.catalogProfiles.keys().next().value;
+            if (catalogComponentId) {
+                catalogStore.catalogProfiles.set(catalogComponentId, fileId);
+            }
         }
-        return catalogWidgetId;
+        return catalogComponentId;
     };
 
-    @action removeCatalog(fileId: number, catalogWidgetId: string, catalogComponentId?: string) {
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             const catalogStore = CatalogStore.Instance;
             // close all associated catalog plots widgets
             catalogStore.clearCatalogPlotsByFileId(fileId);
-            // remove catalog overlay widget store
-            this.catalogStore.catalogWidgets.delete(fileId);
-            this.widgetsStore.catalogWidgets.delete(catalogWidgetId);
+            // remove catalog overlay display store
+            catalogStore.removeCatalogDisplayStore(fileId);
             // remove overlay
             catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
@@ -1792,11 +1821,13 @@ export class AppStore {
     };
 
     @action setImageRatio = (val: number) => {
+        const imageRatioScale = val / this.imageRatio;
         for (const f of this.frames) {
             if (!f.spatialReference) {
-                f.setZoom((f.zoomLevel * val) / this.imageRatio);
+                scaleFrameZoom(f, imageRatioScale);
             }
         }
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, imageRatioScale));
         this.imageRatio = val;
     };
 
@@ -2251,15 +2282,14 @@ export class AppStore {
 
     // update devicePixelRatio and make the image size invariant on screen
     @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
+        const devicePixelRatioScale = devicePixelRatio / prevDevicePixelRatio;
         this.frames.forEach(frame => {
             if (frame === this.spatialReference || !frame.spatialReference) {
-                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+                scaleFrameZoom(frame, devicePixelRatioScale);
             }
         });
 
-        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
-            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
-        });
+        this.previewFrames.forEach(previewFrame => scaleFrameZoom(previewFrame, devicePixelRatioScale));
 
         this.devicePixelRatio = devicePixelRatio;
     }
@@ -2438,7 +2468,6 @@ export class AppStore {
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         const catalogFileId = catalogFilter.fileId;
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-        const catalogWidgetStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -2451,10 +2480,10 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate && catalogWidgetStoreId) {
-                const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                const xColumn = catalogWidgetStore?.xAxis;
-                const yColumn = catalogWidgetStore?.yAxis;
+            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
+                const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
+                const xColumn = catalogDisplayStore?.xAxis;
+                const yColumn = catalogDisplayStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
@@ -2471,7 +2500,7 @@ export class AppStore {
                             catalogFilter.subsetEndIndex,
                             catalogFilter.subsetDataSize
                         );
-                        catalogWidgetStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
+                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
                     }
                 }
             }
@@ -2798,7 +2827,7 @@ export class AppStore {
                     }
 
                     if (fileInfo.renderConfig) {
-                        frame.renderConfig.updateFromWorkspace(fileInfo.renderConfig);
+                        frame.renderConfig.applyConfig(fileInfo.renderConfig);
                     }
 
                     if (workspace.references && fileInfo.references) {
@@ -2814,11 +2843,11 @@ export class AppStore {
                     }
 
                     if (fileInfo.contourConfig) {
-                        frame.contourConfig.updateFromWorkspace(fileInfo.contourConfig);
+                        frame.contourConfig.applyConfig(fileInfo.contourConfig);
                         frame.applyContours();
                     }
                     if (fileInfo.vectorOverlayConfig) {
-                        frame.vectorOverlayConfig.updateFromWorkspace(fileInfo.vectorOverlayConfig);
+                        frame.vectorOverlayConfig.applyConfig(fileInfo.vectorOverlayConfig);
                         frame.applyVectorOverlay();
                     }
 
@@ -2826,9 +2855,7 @@ export class AppStore {
                     if (fileInfo.center) {
                         frame.center = fileInfo.center;
                     }
-                    if (fileInfo.zoomLevel) {
-                        frame.zoomLevel = fileInfo.zoomLevel;
-                    }
+                    restoreWorkspaceZoom(frame, fileInfo);
 
                     // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
@@ -2979,6 +3006,11 @@ export class AppStore {
 
             workspaceFile.center = frame.center;
             workspaceFile.zoomLevel = frame.zoomLevel;
+            const zoomFrame = frame.spatialReference ?? frame;
+            if (zoomFrame.isAxisZoomable) {
+                workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
+                workspaceFile.zoomAxis = zoomFrame.zoomAxis;
+            }
             workspaceFile.channel = frame.channel;
             workspaceFile.stokes = frame.stokes;
 
@@ -2990,14 +3022,14 @@ export class AppStore {
             }
 
             // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            workspaceFile.renderConfig = WorkspaceConfig.createRenderConfig(frame.renderConfig);
+            workspaceFile.renderConfig = frame.renderConfig.toConfig();
 
-            const contourConfig = WorkspaceConfig.createContourConfig(frame.contourConfig);
+            const contourConfig = frame.contourConfig.toConfig();
             if (contourConfig) {
                 workspaceFile.contourConfig = contourConfig;
             }
 
-            const vectorOverlayConfig = WorkspaceConfig.createVectorOverlayConfig(frame.vectorOverlayConfig);
+            const vectorOverlayConfig = frame.vectorOverlayConfig.toConfig();
             if (vectorOverlayConfig) {
                 workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
             }

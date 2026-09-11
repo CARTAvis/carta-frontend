@@ -251,6 +251,24 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(ellipse.size).toEqual({x: 6, y: 12});
     });
 
+    test("focus preserves independent axis zoom ratio", () => {
+        const setAxisZoom = jest.fn();
+        const rectangle = MakeRegion(
+            CARTA.RegionType.RECTANGLE,
+            [
+                {x: 0, y: 0},
+                {x: 100, y: 50}
+            ],
+            {frame: {effectiveZoomLevel: {x: 2, y: 4}, isAxisZoomable: true, setAxisZoom}}
+        );
+
+        rectangle.focusCenter();
+
+        expect(setAxisZoom).toHaveBeenCalled();
+        const [zoomX, zoomY] = setAxisZoom.mock.calls[0];
+        expect(zoomX / zoomY).toBeCloseTo(0.5);
+    });
+
     test("moves selected compass point by updating compass length", () => {
         const compass = new CompassAnnotationStore(
             BACKEND_SERVICE as any,

@@ -102,12 +102,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             return undefined;
         }
 
-        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-        if (!catalogWidgetStoreId) {
-            return undefined;
-        }
-
-        return AppStore.Instance.widgetsStore.catalogWidgets.get(catalogWidgetStoreId)?.settingsTabId;
+        return catalogStore.getCatalogDisplayStore(catalogFileId)?.settingsTabId;
     };
 
     private getSettingsTab = (parentId: string, parentType?: string): number | undefined => {

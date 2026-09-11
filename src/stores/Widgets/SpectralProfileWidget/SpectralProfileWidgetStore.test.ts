@@ -530,7 +530,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+        runInAction(() => widgetStore.applyConfig({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
         expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
@@ -602,25 +602,25 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("restores the shift mode while keeping legacy redshift configs valid", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
 
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300.093, 1);
 
-        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25}));
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
     });
 
     test("restores the velocity convention while defaulting legacy configs to radio", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
+        runInAction(() => widgetStore.applyConfig({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
 
         expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
         expect(widgetStore.restFrameRadialVelocity).toBe(0);
 
         const {widgetStore: legacyWidgetStore} = createWidgetStore();
-        runInAction(() => legacyWidgetStore.init({restFrameRedshift: 0.25}));
+        runInAction(() => legacyWidgetStore.applyConfig({restFrameRedshift: 0.25}));
         expect(legacyWidgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
         expect(legacyWidgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
     });

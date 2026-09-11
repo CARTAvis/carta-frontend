@@ -121,12 +121,18 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
+        const zoomFrame = frame.spatialReference ?? frame;
+        const zoomX = zoomFrame.effectiveZoomLevel.x;
+        const zoomY = zoomFrame.effectiveZoomLevel.y;
+        const zoomRatio = isFinite(zoomX) && isFinite(zoomY) && zoomY > 0 ? zoomX / zoomY : 1;
+        const effectiveAspectRatio = zoomRatio * frame.aspectRatio;
+
         const frameView = this.props.isUnscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
-                  yMin: (frame.aspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
-                  yMax: (frame.aspectRatio ?? 1) * this.props.overlayStore.viewHeight * appStore.pixelRatio - padding.top * appStore.pixelRatio,
+                  yMin: (effectiveAspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
+                  yMax: (effectiveAspectRatio ?? 1) * this.props.overlayStore.viewHeight * appStore.pixelRatio - padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference
@@ -144,7 +150,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.setCanvas(this.canvas);
             if (!frame.hasSquarePixels) {
                 const currentWcsIndex = parseInt(AST.getString(tempWcsInfo, "Current"), 10);
-                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
+                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / effectiveAspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 try {
                     AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
@@ -193,8 +199,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     tempWcsInfo,
                     frameView.xMin,
                     frameView.xMax,
-                    frameView.yMin / frame.aspectRatio,
-                    frameView.yMax / frame.aspectRatio,
+                    frameView.yMin / effectiveAspectRatio,
+                    frameView.yMax / effectiveAspectRatio,
                     this.props.overlayStore.viewWidth * appStore.pixelRatio,
                     this.props.overlayStore.viewHeight * appStore.pixelRatio,
                     padding.left * appStore.pixelRatio,

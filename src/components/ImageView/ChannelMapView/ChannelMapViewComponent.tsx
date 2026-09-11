@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageType} from "enums";
-import {type CursorInfo} from "models";
+import {type CursorInfo, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -56,7 +56,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         setImageToolbarVisible(false);
     };
 
-    const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
+    const onRegionViewZoom = (frame: FrameStore, zoom: number | Point2D) => {
         if (frame) {
             regionViewRef?.current?.stageZoomToPoint(frame.renderWidth / 2, frame.renderHeight / 2, zoom);
         }
