@@ -11,7 +11,7 @@ export class ContourStore {
     @observable chunkCount: number = 0;
 
     private indexOffsets: Int32Array[] = [];
-    private vertexData: (Float32Array | null)[] = [];
+    private sourceVertexData: Float32Array[] = [];
     private vertexBuffers: WebGLBuffer[] = [];
 
     private gl: WebGL2RenderingContext | null;
@@ -20,11 +20,7 @@ export class ContourStore {
     private static vertexDataElements = 8;
 
     get hasValidData() {
-        if (!this.vertexData) {
-            return false;
-        }
-
-        return this.vertexData.length > 0;
+        return this.sourceVertexData.length > 0;
     }
 
     get exportIndexOffsets() {
@@ -32,7 +28,7 @@ export class ContourStore {
     }
 
     get exportVertexData() {
-        return this.vertexData;
+        return this.sourceVertexData.map((sourceVertices, index) => CARTACompute.GenerateVertexData(sourceVertices, this.indexOffsets[index]).slice());
     }
 
     @computed get isComplete() {
@@ -62,9 +58,6 @@ export class ContourStore {
             return;
         }
 
-        if (!this.vertexData) {
-            this.vertexData = [];
-        }
         if (!this.indexOffsets) {
             this.indexOffsets = [];
         }
@@ -74,19 +67,19 @@ export class ContourStore {
 
         // Slice to copy: GenerateVertexData returns a view into reusable WASM heap
         // memory that gets overwritten by subsequent calls
-        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
-        this.vertexData.push(vertexData.slice());
-        this.indexOffsets.push(indexOffsets);
+        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets).slice();
+        this.sourceVertexData.push(sourceVertices.slice());
+        this.indexOffsets.push(indexOffsets.slice());
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
-        const index = this.vertexData.length - 1;
-        this.generateBuffers(index);
+        const index = this.sourceVertexData.length - 1;
+        this.generateBuffers(index, vertexData);
 
         this.vertexCount += numVertices;
         this.chunkCount++;
     };
 
-    private generateBuffers(index: number) {
+    private generateBuffers(index: number, vertexData: Float32Array) {
         if (!this.vertexBuffers) {
             this.vertexBuffers = [];
         }
@@ -100,13 +93,13 @@ export class ContourStore {
         if (this.gl) {
             this.vertexBuffers.push(this.gl.createBuffer()!);
             this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
-            this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
+            this.gl.bufferData(GL2.ARRAY_BUFFER, vertexData, GL2.STATIC_DRAW);
         }
     }
 
     @action clearData = () => {
         this.indexOffsets = [];
-        this.vertexData = [];
+        this.sourceVertexData = [];
         this.numGeneratedVertices = [];
         this.vertexCount = 0;
         this.chunkCount = 0;
