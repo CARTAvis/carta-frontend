@@ -20,20 +20,22 @@ export class SpectralSettingsComponent extends React.Component<{
     render() {
         const frame = this.props.frame;
         const nativeSpectralCoordinate = frame?.nativeSpectralCoordinate;
+        // the native entry shows the header's CTYPE as it is, e.g. "WAVE-LOG (Angstrom)" for a non-linear wavelength axis
+        const nativeSpectralCoordinateLabel = (frame?.nativeSpectralCoordinateLabel ?? nativeSpectralCoordinate) + " (Native WCS)";
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
         const spectralCoordinateOptions: OptionProps[] = filteredSpectralTypes.map((coord: string) => {
             if (coord === SPECTRAL_TYPE_STRING.get(SpectralType.NATIVE)) {
-                return {value: coord, label: nativeSpectralCoordinate + " (Native WCS)", key: coord};
+                return {value: coord, label: nativeSpectralCoordinateLabel, key: coord};
             }
-            return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord, key: coord};
+            return {value: coord, label: coord === nativeSpectralCoordinate ? nativeSpectralCoordinateLabel : coord, key: coord};
         });
         const spectralSystemOptions: OptionProps[] =
             frame?.spectralSystemsSupported && frame.spectralSystemsSupported.length > 0
                 ? frame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system, key: system};
                   })
-                : [{value: frame?.spectralAxis?.specsys ?? "", label: frame?.spectralAxis?.specsys ?? ""}];
+                : [{value: frame?.spectralAxis?.specsys || "", label: frame?.spectralAxis?.specsys || "Unknown"}];
         const shouldDisableCoordinateSetting = this.props.disable;
         const shouldDisableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 
