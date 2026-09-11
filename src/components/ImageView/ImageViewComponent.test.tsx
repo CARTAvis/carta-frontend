@@ -139,7 +139,12 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-width", "2");
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-dasharray", "24,8");
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
-        expect(panelSvg?.querySelector("#catalog-overlay")).not.toBeNull();
+        expect(panelSvg?.querySelector("#catalog-overlay")).toHaveAttribute("clip-path", "url(#catalog-clip-0-0)");
+        const catalogClipRect = panelSvg?.querySelector("#catalog-clip-0-0 rect");
+        expect(catalogClipRect).toHaveAttribute("x", "5");
+        expect(catalogClipRect).toHaveAttribute("y", "7");
+        expect(catalogClipRect).toHaveAttribute("width", "100");
+        expect(catalogClipRect).toHaveAttribute("height", "80");
     });
 
     test("maps spatial contours into the reference frame before exporting", () => {

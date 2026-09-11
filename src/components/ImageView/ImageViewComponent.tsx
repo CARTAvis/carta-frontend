@@ -717,6 +717,20 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     // 7. Catalog — vector SVG from store data
     const catalogSvg = buildCatalogSvg(frame, padding, pixelRatio);
     if (catalogSvg) {
+        const clipId = `catalog-clip-${column}-${row}`;
+        const clipPath = createSvgElement("clipPath", {id: clipId});
+        clipPath.appendChild(
+            createSvgElement("rect", {
+                x: padding.left * pixelRatio,
+                y: padding.top * pixelRatio,
+                width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
+                height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
+            })
+        );
+        const defs = createSvgElement("defs", {});
+        defs.appendChild(clipPath);
+        panelGroup.appendChild(defs);
+        catalogSvg.setAttribute("clip-path", `url(#${clipId})`);
         panelGroup.appendChild(catalogSvg);
     }
 
