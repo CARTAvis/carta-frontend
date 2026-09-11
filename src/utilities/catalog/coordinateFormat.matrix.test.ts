@@ -3,6 +3,7 @@ import {CatalogOverlay} from "enums";
 import {
     type CoordinateDescriptor,
     getCoordinateDescriptorFromUnits,
+    getDegreesPerCatalogUnit,
     isCatalogLatitudeAxis,
     parseCoordinateValue,
     rejectOutOfRangeLatitude,
@@ -20,12 +21,29 @@ import {
  * up as an obviously wrong number rather than a subtly shifted one.
  */
 
-const HOUR: ResolvedCoordinateDescriptor = {kind: "sexagesimal", fieldUnit: "hour", source: "units"};
-const DEGREE: ResolvedCoordinateDescriptor = {kind: "sexagesimal", fieldUnit: "degree", source: "units"};
-const DECIMAL_DEGREE: ResolvedCoordinateDescriptor = {kind: "decimal", fieldUnit: "degree", source: "units"};
-const DECIMAL_HOUR: ResolvedCoordinateDescriptor = {kind: "decimal", fieldUnit: "hour", source: "units"};
+/** A column as the overlay sees it: the units it declares, and the descriptor they imply. */
+type ColumnFormat = {descriptor: ResolvedCoordinateDescriptor; units: string | null};
 
-type Row = [label: string, value: string, descriptor: ResolvedCoordinateDescriptor, expectedDegrees: number];
+const HOUR: ColumnFormat = {descriptor: {kind: "sexagesimal", fieldUnit: "hour", source: "units"}, units: "hms"};
+const DEGREE: ColumnFormat = {descriptor: {kind: "sexagesimal", fieldUnit: "degree", source: "units"}, units: "dms"};
+const DECIMAL_DEGREE: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "degree", source: "units"}, units: "deg"};
+const DECIMAL_HOUR: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "hour", source: "units"}, units: "h"};
+const DECIMAL_RADIAN: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "radian", source: "units"}, units: "rad"};
+
+/**
+ * The degrees a column of this format actually contributes to the overlay: the parser's reading
+ * scaled by the units, which is the pair the sky transform applies on its way into AST.
+ *
+ * The rows below assert on that product rather than on the parser alone, because the two halves
+ * divide the work differently depending on the units -- `hms` names a notation the parser has to
+ * resolve, `h` names a scale the transform applies -- and either half can look right on its own
+ * while the product is out by a factor of fifteen.
+ */
+function readDegrees(value: string, format: ColumnFormat): number {
+    return parseCoordinateValue(value, format.descriptor) * getDegreesPerCatalogUnit(format.units);
+}
+
+type Row = [label: string, value: string, format: ColumnFormat, expectedDegrees: number];
 
 // 20h54m05.689s = 313.523704...  |  +37d01m17.38s = 37.021494...
 const RA_DEGREES = 313.52370416666665;
@@ -112,7 +130,7 @@ const SUPPORTED_ROWS: Row[] = [
     ["longitude upper bound", "359.999999", DECIMAL_DEGREE, 359.999999]
 ];
 
-const REJECTED_ROWS: Array<[label: string, value: string, descriptor: ResolvedCoordinateDescriptor]> = [
+const REJECTED_ROWS: Array<[label: string, value: string, format: ColumnFormat]> = [
     ["object name", "NGC 1333", DEGREE],
     ["free text", "banana", DEGREE],
     ["empty", "", DEGREE],
@@ -129,19 +147,19 @@ const REJECTED_ROWS: Array<[label: string, value: string, descriptor: ResolvedCo
 ];
 
 describe("coordinate format matrix", () => {
-    test.each(SUPPORTED_ROWS)("parses %s: %s", (_label, value, descriptor, expected) => {
-        expect(parseCoordinateValue(value, descriptor)).toBeCloseTo(expected, 9);
+    test.each(SUPPORTED_ROWS)("parses %s: %s", (_label, value, format, expected) => {
+        expect(readDegrees(value, format)).toBeCloseTo(expected, 9);
     });
 
-    test.each(REJECTED_ROWS)("rejects %s: %s", (_label, value, descriptor) => {
-        expect(parseCoordinateValue(value, descriptor)).toBeNaN();
+    test.each(REJECTED_ROWS)("rejects %s: %s", (_label, value, format) => {
+        expect(readDegrees(value, format)).toBeNaN();
     });
 
     describe("the compact form needs metadata, never a guess", () => {
         test("a bare six-digit value is a decimal number unless the units say otherwise", () => {
             // "205405.689" is 20h54m05.689s or 205405.689 degrees. Nothing in the value decides it.
-            expect(parseCoordinateValue("205405.689", DECIMAL_DEGREE)).toBe(205405.689);
-            expect(parseCoordinateValue("205405.689", HOUR)).toBeCloseTo(RA_DEGREES, 9);
+            expect(readDegrees("205405.689", DECIMAL_DEGREE)).toBe(205405.689);
+            expect(readDegrees("205405.689", HOUR)).toBeCloseTo(RA_DEGREES, 9);
         });
 
         test("sniffing never produces the compact reading", () => {
@@ -150,18 +168,16 @@ describe("coordinate format matrix", () => {
 
         test("a short bare number in a sexagesimal column stays decimal", () => {
             // Only a 6- or 7-digit run can be HHMMSS; "12.5" in an hms column is 12.5 hours.
-            expect(parseCoordinateValue("12.5", HOUR)).toBe(187.5);
+            expect(readDegrees("12.5", HOUR)).toBe(187.5);
         });
     });
 
     describe("radians come from the units alone", () => {
-        const radianDescriptor: ResolvedCoordinateDescriptor = {kind: "decimal", fieldUnit: "radian", source: "units"};
-
         test("converts radian columns to degrees", () => {
-            expect(parseCoordinateValue(String(Math.PI), radianDescriptor)).toBeCloseTo(180, 9);
-            expect(parseCoordinateValue(String(Math.PI / 2), radianDescriptor)).toBeCloseTo(90, 9);
-            expect(parseCoordinateValue(String(-Math.PI / 4), radianDescriptor)).toBeCloseTo(-45, 9);
-            expect(parseCoordinateValue("0", radianDescriptor)).toBe(0);
+            expect(readDegrees(String(Math.PI), DECIMAL_RADIAN)).toBeCloseTo(180, 9);
+            expect(readDegrees(String(Math.PI / 2), DECIMAL_RADIAN)).toBeCloseTo(90, 9);
+            expect(readDegrees(String(-Math.PI / 4), DECIMAL_RADIAN)).toBeCloseTo(-45, 9);
+            expect(readDegrees("0", DECIMAL_RADIAN)).toBe(0);
         });
 
         test("is reachable only through the units", () => {
@@ -169,6 +185,38 @@ describe("coordinate format matrix", () => {
             expect(getCoordinateDescriptorFromUnits("radians")).toEqual({kind: "decimal", fieldUnit: "radian", source: "units"});
             // A bare "1.234" is degrees or radians with equal plausibility, so sniffing says degrees.
             expect(sniffCoordinateDescriptor(["1.234", "0.5"])?.fieldUnit).toBe("degree");
+        });
+    });
+
+    describe("units the parser never sees", () => {
+        // A numeric column goes straight to the transform, so its declared units are the only
+        // conversion it ever gets. Reading them as degrees put a Double column of hours 175
+        // degrees from where it belonged, and a radian one 54 degrees out.
+        test("scales a numeric column by whatever its units are worth", () => {
+            expect(getDegreesPerCatalogUnit("h")).toBe(15);
+            expect(getDegreesPerCatalogUnit("hours")).toBe(15);
+            expect(getDegreesPerCatalogUnit("rad")).toBeCloseTo(180 / Math.PI, 12);
+            expect(getDegreesPerCatalogUnit("arcmin")).toBeCloseTo(1 / 60, 12);
+            expect(getDegreesPerCatalogUnit("arcsec")).toBeCloseTo(1 / 3600, 12);
+            expect(getDegreesPerCatalogUnit("deg")).toBe(1);
+            expect(getDegreesPerCatalogUnit(null)).toBe(1);
+        });
+
+        test("leaves sexagesimal units at one degree per unit, because the parser converts those", () => {
+            // "hms" names a notation, not a scale. Scaling here too would apply fifteen twice.
+            expect(getDegreesPerCatalogUnit("hms")).toBe(1);
+            expect(getDegreesPerCatalogUnit("h:m:s")).toBe(1);
+            expect(getDegreesPerCatalogUnit("hh:mm:ss")).toBe(1);
+            expect(getDegreesPerCatalogUnit("dms")).toBe(1);
+        });
+
+        test("applies exactly one conversion, whichever half does the work", () => {
+            // The same position in the two spellings of an hour column: the parser resolves the
+            // sexagesimal one and the units scale the decimal one, and they have to agree.
+            expect(readDegrees("12:30:00", HOUR)).toBe(187.5);
+            expect(readDegrees("12.5", DECIMAL_HOUR)).toBe(187.5);
+            // A sexagesimal value in a column whose units name a scale is still one conversion.
+            expect(readDegrees("12:30:00", DECIMAL_HOUR)).toBe(187.5);
         });
     });
 
@@ -199,8 +247,8 @@ describe("coordinate format matrix", () => {
             ["-91:00:00", DEGREE, -91],
             ["+95:00:00", DEGREE, 95],
             ["400", DECIMAL_DEGREE, 400]
-        ])("passes %s through as %f", (value, descriptor, expected) => {
-            expect(parseCoordinateValue(value as string, descriptor as ResolvedCoordinateDescriptor)).toBeCloseTo(expected as number, 9);
+        ])("passes %s through as %f", (value, format, expected) => {
+            expect(readDegrees(value as string, format as ColumnFormat)).toBeCloseTo(expected as number, 9);
         });
     });
 

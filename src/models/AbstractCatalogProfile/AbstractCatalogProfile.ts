@@ -55,10 +55,10 @@ function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligi
     }
 
     const descriptor = resolveDescriptorForAxis(eligibility.descriptor, axis);
+    // Parsed values are in the column's units too, so one scale covers both paths: the parser
+    // resolves only what the units cannot express as a multiplier, which is the sexagesimal
+    // notation, and getDegreesPerCatalogUnit reports 1 for exactly those units.
     const parsedData = (column.data as Array<string | null | undefined>).map(value => parseCoordinateValue(value, descriptor));
-    // A descriptor derived from the units has already consumed them, and one derived from the
-    // values only ever comes from units the transform reads as a plain angle, so the same scale
-    // applies to both paths.
     return isLatitude ? rejectOutOfRangeLatitudes(parsedData, degreesPerUnit) : parsedData;
 }
 

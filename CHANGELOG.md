@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fixed catalogs declaring the standard VOTable ecliptic coordinate systems (`ecl_FK5`, `ecl_FK4`) being read as equatorial ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed catalog overlay sources with a latitude beyond a pole being plotted at an arbitrary position instead of being dropped ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
+* Fixed numeric catalog coordinate columns that declare hour or radian units being plotted as though their values were degrees ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).

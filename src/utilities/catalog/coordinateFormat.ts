@@ -285,8 +285,17 @@ export function resolveDescriptorForAxis(descriptor: CoordinateDescriptor, axis:
 }
 
 /**
- * Converts one value to degrees. Pure: everything needed to scale the value is in the descriptor,
- * so this never re-reads units or inspects the column name.
+ * Reads one value in the units its column declares, which is what the sky transform expects: it
+ * applies {@link getDegreesPerCatalogUnit} on the way into AST, so scaling here as well would
+ * apply that scale twice.
+ *
+ * Sexagesimal columns are the exception, and have to be. `hms` and `dms` name a notation, not a
+ * scale that could be multiplied, so those values are converted to degrees here instead --
+ * getDegreesPerCatalogUnit reports 1 degree per unit for them, so exactly one conversion happens
+ * on either path. A value carrying its own h/d marker is converted here for the same reason.
+ *
+ * Pure: everything needed to read the value is in the descriptor, so this never re-reads units or
+ * inspects the column name.
  */
 export function parseCoordinateValue(value: string | number | null | undefined, descriptor: ResolvedCoordinateDescriptor): number {
     const recognized = recognizeCoordinateString(value, descriptor.kind);
@@ -297,9 +306,16 @@ export function parseCoordinateValue(value: string | number | null | undefined, 
     const [firstField, minutes = 0, seconds = 0] = recognized.fields;
     const magnitude = Math.abs(firstField) + Math.abs(minutes) / 60 + Math.abs(seconds) / 3600;
     const sign = recognized.isNegative ? -1 : 1;
-    // Radians only ever describe a whole decimal value; a sexagesimal value carries its own
-    // subdivision, so an explicit h/d marker is the only thing that can override the descriptor.
-    const fieldUnit = recognized.explicitUnit ?? (recognized.kind === "decimal" ? descriptor.fieldUnit : descriptor.fieldUnit === "radian" ? "degree" : descriptor.fieldUnit);
+
+    // The descriptor's kind, not the value's: "12:30:00" in a column of decimal hours is 12.5 of
+    // that column's units, and the sexagesimal notation only says how the value was subdivided.
+    if (descriptor.kind === "decimal" && !recognized.explicitUnit) {
+        return sign * magnitude;
+    }
+
+    // Radians only ever describe a whole decimal value, so a sexagesimal value in a radian column
+    // is read as degrees rather than scaled by something its own notation contradicts.
+    const fieldUnit = recognized.explicitUnit ?? (descriptor.fieldUnit === "radian" ? "degree" : descriptor.fieldUnit);
     return sign * magnitude * DEGREES_PER_FIELD_UNIT[fieldUnit];
 }
 
@@ -330,22 +346,35 @@ export function normalizeCatalogUnits(units: string | null | undefined): string 
 }
 
 /**
- * How many degrees one unit of a column's declared units is worth. Only the angular units that
- * survive as a plain number are listed: a column whose units already decide the format (`hms`,
- * `rad`, `h`) is converted by {@link parseCoordinateValue}, and is worth one degree per unit here
- * so that the two conversions can never both apply.
+ * How many degrees one unit of a column's declared units is worth. This is the scale the sky
+ * transform applies on its way into AST, shared with it so the two cannot drift: a range check
+ * that disagreed with the transform would drop valid sources.
  *
- * This is the same scale the sky transform applies on its way into AST, and it is shared with it so
- * the two cannot drift: a range check that disagreed with the transform would drop valid sources.
- * Unknown units fall back to degrees, as the transform does.
+ * Every unit that is a plain multiple of a degree is scaled here, whichever way the column
+ * arrived. Doing it here rather than in {@link parseCoordinateValue} is what gets a numeric
+ * column right: a Double column in `h` or `rad` never passes through the parser at all, and was
+ * otherwise plotted as though its values were degrees.
+ *
+ * Sexagesimal units (`hms`, `dms`) name a notation rather than a scale, so they are worth one
+ * degree per unit here and the parser converts those values instead. Unknown units fall back to
+ * degrees, as the transform does.
  */
 export function getDegreesPerCatalogUnit(units: string | null | undefined): number {
     const normalizedUnits = normalizeCatalogUnits(units);
-    if (normalizedUnits && CATALOG_ARCMIN_UNITS.includes(normalizedUnits)) {
+    if (!normalizedUnits) {
+        return 1;
+    }
+    if (CATALOG_ARCMIN_UNITS.includes(normalizedUnits)) {
         return 1 / 60;
     }
-    if (normalizedUnits && CATALOG_ARCSEC_UNITS.includes(normalizedUnits)) {
+    if (CATALOG_ARCSEC_UNITS.includes(normalizedUnits)) {
         return 1 / 3600;
+    }
+    if (CATALOG_RADIAN_UNITS.includes(normalizedUnits)) {
+        return DEGREES_PER_FIELD_UNIT.radian;
+    }
+    if (CATALOG_HOUR_UNITS.includes(normalizedUnits)) {
+        return DEGREES_PER_FIELD_UNIT.hour;
     }
     return 1;
 }
