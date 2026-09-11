@@ -83,45 +83,43 @@ export class ControlMap {
             return null;
         }
 
-        const normalizedX = ((point.x - this.minPoint.x) / widthRange) * (this.width - 1);
-        const normalizedY = ((point.y - this.minPoint.y) / heightRange) * (this.height - 1);
+        // Keep the CPU path in lockstep with controlMapLookup() in the shader:
+        // texture coordinates are scaled by the texture dimensions and sampled
+        // with the same clamped bicubic kernel.
+        const normalizedX = ((point.x - this.minPoint.x) / widthRange) * this.width;
+        const normalizedY = ((point.y - this.minPoint.y) / heightRange) * this.height;
         if (!isFinite(normalizedX) || !isFinite(normalizedY)) {
             return null;
         }
 
-        const sampleX = Math.min(Math.max(normalizedX, 0), this.width - 1);
-        const sampleY = Math.min(Math.max(normalizedY, 0), this.height - 1);
-        const x0 = Math.floor(sampleX);
-        const y0 = Math.floor(sampleY);
-        const x1 = Math.min(x0 + 1, this.width - 1);
-        const y1 = Math.min(y0 + 1, this.height - 1);
-        const tx = sampleX - x0;
-        const ty = sampleY - y0;
-
-        const p00 = this.getGridPoint(x0, y0);
-        const p10 = this.getGridPoint(x1, y0);
-        const p01 = this.getGridPoint(x0, y1);
-        const p11 = this.getGridPoint(x1, y1);
-        if (!p00 || !p10 || !p01 || !p11) {
-            return null;
+        if (widthRange === 0 && heightRange === 0) {
+            return this.getGridPoint(0, 0);
         }
 
-        const top = {
-            x: p00.x + (p10.x - p00.x) * tx,
-            y: p00.y + (p10.y - p00.y) * tx
-        };
-        const bottom = {
-            x: p01.x + (p11.x - p01.x) * tx,
-            y: p01.y + (p11.y - p01.y) * tx
-        };
+        const x0 = Math.floor(normalizedX);
+        const y0 = Math.floor(normalizedY);
+        const tx = normalizedX - x0;
+        const ty = normalizedY - y0;
+        const rowValues = (row: number, component: 0 | 1) =>
+            [-1, 0, 1, 2].map(offset => {
+                const point = this.getGridPoint(x0 + offset, row);
+                return point ? (component === 0 ? point.x : point.y) : NaN;
+            });
+        const rows = [-1, 0, 1, 2].map(offset => this.cubic(rowValues(y0 + offset, 0), tx));
+        const rowsY = [-1, 0, 1, 2].map(offset => this.cubic(rowValues(y0 + offset, 1), tx));
+        const x = this.cubic(rows, ty);
+        const y = this.cubic(rowsY, ty);
+        return isFinite(x) && isFinite(y) ? {x, y} : null;
+    };
 
-        return {
-            x: top.x + (bottom.x - top.x) * ty,
-            y: top.y + (bottom.y - top.y) * ty
-        };
+    private cubic = (values: number[], t: number): number => {
+        const [a, b, c, d] = values;
+        return (-a / 2 + (3 * b) / 2 - (3 * c) / 2 + d / 2) * t * t * t + (a - (5 * b) / 2 + 2 * c - d / 2) * t * t + (-a / 2 + c / 2) * t + b;
     };
 
     private getGridPoint = (xIndex: number, yIndex: number): Point2D | null => {
+        xIndex = Math.min(Math.max(xIndex, 0), this.width - 1);
+        yIndex = Math.min(Math.max(yIndex, 0), this.height - 1);
         const offset = (yIndex * this.width + xIndex) * 2;
         const x = this.grid[offset];
         const y = this.grid[offset + 1];
