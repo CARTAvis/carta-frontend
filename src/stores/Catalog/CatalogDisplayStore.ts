@@ -139,8 +139,6 @@ export class CatalogDisplayStore {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
 
-        // In world (angular size) mode the size and orientation columns are used as they are: the output ranges are kept equal to the
-        // data range, as when the column is selected, so that the mapping stays an identity when the data changes (e.g. a filter)
         this.disposers.push(
             reaction(
                 () => this.sizeMapData,
