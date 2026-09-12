@@ -114,13 +114,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     exportImageTooltip = () => {
+        const exportBackgroundColor = AppStore.Instance.preferenceStore.exportBackgroundColor;
         return (
             <span>
                 <br />
                 <i>
                     <small>
-                        Background color is {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "transparent" : "filled"}.<br />
-                        {AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        Background color is {exportBackgroundColor}.<br />
+                        Change export background color in Preferences.
                         <br />
                     </small>
                 </i>
@@ -133,6 +134,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const overlay = AppStore.Instance.overlaySettings;
         const frame = this.props.frame;
         const grid = overlay.grid;
+        const exportHotkey = `${appStore.modifierString.trimEnd()} E`;
 
         const styleProps: CSSProperties = {
             bottom: frame.overlayStore.padding.bottom,
@@ -260,7 +262,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         const exportImageMenu = (
-            <Menu>
+            <Menu style={{minWidth: 100}}>
                 <ExportImageMenuComponent />
             </Menu>
         );
@@ -493,8 +495,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         position={tooltipPosition}
                                         content={
                                             <span>
-                                                Export image
-                                                {this.exportImageTooltip()}
+                                                Export image ({exportHotkey}: 100% PNG){this.exportImageTooltip()}
                                             </span>
                                         }
                                     >

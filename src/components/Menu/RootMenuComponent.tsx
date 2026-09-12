@@ -318,7 +318,7 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip>
                 <MenuItem text="Import Catalog" label={`${modString}G`} disabled={appStore.isAppendFileDisabled || appStore.activeFrame?.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
+                <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview} submenuProps={{style: {minWidth: 100}}}>
                     <ExportImageMenuComponent />
                 </MenuItem>
                 <MenuDivider />

@@ -1,6 +1,10 @@
+import React from "react";
+import {HotkeysProvider} from "@blueprintjs/core";
+import {cleanup, render} from "@testing-library/react";
+
 import {AppStore} from "stores";
 
-import {HotkeyService} from "./HotkeyWrapper";
+import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 
 const MockSelection = (text: string) => ({isCollapsed: text.length === 0, toString: () => text}) as unknown as Selection;
 
@@ -64,5 +68,21 @@ describe("HotkeyService.copyRegion", () => {
 
         expect(copySelectedRegion).toHaveBeenCalledTimes(1);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+});
+
+describe("HotkeysRegistrar", () => {
+    afterEach(() => {
+        cleanup();
+        jest.restoreAllMocks();
+    });
+
+    test("handles macOS dead-key events for Alt+E", () => {
+        const exportImage = jest.spyOn(AppStore.Instance, "exportImage").mockImplementation(() => undefined);
+        render(React.createElement(HotkeysProvider, null, React.createElement(HotkeysRegistrar)));
+
+        document.dispatchEvent(new KeyboardEvent("keydown", {altKey: true, bubbles: true, cancelable: true, code: "KeyE", key: "Dead"}));
+
+        expect(exportImage).toHaveBeenCalledWith(1);
     });
 });

@@ -1,14 +1,23 @@
 import * as React from "react";
-import {NonIdealState, Spinner} from "@blueprintjs/core";
+import {Colors, NonIdealState, Spinner} from "@blueprintjs/core";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector} from "components/Shared";
-import {HelpType, ImageType} from "enums";
-import {type Point2D, Zoom} from "models";
-import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
+import {AstFonts, ResizeDetector} from "components/Shared";
+import {BeamType, ContourDashMode, HelpType, ImageType, VectorOverlaySource} from "enums";
+import {type FrameView, type ImageViewItem, type Point2D, Zoom} from "models";
+import {AppStore, type DefaultWidgetConfig, type OverlayColorbarSettings, type Padding, type WidgetProps} from "stores";
 import {LayoutStore} from "stores";
-import {toFixed} from "utilities";
+import {type FrameStore} from "stores/Frame";
+import {ceilToPower, getChannelMapCell, getColorForTheme, getColorsForValues, toFixed} from "utilities";
+import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
+import {type BeamPlotProps, renderBeamToSvg} from "utilities/export/beamSvgExport";
+import {type CatalogPointStyle, renderCatalogToSvg} from "utilities/export/catalogSvgExport";
+import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
+import {renderContoursToSvg} from "utilities/export/contourSvgExport";
+import {renderRegionsToSvg} from "utilities/export/regionSvgExport";
+import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, svgGroupFromLayer} from "utilities/export/svgExport";
+import {renderVectorOverlayToSvg} from "utilities/export/vectorOverlaySvgExport";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
@@ -191,6 +200,796 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     }
 
     return composedCanvas;
+}
+
+export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
+    const appStore = AppStore.Instance;
+    const config = appStore.imageViewConfigStore;
+
+    const totalWidth = appStore.fullViewWidth * appStore.pixelRatio;
+    const totalHeight = appStore.fullViewHeight * appStore.pixelRatio;
+    const svgDoc = buildSvgDocument(totalWidth, totalHeight, backgroundColor);
+
+    config.visibleImages.forEach((image, index) => {
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
+        if (!frame) {
+            return;
+        }
+        const column = index % config.numImageColumns;
+        const row = Math.floor(index / config.numImageColumns);
+        const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const panelSvg = getPanelSvg(column, row, viewHeight, padding, image);
+        if (panelSvg) {
+            const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
+            const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
+            if (offsetX !== 0 || offsetY !== 0) {
+                panelSvg.setAttribute("transform", `translate(${offsetX},${offsetY})`);
+            }
+            svgDoc.appendChild(panelSvg);
+        }
+    });
+
+    return svgDoc;
+}
+
+const DEFAULT_CONTOUR_DASH_LENGTH = 8;
+
+function clampValue(value: number, minValue: number, maxValue: number): number {
+    return Math.min(Math.max(value, minValue), maxValue);
+}
+
+function getDestinationFrameView(frame: FrameStore): FrameView | null {
+    return frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+}
+
+function imageToCanvasPoint(imagePoint: Point2D, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
+    const viewWidth = frameView.xMax - frameView.xMin;
+    const viewHeight = frameView.yMax - frameView.yMin;
+
+    return {
+        x: ((imagePoint.x - frameView.xMin) / viewWidth) * layerWidth,
+        y: layerHeight - ((imagePoint.y - frameView.yMin) / viewHeight) * layerHeight
+    };
+}
+
+function imageSizeToCanvasSize(sizeX: number, sizeY: number, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
+    const viewWidth = frameView.xMax - frameView.xMin;
+    const viewHeight = frameView.yMax - frameView.yMin;
+
+    return {
+        x: (sizeX / viewWidth) * layerWidth,
+        y: (sizeY / viewHeight) * layerHeight
+    };
+}
+
+function rgbColorToCss(color: {r: number; g: number; b: number; a?: number} | undefined): string {
+    if (!color) {
+        return "rgba(255, 255, 255, 1)";
+    }
+
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
+}
+
+function sampleColormapColor(colorMap: string, fraction: number, bias: number, contrast: number, fallbackColor: string): string {
+    const {color, size} = getColorsForValues(colorMap);
+    if (!size || color.length < 4) {
+        return fallbackColor;
+    }
+
+    let sampledFraction = clampValue(fraction - bias, 0, 1);
+    sampledFraction = clampValue((sampledFraction - 0.5) * contrast + 0.5, 0, 1);
+    const colorIndex = clampValue(Math.round(sampledFraction * (size - 1)), 0, size - 1);
+    const offset = colorIndex * 4;
+
+    return `rgba(${color[offset]}, ${color[offset + 1]}, ${color[offset + 2]}, ${(color[offset + 3] ?? 255) / 255})`;
+}
+
+function getContourStrokeWidth(sourceFrame: FrameStore, pixelRatio: number): number {
+    return pixelRatio * sourceFrame.contourConfig.thickness;
+}
+
+function getContourDashLength(destinationFrame: FrameStore, dashMode: ContourDashMode, level: number, pixelRatio: number): number {
+    if (dashMode !== ContourDashMode.Dashed && !(dashMode === ContourDashMode.NegativeOnly && level < 0)) {
+        return 0;
+    }
+
+    const zoomLevel = destinationFrame.spatialReference ? destinationFrame.spatialReference.zoomLevel : destinationFrame.zoomLevel;
+    const zoomScale = destinationFrame.spatialReference ? zoomLevel * (destinationFrame.spatialTransform?.scale ?? 1) : zoomLevel;
+    const dashFactor = ceilToPower(1.0 / zoomLevel, 3.0);
+    return pixelRatio * DEFAULT_CONTOUR_DASH_LENGTH * dashFactor * zoomScale;
+}
+
+function getContourStrokeColor(frame: FrameStore, level: number, levels: number[]): string {
+    const fallbackColor = rgbColorToCss(frame.contourConfig.color);
+    if (!frame.contourConfig.isColormapEnabled) {
+        return fallbackColor;
+    }
+
+    const minLevel = Math.min(...levels);
+    const maxLevel = Math.max(...levels);
+    const fraction = minLevel === maxLevel ? 1 : (level - minLevel) / (maxLevel - minLevel);
+
+    return sampleColormapColor(frame.contourConfig.colormap, fraction, frame.contourConfig.colormapBias, frame.contourConfig.colormapContrast, fallbackColor);
+}
+
+function getVectorZoomScale(frame: FrameStore): number {
+    return frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel;
+}
+
+function getVectorLineLengthInImageSpace(frame: FrameStore, intensity: number, pixelRatio: number): number {
+    const config = frame.vectorOverlayConfig;
+    const intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+    const intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+    const zoomScale = getVectorZoomScale(frame);
+    const lengthMin = config.lengthMin * pixelRatio;
+    const lengthMax = config.lengthMax * pixelRatio;
+
+    if (config.intensitySource === VectorOverlaySource.None) {
+        return lengthMax / zoomScale;
+    }
+
+    if (!isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax) {
+        return lengthMax / zoomScale;
+    }
+
+    const minIntensity = intensityMin ?? 0;
+    const maxIntensity = intensityMax ?? minIntensity;
+    const scaledIntensity = clampValue((intensity - minIntensity) / (maxIntensity - minIntensity), 0, 1);
+    return (lengthMin + (lengthMax - lengthMin) * scaledIntensity) / zoomScale;
+}
+
+function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
+    const fallbackColor = rgbColorToCss(frame.vectorOverlayConfig.color);
+    if (!frame.vectorOverlayConfig.isColormapEnabled) {
+        return fallbackColor;
+    }
+
+    const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin ?? NaN) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
+    const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
+    const fraction = !isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax ? 1 : (intensity - (intensityMin ?? 0)) / ((intensityMax ?? 0) - (intensityMin ?? 0));
+
+    return sampleColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor);
+}
+
+function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore, shouldUseCatalogTransform: boolean = false): Point2D | null {
+    if (sourceFrame === destinationFrame) {
+        return point;
+    }
+
+    const controlMap = shouldUseCatalogTransform ? sourceFrame.getCatalogControlMap(destinationFrame) : sourceFrame.getControlMap(destinationFrame);
+    return controlMap.transformPoint(point);
+}
+
+function transformContourPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
+    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame);
+    if (!transformedPoint) {
+        return null;
+    }
+
+    if (destinationFrame.spatialReference) {
+        return destinationFrame.spatialTransform?.transformCoordinate(transformedPoint, true) ?? null;
+    }
+
+    return transformedPoint;
+}
+
+function transformContourVertexData(vertexDataArrays: (Float32Array | null)[], sourceFrame: FrameStore, destinationFrame: FrameStore, frameView: FrameView, layerWidth: number, layerHeight: number): (Float32Array | null)[] {
+    return vertexDataArrays.map(vertexData => {
+        if (!vertexData) {
+            return null;
+        }
+
+        const transformed = new Float32Array(vertexData);
+        for (let index = 0; index < transformed.length; index += 8) {
+            // Check for degenerate connecting pair BEFORE transformation.
+            // In a normal pair, both vertices are at the exact same image coordinate.
+            // In a degenerate pair connecting Polyline A to Polyline B, the first
+            // vertex is A's last point, and the second is B's first point.
+            // (If they are exactly the same point, drawing a line is harmless/invisible).
+            const isDegenerate = Math.abs(transformed[index] - transformed[index + 4]) > 1e-6 || Math.abs(transformed[index + 1] - transformed[index + 5]) > 1e-6;
+
+            if (isDegenerate) {
+                transformed[index] = Number.NaN;
+                transformed[index + 1] = Number.NaN;
+                continue;
+            }
+
+            const transformedPoint = transformContourPoint({x: transformed[index] - 0.5, y: transformed[index + 1] - 0.5}, sourceFrame, destinationFrame);
+            if (!transformedPoint) {
+                transformed[index] = Number.NaN;
+                transformed[index + 1] = Number.NaN;
+                continue;
+            }
+
+            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, layerWidth, layerHeight);
+            transformed[index] = canvasPoint.x;
+            transformed[index + 1] = canvasPoint.y;
+        }
+
+        return transformed;
+    });
+}
+
+function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+    const contourFrames = AppStore.Instance.contourFrames.get(frame);
+    const frameView = getDestinationFrameView(frame);
+    if (!contourFrames?.length || !frameView) {
+        return null;
+    }
+
+    const layerWidth = frame.renderWidth * pixelRatio;
+    const layerHeight = frame.renderHeight * pixelRatio;
+    const group = svgGroupFromLayer("contours");
+
+    for (let frameIndex = contourFrames.length - 1; frameIndex >= 0; --frameIndex) {
+        const contourFrame = contourFrames[frameIndex];
+        if (!contourFrame.contourConfig.isVisible || !contourFrame.contourStores.size) {
+            continue;
+        }
+
+        const levels = Array.from(contourFrame.contourStores.keys());
+        contourFrame.contourStores.forEach((contourStore, level) => {
+            const contourSvg = renderContoursToSvg(
+                transformContourVertexData(contourStore.exportVertexData, contourFrame, frame, frameView, layerWidth, layerHeight),
+                getContourStrokeColor(contourFrame, level, levels),
+                getContourStrokeWidth(contourFrame, pixelRatio),
+                getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio),
+                padding.left * pixelRatio,
+                padding.top * pixelRatio
+            );
+            group.appendChild(contourSvg);
+        });
+    }
+
+    return group.childNodes.length ? group : null;
+}
+
+function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+    const vectorOverlayFrames = AppStore.Instance.vectorOverlayFrames.get(frame);
+    const frameView = getDestinationFrameView(frame);
+    if (!vectorOverlayFrames?.length || !frameView) {
+        return null;
+    }
+
+    const layerWidth = frame.renderWidth * pixelRatio;
+    const layerHeight = frame.renderHeight * pixelRatio;
+    const group = svgGroupFromLayer("vector-overlays");
+
+    for (let frameIndex = vectorOverlayFrames.length - 1; frameIndex >= 0; --frameIndex) {
+        const vectorFrame = vectorOverlayFrames[frameIndex];
+        if (!vectorFrame.vectorOverlayConfig.isVisible || !vectorFrame.vectorOverlayStore.tiles?.length) {
+            continue;
+        }
+
+        const exportPositions: number[] = [];
+        const strokeColors: string[] = [];
+        const rotationOffset = isFinite(vectorFrame.vectorOverlayConfig.rotationOffset) ? (vectorFrame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0 : 0;
+
+        vectorFrame.vectorOverlayStore.tiles.forEach(tile => {
+            for (let vectorIndex = 0; vectorIndex < tile.numVertices; vectorIndex++) {
+                const offset = vectorIndex * 4;
+                const center = {x: tile.vertexData[offset], y: tile.vertexData[offset + 1]};
+                const intensity = tile.vertexData[offset + 2];
+                const rawAngleDegrees = tile.vertexData[offset + 3];
+                const lineLength = getVectorLineLengthInImageSpace(vectorFrame, intensity, pixelRatio);
+                if (lineLength <= 0) {
+                    continue;
+                }
+
+                const angle = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None ? 0 : (-rawAngleDegrees * Math.PI) / 180.0 - rotationOffset;
+                const dx = Math.cos(angle) * lineLength * 0.5;
+                const dy = Math.sin(angle) * lineLength * 0.5;
+                const startPoint = transformOverlayPoint({x: center.x - dx, y: center.y - dy}, vectorFrame, frame);
+                const endPoint = transformOverlayPoint({x: center.x + dx, y: center.y + dy}, vectorFrame, frame);
+                if (!startPoint || !endPoint) {
+                    continue;
+                }
+
+                const startCanvas = imageToCanvasPoint(startPoint, frameView, layerWidth, layerHeight);
+                const endCanvas = imageToCanvasPoint(endPoint, frameView, layerWidth, layerHeight);
+                const exportLength = Math.hypot(endCanvas.x - startCanvas.x, endCanvas.y - startCanvas.y);
+                if (exportLength <= 0) {
+                    continue;
+                }
+
+                exportPositions.push((startCanvas.x + endCanvas.x) * 0.5, (startCanvas.y + endCanvas.y) * 0.5, exportLength, Math.atan2(endCanvas.y - startCanvas.y, endCanvas.x - startCanvas.x));
+                strokeColors.push(getVectorStrokeColor(vectorFrame, intensity));
+            }
+        });
+
+        if (exportPositions.length) {
+            const vectorSvg = renderVectorOverlayToSvg(
+                Float32Array.from(exportPositions),
+                exportPositions.length / 4,
+                1,
+                pixelRatio * vectorFrame.vectorOverlayConfig.thickness,
+                strokeColors,
+                padding.left * pixelRatio,
+                padding.top * pixelRatio
+            );
+            group.appendChild(vectorSvg);
+        }
+    }
+
+    return group.childNodes.length ? group : null;
+}
+
+function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: boolean, pixelRatio: number): number {
+    if (!isImagePixelSize) {
+        // Screen-pixel sizes are already expressed in the SVG canvas coordinate space.
+        return size;
+    }
+
+    const frameView = getDestinationFrameView(frame);
+    return frameView ? imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x : size;
+}
+
+function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+    const catalogFileIds = AppStore.Instance.catalogStore.visibleCatalogFiles.get(frame);
+    const frameView = getDestinationFrameView(frame);
+    if (!catalogFileIds?.length || !frameView) {
+        return null;
+    }
+
+    const positionArrays = new Map<number, Float32Array>();
+    const shapes = new Map<number, string | number>();
+    const sizes = new Map<number, number>();
+    const colors = new Map<number, string>();
+    const styles = new Map<number, CatalogPointStyle[]>();
+
+    catalogFileIds.forEach(fileId => {
+        const catalog = AppStore.Instance.catalogStore.catalogGLData.get(fileId);
+        const catalogWidgetStore = AppStore.Instance.catalogStore.getCatalogDisplayStore(fileId);
+        const count = AppStore.Instance.catalogStore.catalogCounts.get(fileId) ?? 0;
+        const sourceFrame = AppStore.Instance.getFrame(AppStore.Instance.catalogStore.getFrameIdByCatalogId(fileId));
+        if (!catalog || !catalogWidgetStore || !count || !sourceFrame) {
+            return;
+        }
+
+        const points = new Float32Array(count * 2);
+        const exportedIndices: number[] = [];
+        let pointCount = 0;
+        for (let index = 0; index < count; index++) {
+            const transformedPoint = transformOverlayPoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
+            if (!transformedPoint) {
+                continue;
+            }
+
+            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
+            points[pointCount * 2] = canvasPoint.x;
+            points[pointCount * 2 + 1] = canvasPoint.y;
+            exportedIndices.push(index);
+            pointCount++;
+        }
+
+        if (!pointCount) {
+            return;
+        }
+
+        const shapeSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + (catalogWidgetStore.shapeSettings?.diameterBase ?? 0);
+        const mappedSizes = catalogWidgetStore.sizeArray?.() ?? new Float32Array();
+        const mappedMinorSizes = catalogWidgetStore.sizeMinorArray?.() ?? new Float32Array();
+        const mappedColors = catalogWidgetStore.colorArray?.() ?? new Float32Array();
+        const mappedOrientations = catalogWidgetStore.orientationArray?.() ?? new Float32Array();
+        const pointStyles: CatalogPointStyle[] = [];
+        for (const index of exportedIndices) {
+            const pointSize = mappedSizes[index];
+            const minorSize = mappedMinorSizes[index];
+            const mappedColor = mappedColors[index];
+            pointStyles.push({
+                size: isFinite(pointSize) && pointSize > 0 ? getCatalogPointSize(frame, pointSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
+                minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
+                color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
+                rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
+                // Keep the catalog stroke in the same units as its source size.
+                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * (catalogWidgetStore.isImagePixelSize ? pixelRatio : 1) : undefined
+            });
+        }
+        positionArrays.set(fileId, points.subarray(0, pointCount * 2));
+        shapes.set(fileId, catalogWidgetStore.catalogShape);
+        sizes.set(fileId, getCatalogPointSize(frame, shapeSize, catalogWidgetStore.isImagePixelSize, pixelRatio));
+        colors.set(fileId, catalogWidgetStore.catalogColor);
+        styles.set(fileId, pointStyles);
+    });
+
+    if (!positionArrays.size) {
+        return null;
+    }
+
+    return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio, styles);
+}
+
+function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: any, pixelRatio: number): SVGGElement | null {
+    const source = renderAstOverlayToSvg(frame.channelMapInnerOverlayStore, image, overlaySettings, pixelRatio);
+    if (!source) {
+        return null;
+    }
+
+    const channelMapStore = AppStore.Instance.channelMapStore;
+    const overlayStore = frame.channelMapInnerOverlayStore;
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const innerPadding = overlayStore.padding;
+    const channelMapLayout = {
+        numColumns: channelMapStore.numColumns,
+        outerPadding,
+        tileWidth: overlayStore.renderWidth,
+        tileHeight: overlayStore.renderHeight,
+        gapX: overlayStore.gapX,
+        gapY: overlayStore.gapY
+    };
+    const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
+    const {row: lastRow, column: columnOfLastFrame} = lastCell;
+    const group = svgGroupFromLayer("channel-map-coordinate-overlays");
+    const sourceId = `channel-map-coordinate-source-${frame.frameInfo.fileId}`;
+    source.setAttribute("id", sourceId);
+    const defs = createSvgElement("defs", {});
+    defs.appendChild(source);
+    group.appendChild(defs);
+
+    channelMapStore.channelArray.forEach((channel, index) => {
+        if (channel >= frame.frameInfo.fileInfoExtended.depth) {
+            return;
+        }
+
+        const {column, row, left, top} = getChannelMapCell(index, channelMapLayout);
+        const isBottom = row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame);
+        const cropLeft = column === 0 ? 0 : innerPadding.left * pixelRatio;
+        const cropBottom = isBottom ? 0 : innerPadding.bottom * pixelRatio;
+        const x = (left - innerPadding.left) * pixelRatio + cropLeft;
+        const y = (top - innerPadding.top) * pixelRatio;
+        const width = overlayStore.viewWidth * pixelRatio - cropLeft;
+        const height = overlayStore.viewHeight * pixelRatio - cropBottom;
+        const viewport = createSvgElement("svg", {x, y, width, height, viewBox: `${cropLeft} 0 ${width} ${height}`, overflow: "hidden"});
+        viewport.appendChild(createSvgElement("use", {href: `#${sourceId}`}));
+        group.appendChild(viewport);
+    });
+
+    return group.querySelector("use") ? group : null;
+}
+
+export function getPanelSvg(column: number, row: number, viewHeight: number, padding: Padding, image: ImageViewItem): SVGGElement | null {
+    const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
+    if (!panelElement) {
+        return null;
+    }
+
+    const appStore = AppStore.Instance;
+    const pixelRatio = appStore.pixelRatio;
+    const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
+    if (!frame) {
+        return null;
+    }
+
+    const panelGroup = svgGroupFromLayer(`panel-${column}-${row}`);
+
+    // 1. Raster — embed as PNG <image>
+    const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
+    if (rasterCanvas) {
+        const rasterImage = embedRasterAsSvgImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio, rasterCanvas.width, rasterCanvas.height);
+        panelGroup.appendChild(rasterImage);
+    }
+
+    // 2. Contour — vector SVG from store data
+    const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
+    if (contoursSvg) {
+        if (rasterCanvas) {
+            const clipId = `contour-clip-${column}-${row}`;
+            const clipPath = createSvgElement("clipPath", {id: clipId});
+            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
+            const defs = createSvgElement("defs", {});
+            defs.appendChild(clipPath);
+            panelGroup.appendChild(defs);
+            contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
+        }
+        panelGroup.appendChild(contoursSvg);
+    }
+
+    // 3. Vector overlay — vector SVG from store data
+    const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
+    if (vectorOverlaySvg) {
+        panelGroup.appendChild(vectorOverlaySvg);
+    }
+
+    // 4. Colorbar — vector SVG from store data
+    const colorbarSettings = appStore.overlaySettings.colorbar;
+    if (colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
+        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
+        if (colorbarSvg) {
+            panelGroup.appendChild(colorbarSvg);
+        }
+    }
+
+    // 5. Beam — vector SVG from store data
+    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
+    if (beamGroup) {
+        panelGroup.appendChild(beamGroup);
+    }
+
+    // 6. AST overlay — vector SVG via svgcanvas
+    const isChannelMap = appStore.channelMapStore.isChannelMapEnabled;
+    const channelMapAstSvg = isChannelMap ? buildChannelMapAstSvg(frame, image, appStore.overlaySettings, pixelRatio) : null;
+    if (channelMapAstSvg) {
+        panelGroup.appendChild(channelMapAstSvg);
+    }
+    const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio);
+    if (astSvg) {
+        panelGroup.appendChild(astSvg);
+    }
+
+    // 7. Catalog — vector SVG from store data
+    const catalogSvg = buildCatalogSvg(frame, padding, pixelRatio);
+    if (catalogSvg) {
+        const clipId = `catalog-clip-${column}-${row}`;
+        const clipPath = createSvgElement("clipPath", {id: clipId});
+        clipPath.appendChild(
+            createSvgElement("rect", {
+                x: 0,
+                y: 0,
+                width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
+                height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
+            })
+        );
+        const defs = createSvgElement("defs", {});
+        defs.appendChild(clipPath);
+        panelGroup.appendChild(defs);
+        catalogSvg.setAttribute("clip-path", `url(#${clipId})`);
+        panelGroup.appendChild(catalogSvg);
+    }
+
+    // 8. Channel map labels — SVG text
+    const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
+    if (channelMapLabelArray?.length) {
+        const labelGroup = buildChannelMapLabelsSvg(channelMapLabelArray, pixelRatio);
+        panelGroup.appendChild(labelGroup);
+    }
+
+    // 9. Regions — vector SVG from store data
+    const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio, `panel-${column}-${row}-`);
+    if (regionsSvg) {
+        panelGroup.appendChild(regionsSvg);
+    }
+
+    return panelGroup;
+}
+
+function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSettings, viewHeight: number, padding: Padding, pixelRatio: number, rasterWidth?: number, rasterHeight?: number): SVGGElement | null {
+    const colorbarStore = frame.colorbarStore;
+    if (!colorbarStore) {
+        return null;
+    }
+
+    const appStore = AppStore.Instance;
+    const colorscaleArray = frame.renderConfig.colorscaleArray;
+    const positions = colorbarStore.positions ?? [];
+    const texts = colorbarStore.texts ?? [];
+    const isVertical = colorbarSettings.position === "right";
+
+    let barWidth = colorbarSettings.width * pixelRatio;
+    const offset = colorbarSettings.offset * pixelRatio;
+
+    let barX: number, barY: number, barHeight: number;
+    const imageWidth = rasterWidth ?? frame.renderWidth * pixelRatio;
+    const imageHeight = rasterHeight ?? frame.renderHeight * pixelRatio;
+
+    if (isVertical) {
+        barX = padding.left * pixelRatio + imageWidth + offset;
+        barY = padding.top * pixelRatio;
+        barHeight = imageHeight;
+    } else {
+        barX = padding.left * pixelRatio;
+        barHeight = barWidth;
+        if (colorbarSettings.position === "top") {
+            barY = padding.top * pixelRatio - barHeight - offset;
+        } else {
+            barY = viewHeight - barHeight - offset - appStore.overlaySettings.colorbarHoverInfoHeight * pixelRatio;
+        }
+        barWidth = imageWidth;
+    }
+
+    const baseColor = colorbarSettings.hasCustomColor ? colorbarSettings.color : appStore.overlaySettings.global.color;
+    const resolveColor = (hasCustomColor: boolean, color: string) => getColorForTheme(hasCustomColor ? color : baseColor);
+    const numberFont = AstFonts[colorbarSettings.numberFont] ?? AstFonts[0];
+    const labelFont = AstFonts[colorbarSettings.labelFont] ?? AstFonts[0];
+
+    // Scale tick positions to SVG coordinates
+    const scaledPositions = positions.map((p: number) => p * pixelRatio);
+
+    const frameUnit = frame.requiredUnit === undefined || !frame.requiredUnit.length ? "arbitrary units" : frame.requiredUnit;
+    const labelText = colorbarSettings.isLabelVisible ? (colorbarSettings.hasLabelCustomText ? (frame.colorbarLabelCustomText ?? "") : frameUnit) : "";
+
+    return renderColorbarToSvg({
+        colorscaleArray,
+        position: colorbarSettings.position,
+        bar: {
+            x: barX,
+            y: barY,
+            width: isVertical ? barWidth : imageWidth,
+            height: isVertical ? barHeight : colorbarSettings.width * pixelRatio,
+            gradientVisible: colorbarSettings.isGradientVisible
+        },
+        ticks: {
+            positions: scaledPositions,
+            texts,
+            visible: colorbarSettings.isTickVisible,
+            color: resolveColor(colorbarSettings.hasTickCustomColor, colorbarSettings.tickColor),
+            width: colorbarSettings.tickWidth * pixelRatio,
+            length: colorbarSettings.tickLen * pixelRatio
+        },
+        numbers: {
+            visible: colorbarSettings.isNumberVisible,
+            fontFamily: numberFont.family,
+            fontSize: colorbarSettings.numberFontSize * pixelRatio,
+            fontStyle: numberFont.style,
+            fontWeight: numberFont.weight,
+            color: resolveColor(colorbarSettings.hasNumberCustomColor, colorbarSettings.numberColor),
+            rotation: colorbarSettings.numberRotation,
+            gap: colorbarSettings.textGap * pixelRatio,
+            width: colorbarSettings.numberWidth * pixelRatio
+        },
+        label: {
+            text: labelText,
+            fontFamily: labelFont.family,
+            fontSize: colorbarSettings.labelFontSize * pixelRatio,
+            fontStyle: labelFont.style,
+            fontWeight: labelFont.weight,
+            color: resolveColor(colorbarSettings.hasLabelCustomColor, colorbarSettings.labelColor),
+            rotation: colorbarSettings.labelRotation
+        },
+        border: {
+            visible: colorbarSettings.isBorderVisible,
+            color: resolveColor(colorbarSettings.hasBorderCustomColor, colorbarSettings.borderColor),
+            width: colorbarSettings.borderWidth * pixelRatio
+        }
+    });
+}
+
+function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null {
+    if (!frame.hasVisibleBeam || !frame.beamProperties || !frame.overlayBeamSettings?.isVisible) {
+        return null;
+    }
+
+    const appStore = AppStore.Instance;
+    const beamSettings = frame.overlayBeamSettings;
+    const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / appStore.imageRatio;
+    const color = getColorForTheme(beamSettings.color);
+    const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
+    const strokeWidth = beamSettings.width;
+
+    const semiMajor = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
+    const semiMinor = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
+    let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
+    if (frame.spatialTransform) {
+        theta -= frame.spatialTransform.rotation;
+    }
+
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    const boundingBox = {
+        x: 2 * Math.sqrt(semiMajor * semiMajor * cosTheta * cosTheta + semiMinor * semiMinor * sinTheta * sinTheta),
+        y: 2 * Math.sqrt(semiMajor * semiMajor * sinTheta * sinTheta + semiMinor * semiMinor * cosTheta * cosTheta)
+    };
+
+    // Match the original BeamProfileOverlayComponent: padding prop is 10, scaled by devicePixelRatio
+    const beamPadding = 10;
+    const paddingOffset = beamPadding * devicePixelRatio;
+    const position = basePosition ?? {
+        x: Math.min(frame.renderWidth - boundingBox.x / 2.0, boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX),
+        y: Math.max(boundingBox.y / 2.0, frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY)
+    };
+
+    const isFilled = beamSettings.type === BeamType.Solid;
+
+    return {
+        position,
+        semiMajor,
+        semiMinor,
+        rotationDegrees: (theta * 180.0) / Math.PI,
+        color,
+        axisColor,
+        strokeWidth,
+        isFilled
+    };
+}
+
+function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+    const appStore = AppStore.Instance;
+    const contourFrames = appStore.contourFrames.get(frame)?.filter(f => f !== frame && f.hasVisibleBeam);
+
+    if (!frame.hasVisibleBeam && !contourFrames?.length) {
+        return null;
+    }
+
+    const group = svgGroupFromLayer("beams");
+    // Channel-map beam overlays are rendered in the bottom-left channel tile.
+    // The regular image view has one image area, so its beam only needs the
+    // image padding offset.
+    let beamPadding = padding;
+    let beamOffsetY = 0;
+    if (appStore.channelMapStore.isChannelMapEnabled) {
+        const outerOverlay = frame.channelMapOuterOverlayStore;
+        const innerOverlay = frame.channelMapInnerOverlayStore;
+        const channelMapStore = appStore.channelMapStore;
+        const channelMapLayout = {
+            numColumns: channelMapStore.numColumns,
+            outerPadding: outerOverlay.padding,
+            tileWidth: innerOverlay.renderWidth,
+            tileHeight: innerOverlay.renderHeight,
+            gapX: innerOverlay.gapX,
+            gapY: innerOverlay.gapY
+        };
+        const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
+
+        beamPadding = outerOverlay.padding;
+        beamOffsetY = lastCell.top - beamPadding.top;
+    }
+    group.setAttribute("transform", `translate(${beamPadding.left * pixelRatio},${(beamPadding.top + beamOffsetY) * pixelRatio})`);
+
+    // Base frame beam
+    const basePlot = frame.hasVisibleBeam ? getBeamPlotProps(frame) : null;
+    if (basePlot) {
+        group.appendChild(renderBeamToSvg(basePlot, pixelRatio));
+    }
+
+    // Contour frame beams (positioned at the same location as the base beam)
+    contourFrames?.forEach(contourFrame => {
+        const plotProps = getBeamPlotProps(contourFrame, basePlot?.position);
+        if (plotProps) {
+            group.appendChild(renderBeamToSvg(plotProps, pixelRatio));
+        }
+    });
+
+    return group;
+}
+
+function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanElement>, pixelRatio: number): SVGGElement {
+    const group = svgGroupFromLayer("channel-map-labels");
+
+    for (const channelMapLabel of channelMapLabelArray) {
+        const style = getComputedStyle(channelMapLabel);
+        const offsetLeft = (channelMapLabel.offsetLeft + parseFloat(style.paddingLeft)) * pixelRatio;
+        const offsetTop = (channelMapLabel.offsetTop + parseFloat(style.paddingTop)) * pixelRatio;
+
+        const fontSize = parseFloat(style.fontSize) * pixelRatio;
+        const fontFamily = style.fontFamily;
+        const fontWeight = style.fontWeight;
+        const fontStyle = style.fontStyle;
+        const color = style.color;
+
+        const divElementArray = channelMapLabel.querySelectorAll("div");
+        let line = 1;
+        const lineHeight = parseFloat(style.lineHeight) * pixelRatio;
+
+        for (const divElement of divElementArray) {
+            if (divElement.textContent) {
+                const textEl = createSvgText(divElement.textContent, offsetLeft, offsetTop + lineHeight * line, {
+                    fill: color,
+                    "font-family": fontFamily,
+                    "font-weight": fontWeight,
+                    "font-style": fontStyle,
+                    "font-size": fontSize,
+                    "dominant-baseline": "auto"
+                });
+                group.appendChild(textEl);
+                line++;
+            }
+        }
+    }
+
+    return group;
+}
+
+function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number, idPrefix = ""): SVGGElement | null {
+    const regions = frame.regionSet?.regionsAndAnnotationsForRender;
+    if (!regions?.length) {
+        return null;
+    }
+
+    const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+    if (!frameView) {
+        return null;
+    }
+
+    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio, idPrefix});
 }
 
 @observer

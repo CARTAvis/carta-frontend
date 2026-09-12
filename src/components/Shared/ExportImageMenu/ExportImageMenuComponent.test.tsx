@@ -1,39 +1,69 @@
 import React from "react";
-import {fireEvent, render, screen} from "@testing-library/react";
+import {act, fireEvent, render, screen} from "@testing-library/react";
 
+import {PreferenceKeys, VectorGraphicFormat} from "enums";
 import {AppStore} from "stores";
 
 import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
 
 describe("ExportImageMenuComponent", () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let mockModifierString: jest.SpyInstance; // Indirectly used when rendering
     let mockExportImage: jest.SpyInstance;
+    let mockExportSvgImage: jest.SpyInstance;
+    let mockExportPdfImage: jest.SpyInstance;
 
     beforeEach(() => {
-        mockModifierString = jest.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
         mockExportImage = jest.spyOn(AppStore.Instance, "exportImage");
+        mockExportSvgImage = jest.spyOn(AppStore.Instance, "exportSvgImage");
+        mockExportPdfImage = jest.spyOn(AppStore.Instance, "exportPdfImage");
     });
 
-    test("renders one menu divider and three menu items", () => {
-        render(<ExportImageMenuComponent />);
-        expect(screen.getByRole("separator")).toHaveTextContent(/^Resolution$/);
-
-        const menuitems = screen.getAllByRole("menuitem");
-        expect(menuitems?.length).toEqual(3);
-        expect(menuitems?.[0]).toHaveTextContent(/^Normal \(100%\)ctrl \+ E$/);
-        expect(menuitems?.[1]).toHaveTextContent(/^High \(200%\)$/);
-        expect(menuitems?.[2]).toHaveTextContent(/^Highest \(400%\)$/);
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    test("calls exportImage() with required image ratio when clicked", () => {
+    test("renders resolution radios and PNG/PDF buttons by default", () => {
         render(<ExportImageMenuComponent />);
 
-        fireEvent.click(screen.getByText(/Normal /));
+        expect(screen.getByRole("heading", {name: "Resolution"})).toBeInTheDocument();
+
+        const radios = screen.getAllByRole("radio");
+        expect(radios).toHaveLength(3);
+        expect(radios[0]).toBeChecked();
+        expect(screen.getAllByRole("button")).toHaveLength(2);
+        expect(screen.getByRole("button", {name: "PNG"})).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "PDF"})).toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "SVG"})).not.toBeInTheDocument();
+    });
+
+    test("calls the selected PDF export method when clicked", () => {
+        render(<ExportImageMenuComponent />);
+        const pngButton = screen.getByRole("button", {name: "PNG"});
+        const pdfButton = screen.getByRole("button", {name: "PDF"});
+
+        fireEvent.click(pngButton);
         expect(mockExportImage).toHaveBeenCalledWith(1);
-        fireEvent.click(screen.getByText(/High /));
-        expect(mockExportImage).toHaveBeenCalledWith(2);
-        fireEvent.click(screen.getByText(/Highest /));
+        fireEvent.click(pdfButton);
+        expect(mockExportPdfImage).toHaveBeenCalledWith(1);
+
+        fireEvent.click(screen.getByRole("radio", {name: "400%"}));
+        fireEvent.click(pngButton);
+        fireEvent.click(pdfButton);
         expect(mockExportImage).toHaveBeenCalledWith(4);
+        expect(mockExportPdfImage).toHaveBeenCalledWith(4);
+    });
+
+    test("renders and calls the selected SVG export method", () => {
+        AppStore.Instance.preferenceStore.preferences.set(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT, VectorGraphicFormat.SVG);
+        render(<ExportImageMenuComponent />);
+
+        expect(screen.getByRole("button", {name: "PNG"})).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "SVG"})).toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "PDF"})).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", {name: "SVG"}));
+        expect(mockExportSvgImage).toHaveBeenCalledWith(1);
+        act(() => {
+            AppStore.Instance.preferenceStore.preferences.delete(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT);
+        });
     });
 });

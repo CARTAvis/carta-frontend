@@ -6,6 +6,7 @@ export * from "./connection";
 export * from "./contour";
 export * from "./dataSizeConverter";
 export * from "./dialog";
+export * from "./exportImage";
 export * from "./fileBrowser";
 export * from "./help";
 export * from "./hips";

@@ -208,36 +208,48 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable @typescript-eslint/no-unused-vars */
 
+    const stage = props.stageRef.current;
+    const stageScaleX = stage?.scaleX() ?? 1;
+    const stageScaleY = stage?.scaleY() ?? 1;
     const updateOffset = () => {
-        const northDiffX = northPointArray[northPointArray.length - 4] - northPointArray[northPointArray.length - 2];
-        const northDiffY = northPointArray[northPointArray.length - 3] - northPointArray[northPointArray.length - 1];
-        const eastDiffX = eastPointArray[eastPointArray.length - 4] - eastPointArray[eastPointArray.length - 2];
-        const eastDiffY = eastPointArray[eastPointArray.length - 3] - eastPointArray[eastPointArray.length - 1];
-        const northAngle = Math.atan2(northDiffY, northDiffX);
-        const eastAngle = Math.atan2(eastDiffY, eastDiffX);
+        const origin = adjustPosToUnityStage({x: originPoints.x - mousePoint.current.x, y: originPoints.y - mousePoint.current.y}, stage);
+        const getLabelOffset = (points: number[], label: React.RefObject<Konva.Text | null>, fallbackDirection: Point2D): Point2D => {
+            const tip = adjustPosToUnityStage({x: points[points.length - 2], y: points[points.length - 1]}, stage);
+            let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
+            const length = Math.hypot(direction.x, direction.y);
+            direction = length ? {x: direction.x / length, y: direction.y / length} : fallbackDirection;
+            const labelGap = Math.max(4, region.fontSize * 0.75);
+            return {
+                x: (label.current?.textWidth ?? 0) / 2 - direction.x * labelGap,
+                y: (label.current?.textHeight ?? 0) / 2 - direction.y * labelGap
+            };
+        };
 
-        let northXOffset = (northLabelRef?.current?.textWidth ?? 0) / 2;
-        let northYOffset = (northLabelRef?.current?.textHeight ?? 0) / 2;
-        let eastXOffset = (eastLabelRef?.current?.textWidth ?? 0) / 2;
-        let eastYOffset = (eastLabelRef?.current?.textHeight ?? 0) / 2;
-
-        const northTranslation = Math.min(northLabelRef?.current?.textWidth ?? 0, northLabelRef?.current?.textHeight ?? 0);
-        const eastTranslation = Math.min(eastLabelRef?.current?.textWidth ?? 0, eastLabelRef?.current?.textHeight ?? 0);
-
-        northXOffset += Math.cos(northAngle) * northTranslation;
-        northYOffset += Math.sin(northAngle) * northTranslation;
-        eastXOffset += Math.cos(eastAngle) * eastTranslation;
-        eastYOffset += Math.sin(eastAngle) * eastTranslation;
-
-        region.setNorthTextOffset(northXOffset, true, true);
-        region.setNorthTextOffset(northYOffset, false, true);
-        region.setEastTextOffset(eastXOffset, true, true);
-        region.setEastTextOffset(eastYOffset, false, true);
+        const northOffset = getLabelOffset(northPointArray, northLabelRef, {x: 0, y: -1});
+        const eastOffset = getLabelOffset(eastPointArray, eastLabelRef, {x: -1, y: 0});
+        region.setNorthTextOffset(northOffset.x, true, true);
+        region.setNorthTextOffset(northOffset.y, false, true);
+        region.setEastTextOffset(eastOffset.x, true, true);
+        region.setEastTextOffset(eastOffset.y, false, true);
     };
 
     React.useEffect(() => {
         updateOffset();
-    }, []);
+    }, [
+        northPointArray[northPointArray.length - 2],
+        northPointArray[northPointArray.length - 1],
+        eastPointArray[eastPointArray.length - 2],
+        eastPointArray[eastPointArray.length - 1],
+        originPoints.x,
+        originPoints.y,
+        stageScaleX,
+        stageScaleY,
+        region.fontSize,
+        region.font,
+        region.fontStyle,
+        region.northLabel,
+        region.eastLabel
+    ]);
 
     const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);
     const eastArrowScales = getDirectionalStageScale(eastPointArray, props.stageRef.current);

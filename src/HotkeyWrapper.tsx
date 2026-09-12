@@ -11,6 +11,9 @@ import {getNextRegionOpacity} from "utilities";
 
 import "./HotkeyWrapper.scss";
 
+const DEFAULT_EXPORT_IMAGE_RATIO = 1;
+const ExportImageAtDefaultResolution = () => AppStore.Instance.exportImage(DEFAULT_EXPORT_IMAGE_RATIO);
+
 @observer
 export class HotkeyService extends React.Component<{}> {
     public render() {
@@ -538,7 +541,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: `${modString}W`, label: "Close image", onKeyDown: () => appStore.closeCurrentFile(true)},
             {combo: `${modString}S`, label: "Save image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)},
             {combo: `${modString}G`, label: "Import catalog", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)},
-            {combo: `${modString}E`, label: "Export image", onKeyDown: () => appStore.exportImage(1)}
+            {combo: `${modString}E`, label: "Export image", onKeyDown: ExportImageAtDefaultResolution}
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -617,9 +620,17 @@ export const HotkeysRegistrar = () => {
 
     useHotkeys(hotkeys);
 
-    // Directly handle Shift+? to open custom hotkeys dialog
+    // Handle global fallback shortcuts that need physical-key matching.
     React.useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
+            // macOS may report Option+E as a dead key or accent, so match its physical key code.
+            if (event.code === "KeyE" && event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !isEditableTarget(event.target)) {
+                event.preventDefault();
+                event.stopPropagation();
+                ExportImageAtDefaultResolution();
+                return;
+            }
+
             // Only handle if not in an editable element
             if (isEditableTarget(event.target)) {
                 return;
@@ -660,7 +671,19 @@ function getForwardedKeyboardEventInit(event: KeyboardEvent): KeyboardEventInit 
 
 function isEditableTarget(target: EventTarget | null): boolean {
     const element = target as Element | null;
-    return Boolean(element && (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element.closest?.("input, textarea, [contenteditable]")));
+    const editable = element?.closest?.("input, textarea, [contenteditable=true]") as HTMLElement | null;
+    if (!editable) {
+        return false;
+    }
+
+    if (editable.tagName.toLowerCase() === "input") {
+        const inputType = editable.getAttribute("type")?.toLowerCase();
+        if (inputType === "checkbox" || inputType === "radio") {
+            return false;
+        }
+    }
+
+    return !("readOnly" in editable && Boolean((editable as HTMLInputElement | HTMLTextAreaElement).readOnly));
 }
 
 export const PopoutKeyboardForwarder = ({popoutWindow}: {popoutWindow: Window}) => {
