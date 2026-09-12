@@ -66,6 +66,7 @@ export class ScatterPlotComponentProps {
     indicatorInteractionChannel?: {currentChannel: Point3D; hoveredChannel: Point3D; start: boolean};
     zeroLineWidth?: number;
     cursorNearestPoint?: {x: number; y: number};
+    cursorNearestPointAt?: (x: number, y: number) => {x: number; y: number} | undefined;
     cursorHitRadius?: number;
     updateChartArea?: (chartArea: ChartArea) => void;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
@@ -536,7 +537,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         // Store event details for later callback use
         const mousePoint: Point2D = {x: ev.evt.offsetX, y: ev.evt.offsetY};
         const mouseButton = ev.evt.button;
-        const nearestPoint = this.props.cursorNearestPoint;
+        let nearestPoint = this.props.cursorNearestPoint;
+        if (this.props.cursorNearestPointAt) {
+            const clickX = this.getValueForPixelX(mousePoint.x);
+            const clickY = this.getValueForPixelY(mousePoint.y);
+            if (clickX !== undefined && clickY !== undefined) {
+                nearestPoint = this.props.cursorNearestPointAt(clickX, clickY);
+            }
+        }
         // Handle double-clicks
         const currentTime = performance.now();
         const delta = currentTime - this.previousClickTime;

@@ -11,6 +11,7 @@ in vec2 aPosition;
 in float aSelected;
 
 uniform vec4 uViewport;
+uniform vec4 uDataViewport;
 uniform vec2 uCanvasSize;
 uniform float uPointSize;
 
@@ -18,7 +19,9 @@ out float vSelected;
 
 void main() {
     vSelected = aSelected;
-    vec2 normalized = aPosition;
+    vec2 normalized;
+    normalized.x = (aPosition.x - uDataViewport.x) / uDataViewport.z;
+    normalized.y = (aPosition.y - uDataViewport.y) / uDataViewport.w;
     vec2 pixel;
     pixel.x = uViewport.x + normalized.x * uViewport.z;
     pixel.y = uViewport.y + (1.0 - normalized.y) * uViewport.w;
@@ -77,10 +80,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private selectedData: Float32Array = new Float32Array(0);
     private previousXData: ArrayLike<number> | undefined;
     private previousYData: ArrayLike<number> | undefined;
-    private previousXMin: number | undefined;
-    private previousYMin: number | undefined;
-    private previousXMax: number | undefined;
-    private previousYMax: number | undefined;
+    private positionOriginX = 0;
+    private positionOriginY = 0;
     private previousSelectedIndices: Set<number> | undefined;
 
     componentDidMount() {
@@ -171,6 +172,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
         this.uniforms = {
             uViewport: gl.getUniformLocation(this.shaderProgram, "uViewport"),
+            uDataViewport: gl.getUniformLocation(this.shaderProgram, "uDataViewport"),
             uCanvasSize: gl.getUniformLocation(this.shaderProgram, "uCanvasSize"),
             uPointSize: gl.getUniformLocation(this.shaderProgram, "uPointSize"),
             uColor: gl.getUniformLocation(this.shaderProgram, "uColor"),
@@ -183,10 +185,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.selectedData = new Float32Array(0);
         this.previousXData = undefined;
         this.previousYData = undefined;
-        this.previousXMin = undefined;
-        this.previousYMin = undefined;
-        this.previousXMax = undefined;
-        this.previousYMax = undefined;
+        this.positionOriginX = 0;
+        this.positionOriginY = 0;
         this.previousSelectedIndices = undefined;
     }
 
@@ -237,20 +237,32 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         }
 
         const numPoints = Math.min(xData.length, yData.length);
-        const isPositionChanged =
-            this.previousXData !== xData || this.previousYData !== yData || this.previousXMin !== xMin || this.previousYMin !== yMin || this.previousXMax !== xMax || this.previousYMax !== yMax || this.positionData.length !== numPoints * 2;
+        const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData || this.positionData.length !== numPoints * 2;
         if (isPositionChanged) {
+            let hasXOrigin = false;
+            let hasYOrigin = false;
+            this.positionOriginX = 0;
+            this.positionOriginY = 0;
+            for (let i = 0; i < numPoints; i++) {
+                if (!hasXOrigin && Number.isFinite(xData[i])) {
+                    this.positionOriginX = xData[i];
+                    hasXOrigin = true;
+                }
+                if (!hasYOrigin && Number.isFinite(yData[i])) {
+                    this.positionOriginY = yData[i];
+                    hasYOrigin = true;
+                }
+                if (hasXOrigin && hasYOrigin) {
+                    break;
+                }
+            }
             this.positionData = new Float32Array(numPoints * 2);
             for (let i = 0; i < numPoints; i++) {
-                this.positionData[i * 2] = (xData[i] - xMin) / xRange;
-                this.positionData[i * 2 + 1] = (yData[i] - yMin) / yRange;
+                this.positionData[i * 2] = xData[i] - this.positionOriginX;
+                this.positionData[i * 2 + 1] = yData[i] - this.positionOriginY;
             }
             this.previousXData = xData;
             this.previousYData = yData;
-            this.previousXMin = xMin;
-            this.previousYMin = yMin;
-            this.previousXMax = xMax;
-            this.previousYMax = yMax;
         }
 
         gl.bindBuffer(GL2.ARRAY_BUFFER, this.positionBuffer);
@@ -282,6 +294,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         const viewWidth = (chartArea.right - chartArea.left) * dpr;
         const viewHeight = (chartArea.bottom - chartArea.top) * dpr;
         gl.uniform4f(this.uniforms.uViewport, viewLeft, viewTop, viewWidth, viewHeight);
+        gl.uniform4f(this.uniforms.uDataViewport, xMin - this.positionOriginX, yMin - this.positionOriginY, xRange, yRange);
         gl.uniform2f(this.uniforms.uCanvasSize, canvas.width, canvas.height);
         gl.uniform1f(this.uniforms.uPointSize, (pointSize ?? 5) * dpr);
 
@@ -315,6 +328,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
                     position: "absolute",
                     top: 0,
                     left: 0,
+                    zIndex: 0,
                     width,
                     height,
                     pointerEvents: "none"

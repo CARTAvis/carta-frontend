@@ -516,6 +516,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
                 continue;
             }
+            if (pointX < xMin || pointX > xMax || pointY < yMin || pointY > yMax) {
+                continue;
+            }
             const cellX = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointX - xMin) / xRange) * SCATTER_GRID_SIZE)));
             const cellY = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointY - yMin) / yRange) * SCATTER_GRID_SIZE)));
             const key = cellY * SCATTER_GRID_SIZE + cellX;
@@ -581,6 +584,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         const deltaX = ((pointX - x) * chartWidth) / xRange;
                         const deltaY = ((pointY - y) * chartHeight) / yRange;
                         const distance = deltaX * deltaX + deltaY * deltaY;
+                        if (distance === 0) {
+                            return index;
+                        }
                         if (distance < minDistance) {
                             minDistance = distance;
                             nearestIndex = index;
@@ -633,6 +639,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (this.scatterCursorFrame === undefined) {
             this.scatterCursorFrame = window.requestAnimationFrame(this.updateScatterCursor);
         }
+    };
+
+    private getNearestScatterPoint = (x: number, y: number) => {
+        const scatter = this.scatterData;
+        const nearestIndex = this.getNearestScatterPointIndex(x, y);
+        return nearestIndex >= 0 ? {x: scatter.xData[nearestIndex], y: scatter.yData[nearestIndex]} : undefined;
     };
 
     private onAutoscale = () => {
@@ -1404,10 +1416,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     if (nativeEvent && chart.chartArea) {
                         const xScale = chart.scales["x"];
                         const yScale = chart.scales["y"];
-                        if (xScale && yScale && histData.bins.length > 0 && histData.binSize > 0) {
+                        if (xScale && yScale && histData.bins.length > 0) {
                             const xVal = xScale.getValueForPixel(nativeEvent.offsetX);
                             if (xVal !== undefined) {
-                                const binIndex = Math.floor((xVal - histData.start) / histData.binSize);
+                                const binIndex = histData.binSize > 0 ? Math.floor((xVal - histData.start) / histData.binSize) : 0;
                                 const clampedIndex = Math.max(0, Math.min(binIndex, histData.bins.length - 1));
                                 const binCenter = histData.bins[clampedIndex].x;
                                 const binCount = histData.bins[clampedIndex].y;
@@ -1627,6 +1639,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         graphZoomReset={this.onDoubleClick}
                         graphSelectionReset={this.onDeselect}
                         graphCursorMoved={this.onScatterCursorMoved}
+                        cursorNearestPointAt={this.getNearestScatterPoint}
                         updateChartArea={this.updateScatterChartArea}
                         graphClicked={this.onGraphClicked}
                         pointRadius={0.001}
