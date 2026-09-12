@@ -515,12 +515,13 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 }
 
 function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: boolean, pixelRatio: number): number {
-    const frameView = getDestinationFrameView(frame);
-    if (isImagePixelSize && frameView) {
-        return imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x;
+    if (!isImagePixelSize) {
+        // Screen-pixel sizes are already expressed in the SVG canvas coordinate space.
+        return size;
     }
 
-    return size * pixelRatio;
+    const frameView = getDestinationFrameView(frame);
+    return frameView ? imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x : size;
 }
 
 function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
@@ -580,7 +581,8 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
                 minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
                 color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
                 rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
-                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * (catalogWidgetStore.shapeSettings?.thicknessBase ?? 1) * pixelRatio : undefined
+                // Keep the catalog stroke in the same units as its source size.
+                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * (catalogWidgetStore.isImagePixelSize ? pixelRatio : 1) : undefined
             });
         }
         positionArrays.set(fileId, points.subarray(0, pointCount * 2));
@@ -721,8 +723,8 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         const clipPath = createSvgElement("clipPath", {id: clipId});
         clipPath.appendChild(
             createSvgElement("rect", {
-                x: padding.left * pixelRatio,
-                y: padding.top * pixelRatio,
+                x: 0,
+                y: 0,
                 width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
                 height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
             })

@@ -181,6 +181,31 @@ describe("renderCatalogToSvg", () => {
         expect(circles).toHaveLength(2);
         expect(circles[0]).toHaveAttribute("stroke", "#123456");
         expect(circles[0]).toHaveAttribute("fill", "none");
-        expect(circles[0]).toHaveAttribute("r", "4");
+        expect(circles[0]).toHaveAttribute("r", "3");
+    });
+
+    test("preserves mapped ellipse geometry and rotation in degrees", () => {
+        const group = renderCatalogToSvg(
+            new Map([[11, new Float32Array([10, 20])]]),
+            new Map([[11, CatalogOverlayShape.ELLIPSE_LINED]]),
+            new Map([[11, 12]]),
+            new Map([[11, "#123456"]]),
+            0,
+            0,
+            new Map([[11, [{size: 12, minorSize: 6, rotation: 45, lineWidth: 2}]]])
+        );
+
+        const ellipse = group.querySelector("ellipse");
+        expect(ellipse).not.toBeNull();
+        expect(ellipse).toHaveAttribute("rx", "6");
+        expect(ellipse).toHaveAttribute("ry", "3");
+        expect(ellipse).toHaveAttribute("transform", "rotate(90,10,20) rotate(-45,10,20)");
+        expect(ellipse).toHaveAttribute("stroke-width", "2");
+    });
+
+    test("flips line-segment axes around the source center", () => {
+        const group = renderCatalogToSvg(new Map([[11, new Float32Array([10, 20])]]), new Map([[11, CatalogOverlayShape.LineSegment_FILLED]]), new Map([[11, 12]]), new Map([[11, "#123456"]]), 0, 0);
+
+        expect(group.querySelector("line")).toHaveAttribute("transform", "rotate(90,10,20)");
     });
 });

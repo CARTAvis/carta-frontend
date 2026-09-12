@@ -141,8 +141,8 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
         expect(panelSvg?.querySelector("#catalog-overlay")).toHaveAttribute("clip-path", "url(#catalog-clip-0-0)");
         const catalogClipRect = panelSvg?.querySelector("#catalog-clip-0-0 rect");
-        expect(catalogClipRect).toHaveAttribute("x", "5");
-        expect(catalogClipRect).toHaveAttribute("y", "7");
+        expect(catalogClipRect).toHaveAttribute("x", "0");
+        expect(catalogClipRect).toHaveAttribute("y", "0");
         expect(catalogClipRect).toHaveAttribute("width", "100");
         expect(catalogClipRect).toHaveAttribute("height", "80");
     });
@@ -265,5 +265,54 @@ describe("getPanelSvg", () => {
         expect(beam).toHaveAttribute("cy", "120");
         expect(beam).toHaveAttribute("rx", "20");
         expect(beam).toHaveAttribute("ry", "12");
+    });
+
+    test("does not apply the device pixel ratio twice to catalog source sizes", () => {
+        mockAppStore.pixelRatio = 2;
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
+            catalogShape: 2,
+            catalogSize: 6,
+            catalogColor: "#00ff00",
+            isImagePixelSize: false,
+            shapeSettings: {diameterBase: 0}
+        });
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const source = panelSvg?.querySelector("#catalog-overlay circle");
+
+        expect(source).toHaveAttribute("r", "3");
+    });
+
+    test("scales image-pixel catalog source sizes with the exported image view", () => {
+        mockAppStore.pixelRatio = 2;
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
+            catalogShape: 2,
+            catalogSize: 6,
+            catalogColor: "#00ff00",
+            isImagePixelSize: true,
+            shapeSettings: {diameterBase: 0}
+        });
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const source = panelSvg?.querySelector("#catalog-overlay circle");
+
+        expect(source).toHaveAttribute("r", "6");
+    });
+
+    test("does not apply WebGL quad tuning to angular-size ellipses", () => {
+        mockAppStore.pixelRatio = 2;
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
+            catalogShape: 11,
+            catalogSize: 6,
+            catalogColor: "#00ff00",
+            isImagePixelSize: true,
+            isAngularSize: true,
+            shapeSettings: {diameterBase: 0}
+        });
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const source = panelSvg?.querySelector("#catalog-overlay ellipse");
+
+        expect(source).toHaveAttribute("rx", "6");
     });
 });
