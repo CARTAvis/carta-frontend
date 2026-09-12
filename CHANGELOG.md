@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added an option to interpret catalog overlay angular-size columns as either diameters or radii ([#2679](https://github.com/CARTAvis/carta-frontend/issues/2679)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
+* Supported for vector image export ([#1007](https://github.com/CARTAvis/carta-frontend/issues/1007)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
