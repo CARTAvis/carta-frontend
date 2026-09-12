@@ -57,7 +57,7 @@ export class CatalogPlotWidgetStore {
         this.yColumnName = columnName;
     }
 
-    @action setIndicator(val: Point2D) {
+    @action setIndicator(val: Point2D | undefined) {
         this.indicatorInfo = val;
     }
 

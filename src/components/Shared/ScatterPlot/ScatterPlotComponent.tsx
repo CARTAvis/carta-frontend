@@ -557,11 +557,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 }
                 const nearestPointX = nearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined ? this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true) : undefined;
                 const nearestPointY = nearestPoint && this.props.yMin !== undefined && this.props.yMax !== undefined ? this.getPixelValue(nearestPoint.y, this.props.yMin, this.props.yMax, false) : undefined;
-                const hitRadius = this.props.cursorHitRadius ?? 5;
+                const hitRadius = this.props.cursorHitRadius;
                 const distanceX = nearestPointX === undefined ? Infinity : nearestPointX - mousePoint.x;
                 const distanceY = nearestPointY === undefined ? Infinity : nearestPointY - mousePoint.y;
                 // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseButton === 0 && nearestPoint && this.props.data && distanceX * distanceX + distanceY * distanceY <= hitRadius * hitRadius) {
+                if (this.props.graphClicked && mouseButton === 0 && nearestPoint && this.props.data && (hitRadius === undefined || distanceX * distanceX + distanceY * distanceY <= hitRadius * hitRadius)) {
                     this.props.graphClicked(nearestPoint.x, nearestPoint.y, this.props.data);
                 }
             }, DOUBLE_CLICK_THRESHOLD);

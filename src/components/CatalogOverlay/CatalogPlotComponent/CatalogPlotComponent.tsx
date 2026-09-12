@@ -29,6 +29,19 @@ import "./CatalogPlotComponent.scss";
 Chart.register(BarController, BarElement, Legend, LinearScale, LogarithmicScale, PointElement);
 
 const DEFAULT_NUM_BINS = 10; // default fallback
+const SCATTER_GRID_SIZE = 64;
+
+type ScatterSpatialIndex = {
+    xData: ArrayLike<number>;
+    yData: ArrayLike<number>;
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+    chartWidth: number;
+    chartHeight: number;
+    cells: Map<number, number[]>;
+};
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
@@ -46,6 +59,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private scatterChartArea: ChartArea | undefined;
     private cursorNearestScatterPoint: {x: number; y: number} | undefined;
     private cursorNearestScatterPointIndex: number | undefined;
+    private cursorNearestScatterXData: ArrayLike<number> | undefined;
+    private cursorNearestScatterYData: ArrayLike<number> | undefined;
+    private scatterSpatialIndex: ScatterSpatialIndex | undefined;
     private pendingScatterCursor: {x: number; y: number} | undefined;
     private scatterCursorFrame: number | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
@@ -462,8 +478,63 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.scatterChartArea = chartArea;
     };
 
+    private resetScatterCursorIfDataChanged = (xData: ArrayLike<number>, yData: ArrayLike<number>) => {
+        if (this.cursorNearestScatterXData === xData && this.cursorNearestScatterYData === yData) {
+            return;
+        }
+        this.cursorNearestScatterXData = xData;
+        this.cursorNearestScatterYData = yData;
+        this.cursorNearestScatterPoint = undefined;
+        this.cursorNearestScatterPointIndex = undefined;
+        this.scatterSpatialIndex = undefined;
+        this.widgetStore?.setIndicator(undefined);
+    };
+
+    private getScatterSpatialIndex = (xData: ArrayLike<number>, yData: ArrayLike<number>, xMin: number, xMax: number, yMin: number, yMax: number, chartWidth: number, chartHeight: number) => {
+        const current = this.scatterSpatialIndex;
+        if (
+            current &&
+            current.xData === xData &&
+            current.yData === yData &&
+            current.xMin === xMin &&
+            current.xMax === xMax &&
+            current.yMin === yMin &&
+            current.yMax === yMax &&
+            current.chartWidth === chartWidth &&
+            current.chartHeight === chartHeight
+        ) {
+            return current;
+        }
+
+        const cells = new Map<number, number[]>();
+        const xRange = xMax - xMin;
+        const yRange = yMax - yMin;
+        const numPoints = Math.min(xData.length, yData.length);
+        for (let i = 0; i < numPoints; i++) {
+            const pointX = xData[i];
+            const pointY = yData[i];
+            if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
+                continue;
+            }
+            const cellX = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointX - xMin) / xRange) * SCATTER_GRID_SIZE)));
+            const cellY = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointY - yMin) / yRange) * SCATTER_GRID_SIZE)));
+            const key = cellY * SCATTER_GRID_SIZE + cellX;
+            const cell = cells.get(key);
+            if (cell) {
+                cell.push(i);
+            } else {
+                cells.set(key, [i]);
+            }
+        }
+
+        this.cursorNearestScatterPointIndex = undefined;
+        this.scatterSpatialIndex = {xData, yData, xMin, xMax, yMin, yMax, chartWidth, chartHeight, cells};
+        return this.scatterSpatialIndex;
+    };
+
     private getNearestScatterPointIndex = (x: number, y: number) => {
         const scatter = this.scatterData;
+        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         const widgetStore = this.widgetStore;
         const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
         const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
@@ -480,20 +551,53 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const chartArea = this.scatterChartArea;
         const chartWidth = chartArea ? chartArea.right - chartArea.left : 1;
         const chartHeight = chartArea ? chartArea.bottom - chartArea.top : 1;
+        const spatialIndex = this.getScatterSpatialIndex(scatter.xData, scatter.yData, border.xMin, border.xMax, border.yMin, border.yMax, chartWidth, chartHeight);
+        const cellWidth = chartWidth / SCATTER_GRID_SIZE;
+        const cellHeight = chartHeight / SCATTER_GRID_SIZE;
+        const cursorCellX = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((x - border.xMin) / xRange) * SCATTER_GRID_SIZE)));
+        const cursorCellY = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((y - border.yMin) / yRange) * SCATTER_GRID_SIZE)));
+        const cursorPixelX = Math.min(chartWidth, Math.max(0, ((x - border.xMin) / xRange) * chartWidth));
+        const cursorPixelY = Math.min(chartHeight, Math.max(0, ((y - border.yMin) / yRange) * chartHeight));
         let nearestIndex = -1;
         let minDistance = Number.POSITIVE_INFINITY;
-        for (let i = 0; i < numPoints; i++) {
-            const pointX = scatter.xData[i];
-            const pointY = scatter.yData[i];
-            if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
-                continue;
+
+        for (let radius = 0; radius < SCATTER_GRID_SIZE; radius++) {
+            const minCellX = Math.max(0, cursorCellX - radius);
+            const maxCellX = Math.min(SCATTER_GRID_SIZE - 1, cursorCellX + radius);
+            const minCellY = Math.max(0, cursorCellY - radius);
+            const maxCellY = Math.min(SCATTER_GRID_SIZE - 1, cursorCellY + radius);
+            for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
+                for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+                    if (radius > 0 && Math.max(Math.abs(cellX - cursorCellX), Math.abs(cellY - cursorCellY)) !== radius) {
+                        continue;
+                    }
+                    const cell = spatialIndex.cells.get(cellY * SCATTER_GRID_SIZE + cellX);
+                    if (!cell) {
+                        continue;
+                    }
+                    for (const index of cell) {
+                        const pointX = scatter.xData[index];
+                        const pointY = scatter.yData[index];
+                        const deltaX = ((pointX - x) * chartWidth) / xRange;
+                        const deltaY = ((pointY - y) * chartHeight) / yRange;
+                        const distance = deltaX * deltaX + deltaY * deltaY;
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestIndex = index;
+                        }
+                    }
+                }
             }
-            const deltaX = ((pointX - x) * chartWidth) / xRange;
-            const deltaY = ((pointY - y) * chartHeight) / yRange;
-            const distance = deltaX * deltaX + deltaY * deltaY;
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestIndex = i;
+
+            if (nearestIndex >= 0) {
+                const minX = minCellX * cellWidth;
+                const maxX = (maxCellX + 1) * cellWidth;
+                const minY = minCellY * cellHeight;
+                const maxY = (maxCellY + 1) * cellHeight;
+                const distanceToUnvisited = Math.min(cursorPixelX - minX, maxX - cursorPixelX, cursorPixelY - minY, maxY - cursorPixelY);
+                if (radius === SCATTER_GRID_SIZE - 1 || minDistance <= distanceToUnvisited * distanceToUnvisited) {
+                    return nearestIndex;
+                }
             }
         }
         return nearestIndex;
@@ -508,6 +612,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         const scatter = this.scatterData;
+        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         const nearestIndex = this.getNearestScatterPointIndex(cursor.x, cursor.y);
         if (nearestIndex < 0) {
             this.cursorNearestScatterPoint = undefined;
@@ -1448,6 +1553,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         // Scatter plot rendering
         const scatter = this.scatterData;
+        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         let border: Border | undefined;
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
