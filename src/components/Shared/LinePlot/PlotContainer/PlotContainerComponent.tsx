@@ -2,13 +2,14 @@ import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
+import Annotation from "chartjs-plugin-annotation";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
-Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
+Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement, Annotation);
 
 export class PlotContainerProps {
     width?: number;
@@ -49,6 +50,8 @@ export class PlotContainerProps {
     borderWidth?: number;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    shouldAlignChartAreaRight?: boolean;
+    extraPluginOptions?: ChartOptions<"scatter">["plugins"];
 }
 
 export class MultiPlotProps {
@@ -91,6 +94,17 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
+        }
+
+        if (this.props.shouldAlignChartAreaRight) {
+            const xScale = chart.scales["x"];
+            if (xScale) {
+                const right = chart.width - 1;
+                chart.chartArea.right = right;
+                xScale.right = right;
+                xScale.width = xScale.right - xScale.left;
+                xScale["_length"] = xScale.width;
+            }
         }
 
         if (!_.isEqual(chart.chartArea, this.chartArea)) {
@@ -349,6 +363,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
 
+        if (!_.isEqual(props.extraPluginOptions, nextProps.extraPluginOptions)) {
+            return true;
+        }
+
         // Skip any other changes
         return false;
     }
@@ -368,7 +386,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plugins: {
                 legend: {
                     display: this.props.shouldShowLegend === undefined ? false : this.props.shouldShowLegend
-                }
+                },
+                ...this.props.extraPluginOptions
             },
             scales: {
                 x: {

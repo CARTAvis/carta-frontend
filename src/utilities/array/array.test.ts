@@ -1,6 +1,15 @@
 import {type Point2D} from "models";
 
-import {binarySearchByX} from "./array";
+import {binarySearchByX, computeHistogramBins} from "./array";
+
+test("handles empty and all-invalid histogram input", () => {
+    expect(computeHistogramBins([], 10)).toEqual({bins: [], binSize: 0, start: 0, binIndices: []});
+    expect(computeHistogramBins([NaN, NaN], 10)).toEqual({bins: [], binSize: 0, start: 0, binIndices: []});
+});
+
+test("keeps identical histogram values in one bin", () => {
+    expect(computeHistogramBins([4, 4, NaN], 10)).toEqual({bins: [{x: 4, y: 2}], binSize: 0, start: 4, binIndices: [[0, 1]]});
+});
 
 test("test binarySearchByX with sorted array in incremental/decremental order", () => {
     const incremental: Point2D[] = [
