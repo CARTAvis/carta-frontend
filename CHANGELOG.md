@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added an option to interpret catalog overlay angular-size columns as either diameters or radii ([#2679](https://github.com/CARTAvis/carta-frontend/issues/2679)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
-* Supported for vector image export ([#1007](https://github.com/CARTAvis/carta-frontend/issues/1007)).
+* Added support for vector format image export ([#1007](https://github.com/CARTAvis/carta-frontend/issues/1007)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed persistent scrollbars in the region list and catalog scatter plot, and fixed the catalog plot widget toolbar being clipped without a scrollbar when the widget is too narrow ([#2848](https://github.com/CARTAvis/carta-frontend/issues/2848)).
 * Fixed incorrect color mapping in the Stokes QU scatter plot after applying data smoothing ([#2851](https://github.com/CARTAvis/carta-frontend/issues/2851)).
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
+* Fixed hotkey `alt + E` not working for exporting image ([#2968](https://github.com/CARTAvis/carta-frontend/issues/2968)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 
