@@ -719,7 +719,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         // Lasso polygon rendering
         if (this.isLassoSelecting && this.lassoPoints.length >= 4) {
-            return [<Line key={"lasso"} points={this.lassoPoints} stroke={Colors.GRAY3} strokeWidth={2} closed={false} dash={[5, 5]} fill={Colors.GRAY3} fillEnabled={true} opacity={0.2} />];
+            const lassoColor = this.props.isDarkMode ? Colors.LIGHT_GRAY4 : Colors.DARK_GRAY1;
+            return [<Line key={"lasso"} points={this.lassoPoints} stroke={lassoColor} strokeWidth={2} closed={false} dash={[5, 5]} fill={Colors.GRAY3} fillEnabled={true} opacity={0.2} />];
         }
 
         // Box selection for dragAction === DragMode.Select
