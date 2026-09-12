@@ -1,5 +1,6 @@
 import {type Point2D} from "models";
 
+import {minMaxArray} from "../math/math";
 import {type TypedArray} from "../Processed/Processed";
 
 export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBins: number): {bins: Point2D[]; binSize: number; start: number; binIndices: number[][]} {
@@ -7,23 +8,9 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
         return {bins: [], binSize: 0, start: 0, binIndices: []};
     }
 
-    let minVal = Number.MAX_VALUE;
-    let maxVal = -Number.MAX_VALUE;
-    let hasValidValue = false;
-    for (let i = 0; i < data.length; i++) {
-        const val = data[i];
-        if (!isNaN(val)) {
-            hasValidValue = true;
-            if (val < minVal) {
-                minVal = val;
-            }
-            if (val > maxVal) {
-                maxVal = val;
-            }
-        }
-    }
+    const {minVal, maxVal} = minMaxArray(data);
 
-    if (!hasValidValue || !isFinite(minVal) || !isFinite(maxVal)) {
+    if (!isFinite(minVal) || !isFinite(maxVal)) {
         return {bins: [], binSize: 0, start: 0, binIndices: []};
     }
 

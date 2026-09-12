@@ -47,8 +47,8 @@ interface CatalogScatterWebGLProps {
     width: number;
     height: number;
     chartArea: ChartArea | undefined;
-    xData: number[];
-    yData: number[];
+    xData: ArrayLike<number>;
+    yData: ArrayLike<number>;
     xMin: number;
     xMax: number;
     yMin: number;
@@ -75,8 +75,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
     private positionData: Float32Array = new Float32Array(0);
     private selectedData: Float32Array = new Float32Array(0);
-    private previousXData: number[] | undefined;
-    private previousYData: number[] | undefined;
+    private previousXData: ArrayLike<number> | undefined;
+    private previousYData: ArrayLike<number> | undefined;
     private previousXMin: number | undefined;
     private previousYMin: number | undefined;
     private previousXMax: number | undefined;
