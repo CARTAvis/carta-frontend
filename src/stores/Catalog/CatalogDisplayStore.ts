@@ -1275,7 +1275,7 @@ export class CatalogDisplayStore {
      * 3. scaling, sizes and the clipped bounds themselves
      * 4. the column locks last, so that restoring the minor axis is not overwritten by the major
      *
-     * Values recomputed from the catalog data, and state a panel keeps for its own presentation,
+     * Values recomputed from the catalog data, and state a widget keeps for its own presentation,
      * are not part of a config and are left alone.
      */
     @action applyConfig = (config: WorkspaceCatalogConfig | undefined | null): CatalogConfigApplyResult => {

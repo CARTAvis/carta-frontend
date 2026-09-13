@@ -3,7 +3,7 @@ import {CatalogStore, WidgetsStore} from "stores";
 
 import {FloatingWidgetManagerComponent} from "./FloatingWidgetManagerComponent";
 
-describe("FloatingWidgetManagerComponent catalog panels", () => {
+describe("FloatingWidgetManagerComponent catalog widgets", () => {
     afterEach(() => {
         WidgetsStore.Instance.catalogWidgets.clear();
         WidgetsStore.Instance.floatingWidgets = [];
@@ -11,7 +11,7 @@ describe("FloatingWidgetManagerComponent catalog panels", () => {
         jest.restoreAllMocks();
     });
 
-    test("removes the panel store when a floating catalog overlay closes", () => {
+    test("removes the widget store when a floating catalog overlay closes", () => {
         const widgetsStore = WidgetsStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const componentId = "catalog-overlay-component-0";

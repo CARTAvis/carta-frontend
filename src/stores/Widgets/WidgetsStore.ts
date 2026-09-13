@@ -1587,7 +1587,7 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    /** Get or create the panel-scoped state for one catalog overlay component. */
+    /** Get or create the widget-scoped state for one catalog overlay component. */
     @action getCatalogWidgetStore = (componentId: string, selectedCatalogId: number = 1): CatalogWidgetStore => {
         let widgetStore = this.catalogWidgets.get(componentId);
         if (!widgetStore) {
@@ -1597,8 +1597,8 @@ export class WidgetsStore {
         return widgetStore;
     };
 
-    /** Select a loaded catalog in one panel by its component ID. */
-    @action setCatalogPanelSelection = (componentId: string, catalogFileId: number): boolean => {
+    /** Select a loaded catalog in one widget by its component ID. */
+    @action setCatalogWidgetSelection = (componentId: string, catalogFileId: number): boolean => {
         if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
             return false;
         }
@@ -1619,22 +1619,22 @@ export class WidgetsStore {
         }
     };
 
-    /** Select a catalog in the first panel when an image-view interaction identifies it, and return that panel's ID. */
-    @action updateCatalogPanelSelection = (catalogFileId: number): string | undefined => {
-        const panels = Array.from(this.catalogWidgets.entries());
-        const panel = panels.find(([, widgetStore]) => widgetStore.selectedCatalogId === catalogFileId) ?? panels[0];
-        if (!panel) {
+    /** Select a catalog in the first widget when an image-view interaction identifies it, and return that widget's ID. */
+    @action updateCatalogWidgetSelection = (catalogFileId: number): string | undefined => {
+        const widgets = Array.from(this.catalogWidgets.entries());
+        const widget = widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId === catalogFileId) ?? widgets[0];
+        if (!widget) {
             return undefined;
         }
-        const [componentId, widgetStore] = panel;
+        const [componentId, widgetStore] = widget;
         widgetStore.setSelectedCatalogId(catalogFileId);
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return componentId;
     };
 
-    /** Replace a catalog only in panels that were showing it. */
-    @action replaceCatalogPanelSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
+    /** Replace a catalog only in widgets that were showing it. */
+    @action replaceCatalogWidgetSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
         this.catalogWidgets.forEach((widgetStore, componentId) => {
             if (widgetStore.selectedCatalogId === catalogFileId) {
                 widgetStore.setSelectedCatalogId(replacementCatalogFileId);
@@ -1643,8 +1643,8 @@ export class WidgetsStore {
         });
     };
 
-    /** Keep panel selections valid when the active image changes. */
-    @action resetCatalogPanelSelections = (activeCatalogFileIds: number[]) => {
+    /** Keep widget selections valid when the active image changes. */
+    @action resetCatalogWidgetSelections = (activeCatalogFileIds: number[]) => {
         if (activeCatalogFileIds.length === 0) {
             return;
         }

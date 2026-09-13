@@ -125,7 +125,7 @@ export class CatalogStore {
 
         // update catalogProfiles fileId
         if (catalogComponentId && associatedCatalogId.length) {
-            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogId[0]);
+            WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogId[0]);
             this.catalogProfiles.forEach((catalogFileId, componentId) => {
                 if (catalogFileId === fileId) {
                     this.catalogProfiles.set(componentId, associatedCatalogId[0]);
@@ -168,11 +168,11 @@ export class CatalogStore {
             return;
         }
 
-        // CatalogWidgetStore is the source of truth for the refactored catalog panels.
+        // CatalogWidgetStore is the source of truth for the refactored catalog widgets.
         // Keep the legacy map synchronized while it remains for compatibility with
         // callers that have not migrated yet.
         if (WidgetsStore.Instance.catalogWidgets.size) {
-            WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
+            WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
             this.catalogProfiles.forEach((_value, componentId) => {
                 if (!WidgetsStore.Instance.catalogWidgets.has(componentId)) {
                     this.catalogProfiles.delete(componentId);

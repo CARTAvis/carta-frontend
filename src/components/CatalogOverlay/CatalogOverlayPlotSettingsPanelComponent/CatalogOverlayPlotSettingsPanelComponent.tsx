@@ -264,7 +264,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        WidgetsStore.Instance.setCatalogPanelSelection(this.widgetId, fileId);
+        WidgetsStore.Instance.setCatalogWidgetSelection(this.widgetId, fileId);
     };
 
     private renderScalingParameter(scaling: FrameScaling, value: number, onValueChange: (value: number) => void, isDisabled: boolean): React.ReactNode {

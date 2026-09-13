@@ -9,7 +9,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         jest.restoreAllMocks();
     });
 
-    test("updates the panel selection when a plot selection is made", () => {
+    test("updates the widget selection when a plot selection is made", () => {
         const catalogStore = CatalogStore.Instance;
         const widgetsStore = WidgetsStore.Instance;
         const profileStore = {
@@ -28,13 +28,13 @@ describe("CatalogPlotComponent catalog selection", () => {
         catalogStore.setCatalogPlots("catalog-plot-component-0", 7, "catalog-plot-0");
         widgetsStore.catalogPlotWidgets.set("catalog-plot-0", widgetStore as any);
         catalogStore.catalogDisplayStores.set(7, catalogDisplayStore as any);
-        const panel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
 
         component["onLassoSelected"]({points: [{pointIndex: 3}]} as any);
         component.componentWillUnmount();
 
-        expect(panel.selectedCatalogId).toBe(7);
+        expect(widget.selectedCatalogId).toBe(7);
         expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);

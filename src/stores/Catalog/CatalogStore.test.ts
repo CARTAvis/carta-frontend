@@ -1,6 +1,6 @@
 import {CatalogStore, WidgetsStore} from "stores";
 
-describe("CatalogStore panel selection compatibility", () => {
+describe("CatalogStore widget selection compatibility", () => {
     const catalogStore = CatalogStore.Instance;
     const widgetsStore = WidgetsStore.Instance;
 
@@ -10,30 +10,30 @@ describe("CatalogStore panel selection compatibility", () => {
         widgetsStore.catalogWidgets.clear();
     });
 
-    test("resets panel selections even when the legacy map is empty", () => {
+    test("resets widget selections even when the legacy map is empty", () => {
         catalogStore.updateImageAssociatedCatalogId(101, [7, 8]);
-        const panel = widgetsStore.getCatalogWidgetStore("catalog-panel-0", 99);
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 99);
 
         catalogStore.resetActiveCatalogFile(101);
 
-        expect(panel.selectedCatalogId).toBe(7);
-        expect(catalogStore.catalogProfiles.get("catalog-panel-0")).toBe(7);
+        expect(widget.selectedCatalogId).toBe(7);
+        expect(catalogStore.catalogProfiles.get("catalog-widget-0")).toBe(7);
     });
 
-    test("removes stale legacy entries and mirrors every live panel", () => {
+    test("removes stale legacy entries and mirrors every live widget", () => {
         catalogStore.updateImageAssociatedCatalogId(102, [7, 8]);
-        const firstPanel = widgetsStore.getCatalogWidgetStore("catalog-panel-0", 7);
-        const secondPanel = widgetsStore.getCatalogWidgetStore("catalog-panel-1", 8);
-        catalogStore.catalogProfiles.set("catalog-panel-0", 99);
-        catalogStore.catalogProfiles.set("closed-panel", 8);
+        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-1", 8);
+        catalogStore.catalogProfiles.set("catalog-widget-0", 99);
+        catalogStore.catalogProfiles.set("closed-widget", 8);
 
         catalogStore.resetActiveCatalogFile(102);
 
-        expect(firstPanel.selectedCatalogId).toBe(7);
-        expect(secondPanel.selectedCatalogId).toBe(8);
+        expect(firstWidget.selectedCatalogId).toBe(7);
+        expect(secondWidget.selectedCatalogId).toBe(8);
         expect(Array.from(catalogStore.catalogProfiles.entries())).toEqual([
-            ["catalog-panel-0", 7],
-            ["catalog-panel-1", 8]
+            ["catalog-widget-0", 7],
+            ["catalog-widget-1", 8]
         ]);
     });
 });

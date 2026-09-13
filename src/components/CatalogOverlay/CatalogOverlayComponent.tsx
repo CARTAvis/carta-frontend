@@ -70,7 +70,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        WidgetsStore.Instance.setCatalogPanelSelection(this.widgetId, fileId);
+        WidgetsStore.Instance.setCatalogWidgetSelection(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {

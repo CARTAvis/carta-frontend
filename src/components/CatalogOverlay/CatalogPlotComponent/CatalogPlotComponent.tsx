@@ -595,7 +595,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return;
             }
             const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogPanelSelection(catalogFileId);
+            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
 
             let selectedPointIndices;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
@@ -635,7 +635,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        WidgetsStore.Instance.updateCatalogPanelSelection(this.catalogFileId);
+        WidgetsStore.Instance.updateCatalogWidgetSelection(this.catalogFileId);
         profileStore?.setSelectedPointIndices([], false);
         catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
@@ -652,7 +652,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogDisplayStore = this.catalogDisplayStore;
         if (event?.points?.length > 0 && isInDragMode && profileStore && catalogDisplayStore) {
             const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogPanelSelection(catalogFileId);
+            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
             let selectedPointIndex: number[] = [];
             const selectedPoint = event.points[0] as any;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {

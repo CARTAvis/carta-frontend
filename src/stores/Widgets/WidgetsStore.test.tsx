@@ -194,7 +194,7 @@ describe("WidgetsStore PV preview test ids", () => {
         });
     });
 
-    test("persists catalog display settings alongside panel layout settings", () => {
+    test("persists catalog display settings alongside widget layout settings", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
         const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
@@ -213,7 +213,7 @@ describe("WidgetsStore PV preview test ids", () => {
     test("defers restored catalog display settings until this session selects a catalog", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const displayStore = {applyConfigWhenReady: jest.fn()};
-        const widgetSettings = {catalogFileId: 7, catalogColor: "#123456", catalogShape: "circle", catalogSize: 14, panelPosition: "top"};
+        const widgetSettings = {catalogFileId: 7, catalogColor: "#123456", catalogShape: "circle", catalogSize: 14, widgetPosition: "top"};
 
         CatalogStore.Instance.catalogDisplayStores.set(1, displayStore as any);
 
@@ -221,7 +221,7 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(CatalogStore.Instance.catalogDisplayStores.has(7)).toBe(false);
         expect(displayStore.applyConfigWhenReady).not.toHaveBeenCalled();
 
-        widgetsStore.updateCatalogPanelSelection(1);
+        widgetsStore.updateCatalogWidgetSelection(1);
 
         expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith({
             ...widgetSettings,
@@ -297,7 +297,7 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.catalogDisplayStores.set(1, displayStore as any);
 
         (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
-        widgetsStore.updateCatalogPanelSelection(1);
+        widgetsStore.updateCatalogWidgetSelection(1);
 
         expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith(widgetSettings);
 

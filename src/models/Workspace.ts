@@ -114,7 +114,7 @@ export interface WorkspaceCatalogOrientationAxisConfig {
 }
 
 /**
- * How one catalog is drawn. Holds only what the user authored: the state a panel keeps for its
+ * How one catalog is drawn. Holds only what the user authored: the state a widget keeps for its
  * own presentation, and the values recomputed from the catalog data, are deliberately absent.
  */
 export interface WorkspaceCatalogConfig {

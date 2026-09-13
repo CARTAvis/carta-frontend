@@ -20,8 +20,8 @@ describe("AppStore.handleCatalogFilterStream", () => {
         widgetsStore.catalogPlotWidgets.clear();
     });
 
-    test("updates an existing panel when loading a catalog after the panel store exists", () => {
-        const panel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+    test("updates an existing widget when loading a catalog after the widget store exists", () => {
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         catalogStore.imageAssociatedCatalogId.set(100, [1]);
 
         jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
@@ -30,19 +30,19 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         expect(componentId).toBe("catalog-overlay-component-0");
         expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
-        expect(panel.selectedCatalogId).toBe(2);
+        expect(widget.selectedCatalogId).toBe(2);
     });
 
-    test("updates every panel when the first catalog is loaded for a new image", () => {
-        const firstPanel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
-        const secondPanel = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
+    test("updates every widget when the first catalog is loaded for a new image", () => {
+        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
         catalogStore.imageAssociatedCatalogId.set(101, []);
 
         const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
 
         expect(componentId).toBe("catalog-overlay-component-0");
-        expect(firstPanel.selectedCatalogId).toBe(3);
-        expect(secondPanel.selectedCatalogId).toBe(3);
+        expect(firstWidget.selectedCatalogId).toBe(3);
+        expect(secondWidget.selectedCatalogId).toBe(3);
     });
 
     test("binds restored catalog plots when this session loads its first catalog", () => {

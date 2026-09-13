@@ -1221,7 +1221,7 @@ export class AppStore {
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                     return fileId;
                 } else {
-                    throw new Error("No catalog panel");
+                    throw new Error("No catalog widget");
                 }
             } else {
                 throw new Error("No catalog file loaded");
@@ -1245,7 +1245,7 @@ export class AppStore {
             associatedCatalogFiles = currentAssociatedCatalogFile;
         } else {
             // new image append
-            this.widgetsStore.resetCatalogPanelSelections([fileId]);
+            this.widgetsStore.resetCatalogWidgetSelections([fileId]);
         }
         associatedCatalogFiles.push(fileId);
         if (AppStore.Instance.activeFrame) {
@@ -1258,7 +1258,7 @@ export class AppStore {
             catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
             catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
-            catalogComponentId = this.widgetsStore.updateCatalogPanelSelection(fileId);
+            catalogComponentId = this.widgetsStore.updateCatalogWidgetSelection(fileId);
         }
         return catalogComponentId;
     };

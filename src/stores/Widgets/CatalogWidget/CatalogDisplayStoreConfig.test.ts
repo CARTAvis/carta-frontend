@@ -496,41 +496,41 @@ describe("CatalogDisplayStore display config", () => {
         expect(addWarning).not.toHaveBeenCalled();
     });
 
-    test("round-trips panel presentation without persisting a session-local catalog selection", () => {
-        const panel = new CatalogWidgetStore(7, "catalog-panel-primary");
-        panel.setTableSeparatorPosition("40%");
-        panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
+    test("round-trips widget presentation without persisting a session-local catalog selection", () => {
+        const widget = new CatalogWidgetStore(7, "catalog-widget-primary");
+        widget.setTableSeparatorPosition("40%");
+        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
-        expect(panel.toLayoutSettings()).toEqual({
-            widgetId: "catalog-panel-primary",
+        expect(widget.toLayoutSettings()).toEqual({
+            widgetId: "catalog-widget-primary",
             tableSeparatorPosition: "40%",
             settingsTabId: CatalogSettingsTabs.COLOR
         });
 
         const restored = new CatalogWidgetStore();
-        restored.applyLayoutSettings(panel.toLayoutSettings());
+        restored.applyLayoutSettings(widget.toLayoutSettings());
         expect(restored.selectedCatalogId).toBe(1);
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
-        expect(restored.toLayoutSettings()).toEqual(panel.toLayoutSettings());
+        expect(restored.toLayoutSettings()).toEqual(widget.toLayoutSettings());
     });
 
-    test("remembers the settings section of each catalog the panel has shown", () => {
-        const panel = new CatalogWidgetStore(1, "catalog-panel-primary");
-        panel.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
+    test("remembers the settings section of each catalog the widget has shown", () => {
+        const widget = new CatalogWidgetStore(1, "catalog-widget-primary");
+        widget.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
 
-        panel.setSelectedCatalogId(2);
-        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
-        panel.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        widget.setSelectedCatalogId(2);
+        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
+        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
-        panel.setSelectedCatalogId(1);
-        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
-        panel.setSelectedCatalogId(2);
-        expect(panel.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        widget.setSelectedCatalogId(1);
+        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        widget.setSelectedCatalogId(2);
+        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
     });
 
-    test("keeps the settings section of each panel separate", () => {
-        const first = new CatalogWidgetStore(7, "catalog-panel-primary");
-        const second = new CatalogWidgetStore(7, "catalog-panel-secondary");
+    test("keeps the settings section of each widget separate", () => {
+        const first = new CatalogWidgetStore(7, "catalog-widget-primary");
+        const second = new CatalogWidgetStore(7, "catalog-widget-secondary");
 
         first.setSettingsTabId(CatalogSettingsTabs.COLOR);
 

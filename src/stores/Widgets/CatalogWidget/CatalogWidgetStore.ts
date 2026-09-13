@@ -4,7 +4,7 @@ import {CatalogSettingsTabs} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {PreferenceStore} from "stores";
 
-/** State owned by one catalog panel rather than by the catalog it displays. */
+/** State owned by one catalog widget rather than by the catalog it displays. */
 export interface CatalogWidgetLayoutSettings {
     widgetId?: string;
     /** Legacy session-local association. Read for migration, but no longer persisted. */
@@ -12,7 +12,7 @@ export interface CatalogWidgetLayoutSettings {
     tableSeparatorPosition?: string;
     /** Legacy settings sections keyed by session-local catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
-    /** The settings section this panel was left on. */
+    /** The settings section this widget was left on. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
@@ -21,9 +21,9 @@ export class CatalogWidgetStore {
     @observable selectedCatalogId: number = 1;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
-     * The settings section for each catalog this panel has shown. The section belongs to the panel,
-     * so two panels showing one catalog keep their own, but it is remembered per catalog so that a
-     * panel returning to a catalog returns to the section that catalog was left on.
+     * The settings section for each catalog this widget has shown. The section belongs to the widget,
+     * so two widgets showing one catalog keep their own, but it is remembered per catalog so that a
+     * widget returning to a catalog returns to the section that catalog was left on.
      */
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
     /** Display settings restored before a session-local catalog has been selected. */
@@ -47,7 +47,7 @@ export class CatalogWidgetStore {
         this.pendingDisplayConfig = config;
     };
 
-    /** Return restored display settings exactly once, when this panel selects a real catalog. */
+    /** Return restored display settings exactly once, when this widget selects a real catalog. */
     public takePendingDisplayConfig = (): WorkspaceCatalogConfig | undefined => {
         const config = this.pendingDisplayConfig;
         this.pendingDisplayConfig = undefined;
