@@ -408,6 +408,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
+                        z: -1,
                         color: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
@@ -446,6 +447,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
                     },
                     grid: {
+                        z: -1,
                         color: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.zeroLineWidth : 1)
                     },
