@@ -218,7 +218,7 @@ const CreateConstructedComponentHarness = (
     }
 
     runInAction(() => {
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        WidgetsStore.Instance.getCatalogWidgetStore(componentId, catalogFileId);
         CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore);
         CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, widgetStore);
     });
@@ -234,7 +234,7 @@ afterEach(() => {
         component.componentWillUnmount();
         widgetStore.dispose();
         runInAction(() => {
-            CatalogStore.Instance.catalogProfiles.delete(componentId);
+            WidgetsStore.Instance.catalogWidgets.delete(componentId);
             CatalogStore.Instance.catalogProfileStores.delete(catalogFileId);
             CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
         });

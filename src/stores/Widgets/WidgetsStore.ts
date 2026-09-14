@@ -458,18 +458,12 @@ export class WidgetsStore {
                 }
             }
             widgets.delete(widgetId);
-            this.removeCatalogAssociations(widgetId, widgetType);
+            if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
+                CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
+            }
         }
         // remove floating settings according floating settings Id
         this.floatingSettingsWidgets.delete(widgetId);
-    };
-
-    private removeCatalogAssociations = (widgetId: string, widgetType: string) => {
-        if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
-            CatalogStore.Instance.catalogProfiles.delete(widgetId);
-        } else if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
-        }
     };
 
     private addWidgetByType = (widgetType: string, widgetSettings: object | null = null, preAssignedId: string | null = null): string => {
@@ -555,7 +549,6 @@ export class WidgetsStore {
                 settingsTabIdByCatalog: undefined,
                 settingsTabId: savedSettingsTabId
             });
-            catalogStore.catalogProfiles.set(componentId, selectedCatalogId);
             // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
             // them at the restore boundary while allowing the current workspace names to take precedence.
             const displaySettings = {
@@ -572,7 +565,6 @@ export class WidgetsStore {
         }
         const itemId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
         this.getCatalogWidgetStore(itemId);
-        CatalogStore.Instance.catalogProfiles.set(itemId, 1);
         return itemId;
     };
 
@@ -1096,7 +1088,6 @@ export class WidgetsStore {
                         }
                         if (isCatalogTable) {
                             this.catalogWidgets.delete(id);
-                            CatalogStore.Instance.catalogProfiles.delete(id);
                             this.removeAssociatedFloatingSetting(id);
                         }
                         if (isCatalogPlot) {
@@ -1577,7 +1568,6 @@ export class WidgetsStore {
         this.getCatalogWidgetStore(widgetComponentId, catalogFileId);
         const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = widgetComponentId;
-        CatalogStore.Instance.catalogProfiles.set(widgetComponentId, catalogFileId);
         this.addFloatingWidget(config);
         return widgetComponentId;
     };
@@ -1590,7 +1580,6 @@ export class WidgetsStore {
         config.componentId = componentId;
         if (catalogFileNum) {
             this.getCatalogWidgetStore(componentId, catalogFileNum);
-            CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
         }
         this.addFloatingWidget(config);
     };
@@ -1616,7 +1605,6 @@ export class WidgetsStore {
         }
         widgetStore.setSelectedCatalogId(catalogFileId);
         widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(catalogFileId));
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return true;
     };
@@ -1641,18 +1629,16 @@ export class WidgetsStore {
         const [componentId, widgetStore] = widget;
         widgetStore.setSelectedCatalogId(catalogFileId);
         widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(catalogFileId));
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return componentId;
     };
 
     /** Replace a catalog only in widgets that were showing it. */
     @action replaceCatalogWidgetSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
-        this.catalogWidgets.forEach((widgetStore, componentId) => {
+        this.catalogWidgets.forEach(widgetStore => {
             if (widgetStore.selectedCatalogId === catalogFileId) {
                 widgetStore.setSelectedCatalogId(replacementCatalogFileId);
                 widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(replacementCatalogFileId));
-                CatalogStore.Instance.catalogProfiles.set(componentId, replacementCatalogFileId);
             }
         });
     };
@@ -1663,14 +1649,13 @@ export class WidgetsStore {
             return;
         }
         const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
-        this.catalogWidgets.forEach((widgetStore, componentId) => {
+        this.catalogWidgets.forEach(widgetStore => {
             if (!activeCatalogFileIdSet.has(widgetStore.selectedCatalogId)) {
                 if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID && CatalogStore.hasStableCatalogIdentity(widgetStore.getCatalogAssociation())) {
                     return;
                 }
                 widgetStore.setSelectedCatalogId(activeCatalogFileIds[0]);
                 widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(activeCatalogFileIds[0]));
-                CatalogStore.Instance.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             }
         });
     };
@@ -1681,7 +1666,6 @@ export class WidgetsStore {
             if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID && CatalogStore.Instance.catalogMatchesAssociation(widgetStore.getCatalogAssociation(), fileId, info)) {
                 widgetStore.bindPendingCatalogId(fileId);
                 widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationFromInfo(fileId, info));
-                CatalogStore.Instance.catalogProfiles.set(componentId, fileId);
                 this.applyPendingCatalogDisplayConfig(componentId, fileId);
             }
         });

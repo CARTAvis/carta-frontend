@@ -137,7 +137,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         makeObservable(this);
         this.widgetId = props.id;
 
-        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, CatalogStore.Instance.catalogProfiles.get(this.widgetId) ?? 1);
+        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID);
         this.catalogFileNames = new Map<number, string>();
 
         this.disposers.push(

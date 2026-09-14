@@ -34,8 +34,6 @@ export class CatalogStore {
     @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
-    // catalog component Id : catalog file Id
-    @observable catalogProfiles: Map<string, number> = new Map();
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
     // catalog file Id : catalog Profile store
@@ -208,14 +206,8 @@ export class CatalogStore {
             this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogId);
         }
 
-        // update catalogProfiles fileId
         if (catalogComponentId && associatedCatalogId.length) {
             WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogId[0]);
-            this.catalogProfiles.forEach((catalogFileId, componentId) => {
-                if (catalogFileId === fileId) {
-                    this.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                }
-            });
         }
     }
 
@@ -253,40 +245,8 @@ export class CatalogStore {
             return;
         }
 
-        // CatalogWidgetStore is the source of truth for the refactored catalog widgets.
-        // Keep the legacy map synchronized while it remains for compatibility with
-        // callers that have not migrated yet.
-        if (WidgetsStore.Instance.catalogWidgets.size) {
-            WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
-            this.catalogProfiles.forEach((_value, componentId) => {
-                if (!WidgetsStore.Instance.catalogWidgets.has(componentId)) {
-                    this.catalogProfiles.delete(componentId);
-                }
-            });
-            WidgetsStore.Instance.catalogWidgets.forEach((widgetStore, componentId) => {
-                this.catalogProfiles.set(componentId, widgetStore.selectedCatalogId);
-            });
-            return;
-        }
-
-        // Legacy-only callers still need the previous behavior during migration.
-        if (this.catalogProfiles.size) {
-            this.catalogProfiles.forEach((_value, componentId) => {
-                this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
-            });
-        }
+        WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
     }
-
-    // update associated catalogProfile fileId
-    @action updateCatalogProfiles = (catalogFileId: number) => {
-        if (this.catalogProfiles.size > 0) {
-            const componentIds = Array.from(this.catalogProfiles.keys());
-            const fileIds = Array.from(this.catalogProfiles.values());
-            if (!fileIds.includes(catalogFileId)) {
-                this.catalogProfiles.set(componentIds[0], catalogFileId);
-            }
-        }
-    };
 
     getImageIdByCatalog(catalogFileId: number): number | undefined {
         let imageFileId: number | undefined = undefined;

@@ -30,7 +30,6 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.visitNodes.mockReset();
         CatalogStore.Instance.catalogProfileStores.clear();
         CatalogStore.Instance.catalogDisplayStores.clear();
-        CatalogStore.Instance.catalogProfiles.clear();
         CatalogStore.Instance.catalogPlots.clear();
     });
 
@@ -239,7 +238,6 @@ describe("WidgetsStore PV preview test ids", () => {
         });
 
         CatalogStore.Instance.catalogDisplayStores.delete(1);
-        CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");
     });
 
     test("binds a restored plot to a catalog from the current session", () => {
@@ -334,10 +332,9 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(widgetsStore.catalogPlotWidgets.get(secondPlotId)?.xColumnName).toBe("ra");
     });
 
-    test("clears both catalog associations when a docked catalog tab is closed", () => {
+    test("clears the catalog widget store when a docked catalog tab is closed", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
-        CatalogStore.Instance.catalogProfiles.set("catalog-overlay-7", 7);
 
         layoutModelMock.getNodeById.mockReturnValue({
             getType: () => "tab",
@@ -348,7 +345,6 @@ describe("WidgetsStore PV preview test ids", () => {
         widgetsStore.onAction({type: Actions.DELETE_TAB, data: {node: "catalog-overlay-7"}});
 
         expect(widgetsStore.catalogWidgets.has("catalog-overlay-7")).toBe(false);
-        expect(CatalogStore.Instance.catalogProfiles.has("catalog-overlay-7")).toBe(false);
     });
 
     test("prefers current catalog display fields over legacy fields when restoring", () => {
@@ -372,6 +368,5 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith(widgetSettings);
 
         CatalogStore.Instance.catalogDisplayStores.delete(1);
-        CatalogStore.Instance.catalogProfiles.delete("catalog-overlay-7");
     });
 });

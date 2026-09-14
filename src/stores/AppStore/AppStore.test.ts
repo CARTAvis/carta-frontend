@@ -13,7 +13,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.clear();
-        catalogStore.catalogProfiles.clear();
         catalogStore.catalogPlots.clear();
         catalogStore.imageAssociatedCatalogId.clear();
         widgetsStore.catalogWidgets.clear();
@@ -31,6 +30,13 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(componentId).toBe("catalog-overlay-component-0");
         expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
         expect(widget.selectedCatalogId).toBe(2);
+    });
+
+    test("creates a widget store for the first loaded catalog", () => {
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBeDefined();
+        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(2);
     });
 
     test("updates every widget when the first catalog is loaded for a new image", () => {

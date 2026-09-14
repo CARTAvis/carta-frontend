@@ -1257,7 +1257,6 @@ export class AppStore {
         catalogStore.bindPendingCatalogPlots(fileId, catalogInfo);
         if (catalogComponentSize === 0) {
             catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
-            catalogStore.catalogProfiles.set(catalogComponentId, fileId);
         } else {
             catalogComponentId = this.widgetsStore.updateCatalogWidgetSelection(fileId);
         }
