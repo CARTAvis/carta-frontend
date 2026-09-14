@@ -93,7 +93,7 @@ export class CatalogStore {
                     }
                     break;
             }
-            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + xData.length);
+            this.catalogCounts.set(fileId, Math.max(this.catalogCounts.get(fileId) ?? 0, startIndex + xData.length));
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }

@@ -238,4 +238,17 @@ describe("setAstCatalogSystem", () => {
 
         expect(AST.set).toHaveBeenCalledWith(frameSet, "System=ECLIPTIC, Equinox=B1950.0, Epoch=B1950.0");
     });
+
+    test("falls back when a catalog supplies invalid equinox or epoch values", () => {
+        const frameSet = {} as AST.FrameSet;
+
+        setAstCatalogSystem(frameSet, {
+            system: CatalogSystemType.ICRS,
+            equinox: "not-an-equinox",
+            epoch: "J2000 nonsense",
+            coordinate: undefined
+        });
+
+        expect(AST.set).toHaveBeenCalledWith(frameSet, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0");
+    });
 });

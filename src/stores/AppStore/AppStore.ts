@@ -2500,7 +2500,7 @@ export class AppStore {
                         // unitless string descriptor was unresolved. Re-read the accumulated
                         // prefix now that the descriptor is known, and write it from row zero.
                         this.catalogStore.clearImageCoordsData(catalogFileId);
-                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData);
+                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, catalogFilter.subsetEndIndex);
                     }
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
                     if (coords.wcsX && coords.wcsY) {

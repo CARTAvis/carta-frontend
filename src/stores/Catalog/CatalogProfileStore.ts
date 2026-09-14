@@ -126,6 +126,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.subsetEndIndex = subsetEndIndex;
         }
 
+        this.catalogDataVersion++;
+
         // Reset column update mode flag after processing the filter response
         if (this.isUpdateColumnMode) {
             this.setIsUpdateColumn(false);

@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {runInAction} from "mobx";
+import {isObservableArray, runInAction} from "mobx";
 
 import {CatalogSystemType, CatalogType, PreferenceKeys} from "enums";
 import {PreferenceStore} from "stores";
@@ -163,6 +163,20 @@ describe("CatalogProfileStore coordinate system", () => {
         const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK4", 0, "B1975.0", "B1976.5");
 
         expect(store.catalogCoordinateSystem).toEqual(expect.objectContaining({equinox: "B1975.0", epoch: "B1976.5"}));
+    });
+
+    test("resets equinox and epoch when the user changes coordinate systems", () => {
+        const store = CreateProfileStore([{name: "RA"}, {name: "DEC"}], "eq_FK5", 0, "J2015.5", "J2015.5");
+
+        store.setCatalogCoordinateSystem(CatalogSystemType.FK4);
+
+        expect(store.catalogCoordinateSystem).toEqual(expect.objectContaining({system: CatalogSystemType.FK4, equinox: "B1950.0", epoch: "B1950.0"}));
+    });
+
+    test("keeps catalog column arrays shallow", () => {
+        const store = CreateProfileStore([{name: "label", dataType: CARTA.ColumnType.String, data: ["value"]}]);
+
+        expect(isObservableArray(store.catalogOriginalData.get(0)?.data)).toBe(false);
     });
 });
 
@@ -346,5 +360,17 @@ describe("CatalogProfileStore plot data", () => {
         const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
         expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(coords.wcsY?.[0]).toBeCloseTo(-21.954295, 6);
+    });
+
+    test("can read only the received prefix of an allocated streamed column", () => {
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00", "13:00:00", undefined]},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15", "-22:00:00", undefined]}
+        ]);
+
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, 2);
+
+        expect(coords.wcsX).toHaveLength(2);
+        expect(coords.wcsY).toHaveLength(2);
     });
 });

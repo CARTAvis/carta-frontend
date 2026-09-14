@@ -41,17 +41,19 @@ export interface CatalogInfo {
  * Values come back in the column's declared units, not in degrees: the sky transform scales them
  * on its way into AST, and converting here as well would apply that scaling twice.
  */
-function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligibility: CatalogAxisEligibilityResult, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
+function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligibility: CatalogAxisEligibilityResult, units: string | null | undefined, axis: CatalogOverlay, rowCount?: number): Array<number> | undefined {
     if (!column) {
         return undefined;
     }
+
+    const data = rowCount === undefined ? column.data : column.data?.slice(0, rowCount);
 
     // An unknown string format is not a reason to omit this chunk: the overlay buffer is written
     // at absolute row offsets, and omitting it would leave zero-filled vertices at the origin while
     // later chunks are written past the count. Keep the row slots occupied until a later chunk
     // provides enough evidence to settle the descriptor.
     if (eligibility.status === CatalogAxisEligibility.Unknown) {
-        return new Array<number>(column.data?.length ?? 0).fill(NaN);
+        return new Array<number>(data?.length ?? 0).fill(NaN);
     }
     if (eligibility.status !== CatalogAxisEligibility.Eligible) {
         return undefined;
@@ -63,7 +65,7 @@ function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligi
     const degreesPerUnit = getDegreesPerCatalogUnit(units);
 
     if (!eligibility.descriptor) {
-        const numericData = column.data as ArrayLike<number>;
+        const numericData = data as ArrayLike<number>;
         return isLatitude ? rejectOutOfRangeLatitudes(numericData, degreesPerUnit) : (numericData as Array<number>);
     }
 
@@ -71,7 +73,7 @@ function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligi
     // Parsed values are in the column's units too, so one scale covers both paths: the parser
     // resolves only what the units cannot express as a multiplier, which is the sexagesimal
     // notation, and getDegreesPerCatalogUnit reports 1 for exactly those units.
-    const parsedData = (column.data as Array<string | null | undefined>).map(value => parseCoordinateValue(value, descriptor));
+    const parsedData = (data as Array<string | null | undefined>).map(value => parseCoordinateValue(value, descriptor));
     return isLatitude ? rejectOutOfRangeLatitudes(parsedData, degreesPerUnit) : parsedData;
 }
 
@@ -135,7 +137,9 @@ export abstract class AbstractCatalogProfileStore {
     @observable filterIndexMap: number[] = [];
     @observable isUpdateColumnMode: boolean = false;
 
-    @observable private _catalogData: Map<number, ProcessedColumnData>;
+    @observable.shallow private _catalogData: Map<number, ProcessedColumnData>;
+    /** Changes when a column object is updated without changing the shallow map itself. */
+    @observable protected catalogDataVersion = 0;
     /** Backing store for {@link getCoordinateEligibility}, by column name. */
     private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
@@ -164,6 +168,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     get catalogData(): Map<number, ProcessedColumnData> {
+        void this.catalogDataVersion;
         if (!this.isFileBasedCatalog && this.filterIndexMap.length !== this.catalogInfo.dataSize) {
             const filteredData = new Map<number, ProcessedColumnData>();
             this._catalogData.forEach((columnData, i) => {
@@ -175,6 +180,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     get catalogOriginalData(): Map<number, ProcessedColumnData> {
+        void this.catalogDataVersion;
         return this._catalogData;
     }
 
@@ -283,11 +289,12 @@ export abstract class AbstractCatalogProfileStore {
     public get2DCoordinateData(
         xColumnName: string,
         yColumnName: string,
-        columnsData: Map<number, ProcessedColumnData>
+        columnsData: Map<number, ProcessedColumnData>,
+        rowCount?: number
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
-        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName, xHeaderInfo), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X);
-        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName, yHeaderInfo), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName, xHeaderInfo), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName, yHeaderInfo), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
 
         if (wcsX && wcsY) {
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
@@ -516,11 +523,15 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
-        const current = this.catalogCoordinateSystem;
+        if (this.catalogCoordinateSystem.system === catalogSystem) {
+            return;
+        }
+
+        const defaults = AbstractCatalogProfileStore.getCatalogCoordinateDefaults(catalogSystem);
         this.catalogCoordinateSystem = {
             system: catalogSystem,
-            equinox: current.equinox,
-            epoch: current.epoch,
+            equinox: defaults.equinox,
+            epoch: defaults.epoch,
             coordinate: this.systemCoordinateMap.get(catalogSystem)
         };
     }

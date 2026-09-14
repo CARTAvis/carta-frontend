@@ -49,6 +49,12 @@ function getEquinoxEpochForSystem(system: SystemType | CatalogSystemType): {equi
     return null;
 }
 
+/** AST accepts equinoxes and epochs in the Besselian/Julian year form. */
+function getValidAstEpoch(value: string | null | undefined): string | undefined {
+    const normalizedValue = value?.trim().toUpperCase();
+    return normalizedValue && /^[BJ]\d{4}(?:\.\d+)?$/.test(normalizedValue) ? normalizedValue : undefined;
+}
+
 /**
  * Set the `System` on an AST settings string and add `Equinox`/`Epoch` for that system when applicable.
  *
@@ -129,8 +135,8 @@ export function setAstCatalogSystem(astTransform: AST.FrameSet, catalogCoordinat
 
     if (system !== CatalogSystemType.Pixel0 && system !== CatalogSystemType.Pixel1) {
         const values = getEquinoxEpochForSystem(system);
-        astString.add("Equinox", catalogCoordinateSystem.equinox || values?.equinox);
-        astString.add("Epoch", catalogCoordinateSystem.epoch || values?.epoch);
+        astString.add("Equinox", getValidAstEpoch(catalogCoordinateSystem.equinox) ?? values?.equinox);
+        astString.add("Epoch", getValidAstEpoch(catalogCoordinateSystem.epoch) ?? values?.epoch);
     }
 
     if (astString.toString().length > 0) {

@@ -232,7 +232,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(clearSpy).toHaveBeenCalledWith(1);
-        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData);
+        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, 3);
         expect(convertSpy).toHaveBeenCalledWith(1, [1, 2, 3], [4, 5, 6], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}), 0, 0);
     });
 });
