@@ -91,6 +91,26 @@ describe("CatalogPlotComponent restored plots", () => {
         component.componentWillUnmount();
     });
 
+    test("keeps the shown plot serializable after the catalog it was created with closes", () => {
+        const {component, plotId} = restorePlot();
+        loadCatalog(11, "second.xml");
+        loadCatalog(12, "first.xml");
+        component.handleCatalogFileChange(11);
+        const displayed = component.widgetStore!;
+
+        // Closing catalog 11's sibling takes away the store the layout tab is named after.
+        catalogStore.clearCatalogPlotsByFileId(12);
+        expect(widgetsStore.catalogPlotWidgets.has(plotId)).toBe(false);
+
+        // The tab is still identified by that store, and must still save the plot it is showing.
+        expect(widgetsStore.getDisplayedCatalogPlotWidget(plotId)).toBe(displayed);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toMatchObject({
+            ...displayed.toConfig(),
+            catalogFileId: 11
+        });
+        component.componentWillUnmount();
+    });
+
     test("persists the plot the component is showing rather than the one it was created with", () => {
         const {component, plotId} = restorePlot();
         loadCatalog(11, "second.xml");

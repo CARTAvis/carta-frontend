@@ -38,6 +38,8 @@ export class CatalogStore {
     @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
     // catalog plot component Id : the catalog that component is showing, of the several it holds
     @observable private catalogPlotSelections: Map<string, number> = new Map();
+    // catalog plot widget Id : the component it belongs to, kept after its own catalog closes
+    @observable private catalogPlotComponents: Map<string, string> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // catalog file Id : catalog display store
@@ -269,6 +271,7 @@ export class CatalogStore {
             catalogWidgetMap.set(fileId, widgetId);
             this.catalogPlots.set(componentId, catalogWidgetMap);
         }
+        this.catalogPlotComponents.set(widgetId, componentId);
         if (fileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
             WidgetsStore.Instance.catalogPlotWidgets.get(widgetId)?.setCatalogAssociation(this.catalogAssociationForFileId(fileId));
         }
@@ -309,15 +312,19 @@ export class CatalogStore {
      */
     public getDisplayedCatalogPlot(catalogPlotWidgetId: string): {widgetId: string; catalogFileId: number | undefined} {
         const {catalogPlotComponentId, catalogFileId} = this.getAssociatedIdByWidgetId(catalogPlotWidgetId);
-        if (catalogPlotComponentId === undefined) {
+        // A widget loses its own binding when its catalog closes, but the layout still identifies
+        // the tab by it. The component it was created in outlives that, and carries the plot the
+        // tab has since been switched to.
+        const componentId = catalogPlotComponentId ?? this.catalogPlotComponents.get(catalogPlotWidgetId);
+        if (componentId === undefined) {
             return {widgetId: catalogPlotWidgetId, catalogFileId};
         }
-        const selectedCatalogFileId = this.getCatalogPlotSelection(catalogPlotComponentId) ?? catalogFileId;
+        const selectedCatalogFileId = this.getCatalogPlotSelection(componentId) ?? catalogFileId;
         if (selectedCatalogFileId === undefined) {
             return {widgetId: catalogPlotWidgetId, catalogFileId};
         }
         return {
-            widgetId: this.catalogPlots.get(catalogPlotComponentId)?.get(selectedCatalogFileId) ?? catalogPlotWidgetId,
+            widgetId: this.catalogPlots.get(componentId)?.get(selectedCatalogFileId) ?? catalogPlotWidgetId,
             catalogFileId: selectedCatalogFileId
         };
     }
@@ -342,6 +349,11 @@ export class CatalogStore {
             this.catalogPlots.delete(componentId);
         }
         this.catalogPlotSelections.delete(componentId);
+        this.catalogPlotComponents.forEach((plotComponentId, widgetId) => {
+            if (plotComponentId === componentId) {
+                this.catalogPlotComponents.delete(widgetId);
+            }
+        });
     }
 
     @action clearCatalogPlotsByWidgetId(widgetId: string) {

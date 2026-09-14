@@ -1104,6 +1104,15 @@ export class WidgetsStore {
         return action;
     };
 
+    /**
+     * The catalog plot store a layout tab is showing. The tab is identified by the store it was
+     * created with, which its component may since have switched away from, and which is gone
+     * altogether once that catalog closes.
+     */
+    public getDisplayedCatalogPlotWidget = (widgetID: string): CatalogPlotWidgetStore | undefined => {
+        return this.catalogPlotWidgets.get(CatalogStore.Instance.getDisplayedCatalogPlot(widgetID).widgetId);
+    };
+
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
         if (!widgetType || !widgetID) {
             return null;
