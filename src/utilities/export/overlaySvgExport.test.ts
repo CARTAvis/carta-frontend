@@ -90,6 +90,16 @@ describe("renderVectorOverlayToSvg", () => {
         expect(lines[0]).toHaveAttribute("x2", "14.00");
         expect(lines[1]).toHaveAttribute("stroke", "#ff00ff");
     });
+
+    test("renders intensity plots as filled squares", () => {
+        const group = renderVectorOverlayToSvg(new Float32Array([10, 20, 8, 0]), 1, 1, 3, "#00ff00", 0, 0, true);
+
+        expect(group.querySelector("line")).toBeNull();
+        expect(group.querySelector("rect")).toHaveAttribute("x", "6.00");
+        expect(group.querySelector("rect")).toHaveAttribute("y", "16.00");
+        expect(group.querySelector("rect")).toHaveAttribute("width", "8.00");
+        expect(group.querySelector("rect")).toHaveAttribute("height", "8.00");
+    });
 });
 
 describe("renderColorbarToSvg", () => {

@@ -4,7 +4,7 @@ import {createSvgElement, svgGroupFromLayer} from "./svgExport";
  * Converts vector overlay data to SVG line elements.
  * Each vector has position (x, y), intensity, and angle.
  */
-export function renderVectorOverlayToSvg(positions: Float32Array | null, numVectors: number, lengthScale: number, lineWidth: number, color: string | string[], offsetX: number, offsetY: number): SVGGElement {
+export function renderVectorOverlayToSvg(positions: Float32Array | null, numVectors: number, lengthScale: number, lineWidth: number, color: string | string[], offsetX: number, offsetY: number, isIntensityPlot = false): SVGGElement {
     const group = svgGroupFromLayer("vector-overlay");
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
@@ -31,9 +31,23 @@ export function renderVectorOverlayToSvg(positions: Float32Array | null, numVect
         }
 
         const halfLength = length / 2;
+        const stroke = Array.isArray(color) ? (color[i] ?? color[color.length - 1] ?? "#ffffff") : color;
+
+        if (isIntensityPlot) {
+            group.appendChild(
+                createSvgElement("rect", {
+                    x: (x - halfLength).toFixed(2),
+                    y: (y - halfLength).toFixed(2),
+                    width: length.toFixed(2),
+                    height: length.toFixed(2),
+                    fill: stroke
+                })
+            );
+            continue;
+        }
+
         const dx = halfLength * Math.cos(angle);
         const dy = halfLength * Math.sin(angle);
-        const stroke = Array.isArray(color) ? (color[i] ?? color[color.length - 1] ?? "#ffffff") : color;
 
         const line = createSvgElement("line", {
             x1: (x - dx).toFixed(2),

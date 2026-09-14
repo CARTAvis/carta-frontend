@@ -509,7 +509,8 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 pixelRatio * vectorFrame.vectorOverlayConfig.thickness,
                 strokeColors,
                 padding.left * pixelRatio,
-                padding.top * pixelRatio
+                padding.top * pixelRatio,
+                vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None
             );
             group.appendChild(vectorSvg);
         }
@@ -691,6 +692,15 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     // 3. Vector overlay — vector SVG from store data
     const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
     if (vectorOverlaySvg) {
+        if (rasterCanvas) {
+            const clipId = `vector-clip-${column}-${row}`;
+            const clipPath = createSvgElement("clipPath", {id: clipId});
+            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
+            const defs = createSvgElement("defs", {});
+            defs.appendChild(clipPath);
+            panelGroup.appendChild(defs);
+            vectorOverlaySvg.setAttribute("clip-path", `url(#${clipId})`);
+        }
         panelGroup.appendChild(vectorOverlaySvg);
     }
 

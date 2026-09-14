@@ -139,6 +139,12 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-width", "2");
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-dasharray", "24,8");
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
+        expect(panelSvg?.querySelector("#vector-overlays")).toHaveAttribute("clip-path", "url(#vector-clip-0-0)");
+        const vectorClipRect = panelSvg?.querySelector("#vector-clip-0-0 rect");
+        expect(vectorClipRect).toHaveAttribute("x", "5");
+        expect(vectorClipRect).toHaveAttribute("y", "7");
+        expect(vectorClipRect).toHaveAttribute("width", "100");
+        expect(vectorClipRect).toHaveAttribute("height", "80");
         expect(panelSvg?.querySelector("#catalog-overlay")).toHaveAttribute("clip-path", "url(#catalog-clip-0-0)");
         const catalogClipRect = panelSvg?.querySelector("#catalog-clip-0-0 rect");
         expect(catalogClipRect).toHaveAttribute("x", "0");
