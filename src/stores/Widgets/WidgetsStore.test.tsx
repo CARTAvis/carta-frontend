@@ -268,6 +268,39 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.catalogDisplayStores.delete(1);
     });
 
+    test("discards pending catalog display settings when manual selection does not match", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red"};
+        const catalogFileId = 12;
+
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, {
+            catalogInfo: {fileId: catalogFileId, directory: "/catalogs", fileInfo: {name: "second.xml"}}
+        } as any);
+        CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore as any);
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-0");
+
+        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-0", catalogFileId)).toBe(true);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(catalogFileId);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.getPendingDisplayConfig()).toBeUndefined();
+        expect(displayStore.applyConfigWhenReady).not.toHaveBeenCalled();
+    });
+
+    test("clears catalog widget restores left unmatched after workspace loading", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "missing.xml", color: "red"};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-0");
+        const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0");
+        expect(widgetStore?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(widgetStore?.getPendingDisplayConfig()).toBeDefined();
+
+        widgetsStore.clearUnmatchedPendingCatalogRestores();
+
+        expect(widgetStore?.getPendingDisplayConfig()).toBeUndefined();
+        expect(widgetStore?.getCatalogAssociation()).toBeUndefined();
+    });
+
     test("writes restored display settings back out while the widget is still waiting", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const widgetSettings = {catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "#123456", shape: "circle", size: 14, xAxis: "RA"};

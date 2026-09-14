@@ -2935,6 +2935,10 @@ export class AppStore {
                 }
             }
 
+            // A workspace replaces the session's catalogs. Keep restores that matched one of its
+            // catalogs, but discard pending widget state still waiting for a catalog from an older workspace.
+            this.widgetsStore.clearUnmatchedPendingCatalogRestores();
+
             // Sync up raster scaling once all images are loaded and configured
             if (this.rasterScalingReference) {
                 this.rasterScalingReference.renderConfig.updateSiblings();

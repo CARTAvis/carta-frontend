@@ -1610,15 +1610,20 @@ export class WidgetsStore {
 
     /** Select a loaded catalog in one widget by its component ID. */
     @action setCatalogWidgetSelection = (componentId: string, catalogFileId: number): boolean => {
-        if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
+        const catalogStore = CatalogStore.Instance;
+        if (!catalogStore.catalogProfileStores.has(catalogFileId)) {
             return false;
         }
         const widgetStore = this.catalogWidgets.get(componentId);
         if (!widgetStore) {
             return false;
         }
+        const pendingConfig = widgetStore.getPendingDisplayConfig();
+        if (pendingConfig && !catalogStore.catalogMatchesAssociation(widgetStore.getCatalogAssociation(), catalogFileId)) {
+            widgetStore.clearPendingRestore();
+        }
         widgetStore.setSelectedCatalogId(catalogFileId);
-        widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(catalogFileId));
+        widgetStore.setCatalogAssociation(catalogStore.catalogAssociationForFileId(catalogFileId));
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return true;
     };
@@ -1685,6 +1690,15 @@ export class WidgetsStore {
                 widgetStore.bindPendingCatalogId(fileId);
                 widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationFromInfo(fileId, info));
                 this.applyPendingCatalogDisplayConfig(componentId, fileId);
+            }
+        });
+    };
+
+    /** Discard catalog widget restores that were not matched while the current workspace loaded. */
+    @action clearUnmatchedPendingCatalogRestores = () => {
+        this.catalogWidgets.forEach(widgetStore => {
+            if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID) {
+                widgetStore.clearPendingRestore();
             }
         });
     };

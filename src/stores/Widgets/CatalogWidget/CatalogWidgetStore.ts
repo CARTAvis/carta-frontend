@@ -70,6 +70,12 @@ export class CatalogWidgetStore {
     /** Read restored display settings without consuming them, so that they can be written back out. */
     public getPendingDisplayConfig = (): WorkspaceCatalogConfig | undefined => this.pendingDisplayConfig;
 
+    /** Discard restore state that could not be matched to a catalog in the current session. */
+    @action clearPendingRestore = () => {
+        this.pendingDisplayConfig = undefined;
+        this.catalogAssociation = undefined;
+    };
+
     @action setTableSeparatorPosition = (position: string) => {
         this.tableSeparatorPosition = position;
     };
