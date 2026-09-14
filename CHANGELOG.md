@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
+* Scatter plot and histogram in the catalog widget are modified slightly because of changing the plot library ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
 
 ## [6.0.0]
 
