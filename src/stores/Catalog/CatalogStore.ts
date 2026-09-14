@@ -104,7 +104,7 @@ export class CatalogStore {
         return undefined;
     }
 
-    /** Resolve persisted settings through the shared panel/plot restore policy. */
+    /** Resolve persisted settings through the shared widget/plot restore policy. */
     public catalogAssociationForRestore(config: Partial<WorkspaceCatalogAssociation> | null | undefined): {catalogFileId: number; association?: WorkspaceCatalogAssociation} {
         const association = CatalogStore.catalogAssociationFromConfig(config);
         const resolvedCatalogId = this.resolveCatalogAssociation(association);

@@ -1141,8 +1141,6 @@ export class WidgetsStore {
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             case CatalogPlotComponent.WidgetConfig.type: {
-                // The widget ID names the store this component was created with, but switching its
-                // File dropdown leaves that store hidden behind another. Persist the plot on screen.
                 const displayed = CatalogStore.Instance.getDisplayedCatalogPlot(widgetID);
                 const plotStore = this.catalogPlotWidgets.get(displayed.widgetId);
                 if (!plotStore) {
@@ -1666,7 +1664,7 @@ export class WidgetsStore {
         });
     };
 
-    /** Resolve restored overlay panels independently as their catalogs arrive. */
+    /** Resolve restored overlay widgets independently as their catalogs arrive. */
     @action bindPendingCatalogWidgets = (fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">) => {
         this.catalogWidgets.forEach((widgetStore, componentId) => {
             if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID && CatalogStore.Instance.catalogMatchesAssociation(widgetStore.getCatalogAssociation(), fileId, info)) {
