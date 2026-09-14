@@ -147,7 +147,8 @@ describe("renderRegionsToSvg", () => {
         expect(group.querySelectorAll("text").length).toBe(2);
 
         const compassTexts = [...group.querySelectorAll("text")];
-        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(772.5);
+        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(732.5);
         expect(Number(compassTexts[1].getAttribute("x"))).toBeCloseTo(172.5);
+        expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(820);
     });
 });

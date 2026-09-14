@@ -252,7 +252,7 @@ function renderAnnotationText(text: string, position: Point2D, region: RegionSto
     });
 }
 
-function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassAnnotationStore, pixelRatio: number, fallbackDirection: Point2D): Point2D {
+function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassAnnotationStore, pixelRatio: number, fallbackDirection: Point2D, yOffset: number): Point2D {
     let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
     const length = Math.hypot(direction.x, direction.y);
     if (length === 0) {
@@ -263,7 +263,7 @@ function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassA
     const labelGap = Math.max(4, (region.fontSize ?? 20) * 0.75) * pixelRatio;
     return {
         x: tip.x + direction.x * labelGap,
-        y: tip.y + direction.y * labelGap
+        y: tip.y + direction.y * labelGap + yOffset * pixelRatio
     };
 }
 
@@ -317,8 +317,8 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     addArrow(origin, northEnd, region.hasNorthArrowhead, "north");
     addArrow(origin, eastEnd, region.hasEastArrowhead, "east");
 
-    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northEnd, region, options.pixelRatio, {x: 0, y: -1}), region, options.pixelRatio);
-    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastEnd, region, options.pixelRatio, {x: -1, y: 0}), region, options.pixelRatio);
+    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northEnd, region, options.pixelRatio, {x: 0, y: -1}, region.northTextOffset.y), region, options.pixelRatio);
+    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastEnd, region, options.pixelRatio, {x: -1, y: 0}, region.eastTextOffset.y), region, options.pixelRatio);
     group.append(northText, eastText);
     return group;
 }
@@ -389,7 +389,10 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
 
     const midpoint = (points: Point2D[]): Point2D => points[Math.floor((points.length - 1) / 2)] ?? points[0];
     const addText = (text: string, position: Point2D, offset: Point2D) => {
-        if (text) group.appendChild(renderAnnotationText(text, {x: position.x + offset.x * options.pixelRatio, y: position.y + offset.y * options.pixelRatio}, region, options.pixelRatio));
+        if (text) {
+            const fontSize = (region.fontSize ?? 20) * options.pixelRatio;
+            group.appendChild(renderAnnotationText(text, {x: position.x + offset.x * options.pixelRatio, y: position.y - offset.y * options.pixelRatio + fontSize / 2}, region, options.pixelRatio));
+        }
     };
     addText(distanceText, midpoint(hypotenusePoints), region.textOffset);
     if (region.isAuxiliaryTextVisible) {
