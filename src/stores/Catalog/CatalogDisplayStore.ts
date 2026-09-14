@@ -20,6 +20,11 @@ function getScalingParameter(parameters: Map<FrameScaling, number>, scaling: Fra
     return parameters.get(scaling) ?? getDefaultScalingParameter(scaling);
 }
 
+function getDefaultRange(column: Float32Array): {minVal: number; maxVal: number} {
+    const result = minMaxArray(column);
+    return {minVal: isFinite(result.minVal) ? result.minVal : 0, maxVal: isFinite(result.maxVal) ? result.maxVal : 0};
+}
+
 export class CatalogDisplayStore {
     public static readonly MIN_OVERLAY_SIZE = 1;
     public static readonly MAX_OVERLAY_SIZE = 50;
@@ -138,9 +143,18 @@ export class CatalogDisplayStore {
             reaction(
                 () => this.sizeMapData,
                 column => {
-                    const result = minMaxArray(column);
-                    this.setSizeColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
-                    this.setSizeColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
+                    const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.sizeColumnMin.default || maxVal !== this.sizeColumnMax.default;
+                    if (minVal !== this.sizeColumnMin.default) {
+                        this.setSizeColumnMin(minVal, "default");
+                    }
+                    if (maxVal !== this.sizeColumnMax.default) {
+                        this.setSizeColumnMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setSizeMax(maxVal);
+                        this.setSizeMin(minVal);
+                    }
                 }
             )
         );
@@ -182,9 +196,18 @@ export class CatalogDisplayStore {
             reaction(
                 () => this.sizeMinorMapData,
                 column => {
-                    const result = minMaxArray(column);
-                    this.setSizeMinorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
-                    this.setSizeMinorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
+                    const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.sizeMinorColumnMin.default || maxVal !== this.sizeMinorColumnMax.default;
+                    if (minVal !== this.sizeMinorColumnMin.default) {
+                        this.setSizeMinorColumnMin(minVal, "default");
+                    }
+                    if (maxVal !== this.sizeMinorColumnMax.default) {
+                        this.setSizeMinorColumnMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setMinorSizeMax(maxVal);
+                        this.setMinorSizeMin(minVal);
+                    }
                 }
             )
         );
@@ -226,9 +249,13 @@ export class CatalogDisplayStore {
             reaction(
                 () => this.colorMapData,
                 column => {
-                    const result = minMaxArray(column);
-                    this.setColorColumnMin(isFinite(result.minVal) ? result.minVal : 0, "default");
-                    this.setColorColumnMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
+                    const {minVal, maxVal} = getDefaultRange(column);
+                    if (minVal !== this.colorColumnMin.default) {
+                        this.setColorColumnMin(minVal, "default");
+                    }
+                    if (maxVal !== this.colorColumnMax.default) {
+                        this.setColorColumnMax(maxVal, "default");
+                    }
                 }
             )
         );
@@ -248,9 +275,18 @@ export class CatalogDisplayStore {
             reaction(
                 () => this.orientationMapData,
                 column => {
-                    const result = minMaxArray(column);
-                    this.setOrientationMin(isFinite(result.minVal) ? result.minVal : 0, "default");
-                    this.setOrientationMax(isFinite(result.maxVal) ? result.maxVal : 0, "default");
+                    const {minVal, maxVal} = getDefaultRange(column);
+                    const isRangeChanged = minVal !== this.orientationMin.default || maxVal !== this.orientationMax.default;
+                    if (minVal !== this.orientationMin.default) {
+                        this.setOrientationMin(minVal, "default");
+                    }
+                    if (maxVal !== this.orientationMax.default) {
+                        this.setOrientationMax(maxVal, "default");
+                    }
+                    if (isRangeChanged && column.length && this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                        this.setAngleMax(maxVal);
+                        this.setAngleMin(minVal);
+                    }
                 }
             )
         );
@@ -945,16 +981,26 @@ export class CatalogDisplayStore {
     }
 
     /**
+     * Column data of a size, color, or orientation map for the plotted catalog sources
+     */
+    private getMapColumnData(column: string, isDisabled: boolean): Float32Array {
+        const catalogStore = CatalogStore.Instance;
+        // dummy value to trigger update when the overlay positions are rebuilt, since profileStore.catalogData is not observable
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const plottedSourceCount = catalogStore.catalogCounts.get(this.catalogFileId);
+        const catalogProfileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
+        if (!isDisabled && catalogProfileStore) {
+            const data = catalogProfileStore.get1DPlotData(column).wcsData;
+            return data ? Float32Array.from(data) : new Float32Array(0);
+        }
+        return new Float32Array(0);
+    }
+
+    /**
      * Orientation data for catalog sources
      */
     @computed get orientationMapData(): Float32Array {
-        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        if (!this.isOrientationMapDisabled && catalogProfileStore) {
-            const column = catalogProfileStore.get1DPlotData(this.orientationMapColumn).wcsData;
-            return column ? Float32Array.from(column) : new Float32Array(0);
-        } else {
-            return new Float32Array(0);
-        }
+        return this.getMapColumnData(this.orientationMapColumn, this.isOrientationMapDisabled);
     }
 
     orientationArray(): Float32Array {
@@ -978,13 +1024,7 @@ export class CatalogDisplayStore {
      * Color data for catalog sources
      */
     @computed get colorMapData(): Float32Array {
-        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        if (!this.isColorMapDisabled && catalogProfileStore) {
-            const column = catalogProfileStore.get1DPlotData(this.colorMapColumn).wcsData;
-            return column ? Float32Array.from(column) : new Float32Array(0);
-        } else {
-            return new Float32Array(0);
-        }
+        return this.getMapColumnData(this.colorMapColumn, this.isColorMapDisabled);
     }
 
     colorArray(): Float32Array {
@@ -999,26 +1039,14 @@ export class CatalogDisplayStore {
      * Size data for catalog sources
      */
     @computed get sizeMapData(): Float32Array {
-        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        if (!this.isSizeMapDisabled && catalogProfileStore) {
-            const column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
-            return column ? Float32Array.from(column) : new Float32Array(0);
-        } else {
-            return new Float32Array(0);
-        }
+        return this.getMapColumnData(this.sizeMapColumn, this.isSizeMapDisabled);
     }
 
     /**
      * Minor size data for catalog sources
      */
     @computed get sizeMinorMapData(): Float32Array {
-        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        if (!this.isSizeMinorMapDisabled && catalogProfileStore) {
-            const column = catalogProfileStore.get1DPlotData(this.sizeMinorMapColumn).wcsData;
-            return column ? Float32Array.from(column) : new Float32Array(0);
-        } else {
-            return new Float32Array(0);
-        }
+        return this.getMapColumnData(this.sizeMinorMapColumn, this.isSizeMinorMapDisabled);
     }
 
     /**
