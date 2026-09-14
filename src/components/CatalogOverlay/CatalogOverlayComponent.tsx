@@ -481,7 +481,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
     }
 
-    /** Whether a visible candidate may become usable when the rest of a file response arrives. */
     private hasPendingStreamedAxisEligibility(): boolean {
         const profileStore = this.profileStore;
         return Boolean(profileStore?.isFileBasedCatalog && profileStore.shouldUpdateData && Array.from(this.axisColumnEligibility.values()).some(result => result.status === CatalogAxisEligibility.Unknown));

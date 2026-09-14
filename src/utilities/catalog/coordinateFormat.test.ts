@@ -137,7 +137,6 @@ describe("coordinate format", () => {
 
         test("needs a strict majority, so a column of names cannot pass as a coordinate", () => {
             expect(sniffCoordinateDescriptor(["12:30:00", "banana", "rhubarb"])).toBeUndefined();
-            // A tie is not a majority: half the column disagreeing is not evidence of a format.
             expect(sniffCoordinateDescriptor(["12:30:00", "banana"])).toBeUndefined();
         });
 

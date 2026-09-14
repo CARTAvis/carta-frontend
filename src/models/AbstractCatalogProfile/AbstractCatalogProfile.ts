@@ -90,7 +90,6 @@ function rejectOutOfRangeLatitudes(values: ArrayLike<number>, degreesPerUnit: nu
     return checked;
 }
 
-/** Raw values of a numeric column, for a plot that reads them as plain numbers. */
 function getNumericPlotData(column: ProcessedColumnData | undefined): Array<number> | undefined {
     return column && isCatalogNumericDataType(column.dataType) ? (column.data as Array<number>) : undefined;
 }

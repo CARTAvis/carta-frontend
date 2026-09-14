@@ -402,10 +402,6 @@ export function parseCoordinateValue(value: string | number | null | undefined, 
     const magnitude = Math.abs(firstField) + Math.abs(minutes) / 60 + Math.abs(seconds) / 3600;
     const sign = recognized.isNegative ? -1 : 1;
 
-    // Decimal columns are passed to the transform in their declared units. A sexagesimal value
-    // without a marker is still subdivided in those units ("12:30:00" in decimal hours is 12.5
-    // hours), while an explicit marker overrides the descriptor and is converted back to the
-    // declared unit before the transform applies its scale.
     if (descriptor.kind === "decimal") {
         const sourceUnit = recognized.explicitUnit ?? descriptor.fieldUnit;
         return (sign * magnitude * DEGREES_PER_FIELD_UNIT[sourceUnit]) / DEGREES_PER_FIELD_UNIT[descriptor.fieldUnit];
