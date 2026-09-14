@@ -325,6 +325,31 @@ export class CatalogStore {
         };
     }
 
+    /**
+     * Drop restored plot columns the catalog turns out not to have, and say which. Columns are
+     * restored before the catalog is known, so they are checked once its data arrives, the way
+     * a restored display config is.
+     */
+    @action validateCatalogPlotColumns(fileId: number) {
+        const profileStore = this.catalogProfileStores.get(fileId);
+        if (!profileStore) {
+            return;
+        }
+        const dropped = new Set<string>();
+        this.catalogPlots.forEach(catalogWidgetMap => {
+            const widgetId = catalogWidgetMap.get(fileId);
+            const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
+            plotStore?.resetUnknownColumns(column => profileStore.catalogControlHeader.has(column)).forEach(column => dropped.add(column));
+        });
+        if (dropped.size) {
+            const catalogName = profileStore.catalogInfo.fileInfo.name ?? `catalog ${fileId}`;
+            const columns = Array.from(dropped)
+                .map(column => `"${column}"`)
+                .join(", ");
+            AppStore.Instance.logStore.addWarning(`Plot settings for ${catalogName} were not restored: ${columns} ${dropped.size > 1 ? "are not columns" : "is not a column"} this catalog has`, ["catalog"]);
+        }
+    }
+
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
         this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {

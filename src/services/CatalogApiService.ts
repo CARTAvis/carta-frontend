@@ -261,6 +261,7 @@ export class CatalogApiService {
             appStore.fileBrowserStore.hideFileBrowser();
             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
             appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+            appStore.catalogStore.validateCatalogPlotColumns(fileId);
             appStore.dialogStore.hideDialog(DialogId.OnlineDataQuery);
         }
     };

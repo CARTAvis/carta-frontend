@@ -72,6 +72,26 @@ export class CatalogPlotWidgetStore {
         this.catalogAssociation = association;
     }
 
+    /**
+     * Drop restored columns the catalog turns out not to have, and return their names. A plot's
+     * columns are restored before its catalog is known, and a catalog at the same path can have
+     * been rewritten since: plotting a column it no longer has throws when its header is read.
+     */
+    @action resetUnknownColumns(hasColumn: (column: string) => boolean): string[] {
+        const dropped: string[] = [];
+        const keep = (column: string | undefined): string | undefined => {
+            if (column === undefined || column === CatalogOverlay.NONE || hasColumn(column)) {
+                return column;
+            }
+            dropped.push(column);
+            return CatalogOverlay.NONE;
+        };
+        this.xColumnName = keep(this.xColumnName) ?? CatalogOverlay.NONE;
+        this.yColumnName = keep(this.yColumnName);
+        this.statisticColumnName = keep(this.statisticColumnName) ?? CatalogOverlay.NONE;
+        return dropped;
+    }
+
     public getCatalogAssociation = (): WorkspaceCatalogAssociation | undefined => this.catalogAssociation;
 
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {

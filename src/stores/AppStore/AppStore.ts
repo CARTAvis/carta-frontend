@@ -1219,6 +1219,7 @@ export class AppStore {
                     this.fileBrowserStore.hideFileBrowser();
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                    this.catalogStore.validateCatalogPlotColumns(fileId);
                     return fileId;
                 } else {
                     throw new Error("No catalog widget");
