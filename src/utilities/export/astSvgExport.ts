@@ -4,6 +4,7 @@ import {Context as SvgContext} from "svgcanvas";
 import {ImageType} from "enums";
 import {type ImageViewItem} from "models";
 import {type OverlaySettings, type OverlayStore} from "stores";
+import {setAstSystem} from "utilities";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -23,6 +24,11 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const padding = overlayStore.padding;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const zoomFrame = frame.spatialReference ?? frame;
+        const zoomX = zoomFrame.effectiveZoomLevel.x;
+        const zoomY = zoomFrame.effectiveZoomLevel.y;
+        const zoomRatio = isFinite(zoomX) && isFinite(zoomY) && zoomY > 0 ? zoomX / zoomY : 1;
+        const effectiveAspectRatio = zoomRatio * frame.aspectRatio;
 
         if (!wcsInfo || !frameView) {
             return null;
@@ -92,7 +98,7 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
             }
 
             if (!frame.hasSquarePixels) {
-                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
+                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / effectiveAspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 try {
                     AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
@@ -133,6 +139,14 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
                 AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
             }
 
+            // Match the raster overlay's explicit coordinate formatting. Otherwise AST
+            // may choose a different precision for SVG labels.
+            if (overlaySettings.numbers.formatStringX !== undefined && overlaySettings.numbers.formatStringY !== undefined && overlaySettings.global.explicitSystem !== undefined && overlaySettings.isWcsCoordinates && frame.isValidWcs) {
+                const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+                AST.set(tempWcsInfo, `Format(${frame.dirX})=${overlaySettings.numbers.formatStringX}, Format(${frame.dirY})=${overlaySettings.numbers.formatStringY},${dirAxesSetting}`);
+                setAstSystem(tempWcsInfo, overlaySettings.global.explicitSystem, overlaySettings.global);
+            }
+
             let currentStyleString = overlayStore.styleString(frame);
 
             if (!frame.isValidWcs) {
@@ -155,8 +169,8 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
                 tempWcsInfo,
                 frameView.xMin,
                 frameView.xMax,
-                frameView.yMin / frame.aspectRatio,
-                frameView.yMax / frame.aspectRatio,
+                frameView.yMin / effectiveAspectRatio,
+                frameView.yMax / effectiveAspectRatio,
                 viewWidth,
                 viewHeight,
                 padding.left * pixelRatio,
@@ -171,8 +185,8 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
                     tempWcsInfo,
                     frameView.xMin,
                     frameView.xMax,
-                    frameView.yMin / frame.aspectRatio,
-                    frameView.yMax / frame.aspectRatio,
+                    frameView.yMin / effectiveAspectRatio,
+                    frameView.yMax / effectiveAspectRatio,
                     viewWidth,
                     viewHeight,
                     padding.left * pixelRatio,

@@ -728,6 +728,20 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
     const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio);
     if (astSvg) {
+        const clipId = `ast-clip-${column}-${row}`;
+        const clipPath = createSvgElement("clipPath", {id: clipId});
+        clipPath.appendChild(
+            createSvgElement("rect", {
+                x: 0,
+                y: 0,
+                width: frame.overlayStore.viewWidth * pixelRatio,
+                height: viewHeight
+            })
+        );
+        const defs = createSvgElement("defs", {});
+        defs.appendChild(clipPath);
+        panelGroup.appendChild(defs);
+        astSvg.setAttribute("clip-path", `url(#${clipId})`);
         panelGroup.appendChild(astSvg);
     }
 

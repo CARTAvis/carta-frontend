@@ -153,6 +153,21 @@ describe("getPanelSvg", () => {
         expect(catalogClipRect).toHaveAttribute("height", "80");
     });
 
+    test("clips coordinate overlays at the panel boundary", () => {
+        const astOverlay = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        astOverlay.id = "ast-overlay";
+        renderAstOverlayToSvgMock.mockReturnValue(astOverlay);
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panelSvg?.querySelector("#ast-overlay")).toHaveAttribute("clip-path", "url(#ast-clip-0-0)");
+        const astClipRect = panelSvg?.querySelector("#ast-clip-0-0 rect");
+        expect(astClipRect).toHaveAttribute("x", "0");
+        expect(astClipRect).toHaveAttribute("y", "0");
+        expect(astClipRect).toHaveAttribute("width", "120");
+        expect(astClipRect).toHaveAttribute("height", "100");
+    });
+
     test("uses the vector overlay vertical axis as the zero-angle direction", () => {
         frame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
 
