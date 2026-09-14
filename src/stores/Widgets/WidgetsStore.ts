@@ -28,7 +28,7 @@ import {
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
+import {type CatalogInfo, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap, type WorkspaceCatalogAssociation} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
@@ -542,10 +542,12 @@ export class WidgetsStore {
 
     private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
         if (widgetSettings) {
+            const catalogStore = CatalogStore.Instance;
             const savedCatalogFileId = widgetSettings["catalogFileId"];
-            const selectedCatalogId = CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+            const {catalogFileId: selectedCatalogId, association} = catalogStore.catalogAssociationForRestore(widgetSettings as WorkspaceCatalogAssociation);
             const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
             const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
+            widgetStore.setCatalogAssociation(association);
             const savedSettingsTabId = widgetSettings["settingsTabId"] ?? (typeof savedCatalogFileId === "number" ? widgetSettings["settingsTabIdByCatalog"]?.[String(savedCatalogFileId)] : undefined);
             widgetStore.applyLayoutSettings({
                 ...(widgetSettings as CatalogWidgetLayoutSettings),
@@ -553,7 +555,7 @@ export class WidgetsStore {
                 settingsTabIdByCatalog: undefined,
                 settingsTabId: savedSettingsTabId
             });
-            CatalogStore.Instance.catalogProfiles.set(componentId, selectedCatalogId);
+            catalogStore.catalogProfiles.set(componentId, selectedCatalogId);
             // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
             // them at the restore boundary while allowing the current workspace names to take precedence.
             const displaySettings = {
@@ -577,11 +579,12 @@ export class WidgetsStore {
     private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null, widgetSettings: object | null = null): string | null => {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
+            const catalogStore = CatalogStore.Instance;
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            // Catalog IDs are assigned by the backend for each session. Keep restored plot settings
-            // unbound until this session selects a catalog, instead of trusting a persisted ID.
-            const selectedCatalogId = CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID;
-            CatalogStore.Instance.setCatalogPlots(componentId, selectedCatalogId, itemId);
+            const {catalogFileId: selectedCatalogId, association} = catalogStore.catalogAssociationForRestore(widgetSettings as WorkspaceCatalogAssociation | null);
+            const plotStore = this.catalogPlotWidgets.get(itemId);
+            plotStore?.setCatalogAssociation(association);
+            catalogStore.setCatalogPlots(componentId, selectedCatalogId, itemId);
         }
         return itemId;
     };
@@ -1125,7 +1128,8 @@ export class WidgetsStore {
             // Keep the legacy flat layout shape until workspace persistence owns display state.
             return {
                 ...(catalogDisplayStore?.toConfig() ?? {}),
-                ...widgetStore.toLayoutSettings()
+                ...widgetStore.toLayoutSettings(),
+                ...(widgetStore.selectedCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID ? CatalogStore.Instance.catalogAssociationForFileId(widgetStore.selectedCatalogId) : {})
             };
         }
 
@@ -1151,7 +1155,11 @@ export class WidgetsStore {
                 if (!plotStore) {
                     return undefined;
                 }
-                return plotStore.toConfig();
+                const {catalogFileId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetID);
+                return {
+                    ...plotStore.toConfig(),
+                    ...(catalogFileId !== undefined && catalogFileId !== CatalogStore.PENDING_CATALOG_FILE_ID ? CatalogStore.Instance.catalogAssociationForFileId(catalogFileId) : {})
+                };
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1607,6 +1615,7 @@ export class WidgetsStore {
             return false;
         }
         widgetStore.setSelectedCatalogId(catalogFileId);
+        widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(catalogFileId));
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return true;
@@ -1622,12 +1631,16 @@ export class WidgetsStore {
     /** Select a catalog in the first widget when an image-view interaction identifies it, and return that widget's ID. */
     @action updateCatalogWidgetSelection = (catalogFileId: number): string | undefined => {
         const widgets = Array.from(this.catalogWidgets.entries());
-        const widget = widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId === catalogFileId) ?? widgets[0];
+        const widget =
+            widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId === catalogFileId) ??
+            widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID) ??
+            widgets.find(([, widgetStore]) => !CatalogStore.hasStableCatalogIdentity(widgetStore.getCatalogAssociation()));
         if (!widget) {
-            return undefined;
+            return widgets[0]?.[0];
         }
         const [componentId, widgetStore] = widget;
         widgetStore.setSelectedCatalogId(catalogFileId);
+        widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(catalogFileId));
         CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
         this.applyPendingCatalogDisplayConfig(componentId, catalogFileId);
         return componentId;
@@ -1638,6 +1651,7 @@ export class WidgetsStore {
         this.catalogWidgets.forEach((widgetStore, componentId) => {
             if (widgetStore.selectedCatalogId === catalogFileId) {
                 widgetStore.setSelectedCatalogId(replacementCatalogFileId);
+                widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(replacementCatalogFileId));
                 CatalogStore.Instance.catalogProfiles.set(componentId, replacementCatalogFileId);
             }
         });
@@ -1651,8 +1665,24 @@ export class WidgetsStore {
         const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
         this.catalogWidgets.forEach((widgetStore, componentId) => {
             if (!activeCatalogFileIdSet.has(widgetStore.selectedCatalogId)) {
+                if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID && CatalogStore.hasStableCatalogIdentity(widgetStore.getCatalogAssociation())) {
+                    return;
+                }
                 widgetStore.setSelectedCatalogId(activeCatalogFileIds[0]);
+                widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationForFileId(activeCatalogFileIds[0]));
                 CatalogStore.Instance.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
+            }
+        });
+    };
+
+    /** Resolve restored overlay panels independently as their catalogs arrive. */
+    @action bindPendingCatalogWidgets = (fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">) => {
+        this.catalogWidgets.forEach((widgetStore, componentId) => {
+            if (widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID && CatalogStore.Instance.catalogMatchesAssociation(widgetStore.getCatalogAssociation(), fileId, info)) {
+                widgetStore.bindPendingCatalogId(fileId);
+                widgetStore.setCatalogAssociation(CatalogStore.Instance.catalogAssociationFromInfo(fileId, info));
+                CatalogStore.Instance.catalogProfiles.set(componentId, fileId);
+                this.applyPendingCatalogDisplayConfig(componentId, fileId);
             }
         });
     };

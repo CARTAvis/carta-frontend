@@ -113,6 +113,14 @@ export interface WorkspaceCatalogOrientationAxisConfig {
     scalingParameters?: ScalingParameters;
 }
 
+/** A catalog association that remains meaningful when backend file IDs change between sessions. */
+export interface WorkspaceCatalogAssociation {
+    /** Session-local fallback. It is used only when it still identifies a loaded catalog. */
+    catalogFileId?: number;
+    catalogDirectory?: string;
+    catalogFilename?: string;
+}
+
 /**
  * How one catalog is drawn. Holds only what the user authored: the state a widget keeps for its
  * own presentation, and the values recomputed from the catalog data, are deliberately absent.

@@ -1,7 +1,7 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {CatalogPlotType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -28,6 +28,10 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.getNodeById.mockReset();
         layoutModelMock.doAction.mockReset();
         layoutModelMock.visitNodes.mockReset();
+        CatalogStore.Instance.catalogProfileStores.clear();
+        CatalogStore.Instance.catalogDisplayStores.clear();
+        CatalogStore.Instance.catalogProfiles.clear();
+        CatalogStore.Instance.catalogPlots.clear();
     });
 
     afterEach(() => {
@@ -199,12 +203,16 @@ describe("WidgetsStore PV preview test ids", () => {
         const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
         const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
         const displayStore = {toConfig: () => displayConfig};
+        CatalogStore.Instance.catalogProfileStores.set(7, {catalogInfo: {fileId: 7, directory: "/catalogs", fileInfo: {name: "sources.xml"}}} as any);
 
         CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
 
         expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toEqual({
             ...displayConfig,
-            ...widgetStore.toLayoutSettings()
+            ...widgetStore.toLayoutSettings(),
+            catalogFileId: 7,
+            catalogDirectory: "/catalogs",
+            catalogFilename: "sources.xml"
         });
 
         CatalogStore.Instance.catalogDisplayStores.delete(7);
@@ -247,7 +255,10 @@ describe("WidgetsStore PV preview test ids", () => {
         const {catalogFileId, catalogPlotComponentId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
 
         expect(catalogFileId).toBe(1);
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetStoreId)).toEqual(widgetsStore.catalogPlotWidgets.get(widgetStoreId)?.toConfig());
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetStoreId)).toEqual({
+            ...widgetsStore.catalogPlotWidgets.get(widgetStoreId)?.toConfig(),
+            catalogFileId: 1
+        });
 
         CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
     });
@@ -262,6 +273,65 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
 
         CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
+    });
+
+    test("restores catalog panels independently when matching catalogs load", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const firstSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red", settingsTabId: CatalogSettingsTabs.COLOR};
+        const secondSettings = {catalogFileId: 4, catalogDirectory: "/catalogs", catalogFilename: "second.xml", color: "blue"};
+        const firstDisplayStore = {applyConfigWhenReady: jest.fn()};
+        const secondDisplayStore = {applyConfigWhenReady: jest.fn()};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(firstSettings, "catalog-overlay-0");
+        (widgetsStore as any).initializeCatalogOverlayWidget(secondSettings, "catalog-overlay-1");
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.catalogDisplayStores.set(11, firstDisplayStore as any);
+        widgetsStore.bindPendingCatalogWidgets(11, {directory: "/catalogs", fileInfo: {name: "first.xml"}});
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(11);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(firstDisplayStore.applyConfigWhenReady).toHaveBeenCalledWith(firstSettings);
+
+        CatalogStore.Instance.catalogDisplayStores.set(12, secondDisplayStore as any);
+        widgetsStore.bindPendingCatalogWidgets(12, {directory: "/catalogs", fileInfo: {name: "second.xml"}});
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(12);
+        expect(secondDisplayStore.applyConfigWhenReady).toHaveBeenCalledWith(secondSettings);
+    });
+
+    test("restores catalog plots only to their matching catalogs", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
+        const firstPlotId = (widgetsStore as any).initializeCatalogPlotWidget(props, "catalog-plot-0", {
+            ...props,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml"
+        });
+        const secondPlotId = (widgetsStore as any).initializeCatalogPlotWidget(props, "catalog-plot-1", {
+            ...props,
+            xColumnName: "ra",
+            yColumnName: "dec",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "second.xml"
+        });
+
+        CatalogStore.Instance.bindPendingCatalogPlots(11, {directory: "/catalogs", fileInfo: {name: "first.xml"}});
+
+        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(firstPlotId).catalogFileId).toBe(11);
+        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId).catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.bindPendingCatalogPlots(12, {directory: "/catalogs", fileInfo: {name: "second.xml"}});
+
+        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId).catalogFileId).toBe(12);
+        expect(widgetsStore.catalogPlotWidgets.get(firstPlotId)?.xColumnName).toBe("Fmag");
+        expect(widgetsStore.catalogPlotWidgets.get(secondPlotId)?.xColumnName).toBe("ra");
     });
 
     test("clears both catalog associations when a docked catalog tab is closed", () => {

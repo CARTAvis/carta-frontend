@@ -2,6 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
 import {CatalogOverlay, type CatalogPlotType} from "enums";
+import type {WorkspaceCatalogAssociation} from "models/Workspace";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -14,10 +15,8 @@ export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
-export interface CatalogPlotWidgetConfig {
+export interface CatalogPlotWidgetConfig extends WorkspaceCatalogAssociation {
     plotType: CatalogPlotType;
-    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
-    catalogFileId?: number;
     xColumnName: string;
     yColumnName?: string;
     statisticColumnName?: string;
@@ -46,6 +45,8 @@ export class CatalogPlotWidgetStore {
     @observable minMaxX: {minVal: number; maxVal: number} | null = null;
     @observable statisticColumnName: string = CatalogOverlay.NONE;
     @observable statistic: Statistic | null = null;
+    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
+    private catalogAssociation: WorkspaceCatalogAssociation | undefined;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         this.plotType = props.plotType;
@@ -55,6 +56,7 @@ export class CatalogPlotWidgetStore {
     }
 
     public toConfig = (): CatalogPlotWidgetConfig => ({
+        ...this.catalogAssociation,
         plotType: this.plotType,
         xColumnName: this.xColumnName,
         yColumnName: this.yColumnName,
@@ -65,6 +67,12 @@ export class CatalogPlotWidgetStore {
         scatterBorder: this.scatterBorder,
         histogramBorder: this.histogramBorder
     });
+
+    @action setCatalogAssociation(association: WorkspaceCatalogAssociation | undefined) {
+        this.catalogAssociation = association;
+    }
+
+    public getCatalogAssociation = (): WorkspaceCatalogAssociation | undefined => this.catalogAssociation;
 
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
         if (typeof config.xColumnName === "string") {

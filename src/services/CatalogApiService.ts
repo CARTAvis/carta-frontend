@@ -254,7 +254,7 @@ export class CatalogApiService {
             AppToaster.show(ErrorToast("Please load an image file"));
             return;
         }
-        const catalogComponentId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
+        const catalogComponentId = appStore.updateCatalogProfile(fileId, appStore.activeFrame, catalogInfo);
         if (catalogComponentId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
             appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);

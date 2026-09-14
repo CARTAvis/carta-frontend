@@ -1,5 +1,6 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, ObservableMap} from "mobx";
+import type {CatalogInfo, WorkspaceCatalogAssociation} from "models";
 
 import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
@@ -46,6 +47,90 @@ export class CatalogStore {
 
     private constructor() {
         makeObservable(this);
+    }
+
+    /** Read and validate a catalog association from persisted widget settings. */
+    public static catalogAssociationFromConfig(config: Partial<WorkspaceCatalogAssociation> | null | undefined): WorkspaceCatalogAssociation | undefined {
+        if (!config) {
+            return undefined;
+        }
+        const catalogFileId = Number.isInteger(config.catalogFileId) && (config.catalogFileId as number) > 0 ? config.catalogFileId : undefined;
+        const hasStableIdentity = typeof config.catalogDirectory === "string" && typeof config.catalogFilename === "string" && config.catalogFilename.length > 0;
+        if (catalogFileId === undefined && !hasStableIdentity) {
+            return undefined;
+        }
+        return {
+            ...(catalogFileId !== undefined ? {catalogFileId} : {}),
+            ...(hasStableIdentity ? {catalogDirectory: config.catalogDirectory, catalogFilename: config.catalogFilename} : {})
+        };
+    }
+
+    public static hasStableCatalogIdentity(association: WorkspaceCatalogAssociation | undefined): boolean {
+        return typeof association?.catalogDirectory === "string" && typeof association.catalogFilename === "string" && association.catalogFilename.length > 0;
+    }
+
+    /** Create the persisted association for a loaded catalog. */
+    public catalogAssociationForFileId(fileId: number): WorkspaceCatalogAssociation {
+        const info = this.catalogProfileStores.get(fileId)?.catalogInfo;
+        return this.catalogAssociationFromInfo(fileId, info);
+    }
+
+    public catalogAssociationFromInfo(fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">): WorkspaceCatalogAssociation {
+        const filename = info?.fileInfo.name;
+        return {
+            catalogFileId: fileId,
+            ...(typeof info?.directory === "string" && typeof filename === "string" && filename.length > 0 ? {catalogDirectory: info.directory, catalogFilename: filename} : {})
+        };
+    }
+
+    /** Resolve an association without trusting a stale session-local ID. */
+    public resolveCatalogAssociation(association: WorkspaceCatalogAssociation | undefined): number | undefined {
+        if (!association) {
+            return undefined;
+        }
+        if (association.catalogFileId !== undefined) {
+            const info = this.catalogProfileStores.get(association.catalogFileId)?.catalogInfo;
+            if (info && this.catalogMatchesAssociation(association, association.catalogFileId, info)) {
+                return association.catalogFileId;
+            }
+        }
+        if (CatalogStore.hasStableCatalogIdentity(association)) {
+            for (const [fileId, profileStore] of this.catalogProfileStores) {
+                if (this.catalogMatchesAssociation(association, fileId, profileStore.catalogInfo)) {
+                    return fileId;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /** Resolve persisted settings through the shared panel/plot restore policy. */
+    public catalogAssociationForRestore(config: Partial<WorkspaceCatalogAssociation> | null | undefined): {catalogFileId: number; association?: WorkspaceCatalogAssociation} {
+        const association = CatalogStore.catalogAssociationFromConfig(config);
+        const resolvedCatalogId = this.resolveCatalogAssociation(association);
+        if (resolvedCatalogId !== undefined) {
+            return {catalogFileId: resolvedCatalogId, association: this.catalogAssociationForFileId(resolvedCatalogId)};
+        }
+        if (CatalogStore.hasStableCatalogIdentity(association)) {
+            return {catalogFileId: CatalogStore.PENDING_CATALOG_FILE_ID, association};
+        }
+        const fallbackCatalogId = this.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+        return {
+            catalogFileId: fallbackCatalogId,
+            ...(fallbackCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID ? {association: this.catalogAssociationForFileId(fallbackCatalogId)} : {})
+        };
+    }
+
+    /** Match a pending association against a newly loaded catalog. */
+    public catalogMatchesAssociation(association: WorkspaceCatalogAssociation | undefined, fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">): boolean {
+        if (!association) {
+            return true;
+        }
+        if (CatalogStore.hasStableCatalogIdentity(association)) {
+            const catalogInfo = info ?? this.catalogProfileStores.get(fileId)?.catalogInfo;
+            return association.catalogDirectory === catalogInfo?.directory && association.catalogFilename === catalogInfo?.fileInfo.name;
+        }
+        return association.catalogFileId === fileId;
     }
 
     @computed get catalogGLData() {
@@ -222,15 +307,20 @@ export class CatalogStore {
             catalogWidgetMap.set(fileId, widgetId);
             this.catalogPlots.set(componentId, catalogWidgetMap);
         }
+        if (fileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
+            WidgetsStore.Instance.catalogPlotWidgets.get(widgetId)?.setCatalogAssociation(this.catalogAssociationForFileId(fileId));
+        }
     }
 
-    /** Attach restored plot stores to the first catalog selected in this session. */
-    @action bindPendingCatalogPlots(fileId: number) {
+    /** Attach only restored plots whose stable association matches the newly loaded catalog. */
+    @action bindPendingCatalogPlots(fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">) {
         this.catalogPlots.forEach(catalogWidgetMap => {
             const pendingWidgetId = catalogWidgetMap.get(CatalogStore.PENDING_CATALOG_FILE_ID);
-            if (pendingWidgetId && !catalogWidgetMap.has(fileId)) {
+            const plotStore = pendingWidgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(pendingWidgetId) : undefined;
+            if (pendingWidgetId && !catalogWidgetMap.has(fileId) && this.catalogMatchesAssociation(plotStore?.getCatalogAssociation(), fileId, info)) {
                 catalogWidgetMap.set(fileId, pendingWidgetId);
                 catalogWidgetMap.delete(CatalogStore.PENDING_CATALOG_FILE_ID);
+                plotStore?.setCatalogAssociation(this.catalogAssociationFromInfo(fileId, info));
             }
         });
     }

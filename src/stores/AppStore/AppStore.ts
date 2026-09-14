@@ -1212,7 +1212,7 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
-                const catalogComponentId = this.updateCatalogProfile(fileId, frame);
+                const catalogComponentId = this.updateCatalogProfile(fileId, frame, catalogInfo);
                 if (catalogComponentId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                     this.catalogStore.addCatalog(fileId, ack.dataSize);
@@ -1234,11 +1234,12 @@ export class AppStore {
         }
     }
 
-    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string | undefined => {
+    @action updateCatalogProfile = (fileId: number, frame: FrameStore, catalogInfo?: Pick<CatalogInfo, "directory" | "fileInfo">): string | undefined => {
         let catalogComponentId: string | undefined;
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
+        this.widgetsStore.bindPendingCatalogWidgets(fileId, catalogInfo);
         const catalogComponentSize = this.widgetsStore.catalogWidgets.size;
         const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
@@ -1253,7 +1254,7 @@ export class AppStore {
         }
 
         catalogStore.getOrCreateCatalogDisplayStore(fileId);
-        catalogStore.bindPendingCatalogPlots(fileId);
+        catalogStore.bindPendingCatalogPlots(fileId, catalogInfo);
         if (catalogComponentSize === 0) {
             catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
             catalogStore.catalogProfiles.set(catalogComponentId, fileId);

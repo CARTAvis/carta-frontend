@@ -1514,10 +1514,21 @@ export class CatalogDisplayStore {
      */
     private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string): {min: number; max: number} {
         const data = profileStore.catalogControlHeader.has(column) ? profileStore.get1DPlotData(column).wcsData : undefined;
-        const range = minMaxArray(data ? Float32Array.from(data) : new Float32Array(0));
+        let min = Number.MAX_VALUE;
+        let max = -Number.MAX_VALUE;
+        const visibleRows = Math.min(data?.length ?? 0, profileStore.numVisibleRows);
+        for (let i = 0; i < visibleRows; i++) {
+            // Display mappings use float32 textures. Preserve those bounds without allocating a
+            // Float32Array copy of the complete column each time the range is refreshed.
+            const value = Math.fround(data?.[i] ?? NaN);
+            if (!isNaN(value)) {
+                min = Math.min(min, value);
+                max = Math.max(max, value);
+            }
+        }
         return {
-            min: isFinite(range.minVal) ? range.minVal : 0,
-            max: isFinite(range.maxVal) ? range.maxVal : 0
+            min: isFinite(min) ? min : 0,
+            max: isFinite(max) ? max : 0
         };
     }
 

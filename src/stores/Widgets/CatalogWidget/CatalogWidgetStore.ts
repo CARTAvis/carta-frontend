@@ -1,14 +1,12 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {CatalogSettingsTabs} from "enums";
-import {type WorkspaceCatalogConfig} from "models/Workspace";
+import {type WorkspaceCatalogAssociation, type WorkspaceCatalogConfig} from "models/Workspace";
 import {PreferenceStore} from "stores";
 
 /** State owned by one catalog widget rather than by the catalog it displays. */
-export interface CatalogWidgetLayoutSettings {
+export interface CatalogWidgetLayoutSettings extends WorkspaceCatalogAssociation {
     widgetId?: string;
-    /** Legacy session-local association. Read for migration, but no longer persisted. */
-    catalogFileId?: number;
     tableSeparatorPosition?: string;
     /** Legacy settings sections keyed by session-local catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
@@ -28,6 +26,8 @@ export class CatalogWidgetStore {
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
     /** Display settings restored before a session-local catalog has been selected. */
     private pendingDisplayConfig: WorkspaceCatalogConfig | undefined;
+    /** Stable association retained while the matching catalog is not loaded. */
+    private catalogAssociation: WorkspaceCatalogAssociation | undefined;
 
     constructor(selectedCatalogId: number = 1, widgetId: string = "") {
         this.selectedCatalogId = selectedCatalogId;
@@ -42,6 +42,21 @@ export class CatalogWidgetStore {
     @action setSelectedCatalogId = (catalogFileId: number) => {
         this.selectedCatalogId = catalogFileId;
     };
+
+    /** Bind a pending restore while carrying its widget-scoped settings section to the resolved ID. */
+    @action bindPendingCatalogId = (catalogFileId: number) => {
+        const pendingSettingsTabId = this.settingsTabIdByCatalog.get(this.selectedCatalogId);
+        this.selectedCatalogId = catalogFileId;
+        if (pendingSettingsTabId !== undefined) {
+            this.settingsTabIdByCatalog.set(catalogFileId, pendingSettingsTabId);
+        }
+    };
+
+    @action setCatalogAssociation = (association: WorkspaceCatalogAssociation | undefined) => {
+        this.catalogAssociation = association;
+    };
+
+    public getCatalogAssociation = (): WorkspaceCatalogAssociation | undefined => this.catalogAssociation;
 
     public setPendingDisplayConfig = (config: WorkspaceCatalogConfig) => {
         this.pendingDisplayConfig = config;
@@ -68,6 +83,7 @@ export class CatalogWidgetStore {
 
     public toLayoutSettings = (): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
+        ...this.catalogAssociation,
         tableSeparatorPosition: this.tableSeparatorPosition,
         settingsTabId: this.settingsTabId
     });
