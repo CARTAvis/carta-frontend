@@ -521,8 +521,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
-        const isModifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (isModifierPressed || this.props.dragAction === DragMode.Pan) {
+        if (mouseEvent.shiftKey) {
             this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
         } else if (this.props.dragAction === DragMode.Lasso) {
             this.startLassoSelection(mouseEvent.offsetX, mouseEvent.offsetY);

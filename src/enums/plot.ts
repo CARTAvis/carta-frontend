@@ -7,7 +7,6 @@ export enum ZoomMode {
 
 export enum DragMode {
     Zoom = "zoom",
-    Pan = "pan",
     Select = "select",
     Lasso = "lasso"
 }

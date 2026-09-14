@@ -931,8 +931,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const target = event.target as Element | null;
         if (event.button === 0 && !target?.closest(".profiler-toolbar")) {
             window.addEventListener("mouseup", this.onHistogramWindowMouseUp);
-            const widgetStore = this.widgetStore;
-            if (widgetStore?.histogramDragMode === DragMode.Pan) {
+            if (event.shiftKey) {
                 this.histogramPanPrevX = event.nativeEvent.offsetX;
             } else {
                 this.histogramDragStartX = event.nativeEvent.offsetX;
@@ -1575,15 +1574,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             <Tooltip content="Box select">
                                 <AnchorButton icon="widget" active={widgetStore.histogramDragMode === DragMode.Select} onClick={() => widgetStore.setHistogramDragMode(DragMode.Select)} />
                             </Tooltip>
-                            <Tooltip content="Zoom">
-                                <AnchorButton icon="search" active={widgetStore.histogramDragMode === DragMode.Zoom} onClick={() => widgetStore.setHistogramDragMode(DragMode.Zoom)} />
-                            </Tooltip>
-                            <Tooltip content="Pan">
-                                <AnchorButton icon="move" active={widgetStore.histogramDragMode === DragMode.Pan} onClick={() => widgetStore.setHistogramDragMode(DragMode.Pan)} />
-                            </Tooltip>
-                            <Tooltip content="Autoscale">
-                                <AnchorButton icon="zoom-to-fit" onClick={this.onAutoscale} data-testid="catalog-histogram-autoscale-button" />
-                            </Tooltip>
                         </ToolbarComponent>
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
@@ -1705,12 +1695,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                 </Tooltip>
                                 <Tooltip content="Zoom">
                                     <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} />
-                                </Tooltip>
-                                <Tooltip content="Pan">
-                                    <AnchorButton icon="move" active={widgetStore.dragMode === DragMode.Pan} onClick={() => widgetStore.setDragMode(DragMode.Pan)} />
-                                </Tooltip>
-                                <Tooltip content="Autoscale">
-                                    <AnchorButton icon="zoom-to-fit" onClick={this.onAutoscale} data-testid="catalog-scatter-autoscale-button" />
                                 </Tooltip>
                             </React.Fragment>
                         }
