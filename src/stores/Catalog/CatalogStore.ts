@@ -312,19 +312,15 @@ export class CatalogStore {
      */
     public getDisplayedCatalogPlot(catalogPlotWidgetId: string): {widgetId: string; catalogFileId: number | undefined} {
         const {catalogPlotComponentId, catalogFileId} = this.getAssociatedIdByWidgetId(catalogPlotWidgetId);
-        // A widget loses its own binding when its catalog closes, but the layout still identifies
-        // the tab by it. The component it was created in outlives that, and carries the plot the
-        // tab has since been switched to.
-        const componentId = catalogPlotComponentId ?? this.catalogPlotComponents.get(catalogPlotWidgetId);
-        if (componentId === undefined) {
+        if (catalogPlotComponentId === undefined) {
             return {widgetId: catalogPlotWidgetId, catalogFileId};
         }
-        const selectedCatalogFileId = this.getCatalogPlotSelection(componentId) ?? catalogFileId;
+        const selectedCatalogFileId = this.getCatalogPlotSelection(catalogPlotComponentId) ?? catalogFileId;
         if (selectedCatalogFileId === undefined) {
             return {widgetId: catalogPlotWidgetId, catalogFileId};
         }
         return {
-            widgetId: this.catalogPlots.get(componentId)?.get(selectedCatalogFileId) ?? catalogPlotWidgetId,
+            widgetId: this.catalogPlots.get(catalogPlotComponentId)?.get(selectedCatalogFileId) ?? catalogPlotWidgetId,
             catalogFileId: selectedCatalogFileId
         };
     }
@@ -427,7 +423,17 @@ export class CatalogStore {
                 }
             });
         });
-        return {catalogPlotComponentId: catalogPlotComponentId, catalogFileId: catalogFileId};
+        if (catalogPlotComponentId !== undefined) {
+            return {catalogPlotComponentId, catalogFileId};
+        }
+        // A widget loses its own binding when its catalog closes, but the layout still identifies
+        // the tab by it. The component it was created in outlives that, and is still showing a
+        // plot, so the tab resolves through it rather than becoming an orphan.
+        const retainedComponentId = this.catalogPlotComponents.get(catalogPlotWidgetId);
+        return {
+            catalogPlotComponentId: retainedComponentId,
+            catalogFileId: retainedComponentId !== undefined ? this.getCatalogPlotSelection(retainedComponentId) : undefined
+        };
     }
 
     getCatalogFileNames(fileIds: Array<number>) {

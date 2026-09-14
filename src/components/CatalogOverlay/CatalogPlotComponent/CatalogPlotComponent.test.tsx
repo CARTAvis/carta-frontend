@@ -91,6 +91,29 @@ describe("CatalogPlotComponent restored plots", () => {
         component.componentWillUnmount();
     });
 
+    test("still resolves a remounted tab and its cleanup after its original catalog closes", () => {
+        const {component, plotId} = restorePlot();
+        loadCatalog(11, "second.xml");
+        loadCatalog(12, "first.xml");
+        component.handleCatalogFileChange(11);
+        const displayed = component.widgetStore!;
+        component.componentWillUnmount();
+
+        catalogStore.clearCatalogPlotsByFileId(12);
+
+        // The tab is remounted under the store that has gone, and must find its component again.
+        const remounted = new CatalogPlotComponent({id: plotId, docked: false} as any);
+        expect(remounted.componentId).toBe(componentId);
+        expect(remounted.catalogFileId).toBe(11);
+        expect(remounted.widgetStore).toBe(displayed);
+        remounted.componentWillUnmount();
+
+        // Closing that tab must still release the component rather than leaking it.
+        catalogStore.clearCatalogPlotsByWidgetId(plotId);
+        expect(catalogStore.catalogPlots.has(componentId)).toBe(false);
+        expect(widgetsStore.catalogPlotWidgets.size).toBe(0);
+    });
+
     test("keeps the shown plot serializable after the catalog it was created with closes", () => {
         const {component, plotId} = restorePlot();
         loadCatalog(11, "second.xml");
