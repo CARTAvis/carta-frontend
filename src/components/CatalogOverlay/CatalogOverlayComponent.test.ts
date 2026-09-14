@@ -369,6 +369,25 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
         });
 
+        test("does not stream ordinary string columns while looking for axes", () => {
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "object_name", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]},
+                {name: "description", dataType: CARTA.ColumnType.String, data: ["Taurus", "Monoceros"]}
+            ]);
+            Object.assign(profileStore, {
+                isFileBasedCatalog: true,
+                isLoadingData: false,
+                shouldUpdateData: true,
+                updateMode: CatalogUpdateMode.TableUpdate
+            });
+            component["updateByInfiniteScroll"] = jest.fn();
+
+            expect(component["autoSelectAxes"]()).toBe(false);
+            expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
         test("refreshes column eligibility when catalog values arrive", () => {
             const profileStore = CreateCatalogProfileStore(12345, CatalogSystemType.ICRS, [{name: "RA1", dataType: CARTA.ColumnType.String}]);
             const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});

@@ -289,13 +289,15 @@ export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | numb
  */
 interface CoordinateSampleResult {
     descriptor: CoordinateDescriptor | undefined;
+    /** A recognized format, even when it did not reach the majority threshold. */
+    recognizedDescriptor: CoordinateDescriptor | undefined;
     inspectedCount: number;
     recognizedCount: number;
     hasConflictingFormats: boolean;
 }
 
 function sniffCoordinateSample(values: ReadonlyArray<string | number | null | undefined>, indices: ReadonlyArray<number>, sampleSize: number): CoordinateSampleResult {
-    let descriptor: CoordinateDescriptor | undefined;
+    let recognizedDescriptor: CoordinateDescriptor | undefined;
     let inspectedCount = 0;
     let recognizedCount = 0;
     for (const index of indices) {
@@ -319,21 +321,26 @@ function sniffCoordinateSample(values: ReadonlyArray<string | number | null | un
             source: "sniffed"
         };
 
-        if (descriptor && (descriptor.kind !== candidate.kind || descriptor.fieldUnit !== candidate.fieldUnit)) {
-            return {descriptor: undefined, inspectedCount, recognizedCount, hasConflictingFormats: true};
+        if (recognizedDescriptor && hasDifferentCoordinateFormat(recognizedDescriptor, candidate)) {
+            return {descriptor: undefined, recognizedDescriptor, inspectedCount, recognizedCount, hasConflictingFormats: true};
         }
-        descriptor = candidate;
+        recognizedDescriptor = candidate;
         recognizedCount++;
     }
 
     // A strict majority, so a sample of names with a few numeric entries cannot pass as a
     // coordinate. The caller can combine this bounded sample with a later distributed sample.
     return {
-        descriptor: recognizedCount * 2 > inspectedCount ? descriptor : undefined,
+        descriptor: recognizedCount * 2 > inspectedCount ? recognizedDescriptor : undefined,
+        recognizedDescriptor,
         inspectedCount,
         recognizedCount,
         hasConflictingFormats: false
     };
+}
+
+function hasDifferentCoordinateFormat(left: CoordinateDescriptor, right: CoordinateDescriptor): boolean {
+    return left.kind !== right.kind || left.fieldUnit !== right.fieldUnit;
 }
 
 export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): CoordinateDescriptor | undefined {
@@ -349,7 +356,11 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
     if (!laterSample.inspectedCount) {
         return initialSample.descriptor;
     }
-    if (initialSample.hasConflictingFormats || laterSample.hasConflictingFormats) {
+    if (
+        initialSample.hasConflictingFormats ||
+        laterSample.hasConflictingFormats ||
+        (initialSample.recognizedDescriptor && laterSample.recognizedDescriptor && hasDifferentCoordinateFormat(initialSample.recognizedDescriptor, laterSample.recognizedDescriptor))
+    ) {
         return undefined;
     }
 
@@ -357,9 +368,6 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
     // even when an early noisy/placeholder window has already used its own sample budget. When
     // both windows identify a format they still have to agree.
     if (laterSample.descriptor) {
-        if (initialSample.descriptor && (initialSample.descriptor.kind !== laterSample.descriptor.kind || initialSample.descriptor.fieldUnit !== laterSample.descriptor.fieldUnit)) {
-            return undefined;
-        }
         return laterSample.descriptor;
     }
 

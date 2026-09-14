@@ -483,7 +483,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private hasPendingStreamedAxisEligibility(): boolean {
         const profileStore = this.profileStore;
-        return Boolean(profileStore?.isFileBasedCatalog && profileStore.shouldUpdateData && Array.from(this.axisColumnEligibility.values()).some(result => result.status === CatalogAxisEligibility.Unknown));
+        return Boolean(
+            profileStore?.isFileBasedCatalog &&
+            profileStore.shouldUpdateData &&
+            Array.from(this.axisColumnEligibility.entries()).some(([columnName, result]) => result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName))
+        );
+    }
+
+    private isCoordinateNameCandidate(columnName: string): boolean {
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        return Boolean(getAutoSelectedCatalogAxisColumn(this.xAxisLabel, [columnName], system) || getAutoSelectedCatalogAxisColumn(this.yAxisLabel, [columnName], system));
     }
 
     /** Returns true when auto-selection should be retried after another streamed response. */

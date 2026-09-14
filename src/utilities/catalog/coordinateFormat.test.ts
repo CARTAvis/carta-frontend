@@ -164,6 +164,12 @@ describe("coordinate format", () => {
             const values = [...new Array(1000).fill("--"), ...new Array(100).fill("12:30:00")];
             expect(sniffCoordinateDescriptor(values)).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
         });
+
+        test("rejects a format conflict when the earlier format misses the majority threshold", () => {
+            const values = ["12:30:00", ...new Array(999).fill("--"), ...new Array(100).fill("187.5")];
+
+            expect(sniffCoordinateDescriptor(values)).toBeUndefined();
+        });
     });
 
     describe("hasCoordinateValuesToInspect", () => {
