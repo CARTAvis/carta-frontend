@@ -147,6 +147,16 @@ describe("getPanelSvg", () => {
         expect(catalogClipRect).toHaveAttribute("height", "80");
     });
 
+    test("uses the vector overlay vertical axis as the zero-angle direction", () => {
+        frame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const line = panelSvg?.querySelector("#vector-overlay line");
+
+        expect(line).toHaveAttribute("x1", "20.00");
+        expect(line).toHaveAttribute("x2", "20.00");
+    });
+
     test("maps spatial contours into the reference frame before exporting", () => {
         frame.spatialReference = {
             requiredFrameView: {xMin: 0, xMax: 100, yMin: 0, yMax: 80},

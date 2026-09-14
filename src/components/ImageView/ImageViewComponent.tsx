@@ -477,10 +477,14 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 }
 
                 const angle = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None ? 0 : (-rawAngleDegrees * Math.PI) / 180.0 - rotationOffset;
-                const dx = Math.cos(angle) * lineLength * 0.5;
-                const dy = Math.sin(angle) * lineLength * 0.5;
-                const startPoint = transformOverlayPoint({x: center.x - dx, y: center.y - dy}, vectorFrame, frame);
-                const endPoint = transformOverlayPoint({x: center.x + dx, y: center.y + dy}, vectorFrame, frame);
+                const halfLength = lineLength * 0.5;
+                // The WebGL renderer rotates a screen-space vertical vector. Convert
+                // that direction back to image coordinates before imageToCanvasPoint
+                // flips the y axis.
+                const dx = -Math.sin(angle) * halfLength;
+                const dy = -Math.cos(angle) * halfLength;
+                const startPoint = transformContourPoint({x: center.x - dx, y: center.y - dy}, vectorFrame, frame);
+                const endPoint = transformContourPoint({x: center.x + dx, y: center.y + dy}, vectorFrame, frame);
                 if (!startPoint || !endPoint) {
                     continue;
                 }
