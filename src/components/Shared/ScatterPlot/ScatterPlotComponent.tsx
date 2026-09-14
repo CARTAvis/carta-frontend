@@ -98,6 +98,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private containerRef = React.createRef<HTMLDivElement>();
     private previousClickTime: number;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
+    private forceUpdateHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
     private stageClickStartY: number;
     private panPrevious: {x: number; y: number};
@@ -132,6 +133,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     componentWillUnmount() {
         clearTimeout(this.pendingClickHandle);
         this.pendingClickHandle = undefined;
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = undefined;
     }
 
     onPlotRefUpdated = plotRef => {
@@ -140,6 +143,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action updateChart = (chartArea: ChartArea) => {
         this.chartArea = chartArea;
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = setTimeout(() => {
+            this.forceUpdateHandle = undefined;
+            this.forceUpdate();
+        }, 0);
         if (this.props.updateChartArea) {
             this.props.updateChartArea(chartArea);
         }
