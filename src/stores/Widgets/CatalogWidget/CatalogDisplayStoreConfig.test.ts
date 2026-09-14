@@ -407,6 +407,23 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
     });
 
+    test("treats a column whose loaded rows hold no value as having no range", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+
+        // A catalog stores a missing value as NaN, so a column can carry rows and still hold no range.
+        loadRows(profileStore, [NaN, NaN]);
+        expect(store.applyConfig({sizeAxis: {mapColumn: "Fmag"}})).toEqual({success: true, errors: []});
+
+        // The rest of the rows arrive, and they are just as empty.
+        loadRows(profileStore, [NaN, NaN, NaN, NaN]);
+
+        expect(store.sizeColumnMin.clipd).toBe(0);
+        expect(store.sizeColumnMax.clipd).toBe(0);
+        expect(store.sizeColumnMin.default).toBe(0);
+        expect(store.sizeColumnMax.default).toBe(0);
+    });
+
     test("keeps a clip the user authored when the rest of the catalog rows arrive", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);

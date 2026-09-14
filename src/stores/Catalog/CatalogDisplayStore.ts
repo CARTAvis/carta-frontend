@@ -1518,17 +1518,16 @@ export class CatalogDisplayStore {
         let max = -Number.MAX_VALUE;
         const visibleRows = Math.min(data?.length ?? 0, profileStore.numVisibleRows);
         for (let i = 0; i < visibleRows; i++) {
-            // Display mappings use float32 textures. Preserve those bounds without allocating a
-            // Float32Array copy of the complete column each time the range is refreshed.
             const value = Math.fround(data?.[i] ?? NaN);
             if (!isNaN(value)) {
                 min = Math.min(min, value);
                 max = Math.max(max, value);
             }
         }
+        const hasValue = min !== Number.MAX_VALUE && max !== -Number.MAX_VALUE;
         return {
-            min: isFinite(min) ? min : 0,
-            max: isFinite(max) ? max : 0
+            min: hasValue && isFinite(min) ? min : 0,
+            max: hasValue && isFinite(max) ? max : 0
         };
     }
 
