@@ -1486,7 +1486,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         return;
                     }
                     const {x, y} = this.histogramHoverPixel;
-                    const lineColor = AppStore.Instance.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2;
+                    const lineColor = AppStore.Instance.isDarkTheme ? Colors.GRAY4 : Colors.DARK_GRAY3;
                     ctx.save();
                     ctx.strokeStyle = lineColor;
                     ctx.lineWidth = 1;
@@ -1517,12 +1517,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     const startX = Math.max(this.histogramDragStartX, chartArea.left);
                     const endX = Math.min(this.histogramDragCurrentX, chartArea.right);
                     const boxWidth = endX - startX;
+                    const selectionColor = AppStore.Instance.isDarkTheme ? Colors.GRAY3 : Colors.DARK_GRAY1;
                     ctx.save();
-                    ctx.fillStyle = Colors.GRAY3;
+                    ctx.fillStyle = selectionColor;
                     ctx.globalAlpha = 0.2;
                     ctx.fillRect(startX, chartArea.top, boxWidth, chartArea.bottom - chartArea.top);
                     ctx.globalAlpha = 1.0;
-                    ctx.strokeStyle = Colors.GRAY3;
+                    ctx.strokeStyle = selectionColor;
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(startX, chartArea.top);

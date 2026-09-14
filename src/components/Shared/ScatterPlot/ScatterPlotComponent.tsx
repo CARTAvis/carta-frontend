@@ -342,7 +342,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
         if (this.isMouseEntered && this.props.cursorNearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined && this.props.yMin !== undefined && this.props.yMax !== undefined) {
             const nearestPoint = this.props.cursorNearestPoint;
-            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : Colors.GRAY2;
+            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : Colors.DARK_GRAY3;
             if (nearestPoint.x >= this.props.xMin && nearestPoint.x <= this.props.xMax && nearestPoint.y >= this.props.yMin && nearestPoint.y <= this.props.yMax) {
                 const devicePixelRatio = window.devicePixelRatio || 1;
                 const xPixelValue = this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true);
@@ -749,12 +749,13 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         // Lasso polygon rendering
         if (this.isLassoSelecting && this.lassoPoints.length >= 4) {
             const lassoColor = this.props.isDarkMode ? Colors.LIGHT_GRAY4 : Colors.DARK_GRAY1;
-            return [<Line key={"lasso"} points={this.lassoPoints} stroke={lassoColor} strokeWidth={2} closed={false} dash={[5, 5]} fill={Colors.GRAY3} fillEnabled={true} opacity={0.2} />];
+            return [<Line key={"lasso"} points={this.lassoPoints} stroke={lassoColor} strokeWidth={2} closed={false} dash={[5, 5]} fill={lassoColor} fillEnabled={true} opacity={0.8} />];
         }
 
         // Box selection for dragAction === DragMode.Select
         if (this.isSelecting && this.props.dragAction === DragMode.Select && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
-            selectionRect = [<Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y} stroke={Colors.GRAY3} strokeWidth={1} />];
+            const selectionColor = this.props.isDarkMode ? Colors.GRAY3 : Colors.DARK_GRAY1;
+            selectionRect = [<Rect fill={selectionColor} key={0} opacity={0.3} x={start.x} y={start.y} width={delta.x} height={delta.y} stroke={selectionColor} strokeWidth={1} />];
         }
 
         return selectionRect;
