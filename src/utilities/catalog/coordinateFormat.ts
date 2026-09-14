@@ -298,10 +298,11 @@ export function resolveDescriptorForAxis(descriptor: CoordinateDescriptor, axis:
  * applies {@link getDegreesPerCatalogUnit} on the way into AST, so scaling here as well would
  * apply that scale twice.
  *
- * Sexagesimal columns are the exception, and have to be. `hms` and `dms` name a notation, not a
- * scale that could be multiplied, so those values are converted to degrees here instead --
- * getDegreesPerCatalogUnit reports 1 degree per unit for them, so exactly one conversion happens
- * on either path. A value carrying its own h/d marker is converted here for the same reason.
+ * Decimal columns return values in their declared units. A value carrying its own h/d marker is
+ * converted from that explicit unit back to the declared unit, so the transform still applies
+ * exactly one scale. Sexagesimal columns are the exception, and have to be: `hms` and `dms` name a
+ * notation, not a scale that could be multiplied, so those values are converted to degrees here --
+ * getDegreesPerCatalogUnit reports 1 degree per unit for them.
  *
  * Pure: everything needed to read the value is in the descriptor, so this never re-reads units or
  * inspects the column name.
@@ -316,10 +317,13 @@ export function parseCoordinateValue(value: string | number | null | undefined, 
     const magnitude = Math.abs(firstField) + Math.abs(minutes) / 60 + Math.abs(seconds) / 3600;
     const sign = recognized.isNegative ? -1 : 1;
 
-    // The descriptor's kind, not the value's: "12:30:00" in a column of decimal hours is 12.5 of
-    // that column's units, and the sexagesimal notation only says how the value was subdivided.
-    if (descriptor.kind === "decimal" && !recognized.explicitUnit) {
-        return sign * magnitude;
+    // Decimal columns are passed to the transform in their declared units. A sexagesimal value
+    // without a marker is still subdivided in those units ("12:30:00" in decimal hours is 12.5
+    // hours), while an explicit marker overrides the descriptor and is converted back to the
+    // declared unit before the transform applies its scale.
+    if (descriptor.kind === "decimal") {
+        const sourceUnit = recognized.explicitUnit ?? descriptor.fieldUnit;
+        return (sign * magnitude * DEGREES_PER_FIELD_UNIT[sourceUnit]) / DEGREES_PER_FIELD_UNIT[descriptor.fieldUnit];
     }
 
     // Radians only ever describe a whole decimal value, so a sexagesimal value in a radian column

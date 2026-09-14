@@ -61,6 +61,8 @@ const SUPPORTED_ROWS: Row[] = [
     // --- decimal hours, as HEASARC and SIMBAD write RA ---
     ["decimal hours by unit", "12.34567", DECIMAL_HOUR, 185.18505],
     ["decimal hours by marker", "12.34567h", DECIMAL_DEGREE, 185.18505],
+    ["explicit hms in decimal hours", "12h30m00s", DECIMAL_HOUR, 187.5],
+    ["explicit dms in decimal hours", "12d30m00s", DECIMAL_HOUR, 12.5],
 
     // --- whitespace separated, the VizieR "h:m:s" / "d:m:s" columns ---
     ["space hms", "20 54 05.689", HOUR, RA_DEGREES],
@@ -185,6 +187,11 @@ describe("coordinate format matrix", () => {
             expect(getCoordinateDescriptorFromUnits("radians")).toEqual({kind: "decimal", fieldUnit: "radian", source: "units"});
             // A bare "1.234" is degrees or radians with equal plausibility, so sniffing says degrees.
             expect(sniffCoordinateDescriptor(["1.234", "0.5"])?.fieldUnit).toBe("degree");
+        });
+
+        test("converts explicit markers back to the declared radian unit", () => {
+            expect(readDegrees("180d", DECIMAL_RADIAN)).toBeCloseTo(180, 9);
+            expect(readDegrees("12h", DECIMAL_RADIAN)).toBeCloseTo(180, 9);
         });
     });
 
