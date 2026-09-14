@@ -49,7 +49,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(componentId).toBeDefined();
         expect(componentId).not.toBe("catalog-overlay-component-0");
         expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(11);
-        // The restored widget is left waiting for the catalog its workspace named.
         expect(pendingWidget.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
     });
 

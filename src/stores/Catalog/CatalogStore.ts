@@ -36,9 +36,8 @@ export class CatalogStore {
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
-    // catalog plot component Id : the catalog that component is showing, of the several it holds
     @observable private catalogPlotSelections: Map<string, number> = new Map();
-    // catalog plot widget Id : the component it belongs to, kept after its own catalog closes
+    // Retains the component association after its catalog-specific widget store closes.
     @observable private catalogPlotComponents: Map<string, string> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();

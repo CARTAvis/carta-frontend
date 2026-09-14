@@ -1264,18 +1264,13 @@ export class CatalogDisplayStore {
     }
 
     /**
-     * Set the display config to exactly what `config` describes. Anything the config leaves out
-     * returns to its default, so the same config always produces the same overlay.
-     *
-     * The order the fields are set in is deliberate and load bearing:
+     * Apply a complete display config. The assignment order is deliberate and load bearing:
      *
      * 1. display mode and size units, because the allowed source size depends on both
      * 2. mapped columns, whose change resets the clipped bounds of their own group
      * 3. scaling, sizes and the clipped bounds themselves
      * 4. the column locks last, so that restoring the minor axis is not overwritten by the major
-     *
-     * Values recomputed from the catalog data, and state a widget keeps for its own presentation,
-     * are not part of a config and are left alone.
+     * Data-derived values and widget presentation state are not part of a config and are left alone.
      */
     @action applyConfig = (config: WorkspaceCatalogConfig | undefined | null): CatalogConfigApplyResult => {
         const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -1418,9 +1413,8 @@ export class CatalogDisplayStore {
     };
 
     /**
-     * Report settings that will not be applied. A config is only rejected for a reason waiting will
-     * not resolve — a column the catalog does not have, or one that cannot carry the axis — so the
-     * settings are dropped rather than retried, and the user is told which ones and why.
+     * Report settings that cannot be applied or retried, such as columns the catalog does not have,
+     * columns with an unsupported type, or columns with no data.
      */
     private reportRejectedConfig(result: CatalogConfigApplyResult) {
         if (result.success) {
@@ -1505,7 +1499,6 @@ export class CatalogDisplayStore {
             return {min: axis.columnMinClip, max: axis.columnMaxClip};
         }
 
-        // applyConfig has already established that a mapped column carries data.
         const range = this.columnRange(profileStore, axis.mapColumn);
         return {
             min: axis.columnMinClip ?? range.min,

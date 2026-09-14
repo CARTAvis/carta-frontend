@@ -31,7 +31,6 @@ describe("CatalogPlotWidgetStore restored columns", () => {
         const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
         store.setStatisticColumn("Vmag");
 
-        // The catalog at the same path has been rewritten and lost two of the three columns.
         const columns = new Set(["Fmag"]);
         const dropped = store.resetUnknownColumns(column => columns.has(column));
 
@@ -47,7 +46,6 @@ describe("CatalogPlotWidgetStore restored columns", () => {
         expect(store.resetUnknownColumns(() => true)).toEqual([]);
         expect(store.xColumnName).toBe("Fmag");
         expect(store.yColumnName).toBe("Bmag");
-        // An axis that was already unset is not reported as a column the catalog is missing.
         expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
     });
 });

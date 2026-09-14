@@ -81,9 +81,9 @@ export interface WorkspaceCatalogSizeAxisConfig {
     areaMode?: boolean;
     scalingType?: FrameScaling;
     scalingParameters?: ScalingParameters;
-    /** Whether the minor axis follows this axis at the lower end. */
+    /** Whether the other size axis follows this axis at the lower end. */
     columnMinLocked?: boolean;
-    /** Whether the minor axis follows this axis at the upper end. */
+    /** Whether the other size axis follows this axis at the upper end. */
     columnMaxLocked?: boolean;
 }
 

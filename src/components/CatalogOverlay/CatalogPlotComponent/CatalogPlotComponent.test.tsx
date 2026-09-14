@@ -104,7 +104,6 @@ describe("CatalogPlotComponent restored plots", () => {
         });
         const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
 
-        // The plot binds to the catalog that is already open, so nothing loads later to check it.
         expect(catalogStore.getAssociatedIdByWidgetId(plotId).catalogFileId).toBe(11);
         expect(store.xColumnName).toBe("Fmag");
         expect(store.yColumnName).toBe(CatalogOverlay.NONE);
@@ -134,13 +133,11 @@ describe("CatalogPlotComponent restored plots", () => {
         const {component} = restorePlot();
         expect(component.catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
 
-        // A catalog the plot was not saved against loads first.
         loadCatalog(11, "second.xml");
 
         expect(component.catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
         expect(component.widgetStore?.xColumnName).toBe("Fmag");
 
-        // The catalog it was saved against arrives, and the plot follows its store onto it.
         loadCatalog(12, "first.xml");
 
         expect(component.catalogFileId).toBe(12);
@@ -158,14 +155,12 @@ describe("CatalogPlotComponent restored plots", () => {
 
         catalogStore.clearCatalogPlotsByFileId(12);
 
-        // The tab is remounted under the store that has gone, and must find its component again.
         const remounted = new CatalogPlotComponent({id: plotId, docked: false} as any);
         expect(remounted.componentId).toBe(componentId);
         expect(remounted.catalogFileId).toBe(11);
         expect(remounted.widgetStore).toBe(displayed);
         remounted.componentWillUnmount();
 
-        // Closing that tab must still release the component rather than leaking it.
         catalogStore.clearCatalogPlotsByWidgetId(plotId);
         expect(catalogStore.catalogPlots.has(componentId)).toBe(false);
         expect(widgetsStore.catalogPlotWidgets.size).toBe(0);
@@ -178,11 +173,9 @@ describe("CatalogPlotComponent restored plots", () => {
         component.handleCatalogFileChange(11);
         const displayed = component.widgetStore!;
 
-        // Closing catalog 11's sibling takes away the store the layout tab is named after.
         catalogStore.clearCatalogPlotsByFileId(12);
         expect(widgetsStore.catalogPlotWidgets.has(plotId)).toBe(false);
 
-        // The tab is still identified by that store, and must still save the plot it is showing.
         expect(widgetsStore.getDisplayedCatalogPlotWidget(plotId)).toBe(displayed);
         expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toMatchObject({
             ...displayed.toConfig(),
@@ -196,14 +189,12 @@ describe("CatalogPlotComponent restored plots", () => {
         loadCatalog(11, "second.xml");
         loadCatalog(12, "first.xml");
 
-        // Switching the File dropdown leaves the restored store behind a second one.
         component.handleCatalogFileChange(11);
         expect(component.catalogFileId).toBe(11);
         const displayed = component.widgetStore;
         expect(displayed).toBeDefined();
         expect(displayed).not.toBe(widgetsStore.catalogPlotWidgets.get(plotId));
 
-        // The layout still saves under the original widget ID, but gets the plot on screen.
         expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toEqual({
             ...displayed!.toConfig(),
             catalogFileId: 11,

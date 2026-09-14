@@ -223,7 +223,6 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeColumnMin.clipd).toBe(1);
         expect(store.sizeColumnMax.clipd).toBe(10);
 
-        // The mapped columns no longer change, so nothing recomputes the bounds on our behalf.
         store.applyConfig(config);
 
         expect(store.colorColumnMin.clipd).toBe(3);
@@ -237,7 +236,6 @@ describe("CatalogDisplayStore display config", () => {
 
         store.applyConfig({sizeAxis: {mapColumn: "Fmag"}, colorAxis: {mapColumn: "Vmag"}});
 
-        // The bounds hold the full data range, which the store recomputes from the data itself.
         expect(store.sizeColumnMin.clipd).toBe(1);
         expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
         expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
@@ -428,7 +426,6 @@ describe("CatalogDisplayStore display config", () => {
         loadRows(profileStore, [NaN, NaN]);
         expect(store.applyConfig({sizeAxis: {mapColumn: "Fmag"}})).toEqual({success: true, errors: []});
 
-        // The rest of the rows arrive, and they are just as empty.
         loadRows(profileStore, [NaN, NaN, NaN, NaN]);
 
         expect(store.sizeColumnMin.clipd).toBe(0);
@@ -469,7 +466,6 @@ describe("CatalogDisplayStore display config", () => {
 
         loadRows(profileStore, [1, 4, 7, 10]);
 
-        // The minor bounds track the major axis rather than their own column's range.
         expect(store.sizeMinorColumnMin.clipd).toBe(store.sizeColumnMin.clipd);
         expect(store.sizeMinorColumnMax.clipd).toBe(store.sizeColumnMax.clipd);
     });
@@ -480,7 +476,6 @@ describe("CatalogDisplayStore display config", () => {
 
         const config: WorkspaceCatalogConfig = {sizeAxis: {mapColumn: "Fmag"}};
         store.applyConfig(config);
-        // The second apply finds the column already mapped, so nothing recomputes the bounds for it.
         store.applyConfig(config);
 
         expect(store.sizeColumnMin.clipd).toBe(store.sizeColumnMin.default);
