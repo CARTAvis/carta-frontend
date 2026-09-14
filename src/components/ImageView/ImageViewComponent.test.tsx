@@ -255,6 +255,17 @@ describe("getPanelSvg", () => {
         });
     });
 
+    test("omits the colorbar from color-blending SVG panels", () => {
+        mockAppStore.overlaySettings.colorbar.isVisible = true;
+        frame.renderConfig.colorscaleArray = [0, "#000", 1, "#fff"];
+        frame.colorbarStore = {positions: [], texts: []};
+        renderColorbarToSvgMock.mockClear();
+
+        getPanelSvg(0, 0, 100, padding, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame}} as never);
+
+        expect(renderColorbarToSvgMock).not.toHaveBeenCalled();
+    });
+
     test("places the beam in the bottom-left channel map cell", () => {
         mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
         frame.hasVisibleBeam = true;

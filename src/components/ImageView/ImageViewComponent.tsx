@@ -71,7 +71,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
+        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor, image?.type === ImageType.COLOR_BLENDING);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
@@ -80,7 +80,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     return imageViewCanvas;
 }
 
-export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)", isColorBlending = false) {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -125,7 +125,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
         ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
-    if (colorbarCanvas) {
+    if (colorbarCanvas && !isColorBlending) {
         let xPos, yPos;
         switch (colorbarPosition) {
             case "top":
@@ -660,6 +660,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     const appStore = AppStore.Instance;
     const pixelRatio = appStore.pixelRatio;
+    const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
     const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
     if (!frame) {
         return null;
@@ -706,7 +707,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     // 4. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
-    if (colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
+    if (!isColorBlending && colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
         const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
         if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
