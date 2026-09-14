@@ -1,11 +1,18 @@
-import {CatalogPlotType} from "enums";
+import {CatalogOverlay, CatalogPlotType} from "enums";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 
 import {CatalogPlotComponent} from "./CatalogPlotComponent";
 
 /** A catalog loaded in this session, as a restored plot's association is matched against. */
 function loadCatalog(fileId: number, filename: string) {
-    CatalogStore.Instance.catalogProfileStores.set(fileId, {catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}}} as any);
+    CatalogStore.Instance.catalogProfileStores.set(fileId, {
+        catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
+        // The columns these tests plot; a restored column outside this set is one the catalog lacks.
+        catalogControlHeader: new Map([
+            ["Fmag", {dataIndex: 0}],
+            ["Bmag", {dataIndex: 1}]
+        ])
+    } as any);
     CatalogStore.Instance.bindPendingCatalogPlots(fileId, {directory: "/catalogs", fileInfo: {name: filename}} as any);
 }
 
@@ -67,10 +74,34 @@ describe("CatalogPlotComponent restored plots", () => {
     }
 
     afterEach(() => {
-        catalogStore.clearCatalogPlotsByComponentId(componentId);
+        // Every component, not just the first: a leftover one keeps its widget-to-component
+        // mapping alive, and widget IDs are handed out again from the start of each test.
+        Array.from(catalogStore.catalogPlots.keys()).forEach(plotComponentId => catalogStore.clearCatalogPlotsByComponentId(plotComponentId));
         catalogStore.catalogProfileStores.clear();
         widgetsStore.catalogPlotWidgets.clear();
         jest.restoreAllMocks();
+    });
+
+    test("drops restored columns the catalog lacks when the layout is applied against a loaded one", () => {
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        loadCatalog(11, "first.xml");
+
+        const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {
+            ...plotProps,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag_gone",
+            statisticColumnName: "Vmag_gone",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml"
+        });
+        const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
+
+        // The plot binds to the catalog that is already open, so nothing loads later to check it.
+        expect(catalogStore.getAssociatedIdByWidgetId(plotId).catalogFileId).toBe(11);
+        expect(store.xColumnName).toBe("Fmag");
+        expect(store.yColumnName).toBe(CatalogOverlay.NONE);
+        expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
+        expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("Bmag_gone"), ["catalog"]);
     });
 
     test("keeps a restored plot waiting for its own catalog instead of the first one loaded", () => {

@@ -274,6 +274,9 @@ export class CatalogStore {
         this.catalogPlotComponents.set(widgetId, componentId);
         if (fileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
             WidgetsStore.Instance.catalogPlotWidgets.get(widgetId)?.setCatalogAssociation(this.catalogAssociationForFileId(fileId));
+            // A layout can be applied while its catalog is already open, binding a restored plot
+            // here rather than when the catalog arrives. Check its columns either way.
+            this.validateCatalogPlotColumns(fileId);
         }
     }
 
