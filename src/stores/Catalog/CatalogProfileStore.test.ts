@@ -11,7 +11,7 @@ const DISPLAYED_COLUMN_SIZE = 3;
 
 type ColumnSpec = {name: string; dataType?: CARTA.ColumnType; units?: string; data?: ProcessedColumnData["data"]};
 
-const CreateProfileStore = (columns: ColumnSpec[], system?: string, dataSize = 0): CatalogProfileStore => {
+const CreateProfileStore = (columns: ColumnSpec[], system?: string, dataSize = 0, equinox?: string, epoch?: string): CatalogProfileStore => {
     const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
     const catalogData = new Map<number, ProcessedColumnData>();
     columns.forEach((column, index) => {
@@ -25,7 +25,7 @@ const CreateProfileStore = (columns: ColumnSpec[], system?: string, dataSize = 0
             dataSize,
             directory: "",
             fileId: 1,
-            fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog", coosys: system ? [new CARTA.Coosys({system})] : undefined})
+            fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog", coosys: system ? [new CARTA.Coosys({system, equinox, epoch})] : undefined})
         },
         catalogHeader,
         catalogData,
@@ -151,6 +151,18 @@ describe("CatalogProfileStore coordinate system", () => {
     test("an ecliptic file gets ecliptic axes, not equatorial ones", () => {
         const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK5");
         expect(store.activedSystem).toEqual({x: "ELON", y: "ELAT"});
+    });
+
+    test("preserves the FK4 reference frame declared by an ecliptic catalog", () => {
+        const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK4");
+
+        expect(store.catalogCoordinateSystem).toEqual(expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}));
+    });
+
+    test("uses explicit catalog equinox and epoch values", () => {
+        const store = CreateProfileStore([{name: "ELON"}, {name: "ELAT"}], "ecl_FK4", 0, "B1975.0", "B1976.5");
+
+        expect(store.catalogCoordinateSystem).toEqual(expect.objectContaining({equinox: "B1975.0", epoch: "B1976.5"}));
     });
 });
 

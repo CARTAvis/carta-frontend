@@ -175,6 +175,35 @@ describe("what the sky-to-pixel transform does with out-of-range coordinates", (
     });
 });
 
+describe("catalog coordinate reference frames in the sky-to-pixel transform", () => {
+    const DEGREES_TO_RADIANS = Math.PI / 180;
+
+    function toPixelWithCatalogFrame(settings, longitudeDegrees, latitudeDegrees) {
+        const catalogFrame = AST.copy(frameSet);
+        try {
+            AST.set(catalogFrame, settings);
+            return AST.transformPointArrays(
+                catalogFrame,
+                new Float64Array([longitudeDegrees * DEGREES_TO_RADIANS]),
+                new Float64Array([latitudeDegrees * DEGREES_TO_RADIANS]),
+                false
+            );
+        } finally {
+            AST.deleteObject(catalogFrame);
+        }
+    }
+
+    test("does not interpret ecl_FK4 coordinates as J2000 ecliptic coordinates", () => {
+        const fk4 = toPixelWithCatalogFrame("System=ECLIPTIC, Equinox=B1950.0, Epoch=B1950.0", 180, -20);
+        const j2000 = toPixelWithCatalogFrame("System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0", 180, -20);
+
+        expect(Number.isFinite(fk4.x[0])).toBe(true);
+        expect(Number.isFinite(fk4.y[0])).toBe(true);
+        expect(Math.abs(fk4.x[0] - j2000.x[0])).toBeGreaterThan(1e-3);
+        expect(Math.abs(fk4.y[0] - j2000.y[0])).toBeGreaterThan(1e-3);
+    });
+});
+
 describe("documents why AST is not the parser", () => {
     test("AST silently truncates the CASA dot-separated form", () => {
         // Not a failure in AST: it reads a valid decimal prefix and stops. But the wrapper reports

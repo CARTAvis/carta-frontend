@@ -188,7 +188,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const eligibilityState = Array.from(this.axisColumnEligibility.entries())
                         .map(([columnName, result]) => `${columnName}:${result.status}`)
                         .join("|");
-                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.shouldUpdateData, eligibilityState] as const;
+                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityState] as const;
                 },
                 ([catalogDisplayStore, canAutoSelectAxes]) => {
                     if (!catalogDisplayStore || !canAutoSelectAxes || catalogDisplayStore.hasAttemptedAutoSelectImageOverlayAxes) {
@@ -509,6 +509,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // Do not spend the one-shot attempt on a partial answer. In particular, a first chunk
         // containing one coordinate and one placeholder is Unknown, not a final rejection.
         if (this.hasPendingStreamedAxisEligibility()) {
+            // The preview is only the first chunk. Keep fetching the displayed candidates so a
+            // later response can settle a unitless string format and wake this reaction again.
+            this.updateByInfiniteScroll();
             return true;
         }
 
@@ -556,7 +559,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             catalogStore.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
-                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem.system, 0, 0);
+                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem, 0, 0);
             }
             profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
         }

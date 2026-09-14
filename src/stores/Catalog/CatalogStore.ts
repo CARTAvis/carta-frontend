@@ -5,7 +5,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {getDegreesPerCatalogUnit, minMaxArray, setAstSystem} from "utilities";
+import {type CatalogCoordinateSystem, getDegreesPerCatalogUnit, minMaxArray, setAstCatalogSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -51,12 +51,22 @@ export class CatalogStore {
         this.catalogCounts.set(fileId, 0);
     }
 
-    @action convertToImageCoordinate(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType, subsetEndIndex: number, subsetDataSize: number) {
+    @action convertToImageCoordinate(
+        fileId: number,
+        xData: Array<number>,
+        yData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogCoordinateSystem: CatalogCoordinateSystem,
+        subsetEndIndex: number,
+        subsetDataSize: number
+    ) {
         const catalog = this.catalogGLData.get(fileId);
         const position = new Float32Array(xData.length * 2);
         if (catalog && xData && yData) {
             const startIndex = subsetEndIndex - subsetDataSize;
-            switch (catalogFrame) {
+            switch (catalogCoordinateSystem.system) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
                         catalog.x[startIndex + i] = xData[i];
@@ -74,7 +84,7 @@ export class CatalogStore {
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogCoordinateSystem);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalog.x[startIndex + i] = pixelData.xImageCoords[i];
                         catalog.y[startIndex + i] = pixelData.yImageCoords[i];
@@ -304,7 +314,14 @@ export class CatalogStore {
         return (getDegreesPerCatalogUnit(unit) * Math.PI) / 180.0;
     }
 
-    private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
+    private static transformCatalogData(
+        xWcsData: Array<number>,
+        yWcsData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogCoordinateSystem: CatalogCoordinateSystem
+    ): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
@@ -317,7 +334,7 @@ export class CatalogStore {
                 AST.setI(wcsCopy, "Current", 2);
             }
 
-            setAstSystem(wcsCopy, catalogFrame, overlay.global);
+            setAstCatalogSystem(wcsCopy, catalogCoordinateSystem);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

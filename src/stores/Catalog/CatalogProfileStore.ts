@@ -33,11 +33,12 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
         if (coordinateSystem) {
             const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
+            const defaults = AbstractCatalogProfileStore.getCatalogCoordinateDefaults(coordinateSystem.system);
             this.catalogCoordinateSystem = {
                 system: system,
-                equinox: coordinateSystem.equinox,
-                epoch: coordinateSystem.epoch,
-                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+                equinox: coordinateSystem.equinox || defaults.equinox,
+                epoch: coordinateSystem.epoch || defaults.epoch,
+                coordinate: this.systemCoordinateMap.get(system)
             };
         } else {
             this.catalogCoordinateSystem = {

@@ -3,6 +3,8 @@ import * as AST from "ast_wrapper";
 import {CatalogSystemType, SystemType} from "enums";
 import {type OverlayGlobalSettings} from "stores/OverlayStore/OverlayStore";
 
+import {type CatalogCoordinateSystem} from "../catalog/types";
+
 export class ASTSettingsString {
     stringList: Array<string>;
 
@@ -110,6 +112,27 @@ export function setAstStringSystem(astString: ASTSettingsString, system: SystemT
 export function setAstSystem(astTransform: AST.FrameSet, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings): void {
     const astString = new ASTSettingsString();
     setAstStringSystem(astString, system, overlayGlobalSettings);
+    if (astString.toString().length > 0) {
+        AST.set(astTransform, astString.toString());
+    }
+}
+
+/**
+ * Set an AST transform to the coordinate frame declared by a catalog. Catalog source metadata is
+ * authoritative here; the overlay's display defaults describe the image UI and must not change how
+ * catalog values are interpreted.
+ */
+export function setAstCatalogSystem(astTransform: AST.FrameSet, catalogCoordinateSystem: CatalogCoordinateSystem): void {
+    const astString = new ASTSettingsString();
+    const system = catalogCoordinateSystem.system;
+    astString.add("System", system);
+
+    if (system !== CatalogSystemType.Pixel0 && system !== CatalogSystemType.Pixel1) {
+        const values = getEquinoxEpochForSystem(system);
+        astString.add("Equinox", catalogCoordinateSystem.equinox || values?.equinox);
+        astString.add("Epoch", catalogCoordinateSystem.epoch || values?.epoch);
+    }
+
     if (astString.toString().length > 0) {
         AST.set(astTransform, astString.toString());
     }

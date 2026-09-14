@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 
 import {CatalogSystemType, SystemType} from "../../enums";
 
-import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
+import {ASTSettingsString, setAstCatalogSystem, setAstStringSystem, setAstSystem} from "./ast";
 
 const GS = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) =>
     ({
@@ -218,5 +218,24 @@ describe("setAstSystem", () => {
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
         expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(CatalogSystemType.ICRS, DEFAULT_FK5));
+    });
+});
+
+describe("setAstCatalogSystem", () => {
+    beforeEach(() => {
+        (AST.set as jest.Mock).mockClear();
+    });
+
+    test("uses an ecliptic catalog's FK4 equinox and epoch", () => {
+        const frameSet = {} as AST.FrameSet;
+
+        setAstCatalogSystem(frameSet, {
+            system: CatalogSystemType.Ecliptic,
+            equinox: "B1950.0",
+            epoch: "B1950.0",
+            coordinate: undefined
+        });
+
+        expect(AST.set).toHaveBeenCalledWith(frameSet, "System=ECLIPTIC, Equinox=B1950.0, Epoch=B1950.0");
     });
 });

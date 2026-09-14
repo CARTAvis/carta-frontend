@@ -8,6 +8,7 @@ import {AppStore, CatalogStore, type ControlHeader} from "stores";
 import {
     CatalogAxisEligibility,
     type CatalogAxisEligibilityResult,
+    type CatalogCoordinateSystem,
     filterProcessedColumnData,
     getCatalogAxisEligibility,
     getComparisonOperatorAndValue,
@@ -117,7 +118,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable isLoadingData: boolean = false;
     @observable catalogType: CatalogType = CatalogType.SIMBAD;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest.$Properties = {};
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined} = {
+    @observable catalogCoordinateSystem: CatalogCoordinateSystem = {
         system: CatalogSystemType.ICRS,
         equinox: null,
         epoch: null,
@@ -231,6 +232,27 @@ export abstract class AbstractCatalogProfileStore {
         return AbstractCatalogProfileStore.CoordinateSystemKeywords.find(([keyword]) => normalizedSystem.includes(keyword))?.[1] ?? CatalogSystemType.ICRS;
     }
 
+    public static getCatalogCoordinateDefaults(system: string | null | undefined): {equinox: string | null; epoch: string | null} {
+        const normalizedSystem = system?.trim().toLowerCase();
+        const catalogSystem = AbstractCatalogProfileStore.getCatalogSystem(system);
+
+        if (catalogSystem === CatalogSystemType.Pixel0 || catalogSystem === CatalogSystemType.Pixel1) {
+            return {equinox: null, epoch: null};
+        }
+
+        if (catalogSystem === CatalogSystemType.FK4 || normalizedSystem === "ecl_fk4") {
+            return {equinox: "B1950.0", epoch: "B1950.0"};
+        }
+
+        return {equinox: "J2000.0", epoch: "J2000.0"};
+    }
+
+    public getCoordinateEligibilityStatus(columnName: string): CatalogAxisEligibility {
+        const controlHeader = this.catalogControlHeader.get(columnName);
+        const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
+        return this.getCoordinateEligibility(columnName, headerInfo).status;
+    }
+
     /**
      * Values for a scatter plot of any two columns. The axes carry no coordinate meaning here --
      * a flux against a velocity is as valid a pair as a longitude against a latitude -- so the
@@ -289,7 +311,7 @@ export abstract class AbstractCatalogProfileStore {
      * The evidence is the store's own accumulated data rather than the rows passed in, which is
      * always at least as much to go on.
      */
-    private getCoordinateEligibility(columnName: string, headerInfo: CARTA.CatalogHeader.$Properties): CatalogAxisEligibilityResult {
+    private getCoordinateEligibility(columnName: string, headerInfo: CARTA.CatalogHeader.$Properties | undefined): CatalogAxisEligibilityResult {
         const settled = this._coordinateEligibility.get(columnName);
         if (settled) {
             return settled;
