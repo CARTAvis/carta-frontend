@@ -90,4 +90,26 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(component.widgetStore?.xColumnName).toBe("Fmag");
         component.componentWillUnmount();
     });
+
+    test("persists the plot the component is showing rather than the one it was created with", () => {
+        const {component, plotId} = restorePlot();
+        loadCatalog(11, "second.xml");
+        loadCatalog(12, "first.xml");
+
+        // Switching the File dropdown leaves the restored store behind a second one.
+        component.handleCatalogFileChange(11);
+        expect(component.catalogFileId).toBe(11);
+        const displayed = component.widgetStore;
+        expect(displayed).toBeDefined();
+        expect(displayed).not.toBe(widgetsStore.catalogPlotWidgets.get(plotId));
+
+        // The layout still saves under the original widget ID, but gets the plot on screen.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toEqual({
+            ...displayed!.toConfig(),
+            catalogFileId: 11,
+            catalogDirectory: "/catalogs",
+            catalogFilename: "second.xml"
+        });
+        component.componentWillUnmount();
+    });
 });

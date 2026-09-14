@@ -301,6 +301,27 @@ export class CatalogStore {
         this.catalogPlotSelections.set(componentId, catalogFileId);
     }
 
+    /**
+     * The plot store one catalog plot component is showing. A component keeps one store per catalog
+     * it has been switched to, so the widget ID it was created with is not always the plot on
+     * screen. A component that has never been mounted has settled on nothing, and the widget's own
+     * binding stands in for it.
+     */
+    public getDisplayedCatalogPlot(catalogPlotWidgetId: string): {widgetId: string; catalogFileId: number | undefined} {
+        const {catalogPlotComponentId, catalogFileId} = this.getAssociatedIdByWidgetId(catalogPlotWidgetId);
+        if (catalogPlotComponentId === undefined) {
+            return {widgetId: catalogPlotWidgetId, catalogFileId};
+        }
+        const selectedCatalogFileId = this.getCatalogPlotSelection(catalogPlotComponentId) ?? catalogFileId;
+        if (selectedCatalogFileId === undefined) {
+            return {widgetId: catalogPlotWidgetId, catalogFileId};
+        }
+        return {
+            widgetId: this.catalogPlots.get(catalogPlotComponentId)?.get(selectedCatalogFileId) ?? catalogPlotWidgetId,
+            catalogFileId: selectedCatalogFileId
+        };
+    }
+
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
         this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {

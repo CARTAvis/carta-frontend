@@ -1141,11 +1141,14 @@ export class WidgetsStore {
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             case CatalogPlotComponent.WidgetConfig.type: {
-                const plotStore = this.catalogPlotWidgets.get(widgetID);
+                // The widget ID names the store this component was created with, but switching its
+                // File dropdown leaves that store hidden behind another. Persist the plot on screen.
+                const displayed = CatalogStore.Instance.getDisplayedCatalogPlot(widgetID);
+                const plotStore = this.catalogPlotWidgets.get(displayed.widgetId);
                 if (!plotStore) {
                     return undefined;
                 }
-                const {catalogFileId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetID);
+                const catalogFileId = displayed.catalogFileId;
                 return {
                     ...plotStore.toConfig(),
                     ...(catalogFileId !== undefined && catalogFileId !== CatalogStore.PENDING_CATALOG_FILE_ID ? CatalogStore.Instance.catalogAssociationForFileId(catalogFileId) : {})
