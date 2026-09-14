@@ -39,6 +39,20 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(2);
     });
 
+    test("gives a catalog its own widget when every widget waits for a different one", () => {
+        const pendingWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", CatalogStore.PENDING_CATALOG_FILE_ID);
+        pendingWidget.setCatalogAssociation({catalogDirectory: "/data", catalogFilename: "a.xml"});
+        catalogStore.imageAssociatedCatalogId.set(103, []);
+
+        const componentId = appStore.updateCatalogProfile(11, {frameInfo: {fileId: 103}} as any, {directory: "/data", fileInfo: {name: "b.xml"}} as any);
+
+        expect(componentId).toBeDefined();
+        expect(componentId).not.toBe("catalog-overlay-component-0");
+        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(11);
+        // The restored widget is left waiting for the catalog its workspace named.
+        expect(pendingWidget.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+    });
+
     test("updates every widget when the first catalog is loaded for a new image", () => {
         const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);

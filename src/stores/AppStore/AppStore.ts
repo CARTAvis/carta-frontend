@@ -1235,12 +1235,10 @@ export class AppStore {
     }
 
     @action updateCatalogProfile = (fileId: number, frame: FrameStore, catalogInfo?: Pick<CatalogInfo, "directory" | "fileInfo">): string | undefined => {
-        let catalogComponentId: string | undefined;
         // update image associated catalog file
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
         this.widgetsStore.bindPendingCatalogWidgets(fileId, catalogInfo);
-        const catalogComponentSize = this.widgetsStore.catalogWidgets.size;
         const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;
@@ -1255,12 +1253,7 @@ export class AppStore {
 
         catalogStore.getOrCreateCatalogDisplayStore(fileId);
         catalogStore.bindPendingCatalogPlots(fileId, catalogInfo);
-        if (catalogComponentSize === 0) {
-            catalogComponentId = this.widgetsStore.createFloatingCatalogWidget(fileId);
-        } else {
-            catalogComponentId = this.widgetsStore.updateCatalogWidgetSelection(fileId);
-        }
-        return catalogComponentId;
+        return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId);
     };
 
     @action removeCatalog(fileId: number, catalogComponentId?: string) {

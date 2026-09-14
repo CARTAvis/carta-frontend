@@ -1615,7 +1615,11 @@ export class WidgetsStore {
         }
     };
 
-    /** Select a catalog in the first widget when an image-view interaction identifies it, and return that widget's ID. */
+    /**
+     * Select a catalog in the first widget that can show it, and return that widget's ID. A widget
+     * still waiting for the catalog a restored workspace named is not one that can: it is left
+     * waiting, and undefined is returned so that the caller gives this catalog a widget of its own.
+     */
     @action updateCatalogWidgetSelection = (catalogFileId: number): string | undefined => {
         const widgets = Array.from(this.catalogWidgets.entries());
         const widget =
@@ -1623,7 +1627,7 @@ export class WidgetsStore {
             widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID) ??
             widgets.find(([, widgetStore]) => !CatalogStore.hasStableCatalogIdentity(widgetStore.getCatalogAssociation()));
         if (!widget) {
-            return widgets[0]?.[0];
+            return undefined;
         }
         const [componentId, widgetStore] = widget;
         widgetStore.setSelectedCatalogId(catalogFileId);
