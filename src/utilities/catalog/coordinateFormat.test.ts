@@ -31,6 +31,10 @@ describe("coordinate format", () => {
             expect(getCoordinateDescriptorFromUnits("degrees")).toEqual({kind: "decimal", fieldUnit: "degree", source: "units"});
         });
 
+        test("reads astropy's hourangle unit as decimal hours", () => {
+            expect(getCoordinateDescriptorFromUnits("hourangle")).toEqual({kind: "decimal", fieldUnit: "hour", source: "units"});
+        });
+
         test("rejects units that are not coordinate units", () => {
             expect(getCoordinateDescriptorFromUnits("hmsdms")).toBeUndefined();
             expect(getCoordinateDescriptorFromUnits("pix")).toBeUndefined();

@@ -28,6 +28,7 @@ const HOUR: ColumnFormat = {descriptor: {kind: "sexagesimal", fieldUnit: "hour",
 const DEGREE: ColumnFormat = {descriptor: {kind: "sexagesimal", fieldUnit: "degree", source: "units"}, units: "dms"};
 const DECIMAL_DEGREE: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "degree", source: "units"}, units: "deg"};
 const DECIMAL_HOUR: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "hour", source: "units"}, units: "h"};
+const DECIMAL_HOURANGLE: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "hour", source: "units"}, units: "hourangle"};
 const DECIMAL_RADIAN: ColumnFormat = {descriptor: {kind: "decimal", fieldUnit: "radian", source: "units"}, units: "rad"};
 
 /**
@@ -60,6 +61,7 @@ const SUPPORTED_ROWS: Row[] = [
 
     // --- decimal hours, as HEASARC and SIMBAD write RA ---
     ["decimal hours by unit", "12.34567", DECIMAL_HOUR, 185.18505],
+    ["decimal hours by astropy unit", "12.5", DECIMAL_HOURANGLE, 187.5],
     ["decimal hours by marker", "12.34567h", DECIMAL_DEGREE, 185.18505],
     ["explicit hms in decimal hours", "12h30m00s", DECIMAL_HOUR, 187.5],
     ["explicit dms in decimal hours", "12d30m00s", DECIMAL_HOUR, 12.5],
@@ -202,6 +204,7 @@ describe("coordinate format matrix", () => {
         test("scales a numeric column by whatever its units are worth", () => {
             expect(getDegreesPerCatalogUnit("h")).toBe(15);
             expect(getDegreesPerCatalogUnit("hours")).toBe(15);
+            expect(getDegreesPerCatalogUnit("hourangle")).toBe(15);
             expect(getDegreesPerCatalogUnit("rad")).toBeCloseTo(180 / Math.PI, 12);
             expect(getDegreesPerCatalogUnit("arcmin")).toBeCloseTo(1 / 60, 12);
             expect(getDegreesPerCatalogUnit("arcsec")).toBeCloseTo(1 / 3600, 12);

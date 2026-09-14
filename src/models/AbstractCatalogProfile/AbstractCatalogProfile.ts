@@ -40,7 +40,18 @@ export interface CatalogInfo {
  * on its way into AST, and converting here as well would apply that scaling twice.
  */
 function getCatalogCoordinateData(column: ProcessedColumnData | undefined, eligibility: CatalogAxisEligibilityResult, units: string | null | undefined, axis: CatalogOverlay): Array<number> | undefined {
-    if (!column || eligibility.status !== CatalogAxisEligibility.Eligible) {
+    if (!column) {
+        return undefined;
+    }
+
+    // An unknown string format is not a reason to omit this chunk: the overlay buffer is written
+    // at absolute row offsets, and omitting it would leave zero-filled vertices at the origin while
+    // later chunks are written past the count. Keep the row slots occupied until a later chunk
+    // provides enough evidence to settle the descriptor.
+    if (eligibility.status === CatalogAxisEligibility.Unknown) {
+        return new Array<number>(column.data?.length ?? 0).fill(NaN);
+    }
+    if (eligibility.status !== CatalogAxisEligibility.Eligible) {
         return undefined;
     }
 
@@ -123,7 +134,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable filterIndexMap: number[] = [];
     @observable isUpdateColumnMode: boolean = false;
 
-    private _catalogData: Map<number, ProcessedColumnData>;
+    @observable private _catalogData: Map<number, ProcessedColumnData>;
     /** Backing store for {@link getCoordinateEligibility}, by column name. */
     private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([

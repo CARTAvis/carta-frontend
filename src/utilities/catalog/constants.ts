@@ -34,4 +34,4 @@ export const CATALOG_DEGREE_UNITS = ["d", "deg", "degree", "degrees"];
 export const CATALOG_ARCMIN_UNITS = ["arcmin", "arcminute", "arcminutes"];
 export const CATALOG_ARCSEC_UNITS = ["arcsec", "arcsecond", "arcseconds"];
 export const CATALOG_RADIAN_UNITS = ["rad", "radian", "radians"];
-export const CATALOG_HOUR_UNITS = ["h", "hr", "hour", "hours"];
+export const CATALOG_HOUR_UNITS = ["h", "hr", "hour", "hours", "hourangle"];

@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {CatalogSystemType, CatalogType, PreferenceKeys} from "enums";
 import {PreferenceStore} from "stores";
@@ -234,6 +235,36 @@ describe("CatalogProfileStore plot data", () => {
         expect(coords.wcsX).toHaveLength(2);
         expect(coords.wcsY).toHaveLength(2);
         expect(coords.wcsX?.every(isNaN)).toBe(true);
+    });
+
+    test("keeps an unresolved early chunk aligned until a later chunk identifies its format", () => {
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String}
+        ]);
+        const blankChunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["", ""]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["", ""]}]
+        ]);
+
+        // The first chunk still needs two slots in the GL buffer; it must not be omitted while the
+        // sniffer has no evidence yet.
+        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk);
+        expect(earlyCoords.wcsX).toEqual([NaN, NaN]);
+        expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
+
+        runInAction(() => {
+            store.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", "12:30:00"]});
+            store.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["", "-21:57:15"]});
+        });
+
+        const laterChunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}]
+        ]);
+        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk);
+        expect(laterCoords.wcsX?.[0]).toBeCloseTo(187.5, 10);
+        expect(laterCoords.wcsY?.[0]).toBeCloseTo(-21.954166666666667, 10);
     });
 
     test("drops the rows it cannot read, not the chunk they arrived in", () => {

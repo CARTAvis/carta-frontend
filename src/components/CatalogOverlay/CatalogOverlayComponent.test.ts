@@ -346,6 +346,19 @@ describe("CatalogOverlayComponent", () => {
             expect(component["axisColumnEligibility"].get("note")?.reason).toBeTruthy();
         });
 
+        test("refreshes column eligibility when catalog values arrive", () => {
+            const profileStore = CreateCatalogProfileStore(12345, CatalogSystemType.ICRS, [{name: "RA1", dataType: CARTA.ColumnType.String}]);
+            const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("unknown");
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]});
+            });
+
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("eligible");
+        });
+
         test("auto-selects hms and dms coordinate columns", () => {
             const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
                 {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},

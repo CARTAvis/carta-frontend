@@ -313,11 +313,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
      * been fetched. Only displayed columns are requested from the backend, so this is routinely
      * empty for a column the user has not switched on yet.
      */
-    private getColumnSampleData(columnIndex: number | undefined): Array<string | null | undefined> | undefined {
+    private getColumnSampleData(catalogData: Map<number, ProcessedColumnData>, columnIndex: number | undefined): Array<string | null | undefined> | undefined {
         if (columnIndex === undefined) {
             return undefined;
         }
-        const columnData = this.profileStore?.catalogData?.get(columnIndex);
+        const columnData = catalogData.get(columnIndex);
         return columnData?.dataType === CARTA.ColumnType.String ? (columnData.data as Array<string | null | undefined>) : undefined;
     }
 
@@ -332,12 +332,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return eligibility;
         }
 
+        const catalogData = profileStore.catalogData;
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex === undefined || !header.display) {
                 return;
             }
             const catalogHeader = profileStore.catalogHeader[header.dataIndex];
-            const sampleData = this.getColumnSampleData(catalogHeader?.columnIndex);
+            const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
             eligibility.set(columnName, getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData));
         });
         return eligibility;
@@ -392,13 +393,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const axisOptions: string[] = [];
+        const catalogData = profileStore.catalogData;
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
                 return;
             }
 
             const catalogHeader = profileStore.catalogHeader[header.dataIndex];
-            const sampleData = this.getColumnSampleData(catalogHeader?.columnIndex);
+            const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
             const status = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData).status;
             if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
                 axisOptions.push(columnName);
