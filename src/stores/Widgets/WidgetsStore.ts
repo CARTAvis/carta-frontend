@@ -1114,12 +1114,15 @@ export class WidgetsStore {
             if (!widgetStore) {
                 return undefined;
             }
-            const catalogDisplayStore = CatalogStore.Instance.getCatalogDisplayStore(widgetStore.selectedCatalogId);
+            // A widget still waiting for its catalog has no display store to read: it is holding the
+            // settings it was restored with, so write those back out rather than dropping them.
+            const isPending = widgetStore.selectedCatalogId === CatalogStore.PENDING_CATALOG_FILE_ID;
+            const displayConfig = isPending ? widgetStore.getPendingDisplayConfig() : CatalogStore.Instance.getCatalogDisplayStore(widgetStore.selectedCatalogId)?.toConfig();
             // Keep the legacy flat layout shape until workspace persistence owns display state.
             return {
-                ...(catalogDisplayStore?.toConfig() ?? {}),
+                ...(displayConfig ?? {}),
                 ...widgetStore.toLayoutSettings(),
-                ...(widgetStore.selectedCatalogId !== CatalogStore.PENDING_CATALOG_FILE_ID ? CatalogStore.Instance.catalogAssociationForFileId(widgetStore.selectedCatalogId) : {})
+                ...(isPending ? {} : CatalogStore.Instance.catalogAssociationForFileId(widgetStore.selectedCatalogId))
             };
         }
 

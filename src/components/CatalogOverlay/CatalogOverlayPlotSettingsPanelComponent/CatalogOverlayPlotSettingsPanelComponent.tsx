@@ -136,7 +136,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 if (catalogFileId !== undefined) {
                     const activeFiles = catalogStore.activeCatalogFiles;
                     WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, catalogFileId);
-                    catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+                    // The sentinel names no catalog, so a store built for it would hold nothing but
+                    // defaults and never be released. The widget's own catalog brings one with it.
+                    if (catalogFileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
+                        catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+                    }
 
                     if (activeFiles?.includes(catalogFileId)) {
                         const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);

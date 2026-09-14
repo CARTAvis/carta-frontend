@@ -240,6 +240,24 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.catalogDisplayStores.delete(1);
     });
 
+    test("writes restored display settings back out while the widget is still waiting", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "#123456", shape: "circle", size: 14, xAxis: "RA"};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-7")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        // Re-saving before the catalog arrives must not drop the settings that are still waiting.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toMatchObject({
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml",
+            color: "#123456",
+            shape: "circle",
+            size: 14,
+            xAxis: "RA"
+        });
+    });
+
     test("binds a restored plot to a catalog from the current session", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const widgetSettings = {plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag", catalogFileId: 3};
