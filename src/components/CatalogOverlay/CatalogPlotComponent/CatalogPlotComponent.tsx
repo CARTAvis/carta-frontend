@@ -17,6 +17,7 @@ import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/Plot
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ScatterPlotComponent} from "components/Shared/ScatterPlot/ScatterPlotComponent";
 import {CatalogPlotType, CatalogUpdateMode, DragMode, PlotType, TickType} from "enums";
+import {CustomIcon} from "icons/CustomIcons";
 import {type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
@@ -1694,7 +1695,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                     <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} />
                                 </Tooltip>
                                 <Tooltip content="Lasso select">
-                                    <AnchorButton icon="polygon-filter" active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} />
+                                    <AnchorButton icon={<CustomIcon icon="lasso" />} active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} />
                                 </Tooltip>
                                 <Tooltip content="Zoom">
                                     <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} />
