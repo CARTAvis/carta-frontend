@@ -1394,6 +1394,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 scales: {
                     x: {
                         type: "linear",
+                        offset: false,
                         title: {display: true, text: widgetStore.xColumnName, color: labelColor},
                         ticks: {
                             includeBounds: false,
@@ -1406,7 +1407,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                 return String(value);
                             }
                         },
-                        grid: {color: gridColor},
+                        grid: {color: gridColor, offset: false},
                         border: {color: gridColor},
                         min: xMin,
                         max: xMax
