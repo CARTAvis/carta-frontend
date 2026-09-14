@@ -30,6 +30,7 @@ Chart.register(BarController, BarElement, Legend, LinearScale, LogarithmicScale,
 
 const DEFAULT_NUM_BINS = 10; // default fallback
 const SCATTER_GRID_SIZE = 64;
+const DOUBLE_CLICK_THRESHOLD = 300;
 
 type ScatterSpatialIndex = {
     xData: ArrayLike<number>;
@@ -65,6 +66,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private pendingScatterCursor: {x: number; y: number} | undefined;
     private scatterCursorFrame: number | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
+    private pendingHistogramClickHandle: ReturnType<typeof setTimeout> | undefined;
+    private hasHistogramBarDoubleClickHandled = false;
     private webglOverlayRef: CatalogScatterWebGL | null = null;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
@@ -157,6 +160,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (this.scatterCursorFrame !== undefined) {
             window.cancelAnimationFrame(this.scatterCursorFrame);
         }
+        clearTimeout(this.pendingHistogramClickHandle);
     }
 
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
@@ -672,6 +676,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.onDeselect();
     };
 
+    private onScatterDoubleClick = () => {
+        const dragMode = this.widgetStore?.dragMode;
+        if (dragMode === DragMode.Select || dragMode === DragMode.Lasso) {
+            this.onAutoscale();
+        } else {
+            this.onDoubleClick();
+        }
+    };
+
     private selectCatalogPoints(rawIndices: number[]) {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.catalogDisplayStore;
@@ -993,7 +1006,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
         if (this.widgetStore?.histogramDragMode === DragMode.Select) {
-            this.onDeselect();
+            clearTimeout(this.pendingHistogramClickHandle);
+            this.pendingHistogramClickHandle = undefined;
+            requestAnimationFrame(() => {
+                const didDoubleClickBar = this.hasHistogramBarDoubleClickHandled;
+                this.hasHistogramBarDoubleClickHandled = false;
+                if (!didDoubleClickBar) {
+                    this.onAutoscale();
+                }
+            });
             return;
         }
         this.onDoubleClick();
@@ -1399,16 +1420,27 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         beginAtZero: !widgetStore.isLogScaleY
                     }
                 },
-                onClick: (_event, elements) => {
+                onClick: (event, elements) => {
                     // Skip if a drag action (zoom/select) was just handled
                     if (this.hasHistogramDragHandled) {
                         this.hasHistogramDragHandled = false;
                         return;
                     }
                     if (widgetStore.histogramDragMode === DragMode.Select && elements.length > 0) {
+                        clearTimeout(this.pendingHistogramClickHandle);
+                        this.pendingHistogramClickHandle = undefined;
+                        if (((event.native as MouseEvent | null)?.detail ?? 0) > 1) {
+                            this.hasHistogramBarDoubleClickHandled = true;
+                            this.onDeselect();
+                            return;
+                        }
                         const binIndex = elements[0].index;
                         if (histData.binIndices[binIndex]?.length) {
-                            this.selectCatalogPoints(histData.binIndices[binIndex]);
+                            const binIndices = histData.binIndices[binIndex];
+                            this.pendingHistogramClickHandle = setTimeout(() => {
+                                this.selectCatalogPoints(binIndices);
+                                this.pendingHistogramClickHandle = undefined;
+                            }, DOUBLE_CLICK_THRESHOLD);
                         }
                     }
                 },
@@ -1637,7 +1669,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         tickTypeX={TickType.Automatic}
                         tickTypeY={TickType.Automatic}
                         graphZoomedXY={this.onScatterZoomedXY}
-                        graphZoomReset={this.onDoubleClick}
+                        graphZoomReset={this.onScatterDoubleClick}
                         graphSelectionReset={this.onDeselect}
                         graphCursorMoved={this.onScatterCursorMoved}
                         cursorNearestPointAt={this.getNearestScatterPoint}

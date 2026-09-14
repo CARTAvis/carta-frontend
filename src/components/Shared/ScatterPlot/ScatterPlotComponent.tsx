@@ -521,16 +521,28 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
     };
 
-    onStageDoubleClick = () => {
-        if (this.props.dragAction === DragMode.Select || this.props.dragAction === DragMode.Lasso) {
-            if (this.props.graphSelectionReset) {
-                this.props.graphSelectionReset();
-            }
+    private isNearestPointAtPixel = (pixel: Point2D, point: Point2D | undefined) => {
+        if (!point || this.props.xMin === undefined || this.props.xMax === undefined || this.props.yMin === undefined || this.props.yMax === undefined) {
+            return false;
+        }
+        const pointX = this.getPixelValue(point.x, this.props.xMin, this.props.xMax, true);
+        const pointY = this.getPixelValue(point.y, this.props.yMin, this.props.yMax, false);
+        if (pointX === undefined || pointY === undefined) {
+            return false;
+        }
+        const hitRadius = this.props.cursorHitRadius;
+        const distanceX = pointX - pixel.x;
+        const distanceY = pointY - pixel.y;
+        return hitRadius === undefined || distanceX * distanceX + distanceY * distanceY <= hitRadius * hitRadius;
+    };
+
+    onStageDoubleClick = (mousePoint: Point2D, nearestPoint?: Point2D) => {
+        const isSelectionMode = this.props.dragAction === DragMode.Select || this.props.dragAction === DragMode.Lasso;
+        if (isSelectionMode && this.isNearestPointAtPixel(mousePoint, nearestPoint)) {
+            this.props.graphSelectionReset?.();
             return;
         }
-        if (this.props.graphZoomReset) {
-            this.props.graphZoomReset();
-        }
+        this.props.graphZoomReset?.();
     };
 
     onStageClick = ev => {
@@ -550,7 +562,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
-            this.onStageDoubleClick();
+            this.onStageDoubleClick(mousePoint, nearestPoint);
             clearTimeout(this.pendingClickHandle);
             this.pendingClickHandle = undefined;
             return;
