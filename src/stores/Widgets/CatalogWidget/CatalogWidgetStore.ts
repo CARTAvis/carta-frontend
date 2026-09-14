@@ -8,8 +8,6 @@ import {PreferenceStore} from "stores";
 export interface CatalogWidgetLayoutSettings extends WorkspaceCatalogAssociation {
     widgetId?: string;
     tableSeparatorPosition?: string;
-    /** Legacy settings sections keyed by session-local catalog file ID. */
-    settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
     /** The settings section this widget was left on. */
     settingsTabId?: CatalogSettingsTabs;
 }
@@ -101,13 +99,7 @@ export class CatalogWidgetStore {
         if (typeof settings.tableSeparatorPosition === "string") {
             this.tableSeparatorPosition = settings.tableSeparatorPosition;
         }
-        if (settings.settingsTabIdByCatalog) {
-            for (const [catalogFileId, tabId] of Object.entries(settings.settingsTabIdByCatalog)) {
-                if (Number.isFinite(Number(catalogFileId)) && typeof tabId === "number") {
-                    this.settingsTabIdByCatalog.set(Number(catalogFileId), tabId);
-                }
-            }
-        } else if (typeof settings.settingsTabId === "number") {
+        if (typeof settings.settingsTabId === "number") {
             this.settingsTabIdByCatalog.set(this.selectedCatalogId, settings.settingsTabId);
         }
     };

@@ -546,7 +546,6 @@ export class WidgetsStore {
             widgetStore.applyLayoutSettings({
                 ...(widgetSettings as CatalogWidgetLayoutSettings),
                 catalogFileId: selectedCatalogId,
-                settingsTabIdByCatalog: undefined,
                 settingsTabId: savedSettingsTabId
             });
             // Older workspace layouts stored display settings with catalog-prefixed names. Normalize
