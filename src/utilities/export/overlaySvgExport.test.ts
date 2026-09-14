@@ -111,6 +111,10 @@ describe("renderColorbarToSvg", () => {
         const ticks = group.querySelectorAll("line");
         const labels = group.querySelectorAll("text");
         expect(gradient).toHaveAttribute("gradientUnits", "userSpaceOnUse");
+        expect(gradient).toHaveAttribute("x1", "100");
+        expect(gradient).toHaveAttribute("y1", "10");
+        expect(gradient).toHaveAttribute("x2", "100");
+        expect(gradient).toHaveAttribute("y2", "90");
         expect(border).toHaveAttribute("stroke", "#fff");
         expect(ticks[0]).toHaveAttribute("x1", "104");
         expect(ticks[0]).toHaveAttribute("x2", "108");
@@ -169,6 +173,19 @@ describe("renderColorbarToSvg", () => {
         expect(labels[0]).toHaveAttribute("y", expectedNumberY);
         expect(labels[0]).not.toHaveAttribute("transform");
         expect(labels[1]).toHaveAttribute("y", expectedLabelY);
+    });
+
+    test("reverses horizontal gradient direction to match the canvas", () => {
+        const options = createOptions();
+        options.position = "bottom";
+        options.bar = {...options.bar, x: 20, y: 30, width: 80, height: 10};
+
+        const gradient = renderColorbarToSvg(options).querySelector("linearGradient");
+
+        expect(gradient).toHaveAttribute("x1", "100");
+        expect(gradient).toHaveAttribute("y1", "30");
+        expect(gradient).toHaveAttribute("x2", "20");
+        expect(gradient).toHaveAttribute("y2", "30");
     });
 });
 

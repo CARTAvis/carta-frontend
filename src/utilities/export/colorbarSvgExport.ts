@@ -45,7 +45,7 @@ export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numb
     const gradientId = `colorbar-gradient-${gradientCounter++}`;
     const gradient = createSvgElement(
         "linearGradient",
-        isVertical ? {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y + bar.height, x2: bar.x, y2: bar.y} : {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y, x2: bar.x + bar.width, y2: bar.y}
+        isVertical ? {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y, x2: bar.x, y2: bar.y + bar.height} : {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x + bar.width, y1: bar.y, x2: bar.x, y2: bar.y}
     );
 
     // Preserve the supplied colorscale stops.
