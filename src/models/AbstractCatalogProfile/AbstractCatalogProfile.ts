@@ -11,6 +11,7 @@ import {
     filterProcessedColumnData,
     getCatalogAxisEligibility,
     getComparisonOperatorAndValue,
+    getCoordinateDescriptorFromUnits,
     getDegreesPerCatalogUnit,
     getHasFilter,
     isCatalogLatitudeAxis,
@@ -298,6 +299,14 @@ export abstract class AbstractCatalogProfileStore {
         const column = this.catalogOriginalData.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
+        const isUnresolvedString = column?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
+        // A partial file stream can contain too many placeholders for the current sample to reach
+        // the majority threshold. Keep that result Unknown until the requested rows are exhausted;
+        // unlike a settled Ineligible result, it must reserve its absolute row slots in the GL
+        // buffer because a later chunk can still establish the column's format.
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && this.isFileBasedCatalog && this.shouldUpdateData) {
+            return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
+        }
         // Only an answer counts as settled: a column with nothing readable in it yet is a question
         // the rows still to arrive may well answer.
         if (eligibility.status === CatalogAxisEligibility.Eligible) {

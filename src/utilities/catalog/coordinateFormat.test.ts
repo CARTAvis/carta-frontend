@@ -63,6 +63,15 @@ describe("coordinate format", () => {
             expect(recognizeCoordinateString("12:30:00")?.explicitUnit).toBeUndefined();
         });
 
+        test("requires explicit markers to start with h/d and follow h-m-s or d-m-s order", () => {
+            expect(recognizeCoordinateString("12h30m00s")?.fields).toEqual([12, 30, 0]);
+            expect(recognizeCoordinateString("12d30m00s")?.fields).toEqual([12, 30, 0]);
+            expect(recognizeCoordinateString("12h30d")).toBeUndefined();
+            expect(recognizeCoordinateString("12m30s")).toBeUndefined();
+            expect(recognizeCoordinateString("12h30s")).toBeUndefined();
+            expect(recognizeCoordinateString("12d30h")).toBeUndefined();
+        });
+
         test("recognizes the CASA dot-separated form as its own kind", () => {
             // Read as a decimal this is -21.57, two arcminutes from the truth. Giving it a
             // distinct kind is what stops it from being silently mistaken for one.

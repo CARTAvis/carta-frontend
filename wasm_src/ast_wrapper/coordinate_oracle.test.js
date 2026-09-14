@@ -38,30 +38,39 @@ function astUnformat(axis, text) {
 function createSkyFrameSet(referenceRa, referenceDec) {
     const quote = String.fromCharCode(39);
     const fitsChan = AST.emptyFitsChan();
-    [
-        "NAXIS   = 2",
-        "NAXIS1  = 100",
-        "NAXIS2  = 100",
-        `CTYPE1  = ${quote}RA---TAN${quote}`,
-        `CTYPE2  = ${quote}DEC--TAN${quote}`,
-        `CUNIT1  = ${quote}deg${quote}`,
-        `CUNIT2  = ${quote}deg${quote}`,
-        "CRPIX1  = 50",
-        "CRPIX2  = 50",
-        `CRVAL1  = ${referenceRa}`,
-        `CRVAL2  = ${referenceDec}`,
-        "CDELT1  = -0.001",
-        "CDELT2  = 0.001",
-        `RADESYS = ${quote}ICRS${quote}`,
-        "EQUINOX = 2000.0"
-    ].forEach(card => AST.putFits(fitsChan, card));
-    return AST.getFrameFromFitsChan(fitsChan, false);
+    try {
+        [
+            "NAXIS   = 2",
+            "NAXIS1  = 100",
+            "NAXIS2  = 100",
+            `CTYPE1  = ${quote}RA---TAN${quote}`,
+            `CTYPE2  = ${quote}DEC--TAN${quote}`,
+            `CUNIT1  = ${quote}deg${quote}`,
+            `CUNIT2  = ${quote}deg${quote}`,
+            "CRPIX1  = 50",
+            "CRPIX2  = 50",
+            `CRVAL1  = ${referenceRa}`,
+            `CRVAL2  = ${referenceDec}`,
+            "CDELT1  = -0.001",
+            "CDELT2  = 0.001",
+            `RADESYS = ${quote}ICRS${quote}`,
+            "EQUINOX = 2000.0"
+        ].forEach(card => AST.putFits(fitsChan, card));
+        return AST.getFrameFromFitsChan(fitsChan, false);
+    } finally {
+        AST.deleteObject(fitsChan);
+    }
 }
 
 beforeAll(async () => {
     await AST.onReady;
     frameSet = createSkyFrameSet(187.5, -21.9);
     valuePointer = AST._malloc(8);
+});
+
+afterAll(() => {
+    AST.deleteObject(frameSet);
+    AST._free(valuePointer);
 });
 
 describe("catalog coordinate parser against the AST oracle", () => {
@@ -145,10 +154,14 @@ describe("what the sky-to-pixel transform does with out-of-range coordinates", (
         // is therefore not something a range check can rely on: hence the guard in
         // getCatalogCoordinateData, which drops these before they ever reach the transform.
         const northernFrame = createSkyFrameSet(15, 10);
-        const northernPoint = AST.transformPointArrays(northernFrame, new Float64Array([187.6 * DEGREES_TO_RADIANS]), new Float64Array([-91 * DEGREES_TO_RADIANS]), false);
+        try {
+            const northernPoint = AST.transformPointArrays(northernFrame, new Float64Array([187.6 * DEGREES_TO_RADIANS]), new Float64Array([-91 * DEGREES_TO_RADIANS]), false);
 
-        expect(Number.isFinite(toPixel(187.6, -91).y)).toBe(true);
-        expect(northernPoint.y[0]).toBe(AST_BAD);
+            expect(Number.isFinite(toPixel(187.6, -91).y)).toBe(true);
+            expect(northernPoint.y[0]).toBe(AST_BAD);
+        } finally {
+            AST.deleteObject(northernFrame);
+        }
     });
 
     test("AST__BAD is not a corruption signal: valid far-hemisphere positions produce it too", () => {

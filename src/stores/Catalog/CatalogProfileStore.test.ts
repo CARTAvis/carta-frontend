@@ -11,7 +11,7 @@ const DISPLAYED_COLUMN_SIZE = 3;
 
 type ColumnSpec = {name: string; dataType?: CARTA.ColumnType; units?: string; data?: ProcessedColumnData["data"]};
 
-const CreateProfileStore = (columns: ColumnSpec[], system?: string): CatalogProfileStore => {
+const CreateProfileStore = (columns: ColumnSpec[], system?: string, dataSize = 0): CatalogProfileStore => {
     const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
     const catalogData = new Map<number, ProcessedColumnData>();
     columns.forEach((column, index) => {
@@ -22,7 +22,7 @@ const CreateProfileStore = (columns: ColumnSpec[], system?: string): CatalogProf
 
     return new CatalogProfileStore(
         {
-            dataSize: 0,
+            dataSize,
             directory: "",
             fileId: 1,
             fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog", coosys: system ? [new CARTA.Coosys({system})] : undefined})
@@ -265,6 +265,46 @@ describe("CatalogProfileStore plot data", () => {
         const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk);
         expect(laterCoords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(laterCoords.wcsY?.[0]).toBeCloseTo(-21.954166666666667, 10);
+    });
+
+    test("keeps an early noisy chunk aligned until a later majority identifies its format", () => {
+        const store = CreateProfileStore(
+            [
+                {name: "RAJ2000", dataType: CARTA.ColumnType.String},
+                {name: "DEJ2000", dataType: CARTA.ColumnType.String}
+            ],
+            undefined,
+            3
+        );
+        const earlyChunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--"]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--"]}]
+        ]);
+
+        runInAction(() => {
+            store.catalogOriginalData.set(0, earlyChunk.get(0)!);
+            store.catalogOriginalData.set(1, earlyChunk.get(1)!);
+        });
+        store.setSubsetEndIndex(2);
+
+        // One recognized value out of two inspected values is not a majority, but the rows still
+        // occupy these absolute positions in the streamed overlay buffer.
+        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", earlyChunk);
+        expect(earlyCoords.wcsX).toEqual([NaN, NaN]);
+        expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
+
+        runInAction(() => {
+            store.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00"]});
+            store.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00"]});
+        });
+
+        const laterChunk = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["13:00:00"]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["-22:00:00"]}]
+        ]);
+        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk);
+        expect(laterCoords.wcsX?.[0]).toBeCloseTo(195, 10);
+        expect(laterCoords.wcsY?.[0]).toBe(-22);
     });
 
     test("drops the rows it cannot read, not the chunk they arrived in", () => {

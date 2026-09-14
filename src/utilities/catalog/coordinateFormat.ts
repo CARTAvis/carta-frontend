@@ -48,8 +48,8 @@ const COMPACT_SEXAGESIMAL_PATTERN = /^([+-]?)(\d{6,7})(\.\d+)?$/;
 // while a run of whitespace is a single boundary. A `[:\s]+` class would swallow "::" as one
 // separator and silently turn AST's omitted-field spelling into a different coordinate.
 const SEXAGESIMAL_SEPARATOR_PATTERN = /\s*:\s*|\s+/;
-const HOUR_MARKER_PATTERN = /h/i;
-const DEGREE_MARKER_PATTERN = /d/i;
+const MARKED_SEXAGESIMAL_PATTERN = /^([+-]?)(\d+(?:\.\d+)?)\s*([hd])(?:\s*(\d+(?:\.\d+)?)\s*m(?:\s*(\d+(?:\.\d+)?)\s*s)?)?$/i;
+const COORDINATE_MARKER_PATTERN = /[hmsd]/i;
 const SIGN_PATTERN = /^[+-]/;
 
 const HOUR_AXES = new Set<CatalogOverlay>([CatalogOverlay.RA]);
@@ -100,14 +100,14 @@ export function recognizeCoordinateString(value: string | number | null | undefi
         }
     }
 
-    const hasHourMarker = HOUR_MARKER_PATTERN.test(text);
-    const hasDegreeMarker = DEGREE_MARKER_PATTERN.test(text);
-    const parts = text.replace(/[hmsd]/gi, ":").split(SEXAGESIMAL_SEPARATOR_PATTERN);
-
-    // A trailing separator is just the unit letter that closes the last field ("20h54m05.689s").
-    if (parts.length > 1 && parts[parts.length - 1] === "") {
-        parts.pop();
+    // Marked sexagesimal values have their own grammar. Looking for h/d anywhere in the value and
+    // replacing every marker with a separator would turn malformed values such as "12h30d" or
+    // "12m30s" into plausible coordinates. Require the leading unit, then the ordered m/s suffix.
+    if (COORDINATE_MARKER_PATTERN.test(text)) {
+        return recognizeMarkedSexagesimal(text, isNegative);
     }
+
+    const parts = text.split(SEXAGESIMAL_SEPARATOR_PATTERN);
     // A leading or interior gap is one of AST's omitted-field spellings (":45:33", "6::2.5").
     // AST reads those positionally; we would read them as a different coordinate entirely, so
     // they are rejected rather than quietly given a second meaning.
@@ -129,15 +129,39 @@ export function recognizeCoordinateString(value: string | number | null | undefi
         return undefined;
     }
 
-    const explicitUnit = hasHourMarker ? "hour" : hasDegreeMarker ? "degree" : undefined;
-
     // A single field with no marker carries no sexagesimal notation at all, so it is a plain
     // decimal value. Treating it as sexagesimal is what would let a bare "187.5" be scaled by 15.
-    if (fields.length === 1 && !hasHourMarker && !hasDegreeMarker) {
+    if (fields.length === 1) {
         return {kind: "decimal", fields, isNegative};
     }
 
-    return {kind: "sexagesimal", explicitUnit, fields, isNegative};
+    return {kind: "sexagesimal", fields, isNegative};
+}
+
+function recognizeMarkedSexagesimal(text: string, isNegative: boolean): RecognizedCoordinate | undefined {
+    const match = MARKED_SEXAGESIMAL_PATTERN.exec(text);
+    if (!match) {
+        return undefined;
+    }
+
+    const fields = [Number(match[2])];
+    if (match[4] !== undefined) {
+        fields.push(Number(match[4]));
+    }
+    if (match[5] !== undefined) {
+        fields.push(Number(match[5]));
+    }
+
+    if (!isValidSexagesimalFields(fields)) {
+        return undefined;
+    }
+
+    return {
+        kind: "sexagesimal",
+        explicitUnit: match[3].toLowerCase() === "h" ? "hour" : "degree",
+        fields,
+        isNegative
+    };
 }
 
 function recognizeCompactSexagesimal(text: string, isNegative: boolean): RecognizedCoordinate | undefined {
