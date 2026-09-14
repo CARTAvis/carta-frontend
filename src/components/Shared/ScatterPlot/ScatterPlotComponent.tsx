@@ -83,6 +83,7 @@ export class ScatterPlotComponentProps {
 
 // Maximum time between double clicks
 const DOUBLE_CLICK_THRESHOLD = 300;
+const DOUBLE_CLICK_DISTANCE = 5;
 // Minimum pixel distance before turning a click into a drag event
 const DRAG_THRESHOLD = 3;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
@@ -97,6 +98,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private plotRef: Chart;
     private containerRef = React.createRef<HTMLDivElement>();
     private previousClickTime: number;
+    private previousClickPosition: Point2D | undefined;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
     private forceUpdateHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
@@ -570,30 +572,36 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
-            this.onStageDoubleClick(mousePoint, nearestPoint);
-            clearTimeout(this.pendingClickHandle);
-            this.pendingClickHandle = undefined;
-            return;
-        } else {
-            clearTimeout(this.pendingClickHandle);
-            this.pendingClickHandle = undefined;
-            this.pendingClickHandle = setTimeout(() => {
-                // Ignore click-drags for click handling
-                const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};
-                if (mouseMoveDist.x > 1 || mouseMoveDist.y > 1) {
-                    return;
-                }
-                const nearestPointX = nearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined ? this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true) : undefined;
-                const nearestPointY = nearestPoint && this.props.yMin !== undefined && this.props.yMax !== undefined ? this.getPixelValue(nearestPoint.y, this.props.yMin, this.props.yMax, false) : undefined;
-                const hitRadius = this.props.cursorHitRadius;
-                const distanceX = nearestPointX === undefined ? Infinity : nearestPointX - mousePoint.x;
-                const distanceY = nearestPointY === undefined ? Infinity : nearestPointY - mousePoint.y;
-                // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseButton === 0 && nearestPoint && this.props.data && (hitRadius === undefined || distanceX * distanceX + distanceY * distanceY <= hitRadius * hitRadius)) {
-                    this.props.graphClicked(nearestPoint.x, nearestPoint.y, this.props.data);
-                }
-            }, DOUBLE_CLICK_THRESHOLD);
+            const previousClickPosition = this.previousClickPosition;
+            const clickDistance = previousClickPosition ? Math.hypot(mousePoint.x - previousClickPosition.x, mousePoint.y - previousClickPosition.y) : Infinity;
+            if (clickDistance <= DOUBLE_CLICK_DISTANCE) {
+                this.previousClickPosition = undefined;
+                clearTimeout(this.pendingClickHandle);
+                this.pendingClickHandle = undefined;
+                this.onStageDoubleClick(mousePoint, nearestPoint);
+                return;
+            }
         }
+
+        clearTimeout(this.pendingClickHandle);
+        this.pendingClickHandle = undefined;
+        this.previousClickPosition = mousePoint;
+        this.pendingClickHandle = setTimeout(() => {
+            // Ignore click-drags for click handling
+            const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};
+            if (mouseMoveDist.x > 1 || mouseMoveDist.y > 1) {
+                return;
+            }
+            const nearestPointX = nearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined ? this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true) : undefined;
+            const nearestPointY = nearestPoint && this.props.yMin !== undefined && this.props.yMax !== undefined ? this.getPixelValue(nearestPoint.y, this.props.yMin, this.props.yMax, false) : undefined;
+            const hitRadius = this.props.cursorHitRadius;
+            const distanceX = nearestPointX === undefined ? Infinity : nearestPointX - mousePoint.x;
+            const distanceY = nearestPointY === undefined ? Infinity : nearestPointY - mousePoint.y;
+            // Do left-click callback if it exists
+            if (this.props.graphClicked && mouseButton === 0 && nearestPoint && this.props.data && (hitRadius === undefined || distanceX * distanceX + distanceY * distanceY <= hitRadius * hitRadius)) {
+                this.props.graphClicked(nearestPoint.x, nearestPoint.y, this.props.data);
+            }
+        }, DOUBLE_CLICK_THRESHOLD);
     };
 
     onStageMouseUp = ev => {
@@ -603,6 +611,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
+            this.previousClickPosition = undefined;
             if (this.props.data || this.props.dragAction) {
                 if (this.isLassoSelecting && this.props.onLassoSelected && this.lassoPoints.length >= 6) {
                     // Convert lasso pixel coords to graph coords

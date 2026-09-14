@@ -884,7 +884,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const currentMax = xScale.max;
         const range = currentMax - currentMin;
         event.preventDefault();
-        const delta = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? event.deltaY : event.deltaY * 15;
+        const delta = event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * chart.height : event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 15 : event.deltaY;
         const zoomFactor = clamp(-delta * 0.0005, -0.5, 0.5);
         const mouseX = xScale.getValueForPixel(event.offsetX) ?? currentMin + range / 2;
         const fraction = (mouseX - currentMin) / range;
@@ -1441,8 +1441,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (histData.binIndices[binIndex]?.length) {
                             const binIndices = histData.binIndices[binIndex];
                             this.pendingHistogramClickHandle = setTimeout(() => {
-                                this.selectCatalogPoints(binIndices);
                                 this.pendingHistogramClickHandle = undefined;
+                                if (this.widgetStore?.histogramDragMode === DragMode.Select && this.histogramData === histData) {
+                                    this.selectCatalogPoints(binIndices);
+                                }
                             }, DOUBLE_CLICK_THRESHOLD);
                         }
                     }
