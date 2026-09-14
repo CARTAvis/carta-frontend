@@ -20,7 +20,7 @@ import {
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
-import {clamp, createScalingParameters, getScalingParameter, isCatalogAxisDataType, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
+import {clamp, createScalingParameters, getScalingParameter, isCatalogAxisDataType, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig, type TypedArray} from "utilities";
 
 /** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
 interface ClipRestore {
@@ -32,6 +32,16 @@ type ClipGroup = "sizeMajor" | "sizeMinor" | "color" | "orientation";
 
 /** One end of a mapped column's range: the bound derived from the data, and the one in force. */
 type ClipBound = {default: number | undefined; clipd: number | undefined};
+
+interface ColumnRangeCache {
+    profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore;
+    data: TypedArray | undefined;
+    rowsScanned: number;
+    min: number;
+    max: number;
+    hasValue: boolean;
+    dataState: string;
+}
 
 /** Outcome of applying a display config. A rejected config leaves the store untouched. */
 export interface CatalogConfigApplyResult {
@@ -217,6 +227,8 @@ export class CatalogDisplayStore {
      * data range; a clip that came from a config outlives that reset.
      */
     private readonly pendingClipRestore = new Map<ClipGroup, ClipRestore>();
+    /** Ranges are accumulated as file-based catalog rows arrive in chunks. */
+    private readonly columnRangeCache = new Map<string, ColumnRangeCache>();
     /** Layout display settings waiting for the catalog data they validate against. */
     private pendingConfig: WorkspaceCatalogConfig | undefined;
 
@@ -435,6 +447,7 @@ export class CatalogDisplayStore {
      * Reset all settings of catalog source plot to default
      */
     @action resetMaps() {
+        this.columnRangeCache.clear();
         this.clearPlottedImageOverlayState();
         // size
         this.sizeMapColumn = CatalogOverlay.NONE;
@@ -539,6 +552,7 @@ export class CatalogDisplayStore {
      */
     @action setOrientationMapColumn(column: string) {
         if (this.orientationMapColumn !== column) {
+            this.columnRangeCache.clear();
             this.orientationMapColumn = column;
             this.orientationMin = {default: undefined, clipd: undefined};
             this.orientationMax = {default: undefined, clipd: undefined};
@@ -621,6 +635,7 @@ export class CatalogDisplayStore {
      */
     @action setColorMapColumn(column: string) {
         if (this.colorMapColumn !== column) {
+            this.columnRangeCache.clear();
             this.colorMapColumn = column;
             this.colorColumnMin = {default: undefined, clipd: undefined};
             this.colorColumnMax = {default: undefined, clipd: undefined};
@@ -761,6 +776,7 @@ export class CatalogDisplayStore {
      */
     @action setSizeMap(column: string) {
         if (this.sizeMapColumn !== column) {
+            this.columnRangeCache.clear();
             this.sizeMapColumn = column;
             this.sizeColumnMin = {default: undefined, clipd: undefined};
             this.sizeColumnMax = {default: undefined, clipd: undefined};
@@ -908,6 +924,7 @@ export class CatalogDisplayStore {
      */
     @action setSizeMinorMap(column: string) {
         if (this.sizeMinorMapColumn !== column) {
+            this.columnRangeCache.clear();
             this.sizeMinorMapColumn = column;
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
@@ -1363,6 +1380,7 @@ export class CatalogDisplayStore {
             return {success: false, errors};
         }
 
+        this.columnRangeCache.clear();
         this.catalogDisplayMode = config?.displayMode ?? CatalogDisplayMode.CANVAS;
         this.canvasSizeUnit = config?.canvasSizeUnit ?? CatalogSizeUnits.SCREENPIXEL;
         this.worldSizeUnit = config?.worldSizeUnit ?? AngularSizeUnit.ARCSEC;
@@ -1564,17 +1582,24 @@ export class CatalogDisplayStore {
      */
     private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string): {min: number; max: number} {
         const data = profileStore.catalogControlHeader.has(column) ? profileStore.get1DPlotData(column).wcsData : undefined;
-        let min = Number.MAX_VALUE;
-        let max = -Number.MAX_VALUE;
         const visibleRows = Math.min(data?.length ?? 0, profileStore.numVisibleRows);
-        for (let i = 0; i < visibleRows; i++) {
+        const sortingInfo = profileStore.sortingInfo;
+        const dataState = JSON.stringify([sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
+        const cached = this.columnRangeCache.get(column);
+        const canExtend = cached?.profileStore === profileStore && cached.dataState === dataState && cached.rowsScanned <= visibleRows && (cached.rowsScanned < visibleRows || cached.data === data);
+        let min = canExtend ? cached.min : Number.MAX_VALUE;
+        let max = canExtend ? cached.max : -Number.MAX_VALUE;
+        let hasValue = canExtend ? cached.hasValue : false;
+        const firstRow = canExtend ? cached.rowsScanned : 0;
+        for (let i = firstRow; i < visibleRows; i++) {
             const value = Math.fround(data?.[i] ?? NaN);
             if (!isNaN(value)) {
                 min = Math.min(min, value);
                 max = Math.max(max, value);
+                hasValue = true;
             }
         }
-        const hasValue = min !== Number.MAX_VALUE && max !== -Number.MAX_VALUE;
+        this.columnRangeCache.set(column, {profileStore, data, rowsScanned: visibleRows, min, max, hasValue, dataState});
         return {
             min: hasValue && isFinite(min) ? min : 0,
             max: hasValue && isFinite(max) ? max : 0

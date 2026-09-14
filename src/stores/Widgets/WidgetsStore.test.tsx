@@ -385,12 +385,17 @@ describe("WidgetsStore PV preview test ids", () => {
 
         CatalogStore.Instance.bindPendingCatalogPlots(11, {directory: "/catalogs", fileInfo: {name: "first.xml"}});
 
-        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(firstPlotId).catalogFileId).toBe(11);
+        const firstPlotAssociation = CatalogStore.Instance.getAssociatedIdByWidgetId(firstPlotId);
+        expect(firstPlotAssociation.catalogFileId).toBe(11);
+        expect(firstPlotAssociation.catalogPlotComponentId).toBeDefined();
+        expect(CatalogStore.Instance.getCatalogPlotSelection(firstPlotAssociation.catalogPlotComponentId!)).toBe(11);
         expect(CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId).catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
 
         CatalogStore.Instance.bindPendingCatalogPlots(12, {directory: "/catalogs", fileInfo: {name: "second.xml"}});
 
-        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId).catalogFileId).toBe(12);
+        const secondPlotAssociation = CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId);
+        expect(secondPlotAssociation.catalogFileId).toBe(12);
+        expect(CatalogStore.Instance.getCatalogPlotSelection(secondPlotAssociation.catalogPlotComponentId!)).toBe(12);
         expect(widgetsStore.catalogPlotWidgets.get(firstPlotId)?.xColumnName).toBe("Fmag");
         expect(widgetsStore.catalogPlotWidgets.get(secondPlotId)?.xColumnName).toBe("ra");
     });

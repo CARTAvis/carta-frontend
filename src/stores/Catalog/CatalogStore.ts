@@ -291,7 +291,8 @@ export class CatalogStore {
                 plotStore?.setCatalogAssociation(this.catalogAssociationFromInfo(fileId, info));
                 // A component still waiting on this plot follows it to the catalog it was restored
                 // against, so that the restored plot is the one on screen.
-                if (this.getCatalogPlotSelection(componentId) === CatalogStore.PENDING_CATALOG_FILE_ID) {
+                const selection = this.getCatalogPlotSelection(componentId);
+                if (selection === undefined || selection === CatalogStore.PENDING_CATALOG_FILE_ID) {
                     this.setCatalogPlotSelection(componentId, fileId);
                 }
             }

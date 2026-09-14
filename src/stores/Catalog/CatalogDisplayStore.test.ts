@@ -1,4 +1,5 @@
 import * as CARTACompute from "carta_computation";
+import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {AngularSizeUnit, CatalogDisplayMode, CatalogSizeUnits, CatalogTextureType} from "enums";
@@ -215,5 +216,50 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
         expect([displayStore.orientationMin.clipd, displayStore.orientationMax.clipd]).toEqual([20, 30]);
         expect([displayStore.angleMin, displayStore.angleMax]).toEqual([20, 30]);
         expect(CARTACompute.CalculateCatalogOrientation).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything());
+    });
+});
+
+describe("CatalogDisplayStore data-derived range cache", () => {
+    test("scans only rows appended after the cached prefix", () => {
+        const displayStore = new CatalogDisplayStore(13579);
+        let data = Float32Array.from([1, 2, 3, 4]);
+        const profileStore = {
+            catalogControlHeader: new Map([["VALUE", {filter: "", display: true}]]),
+            numVisibleRows: 2,
+            sortingInfo: {columnName: null, sortingType: null},
+            get1DPlotData: () => ({wcsData: data})
+        } as unknown as CatalogProfileStore;
+        const columnRange = (displayStore as any).columnRange.bind(displayStore);
+        const fround = jest.spyOn(Math, "fround").mockImplementation(value => value);
+
+        try {
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 2});
+
+            data = Float32Array.from([1, 2, 3, 4]);
+            profileStore.numVisibleRows = 4;
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 4});
+            expect(fround).toHaveBeenCalledTimes(4);
+
+            data = Float32Array.from([10, 20, 30, 40]);
+            profileStore.numVisibleRows = 2;
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 20});
+            expect(fround).toHaveBeenCalledTimes(6);
+
+            profileStore.numVisibleRows = 4;
+            profileStore.sortingInfo = {columnName: "VALUE", sortingType: CARTA.SortingType.Ascending};
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(10);
+
+            profileStore.catalogControlHeader.get("VALUE")!.filter = "> 15";
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(14);
+
+            displayStore.setSizeMap("VALUE");
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(18);
+        } finally {
+            fround.mockRestore();
+            displayStore.dispose();
+        }
     });
 });
