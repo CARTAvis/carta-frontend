@@ -36,6 +36,8 @@ export class CatalogStore {
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
+    // catalog plot component Id : the catalog that component is showing, of the several it holds
+    @observable private catalogPlotSelections: Map<string, number> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // catalog file Id : catalog display store
@@ -274,15 +276,29 @@ export class CatalogStore {
 
     /** Attach only restored plots whose stable association matches the newly loaded catalog. */
     @action bindPendingCatalogPlots(fileId: number, info?: Pick<CatalogInfo, "directory" | "fileInfo">) {
-        this.catalogPlots.forEach(catalogWidgetMap => {
+        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
             const pendingWidgetId = catalogWidgetMap.get(CatalogStore.PENDING_CATALOG_FILE_ID);
             const plotStore = pendingWidgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(pendingWidgetId) : undefined;
             if (pendingWidgetId && !catalogWidgetMap.has(fileId) && this.catalogMatchesAssociation(plotStore?.getCatalogAssociation(), fileId, info)) {
                 catalogWidgetMap.set(fileId, pendingWidgetId);
                 catalogWidgetMap.delete(CatalogStore.PENDING_CATALOG_FILE_ID);
                 plotStore?.setCatalogAssociation(this.catalogAssociationFromInfo(fileId, info));
+                // A component still waiting on this plot follows it to the catalog it was restored
+                // against, so that the restored plot is the one on screen.
+                if (this.getCatalogPlotSelection(componentId) === CatalogStore.PENDING_CATALOG_FILE_ID) {
+                    this.setCatalogPlotSelection(componentId, fileId);
+                }
             }
         });
+    }
+
+    /** The catalog one catalog plot component is showing, once it has settled on one. */
+    public getCatalogPlotSelection(componentId: string): number | undefined {
+        return this.catalogPlotSelections.get(componentId);
+    }
+
+    @action setCatalogPlotSelection(componentId: string, catalogFileId: number) {
+        this.catalogPlotSelections.set(componentId, catalogFileId);
     }
 
     // remove catalog plot widget, keep placeholder
@@ -304,6 +320,7 @@ export class CatalogStore {
             });
             this.catalogPlots.delete(componentId);
         }
+        this.catalogPlotSelections.delete(componentId);
     }
 
     @action clearCatalogPlotsByWidgetId(widgetId: string) {
@@ -366,9 +383,9 @@ export class CatalogStore {
         return frameId;
     }
 
-    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string; catalogFileId: number} {
-        let catalogPlotComponentId;
-        let catalogFileId;
+    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string | undefined; catalogFileId: number | undefined} {
+        let catalogPlotComponentId: string | undefined;
+        let catalogFileId: number | undefined;
         this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
             catalogWidgetMap.forEach((widgetId, fileId) => {
                 if (widgetId === catalogPlotWidgetId) {
