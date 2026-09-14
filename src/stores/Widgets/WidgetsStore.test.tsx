@@ -3,6 +3,7 @@ import {Actions} from "flexlayout-react";
 
 import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
+import {CatalogDisplayStore} from "stores/Catalog/CatalogDisplayStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
@@ -30,7 +31,7 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.visitNodes.mockReset();
         CatalogStore.Instance.catalogProfileStores.clear();
         CatalogStore.Instance.catalogDisplayStores.clear();
-        CatalogStore.Instance.catalogPlots.clear();
+        Array.from(CatalogStore.Instance.catalogPlots.keys()).forEach(componentId => CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId));
     });
 
     afterEach(() => {
@@ -217,6 +218,33 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.catalogDisplayStores.delete(7);
     });
 
+    test("preserves deferred catalog display settings while the catalog is loading", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const catalogFileId = 7;
+        const profileStore = {
+            catalogInfo: {fileId: catalogFileId, directory: "/catalogs", fileInfo: {name: "sources.xml"}},
+            isLoadingOntoImage: true
+        };
+        const displayStore = new CatalogDisplayStore(catalogFileId);
+        const widgetSettings = {
+            catalogFileId,
+            catalogDirectory: "/catalogs",
+            catalogFilename: "sources.xml",
+            color: "#123456",
+            xAxis: "RA",
+            sizeAxis: {mapColumn: "Fmag"}
+        };
+
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore as any);
+        CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore);
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toMatchObject(widgetSettings);
+
+        displayStore.dispose();
+        CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
+    });
+
     test("defers restored catalog display settings until this session selects a catalog", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const displayStore = {applyConfigWhenReady: jest.fn()};
@@ -276,7 +304,9 @@ describe("WidgetsStore PV preview test ids", () => {
             catalogFileId: 1
         });
 
-        CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
+        if (catalogPlotComponentId) {
+            CatalogStore.Instance.clearCatalogPlotsByComponentId(catalogPlotComponentId);
+        }
     });
 
     test("restores a plot from a layout written before the catalog association was saved", () => {
@@ -288,7 +318,23 @@ describe("WidgetsStore PV preview test ids", () => {
 
         expect(catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
 
-        CatalogStore.Instance.catalogPlots.delete(catalogPlotComponentId);
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(catalogPlotComponentId);
+    });
+
+    test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
+        const oldWidgetId = widgetsStore.addCatalogPlotWidget(props)!;
+        const componentId = "catalog-plot-component-retained";
+
+        CatalogStore.Instance.setCatalogPlots(componentId, 7, oldWidgetId);
+        CatalogStore.Instance.clearCatalogPlotsByFileId(7);
+
+        expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
+
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        widgetsStore.catalogPlotWidgets.clear();
     });
 
     test("restores catalog panels independently when matching catalogs load", () => {

@@ -6,7 +6,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {minMaxArray, setAstSystem} from "utilities";
+import {isCatalogAxisDataType, minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -342,14 +342,20 @@ export class CatalogStore {
         this.catalogPlots.forEach(catalogWidgetMap => {
             const widgetId = catalogWidgetMap.get(fileId);
             const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
-            plotStore?.resetUnknownColumns(column => profileStore.catalogControlHeader.has(column)).forEach(column => dropped.add(column));
+            plotStore
+                ?.resetUnknownColumns(column => {
+                    const controlHeader = profileStore.catalogControlHeader.get(column);
+                    const header = controlHeader?.dataIndex !== undefined ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+                    return header !== undefined && isCatalogAxisDataType(header.dataType);
+                })
+                .forEach(column => dropped.add(column));
         });
         if (dropped.size) {
             const catalogName = profileStore.catalogInfo.fileInfo.name ?? `catalog ${fileId}`;
             const columns = Array.from(dropped)
                 .map(column => `"${column}"`)
                 .join(", ");
-            AppStore.Instance.logStore.addWarning(`Plot settings for ${catalogName} were not restored: ${columns} ${dropped.size > 1 ? "are not columns" : "is not a column"} this catalog has`, ["catalog"]);
+            AppStore.Instance.logStore.addWarning(`Plot settings for ${catalogName} were not restored: ${columns} ${dropped.size > 1 ? "are not valid numeric columns" : "is not a valid numeric column"} in this catalog`, ["catalog"]);
         }
     }
 
@@ -362,6 +368,11 @@ export class CatalogStore {
             }
             catalogWidgetMap.delete(fileId);
         });
+    }
+
+    /** Whether a layout tab still retains this plot ID after its catalog store was removed. */
+    public isCatalogPlotWidgetIdReserved(widgetId: string): boolean {
+        return this.catalogPlotComponents.has(widgetId);
     }
 
     @action clearCatalogPlotsByComponentId(componentId: string) {

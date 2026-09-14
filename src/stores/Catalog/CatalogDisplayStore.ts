@@ -1,6 +1,5 @@
 import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
-import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {
@@ -21,7 +20,7 @@ import {
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
-import {clamp, createScalingParameters, getScalingParameter, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
+import {clamp, createScalingParameters, getScalingParameter, isCatalogAxisDataType, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig} from "utilities";
 
 /** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
 interface ClipRestore {
@@ -1300,8 +1299,13 @@ export class CatalogDisplayStore {
         ]
             .filter(([, column]) => column !== CatalogOverlay.NONE)
             .map(([axis, column]) => {
-                if (!profileStore.catalogControlHeader.has(column)) {
+                const controlHeader = profileStore.catalogControlHeader.get(column);
+                const header = controlHeader?.dataIndex !== undefined ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+                if (!header) {
                     return `The ${axis} axis is mapped to "${column}", which this catalog does not have`;
+                }
+                if (!isCatalogAxisDataType(header.dataType)) {
+                    return `The ${axis} axis is mapped to "${column}", which is not a numeric column`;
                 }
                 if (!profileStore.get1DPlotData(column).wcsData?.length) {
                     return `The ${axis} axis is mapped to "${column}", which has no data to map`;
@@ -1321,11 +1325,11 @@ export class CatalogDisplayStore {
             .filter(([, column]) => column !== CatalogOverlay.NONE)
             .map(([axis, column]) => {
                 const controlHeader = profileStore.catalogControlHeader.get(column);
-                const header = profileStore.catalogHeader[controlHeader?.dataIndex ?? NaN];
+                const header = controlHeader?.dataIndex !== undefined ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
                 if (!header) {
                     return `The ${axis} axis is set to "${column}", which this catalog does not have`;
                 }
-                if (header.dataType === CARTA.ColumnType.String || header.dataType === CARTA.ColumnType.Bool) {
+                if (!isCatalogAxisDataType(header.dataType)) {
                     return `The ${axis} axis is set to "${column}", which is not a numeric column`;
                 }
                 return undefined;
@@ -1425,6 +1429,9 @@ export class CatalogDisplayStore {
         const catalogName = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId)?.catalogInfo.fileInfo.name ?? `catalog ${this.catalogFileId}`;
         AppStore.Instance.logStore.addWarning(`Display settings for ${catalogName} were not restored: ${result.errors.join("; ")}`, ["catalog"]);
     }
+
+    /** Return the config waiting for catalog validation, if any, for workspace serialization. */
+    public getConfigForSerialization = (): WorkspaceCatalogConfig => this.pendingConfig ?? this.toConfig();
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {

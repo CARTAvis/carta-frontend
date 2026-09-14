@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 import {CatalogOverlay, CatalogPlotType} from "enums";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 
@@ -5,12 +7,18 @@ import {CatalogPlotComponent} from "./CatalogPlotComponent";
 
 /** A catalog loaded in this session, as a restored plot's association is matched against. */
 function loadCatalog(fileId: number, filename: string) {
+    const catalogHeader = [
+        new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "Fmag"}),
+        new CARTA.CatalogHeader({columnIndex: 1, dataType: CARTA.ColumnType.Double, name: "Bmag"}),
+        new CARTA.CatalogHeader({columnIndex: 2, dataType: CARTA.ColumnType.UnsupportedType, name: "Unsupported"})
+    ];
     CatalogStore.Instance.catalogProfileStores.set(fileId, {
         catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
-        // The columns these tests plot; a restored column outside this set is one the catalog lacks.
+        catalogHeader,
         catalogControlHeader: new Map([
             ["Fmag", {dataIndex: 0}],
-            ["Bmag", {dataIndex: 1}]
+            ["Bmag", {dataIndex: 1}],
+            ["Unsupported", {dataIndex: 2}]
         ])
     } as any);
     CatalogStore.Instance.bindPendingCatalogPlots(fileId, {directory: "/catalogs", fileInfo: {name: filename}} as any);
@@ -102,6 +110,24 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(store.yColumnName).toBe(CatalogOverlay.NONE);
         expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
         expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("Bmag_gone"), ["catalog"]);
+    });
+
+    test("drops restored plot columns whose catalog type is unsupported", () => {
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        loadCatalog(11, "first.xml");
+
+        const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {
+            ...plotProps,
+            xColumnName: "Fmag",
+            yColumnName: "Unsupported",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml"
+        });
+        const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
+
+        expect(store.xColumnName).toBe("Fmag");
+        expect(store.yColumnName).toBe(CatalogOverlay.NONE);
+        expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("Unsupported"), ["catalog"]);
     });
 
     test("keeps a restored plot waiting for its own catalog instead of the first one loaded", () => {

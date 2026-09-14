@@ -26,6 +26,7 @@ const COLUMNS: ReadonlyArray<{name: string; values: number[]}> = [
 
 /** A column no axis can be plotted against, for configs that name the wrong kind of column. */
 const STRING_COLUMN = "Name";
+const UNSUPPORTED_COLUMN = "Unsupported";
 
 let nextCatalogFileId = 0;
 const CREATED_STORES: CatalogDisplayStore[] = [];
@@ -36,6 +37,8 @@ function createProfileStore(catalogFileId: number, scale: number = 1): CatalogPr
 
     catalogHeader.push(new CARTA.CatalogHeader({columnIndex: COLUMNS.length, dataType: CARTA.ColumnType.String, name: STRING_COLUMN}));
     catalogData.set(COLUMNS.length, {dataType: CARTA.ColumnType.String, data: ["a", "b", "c", "d"]});
+    catalogHeader.push(new CARTA.CatalogHeader({columnIndex: COLUMNS.length + 1, dataType: CARTA.ColumnType.UnsupportedType, name: UNSUPPORTED_COLUMN}));
+    catalogData.set(COLUMNS.length + 1, {dataType: CARTA.ColumnType.UnsupportedType, data: []});
 
     return new CatalogProfileStore({dataSize: COLUMNS[0].values.length, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData, CatalogType.FILE);
 }
@@ -342,6 +345,16 @@ describe("CatalogDisplayStore display config", () => {
 
         expect(result.success).toBe(false);
         expect(result.errors).toEqual([`The x axis is set to "${STRING_COLUMN}", which is not a numeric column`]);
+        expect(store.toConfig()).toEqual(before);
+    });
+
+    test("rejects an unsupported image overlay axis, without changing anything", () => {
+        const store = createStore();
+        const before = store.toConfig();
+
+        const result = store.applyConfig({xAxis: UNSUPPORTED_COLUMN, yAxis: "DEC"});
+
+        expect(result).toEqual({success: false, errors: [`The x axis is set to "${UNSUPPORTED_COLUMN}", which is not a numeric column`]});
         expect(store.toConfig()).toEqual(before);
     });
 
