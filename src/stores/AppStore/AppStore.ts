@@ -1286,6 +1286,30 @@ export class AppStore {
         return requestId;
     }
 
+    /** Request catalog columns needed by a display config restored before the preview contained them. */
+    @action requestCatalogColumns = (catalogFileId: number, columnNames: string[]): number | false => {
+        const profileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
+        if (!profileStore?.isFileBasedCatalog || profileStore.isLoadingOntoImage) {
+            return false;
+        }
+
+        columnNames.forEach(columnName => profileStore.setHeaderDisplay(true, columnName));
+        profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
+        profileStore.setIsUpdateColumn(true);
+        profileStore.resetFilterRequest();
+
+        const filter = profileStore.updateRequestDataSize;
+        const displayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
+        if (filter.imageBounds) {
+            filter.imageBounds.xColumnName = displayStore?.xAxis ?? CatalogOverlay.NONE;
+            filter.imageBounds.yColumnName = displayStore?.yAxis ?? CatalogOverlay.NONE;
+        }
+        filter.fileId = catalogFileId;
+        filter.filterConfigs = profileStore.getUserFilters();
+        filter.columnIndices = profileStore.displayedColumnHeaders.map(column => column.columnIndex);
+        return this.sendCatalogFilter(filter);
+    };
+
     /**
      * Reorders images in the image list.
      * @param oldIndex - The first index of the images to move.

@@ -313,6 +313,34 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.catalogColor).toBe("#123456");
     });
 
+    test("keeps restoring a mapped column until its hidden preview data is fetched", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+
+        runInAction(() => {
+            profileStore.catalogOriginalData.delete(0);
+            profileStore.setHeaderDisplay(false, "Fmag");
+        });
+
+        const result = store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
+
+        expect(result.success).toBe(false);
+        expect(sendCatalogFilter).toHaveBeenCalled();
+        expect(profileStore.catalogControlHeader.get("Fmag")?.display).toBe(true);
+        expect(store.getConfigForSerialization().sizeAxis?.mapColumn).toBe("Fmag");
+
+        runInAction(() => {
+            profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([1, 4, 7, 10])});
+            profileStore.setLoadingDataStatus(false);
+            profileStore.setUpdatingDataStream(false);
+        });
+
+        expect(store.sizeMapColumn).toBe("Fmag");
+        expect(store.sizeColumnMin.clipd).toBe(2);
+        expect(store.sizeColumnMax.clipd).toBe(8);
+    });
+
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
         const store = createStore();
         const before = store.toConfig();

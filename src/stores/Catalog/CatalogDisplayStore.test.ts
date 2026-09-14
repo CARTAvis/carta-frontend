@@ -82,6 +82,18 @@ describe("CatalogDisplayStore angular size axis type", () => {
 
         displayStore.dispose();
     });
+
+    test("clamps a fixed size when its canvas unit changes range", () => {
+        const displayStore = new CatalogDisplayStore(0);
+
+        displayStore.setCatalogSize(30);
+        displayStore.setCanvasSizeUnit(CatalogSizeUnits.DEG);
+
+        expect(displayStore.showedCatalogSize).toBe(10);
+        expect(displayStore.catalogSize).toBe(10 * displayStore.pixelSizeFactor);
+
+        displayStore.dispose();
+    });
 });
 
 describe("CatalogDisplayStore overlay maps after replotting", () => {

@@ -221,7 +221,8 @@ export class CatalogStore {
 
     /** Return false for a response belonging to a superseded or completed request. */
     public acceptsCatalogResponse = (catalogFileId: number, requestId?: number): boolean => {
-        if (requestId === undefined) {
+        // The ICD reserves request id 0 for data streams without a corresponding request.
+        if (requestId === undefined || requestId === 0) {
             return true;
         }
         const currentRequestId = this.catalogRequestIds.get(catalogFileId);
@@ -231,7 +232,7 @@ export class CatalogStore {
     /** Mark the current request as finished so late responses cannot mutate the catalog. */
     @action completeCatalogRequest = (catalogFileId: number, requestId?: number) => {
         const currentRequestId = this.catalogRequestIds.get(catalogFileId);
-        if (requestId !== undefined && currentRequestId !== requestId) {
+        if (requestId !== undefined && requestId !== 0 && currentRequestId !== requestId) {
             return;
         }
         this.catalogRequestIds.delete(catalogFileId);

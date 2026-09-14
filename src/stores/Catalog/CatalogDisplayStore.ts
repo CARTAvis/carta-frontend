@@ -233,8 +233,7 @@ export class CatalogDisplayStore {
                 isReady => {
                     if (isReady && this.pendingConfig) {
                         const config = this.pendingConfig;
-                        this.pendingConfig = undefined;
-                        this.reportRejectedConfig(this.applyConfig(config));
+                        this.applyConfigWhenReady(config);
                     }
                 }
             )
@@ -961,7 +960,7 @@ export class CatalogDisplayStore {
      */
     @action setCanvasSizeUnit(unit: CatalogSizeUnits) {
         this.canvasSizeUnit = unit;
-        this.setCatalogSize(this.showedCatalogSize);
+        this.setCatalogSize(clamp(this.showedCatalogSize, this.minOverlaySize, this.maxOverlaySize));
     }
 
     /**
@@ -1431,14 +1430,37 @@ export class CatalogDisplayStore {
     /** Apply catalog display settings now, or retry them once the catalog data is ready. */
     @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
         const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        const shouldDefer = !profileStore || profileStore.isLoadingOntoImage;
+        const configColumns = profileStore && !profileStore.isLoadingOntoImage ? this.configColumnsWithoutData(profileStore, config) : [];
+        const shouldDefer = !profileStore || profileStore.isLoadingOntoImage || Boolean(configColumns.length && profileStore.isFileBasedCatalog);
         const result = this.applyConfig(config);
         this.pendingConfig = shouldDefer ? config : undefined;
+        if (shouldDefer && profileStore && !profileStore.isLoadingOntoImage && configColumns.length) {
+            AppStore.Instance.requestCatalogColumns(this.catalogFileId, this.configColumnNames(config));
+        }
         if (!shouldDefer) {
             this.reportRejectedConfig(result);
         }
         return result;
     };
+
+    /** Columns referenced by a restored display config, including image-overlay coordinates. */
+    private configColumnNames(config: WorkspaceCatalogConfig): string[] {
+        return [config.sizeAxis?.mapColumn, config.sizeMinorAxis?.mapColumn, config.colorAxis?.mapColumn, config.orientationAxis?.mapColumn, config.xAxis, config.yAxis].filter(
+            (column, index, columns): column is string => Boolean(column) && column !== CatalogOverlay.NONE && columns.indexOf(column) === index
+        );
+    }
+
+    /** Numeric config columns whose data is not in the catalog response received so far. */
+    private configColumnsWithoutData(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, config: WorkspaceCatalogConfig): string[] {
+        return this.configColumnNames(config).filter(column => {
+            const controlHeader = profileStore.catalogControlHeader.get(column);
+            const header = controlHeader?.dataIndex !== undefined ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+            if (!header || !isCatalogAxisDataType(header.dataType)) {
+                return false;
+            }
+            return !profileStore.get1DPlotData(column).wcsData?.length;
+        });
+    }
 
     /**
      * Report settings that cannot be applied or retried, such as columns the catalog does not have,
