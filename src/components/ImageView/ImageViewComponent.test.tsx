@@ -168,6 +168,20 @@ describe("getPanelSvg", () => {
         expect(astClipRect).toHaveAttribute("height", "100");
     });
 
+    test("renders the AST grid below contours and vector overlays", () => {
+        const astOverlay = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        astOverlay.id = "ast-overlay";
+        renderAstOverlayToSvgMock.mockReturnValue(astOverlay);
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const children = [...(panelSvg?.children ?? [])];
+        const indexOf = (id: string) => children.findIndex(child => child.id === id);
+
+        expect(indexOf("ast-overlay")).toBeGreaterThanOrEqual(0);
+        expect(indexOf("ast-overlay")).toBeLessThan(indexOf("contours"));
+        expect(indexOf("ast-overlay")).toBeLessThan(indexOf("vector-overlays"));
+    });
+
     test("uses the vector overlay vertical axis as the zero-angle direction", () => {
         frame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
 

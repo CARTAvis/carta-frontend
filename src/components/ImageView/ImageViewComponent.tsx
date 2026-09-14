@@ -675,52 +675,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(rasterImage);
     }
 
-    // 2. Contour — vector SVG from store data
-    const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
-    if (contoursSvg) {
-        if (rasterCanvas) {
-            const clipId = `contour-clip-${column}-${row}`;
-            const clipPath = createSvgElement("clipPath", {id: clipId});
-            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
-            const defs = createSvgElement("defs", {});
-            defs.appendChild(clipPath);
-            panelGroup.appendChild(defs);
-            contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
-        }
-        panelGroup.appendChild(contoursSvg);
-    }
-
-    // 3. Vector overlay — vector SVG from store data
-    const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
-    if (vectorOverlaySvg) {
-        if (rasterCanvas) {
-            const clipId = `vector-clip-${column}-${row}`;
-            const clipPath = createSvgElement("clipPath", {id: clipId});
-            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
-            const defs = createSvgElement("defs", {});
-            defs.appendChild(clipPath);
-            panelGroup.appendChild(defs);
-            vectorOverlaySvg.setAttribute("clip-path", `url(#${clipId})`);
-        }
-        panelGroup.appendChild(vectorOverlaySvg);
-    }
-
-    // 4. Colorbar — vector SVG from store data
-    const colorbarSettings = appStore.overlaySettings.colorbar;
-    if (!isColorBlending && colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
-        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
-        if (colorbarSvg) {
-            panelGroup.appendChild(colorbarSvg);
-        }
-    }
-
-    // 5. Beam — vector SVG from store data
-    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
-    if (beamGroup) {
-        panelGroup.appendChild(beamGroup);
-    }
-
-    // 6. AST overlay — vector SVG via svgcanvas
+    // 2. AST overlay — keep the coordinate grid beneath contours and vectors.
     const isChannelMap = appStore.channelMapStore.isChannelMapEnabled;
     const channelMapAstSvg = isChannelMap ? buildChannelMapAstSvg(frame, image, appStore.overlaySettings, pixelRatio) : null;
     if (channelMapAstSvg) {
@@ -743,6 +698,51 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(defs);
         astSvg.setAttribute("clip-path", `url(#${clipId})`);
         panelGroup.appendChild(astSvg);
+    }
+
+    // 3. Contour — vector SVG from store data
+    const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
+    if (contoursSvg) {
+        if (rasterCanvas) {
+            const clipId = `contour-clip-${column}-${row}`;
+            const clipPath = createSvgElement("clipPath", {id: clipId});
+            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
+            const defs = createSvgElement("defs", {});
+            defs.appendChild(clipPath);
+            panelGroup.appendChild(defs);
+            contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
+        }
+        panelGroup.appendChild(contoursSvg);
+    }
+
+    // 4. Vector overlay — vector SVG from store data
+    const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
+    if (vectorOverlaySvg) {
+        if (rasterCanvas) {
+            const clipId = `vector-clip-${column}-${row}`;
+            const clipPath = createSvgElement("clipPath", {id: clipId});
+            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
+            const defs = createSvgElement("defs", {});
+            defs.appendChild(clipPath);
+            panelGroup.appendChild(defs);
+            vectorOverlaySvg.setAttribute("clip-path", `url(#${clipId})`);
+        }
+        panelGroup.appendChild(vectorOverlaySvg);
+    }
+
+    // 5. Colorbar — vector SVG from store data
+    const colorbarSettings = appStore.overlaySettings.colorbar;
+    if (!isColorBlending && colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
+        const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
+        if (colorbarSvg) {
+            panelGroup.appendChild(colorbarSvg);
+        }
+    }
+
+    // 6. Beam — vector SVG from store data
+    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
+    if (beamGroup) {
+        panelGroup.appendChild(beamGroup);
     }
 
     // 7. Catalog — vector SVG from store data
