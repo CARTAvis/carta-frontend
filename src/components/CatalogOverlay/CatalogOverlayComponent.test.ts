@@ -24,6 +24,7 @@ type MockWidgetStore = {
     catalogPlotType: CatalogPlotType;
     hasPlottedImageOverlay: boolean;
     setAutoSelectImageOverlayAxesAttempted: jest.Mock<void, [boolean]>;
+    setCatalogPlotType: jest.Mock<void, [CatalogPlotType]>;
     setxAxis: jest.Mock<void, [string]>;
     setyAxis: jest.Mock<void, [string]>;
     xAxis: string;
@@ -66,6 +67,9 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
         yAxis
     } as MockWidgetStore;
 
+    widgetStore.setCatalogPlotType = jest.fn((nextPlotType: CatalogPlotType) => {
+        widgetStore.catalogPlotType = nextPlotType;
+    });
     widgetStore.setxAxis = jest.fn((nextXAxis: string) => {
         widgetStore.xAxis = nextXAxis;
     });
@@ -130,11 +134,11 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
     return profileStore;
 };
 
-const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
+const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[], dataSize = 0): CatalogProfileStore => {
     const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
     const profileStore = new CatalogProfileStore(
         {
-            dataSize: 0,
+            dataSize,
             directory: "",
             fileId: catalogFileId,
             fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})
@@ -464,6 +468,22 @@ describe("CatalogOverlayComponent", () => {
             expect(component["yAxisOption"]).toEqual(expectedOptions);
         });
 
+        test.each([CatalogPlotType.Histogram, CatalogPlotType.D2Scatter])("clears string coordinate axes when changing from an image overlay to %s", plotType => {
+            const {component, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [
+                {name: "ra", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00"]},
+                {name: "dec", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15"]},
+                {name: "flux"}
+            ]);
+            widgetStore.setxAxis("ra");
+            widgetStore.setyAxis("dec");
+
+            component["handlePlotTypeChange"](plotType);
+
+            expect(widgetStore.catalogPlotType).toBe(plotType);
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
         test("uses safe defaults when profile store is unavailable", () => {
             const {component, widgetStore} = CreateComponentWithoutProfileStore("ra", "dec");
 
@@ -582,6 +602,43 @@ describe("CatalogOverlayComponent", () => {
     });
 
     describe("auto-select axes reaction", () => {
+        test("retries after a noisy streamed coordinate chunk becomes established", () => {
+            const profileStore = CreateCatalogProfileStore(
+                12346,
+                CatalogSystemType.ICRS,
+                [
+                    {name: "ra", dataType: CARTA.ColumnType.String},
+                    {name: "dec", dataType: CARTA.ColumnType.String}
+                ],
+                200
+            );
+            profileStore.setSubsetEndIndex(2);
+            const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--"]});
+                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--"]});
+            });
+
+            // The first chunk is deliberately inconclusive: one coordinate and one placeholder
+            // must not consume the one-shot auto-selection attempt.
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00", ...new Array(197).fill("14:00:00")]});
+                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00", ...new Array(197).fill("-23:00:00")]});
+                profileStore.setSubsetEndIndex(200);
+            });
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+        });
+
         test("only attempts auto-selection once per catalog", () => {
             const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 

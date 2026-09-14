@@ -155,6 +155,16 @@ describe("coordinate format", () => {
             const values = ["12:30:00", ...new Array(500).fill("banana")];
             expect(sniffCoordinateDescriptor(values, 1)).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
         });
+
+        test("samples later rows after a long placeholder prefix", () => {
+            const values = [...new Array(1001).fill(""), "12:30:00", "13:00:00"];
+            expect(sniffCoordinateDescriptor(values)).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+        });
+
+        test("does not let a long nonblank placeholder prefix exhaust the later sample budget", () => {
+            const values = [...new Array(1000).fill("--"), ...new Array(100).fill("12:30:00")];
+            expect(sniffCoordinateDescriptor(values)).toEqual({kind: "sexagesimal", fieldUnit: "ambiguous", source: "sniffed"});
+        });
     });
 
     describe("hasCoordinateValuesToInspect", () => {
@@ -173,6 +183,11 @@ describe("coordinate format", () => {
             const values = [...new Array(500).fill(""), "12:30:00"];
             expect(hasCoordinateValuesToInspect(values, 1)).toBe(false);
             expect(hasCoordinateValuesToInspect(values, 100)).toBe(true);
+        });
+
+        test("finds values in later streamed rows", () => {
+            const values = [...new Array(1001).fill(""), "12:30:00"];
+            expect(hasCoordinateValuesToInspect(values)).toBe(true);
         });
     });
 

@@ -223,6 +223,32 @@ function getSniffScanLimit(valueCount: number, sampleSize: number): number {
 }
 
 /**
+ * Returns a bounded set of positions from both the beginning and the later part of a streamed
+ * column. The initial scan preserves the old fast path for mostly-empty prefixes; the distributed
+ * tail matters when the useful values do not occur until after that prefix (the common shape of an
+ * allocated column that is filled by later catalog responses).
+ */
+function getSniffIndices(valueCount: number, sampleSize: number): number[] {
+    const initialScanLimit = getSniffScanLimit(valueCount, sampleSize);
+    const indices = Array.from({length: initialScanLimit}, (_, index) => index);
+    const laterValueCount = valueCount - initialScanLimit;
+    const laterSampleCount = Math.min(sampleSize, laterValueCount);
+
+    // Do not change the small-array behavior of the sniffer: callers may deliberately use a small
+    // sample to inspect only the prefix. Once a full default scan has been exhausted, however,
+    // inspect a bounded set of distributed positions in the remaining rows.
+    if (valueCount <= COORDINATE_SNIFF_SAMPLE_SIZE * EMPTY_VALUE_SCAN_FACTOR || laterSampleCount <= 0) {
+        return indices;
+    }
+
+    for (let sampleIndex = 0; sampleIndex < laterSampleCount; sampleIndex++) {
+        const laterIndex = laterSampleCount === 1 ? laterValueCount - 1 : Math.floor((sampleIndex * (laterValueCount - 1)) / (laterSampleCount - 1));
+        indices.push(initialScanLimit + laterIndex);
+    }
+    return indices;
+}
+
+/**
  * Whether a sample holds anything a descriptor could be derived from.
  *
  * A column whose loaded rows are all blank has not been ruled out as a coordinate -- it has not
@@ -235,8 +261,7 @@ export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | numb
         return false;
     }
 
-    const scanLimit = getSniffScanLimit(values.length, sampleSize);
-    for (let index = 0; index < scanLimit; index++) {
+    for (const index of getSniffIndices(values.length, sampleSize)) {
         if (!isBlankCoordinateValue(values[index])) {
             return true;
         }
@@ -262,17 +287,18 @@ export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | numb
  * {@link hasCoordinateValuesToInspect}: only values that were read and rejected are evidence that
  * a column is not a coordinate.
  */
-export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): CoordinateDescriptor | undefined {
-    if (!values?.length) {
-        return undefined;
-    }
+interface CoordinateSampleResult {
+    descriptor: CoordinateDescriptor | undefined;
+    inspectedCount: number;
+    recognizedCount: number;
+    hasConflictingFormats: boolean;
+}
 
+function sniffCoordinateSample(values: ReadonlyArray<string | number | null | undefined>, indices: ReadonlyArray<number>, sampleSize: number): CoordinateSampleResult {
     let descriptor: CoordinateDescriptor | undefined;
     let inspectedCount = 0;
     let recognizedCount = 0;
-    const scanLimit = getSniffScanLimit(values.length, sampleSize);
-
-    for (let index = 0; index < scanLimit; index++) {
+    for (const index of indices) {
         const value = values[index];
         if (isBlankCoordinateValue(value)) {
             continue;
@@ -294,15 +320,50 @@ export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number 
         };
 
         if (descriptor && (descriptor.kind !== candidate.kind || descriptor.fieldUnit !== candidate.fieldUnit)) {
-            return undefined;
+            return {descriptor: undefined, inspectedCount, recognizedCount, hasConflictingFormats: true};
         }
         descriptor = candidate;
         recognizedCount++;
     }
 
-    // A strict majority, so a column of names with a few numeric entries in it cannot pass as a
-    // coordinate: more than half its values would have to read as one coordinate format first.
-    return recognizedCount * 2 > inspectedCount ? descriptor : undefined;
+    // A strict majority, so a sample of names with a few numeric entries cannot pass as a
+    // coordinate. The caller can combine this bounded sample with a later distributed sample.
+    return {
+        descriptor: recognizedCount * 2 > inspectedCount ? descriptor : undefined,
+        inspectedCount,
+        recognizedCount,
+        hasConflictingFormats: false
+    };
+}
+
+export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): CoordinateDescriptor | undefined {
+    if (!values?.length) {
+        return undefined;
+    }
+
+    const initialScanLimit = getSniffScanLimit(values.length, sampleSize);
+    const indices = getSniffIndices(values.length, sampleSize);
+    const initialSample = sniffCoordinateSample(values, indices.slice(0, initialScanLimit), sampleSize);
+    const laterSample = sniffCoordinateSample(values, indices.slice(initialScanLimit), sampleSize);
+
+    if (!laterSample.inspectedCount) {
+        return initialSample.descriptor;
+    }
+    if (initialSample.hasConflictingFormats || laterSample.hasConflictingFormats) {
+        return undefined;
+    }
+
+    // The later sample is an independent bounded window. It must be allowed to establish a format
+    // even when an early noisy/placeholder window has already used its own sample budget. When
+    // both windows identify a format they still have to agree.
+    if (laterSample.descriptor) {
+        if (initialSample.descriptor && (initialSample.descriptor.kind !== laterSample.descriptor.kind || initialSample.descriptor.fieldUnit !== laterSample.descriptor.fieldUnit)) {
+            return undefined;
+        }
+        return laterSample.descriptor;
+    }
+
+    return initialSample.descriptor;
 }
 
 /**

@@ -21,6 +21,7 @@ import {
     getAutoSelectedCatalogAxisColumn,
     getCatalogAxisEligibility,
     getCatalogDataTypeDisplayName,
+    getCoordinateDescriptorFromUnits,
     isCatalogNumericDataType,
     type ProcessedColumnData,
     rankCatalogAxisColumns,
@@ -180,16 +181,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             reaction(
                 () => {
                     const catalogDisplayStore = this.displayStore;
-                    const canAutoSelectAxes = this.catalogFileId !== undefined && this.profileStore !== undefined && catalogDisplayStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
-                    return [catalogDisplayStore, canAutoSelectAxes] as const;
+                    const profileStore = this.profileStore;
+                    const canAutoSelectAxes = this.catalogFileId !== undefined && profileStore !== undefined && catalogDisplayStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
+                    // Include the streamed eligibility state so a column that is still being
+                    // sniffed gets another chance when a later response provides enough values.
+                    const eligibilityState = Array.from(this.axisColumnEligibility.entries())
+                        .map(([columnName, result]) => `${columnName}:${result.status}`)
+                        .join("|");
+                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.shouldUpdateData, eligibilityState] as const;
                 },
                 ([catalogDisplayStore, canAutoSelectAxes]) => {
                     if (!catalogDisplayStore || !canAutoSelectAxes || catalogDisplayStore.hasAttemptedAutoSelectImageOverlayAxes) {
                         return;
                     }
 
-                    this.autoSelectAxes();
-                    catalogDisplayStore.setAutoSelectImageOverlayAxesAttempted(true);
+                    // Keep the attempt open while the file still has rows to stream and the
+                    // visible coordinate candidates are unresolved. This prevents a noisy first
+                    // chunk from permanently suppressing auto-selection for a later valid chunk.
+                    const isWaitingForStreamedAxes = this.autoSelectAxes();
+                    if (!isWaitingForStreamedAxes) {
+                        catalogDisplayStore.setAutoSelectImageOverlayAxesAttempted(true);
+                    }
                 },
                 {fireImmediately: true}
             )
@@ -339,8 +351,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             }
             const catalogHeader = profileStore.catalogHeader[header.dataIndex];
             const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
-            eligibility.set(columnName, getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData));
+            eligibility.set(columnName, this.getAxisColumnEligibility(catalogHeader, sampleData));
         });
+        return eligibility;
+    }
+
+    /**
+     * A file response is only a prefix of the catalog. An unresolved unitless string column must
+     * remain Unknown while more rows can still establish its coordinate format; otherwise the UI
+     * can hide it or permanently skip it before the useful rows arrive.
+     */
+    private getAxisColumnEligibility(catalogHeader: CARTA.CatalogHeader.$Properties | undefined, sampleData: Array<string | null | undefined> | undefined): CatalogAxisEligibilityResult {
+        const eligibility = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData);
+        const profileStore = this.profileStore;
+        const isUnresolvedString = catalogHeader?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(catalogHeader?.units);
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore?.isFileBasedCatalog && profileStore.shouldUpdateData) {
+            return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
+        }
         return eligibility;
     }
 
@@ -401,7 +428,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
             const catalogHeader = profileStore.catalogHeader[header.dataIndex];
             const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
-            const status = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData).status;
+            const status = this.getAxisColumnEligibility(catalogHeader, sampleData).status;
             if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
                 axisOptions.push(columnName);
             }
@@ -454,11 +481,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
     }
 
-    private autoSelectAxes(shouldForceReset = false) {
+    /** Whether a visible candidate may become usable when the rest of a file response arrives. */
+    private hasPendingStreamedAxisEligibility(): boolean {
+        const profileStore = this.profileStore;
+        return Boolean(profileStore?.isFileBasedCatalog && profileStore.shouldUpdateData && Array.from(this.axisColumnEligibility.values()).some(result => result.status === CatalogAxisEligibility.Unknown));
+    }
+
+    /** Returns true when auto-selection should be retried after another streamed response. */
+    private autoSelectAxes(shouldForceReset = false): boolean {
         const catalogDisplayStore = this.displayStore;
         const profileStore = this.profileStore;
         if (!this.shouldAutoSelectImageOverlayColumns || catalogDisplayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return;
+            return false;
         }
 
         if (shouldForceReset) {
@@ -470,7 +504,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // values identify them, and only then the hidden ones nothing but their name suggests.
         const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
         if (selected.didSelectX && selected.didSelectY) {
-            return;
+            return false;
+        }
+
+        // Do not spend the one-shot attempt on a partial answer. In particular, a first chunk
+        // containing one coordinate and one placeholder is Unknown, not a final rejection.
+        if (this.hasPendingStreamedAxisEligibility()) {
+            return true;
         }
 
         const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
@@ -488,6 +528,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
+        return false;
     }
 
     private applyImageOverlayPlot() {
@@ -839,8 +880,32 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private handlePlotTypeChange = (plotType: CatalogPlotType) => {
-        this.displayStore?.setCatalogPlotType(plotType);
+        const catalogDisplayStore = this.displayStore;
+        if (!catalogDisplayStore) {
+            return;
+        }
+
+        const isImageOverlay = catalogDisplayStore.catalogPlotType === CatalogPlotType.ImageOverlay;
+        catalogDisplayStore.setCatalogPlotType(plotType);
+
+        // Image overlays accept coordinate strings, while scatter plots and histograms consume
+        // raw numeric arrays. Do not leave a string coordinate selected when changing modes: the
+        // plot button would otherwise remain enabled and the new plot would be empty.
+        if (isImageOverlay && plotType !== CatalogPlotType.ImageOverlay) {
+            if (!this.isNumericPlotColumn(catalogDisplayStore.xAxis)) {
+                catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
+            }
+            if (!this.isNumericPlotColumn(catalogDisplayStore.yAxis)) {
+                catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
+            }
+        }
     };
+
+    private isNumericPlotColumn(columnName: string): boolean {
+        const profileStore = this.profileStore;
+        const controlHeader = profileStore?.catalogControlHeader.get(columnName);
+        return controlHeader?.dataIndex !== undefined && isCatalogNumericDataType(profileStore?.catalogHeader[controlHeader.dataIndex]?.dataType);
+    }
 
     // source selected in table
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
