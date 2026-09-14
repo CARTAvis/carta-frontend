@@ -306,16 +306,6 @@ describe("FrameStore", () => {
             expect(linearFrame.spectralCoordinate).toBe("Frequency (GHz)");
         });
 
-        test("shows the CTYPE value as it is in the native coordinate label", () => {
-            const logFrame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
-            expect(logFrame.nativeSpectralTypeName).toBe("WAVE-LOG");
-            expect(logFrame.nativeSpectralCoordinateLabel).toBe("WAVE-LOG (Angstrom)");
-
-            const linearFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
-            expect(linearFrame.nativeSpectralTypeName).toBe("Frequency");
-            expect(linearFrame.nativeSpectralCoordinateLabel).toBe(linearFrame.nativeSpectralCoordinate);
-        });
-
         test("offers wavelength and frequency coordinates but no velocity or system conversion without RESTFRQ and SPECSYS", () => {
             const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
             const coordinates = Array.from(frame.spectralCoordsSupported?.keys() ?? []);
@@ -383,11 +373,11 @@ describe("FrameStore", () => {
             }
         });
 
-        test("shows the CTYPE value as it is and omits the missing spectral system in the cursor info", () => {
+        test("names the recognized type and omits the missing spectral system in the cursor info", () => {
             const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
             try {
                 const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
-                expect(frame.getFreqWithChannel(1).spectralString).toBe("WAVE-LOG: 3622.4300 Angstrom");
+                expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
             } finally {
                 mockChannelInfo.mockRestore();
             }

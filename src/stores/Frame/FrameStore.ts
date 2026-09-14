@@ -733,7 +733,7 @@ export class FrameStore {
         }
         const specsys = this.spectralAxis?.specsys;
         const spectralSystemSuffix = this.spectralSystem ? ` (${this.spectralSystem})` : "";
-        result.spectralString = `${this.nativeSpectralTypeName ?? spectralType.name}${specsys ? ` (${specsys})` : ""}: ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
+        result.spectralString = `${spectralType.name}${specsys ? ` (${specsys})` : ""}: ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
         if (spectralType.code === "FREQ") {
             const freqVal = this.channelInfo.values[channel];
             // convert frequency value to unit in GHz
@@ -1105,24 +1105,6 @@ export class FrameStore {
 
     @computed get nativeSpectralCoordinate(): string | undefined {
         return this.spectralAxis ? `${this.spectralAxis.type.name}${this.spectralAxis.type.unit ? ` (${this.spectralAxis.type.unit})` : ""}` : undefined;
-    }
-
-    /**
-     * Name of the native spectral type as the header describes it: the CTYPE value as it is when it carries a non-linear algorithm code (e.g. "WAVE-LOG"), otherwise the standard name
-     */
-    @computed get nativeSpectralTypeName(): string | undefined {
-        const spectralAxis = this.spectralAxis;
-        if (!spectralAxis) {
-            return undefined;
-        }
-        return spectralAxis.ctype && spectralAxis.ctype !== spectralAxis.type.code ? spectralAxis.ctype : spectralAxis.type.name;
-    }
-
-    /**
-     * Label of the native spectral coordinate shown to the user, e.g. "WAVE-LOG (Angstrom)" (see {@link nativeSpectralTypeName})
-     */
-    @computed get nativeSpectralCoordinateLabel(): string | undefined {
-        return this.spectralAxis ? `${this.nativeSpectralTypeName}${this.spectralAxis.type.unit ? ` (${this.spectralAxis.type.unit})` : ""}` : undefined;
     }
 
     @computed get spectralCoordinate(): string {

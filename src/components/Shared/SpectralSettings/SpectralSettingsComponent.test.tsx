@@ -9,11 +9,10 @@ import "stores";
 
 import {SpectralSettingsComponent} from "./SpectralSettingsComponent";
 
-const MakeFrame = (specsys: string, spectralSystemsSupported: string[], nativeSpectralCoordinateLabel: string = "Vacuum wavelength (Angstrom)") =>
+const MakeFrame = (specsys: string, spectralSystemsSupported: string[]) =>
     ({
         spectralAxis: {valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, ctype: "WAVE-LOG", specsys, value: 3621.6},
         nativeSpectralCoordinate: "Vacuum wavelength (Angstrom)",
-        nativeSpectralCoordinateLabel,
         spectralCoordinate: "Vacuum wavelength (Angstrom)",
         spectralCoordsSupported: new Map([
             ["Vacuum wavelength (Angstrom)", {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
@@ -35,10 +34,10 @@ const RenderSelects = (frame: FrameStore): {coordinateSelect: HTMLSelectElement;
 const RenderSystemSelect = (frame: FrameStore): HTMLSelectElement => RenderSelects(frame).systemSelect;
 
 describe("SpectralSettingsComponent coordinate dropdown", () => {
-    test("labels the native entry with the CTYPE value as it is", () => {
-        const {coordinateSelect} = RenderSelects(MakeFrame("", [], "WAVE-LOG (Angstrom)"));
+    test("marks the native entry of a recognized type with its standard name", () => {
+        const {coordinateSelect} = RenderSelects(MakeFrame("", []));
         expect(Array.from(coordinateSelect.options).map(option => [option.value, option.text])).toEqual([
-            ["Vacuum wavelength (Angstrom)", "WAVE-LOG (Angstrom) (Native WCS)"],
+            ["Vacuum wavelength (Angstrom)", "Vacuum wavelength (Angstrom) (Native WCS)"],
             ["Frequency (GHz)", "Frequency (GHz)"],
             ["Channel", "Channel"]
         ]);

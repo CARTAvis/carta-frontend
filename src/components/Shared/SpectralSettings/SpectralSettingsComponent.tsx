@@ -20,8 +20,7 @@ export class SpectralSettingsComponent extends React.Component<{
     render() {
         const frame = this.props.frame;
         const nativeSpectralCoordinate = frame?.nativeSpectralCoordinate;
-        // the native entry shows the header's CTYPE as it is, e.g. "WAVE-LOG (Angstrom)" for a non-linear wavelength axis
-        const nativeSpectralCoordinateLabel = (frame?.nativeSpectralCoordinateLabel ?? nativeSpectralCoordinate) + " (Native WCS)";
+        const nativeSpectralCoordinateLabel = nativeSpectralCoordinate + " (Native WCS)";
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
         const spectralCoordinateOptions: OptionProps[] = filteredSpectralTypes.map((coord: string) => {
