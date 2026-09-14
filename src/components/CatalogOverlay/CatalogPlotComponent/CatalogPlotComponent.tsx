@@ -20,7 +20,7 @@ import {CatalogPlotType, CatalogUpdateMode, DragMode, PlotType, TickType} from "
 import {type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
-import {computeHistogramBins, exportTsvFile, getTimestamp, isPointInPolygon, minMaxArray, toExponential, toFixed, type TypedArray} from "utilities";
+import {clamp, computeHistogramBins, exportTsvFile, getTimestamp, isPointInPolygon, minMaxArray, toExponential, toFixed, type TypedArray} from "utilities";
 
 import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
 
@@ -870,7 +870,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const currentMax = xScale.max;
         const range = currentMax - currentMin;
         event.preventDefault();
-        const zoomFactor = event.deltaY > 0 ? -0.02 : 0.02;
+        const delta = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? event.deltaY : event.deltaY * 15;
+        const zoomFactor = clamp(-delta * 0.0005, -0.5, 0.5);
         const mouseX = xScale.getValueForPixel(event.offsetX) ?? currentMin + range / 2;
         const fraction = (mouseX - currentMin) / range;
         const newMin = currentMin + range * zoomFactor * fraction;
