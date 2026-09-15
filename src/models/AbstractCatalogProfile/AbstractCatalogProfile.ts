@@ -223,6 +223,15 @@ export abstract class AbstractCatalogProfileStore {
         ["pix1", CatalogSystemType.Pixel1]
     ];
 
+    /**
+     * Maps a catalog's declared coordinate system onto the system CARTA transforms with.
+     *
+     * The VOTable enumeration is matched exactly before any looser spelling is tried, so the
+     * ecliptic values cannot fall through to the equatorial keywords they contain.
+     *
+     * @param system - the `COOSYS/@system` value as declared by the file
+     * @returns the matching system, or `CatalogSystemType.ICRS` when nothing matches
+     */
     public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
         const normalizedSystem = system?.trim().toLowerCase();
         if (!normalizedSystem) {
@@ -237,6 +246,16 @@ export abstract class AbstractCatalogProfileStore {
         return AbstractCatalogProfileStore.CoordinateSystemKeywords.find(([keyword]) => normalizedSystem.includes(keyword))?.[1] ?? CatalogSystemType.ICRS;
     }
 
+    /**
+     * The equinox and epoch a coordinate system implies, used when the file declares neither.
+     *
+     * Takes the declared string rather than a {@link CatalogSystemType}, because `ecl_FK4` implies
+     * B1950 and is indistinguishable from `ecl_FK5` once both have been mapped to `Ecliptic`.
+     *
+     * @param system - the `COOSYS/@system` value as declared by the file
+     * @returns the equinox and epoch in the Besselian/Julian year form AST accepts, or nulls for a
+     * system that has neither
+     */
     public static getCatalogCoordinateDefaults(system: string | null | undefined): {equinox: string | null; epoch: string | null} {
         const normalizedSystem = system?.trim().toLowerCase();
         const catalogSystem = AbstractCatalogProfileStore.getCatalogSystem(system);
@@ -421,13 +440,23 @@ export abstract class AbstractCatalogProfileStore {
         return displayedColumnHeaders;
     }
 
-    /** Whether a column's declared type is already numeric, so plotting it needs no parsing. */
+    /**
+     * Whether a column's declared type is already numeric, so plotting it needs no parsing.
+     *
+     * @param columnName - the column's name, as it appears in the catalog header
+     * @returns true when the column's values can be read as numbers directly
+     */
     public isNumericColumn(columnName: string): boolean {
         const controlHeader = this.catalogControlHeader.get(columnName);
         return controlHeader?.dataIndex !== undefined && isCatalogNumericDataType(this.catalogHeader[controlHeader.dataIndex]?.dataType);
     }
 
-    /** The displayed columns a scatter plot or histogram can read directly, in table order. */
+    /**
+     * The displayed columns a scatter plot or histogram can read directly, in table order.
+     *
+     * Image overlays are not limited to these: a string column can be a coordinate too, which
+     * {@link getCoordinateEligibility} decides from its units or its values.
+     */
     @computed get displayedNumericColumnNames(): Array<string> {
         const columnNames: string[] = [];
         this.catalogControlHeader.forEach((header, columnName) => {
