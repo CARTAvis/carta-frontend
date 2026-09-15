@@ -357,8 +357,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return [CatalogOverlay.NONE, ...profileStore.displayedNumericColumnNames];
         }
 
-        // Anything that can become a number stays selectable; ranking pushes the unlikely
-        // candidates down the list rather than hiding them, so a mislabelled catalog is still usable.
+        // Numeric columns are selectable, and so are string columns whose values parse as a
+        // coordinate; ranking pushes the unlikely candidates down the list rather than hiding
+        // them, so a mislabelled catalog is still usable.
         const selectableColumns: string[] = [];
         this.axisColumnEligibility.forEach((result, columnName) => {
             if (result.status !== CatalogAxisEligibility.Ineligible) {
