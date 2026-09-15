@@ -823,26 +823,31 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         widgetStore.setFitting(result);
     };
 
+    private getTickExponent = (value: number): number => parseFloat(value.toExponential(1).split("e")[1]);
+
+    private formatTickLabel = (value: number, decimals: number, shouldUseScientificNotation: boolean): string => {
+        return shouldUseScientificNotation ? toExponential(value, decimals) : value.toFixed(decimals);
+    };
+
+    private getMinimumTickDecimals = (tickValues: number[], shouldUseScientificNotation: boolean): number => {
+        for (let decimals = 0; decimals <= 20; decimals++) {
+            const hasDuplicateLabel = tickValues.some(
+                (tickValue, index) => index > 0 && this.formatTickLabel(tickValue, decimals, shouldUseScientificNotation) === this.formatTickLabel(tickValues[index - 1], decimals, shouldUseScientificNotation)
+            );
+            if (!hasDuplicateLabel) {
+                return decimals;
+            }
+        }
+        return 20;
+    };
+
     private formatTickValue = (value: number, rangeMin: number, rangeMax: number, ticks: Tick[] = []): string => {
-        const difference = rangeMax - rangeMin;
-        const exponential = difference.toExponential(2);
-        const power = parseFloat(exponential.split("e")[1]);
+        const power = this.getTickExponent(rangeMax - rangeMin);
         const maxAbsoluteValue = Math.max(Math.abs(rangeMin), Math.abs(rangeMax));
-        const maxPower = parseFloat(maxAbsoluteValue.toExponential(1).split("e")[1]);
-        const shouldUseScientificNotation = maxPower >= 3 || maxPower <= -3;
+        const shouldUseScientificNotation = this.getTickExponent(maxAbsoluteValue) >= 3 || this.getTickExponent(maxAbsoluteValue) <= -3;
         const tickValues = ticks.map(tick => Number(tick.value)).filter(Number.isFinite);
-        const formatLabel = (tickValue: number, decimals: number) => (shouldUseScientificNotation ? toExponential(tickValue, decimals) : tickValue.toFixed(decimals));
-        let decimals = 0;
-        while (decimals < 20 && tickValues.some((tickValue, index) => index > 0 && formatLabel(tickValue, decimals) === formatLabel(tickValues[index - 1], decimals))) {
-            decimals++;
-        }
-        if (shouldUseScientificNotation) {
-            return toExponential(value, decimals);
-        } else if (power <= 0) {
-            return value.toFixed(decimals);
-        } else {
-            return String(value);
-        }
+        const decimals = this.getMinimumTickDecimals(tickValues, shouldUseScientificNotation);
+        return shouldUseScientificNotation || power <= 0 ? this.formatTickLabel(value, decimals, shouldUseScientificNotation) : String(value);
     };
 
     @action private updateHistogramChartArea = (chart: Chart) => {
