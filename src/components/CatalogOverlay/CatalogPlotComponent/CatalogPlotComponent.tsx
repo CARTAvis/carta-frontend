@@ -32,6 +32,7 @@ Chart.register(BarController, BarElement, Legend, LinearScale, LogarithmicScale,
 const DEFAULT_NUM_BINS = 10; // default fallback
 const SCATTER_GRID_SIZE = 64;
 const DOUBLE_CLICK_THRESHOLD = 300;
+const EXPORT_RIGHT_PADDING = 10;
 
 type ScatterSpatialIndex = {
     xData: ArrayLike<number>;
@@ -1037,7 +1038,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
         const composed = document.createElement("canvas") as HTMLCanvasElement;
-        composed.width = chart.canvas.width;
+        composed.width = chart.canvas.width + EXPORT_RIGHT_PADDING;
         composed.height = chart.canvas.height;
         const ctx = composed.getContext("2d");
         if (!ctx) {
@@ -1079,7 +1080,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private compositeScatterCanvases(chartCanvas: HTMLCanvasElement, webglCanvas: HTMLCanvasElement, gl: WebGL2RenderingContext): HTMLCanvasElement {
         const composed = document.createElement("canvas");
-        composed.width = chartCanvas.width;
+        composed.width = chartCanvas.width + EXPORT_RIGHT_PADDING;
         composed.height = chartCanvas.height;
         const ctx = composed.getContext("2d")!;
 
@@ -1091,7 +1092,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         tempCanvas.width = webglCanvas.width;
         tempCanvas.height = webglCanvas.height;
         tempCanvas.getContext("2d")!.putImageData(webglImageData, 0, 0);
-        ctx.drawImage(tempCanvas, 0, 0, composed.width, composed.height);
+        ctx.drawImage(tempCanvas, 0, 0);
 
         return composed;
     }
